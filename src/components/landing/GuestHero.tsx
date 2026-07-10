@@ -27,7 +27,7 @@ export function GuestHero() {
         <div className="guest-hero__center">
           <h1 className="guest-hero__hello">
             Xin chào,
-            <span>thằng hay phán xét</span>
+            <span>bạn iu của mình</span>
           </h1>
 
           <div className="guest-hero__rule" aria-hidden="true" />
