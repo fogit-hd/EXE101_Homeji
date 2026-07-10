@@ -23,3 +23,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Heavy Blender render sequences (keep GIF/WebM/stills only)
+public/**/frames/
+public/**/frames_curve/
+public/**/loop_seq/
+public/mascot/review/render_*.log
+public/mascot/render_*.log
