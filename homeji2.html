@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f7f9ff;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .listing-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(0, 100, 145, 0.15);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(209, 217, 224, 0.5);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#191c1d",
+                      "on-error-container": "#93000a",
+                      "map-error-red": "#E74C3C",
+                      "urgent-coral": "#E67E22",
+                      "tertiary-fixed-dim": "#4ae183",
+                      "inverse-primary": "#8aceff",
+                      "surface-bright": "#f7f9ff",
+                      "inverse-surface": "#203243",
+                      "surface-container-highest": "#d1e4fb",
+                      "secondary-fixed": "#e1e3e4",
+                      "tertiary-fixed": "#6bfe9c",
+                      "primary-fixed-dim": "#8aceff",
+                      "on-tertiary-fixed-variant": "#005228",
+                      "background": "#f7f9ff",
+                      "inverse-on-surface": "#e8f2ff",
+                      "on-secondary-container": "#606364",
+                      "secondary": "#5c5f60",
+                      "secondary-fixed-dim": "#c4c7c8",
+                      "on-tertiary-fixed": "#00210c",
+                      "on-error": "#ffffff",
+                      "tertiary": "#006d37",
+                      "surface-tint": "#006491",
+                      "surface-dim": "#c9dcf3",
+                      "tertiary-container": "#10be65",
+                      "outline": "#707880",
+                      "on-primary": "#ffffff",
+                      "surface-container": "#e3efff",
+                      "surface-container-high": "#d9eaff",
+                      "on-secondary-fixed-variant": "#444748",
+                      "on-surface-variant": "#40484f",
+                      "error-container": "#ffdad6",
+                      "primary-container": "#5dade2",
+                      "on-surface": "#091d2e",
+                      "surface-container-low": "#edf4ff",
+                      "on-primary-container": "#003f5d",
+                      "verified-mint": "#2ECC71",
+                      "on-secondary": "#ffffff",
+                      "action-blue": "#5DADE2",
+                      "secondary-container": "#dee0e1",
+                      "surface-variant": "#d1e4fb",
+                      "error": "#ba1a1a",
+                      "surface": "#f7f9ff",
+                      "primary-fixed": "#c9e6ff",
+                      "primary": "#006491",
+                      "on-tertiary": "#ffffff",
+                      "outline-variant": "#bfc7d0",
+                      "on-background": "#091d2e",
+                      "on-tertiary-container": "#004520",
+                      "on-primary-fixed": "#001e2f",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#004b6f",
+                      "surface-cream": "#F4F6F7"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "container-max": "1200px",
+                      "base": "8px",
+                      "margin-desktop": "32px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "headline-sm": ["Hanken Grotesk"],
+                      "body-lg": ["Hanken Grotesk"],
+                      "price-display": ["Hanken Grotesk"],
+                      "label-md": ["Hanken Grotesk"],
+                      "body-md": ["Hanken Grotesk"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "display-lg": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "price-display": ["18px", {"lineHeight": "24px", "letterSpacing": "0.02em", "fontWeight": "700"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface">
+<div class="flex min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 left-0 sticky flex flex-col bg-surface-container-low border-r border-outline-variant">
+<div class="px-6 py-8">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Homeji</span>
+</div>
+<div class="flex flex-col gap-1 px-2 flex-grow">
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 mx-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</div>
+<!-- Active Tab: My Listings -->
+<div class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-xl px-4 py-3 mx-2 translate-x-1 duration-200 cursor-default">
+<span class="material-symbols-outlined" data-icon="home_work">home_work</span>
+<span class="font-label-md text-label-md">My Listings</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 mx-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-md text-label-md">Applications</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 mx-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+<span class="font-label-md text-label-md">Saved</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 mx-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</div>
+</div>
+<div class="px-4 py-6 mt-auto border-t border-outline-variant/30">
+<div class="bg-primary-container/20 rounded-xl p-4 mb-4">
+<p class="font-label-md text-label-md text-primary font-bold mb-1">Cần thêm lượt xem?</p>
+<p class="text-[11px] text-on-surface-variant leading-tight mb-3">Nâng cấp lên Premium để tin đăng luôn ở đầu trang.</p>
+<button class="w-full bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">Upgrade to Premium</button>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-2 mx-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-2 mx-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-label-md text-label-md">Support</span>
+</div>
+</div>
+<div class="mt-6 flex items-center gap-3 px-4">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a friendly male property manager in his late 20s, wearing a smart casual blue linen shirt. The background is a clean, modern apartment interior with soft natural sunlight. High-quality corporate lifestyle photography with a warm, dependable atmosphere and soft depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpRE5t7dlIliHqbjHVIvez2rPsAB9n0CXc4Q8mtLVcQCgAXAP0jDK4fpOCCrhoavKGgUJe-iVROTjn6tJ8dU8cqQ8Q1-bhnM9t1ltfXlklj1Zcvmiz-6Ptv6ZgweV9VUud8PlL6pgYw1T4YBlKBrlyvUuYtCv2F3hv13hFMm6VxUBhgN9blSoynbirllw1jNoOGpA1Ic0oyKK8oAx1DMAZw4DpC3I89P9zPuz4Fqt1WYJcu5LMa8ri"/>
+</div>
+<div class="overflow-hidden">
+<p class="font-label-md text-label-md font-bold truncate">Student Dashboard</p>
+<p class="text-[10px] text-on-surface-variant truncate">Managing 2 Listings</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-grow px-margin-desktop py-8 max-w-[1400px]">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface mb-1">Tin Đăng Của Tôi</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Quản lý các phòng trọ và căn hộ đang cho thuê của bạn.</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-xl font-headline-sm flex items-center gap-2 hover:shadow-lg transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                    Post Listing
+                </button>
+</div>
+<!-- Stats Overview Bento -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-10">
+<div class="md:col-span-1 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" data-icon="visibility">visibility</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2">Tổng lượt xem</p>
+<h2 class="font-display-lg text-display-lg text-primary">1,284</h2>
+<div class="mt-2 flex items-center gap-1 text-verified-mint font-label-md">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>+12% so với tháng trước</span>
+</div>
+</div>
+<div class="md:col-span-1 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" data-icon="favorite">favorite</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2">Lượt lưu tin</p>
+<h2 class="font-display-lg text-display-lg text-primary">342</h2>
+<div class="mt-2 flex items-center gap-1 text-verified-mint font-label-md">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>+5% so với tháng trước</span>
+</div>
+</div>
+<div class="md:col-span-2 bg-primary-container/10 p-6 rounded-2xl border border-primary-container/30 relative overflow-hidden flex items-center justify-between">
+<div class="z-10">
+<h3 class="font-headline-sm text-headline-sm text-on-primary-container mb-2">AI Tư Vấn Giá Thuê</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs">Giá thuê của bạn đang thấp hơn 5% so với thị trường khu vực Quận 1. Bạn có muốn điều chỉnh?</p>
+<button class="mt-4 text-primary font-bold flex items-center gap-1 hover:underline">
+                            Xem chi tiết <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<div class="w-32 h-32 relative">
+<div class="absolute inset-0 bg-primary/10 rounded-full animate-pulse"></div>
+<img class="w-full h-full object-contain z-10 relative" data-alt="A friendly, stylized 2D AI avatar head with a soft smile, representing a helpful housing assistant. The design is modern, with clean lines and a palette of sky blue and mint green. It sits against a transparent-looking glassmorphism background that feels tech-forward and student-centric." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0WJ8dSrm51lfLYJTUWlZZUDkEzVkLsGwIt5XRhilnFbtezoP9OqR9WPUx2jFB4maNba-JZ8JsuQhUYPVGq1wqjDqOWU3rZQC4wqoaTkfKVYC3A9BjB4XZr8G777vK0enf3m6JM1z9qQ_07hy9TlMDT_YuhzzbjHzkqBHR5mkDcOWzTrZdFB_7SkItfZHp2OZX4e9mAbhCKPJ46m3kiVaSFcHoS8QO9Or0jZZ8FTdp7j_EGsLPFs9R"/>
+</div>
+</div>
+</div>
+<!-- Listing Filter Tabs -->
+<div class="flex items-center gap-6 border-b border-outline-variant mb-6">
+<button class="pb-3 px-2 font-label-md text-label-md text-primary border-b-2 border-primary font-bold">Tất cả (2)</button>
+<button class="pb-3 px-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Đang hoạt động (1)</button>
+<button class="pb-3 px-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Chờ duyệt (1)</button>
+<button class="pb-3 px-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Đã ẩn (0)</button>
+</div>
+<!-- Listings Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+<!-- Listing Card 1: Active -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden flex listing-card-hover transition-all duration-300 shadow-sm">
+<div class="w-52 h-full relative shrink-0">
+<img class="w-full h-full object-cover" data-alt="A bright and spacious modern studio apartment near a university campus. The room features light wood flooring, a minimalist desk setup perfect for a student, and a large window bringing in soft morning light. The furniture is corporate modern style with cream and blue accents, evoking a clean and organized living environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATQC6ENy096YjYFoJY5IC6_RTI6v7PeFzkJz7Ns1vsNQYT4Le8GfZ_e226qPjkboJHK2fR6ZTFYW3tKjCx5ZYiasdB6VZhqslM5jT1oFc4k7AMKU0inAGOF9BQCnYbGgDXGnxNkdZN-9ybh2ZJItC6FYyk-EEHt3Bai8sNXQ8N1TxcWAlWkXmBIrIfzgpuzKqc8KyXFnCohUBBY_GgSYTejGfzvA5wdbX5BenopuGT2gICri7L17CR"/>
+<div class="absolute top-3 left-3 bg-verified-mint text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                            XÁC THỰC
+                        </div>
+<div class="absolute bottom-3 left-3 bg-on-surface/80 text-white px-3 py-1 rounded-full text-[12px] font-bold backdrop-blur-sm">
+                            7.500.000đ
+                        </div>
+</div>
+<div class="flex-grow p-5 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary-container/20 text-primary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Đang hoạt động</span>
+<div class="flex gap-2">
+<button class="p-1.5 rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+</button>
+<button class="p-1.5 rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-xl" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-1 line-clamp-1">Studio Cao Cấp - Vinhomes Central Park</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-1 mb-4">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                                Quận Bình Thạnh, TP. HCM
+                            </p>
+</div>
+<div class="grid grid-cols-3 gap-2 bg-surface-cream rounded-xl p-3">
+<div class="text-center">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Lượt Xem</p>
+<p class="font-headline-sm text-primary">842</p>
+</div>
+<div class="text-center border-x border-outline-variant/30">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Lượt Lưu</p>
+<p class="font-headline-sm text-primary">156</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Liên Hệ</p>
+<p class="font-headline-sm text-primary">24</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Listing Card 2: Pending -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden flex listing-card-hover transition-all duration-300 shadow-sm">
+<div class="w-52 h-full relative shrink-0 grayscale-[0.3]">
+<img class="w-full h-full object-cover" data-alt="A cozy shared apartment bedroom designed for international students. Features a bunk bed with clean white linens, a communal study area with vibrant blue chairs, and organized storage shelves. The lighting is warm and welcoming, creating a sense of safety and competence. High-contrast energetic aesthetic with dependable corporate modern styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5jdTDORBKJLehM_3QYPifBqRRxoR2OKkzW6CtyZdM45D1CFkucK-Xp9b295tpMsMKuLntrXvb4Dnbuh554Txu7N5B1zBPRt8zhPtzIdWZm5J_77_UyvV4k1VVt-oEE-drhYqB52tlV4m6iSX9zQXEuBFp3RGHyMkq5ld74vW1E4_okUrMxG6791dWxfmH9zjaQHJLNhlpzBblWe0mUzMYroA_aM1bNA2cGUqTcHKi6pqaZpVjnWlu"/>
+<div class="absolute inset-0 bg-on-surface/10"></div>
+<div class="absolute bottom-3 left-3 bg-on-surface/80 text-white px-3 py-1 rounded-full text-[12px] font-bold backdrop-blur-sm">
+                            4.200.000đ
+                        </div>
+</div>
+<div class="flex-grow p-5 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<span class="bg-urgent-coral/20 text-urgent-coral px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Chờ duyệt</span>
+<div class="flex gap-2">
+<button class="p-1.5 rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+</button>
+<button class="p-1.5 rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-xl" data-icon="delete_outline">delete_outline</span>
+</button>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-1 line-clamp-1">Phòng Trọ Tiện Nghi - Gần ĐH Bách Khoa</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-1 mb-4">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                                Quận 10, TP. HCM
+                            </p>
+</div>
+<div class="flex items-center gap-3 bg-surface-cream rounded-xl p-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<p class="text-[11px] leading-tight italic">Hệ thống đang kiểm duyệt nội dung và hình ảnh. Dự kiến hoàn tất trong 2 giờ tới.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Marketplace Integration Section (Secondary Action) -->
+<div class="mt-12 bg-surface-container-high/40 rounded-3xl p-8 border border-outline-variant/50 relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Chợ Đồ Cũ Sinh Viên</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mb-6">Bạn có nội thất cũ muốn thanh lý cho người thuê tiếp theo? Đăng bán ngay trên Marketplace để dọn phòng nhanh hơn.</p>
+<div class="flex flex-wrap gap-2 mb-8">
+<span class="bg-surface-cream border border-action-blue text-on-surface-variant px-4 py-1.5 rounded-full font-label-md text-label-md">Nội thất</span>
+<span class="bg-surface-cream border border-action-blue text-on-surface-variant px-4 py-1.5 rounded-full font-label-md text-label-md">Điện tử</span>
+<span class="bg-surface-cream border border-action-blue text-on-surface-variant px-4 py-1.5 rounded-full font-label-md text-label-md">Đồ gia dụng</span>
+</div>
+<button class="bg-action-blue text-on-primary px-8 py-3 rounded-xl font-headline-sm hover:opacity-90 transition-all">Đến Marketplace</button>
+</div>
+<div class="absolute -right-10 -bottom-10 w-96 h-96 opacity-10">
+<span class="material-symbols-outlined text-[300px]" data-icon="shopping_bag">shopping_bag</span>
+</div>
+</div>
+</main>
+</div>
+<!-- Floating Action Button (Contextual for Dashboard) -->
+<button class="fixed bottom-8 right-8 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="chat">chat</span>
+<div class="absolute -top-1 -right-1 w-6 h-6 bg-error text-white rounded-full text-[10px] flex items-center justify-center font-bold border-2 border-surface">2</div>
+</button>
+<script>
+        // Simple micro-interaction for listing cards
+        document.querySelectorAll('.listing-card-hover').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const img = card.querySelector('img');
+                if (img) img.style.transform = 'scale(1.05)';
+            });
+            card.addEventListener('mouseleave', () => {
+                const img = card.querySelector('img');
+                if (img) img.style.transform = 'scale(1)';
+            });
+        });
+
+        // Dynamic greeting based on time
+        const hours = new Date().getHours();
+        let greeting = "Xin chào";
+        if (hours < 12) greeting = "Chào buổi sáng";
+        else if (hours < 18) greeting = "Chào buổi chiều";
+        else greeting = "Chào buổi tối";
+        
+        const subtext = document.querySelector('p.text-on-surface-variant');
+        if (subtext && subtext.innerText.includes('Quản lý')) {
+            const h1 = document.querySelector('h1');
+            // Logic to append greeting if desired, keeping it clean for now.
+        }
+    </script>
+</body></html>

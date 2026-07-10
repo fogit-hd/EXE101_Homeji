@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Homeji - Tìm Trọ Sinh Viên District 9 &amp; Thủ Đức</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-secondary-fixed": "#191c1d",
+                "on-error-container": "#93000a",
+                "map-error-red": "#E74C3C",
+                "urgent-coral": "#E67E22",
+                "tertiary-fixed-dim": "#4ae183",
+                "inverse-primary": "#8aceff",
+                "surface-bright": "#f7f9ff",
+                "inverse-surface": "#203243",
+                "surface-container-highest": "#d1e4fb",
+                "secondary-fixed": "#e1e3e4",
+                "tertiary-fixed": "#6bfe9c",
+                "primary-fixed-dim": "#8aceff",
+                "on-tertiary-fixed-variant": "#005228",
+                "background": "#f7f9ff",
+                "inverse-on-surface": "#e8f2ff",
+                "on-secondary-container": "#606364",
+                "secondary": "#5c5f60",
+                "secondary-fixed-dim": "#c4c7c8",
+                "on-tertiary-fixed": "#00210c",
+                "on-error": "#ffffff",
+                "tertiary": "#006d37",
+                "surface-tint": "#006491",
+                "surface-dim": "#c9dcf3",
+                "tertiary-container": "#10be65",
+                "outline": "#707880",
+                "on-primary": "#ffffff",
+                "surface-container": "#e3efff",
+                "surface-container-high": "#d9eaff",
+                "on-secondary-fixed-variant": "#444748",
+                "on-surface-variant": "#40484f",
+                "error-container": "#ffdad6",
+                "primary-container": "#5dade2",
+                "on-surface": "#091d2e",
+                "surface-container-low": "#edf4ff",
+                "on-primary-container": "#003f5d",
+                "verified-mint": "#2ECC71",
+                "on-secondary": "#ffffff",
+                "action-blue": "#5DADE2",
+                "secondary-container": "#dee0e1",
+                "surface-variant": "#d1e4fb",
+                "error": "#ba1a1a",
+                "surface": "#f7f9ff",
+                "primary-fixed": "#c9e6ff",
+                "primary": "#006491",
+                "on-tertiary": "#ffffff",
+                "outline-variant": "#bfc7d0",
+                "on-background": "#091d2e",
+                "on-tertiary-container": "#004520",
+                "on-primary-fixed": "#001e2f",
+                "surface-container-lowest": "#ffffff",
+                "on-primary-fixed-variant": "#004b6f",
+                "surface-cream": "#F4F6F7"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "margin-mobile": "16px",
+                "container-max": "1200px",
+                "base": "8px",
+                "margin-desktop": "32px",
+                "gutter": "16px"
+            },
+            "fontFamily": {
+                "headline-sm": ["Hanken Grotesk"],
+                "body-lg": ["Hanken Grotesk"],
+                "price-display": ["Hanken Grotesk"],
+                "label-md": ["Hanken Grotesk"],
+                "body-md": ["Hanken Grotesk"],
+                "headline-md": ["Hanken Grotesk"],
+                "display-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "price-display": ["18px", {"lineHeight": "24px", "letterSpacing": "0.02em", "fontWeight": "700"}],
+                "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for listing panel */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1e4fb; border-radius: 10px; }
+        
+        /* Map Pin Animation */
+        @keyframes pulse-mint {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+        .animate-pulse-mint { animation: pulse-mint 2s infinite; }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky z-50 bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none flex justify-between items-center px-margin-desktop py-4 h-[72px]">
+<div class="flex items-center gap-8">
+<a class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary" href="#">Homeji</a>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary dark:text-inverse-primary font-bold border-b-2 border-primary dark:border-inverse-primary pb-1 font-label-md text-label-md" href="#">Find Housing</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-md text-label-md" href="#">Marketplace</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-md text-label-md" href="#">Resources</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-md text-label-md" href="#">Dashboard</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 mr-4">
+<button class="p-2 hover:bg-surface-container-low dark:hover:bg-on-surface-variant rounded-lg transition-all flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low dark:hover:bg-on-surface-variant rounded-lg transition-all flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">chat_bubble</span>
+</button>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-full font-label-md text-label-md font-bold transition-all active:scale-95 duration-150 hover:bg-primary/90">
+                Post Listing
+            </button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="A professional student profile picture featuring a young Vietnamese adult with a friendly expression. They are wearing a casual university hoodie, set against a clean, soft-focus campus background during a golden hour sunset. The lighting is warm and welcoming, reflecting a corporate modern and approachable student-centric aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC30p52ti2gFWmX8_oo3FwIf-46-bapdz_1_FUw-pL_0VqySYfTgB5ODUU_VRfLxSVVObi_rNt3bYDbrhZaLn5qxnzxI4CT-J7xDhKiSjCgvdq1Tt7sZC3UANFwskrnDf9T8Uz2xgflmlBA9TNzuBW1VT4qCDof5LuZi5fZ7bMQC7TQEDA9yLF7nSh2LdCjyI2y1m9NhsHSdVxgpKKILdsZLNLTZEJoU__QyBe3MP8z2xbYPAP0-4lk"/>
+</div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<!-- Left Panel: Map Section -->
+<section class="flex-1 relative">
+<!-- Map Placeholder -->
+<div class="w-full h-full bg-surface-dim">
+<img class="w-full h-full object-cover opacity-80" data-alt="A high-resolution, detailed digital map view of District 9 and Thu Duc in Ho Chi Minh City. The map features clean, corporate modern cartography with sky blue primary roads and soft cream grey residential blocks. Multiple interactive circular pins in Sky Blue and Mint Green are strategically placed across the university areas. The overall style is organized and utility-focused for students." data-location="District 9, Thu Duc, Ho Chi Minh City" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMtNJ85tSZTBPof2_tdx7LbDAeHbZkUX3h0s28a9zcOR-FVZN9Sh6YoSw-vXf5qYQNpR1cuiEW6FaAbuKqY9KYnt52DOpLnwO0q-GNjaVbqVNpnfFpOjb4AWzLoWmWMlqQgxYX9a8NwTTBIgnpKzikvBTMRY7omxNDjRhctMa2PWL3Me8DooYlaXRj5EyM_U-IPVB9-EhJ8fmMU9bhpK3k7wFzHc-6iUCgbnjBkE8KJpaLmGnFeLMq"/>
+</div>
+<!-- Floating Search & Filters -->
+<div class="absolute top-6 left-6 right-6 z-10 flex flex-col gap-4">
+<div class="flex gap-2 max-w-2xl bg-white shadow-lg rounded-2xl p-2 border border-outline-variant">
+<div class="flex-1 flex items-center px-4 gap-3 border-r border-outline-variant">
+<span class="material-symbols-outlined text-primary">search</span>
+<input class="w-full border-none focus:ring-0 font-body-md text-body-md bg-transparent" placeholder="Tìm kiếm khu vực (ví dụ: Làng Đại học)..." type="text"/>
+</div>
+<div class="flex items-center px-4 gap-2 border-r border-outline-variant min-w-[140px]">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">payments</span>
+<span class="font-label-md text-label-md">Giá thuê</span>
+</div>
+<div class="flex items-center px-4 gap-2 min-w-[140px]">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">filter_alt</span>
+<span class="font-label-md text-label-md">Tiện ích</span>
+</div>
+</div>
+<div class="flex gap-2 overflow-x-auto no-scrollbar">
+<button class="bg-white border border-action-blue text-primary px-4 py-1.5 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-all">
+                        Gần Đại học Quốc gia
+                    </button>
+<button class="bg-white border border-outline-variant text-on-surface-variant px-4 py-1.5 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-all">
+                        Máy lạnh
+                    </button>
+<button class="bg-white border border-outline-variant text-on-surface-variant px-4 py-1.5 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-all">
+                        Cho nuôi thú cưng
+                    </button>
+<button class="bg-white border border-outline-variant text-on-surface-variant px-4 py-1.5 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-all">
+                        Phòng đơn
+                    </button>
+</div>
+</div>
+<!-- Interactive Map Pins (Visual representations) -->
+<div class="absolute top-1/2 left-1/3 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+<div class="bg-primary text-white p-2 rounded-full shadow-lg flex items-center justify-center w-12 h-12 transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined">home</span>
+</div>
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-lg shadow-md border border-primary-container opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+<span class="font-price-display text-primary">3.5Tr/tháng</span>
+</div>
+</div>
+<div class="absolute top-[60%] left-[60%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+<div class="bg-verified-mint text-white p-2 rounded-full shadow-lg flex items-center justify-center w-12 h-12 animate-pulse-mint transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined">person_search</span>
+</div>
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-lg shadow-md border border-verified-mint opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+<span class="font-label-md text-verified-mint">AI Gợi ý: Tìm bạn ở ghép</span>
+</div>
+</div>
+<!-- AI Character Bubble -->
+<div class="absolute bottom-8 left-8 flex items-end gap-3 max-w-sm">
+<div class="w-16 h-16 bg-white rounded-full border-4 border-primary-container shadow-lg flex items-center justify-center overflow-hidden shrink-0">
+<img class="w-full h-full object-contain" data-alt="A charming 2D illustrated character head, a helpful student guide with stylized glasses and a bright smile. The character has a modern, clean line art style with vibrant sky blue hair and soft cream skin tones. Set against a minimalist circle background, this avatar represents a trustworthy and energetic AI assistant for students." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCg3ACWK_y1P6YroFaEjAUqY8oOHoIYh75GT2xMQwDHBIb_n-V6Zk1cIGXxHmFqLfAphf4hPbIvOFovXpMhgHbvIb-FuXWcre0WXQPjIBpokg2Rl2NKWDH5qP0VZpTNVgqNyAy5Mmzi7j34v7B2_DEeJE_JemWCEo5bizO3XuXdKTMv1U6i16Q3oQ1ChK5_qYxHmpLAWEQpol5XjmDlIr-S-EyJQ6Ks_gTDkkCML6IjieDWRwmy5fKl"/>
+</div>
+<div class="bg-white/95 backdrop-blur-sm p-4 rounded-2xl rounded-bl-none shadow-xl border border-primary-container/30">
+<p class="font-body-md text-body-md text-on-surface">Chào bạn! Mình đã tìm thấy <b>15 phòng trọ</b> gần Đại học Bách Khoa có giá dưới 4 triệu. Bạn có muốn xem không?</p>
+</div>
+</div>
+</section>
+<!-- Right Panel: Listings Section -->
+<aside class="w-[480px] bg-surface-cream border-l border-outline-variant flex flex-col h-full">
+<div class="p-6 bg-white border-b border-outline-variant shrink-0">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-1">Khu vực Thủ Đức &amp; Q.9</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Hiển thị các phòng tốt nhất dành cho sinh viên</p>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+<!-- Listing Card 1 -->
+<div class="bg-white rounded-xl overflow-hidden border border-outline-variant shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+<div class="relative h-48">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A modern, brightly lit studio apartment in District 9, specifically designed for student living. The room features a minimalist white desk with a laptop, a comfortable single bed with clean linens, and a large window showing lush greenery. The lighting is crisp and natural, highlighting a verified mint green badge in the corner. Professional architectural photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaBfjaxNw8zV4RnuA61cG2Qo15x_n4c9oOPQOxGfSbmC7oHMtAiqswxZnn8H0Iwzc7xukFvkN_phTUTD1Jn_CsRYHA6mWBrr7DgJyREry0y6Ty6oFflBuHYMfQLmtH56ciKSHVBWBWktlN7Xa8jfEkt0ECV3C-VlR6fNZ3yk0CMeXjPGH5Z0IYubAm9aY5tPEQvQSyFwek1YeVsjp6qmA9bSk79mUfVh7jkBPAjF5UZ4IVWP5eDkZQ"/>
+<div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-verified-mint text-sm">verified</span>
+<span class="font-label-md text-label-md text-on-surface">Xác thực</span>
+</div>
+<div class="absolute bottom-3 left-3 bg-primary text-white px-3 py-1 rounded-lg">
+<span class="font-price-display text-price-display">4.200.000đ/th</span>
+</div>
+<button class="absolute top-3 right-3 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center hover:bg-white text-on-surface-variant hover:text-urgent-coral transition-colors">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</div>
+<div class="p-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-surface-container text-primary font-label-md text-label-md px-2 py-0.5 rounded border border-action-blue/20">Căn hộ dịch vụ</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Thủ Đức • 25m²</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Phòng đẹp gần ĐH Sư Phạm Kỹ Thuật</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 line-clamp-2">Đầy đủ nội thất, có máy lạnh, tủ lạnh riêng. Khu vực an ninh, giờ giấc tự do...</p>
+<div class="flex items-center justify-between mt-4">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up avatar of a friendly university student with short dark hair, wearing glasses and a smiling expression. Professional, soft studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvTVnNIMhOfLfj-HxSXviCXPjLKC4ks9hD0oXafkA1tzYXEEN9gfRMP5WqIuJO-tPdzuTSckRH1G3t9rbf2TZYANEhu3EUVUCKZvgEqt4UbKH_f3WVXOna8NvjB2ae4k3jvKC64rbWPKanA6nMCWBKIzAA7u3FZKUJicfkM0_6RDjlD5PCQ5oZIBJqzzRNhQG9z279IT8bScYV9U4iWTb-vsNbGw_dIGsS38hQ7Vv8pIJ-UknkwIRY"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-primary-container flex items-center justify-center">
+<span class="text-[10px] font-bold text-on-primary-container">+3</span>
+</div>
+</div>
+<button class="text-primary font-label-md text-label-md font-bold flex items-center gap-1 hover:underline">
+                                Xem chi tiết <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Roommate Card -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-primary-container/20 relative overflow-hidden">
+<div class="absolute -right-6 -top-6 w-24 h-24 bg-primary-container/20 rounded-full blur-2xl"></div>
+<div class="relative z-10 flex gap-4">
+<div class="shrink-0 relative">
+<div class="w-20 h-20 rounded-2xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Portrait of a female university student with long dark hair, wearing a stylish denim jacket. She has a confident, friendly look. The background is a soft-focus library environment. Corporate modern student-centric style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDRivRjjwS9Hi9qLyhy6vRNtH956wLGhe9nEcAs5LsfDJZ2QF2MJb0VO9LZZhI8jt3eXdPGXNxr0KOjFWP7Yr5WgPg2Waq68VQRS1mZ6RIXeq7WrtqSe9hzjFvs4PeJqKGxPwi5fp_e64D8LWXp0SHvSO9Jg5kCZLyGg8pVI7de9ZGXJyzoZgqprS6-gio7v_VnrhnYhdRLj9WUOrBUxGibpy4Iv4XA3MDc25Cw0wFYsrsHATi6c-E"/>
+</div>
+<div class="absolute -bottom-1 -right-1 w-6 h-6 bg-verified-mint text-white rounded-full flex items-center justify-center border-2 border-white">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Minh Thư, 20</h4>
+<span class="font-label-md text-label-md text-primary">Sinh viên năm 2 - ĐHQG</span>
+</div>
+<span class="bg-urgent-coral/10 text-urgent-coral font-label-md text-label-md px-2 py-1 rounded">Tìm ở ghép</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 italic">"Mình cần tìm bạn nữ ở ghép căn hộ Vinhomes Grand Park, ưu tiên sạch sẽ..."</p>
+</div>
+</div>
+<div class="mt-4 flex gap-2">
+<div class="bg-white px-3 py-1 rounded-full border border-outline-variant font-label-md text-label-md text-on-surface-variant">Không hút thuốc</div>
+<div class="bg-white px-3 py-1 rounded-full border border-outline-variant font-label-md text-label-md text-on-surface-variant">Thích nuôi mèo</div>
+<div class="bg-white px-3 py-1 rounded-full border border-outline-variant font-label-md text-label-md text-on-surface-variant">Dậy sớm</div>
+</div>
+</div>
+<!-- Listing Card 2 -->
+<div class="bg-white rounded-xl overflow-hidden border border-outline-variant shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+<div class="relative h-48">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A spacious and sunny room for rent in a shared student house in Thu Duc. Features a large wooden wardrobe, a minimalist bed frame, and a wide window with a view of the street below. Warm morning sunlight fills the space, creating a cozy and inviting atmosphere. Clean, high-quality architectural photo for a real estate listing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIieHMsKUvm-qZ1UCS0kSCcg3CbOScP8MdvCzWnjiUO_r3KErbuj61Cef1ElTaQxtIeDEZpfSeqD57KvxI-FsZdJiWMU4buXsH6sXSNr42ma-N3ZW33VB2hX0Ytt2RKE2x5Jc5B-G2f-qYG-YU0Z96-6ExtocZMZ03AKUINU5THMjRGaUrOqqUTByLy4PYsghEPUC-a1iLXykk4PoY4Nw1lkW2wCULR0fURkyJ98y1wFfaIcR30-BN"/>
+<div class="absolute bottom-3 left-3 bg-primary text-white px-3 py-1 rounded-lg">
+<span class="font-price-display text-price-display">2.800.000đ/th</span>
+</div>
+</div>
+<div class="p-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-surface-container text-primary font-label-md text-label-md px-2 py-0.5 rounded border border-action-blue/20">Phòng trọ</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Quận 9 • 18m²</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Ký túc xá cao cấp - Làng Đại học</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 line-clamp-2">Phòng mới xây, gác cao, không chung chủ. Gần trạm xe buýt thuận tiện di chuyển...</p>
+<div class="flex items-center justify-between mt-4">
+<span class="text-on-surface-variant font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">schedule</span> Cập nhật 2 giờ trước
+                            </span>
+<button class="text-primary font-label-md text-label-md font-bold flex items-center gap-1 hover:underline">
+                                Xem chi tiết <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Load More Button -->
+<button class="w-full py-4 rounded-xl border-2 border-dashed border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+                    Tải thêm các phòng khác tại Quận 9...
+                </button>
+</div>
+</aside>
+</main>
+<!-- FAB for AI Helper (Mobile/Quick access) -->
+<button class="fixed bottom-6 right-[500px] bg-urgent-coral text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-20">
+<span class="material-symbols-outlined text-3xl">auto_awesome</span>
+</button>
+<script>
+        // Simple Interaction logic
+        document.querySelectorAll('.listing-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Future: highlight corresponding map pin
+            });
+        });
+
+        // Search interaction
+        const searchInput = document.querySelector('input');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.parentElement.classList.add('ring-2', 'ring-primary-container');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.parentElement.classList.remove('ring-2', 'ring-primary-container');
+        });
+    </script>
+</body></html>

@@ -1,0 +1,145 @@
+import type { ApiError } from './types'
+import { NetworkError } from '../lib/errors'
+
+/** Dev luôn dùng same-origin proxy; production dùng URL từ .env */
+function resolveApiBase(): string {
+  if (import.meta.env.DEV) return ''
+  return import.meta.env.VITE_API_BASE_URL || 'https://homeji-api.fly.dev'
+}
+
+const API_BASE = resolveApiBase()
+
+export class ApiRequestError extends Error {
+  status: number
+  body: ApiError
+
+  constructor(status: number, body: ApiError) {
+    super(body.detail ?? body.title ?? `Request failed (${status})`)
+    this.status = status
+    this.body = body
+  }
+}
+
+function getToken(): string | null {
+  return localStorage.getItem('homeji_access_token')
+}
+
+export function setStoredToken(token: string | null) {
+  if (token) {
+    localStorage.setItem('homeji_access_token', token)
+  } else {
+    localStorage.removeItem('homeji_access_token')
+  }
+}
+
+export function getStoredSession(): { accessToken: string; userId: string | null; email: string | null } | null {
+  const accessToken = localStorage.getItem('homeji_access_token')
+  if (!accessToken) return null
+  return {
+    accessToken,
+    userId: localStorage.getItem('homeji_user_id'),
+    email: localStorage.getItem('homeji_email'),
+  }
+}
+
+export function persistSession(accessToken: string, userId?: string | null, email?: string | null) {
+  setStoredToken(accessToken)
+  if (userId) localStorage.setItem('homeji_user_id', userId)
+  if (email) localStorage.setItem('homeji_email', email)
+}
+
+export function getApiBaseUrl(): string {
+  return resolveApiBase()
+}
+
+export function clearSession() {
+  localStorage.removeItem('homeji_access_token')
+  localStorage.removeItem('homeji_user_id')
+  localStorage.removeItem('homeji_email')
+}
+
+type RequestOptions = {
+  method?: string
+  body?: unknown
+  auth?: boolean
+  params?: Record<string, string | number | boolean | string[] | undefined>
+}
+
+function buildUrl(path: string, params?: RequestOptions['params']): string {
+  const urlString = path.startsWith('http') ? path : `${API_BASE}${path}`
+  const url = urlString.startsWith('http')
+    ? new URL(urlString)
+    : new URL(urlString, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null || value === '') continue
+      if (Array.isArray(value)) {
+        for (const item of value) url.searchParams.append(key, item)
+      } else {
+        url.searchParams.set(key, String(value))
+      }
+    }
+  }
+  return url.toString()
+}
+
+function parseErrorBody(text: string, statusText: string): ApiError {
+  if (!text) return { detail: statusText || 'Unknown error' }
+  try {
+    return (JSON.parse(text) as ApiError) ?? { detail: statusText }
+  } catch {
+    return { detail: statusText || 'Unknown error' }
+  }
+}
+
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { method = 'GET', body, auth = true, params } = options
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  }
+
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  if (auth) {
+    const token = getToken()
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+  }
+
+  let response: Response
+  try {
+    response = await fetch(buildUrl(path, params), {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch (err) {
+    throw new NetworkError()
+  }
+
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  const text = await response.text()
+  let data: unknown = null
+  if (text) {
+    try {
+      data = JSON.parse(text) as unknown
+    } catch {
+      data = null
+    }
+  }
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      (data as ApiError) ?? parseErrorBody(text, response.statusText),
+    )
+  }
+
+  return data as T
+}

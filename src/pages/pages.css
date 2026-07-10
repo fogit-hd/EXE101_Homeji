@@ -1,0 +1,75 @@
+.page-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.notification-list,
+.invitation-list,
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notification-item,
+.invitation-item,
+.admin-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-item.unread {
+  border-left: 4px solid var(--grab-green);
+}
+
+.invitation-actions,
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header-row .btn {
+    width: 100%;
+  }
+
+  .notification-item,
+  .invitation-item,
+  .admin-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .invitation-actions,
+  .admin-actions {
+    width: 100%;
+  }
+
+  .invitation-actions .btn,
+  .admin-actions .btn {
+    flex: 1;
+  }
+}

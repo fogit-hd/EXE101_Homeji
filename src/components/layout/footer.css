@@ -1,0 +1,26 @@
+.main-map-layout {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.site-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .site-footer {
+    padding: 16px 0 8px;
+  }
+
+  .site-footer p {
+    font-size: 12px;
+  }
+}
