@@ -10,6 +10,10 @@ import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
 import { AMENITY_OPTIONS } from '../lib/labels'
+import { GuestChrome } from '../components/landing/GuestChrome'
+import { GuestHero } from '../components/landing/GuestHero'
+import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
+import { MissionConfetti } from '../components/landing/MissionConfetti'
 import './HomePage.css'
 
 type AreaSuggestion = {
@@ -325,22 +329,121 @@ export function HomePage() {
 
   if (!isAuthenticated) {
     return (
-      <section className="hero-section">
-        <div className="container hero-content">
-          <h1 className="page-title">Tìm phòng trọ & bạn ở ghép dễ dàng</h1>
-          <p className="page-subtitle">
-            Homeji kết nối người thuê, chủ nhà và bạn cùng phòng — nhanh chóng, minh bạch, an toàn.
-          </p>
-          <div className="hero-actions">
-            <Link to="/register" className="btn btn-primary">
-              Bắt đầu ngay
-            </Link>
-            <Link to="/login" className="btn btn-secondary">
-              Đăng nhập
-            </Link>
+      <div className="guest-landing">
+        <GuestChrome />
+        <GuestHero />
+        <section className="guest-mission" id="mission">
+          <div className="guest-mission__grid">
+            <div className="guest-mission__copy">
+              <p className="guest-mission__eyebrow">Sứ mệnh</p>
+              <h2 className="guest-mission__quote">
+                Không chỉ tìm phòng — tìm nơi bạn thuộc về.
+              </h2>
+              <p className="guest-mission__body">
+                Homeji kết nối sinh viên tìm phòng, bạn cùng phòng và chủ nhà quanh Thủ Đức &amp; Q.9.
+                Minh bạch thông tin, rõ ràng quy trình — để việc chuyển nhà gần trường trở nên nhẹ nhàng
+                hơn.
+              </p>
+              <div className="guest-mission__stats">
+                <div className="guest-mission__stat">
+                  <strong>Sinh viên</strong>
+                  <span>Tìm phòng gần trường</span>
+                </div>
+                <div className="guest-mission__stat">
+                  <strong>Bạn cùng phòng</strong>
+                  <span>Kết nối có kiểm soát</span>
+                </div>
+                <div className="guest-mission__stat">
+                  <strong>Chủ nhà</strong>
+                  <span>Cho thuê đúng đối tượng</span>
+                </div>
+              </div>
+            </div>
+            <MissionConfetti />
           </div>
-        </div>
-      </section>
+        </section>
+        <HorizontalScrollShowcase />
+        <section className="guest-steps" id="how" aria-label="Cách Homeji hoạt động">
+          <p className="guest-steps__eyebrow">Cách hoạt động</p>
+          <h2 className="guest-steps__title">Ba bước để tìm chỗ ở phù hợp</h2>
+          <p className="guest-steps__lead">
+            Từ phòng gần trường đến bạn cùng phòng — Homeji giữ quy trình ngắn, rõ và dễ theo dõi.
+          </p>
+          <ol className="guest-steps__list">
+            <li className="guest-steps__item">
+              <span className="guest-steps__n">01</span>
+              <div>
+                <strong>Chọn khu vực &amp; ngân sách</strong>
+                <p>Lọc Thủ Đức, Q.9 và tiện ích gần trường theo mức chi phí sinh viên chấp nhận.</p>
+              </div>
+            </li>
+            <li className="guest-steps__item">
+              <span className="guest-steps__n">02</span>
+              <div>
+                <strong>Xem tin &amp; lưu phòng</strong>
+                <p>Đọc mô tả, vị trí trên bản đồ, rồi lưu những lựa chọn đáng cân nhắc vào một chỗ.</p>
+              </div>
+            </li>
+            <li className="guest-steps__item">
+              <span className="guest-steps__n">03</span>
+              <div>
+                <strong>Tìm bạn cùng phòng có kiểm soát</strong>
+                <p>Gửi lời mời, nhận thông báo, và thống nhất trước khi chuyển vào ở chung.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section className="guest-audience" id="for" aria-label="Dành cho ai">
+          <p className="guest-audience__eyebrow">Dành cho ai</p>
+          <h2 className="guest-audience__title">Ba vai trò trên</h2>
+          <div className="guest-audience__grid">
+            <article className="guest-audience__card">
+              <h3>Sinh viên tìm phòng</h3>
+              <p>
+                Cần chỗ gần trường, rõ giá và tiện ích — bớt vòng hỏi đi hỏi lại giữa các group chat.
+              </p>
+            </article>
+            <article className="guest-audience__card">
+              <h3>Sinh viên tìm bạn cùng phòng</h3>
+              <p>
+                Muốn chia sẻ chi phí và không gian? Kết nối có kiểm soát qua lời mời và thông báo rõ
+                ràng.
+              </p>
+            </article>
+            <article className="guest-audience__card">
+              <h3>Chủ nhà cho thuê</h3>
+              <p>
+                Đăng tin có cấu trúc, tiếp cận đúng sinh viên đang tìm — giảm tin nhắn trùng và thiếu
+                thông tin.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section className="guest-trust" id="start" aria-label="Cam kết Homeji">
+          <p className="guest-trust__eyebrow">Cam kết</p>
+          <h2 className="guest-trust__title">Minh bạch trước, quyết định sau</h2>
+          <p className="guest-trust__body">
+            Homeji phục vụ hệ sinh thái quanh trường: sinh viên tìm phòng, tìm bạn cùng phòng, và chủ
+            nhà cho thuê. Ưu tiên thông tin rõ — khu vực, giá, tiện ích và quy trình kết nối.
+          </p>
+          <ul className="guest-trust__points">
+            <li>
+              <strong>Không phí ẩn khi bắt đầu</strong>
+              <span>Tạo tài khoản và khám phá tin miễn phí.</span>
+            </li>
+            <li>
+              <strong>Gần trường là trọng tâm</strong>
+              <span>Thủ Đức &amp; Q.9 — đúng nhịp sống sinh viên.</span>
+            </li>
+            <li>
+              <strong>Bạn cùng phòng có dấu vết</strong>
+              <span>Lời mời và thông báo giúp mọi người cùng nắm tiến độ.</span>
+            </li>
+          </ul>
+        </section>
+      </div>
     )
   }
 

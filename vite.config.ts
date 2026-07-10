@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    watch: {
+      // Source media assets can be locked by Windows/Explorer and crash Vite's FSWatcher
+      ignored: ['**/video-src/**', '**/picture-src/**'],
+    },
     proxy: {
       '/api': {
         target: 'https://homeji-api.fly.dev',

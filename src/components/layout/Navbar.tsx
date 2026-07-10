@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { UserRole } from '../../api/types'
 import './Navbar.css'
@@ -7,7 +7,13 @@ import './Navbar.css'
 export function Navbar() {
   const { isAuthenticated, profile, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const isGuestLanding = !isAuthenticated && location.pathname === '/'
+
+  // Guest landing: no global top bar — logo lives inside the hero and scrolls away
+  if (isGuestLanding) return null
 
   const handleLogout = () => {
     setMenuOpen(false)
@@ -21,8 +27,13 @@ export function Navbar() {
     <header className="navbar">
       <div className="container navbar-inner">
         <Link to="/" className="navbar-brand" onClick={closeMenu}>
-          <span className="brand-icon">H</span>
-          Homeji
+          <img
+            src="/brand/homeji-logo.png"
+            alt="Homeji"
+            className="navbar-brand__logo"
+            width={140}
+            height={40}
+          />
         </Link>
 
         <nav className="navbar-links navbar-links--desktop">
@@ -61,7 +72,7 @@ export function Navbar() {
                 Đăng nhập
               </Link>
               <Link to="/register" className="btn btn-primary btn-sm">
-                Đăng ký
+                Bắt đầu ngay
               </Link>
             </>
           )}
@@ -90,20 +101,32 @@ export function Navbar() {
           />
           <div className="navbar-drawer" role="dialog" aria-modal="true">
             <nav className="navbar-drawer__nav">
-              <NavLink to="/" end onClick={closeMenu}>
-                Tìm phòng
-              </NavLink>
               {isAuthenticated ? (
                 <>
-                  <NavLink to="/saved" onClick={closeMenu}>Đã lưu</NavLink>
-                  <NavLink to="/invitations" onClick={closeMenu}>Ở ghép</NavLink>
-                  <NavLink to="/notifications" onClick={closeMenu}>Thông báo</NavLink>
-                  <NavLink to="/payments" onClick={closeMenu}>Thanh toán</NavLink>
+                  <NavLink to="/" end onClick={closeMenu}>
+                    Tìm phòng
+                  </NavLink>
+                  <NavLink to="/saved" onClick={closeMenu}>
+                    Đã lưu
+                  </NavLink>
+                  <NavLink to="/invitations" onClick={closeMenu}>
+                    Ở ghép
+                  </NavLink>
+                  <NavLink to="/notifications" onClick={closeMenu}>
+                    Thông báo
+                  </NavLink>
+                  <NavLink to="/payments" onClick={closeMenu}>
+                    Thanh toán
+                  </NavLink>
                   {profile?.role === UserRole.Landlord && (
-                    <NavLink to="/posts/new" onClick={closeMenu}>Đăng tin</NavLink>
+                    <NavLink to="/posts/new" onClick={closeMenu}>
+                      Đăng tin
+                    </NavLink>
                   )}
                   {profile?.role === UserRole.Admin && (
-                    <NavLink to="/admin" onClick={closeMenu}>Quản trị</NavLink>
+                    <NavLink to="/admin" onClick={closeMenu}>
+                      Quản trị
+                    </NavLink>
                   )}
                   <NavLink to="/profile" onClick={closeMenu}>
                     {profile?.displayName ?? 'Hồ sơ'}
@@ -118,7 +141,7 @@ export function Navbar() {
                     Đăng nhập
                   </Link>
                   <Link to="/register" className="btn btn-primary" onClick={closeMenu}>
-                    Đăng ký
+                    Bắt đầu ngay
                   </Link>
                 </>
               )}

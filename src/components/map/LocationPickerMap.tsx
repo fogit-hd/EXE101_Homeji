@@ -7,12 +7,14 @@ import {
 } from '@vis.gl/react-google-maps'
 import { useEffect, useMemo } from 'react'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   createMarkerIcon,
   isValidCoord,
 } from '../../lib/googleMaps'
+import { MapErrorPanel } from './MapErrorPanel'
 import './RentalMap.css'
 
 type Props = {
@@ -38,6 +40,11 @@ function MapResizeFix() {
 export function LocationPickerMap({ latitude, longitude, onLocationChange }: Props) {
   const { apiKey, mapId, loadError } = useGoogleMaps()
   const status = useApiLoadingStatus()
+  const diagnostics = useGoogleMapsDiagnostics(
+    apiKey,
+    loadError,
+    status === APILoadingStatus.FAILED,
+  )
 
   const center = useMemo(() => {
     if (isValidCoord(latitude, longitude)) {
@@ -57,8 +64,16 @@ export function LocationPickerMap({ latitude, longitude, onLocationChange }: Pro
     )
   }
 
-  if (loadError || status === APILoadingStatus.FAILED) {
-    return <div className="map-placeholder-msg">Không thể tải Maps JavaScript API.</div>
+  if (diagnostics.failed) {
+    return (
+      <MapErrorPanel
+        diagnosis={diagnostics.diagnosis}
+        report={diagnostics.report}
+        apiKeyMasked={diagnostics.apiKeyMasked}
+        probing={diagnostics.probing}
+        probeStatus={diagnostics.probeStatus}
+      />
+    )
   }
 
   if (status !== APILoadingStatus.LOADED) {

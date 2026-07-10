@@ -34,6 +34,7 @@ const MIME = {
   '.map': 'application/json',
   '.glb': 'model/gltf-binary',
   '.webmanifest': 'application/manifest+json',
+  '.lottie': 'application/zip',
 }
 
 function sendFile(res, filePath) {

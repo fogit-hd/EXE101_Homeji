@@ -28,6 +28,13 @@
   flex-shrink: 0;
 }
 
+.navbar-brand__logo {
+  display: block;
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
 .brand-icon {
   display: inline-flex;
   align-items: center;

@@ -12,7 +12,7 @@ import type { RentalPostSummary } from '../../api/types'
 import { RentalPostType } from '../../api/types'
 import { HomejiLoader } from '../HomejiLoader'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
-import { useGoogleMapsAuthFailure } from '../../hooks/useGoogleMapsAuthFailure'
+import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
@@ -21,6 +21,7 @@ import {
   markerColorForType,
 } from '../../lib/googleMaps'
 import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
+import { MapErrorPanel } from './MapErrorPanel'
 import './RentalMap.css'
 
 export { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM }
@@ -185,7 +186,8 @@ export function RentalMap({
 }: RentalMapProps) {
   const { apiKey, mapId, loadError } = useGoogleMaps()
   const status = useApiLoadingStatus()
-  const { authFailed, reason: authFailureReason } = useGoogleMapsAuthFailure()
+  const mapsFailed = status === APILoadingStatus.FAILED
+  const diagnostics = useGoogleMapsDiagnostics(apiKey, loadError, mapsFailed)
 
   const mappable = useMemo(
     () => posts.filter((p) => isValidCoord(p.latitude, p.longitude)),
@@ -204,21 +206,16 @@ export function RentalMap({
     )
   }
 
-  if (loadError || status === APILoadingStatus.FAILED || authFailed) {
-    const detail = loadError?.message
-      ?? authFailureReason
-      ?? (authFailed
-        ? 'API key / billing / referrer bị từ chối (gm_authFailure).'
-        : 'Không tải được Maps JavaScript API.')
-
+  if (diagnostics.failed) {
     return (
-      <div className="rental-map map-placeholder-msg">
-        <p>Không thể hiển thị bản đồ Google Maps.</p>
-        <p className="map-placeholder-hint">{detail}</p>
-        <p className="map-placeholder-hint">
-          Key restrictions: chọn <strong>Don&apos;t restrict key</strong> (test) hoặc tick{' '}
-          <strong>Maps JavaScript API</strong>. Billing phải link project <strong>exe101-homeji</strong>.
-        </p>
+      <div className="rental-map">
+        <MapErrorPanel
+          diagnosis={diagnostics.diagnosis}
+          report={diagnostics.report}
+          apiKeyMasked={diagnostics.apiKeyMasked}
+          probing={diagnostics.probing}
+          probeStatus={diagnostics.probeStatus}
+        />
       </div>
     )
   }
