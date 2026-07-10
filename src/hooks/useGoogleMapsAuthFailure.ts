@@ -8,7 +8,17 @@ const MAP_ERROR_PATTERNS = [
   /ApiTargetBlockedMapError/i,
   /Permission Denied/i,
   /Google Maps JavaScript API error:/i,
+  /REQUEST_DENIED/i,
 ]
+
+function extractMapsReason(text: string): string {
+  const code =
+    text.match(
+      /(BillingNotEnabledMapError|ApiNotActivatedMapError|InvalidKeyMapError|RefererNotAllowedMapError|ApiTargetBlockedMapError)/i,
+    )?.[1] ?? null
+  const firstLine = text.split('\n').map((l) => l.trim()).find(Boolean) ?? text
+  return code ? `${code}: ${firstLine}` : firstLine
+}
 
 /** Bắt gm_authFailure + console.error từ Google Maps. */
 export function useGoogleMapsAuthFailure() {
@@ -20,7 +30,11 @@ export function useGoogleMapsAuthFailure() {
     const prev = win.gm_authFailure
     win.gm_authFailure = () => {
       setAuthFailed(true)
-      setReason((r) => r ?? 'gm_authFailure — key/billing/API restrictions trên Google Cloud.')
+      setReason(
+        (r) =>
+          r ??
+          'gm_authFailure — Google từ chối API key (thường Billing / API chưa bật / restriction).',
+      )
     }
 
     const origError = console.error.bind(console)
@@ -28,7 +42,7 @@ export function useGoogleMapsAuthFailure() {
       const text = args.map(String).join(' ')
       if (MAP_ERROR_PATTERNS.some((p) => p.test(text))) {
         setAuthFailed(true)
-        setReason((r) => r ?? text.split('\n')[0])
+        setReason((r) => r ?? extractMapsReason(text))
       }
       origError(...args)
     }

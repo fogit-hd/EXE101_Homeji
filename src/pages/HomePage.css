@@ -1,21 +1,4 @@
-.hero-section {
-  background: linear-gradient(135deg, #f3f6fb 0%, #f9fafa 50%, #ffffff 100%);
-  padding: 80px 0 96px;
-  min-height: calc(100vh - var(--nav-height) - 80px);
-  display: flex;
-  align-items: center;
-}
-
-.hero-content {
-  max-width: 720px;
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 32px;
-}
+/* Guest landing hero moved to components/landing/GuestHero.css */
 
 .home-loading {
   display: flex;
@@ -298,19 +281,6 @@
 }
 
 @media (max-width: 768px) {
-  .hero-section {
-    padding: 48px 0 72px;
-    min-height: calc(100dvh - var(--nav-height) - var(--safe-top));
-  }
-
-  .hero-actions {
-    flex-direction: column;
-  }
-
-  .hero-actions .btn {
-    width: 100%;
-  }
-
   .app-shell--map .home-map-page {
     height: calc(
       100dvh - var(--nav-height) - var(--safe-top) - var(--mobile-tabbar-height) -

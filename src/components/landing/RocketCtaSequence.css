@@ -1,0 +1,133 @@
+.rocket-seq {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Solid plate — page behind is fully hidden during rocket intro */
+.rocket-seq__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #0b1411;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.rocket-seq__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Fit viewport, never spill */
+.rocket-seq__rocket {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.rocket-seq__rocket > * {
+  width: min(100vw, 100vh) !important;
+  height: min(100vw, 100vh) !important;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.rocket-seq__rocket canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Copy sits lower-right beside the flight path */
+.rocket-seq__tagline {
+  position: absolute;
+  right: clamp(18px, 7vw, 72px);
+  bottom: clamp(16%, 20vh, 28%);
+  z-index: 4;
+  margin: 0;
+  max-width: min(48vw, 22ch);
+  text-align: left;
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.25rem, 3.4vw, 2.1rem);
+  font-weight: 560;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: #f4f7f5;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.rocket-seq__line {
+  display: block;
+}
+
+.rocket-seq__line--sub {
+  margin-top: 0.35em;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: rgba(244, 247, 245, 0.88);
+}
+
+.rocket-seq__char {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.rocket-seq__char.is-space {
+  width: 0.28em;
+}
+
+.rocket-seq__highlight {
+  position: fixed;
+  z-index: 5;
+  transform: translate(-50%, -50%) scaleX(0.88);
+  pointer-events: none;
+  /* Thicken / punch up the blue stroke */
+  filter:
+    contrast(1.35)
+    saturate(1.55)
+    brightness(1.08)
+    drop-shadow(0 0 0.6px #2b7fff)
+    drop-shadow(0 0 1.2px #2b7fff);
+  opacity: 1;
+}
+
+.rocket-seq__click {
+  position: fixed;
+  z-index: 7;
+  width: 128px;
+  height: 128px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.25));
+}
+
+.rocket-seq__confetti {
+  position: fixed;
+  z-index: 6;
+  width: min(360px, 58vw);
+  height: min(220px, 34vh);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .rocket-seq__tagline {
+    right: 50%;
+    bottom: 12%;
+    transform: translateX(50%);
+    max-width: min(88vw, 24ch);
+    text-align: center;
+  }
+}
