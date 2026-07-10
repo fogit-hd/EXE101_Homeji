@@ -4,7 +4,7 @@ import { NetworkError } from '../lib/errors'
 /** Dev luôn dùng same-origin proxy; production dùng URL từ .env */
 function resolveApiBase(): string {
   if (import.meta.env.DEV) return ''
-  return import.meta.env.VITE_API_BASE_URL || 'https://homeji-api.fly.dev'
+  return import.meta.env.VITE_API_BASE_URL || 'https://homeji-api-thanhduy.onrender.com'
 }
 
 const API_BASE = resolveApiBase()
