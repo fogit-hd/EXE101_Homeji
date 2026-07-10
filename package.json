@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:clean": "node -e \"try{require('node:fs').rmSync('node_modules/.vite',{recursive:true,force:true})}catch(e){}\" && vite --force",
     "build": "tsc -b && vite build",
-    "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
+    "start": "node scripts/serve-prod.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

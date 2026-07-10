@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://homeji-api-thanhduy.onrender.com',
+        target: 'https://homeji-api.fly.dev',
         changeOrigin: true,
         secure: true,
       },

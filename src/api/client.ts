@@ -1,10 +1,16 @@
 import type { ApiError } from './types'
 import { NetworkError } from '../lib/errors'
 
-/** Dev luôn dùng same-origin proxy; production dùng URL từ .env */
+/**
+ * Dev: same-origin → Vite proxy.
+ * Production (Render Web Service): same-origin → scripts/serve-prod.mjs proxy → Fly.
+ * Chỉ set VITE_API_BASE_URL khi gọi API trực tiếp (cần CORS trên backend).
+ */
 function resolveApiBase(): string {
   if (import.meta.env.DEV) return ''
-  return import.meta.env.VITE_API_BASE_URL || 'https://homeji-api-thanhduy.onrender.com'
+  const fromEnv = import.meta.env.VITE_API_BASE_URL
+  if (fromEnv != null && String(fromEnv).trim() !== '') return String(fromEnv).replace(/\/$/, '')
+  return ''
 }
 
 const API_BASE = resolveApiBase()

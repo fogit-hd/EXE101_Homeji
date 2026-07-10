@@ -1,12 +1,14 @@
-# Render Blueprint — prefer Static Site for this Vite SPA.
+# Render Blueprint — Web Service (SPA + /api proxy → Fly)
 # Docs: https://render.com/docs/blueprint-spec
 services:
   - type: web
     name: exe101-homeji
-    runtime: static
+    runtime: node
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    startCommand: npm start
+    envVars:
+      - key: API_PROXY_TARGET
+        value: https://homeji-api.fly.dev
+      # Leave VITE_API_BASE_URL unset/empty so the browser uses same-origin /api
+      - key: VITE_API_BASE_URL
+        value: ""
