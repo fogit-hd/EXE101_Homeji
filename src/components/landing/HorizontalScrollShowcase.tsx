@@ -31,14 +31,14 @@ const DESKTOP = {
 } as const
 
 /**
- * Mobile-only: longer pin so a finger flick cannot blast through unread,
- * but scrub stays snappy so horizontal swipes feel 1:1 with the finger.
+ * Mobile-only: enough distance to read panels via swipe, short exit buffer
+ * so the last panel does not feel like a sticky trap into the next section.
  * Desktop constants above stay as-is.
  */
 const MOBILE = {
-  startHold: 0.7,
-  horiz: 28,
-  endHold: 3.6,
+  startHold: 0.45,
+  horiz: 22,
+  endHold: 0.55,
   scrub: 0.25,
 } as const
 
@@ -307,7 +307,7 @@ export function HorizontalScrollShowcase() {
       ScrollTrigger.refresh()
     }, section)
 
-    /** Mobile: horizontal swipe drives panels; vertical keeps native scroll + end soft-brake. */
+    /** Mobile: horizontal swipe drives panels; vertical scroll exits freely at the end. */
     let touchCleanup: (() => void) | undefined
     if (mobileViewport) {
       type Axis = 'none' | 'x' | 'y'
@@ -316,12 +316,12 @@ export function HorizontalScrollShowcase() {
       let startX = 0
       let startY = 0
       let lastX = 0
-      let lastY = 0
       let lastT = 0
       /** Horizontal finger velocity (px/ms), positive = finger moving right */
       let velFingerX = 0
-      let flickDown = 0
       let settleTween: gsap.core.Tween | null = null
+
+      const holdStart = startFrac + horizFrac
 
       const progressFromY = (st: ScrollTrigger, y: number) => {
         const span = st.end - st.start
@@ -332,12 +332,12 @@ export function HorizontalScrollShowcase() {
       const yFromProgress = (st: ScrollTrigger, p: number) =>
         st.start + (st.end - st.start) * gsap.utils.clamp(0, 1, p)
 
+      /** Snap only while still inside the panel track — never yank back from the exit zone. */
       const nearestPanelProgress = (st: ScrollTrigger, y: number, biasHp = 0) => {
         const p = progressFromY(st, y)
-        const holdStart = startFrac + horizFrac
-        if (p >= holdStart - 0.01) {
-          const holdSpan = Math.max(0.04, 1 - holdStart)
-          return holdStart + holdSpan * 0.4
+        if (p >= holdStart - 0.005) {
+          // Already on / past last panel — keep progress (caller may exit past end)
+          return p
         }
         const hp = gsap.utils.clamp(0, 1, (p - startFrac) / Math.max(0.0001, horizFrac) + biasHp)
         const panel = Math.round(hp * (PANEL_COUNT - 1))
@@ -362,10 +362,9 @@ export function HorizontalScrollShowcase() {
         settleTween = null
         const t = e.touches[0]
         startX = lastX = t.clientX
-        startY = lastY = t.clientY
+        startY = t.clientY
         lastT = performance.now()
         velFingerX = 0
-        flickDown = 0
         axis = 'none'
         sticky.classList.remove('is-h-dragging')
       }
@@ -381,19 +380,22 @@ export function HorizontalScrollShowcase() {
         const dx = x - lastX
         const now = performance.now()
         const dt = Math.max(8, now - lastT)
+        const inExitZone = st.progress >= holdStart - 0.02
 
         if (axis === 'none') {
           const adx = Math.abs(x - startX)
           const ady = Math.abs(y - startY)
           if (adx < LOCK_PX && ady < LOCK_PX) return
-          // Prefer horizontal when the gesture is clearly sideways (phone habit)
-          axis = adx > ady * 1.05 ? 'x' : 'y'
+          // At the last panel, prefer vertical so the page can leave the sticky section
+          if (inExitZone) {
+            axis = adx > ady * 1.75 ? 'x' : 'y'
+          } else {
+            axis = adx > ady * 1.05 ? 'x' : 'y'
+          }
         }
 
         if (axis === 'y') {
-          flickDown = flickDown * 0.55 + Math.max(0, lastY - y)
           lastX = x
-          lastY = y
           lastT = now
           return
         }
@@ -407,23 +409,20 @@ export function HorizontalScrollShowcase() {
         const panelScrollPx = (span * horizFrac) / (PANEL_COUNT - 1)
         // Finger left → next panel; finger right → previous
         const deltaScroll = (-dx / Math.max(1, window.innerWidth)) * panelScrollPx
-        const nextY = gsap.utils.clamp(st.start, st.end, window.scrollY + deltaScroll)
+        // Allow a little past st.end so a final left-swipe can unstick into the next section
+        const exitPad = window.innerHeight * 0.35
+        const nextY = gsap.utils.clamp(st.start, st.end + exitPad, window.scrollY + deltaScroll)
         window.scrollTo(0, nextY)
         ScrollTrigger.update()
 
         velFingerX = velFingerX * 0.4 + dx / dt
         lastX = x
-        lastY = y
         lastT = now
       }
 
       const onTouchEnd = () => {
         sticky.classList.remove('is-h-dragging')
         const st = ScrollTrigger.getById('dxh-journey')
-        if (!st?.isActive && axis !== 'x') {
-          axis = 'none'
-          return
-        }
         if (!st) {
           axis = 'none'
           return
@@ -432,33 +431,33 @@ export function HorizontalScrollShowcase() {
         if (axis === 'x') {
           const span = st.end - st.start
           const panelScrollPx = (span * horizFrac) / (PANEL_COUNT - 1)
-          // Coast from finger velocity, then snap to nearest panel
-          const coastPx = gsap.utils.clamp(-panelScrollPx * 1.15, panelScrollPx * 1.15, -velFingerX * 180)
-          const projected = gsap.utils.clamp(st.start, st.end, window.scrollY + coastPx)
-          // Bias snap toward the direction of the flick
-          const biasHp = gsap.utils.clamp(-0.2, 0.2, -velFingerX * 0.012)
-          const targetP = nearestPanelProgress(st, projected, biasHp)
-          animateToY(yFromProgress(st, targetP), Math.abs(velFingerX) > 0.45 ? 0.38 : 0.5)
-        } else if (axis === 'y') {
-          const holdStart = startFrac + horizFrac
-          if (flickDown >= 10 && st.progress >= holdStart - 0.04) {
-            const holdSpan = Math.max(0.04, 1 - holdStart)
-            const midHold = holdStart + holdSpan * 0.45
-            const targetProgress = gsap.utils.clamp(
-              holdStart + holdSpan * 0.15,
-              Math.min(0.97, holdStart + holdSpan * 0.85),
-              Math.max(st.progress, midHold),
-            )
-            const projected = window.scrollY + flickDown * 14
-            if (projected >= st.end - 24 || st.progress >= 0.98) {
-              animateToY(yFromProgress(st, targetProgress), 0.55)
-            }
+          const coastPx = gsap.utils.clamp(
+            -panelScrollPx * 1.15,
+            panelScrollPx * 1.15,
+            -velFingerX * 180,
+          )
+          const projected = window.scrollY + coastPx
+          const pNow = progressFromY(st, window.scrollY)
+          const forwardFlick = -velFingerX > 0.35 // finger moved left → advance / exit
+
+          // Last panel + swipe forward: leave the journey instead of snapping back
+          if (pNow >= holdStart - 0.02 && forwardFlick) {
+            animateToY(st.end + window.innerHeight * 0.08, 0.4)
+          } else if (projected > st.end && forwardFlick) {
+            animateToY(st.end + window.innerHeight * 0.08, 0.4)
+          } else {
+            const biasHp = gsap.utils.clamp(-0.2, 0.2, -velFingerX * 0.012)
+            const targetP = nearestPanelProgress(st, Math.min(projected, st.end), biasHp)
+            // If snap would land in exit zone, park at the start of end-hold (last panel), not mid-trap
+            const parkP =
+              targetP >= holdStart ? holdStart + Math.min(0.08, (1 - holdStart) * 0.25) : targetP
+            animateToY(yFromProgress(st, parkP), Math.abs(velFingerX) > 0.45 ? 0.38 : 0.5)
           }
         }
+        // Vertical: never pull scroll back — native momentum continues into the next section
 
         axis = 'none'
         velFingerX = 0
-        flickDown = 0
       }
 
       // touchmove must be non-passive so horizontal can preventDefault
