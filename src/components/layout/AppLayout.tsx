@@ -29,12 +29,14 @@ export function AppLayout() {
   const { isAuthenticated } = useAuth()
   const isMapHome = location.pathname === '/' && isAuthenticated
   const isGuestLanding = location.pathname === '/' && !isAuthenticated
+  const isAuthCinema =
+    location.pathname === '/login' || location.pathname === '/register'
 
   useRouteViewTransition(location.pathname)
 
   return (
     <div
-      className={`app-shell${isAuthenticated ? ' app-shell--authed' : ''}${isMapHome ? ' app-shell--map' : ''}${isGuestLanding ? ' app-shell--guest-landing' : ''}`}
+      className={`app-shell${isAuthenticated ? ' app-shell--authed' : ''}${isMapHome ? ' app-shell--map' : ''}${isGuestLanding ? ' app-shell--guest-landing' : ''}${isAuthCinema ? ' app-shell--auth-cinema' : ''}`}
     >
       <Navbar />
       <main className={isMapHome ? 'main-map-layout' : 'main-content'}>
@@ -46,7 +48,7 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
-      {!isMapHome && !isGuestLanding && (
+      {!isMapHome && !isGuestLanding && !isAuthCinema && (
         <footer className="site-footer">
           <div className="container">
             <p>Homeji — Nền tảng tìm phòng trọ & bạn ở ghép</p>
