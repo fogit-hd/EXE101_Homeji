@@ -119,6 +119,17 @@ export interface AccountMessage {
   message: string
 }
 
+/** Kết quả POST /api/account/check-email */
+export interface CheckEmailResult {
+  /** true nếu email đã có trong hệ thống */
+  exists?: boolean
+  emailExists?: boolean
+  /** true nếu còn dùng được */
+  available?: boolean
+  isAvailable?: boolean
+  message?: string
+}
+
 export interface AuthUrl {
   url: string
 }

@@ -36,7 +36,7 @@ async function probeConnectivity(signal?: AbortSignal): Promise<boolean> {
     signal?.addEventListener('abort', onAbort, { once: true })
     const timeout = window.setTimeout(() => controller.abort(), 4000)
 
-    const res = await fetch(`${window.location.origin}/favicon.svg?_net=${Date.now()}`, {
+    const res = await fetch(`${window.location.origin}/favicon.png?_net=${Date.now()}`, {
       method: 'HEAD',
       cache: 'no-store',
       signal: controller.signal,

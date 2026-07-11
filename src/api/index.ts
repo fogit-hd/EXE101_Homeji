@@ -3,6 +3,7 @@ import type {
   AccountMessage,
   AuthSession,
   AuthUrl,
+  CheckEmailResult,
   MomoPaymentResponse,
   Notification,
   PayOsPaymentResponse,
@@ -40,6 +41,23 @@ export const resetPassword = (data: { accessToken: string; newPassword: string }
 
 export const getGoogleLoginUrl = (redirectTo?: string) =>
   apiRequest<AuthUrl>('/api/account/google/url', { auth: false, params: { redirectTo } })
+
+/** Kiểm tra email đã tồn tại chưa (intro signup). */
+export const checkEmail = (data: { email: string }) =>
+  apiRequest<CheckEmailResult>('/api/account/check-email', {
+    method: 'POST',
+    body: data,
+    auth: false,
+  })
+
+/** Chuẩn hóa các shape response khác nhau từ API. */
+export function isEmailTaken(result: CheckEmailResult): boolean {
+  if (typeof result.exists === 'boolean') return result.exists
+  if (typeof result.emailExists === 'boolean') return result.emailExists
+  if (typeof result.available === 'boolean') return !result.available
+  if (typeof result.isAvailable === 'boolean') return !result.isAvailable
+  return false
+}
 
 // Profile
 export const getMyProfile = () => apiRequest<UserProfile>('/api/profile/me')

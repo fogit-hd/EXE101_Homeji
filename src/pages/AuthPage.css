@@ -1,0 +1,1697 @@
+/* ─── Full-bleed cinematic auth (login / register) ─── */
+
+.auth-cinema {
+  position: fixed;
+  inset: 0;
+  /* Trên navbar (z-index 100) để không bị che */
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #f4f7f5;
+  font-family: 'Manrope', system-ui, sans-serif;
+  background: #07140f;
+}
+
+/* Video / cinematic layer */
+.auth-cinema__video-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.auth-cinema__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.auth-cinema__video.is-ready {
+  opacity: 1;
+}
+
+.auth-cinema__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Nền sống khi chưa có mp4 */
+.auth-cinema__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0, 177, 79, 0.2), transparent 55%),
+    linear-gradient(160deg, #07140f 0%, #0d241c 42%, #0a1620 100%);
+}
+
+.auth-cinema__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.7;
+  animation: auth-orb-drift 14s ease-in-out infinite alternate;
+}
+
+.auth-cinema__orb--a {
+  width: min(70vw, 520px);
+  height: min(70vw, 520px);
+  left: -18%;
+  top: 8%;
+  background: rgba(0, 177, 79, 0.45);
+}
+
+.auth-cinema__orb--b {
+  width: min(55vw, 420px);
+  height: min(55vw, 420px);
+  right: -12%;
+  bottom: 5%;
+  background: rgba(19, 111, 216, 0.38);
+  animation-delay: -4s;
+  animation-duration: 18s;
+}
+
+.auth-cinema__orb--c {
+  width: min(40vw, 280px);
+  height: min(40vw, 280px);
+  left: 40%;
+  top: 42%;
+  background: rgba(255, 255, 255, 0.08);
+  animation-delay: -8s;
+  animation-duration: 11s;
+}
+
+.auth-cinema__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+@keyframes auth-orb-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4%, -6%, 0) scale(1.12);
+  }
+}
+
+/* Top chrome — chỉ Skip, không logo */
+.auth-cinema__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 20px 12px;
+  pointer-events: none;
+}
+
+.auth-cinema__top > * {
+  pointer-events: auto;
+}
+
+.auth-cinema__top--skip-only {
+  justify-content: flex-end;
+}
+
+.auth-cinema__skip {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.auth-cinema__skip:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.auth-cinema__skip.is-hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Story — góc trên trái, đọc như đoạn văn; không scrollbar */
+.auth-cinema__story {
+  position: absolute;
+  z-index: 3;
+  top: max(20px, calc(env(safe-area-inset-top, 0px) + 12px));
+  left: max(28px, calc(env(safe-area-inset-left, 0px) + 20px));
+  right: max(56px, calc(env(safe-area-inset-right, 0px) + 40px));
+  bottom: max(72px, calc(env(safe-area-inset-bottom, 0px) + 56px));
+  width: auto;
+  max-width: min(1280px, calc(100vw - 36px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  pointer-events: none;
+}
+
+.auth-cinema__story::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.auth-cinema__story > * {
+  pointer-events: auto;
+}
+
+.auth-cinema__welcome {
+  width: min(100%, 640px);
+  margin: 0;
+  opacity: 0;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.auth-cinema__welcome.is-active {
+  opacity: 1;
+}
+
+.auth-cinema__welcome.is-drawn {
+  opacity: 0.9;
+}
+
+.auth-cinema__cascade {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55em;
+  width: 100%;
+  max-width: none;
+  padding-top: 4px;
+}
+
+.auth-cinema__line {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  line-height: 1.62;
+  animation: auth-beat-in 0.36s ease both;
+}
+
+.auth-cinema__line--d0 {
+  padding-left: 0;
+}
+
+/* Một lề trái duy nhất — không bậc thang */
+.auth-cinema__line--indent,
+.auth-cinema__line--d1,
+.auth-cinema__line--d2 {
+  padding-left: 0;
+}
+
+@keyframes auth-beat-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.auth-cinema__answer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 0.4em;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: #fff;
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 1em;
+  font-weight: 600;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.auth-cinema__answer-text {
+  border-bottom: 1.5px solid rgba(93, 255, 168, 0.55);
+  padding-bottom: 1px;
+  line-height: 1.2;
+}
+
+.auth-cinema__answer button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(125, 255, 168, 0.85);
+  cursor: pointer;
+  opacity: 0.75;
+  text-decoration: none;
+}
+
+.auth-cinema__answer button:hover {
+  opacity: 1;
+}
+
+.auth-cinema__nav-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 4px;
+  padding-left: clamp(36px, 5.5vw, 68px);
+}
+
+.auth-cinema__back {
+  appearance: none;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 4px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.25);
+}
+
+.auth-cinema__back:hover {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.auth-cinema__fixed-back {
+  position: absolute;
+  z-index: 6;
+  left: max(20px, env(safe-area-inset-left, 0px));
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  appearance: none;
+  border: none;
+  margin: 0;
+  padding: 10px 4px;
+  background: none;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(255, 255, 255, 0.55);
+}
+
+.auth-cinema__fixed-back:hover {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-cinema__story-switch {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.auth-cinema__fixed-login {
+  position: absolute;
+  z-index: 6;
+  right: max(20px, env(safe-area-inset-right, 0px));
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.auth-cinema__fixed-login button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #5dffa8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-cinema__confetti-btn {
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  overflow: visible;
+  align-self: center;
+  z-index: 2;
+}
+
+.auth-cinema__confetti-btn.is-playing,
+.auth-cinema__confetti-btn.is-done,
+.auth-cinema__confetti-btn.is-wrong,
+.auth-cinema__confetti-btn.is-wrong-hold,
+.auth-cinema__confetti-btn.is-recovering,
+.auth-cinema__confetti-btn.is-checking {
+  background: transparent;
+}
+
+.auth-cinema__confetti-btn:disabled {
+  cursor: default;
+}
+
+.auth-cinema__confetti-idle {
+  position: absolute;
+  inset: 0;
+  display: block;
+  z-index: 1;
+}
+
+.auth-cinema__confetti-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Success canvas 1920 — phóng để vòng ✓ khớp nút 36px */
+.auth-cinema__confetti-stage--success {
+  width: 210%;
+  height: 210%;
+}
+
+/* Wrong canvas 512 — cùng khung nút */
+.auth-cinema__confetti-stage--wrong {
+  width: 100%;
+  height: 100%;
+}
+
+.auth-cinema__confetti-stage.is-on {
+  visibility: visible;
+  opacity: 1;
+}
+
+.auth-cinema__confetti-stage--wrong.is-on {
+  z-index: 3;
+}
+
+.auth-cinema__confetti-stage--success.is-on {
+  z-index: 4;
+}
+
+.auth-cinema__confetti-stage.is-fade-out {
+  animation: auth-lottie-fade-out 0.38s ease forwards;
+}
+
+.auth-cinema__confetti-stage.is-fade-in {
+  animation: auth-lottie-fade-in 0.28s ease both;
+}
+
+@keyframes auth-lottie-fade-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+}
+
+@keyframes auth-lottie-fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.auth-cinema__confetti-done {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.auth-cinema__inline-error {
+  display: inline-block;
+  margin: 0 0 0 0.35em;
+  padding: 0;
+  max-width: 32ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.88em;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #ffb4a8;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  vertical-align: baseline;
+  white-space: nowrap;
+  animation: auth-inline-err-in 0.22s ease both;
+}
+
+/* Password: đúng 1 dòng lỗi, tách khỏi line prompt (tránh trùng story-error / wrap) */
+.auth-cinema__password-error {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 42ch;
+  margin: 0.28em 0 0.15em;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.9em;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: #ffb4a8;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  animation: auth-inline-err-in 0.22s ease both;
+}
+
+@keyframes auth-inline-err-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.auth-cinema__welcome-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.35));
+}
+
+.auth-hw-glow,
+.auth-hw-stroke {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-hw-glow {
+  stroke: rgba(0, 177, 79, 0.45);
+  stroke-width: 6.5;
+}
+
+.auth-hw-stroke {
+  stroke: #ffffff;
+  stroke-width: 2.35;
+}
+
+.auth-cinema__msg {
+  display: inline;
+  margin: 0;
+  max-width: none;
+  text-align: left;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(0.95rem, 1.25vw, 1.08rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 4px 22px rgba(0, 0, 0, 0.35);
+}
+
+.auth-cinema__msg--ask {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: inherit;
+  letter-spacing: -0.012em;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.auth-cinema__msg--body {
+  font-size: inherit;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.auth-cinema__msg--hello {
+  color: #8affb4;
+  font-size: clamp(1.02rem, 1.4vw, 1.18rem);
+  font-weight: 500;
+}
+
+.auth-cinema__msg--hello-out {
+  display: inline;
+  animation: auth-hello-out 0.48s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes auth-hello-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+    filter: blur(2px);
+  }
+}
+
+.auth-cinema__msg--settled {
+  opacity: 0.72;
+}
+
+.auth-cinema__msg--settle-in {
+  animation: auth-msg-settle-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes auth-msg-settle-in {
+  from {
+    opacity: 0.2;
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 0.72;
+    filter: blur(0);
+  }
+}
+
+.auth-cinema__ai-voice-slot {
+  display: inline-block;
+  width: 2.45em;
+  height: 2.45em;
+  margin-right: 0.28em;
+  vertical-align: middle;
+}
+
+.auth-cinema__ai-voice-float {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  width: 2.45em;
+  height: 2.45em;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.auth-cinema__ai-voice-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  transform: scale(0.88);
+  transition:
+    opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-cinema__ai-voice-float.is-on .auth-cinema__ai-voice-inner {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.auth-cinema__ai-voice-float.is-off .auth-cinema__ai-voice-inner {
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-cinema__ai-voice-float canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.auth-cinema__ai-voice {
+  display: inline-block;
+  width: 2.45em;
+  height: 2.45em;
+  margin-right: 0.28em;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.auth-cinema__line--connect {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  overflow: visible;
+}
+
+/* ——— Connect CTA ——— */
+.auth-connect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: min(100%, 42rem);
+  overflow: visible;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: auth-connect-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.05s forwards;
+}
+
+.auth-connect__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* Chừa chỗ trong flow cho fail absolute — KHÔNG pad stage (pad + top:100% = kéo xuống đáy) */
+.auth-cinema__line--connect:has(.auth-connect.is-fail) {
+  margin-bottom: 6.4rem;
+  transition: margin-bottom 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-connect__btn {
+  position: relative;
+  isolation: isolate;
+  appearance: none;
+  border: none;
+  margin: 0;
+  padding: 0.95rem 1.55rem;
+  min-height: 3.15rem;
+  min-width: 13.5rem;
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  background: transparent;
+  color: #e8fff0;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  transition:
+    color 0.32s ease,
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-connect__edge {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(138, 255, 180, 0.55);
+  border-radius: inherit;
+  pointer-events: none;
+  transition:
+    border-color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+
+.auth-connect__fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, #00b14f 0%, #1ae07a 55%, #8affb4 120%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.auth-connect__label {
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.auth-connect__btn:hover:not(:disabled) {
+  color: #04140c;
+  transform: translateY(-2px);
+}
+
+.auth-connect__btn:hover:not(:disabled) .auth-connect__fill {
+  transform: scaleX(1);
+}
+
+.auth-connect__btn:hover:not(:disabled) .auth-connect__edge {
+  border-color: transparent;
+  box-shadow: 0 12px 28px rgba(0, 177, 79, 0.28);
+}
+
+.auth-connect__btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+
+.auth-connect__btn:active:not(:disabled) .auth-connect__fill {
+  transform: scaleX(1);
+}
+
+.auth-connect__btn:disabled {
+  cursor: wait;
+  color: rgba(232, 255, 240, 0.55);
+}
+
+/* Khung nút cố định — chỉ đổi nội dung bên trong */
+.auth-connect.is-connecting .auth-connect__edge {
+  border-color: rgba(0, 177, 79, 0.45);
+}
+
+.auth-connect.is-connecting .auth-connect__fill {
+  transform: scaleX(1);
+  opacity: 0.22;
+}
+
+.auth-connect.is-connecting .auth-connect__label {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.auth-connect__spin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 2.35rem;
+  height: 2.35rem;
+  transform: translate(-50%, -50%) scale(0.86);
+  opacity: 0;
+  flex-shrink: 0;
+  pointer-events: none;
+  animation: auth-connect-spin-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.auth-connect__spin canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@keyframes auth-connect-spin-in {
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/*
+ * Fail neo absolute sát mép dưới nút — KHÔNG dùng padding-bottom
+ * (padding-bottom + top:100% từng kéo animation xuống đáy màn hình).
+ */
+.auth-connect__fail {
+  position: absolute;
+  top: calc(100% + 0.12rem);
+  left: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: min(100vw - 28px, 44rem);
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  animation: auth-connect-fail-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-connect__sad {
+  position: relative;
+  flex: 0 0 3.9rem;
+  width: 3.9rem;
+  height: 4.6rem;
+  margin: -0.15rem 0 0 0.15rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.88);
+  animation: auth-connect-sad-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.04s forwards;
+}
+
+.auth-connect__sad > * {
+  display: block !important;
+  width: 140% !important;
+  height: 140% !important;
+  margin: -12% 0 0 -20%;
+  pointer-events: none;
+}
+
+.auth-connect__sad canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.auth-connect__cloud {
+  position: relative;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(52rem, calc(100vw - 5rem));
+  margin: 0.85rem 0 0;
+  padding: 1.15rem 1.85rem 1.2rem;
+  background: rgba(255, 255, 255, 0.97);
+  color: #b42318;
+  border: 1px solid rgba(180, 35, 24, 0.18);
+  border-radius: 1.25rem 1.25rem 1.25rem 0.4rem;
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  transform: translate3d(-14px, 6px, 0) scale(0.92);
+  transform-origin: left center;
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: auto;
+  will-change: transform, opacity;
+}
+
+.auth-connect__cloud.is-on {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.auth-connect__cloud::before {
+  content: '';
+  position: absolute;
+  left: -0.45rem;
+  top: 1.15rem;
+  width: 0.78rem;
+  height: 0.78rem;
+  background: rgba(255, 255, 255, 0.97);
+  border-left: 1px solid rgba(180, 35, 24, 0.18);
+  border-bottom: 1px solid rgba(180, 35, 24, 0.18);
+  transform: rotate(45deg);
+  border-radius: 0.12rem;
+}
+
+.auth-connect__cloud-text {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #b42318;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.auth-connect__cloud-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.42em;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Size lớn hơn text một chút — đủ để thấy Lottie chạy */
+.auth-connect__cloud-icon {
+  flex: 0 0 2.75em;
+  width: 2.75em;
+  height: 2.75em;
+  margin-top: 0;
+  overflow: visible;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.72);
+  transform-origin: center center;
+  animation: auth-connect-error-icon-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.08s forwards;
+  pointer-events: none;
+}
+
+.auth-connect__cloud-icon > * {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.auth-connect__cloud-icon canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@keyframes auth-connect-error-icon-in {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.auth-connect__cloud.is-wrap .auth-connect__cloud-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.auth-connect__cloud-measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.auth-connect__cloud-caret {
+  display: inline-block;
+  width: 0.09em;
+  height: 1em;
+  margin-left: 0.1em;
+  vertical-align: -0.12em;
+  background: #b42318;
+  animation: auth-connect-caret 0.85s steps(1) infinite;
+}
+
+@keyframes auth-connect-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes auth-connect-sad-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes auth-connect-fail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-connect-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Khóa Skip / Lùi / Đăng nhập khi đang kết nối hoặc đang báo lỗi API */
+.auth-cinema.is-connect-locked .auth-cinema__skip,
+.auth-cinema.is-connect-locked .auth-cinema__fixed-back,
+.auth-cinema.is-connect-locked .auth-cinema__fixed-login button {
+  pointer-events: none !important;
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+/* Đang gọi API — khóa luôn Sửa / input để tránh race */
+.auth-cinema.is-connecting-hard .auth-cinema__answer button,
+.auth-cinema.is-connecting-hard .auth-cinema__ghost-field {
+  pointer-events: none !important;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth-cinema__eye-btn {
+  appearance: none;
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  /* Lottie gốc đen — đảo thành trắng trên nền tối */
+  filter: brightness(0) invert(1);
+  opacity: 0.88;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.auth-cinema__eye-btn:hover {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.auth-cinema__eye-btn.is-visible {
+  opacity: 1;
+}
+
+.auth-cinema__eye-btn canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.auth-cinema__caret {
+  display: inline-block;
+  width: 0.45ch;
+  height: 0.95em;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+  background: rgba(255, 255, 255, 0.8);
+  animation: auth-caret-blink 0.9s steps(1) infinite;
+}
+
+@keyframes auth-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.auth-cinema__ghost-field {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 0 0.4em;
+  padding: 0;
+  max-width: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+  animation: auth-ghost-in 0.28s ease both;
+}
+
+@keyframes auth-ghost-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.auth-cinema__ghost-field input {
+  appearance: none;
+  box-sizing: content-box;
+  flex: 0 0 auto;
+  min-width: 10ch;
+  width: 16ch;
+  max-width: 22ch;
+  margin: 0;
+  padding: 0 2px 3px;
+  border: none;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.38);
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 0.95em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  outline: none;
+  box-shadow: none;
+  caret-color: #5dffa8;
+  vertical-align: baseline;
+}
+
+.auth-cinema__ghost-field input::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+  font-weight: 400;
+}
+
+.auth-cinema__ghost-field input:focus {
+  border-bottom-color: rgba(93, 255, 168, 0.85);
+}
+
+@media (max-width: 900px) {
+  .auth-cinema__story {
+    left: max(16px, env(safe-area-inset-left, 0px));
+    right: max(16px, env(safe-area-inset-right, 0px));
+    top: max(56px, calc(env(safe-area-inset-top, 0px) + 44px));
+    max-width: none;
+  }
+
+  .auth-cinema__cascade {
+    gap: 0.55em;
+  }
+
+  .auth-cinema__line--indent,
+  .auth-cinema__line--d1,
+  .auth-cinema__line--d2 {
+    padding-left: 0;
+  }
+
+  .auth-cinema__msg {
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .auth-cinema__msg--hello {
+    font-size: 0.92rem;
+  }
+
+  .auth-cinema__welcome {
+    width: min(100%, 520px);
+  }
+
+  .auth-cinema__cascade {
+    gap: 0.42em;
+  }
+
+  .auth-cinema__ghost-field {
+    max-width: 100%;
+    white-space: normal;
+    flex-wrap: wrap;
+    row-gap: 0.35em;
+  }
+
+  /* Lỗi đỏ name/email: xuống dòng dưới ô nhập — không chen ngang */
+  .auth-cinema__inline-error {
+    display: block;
+    flex: 1 1 100%;
+    width: 100%;
+    margin: 0.2em 0 0;
+    max-width: 100%;
+    white-space: normal;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: #ffc2b8;
+  }
+
+  .auth-cinema__password-error {
+    font-size: 0.82rem;
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .auth-cinema__nav-row {
+    padding-left: 0;
+  }
+
+  .auth-cinema__cascade {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .auth-cinema__line {
+    text-align: left;
+  }
+
+  .auth-cinema__msg {
+    text-align: left;
+  }
+
+  .auth-cinema__line--connect {
+    align-items: center;
+    overflow: visible;
+  }
+
+  .auth-connect {
+    max-width: calc(100vw - 32px);
+  }
+
+  /* Mobile: mây xếp dưới animation — tránh đẩy ngang màn hình */
+  .auth-cinema__line--connect:has(.auth-connect.is-fail) {
+    margin-bottom: 9.2rem;
+  }
+
+  .auth-connect__fail {
+    top: calc(100% + 0.06rem);
+    left: 50%;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.12rem;
+    width: min(calc(100vw - 20px), 26rem);
+    max-width: calc(100vw - 20px);
+    animation: auth-connect-fail-in-mobile 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .auth-connect__sad {
+    flex: 0 0 3.45rem;
+    width: 3.45rem;
+    height: 4.05rem;
+    margin: -0.1rem 0 0;
+  }
+
+  .auth-connect__cloud {
+    margin-top: 0.1rem;
+    max-width: calc(100vw - 20px);
+    padding: 1rem 1.25rem 1.05rem;
+    transform-origin: top center;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+    border-radius: 1.1rem;
+  }
+
+  .auth-connect__cloud.is-on {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  /* Mũi mây hướng lên nhân vật */
+  .auth-connect__cloud::before {
+    left: 50%;
+    top: -0.36rem;
+    margin-left: -0.39rem;
+    border-left: 1px solid rgba(180, 35, 24, 0.18);
+    border-bottom: none;
+    border-top: 1px solid rgba(180, 35, 24, 0.18);
+  }
+
+  .auth-connect__cloud-text,
+  .auth-connect__cloud-measure {
+    font-size: 0.8rem;
+  }
+
+  .auth-connect__cloud-text {
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .auth-connect__cloud.is-wrap {
+    width: min(100%, calc(100vw - 20px));
+  }
+
+  .auth-connect__cloud.is-wrap .auth-connect__cloud-text {
+    white-space: normal;
+  }
+
+  .auth-connect__cloud-row {
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .auth-connect__cloud-icon {
+    flex-basis: 2.45em;
+    width: 2.45em;
+    height: 2.45em;
+    margin-top: 0;
+  }
+}
+
+@keyframes auth-connect-fail-in-mobile {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Desktop: text dài ngang; input dính sát chữ */
+@media (min-width: 901px) {
+  .auth-connect__fail {
+    max-width: min(100vw - 48px, 52rem);
+  }
+
+  .auth-connect__cloud {
+    max-width: min(52rem, calc(100vw - 6rem));
+    padding: 1.2rem 2rem 1.25rem;
+  }
+
+  .auth-connect__cloud:not(.is-wrap) {
+    width: max-content;
+  }
+
+  .auth-connect__cloud:not(.is-wrap) .auth-connect__cloud-text {
+    white-space: nowrap;
+  }
+
+  .auth-connect__cloud-icon {
+    flex-basis: 2.85em;
+    width: 2.85em;
+    height: 2.85em;
+  }
+
+  .auth-cinema__story {
+    top: max(24px, calc(env(safe-area-inset-top, 0px) + 14px));
+    left: max(36px, calc(env(safe-area-inset-left, 0px) + 24px));
+    right: max(48px, calc(env(safe-area-inset-right, 0px) + 36px));
+    max-width: min(1320px, calc(100vw - 48px));
+  }
+
+  .auth-cinema__welcome {
+    width: min(100%, 640px);
+  }
+
+  .auth-cinema__cascade {
+    gap: 0.42em;
+    max-width: none;
+  }
+
+  .auth-cinema__line {
+    line-height: 1.58;
+  }
+
+  .auth-cinema__line--indent,
+  .auth-cinema__line--d1,
+  .auth-cinema__line--d2 {
+    padding-left: 0;
+  }
+
+  .auth-cinema__msg {
+    font-size: 1.05rem;
+  }
+
+  .auth-cinema__msg--hello {
+    font-size: 1.14rem;
+  }
+
+  .auth-cinema__ghost-field input {
+    width: 16ch;
+    max-width: 20ch;
+  }
+
+  .auth-cinema__inline-error {
+    max-width: 30ch;
+  }
+}
+
+.auth-cinema__story-error {
+  margin: 0.4em 0 0;
+  padding-left: 1.7em;
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #ffb4a8;
+}
+
+.auth-cinema__story-switch {
+  margin-top: auto;
+  padding-left: clamp(22px, 5vw, 40px);
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.auth-cinema__story-switch button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #5dffa8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Stage — form card (Skip / Sign-in) */
+.auth-cinema__stage {
+  position: relative;
+  z-index: 2;
+  width: min(440px, calc(100% - 32px));
+  min-height: min(520px, 72dvh);
+  display: grid;
+  place-items: center;
+}
+
+/* Forms — ẩn hoàn toàn trong lúc intro */
+.auth-cinema__form-wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(28px);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.auth-cinema__form-wrap.is-ready {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+}
+
+.auth-cinema__card {
+  width: 100%;
+  padding: 28px 24px 22px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  text-align: left;
+}
+
+.auth-cinema__title {
+  margin: 0 0 6px;
+  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.auth-cinema__subtitle {
+  margin: 0 0 20px;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.auth-cinema__alert {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.auth-cinema__alert--error {
+  background: rgba(234, 67, 53, 0.18);
+  border: 1px solid rgba(234, 67, 53, 0.35);
+  color: #ffc9c4;
+}
+
+.auth-cinema__alert--ok {
+  background: rgba(0, 177, 79, 0.16);
+  border: 1px solid rgba(0, 177, 79, 0.35);
+  color: #b8f0d0;
+}
+
+.auth-cinema__field {
+  margin-bottom: 14px;
+}
+
+.auth-cinema__field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.auth-cinema__field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.auth-cinema__field input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.auth-cinema__field input:focus {
+  border-color: rgba(0, 177, 79, 0.75);
+  box-shadow: 0 0 0 3px rgba(0, 177, 79, 0.22);
+}
+
+.auth-cinema__submit {
+  width: 100%;
+  margin-top: 4px;
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 16px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #04140c;
+  background: #00b14f;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.auth-cinema__submit:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.auth-cinema__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-cinema__divider {
+  margin: 16px 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.auth-cinema__google {
+  width: 100%;
+  appearance: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.auth-cinema__google:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.auth-cinema__footer {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-cinema__footer button,
+.auth-cinema__footer a {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #5dffa8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-cinema__footer button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth-cinema__forgot {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+}
+
+.auth-cinema__forgot:hover {
+  color: #fff;
+}
+
+.app-shell--auth-cinema .site-footer,
+.app-shell--auth-cinema .mobile-tabbar,
+.app-shell--auth-cinema .navbar {
+  display: none !important;
+}
+
+.app-shell--auth-cinema .main-content {
+  padding: 0;
+  min-height: 100dvh;
+}
+
+.app-shell--auth-cinema .route-outlet {
+  min-height: 100dvh;
+}
