@@ -2,7 +2,8 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import type { DotLottie } from '@lottiefiles/dotlottie-react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useLayoutEffect, useRef, type MutableRefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react'
+import { isMobileLandingViewport } from './mobileLanding'
 import './HorizontalScrollShowcase.css'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -21,16 +22,30 @@ const LOTTIE = {
  * 2) Further scroll drives horizontal panels
  * 3) End hold keeps last panel on screen before vertical continues
  */
-/** Tiny edge buffers — just a nudge to lock/unlock sticky, not a long hold */
-const START_HOLD_VH = 0.12
-/** Longer travel = slower panel-to-panel scrub inside the horizontal section */
-const HORIZ_VH = 12.5
-const END_HOLD_VH = 0.18
+/** Desktop edge buffers — just a nudge to lock/unlock sticky */
+const DESKTOP = {
+  startHold: 0.12,
+  horiz: 12.5,
+  endHold: 0.18,
+  scrub: 0.9,
+} as const
+
 /**
- * Scrub lag ≈ vertical coast ease-out so “dừng xa” feels continuous
- * across vertical ↔ horizontal boundaries.
+ * Mobile-only: longer pin so a finger flick cannot blast through unread,
+ * but scrub stays snappy so horizontal swipes feel 1:1 with the finger.
+ * Desktop constants above stay as-is.
  */
-const SCRUB = 0.9
+const MOBILE = {
+  startHold: 0.7,
+  horiz: 28,
+  endHold: 3.6,
+  scrub: 0.25,
+} as const
+
+function journeyTune() {
+  return isMobileLandingViewport() ? MOBILE : DESKTOP
+}
+
 const PANEL_COUNT = 4
 const PROTECTION_FRAME_ASSEMBLED = 31
 
@@ -96,6 +111,15 @@ export function HorizontalScrollShowcase() {
   const protectionPlayerRef = useRef<DotLottie | null>(null)
   const lastShieldFrameRef = useRef(-1)
   const syncProtectionRef = useRef<(hp: number) => void>(() => {})
+  const [mobileViewport, setMobileViewport] = useState(() => isMobileLandingViewport())
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)')
+    const sync = () => setMobileViewport(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
 
   useLayoutEffect(() => {
     const section = sectionRef.current
@@ -104,9 +128,13 @@ export function HorizontalScrollShowcase() {
     const progressFill = progressRef.current
     if (!section || !sticky || !inner) return
 
+    const { startHold: START_HOLD_VH, horiz: HORIZ_VH, endHold: END_HOLD_VH, scrub: SCRUB } =
+      journeyTune()
+
     const setSectionHeight = () => {
       const vh = window.innerHeight
-      const scrollSpan = vh * (START_HOLD_VH + HORIZ_VH + END_HOLD_VH)
+      const { startHold, horiz, endHold } = journeyTune()
+      const scrollSpan = vh * (startHold + horiz + endHold)
       section.style.height = `${Math.round(vh + scrollSpan)}px`
     }
 
@@ -147,13 +175,14 @@ export function HorizontalScrollShowcase() {
     }
     syncProtectionRef.current = syncProtection
 
+    const totalTune = START_HOLD_VH + HORIZ_VH + END_HOLD_VH
+    const startFrac = START_HOLD_VH / totalTune
+    const horizFrac = HORIZ_VH / totalTune
+
     const ctx = gsap.context(() => {
       setSectionHeight()
 
       const getTravelX = () => -(inner.scrollWidth - window.innerWidth)
-      const total = START_HOLD_VH + HORIZ_VH + END_HOLD_VH
-      const startFrac = START_HOLD_VH / total
-      const horizFrac = HORIZ_VH / total
       const panels = gsap.utils.toArray<HTMLElement>(inner.querySelectorAll('.dxh-panel'))
 
       const mapMedia = inner.querySelector('.dxh-panel--map [data-reveal="map-media"]')
@@ -227,6 +256,7 @@ export function HorizontalScrollShowcase() {
       const tl = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
+          id: 'dxh-journey',
           trigger: section,
           start: 'top top',
           end: 'bottom bottom',
@@ -236,6 +266,13 @@ export function HorizontalScrollShowcase() {
           onUpdate: (self) => {
             sticky.style.setProperty('--dxh-progress', String(self.progress))
             const hp = gsap.utils.clamp(0, 1, (self.progress - startFrac) / horizFrac)
+            sticky.style.setProperty('--dxh-hp', String(hp))
+            if (mobileViewport) {
+              const active = Math.round(hp * (PANEL_COUNT - 1))
+              sticky.querySelectorAll('.dxh-panel-dot').forEach((dot, i) => {
+                dot.classList.toggle('is-on', i === active)
+              })
+            }
             applyReveals(hp)
             syncProtection(hp)
           },
@@ -270,6 +307,175 @@ export function HorizontalScrollShowcase() {
       ScrollTrigger.refresh()
     }, section)
 
+    /** Mobile: horizontal swipe drives panels; vertical keeps native scroll + end soft-brake. */
+    let touchCleanup: (() => void) | undefined
+    if (mobileViewport) {
+      type Axis = 'none' | 'x' | 'y'
+      const LOCK_PX = 10
+      let axis: Axis = 'none'
+      let startX = 0
+      let startY = 0
+      let lastX = 0
+      let lastY = 0
+      let lastT = 0
+      /** Horizontal finger velocity (px/ms), positive = finger moving right */
+      let velFingerX = 0
+      let flickDown = 0
+      let settleTween: gsap.core.Tween | null = null
+
+      const progressFromY = (st: ScrollTrigger, y: number) => {
+        const span = st.end - st.start
+        if (span <= 0) return 0
+        return gsap.utils.clamp(0, 1, (y - st.start) / span)
+      }
+
+      const yFromProgress = (st: ScrollTrigger, p: number) =>
+        st.start + (st.end - st.start) * gsap.utils.clamp(0, 1, p)
+
+      const nearestPanelProgress = (st: ScrollTrigger, y: number, biasHp = 0) => {
+        const p = progressFromY(st, y)
+        const holdStart = startFrac + horizFrac
+        if (p >= holdStart - 0.01) {
+          const holdSpan = Math.max(0.04, 1 - holdStart)
+          return holdStart + holdSpan * 0.4
+        }
+        const hp = gsap.utils.clamp(0, 1, (p - startFrac) / Math.max(0.0001, horizFrac) + biasHp)
+        const panel = Math.round(hp * (PANEL_COUNT - 1))
+        return startFrac + (panel / (PANEL_COUNT - 1)) * horizFrac
+      }
+
+      const animateToY = (targetY: number, duration = 0.45) => {
+        settleTween?.kill()
+        const proxy = { y: window.scrollY }
+        settleTween = gsap.to(proxy, {
+          y: targetY,
+          duration,
+          ease: 'power3.out',
+          overwrite: true,
+          onUpdate: () => window.scrollTo(0, proxy.y),
+        })
+      }
+
+      const onTouchStart = (e: TouchEvent) => {
+        if (e.touches.length !== 1) return
+        settleTween?.kill()
+        settleTween = null
+        const t = e.touches[0]
+        startX = lastX = t.clientX
+        startY = lastY = t.clientY
+        lastT = performance.now()
+        velFingerX = 0
+        flickDown = 0
+        axis = 'none'
+        sticky.classList.remove('is-h-dragging')
+      }
+
+      const onTouchMove = (e: TouchEvent) => {
+        if (e.touches.length !== 1) return
+        const st = ScrollTrigger.getById('dxh-journey')
+        if (!st?.isActive) return
+
+        const t = e.touches[0]
+        const x = t.clientX
+        const y = t.clientY
+        const dx = x - lastX
+        const now = performance.now()
+        const dt = Math.max(8, now - lastT)
+
+        if (axis === 'none') {
+          const adx = Math.abs(x - startX)
+          const ady = Math.abs(y - startY)
+          if (adx < LOCK_PX && ady < LOCK_PX) return
+          // Prefer horizontal when the gesture is clearly sideways (phone habit)
+          axis = adx > ady * 1.05 ? 'x' : 'y'
+        }
+
+        if (axis === 'y') {
+          flickDown = flickDown * 0.55 + Math.max(0, lastY - y)
+          lastX = x
+          lastY = y
+          lastT = now
+          return
+        }
+
+        // Horizontal swipe → drive vertical scroll that scrubs the track
+        e.preventDefault()
+        sticky.classList.add('is-h-dragging')
+        sticky.classList.add('has-h-swiped')
+
+        const span = st.end - st.start
+        const panelScrollPx = (span * horizFrac) / (PANEL_COUNT - 1)
+        // Finger left → next panel; finger right → previous
+        const deltaScroll = (-dx / Math.max(1, window.innerWidth)) * panelScrollPx
+        const nextY = gsap.utils.clamp(st.start, st.end, window.scrollY + deltaScroll)
+        window.scrollTo(0, nextY)
+        ScrollTrigger.update()
+
+        velFingerX = velFingerX * 0.4 + dx / dt
+        lastX = x
+        lastY = y
+        lastT = now
+      }
+
+      const onTouchEnd = () => {
+        sticky.classList.remove('is-h-dragging')
+        const st = ScrollTrigger.getById('dxh-journey')
+        if (!st?.isActive && axis !== 'x') {
+          axis = 'none'
+          return
+        }
+        if (!st) {
+          axis = 'none'
+          return
+        }
+
+        if (axis === 'x') {
+          const span = st.end - st.start
+          const panelScrollPx = (span * horizFrac) / (PANEL_COUNT - 1)
+          // Coast from finger velocity, then snap to nearest panel
+          const coastPx = gsap.utils.clamp(-panelScrollPx * 1.15, panelScrollPx * 1.15, -velFingerX * 180)
+          const projected = gsap.utils.clamp(st.start, st.end, window.scrollY + coastPx)
+          // Bias snap toward the direction of the flick
+          const biasHp = gsap.utils.clamp(-0.2, 0.2, -velFingerX * 0.012)
+          const targetP = nearestPanelProgress(st, projected, biasHp)
+          animateToY(yFromProgress(st, targetP), Math.abs(velFingerX) > 0.45 ? 0.38 : 0.5)
+        } else if (axis === 'y') {
+          const holdStart = startFrac + horizFrac
+          if (flickDown >= 10 && st.progress >= holdStart - 0.04) {
+            const holdSpan = Math.max(0.04, 1 - holdStart)
+            const midHold = holdStart + holdSpan * 0.45
+            const targetProgress = gsap.utils.clamp(
+              holdStart + holdSpan * 0.15,
+              Math.min(0.97, holdStart + holdSpan * 0.85),
+              Math.max(st.progress, midHold),
+            )
+            const projected = window.scrollY + flickDown * 14
+            if (projected >= st.end - 24 || st.progress >= 0.98) {
+              animateToY(yFromProgress(st, targetProgress), 0.55)
+            }
+          }
+        }
+
+        axis = 'none'
+        velFingerX = 0
+        flickDown = 0
+      }
+
+      // touchmove must be non-passive so horizontal can preventDefault
+      section.addEventListener('touchstart', onTouchStart, { passive: true })
+      section.addEventListener('touchmove', onTouchMove, { passive: false })
+      section.addEventListener('touchend', onTouchEnd, { passive: true })
+      section.addEventListener('touchcancel', onTouchEnd, { passive: true })
+      touchCleanup = () => {
+        settleTween?.kill()
+        sticky.classList.remove('is-h-dragging')
+        section.removeEventListener('touchstart', onTouchStart)
+        section.removeEventListener('touchmove', onTouchMove)
+        section.removeEventListener('touchend', onTouchEnd)
+        section.removeEventListener('touchcancel', onTouchEnd)
+      }
+    }
+
     const onResize = () => {
       setSectionHeight()
       ScrollTrigger.refresh()
@@ -282,12 +488,13 @@ export function HorizontalScrollShowcase() {
     const t2 = window.setTimeout(() => ScrollTrigger.refresh(), 400)
 
     return () => {
+      touchCleanup?.()
       window.clearTimeout(t1)
       window.clearTimeout(t2)
       window.removeEventListener('resize', onResize)
       ctx.revert()
     }
-  }, [])
+  }, [mobileViewport])
 
   return (
     <section
@@ -305,6 +512,16 @@ export function HorizontalScrollShowcase() {
         </div>
 
         <div className="dxh-track-ui" aria-hidden="true">
+          {mobileViewport ? (
+            <div className="dxh-mobile-chrome">
+              <p className="dxh-swipe-hint">Vuốt ngang để xem tiếp</p>
+              <div className="dxh-panel-dots">
+                {Array.from({ length: PANEL_COUNT }, (_, i) => (
+                  <span key={i} className={`dxh-panel-dot${i === 0 ? ' is-on' : ''}`} />
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="dxh-track-progress">
             <div className="dxh-track-progress__fill" ref={progressRef} />
           </div>
@@ -389,11 +606,12 @@ export function HorizontalScrollShowcase() {
               const p = Number(
                 stickyRef.current?.style.getPropertyValue('--dxh-progress') || 0,
               )
-              const total = START_HOLD_VH + HORIZ_VH + END_HOLD_VH
+              const { startHold, horiz, endHold } = journeyTune()
+              const total = startHold + horiz + endHold
               const hp = gsap.utils.clamp(
                 0,
                 1,
-                (p - START_HOLD_VH / total) / (HORIZ_VH / total),
+                (p - startHold / total) / (horiz / total),
               )
               syncProtectionRef.current(hp)
             }}

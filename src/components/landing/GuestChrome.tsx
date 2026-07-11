@@ -1,6 +1,7 @@
 import gsap from 'gsap'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
+import { isMobileLandingViewport } from './mobileLanding'
 import { RocketCtaSequence } from './RocketCtaSequence'
 import { WindJumpOverlay, type WindDirection } from './WindJumpOverlay'
 import './GuestChrome.css'
@@ -163,6 +164,9 @@ function NavLinks({
  */
 function useVerticalCoast() {
   useEffect(() => {
+    // Touch / phone scroll stays native — this coast is desktop wheel only.
+    if (isMobileLandingViewport()) return
+
     let y = window.scrollY
     let velocity = 0
     let raf = 0
