@@ -294,6 +294,70 @@
 }
 
 @media (max-width: 900px) {
+  .dxh-scroll-outer {
+    overscroll-behavior-y: contain;
+  }
+
+  .dxh-scroll-sticky {
+    /* Vertical native scroll by default; JS locks axis for horizontal swipes */
+    touch-action: pan-y;
+    will-change: auto;
+  }
+
+  .dxh-scroll-sticky.is-h-dragging {
+    touch-action: none;
+    cursor: grabbing;
+  }
+
+  .dxh-mobile-chrome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .dxh-swipe-hint {
+    margin: 0;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    transition: opacity 0.35s ease;
+  }
+
+  .dxh-scroll-sticky.has-h-swiped .dxh-swipe-hint {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .dxh-panel-dots {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .dxh-panel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.28);
+    transition:
+      transform 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .dxh-panel-dot.is-on {
+    background: #00b14f;
+    transform: scale(1.35);
+  }
+
+  .dxh-orb {
+    opacity: 0.45;
+  }
+
   .dxh-panel--ask,
   .dxh-panel--map,
   .dxh-panel--search,
