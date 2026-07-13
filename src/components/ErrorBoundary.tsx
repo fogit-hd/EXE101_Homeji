@@ -36,12 +36,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       if (this.props.fallback) return this.props.fallback
 
+      // Crash React thường là TypeError — không được nói “mất mạng”
+      const message = getErrorMessage(this.state.error, SYSTEM_ERROR_MESSAGE)
+
       return (
         <div className="app-error" role="alert">
           <div className="app-error__card">
-            <p className="app-error__message">
-              {getErrorMessage(this.state.error, SYSTEM_ERROR_MESSAGE)}
-            </p>
+            <p className="app-error__message">{message}</p>
             <button
               type="button"
               className="btn btn-primary"

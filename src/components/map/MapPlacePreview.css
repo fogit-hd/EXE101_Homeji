@@ -1,0 +1,98 @@
+.map-place-preview {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 470;
+  transform: translate3d(-50%, 0, 0);
+  width: min(420px, calc(100% - 48px));
+  padding: 14px 40px 14px 14px;
+  border-radius: 16px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 14px 36px rgba(var(--shadow-color), 0.18);
+  animation: home-pin-preview-in var(--map-dur, 280ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  pointer-events: auto;
+}
+
+.map-place-preview.is-leaving {
+  animation: home-pin-preview-out var(--map-dur, 280ms) var(--map-ease-soft, cubic-bezier(0.33, 1, 0.68, 1)) both;
+}
+
+.map-place-preview__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-input);
+  color: var(--text-heading);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-place-preview__close:hover {
+  background: var(--border);
+}
+
+.map-place-preview__body {
+  min-width: 0;
+}
+
+.map-place-preview__eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--grab-blue);
+}
+
+.map-place-preview__title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.3;
+}
+
+.map-place-preview__addr {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.map-place-preview__rating {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.map-place-preview__phone {
+  display: inline-block;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--grab-blue);
+  text-decoration: none;
+}
+
+.map-place-preview__phone:hover {
+  text-decoration: underline;
+}
+
+.map-place-preview__note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 720px) {
+  .map-place-preview {
+    bottom: 88px;
+    width: calc(100% - 24px);
+  }
+}

@@ -1,16 +1,222 @@
+/**
+ * Map surface CSS — keep free of transition/transform on the canvas host.
+ * Do NOT set transform:none on .gm-style descendants (Maps uses transforms for tiles).
+ */
+
+.rental-map,
+.home-map-frame,
+.home-map-page {
+  transition: none !important;
+  animation: none !important;
+}
+
 .rental-map {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 320px;
+  min-height: 0;
   overflow: hidden;
+  background: #e8eef2;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  /* No transform / will-change on the map shell — fights WebGL compositing */
+  transform: none !important;
+  will-change: auto !important;
 }
 
-.rental-map-container {
+.rental-map--placeholder {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: #69727d;
+  font-size: 14px;
+  touch-action: auto;
+  transform: none !important;
+}
+
+.rental-map__host {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: none !important;
+  animation: none !important;
+}
+
+.rental-map__canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.rental-map__loader {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, #edf4ff 0%, #f4faf6 100%);
+  pointer-events: none;
+  transition: none !important;
+}
+
+.rental-map__webgl-hint {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 480;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 520px;
+  margin-inline: auto;
+  padding: 10px 36px 10px 12px;
+  border-radius: 10px;
+  background: #fff8e6;
+  border: 1px solid #f0d78c;
+  box-shadow: 0 8px 24px rgba(9, 29, 46, 0.12);
+  color: #5c4a12;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rental-map__webgl-hint p {
+  margin: 0;
+}
+
+.rental-map__webgl-hint code {
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.rental-map__webgl-hint-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #5c4a12;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rental-map__controls {
+  position: absolute;
+  right: 12px;
+  bottom: 24px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  /* Controls may move via `right`/`bottom` — never animate those mid-pan */
+  transition: none !important;
+}
+
+.rental-map__controls > * {
+  pointer-events: auto;
+}
+
+.rental-map__btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  box-shadow:
+    0 1px 2px rgba(var(--shadow-color), 0.24),
+    0 1px 3px 1px rgba(var(--shadow-color), 0.12);
+  cursor: pointer;
+  transition:
+    background-color var(--map-dur-fast, 160ms) ease,
+    color var(--map-dur-fast, 160ms) ease,
+    box-shadow var(--map-dur-fast, 160ms) ease !important;
+  transform: none !important;
+}
+
+.rental-map__btn:hover:not(:disabled) {
+  background: var(--surface-input);
+  color: var(--text-heading);
+}
+
+.rental-map__btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.rental-map__btn:focus-visible {
+  outline: 2px solid var(--grab-blue);
+  outline-offset: 2px;
+}
+
+.rental-map__zoom {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-elevated);
+  box-shadow:
+    0 1px 2px rgba(var(--shadow-color), 0.24),
+    0 1px 3px 1px rgba(var(--shadow-color), 0.12);
+}
+
+.rental-map__btn--zoom {
+  box-shadow: none;
+  border-radius: 0;
+  font-size: 20px;
+}
+
+.rental-map__btn--zoom + .rental-map__btn--zoom {
+  border-top: 1px solid var(--border);
+}
+
+.rental-map__error {
+  margin: 0;
+  max-width: 220px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff5f5;
+  border: 1px solid #f0c2c2;
+  color: #8a3030;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.rental-map__hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  margin-left: -140px;
+  width: 280px;
+  z-index: 3;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 13px;
+  color: #69727d;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  /* No translateX — avoid transform near the map surface */
+  transition: none !important;
 }
 
 .location-picker-map {
@@ -20,6 +226,14 @@
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #d5d8dc;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  transition: none !important;
+  transform: none !important;
+}
+
+.location-picker-map .rental-map__host {
+  border-radius: 8px;
 }
 
 .map-placeholder-msg,
@@ -40,6 +254,12 @@
 .map-placeholder-hint {
   margin-top: 8px;
   font-size: 13px;
+}
+
+.map-picker-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #69727d;
 }
 
 .map-error-panel {
@@ -131,59 +351,31 @@
   filter: brightness(0.95);
 }
 
-.map-popup {
-  font-size: 13px;
-  line-height: 1.45;
-  max-width: 240px;
-  padding: 2px 0;
+.home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
+  right: 336px;
 }
 
-.map-popup strong {
-  display: block;
-  margin-bottom: 4px;
-  color: #091d2e;
+@media (min-width: 1024px) {
+  .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
+    right: 356px;
+  }
 }
 
-.map-popup p {
-  margin: 4px 0 0;
-  color: #69727d;
+.home-map-panel.has-pin-preview .rental-map__controls {
+  bottom: 168px;
 }
 
-.map-popup__price {
-  color: var(--grab-green, #00b14f) !important;
-  font-weight: 700;
-  font-size: 14px;
-}
+@media (max-width: 900px) {
+  .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
+    right: 12px;
+    bottom: calc(52dvh + 12px);
+  }
 
-.map-popup__cta {
-  display: inline-block;
-  margin-top: 10px;
-  font-weight: 600;
-  color: var(--grab-blue, #136fd8);
-  text-decoration: none;
-}
+  .home-map-panel.has-pin-preview .rental-map__controls {
+    bottom: 140px;
+  }
 
-.map-popup__cta:hover {
-  text-decoration: underline;
-}
-
-.map-no-coords-hint {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  color: #69727d;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  pointer-events: none;
-}
-
-.map-picker-hint {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: #69727d;
+  .home-map-page:not(.is-sidebar-collapsed) .home-map-panel.has-pin-preview .rental-map__controls {
+    bottom: calc(52dvh + 12px);
+  }
 }

@@ -1,8 +1,12 @@
 import gsap from 'gsap'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
+import {
+  GUEST_LANDING_NAV_EVENT,
+  type GuestLandingNavDetail,
+} from './guestLandingNav'
 import { isMobileLandingViewport } from './mobileLanding'
-import { RocketCtaSequence } from './RocketCtaSequence'
 import { WindJumpOverlay, type WindDirection } from './WindJumpOverlay'
 import './GuestChrome.css'
 
@@ -12,18 +16,19 @@ const NAV = [
   /** Scrolls to #how; stays active through #for (cách hoạt động + dành cho ai) */
   { id: 'how', label: 'Cơ chế' },
   { id: 'start', label: 'Cam kết' },
+  { id: 'map', label: 'Bản đồ' },
 ] as const
 
 type NavId = (typeof NAV)[number]['id']
 type SectionId = NavId | 'hero'
 
 /** Sections with light paper backgrounds — dark text shows here */
-const LIGHT_SECTION_IDS = ['mission', 'how', 'for', 'start'] as const
+const LIGHT_SECTION_IDS = ['mission', 'how', 'for', 'start', 'map'] as const
 
 /** Above the horizontal journey sticky */
 const ABOVE_JOURNEY: SectionId[] = ['hero', 'mission']
 /** Below the horizontal journey sticky */
-const BELOW_JOURNEY: SectionId[] = ['how', 'start']
+const BELOW_JOURNEY: SectionId[] = ['how', 'start', 'map']
 
 /** First ~12% of journey sticky = start edge / first panel — short hop, no wind */
 const JOURNEY_START_EDGE = 0.12
@@ -224,6 +229,15 @@ function useVerticalCoast() {
 
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) return
+      // Let Google Maps own wheel zoom / don't fight drag with page coast.
+      const target = e.target
+      if (
+        target instanceof Element &&
+        target.closest('.rental-map, .guest-map__map, .gm-style')
+      ) {
+        stop()
+        return
+      }
       e.preventDefault()
       if (isGuestCoastPaused()) return
 
@@ -240,10 +254,22 @@ function useVerticalCoast() {
       }
     }
 
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target
+      if (
+        target instanceof Element &&
+        target.closest('.rental-map, .guest-map__map, .gm-style')
+      ) {
+        stop()
+      }
+    }
+
     window.addEventListener('wheel', onWheel, { passive: false })
+    window.addEventListener('pointerdown', onPointerDown, true)
 
     return () => {
       window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('pointerdown', onPointerDown, true)
       if (raf) cancelAnimationFrame(raf)
     }
   }, [])
@@ -254,8 +280,7 @@ export function GuestChrome() {
   const [windOpen, setWindOpen] = useState(false)
   const [windDir, setWindDir] = useState<WindDirection>('down')
   const [windDestY, setWindDestY] = useState(0)
-  const [rocketOpen, setRocketOpen] = useState(false)
-  const [rocketRunId, setRocketRunId] = useState(0)
+  const progressElRef = useRef<HTMLDivElement>(null)
   const fillRef = useRef<HTMLDivElement>(null)
   const labelRef = useRef<HTMLSpanElement>(null)
   const navRef = useRef<HTMLElement>(null)
@@ -274,12 +299,7 @@ export function GuestChrome() {
   useVerticalCoast()
 
   useEffect(() => {
-    // Preload Windblow + rocket CTA assets
     void fetch('/lottie/windblow.lottie', { cache: 'force-cache' }).catch(() => {})
-    void fetch('/lottie/rocket.lottie', { cache: 'force-cache' }).catch(() => {})
-    void fetch('/lottie/text-highlight-blue.lottie', { cache: 'force-cache' }).catch(() => {})
-    void fetch('/lottie/click-mouse.lottie', { cache: 'force-cache' }).catch(() => {})
-    void fetch('/lottie/exploding-ribbon-confetti.lottie', { cache: 'force-cache' }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -380,6 +400,10 @@ export function GuestChrome() {
       if (labelRef.current) {
         labelRef.current.textContent = `${String(Math.round(p * 100)).padStart(2, '0')}%`
       }
+      // Soft at top so it doesn't compete with the hero; full opacity while scrolling
+      if (progressElRef.current) {
+        progressElRef.current.style.opacity = String(0.5 + 0.5 * p)
+      }
       const nav = navRef.current
       const darkInk = darkInkRef.current
       if (nav && darkInk) {
@@ -463,28 +487,50 @@ export function GuestChrome() {
     })
   }, [])
 
-  const onNavigate = (id: string) => {
-    const to = id as NavId
-    if (!document.getElementById(to) || windBusyRef.current) return
+  const onNavigate = useCallback(
+    (id: string) => {
+      const to = id as NavId
+      if (!document.getElementById(to) || windBusyRef.current) return
 
-    const from = activeRef.current
+      const from = activeRef.current
 
-    if (needsWindJump(from, to)) {
-      navTween.current?.kill()
-      pauseGuestCoast()
-      windBusyRef.current = true
-      windTargetRef.current = to
-      const destY = elementDocTop(document.getElementById(to)!)
-      setWindDestY(destY)
-      // Explicit travel direction (page jump), not CSS-class guessing
-      const goingDown = destY > window.scrollY + 2
-      setWindDir(goingDown ? 'down' : 'up')
-      setWindOpen(true)
-      return
+      if (needsWindJump(from, to)) {
+        navTween.current?.kill()
+        pauseGuestCoast()
+        windBusyRef.current = true
+        windTargetRef.current = to
+        const destY = elementDocTop(document.getElementById(to)!)
+        setWindDestY(destY)
+        // Explicit travel direction (page jump), not CSS-class guessing
+        const goingDown = destY > window.scrollY + 2
+        setWindDir(goingDown ? 'down' : 'up')
+        setWindOpen(true)
+        return
+      }
+
+      scrollSmooth(to)
+    },
+    [scrollSmooth],
+  )
+
+  const onNavigateRef = useRef(onNavigate)
+  onNavigateRef.current = onNavigate
+
+  useEffect(() => {
+    const onExternalNav = (e: Event) => {
+      const id = (e as CustomEvent<GuestLandingNavDetail>).detail?.id
+      if (typeof id === 'string' && id) onNavigateRef.current(id)
     }
+    window.addEventListener(GUEST_LANDING_NAV_EVENT, onExternalNav)
+    return () => window.removeEventListener(GUEST_LANDING_NAV_EVENT, onExternalNav)
+  }, [])
 
-    scrollSmooth(to)
-  }
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, '')
+    if (!hash || !NAV.some((item) => item.id === hash)) return
+    const t = window.setTimeout(() => onNavigateRef.current(hash), 80)
+    return () => window.clearTimeout(t)
+  }, [])
 
   return (
     <>
@@ -501,7 +547,19 @@ export function GuestChrome() {
         </div>
       </nav>
 
-      <div className="guest-progress" aria-hidden="true">
+      <div className="guest-progress" ref={progressElRef} aria-hidden="true">
+        <span className="guest-progress__hint">
+          <span className="guest-progress__hint-text">Scroll</span>
+          <svg className="guest-progress__hint-arrow" viewBox="0 0 12 16" fill="none" aria-hidden="true">
+            <path
+              d="M6 1v12.5M6 13.5 2.5 10M6 13.5 9.5 10"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
         <span className="guest-progress__label" ref={labelRef}>
           00%
         </span>
@@ -512,26 +570,10 @@ export function GuestChrome() {
 
       <div className="guest-fixed-cta" ref={ctaRef} aria-hidden="true">
         <span>Miễn phí đăng ký</span>
-        <button
-          type="button"
-          className="guest-fixed-cta__go"
-          onClick={() => {
-            if (rocketOpen || windBusyRef.current) return
-            setRocketRunId((n) => n + 1)
-            setRocketOpen(true)
-          }}
-        >
+        <Link to="/register" className="guest-fixed-cta__go">
           Bắt đầu ngay
-        </button>
+        </Link>
       </div>
-
-      {rocketOpen && (
-        <RocketCtaSequence
-          key={rocketRunId}
-          open
-          onFinished={() => setRocketOpen(false)}
-        />
-      )}
 
       <WindJumpOverlay
         open={windOpen}

@@ -14,26 +14,34 @@ export const NETWORK_ERROR_MESSAGE =
 export const SYSTEM_ERROR_MESSAGE =
   'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'
 
+/**
+ * Chỉ nhận diện lỗi thật sự liên quan mạng / không tới được server.
+ * Không được coi mọi TypeError (vd. crash render) là mất mạng.
+ */
 function isNetworkLike(err: unknown): boolean {
   if (err instanceof NetworkError) return true
-  if (err instanceof TypeError) return true
 
   if (err instanceof Error) {
+    if (err.name === 'NetworkError') return true
+    // Abort từ timeout request — không phải mất Wi‑Fi; để caller xử lý riêng
+    if (err.name === 'AbortError') return false
+
     const msg = err.message.toLowerCase()
     return (
-      err.name === 'NetworkError' ||
-      err.name === 'AbortError' ||
       msg.includes('failed to fetch') ||
-      msg.includes('networkerror') ||
+      msg.includes('networkerror when attempting to fetch') ||
       msg.includes('network request failed') ||
       msg.includes('load failed') ||
       msg.includes('err_network') ||
       msg.includes('err_internet_disconnected') ||
-      msg.includes('err_connection') ||
+      msg.includes('err_connection_refused') ||
+      msg.includes('err_connection_reset') ||
+      msg.includes('err_connection_timed_out') ||
+      msg.includes('err_name_not_resolved') ||
       msg.includes('econnrefused') ||
       msg.includes('enotfound') ||
       msg.includes('etimedout') ||
-      msg.includes('network')
+      msg.includes('ecconnreset')
     )
   }
 

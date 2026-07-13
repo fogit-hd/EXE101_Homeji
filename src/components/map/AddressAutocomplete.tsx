@@ -1,6 +1,6 @@
-import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import { useEffect, useRef } from 'react'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { importPlacesLibrary } from '../../lib/loadGoogleMaps'
 
 export type PlaceResult = {
   address: string
@@ -17,6 +17,9 @@ type Props = {
   required?: boolean
 }
 
+/**
+ * Places Autocomplete via official google.maps.places — no vis.gl hooks.
+ */
 export function AddressAutocomplete({
   value,
   onChange,
@@ -26,35 +29,49 @@ export function AddressAutocomplete({
   required,
 }: Props) {
   const { apiKey, isLoaded } = useGoogleMaps()
-  const placesLib = useMapsLibrary('places')
   const inputRef = useRef<HTMLInputElement>(null)
+  const onChangeRef = useRef(onChange)
+  const onPlaceSelectRef = useRef(onPlaceSelect)
+  onChangeRef.current = onChange
+  onPlaceSelectRef.current = onPlaceSelect
 
   useEffect(() => {
-    if (!placesLib || !inputRef.current) return
+    if (!isLoaded || !apiKey || !inputRef.current) return
 
-    const autocomplete = new placesLib.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: 'vn' },
-      fields: ['formatted_address', 'geometry', 'name'],
-    })
+    let cancelled = false
+    let autocomplete: google.maps.places.Autocomplete | null = null
+    let listener: google.maps.MapsEventListener | null = null
 
-    const listener = autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace()
-      const location = place.geometry?.location
-      if (!location) return
+    void (async () => {
+      const places = await importPlacesLibrary()
+      if (cancelled || !inputRef.current || !places.Autocomplete) return
 
-      const address = place.formatted_address ?? value
-      onChange(address)
-      onPlaceSelect({
-        address,
-        lat: location.lat(),
-        lng: location.lng(),
+      autocomplete = new places.Autocomplete(inputRef.current, {
+        componentRestrictions: { country: 'vn' },
+        fields: ['formatted_address', 'geometry', 'name'],
       })
-    })
+
+      listener = autocomplete.addListener('place_changed', () => {
+        const place = autocomplete?.getPlace()
+        const location = place?.geometry?.location
+        if (!location) return
+
+        const address = place.formatted_address ?? inputRef.current?.value ?? ''
+        onChangeRef.current(address)
+        onPlaceSelectRef.current({
+          address,
+          lat: location.lat(),
+          lng: location.lng(),
+        })
+      })
+    })()
 
     return () => {
-      google.maps.event.removeListener(listener)
+      cancelled = true
+      if (listener) google.maps.event.removeListener(listener)
+      if (autocomplete) google.maps.event.clearInstanceListeners(autocomplete)
     }
-  }, [placesLib, onChange, onPlaceSelect, value])
+  }, [isLoaded, apiKey])
 
   if (!apiKey) {
     return (
@@ -68,13 +85,14 @@ export function AddressAutocomplete({
     )
   }
 
-  if (!isLoaded || !placesLib) {
+  if (!isLoaded) {
     return (
       <input
         className={className}
         value={value}
         disabled
         placeholder="Đang tải Google Maps..."
+        required={required}
       />
     )
   }

@@ -1,7 +1,7 @@
 /**
  * Production host for Render Web Service:
  * - Serves Vite `dist` with SPA fallback
- * - Proxies `/api/*` → Fly API (avoids browser CORS)
+ * - Proxies `/api/*` → Render API (avoids browser CORS)
  */
 import http from 'node:http'
 import https from 'node:https'
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
 const PORT = Number(process.env.PORT || 3000)
-const API_TARGET = (process.env.API_PROXY_TARGET || 'https://homeji-api.fly.dev').replace(
+const API_TARGET = (process.env.API_PROXY_TARGET || 'https://homeji-be.onrender.com').replace(
   /\/$/,
   '',
 )

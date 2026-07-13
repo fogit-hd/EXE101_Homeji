@@ -8,7 +8,7 @@ import {
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
 
-export function NotificationsPage() {
+export function NotificationsPage({ embedded = false }: { embedded?: boolean }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadOnly, setUnreadOnly] = useState(false)
 
@@ -32,17 +32,20 @@ export function NotificationsPage() {
   }
 
   return (
-    <div className="container page">
+    <div className={embedded ? 'map-embed' : 'container page'}>
       <div className="page-header-row">
-        <div>
-          <h1 className="page-title">Thông báo</h1>
-          <p className="page-subtitle">Cập nhật mới nhất từ Homeji</p>
-        </div>
+        {!embedded ? (
+          <div>
+            <h1 className="page-title">Thông báo</h1>
+            <p className="page-subtitle">Cập nhật mới nhất từ Homeji</p>
+          </div>
+        ) : (
+          <div />
+        )}
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleMarkAll()}>
           Đánh dấu tất cả đã đọc
         </button>
       </div>
-
       <div className="tabs">
         <button type="button" className={`tab ${!unreadOnly ? 'active' : ''}`} onClick={() => setUnreadOnly(false)}>
           Tất cả

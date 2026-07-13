@@ -3,7 +3,7 @@ import type {
   AccountMessage,
   AuthSession,
   AuthUrl,
-  CheckEmailResult,
+  EmailAvailabilityResult,
   MomoPaymentResponse,
   Notification,
   PayOsPaymentResponse,
@@ -44,18 +44,15 @@ export const getGoogleLoginUrl = (redirectTo?: string) =>
 
 /** Kiểm tra email đã tồn tại chưa (intro signup). */
 export const checkEmail = (data: { email: string }) =>
-  apiRequest<CheckEmailResult>('/api/account/check-email', {
-    method: 'POST',
-    body: data,
+  apiRequest<EmailAvailabilityResult>('/api/account/email-availability', {
+    method: 'GET',
+    params: { email: data.email },
     auth: false,
   })
 
-/** Chuẩn hóa các shape response khác nhau từ API. */
-export function isEmailTaken(result: CheckEmailResult): boolean {
+export function isEmailTaken(result: EmailAvailabilityResult): boolean {
   if (typeof result.exists === 'boolean') return result.exists
-  if (typeof result.emailExists === 'boolean') return result.emailExists
   if (typeof result.available === 'boolean') return !result.available
-  if (typeof result.isAvailable === 'boolean') return !result.isAvailable
   return false
 }
 
@@ -80,13 +77,17 @@ export const updateMyLifestyle = (data: {
 }) => apiRequest<UserProfile>('/api/profile/me/lifestyle', { method: 'PUT', body: data })
 
 // Rental Posts
-export const searchRentalPosts = (params: RentalPostSearchParams = {}) =>
+export const searchRentalPosts = (
+  params: RentalPostSearchParams = {},
+  options?: { auth?: boolean },
+) =>
   apiRequest<RentalPostSummary[]>('/api/rental-posts', {
     params: params as RentalPostSearchParams & Record<string, string | number | boolean | string[] | undefined>,
+    auth: options?.auth,
   })
 
-export const getRentalPost = (postId: string) =>
-  apiRequest<RentalPost>(`/api/rental-posts/${postId}`)
+export const getRentalPost = (postId: string, options?: { auth?: boolean }) =>
+  apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { auth: options?.auth })
 
 export const createRentalPostDraft = (type: RentalPostType) =>
   apiRequest<RentalPost>('/api/rental-posts/drafts', { method: 'POST', body: { type } })

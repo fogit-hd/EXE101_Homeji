@@ -2,6 +2,21 @@
   display: none;
 }
 
+@keyframes tab-icon-pop {
+  from {
+    transform: scale(0.86);
+    opacity: 0.55;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .mobile-tabbar {
     display: flex;
@@ -12,13 +27,16 @@
     z-index: 120;
     height: calc(var(--mobile-tabbar-height) + env(safe-area-inset-bottom, 0px));
     padding: 6px 4px env(safe-area-inset-bottom, 0px);
-    background: rgba(255, 255, 255, 0.96);
+    background: var(--surface-glass);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
     justify-content: space-around;
     align-items: flex-start;
     gap: 2px;
+    transition:
+      background-color var(--map-dur, 280ms) ease,
+      border-color var(--map-dur, 280ms) ease;
   }
 
   .mobile-tabbar__item {
@@ -38,9 +56,13 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     transition:
-      color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out),
+      color var(--dur-med) var(--ease-out),
+      background var(--dur-med) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
+  }
+
+  .mobile-tabbar__item svg {
+    transition: transform var(--dur-med) var(--ease-spring);
   }
 
   .mobile-tabbar__item::after {
@@ -74,6 +96,10 @@
     color: var(--grab-green);
   }
 
+  .mobile-tabbar__item.is-active svg {
+    animation: tab-icon-pop var(--dur-med) var(--ease-spring) both;
+  }
+
   .mobile-tabbar__item.is-active::after {
     transform: translateX(-50%) scaleX(1);
     opacity: 1;
@@ -86,11 +112,27 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    transition:
+      opacity var(--dur-fast) ease,
+      transform var(--dur-med) var(--ease-out),
+      font-weight var(--dur-fast) ease;
+  }
+
+  .mobile-tabbar__item.is-active .mobile-tabbar__label {
+    transform: translateY(-1px);
+    font-weight: 600;
+  }
+
+  .mobile-tabbar__item:not(.is-active) .mobile-tabbar__label {
+    opacity: 0.85;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobile-tabbar__item::after {
+  .mobile-tabbar__item::after,
+  .mobile-tabbar__item svg,
+  .mobile-tabbar__label {
     transition: none;
+    animation: none !important;
   }
 }

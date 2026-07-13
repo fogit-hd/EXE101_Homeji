@@ -1,15 +1,17 @@
 .map-listing-card {
   display: flex;
-  gap: 16px;
-  background: #fff;
-  border: 1px solid #d5d8dc;
+  gap: 10px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
+  /* No translateY — moving the card under the cursor causes hover enter/leave loops. */
   transition:
-    box-shadow var(--dur-med) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
+    box-shadow 200ms ease-in-out,
+    border-color 200ms ease-in-out,
+    background 200ms ease-in-out,
+    transform var(--map-dur-fast, 160ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1));
   animation: listing-enter var(--dur-med) var(--ease-out) both;
   animation-delay: calc(var(--stagger, 0) * 40ms);
 }
@@ -25,28 +27,31 @@
   }
 }
 
-.map-listing-card:hover {
-  border-color: #006491;
-  box-shadow: 0 8px 16px rgba(0, 100, 145, 0.12);
-  transform: translateY(-1px);
+.map-listing-card:hover,
+.map-listing-card.is-highlighted {
+  border-color: var(--grab-blue);
+  box-shadow: 0 8px 16px rgba(var(--shadow-color), 0.12);
+  background: var(--surface-input);
 }
 
-.map-listing-card.active {
+.map-listing-card.is-active {
   border-color: var(--grab-green);
   box-shadow: 0 10px 20px rgba(0, 177, 79, 0.14);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--grab-green) 10%, var(--surface-elevated));
 }
 
 .map-listing-card:active {
-  transform: scale(0.99);
+  transform: scale(0.985);
+  box-shadow: 0 2px 8px rgba(var(--shadow-color), 0.1);
 }
 
 .map-listing-card-image {
   position: relative;
-  width: 120px;
-  min-height: 120px;
+  width: 88px;
+  min-height: 88px;
   flex-shrink: 0;
-  background: #f1f4f6;
+  background: var(--surface-input);
+  overflow: hidden;
 }
 
 .map-listing-card-image img {
@@ -56,7 +61,8 @@
   transition: transform var(--dur-slow) var(--ease-out);
 }
 
-.map-listing-card:hover .map-listing-card-image img {
+.map-listing-card:hover .map-listing-card-image img,
+.map-listing-card.is-highlighted .map-listing-card-image img {
   transform: scale(1.04);
 }
 
@@ -65,89 +71,90 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 120px;
-  font-size: 12px;
-  color: #69727d;
+  min-height: 88px;
+  padding: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
 }
 
 .map-listing-card-price {
   position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: #006491;
+  bottom: 6px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  background: var(--grab-blue);
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .map-listing-card-body {
-  padding: 12px 12px 12px 0;
+  padding: 8px 10px 8px 0;
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
 }
 
 .map-listing-card-tags {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  font-size: 12px;
-  color: #69727d;
-  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .map-listing-tag {
-  background: #e3efff;
-  color: #006491;
-  padding: 2px 8px;
+  background: var(--maps-blue-soft);
+  color: var(--maps-blue-text);
+  padding: 1px 6px;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 11px;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .map-listing-card-body h3 {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  margin: 0 0 4px;
-  color: #091d2e;
+  margin: 0;
+  color: var(--text-heading);
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .map-listing-address {
-  font-size: 13px;
-  color: #69727d;
-  margin: 0 0 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.35;
+  white-space: nowrap;
   overflow: hidden;
-}
-
-.map-listing-link {
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.map-listing-link:hover {
-  text-decoration: underline;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 768px) {
   .map-listing-card {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .map-listing-card-image {
-    width: 100%;
-    height: 140px;
+    width: 88px;
+    min-height: 88px;
   }
 
   .map-listing-card-body {
-    padding: 12px;
+    padding: 8px 10px 8px 0;
   }
 }
 
@@ -156,13 +163,8 @@
     animation: none;
   }
 
-  .map-listing-card:hover,
-  .map-listing-card.active,
-  .map-listing-card:active {
-    transform: none;
-  }
-
-  .map-listing-card:hover .map-listing-card-image img {
+  .map-listing-card:hover .map-listing-card-image img,
+  .map-listing-card.is-highlighted .map-listing-card-image img {
     transform: none;
   }
 }

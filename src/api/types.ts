@@ -119,16 +119,17 @@ export interface AccountMessage {
   message: string
 }
 
-/** Kết quả POST /api/account/check-email */
-export interface CheckEmailResult {
+/** Kết quả GET /api/account/email-availability */
+export interface EmailAvailabilityResult {
+  email: string
   /** true nếu email đã có trong hệ thống */
-  exists?: boolean
-  emailExists?: boolean
+  exists: boolean
   /** true nếu còn dùng được */
-  available?: boolean
-  isAvailable?: boolean
-  message?: string
+  available: boolean
 }
+
+/** @deprecated Dùng EmailAvailabilityResult */
+export type CheckEmailResult = EmailAvailabilityResult
 
 export interface AuthUrl {
   url: string

@@ -12,6 +12,15 @@
   --surface: #ffffff;
   --surface-muted: #f6f8fa;
   --surface-input: #f1f4f6;
+  --surface-elevated: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.96);
+  --overlay-scrim: rgba(32, 33, 36, 0.42);
+  --shadow-color: 9, 29, 46;
+  --maps-blue: #1a73e8;
+  --maps-blue-hover: #1557b0;
+  --maps-blue-soft: #e8f0fe;
+  --maps-blue-text: #1967d2;
+  --maps-hover: rgba(60, 64, 67, 0.08);
   --error: #ea4335;
   --success: #39b54a;
   --shadow-sm: rgba(0, 0, 0, 0.15) 0px 5px 12px 0px;
@@ -31,12 +40,43 @@
   --dur-fast: 150ms;
   --dur-med: 280ms;
   --dur-slow: 420ms;
+  color-scheme: light;
   font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   color: var(--text-primary);
   background: var(--surface-muted);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --grab-green: #1ad66a;
+    --grab-green-hover: #14b85a;
+    --grab-blue: #4b9fff;
+    --grab-blue-hover: #2f86f0;
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0a6;
+    --text-heading: #f1f3f4;
+    --border: #3c4043;
+    --surface: #1a1d21;
+    --surface-muted: #121417;
+    --surface-input: #2a2e33;
+    --surface-elevated: #23272c;
+    --surface-glass: rgba(26, 29, 33, 0.94);
+    --overlay-scrim: rgba(0, 0, 0, 0.55);
+    --shadow-color: 0, 0, 0;
+    --maps-blue: #8ab4f8;
+    --maps-blue-hover: #aecbfa;
+    --maps-blue-soft: rgba(138, 180, 248, 0.16);
+    --maps-blue-text: #8ab4f8;
+    --maps-hover: rgba(255, 255, 255, 0.08);
+    --shadow-sm: rgba(0, 0, 0, 0.35) 0px 5px 16px 0px;
+    --shadow-md: rgba(0, 0, 0, 0.4) 0px 4px 12px 0px;
+    --error: #f28b82;
+    --success: #81c995;
+  }
 }
 
 *,
@@ -76,14 +116,40 @@ body {
 }
 
 .app-shell--map {
+  /* Prefer stable 100vh — 100dvh changes when mobile URL bar shows/hides → map resize jank */
+  height: 100%;
   height: 100vh;
-  height: 100dvh;
+  max-height: 100%;
   overflow: hidden;
+  --nav-height: 0px;
+}
+
+@supports (height: 100svh) {
+  .app-shell--map {
+    height: 100svh;
+  }
 }
 
 .app-shell--map .main-map-layout {
-  flex: 1;
+  position: relative;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* React Router outlet wrapper must fill main — otherwise home-map-page height:100% = 0 */
+.app-shell--map .main-map-layout > div {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 a {

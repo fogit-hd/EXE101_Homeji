@@ -1,15 +1,31 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { createRentalPostDraft } from '../api'
 import { RentalPostType } from '../api/types'
 import { rentalPostTypeLabel } from '../lib/labels'
 import { getErrorMessage } from '../lib/errors'
 
+function typeFromQuery(raw: string | null): RentalPostType {
+  if (raw === 'roommate' || raw === String(RentalPostType.RoommateShare)) {
+    return RentalPostType.RoommateShare
+  }
+  return RentalPostType.VacantRoom
+}
+
 export function CreateRentalPostPage() {
   const navigate = useNavigate()
-  const [type, setType] = useState<RentalPostType>(RentalPostType.VacantRoom)
+  const [searchParams] = useSearchParams()
+  const initialType = useMemo(
+    () => typeFromQuery(searchParams.get('type')),
+    [searchParams],
+  )
+  const [type, setType] = useState<RentalPostType>(initialType)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setType(initialType)
+  }, [initialType])
 
   const handleCreate = async () => {
     setError('')
