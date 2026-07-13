@@ -13,7 +13,9 @@ export function loadGoogleMaps(apiKey: string): Promise<void> {
     return Promise.reject(new Error('Google Maps can only load in the browser'))
   }
 
-  if (window.google?.maps?.importLibrary) {
+  // Prefer already-bootstrapped Maps API (importLibrary is the modern entry).
+  const mapsApi = window.google?.maps
+  if (mapsApi && typeof mapsApi.importLibrary === 'function') {
     return ensureCoreLibraries()
   }
 
@@ -41,7 +43,7 @@ export function loadGoogleMaps(apiKey: string): Promise<void> {
     }
 
     const callbackName = `__homejiMapsInit_${Date.now()}`
-    const w = window as Window & Record<string, unknown>
+    const w = window as unknown as Window & Record<string, unknown>
     w[callbackName] = () => {
       delete w[callbackName]
       resolve()
