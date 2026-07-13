@@ -5,22 +5,38 @@ import { MobileTabBar } from './MobileTabBar'
 import { Navbar } from './Navbar'
 import './footer.css'
 
-function useRouteViewTransition(pathname: string) {
+function useRouteViewTransition(pathname: string, enabled: boolean) {
   useEffect(() => {
+    if (!enabled) return
     if (typeof document === 'undefined') return
     const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => { finished: Promise<void> }
+      startViewTransition?: (cb: () => void) => {
+        finished: Promise<void>
+        skipTransition?: () => void
+      }
     }
     if (typeof doc.startViewTransition !== 'function') return
-    // Trigger a lightweight transition when the path changes (CSS handles visuals).
+
     try {
-      doc.startViewTransition(() => {
+      const transition = doc.startViewTransition(() => {
         /* React already committed; this just enables the VT snapshot. */
+      })
+      // Interrupted/skipped transitions reject with AbortError — catch the promise.
+      void transition.finished.catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        if (
+          err &&
+          typeof err === 'object' &&
+          'name' in err &&
+          (err as { name: string }).name === 'AbortError'
+        ) {
+          return
+        }
       })
     } catch {
       /* ignore unsupported / interrupted transitions */
     }
-  }, [pathname])
+  }, [pathname, enabled])
 }
 
 export function AppLayout() {
@@ -32,7 +48,8 @@ export function AppLayout() {
   const isAuthCinema =
     location.pathname === '/login' || location.pathname === '/register'
 
-  useRouteViewTransition(location.pathname)
+  // Map home: never run View Transitions — they abort on every map paint/interaction.
+  useRouteViewTransition(location.pathname, !isMapHome)
 
   return (
     <div

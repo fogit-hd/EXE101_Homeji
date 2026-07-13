@@ -11,7 +11,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'https://homeji-api.fly.dev',
+        target: 'https://homeji-be.onrender.com',
         changeOrigin: true,
         secure: true,
       },

@@ -10,7 +10,7 @@ import type { Payment } from '../api/types'
 import { formatDate, formatPrice, paymentMethodLabel, paymentStatusLabel } from '../lib/labels'
 import { getErrorMessage } from '../lib/errors'
 
-export function PaymentPage() {
+export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [searchParams] = useSearchParams()
   const [amount, setAmount] = useState('100000')
   const [description, setDescription] = useState('Thanh toán Homeji')
@@ -75,10 +75,13 @@ export function PaymentPage() {
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Thanh toán</h1>
-      <p className="page-subtitle">Thanh toán qua MoMo hoặc PayOS</p>
-
+    <div className={embedded ? 'map-embed' : 'container page'}>
+      {!embedded ? (
+        <>
+          <h1 className="page-title">Thanh toán</h1>
+          <p className="page-subtitle">Thanh toán qua MoMo hoặc PayOS</p>
+        </>
+      ) : null}
       {error && <div className="alert alert-error">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 

@@ -3,7 +3,7 @@ import { getSavedPosts, unsavePost, type RentalPostSummary } from '../api'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { RentalPostCard } from '../components/RentalPostCard'
 
-export function SavedPostsPage() {
+export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
 
   const loadFn = useCallback(async () => {
@@ -18,10 +18,13 @@ export function SavedPostsPage() {
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Tin đã lưu</h1>
-      <p className="page-subtitle">Danh sách phòng bạn quan tâm</p>
-
+    <div className={embedded ? 'map-embed' : 'container page'}>
+      {!embedded ? (
+        <>
+          <h1 className="page-title">Tin đã lưu</h1>
+          <p className="page-subtitle">Danh sách phòng bạn quan tâm</p>
+        </>
+      ) : null}
       {error && !disrupted && <div className="alert alert-error">{error}</div>}
 
       {showLoader ? (

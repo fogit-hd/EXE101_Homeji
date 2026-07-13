@@ -20,7 +20,7 @@ import {
   userRoleLabel,
 } from '../lib/labels'
 
-export function ProfilePage() {
+export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
   const { profile, refreshProfile, needsProfileSetup } = useAuth()
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
@@ -81,18 +81,27 @@ export function ProfilePage() {
   }
 
   if (showLoader) {
-    return <HomejiLoader fullPage label="Đang tải hồ sơ..." onIntroComplete={onIntroComplete} />
+    return (
+      <HomejiLoader
+        fullPage={!embedded}
+        label="Đang tải hồ sơ..."
+        onIntroComplete={onIntroComplete}
+      />
+    )
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Hồ sơ của tôi</h1>
-      <p className="page-subtitle">
-        {profile
-          ? `${userRoleLabel[profile.role]} · ${landlordVerificationLabel[profile.landlordVerificationStatus]}`
-          : 'Hoàn thiện thông tin để bắt đầu sử dụng Homeji'}
-      </p>
-
+    <div className={embedded ? 'map-embed' : 'container page'}>
+      {!embedded ? (
+        <>
+          <h1 className="page-title">Hồ sơ của tôi</h1>
+          <p className="page-subtitle">
+            {profile
+              ? `${userRoleLabel[profile.role]} · ${landlordVerificationLabel[profile.landlordVerificationStatus]}`
+              : 'Hoàn thiện thông tin để bắt đầu sử dụng Homeji'}
+          </p>
+        </>
+      ) : null}
       {error && <div className="alert alert-error">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 

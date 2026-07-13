@@ -12,7 +12,7 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
 
-export function RoommateInvitationsPage() {
+export function RoommateInvitationsPage({ embedded = false }: { embedded?: boolean }) {
   const { profile } = useAuth()
   const [invitations, setInvitations] = useState<RoommateInvitation[]>([])
 
@@ -27,10 +27,13 @@ export function RoommateInvitationsPage() {
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Lời mời ở ghép</h1>
-      <p className="page-subtitle">Quản lý lời mời gửi và nhận</p>
-
+    <div className={embedded ? 'map-embed' : 'container page'}>
+      {!embedded ? (
+        <>
+          <h1 className="page-title">Lời mời ở ghép</h1>
+          <p className="page-subtitle">Quản lý lời mời gửi và nhận</p>
+        </>
+      ) : null}
       {error && !disrupted && <div className="alert alert-error">{error}</div>}
 
       {showLoader ? (

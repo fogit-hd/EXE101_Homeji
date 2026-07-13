@@ -11,9 +11,10 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const isGuestLanding = !isAuthenticated && location.pathname === '/'
+  const isMapHome = isAuthenticated && location.pathname === '/'
 
-  // Guest landing: no global top bar — logo lives inside the hero and scrolls away
-  if (isGuestLanding) return null
+  // Guest landing + map home: chrome lives in page / omnibox hamburger
+  if (isGuestLanding || isMapHome) return null
 
   const handleLogout = () => {
     setMenuOpen(false)
@@ -37,7 +38,7 @@ export function Navbar() {
         </Link>
 
         <nav className="navbar-links navbar-links--desktop">
-          <NavLink to="/" end>
+          <NavLink to={isAuthenticated ? '/' : '/explore'} end={isAuthenticated}>
             Tìm phòng
           </NavLink>
           {isAuthenticated && (
@@ -137,6 +138,9 @@ export function Navbar() {
                 </>
               ) : (
                 <>
+                  <NavLink to="/explore" onClick={closeMenu}>
+                    Tìm phòng
+                  </NavLink>
                   <Link to="/login" className="btn btn-ghost" onClick={closeMenu}>
                     Đăng nhập
                   </Link>

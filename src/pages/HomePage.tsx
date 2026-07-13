@@ -1,204 +1,105 @@
-import { useMapsLibrary } from '@vis.gl/react-google-maps'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { searchRentalPosts, type RentalPostSummary } from '../api'
 import { HomejiLoader, SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
-import { MapListingCard } from '../components/MapListingCard'
-import { RentalMap } from '../components/map/RentalMap'
+import { AuthenticatedHomeMapShell } from '../components/map/AuthenticatedHomeMapShell'
+import type { HomeMapFocus } from '../components/map/HomeMapStage'
+import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
+import type { MapAppSection } from '../components/map/MapAppPanel'
 import { useAuth } from '../contexts/AuthContext'
 import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
+import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
 import { AMENITY_OPTIONS } from '../lib/labels'
 import { GuestChrome } from '../components/landing/GuestChrome'
 import { GuestHero } from '../components/landing/GuestHero'
+import { GuestMapSection } from '../components/landing/GuestMapSection'
 import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
 import { MissionConfetti } from '../components/landing/MissionConfetti'
+import {
+  GUEST_DEFAULT_FOCUS,
+  GUEST_DISTRICTS,
+  GUEST_WARDS,
+  buildGuestSearchKeyword,
+  wardsForDistrict,
+} from '../components/landing/guestMapAreas'
+import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
+import '../components/map/MapMotion.css'
 import './HomePage.css'
 
-type AreaSuggestion = {
-  id: string
-  label: string
-  subtitle?: string
-  keyword: string
-  lat?: number
-  lng?: number
-  placeId?: string
-}
+const AMENITY_OPTIONS_LIST = [...AMENITY_OPTIONS]
 
-/** Chỉ mount khi có API key + APIProvider — tránh crash useMapsLibrary. */
-function usePlacePredictions(keyword: string, enabled: boolean): AreaSuggestion[] {
-  const placesLib = useMapsLibrary('places')
-  const [placeSuggestions, setPlaceSuggestions] = useState<AreaSuggestion[]>([])
-
-  useEffect(() => {
-    const q = keyword.trim()
-    if (!enabled || !q || q.length < 2 || !placesLib) {
-      setPlaceSuggestions([])
-      return
-    }
-
-    let cancelled = false
-    const t = window.setTimeout(() => {
-      const service = new placesLib.AutocompleteService()
-      service.getPlacePredictions(
-        {
-          input: q,
-          componentRestrictions: { country: 'vn' },
-          types: ['geocode', 'establishment'],
-        },
-        (predictions, status) => {
-          if (cancelled) return
-          if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
-            setPlaceSuggestions([])
-            return
-          }
-          setPlaceSuggestions(
-            predictions.slice(0, 5).map((p) => ({
-              id: `place:${p.place_id}`,
-              placeId: p.place_id,
-              label: p.structured_formatting?.main_text ?? p.description,
-              subtitle: p.structured_formatting?.secondary_text,
-              keyword: p.structured_formatting?.main_text ?? p.description,
-            })),
-          )
-        },
-      )
-    }, 220)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(t)
-    }
-  }, [keyword, placesLib, enabled])
-
-  return placeSuggestions
-}
-
-function PlacePredictionsBridge({
-  keyword,
-  onResults,
-}: {
-  keyword: string
-  onResults: (items: AreaSuggestion[]) => void
-}) {
-  const items = usePlacePredictions(keyword, true)
-  useEffect(() => {
-    onResults(items)
-  }, [items, onResults])
-  return null
-}
-
-/** Gợi ý khu vực Thủ Đức / Q.9 — hiện ngay dưới ô tìm kiếm khi gõ. */
-const AREA_SUGGESTIONS: AreaSuggestion[] = [
-  {
-    id: 'lang-dh',
-    label: 'Làng Đại học',
-    subtitle: 'Thủ Đức',
-    keyword: 'Làng Đại học',
-    lat: 10.8701,
-    lng: 106.803,
-  },
-  {
-    id: 'uit',
-    label: 'Đại học Công nghệ Thông tin',
-    subtitle: 'UIT · Thủ Đức',
-    keyword: 'UIT',
-    lat: 10.8701,
-    lng: 106.803,
-  },
-  {
-    id: 'bk',
-    label: 'Đại học Bách Khoa',
-    subtitle: 'CS2 · Thủ Đức',
-    keyword: 'Bách Khoa',
-    lat: 10.8413,
-    lng: 106.8099,
-  },
-  {
-    id: 'vincom',
-    label: 'Vincom Mega Mall Grand Park',
-    subtitle: 'Q.9 · Thủ Đức',
-    keyword: 'Vincom Grand Park',
-    lat: 10.8431,
-    lng: 106.8435,
-  },
-  {
-    id: 'suoi-tien',
-    label: 'Suối Tiên',
-    subtitle: 'Thủ Đức',
-    keyword: 'Suối Tiên',
-    lat: 10.866,
-    lng: 106.805,
-  },
-  {
-    id: 'vlu',
-    label: 'Đại học Văn Lang',
-    subtitle: 'CS3 · Thủ Đức',
-    keyword: 'Văn Lang',
-    lat: 10.855,
-    lng: 106.786,
-  },
-  {
-    id: 'q9',
-    label: 'Quận 9',
-    subtitle: 'Thủ Đức',
-    keyword: 'Quận 9',
-    lat: 10.842,
-    lng: 106.828,
-  },
-  {
-    id: 'thu-duc',
-    label: 'Thủ Đức',
-    subtitle: 'TP. Hồ Chí Minh',
-    keyword: 'Thủ Đức',
-    lat: 10.8505,
-    lng: 106.772,
-  },
-]
-
-function matchLocalSuggestions(query: string): AreaSuggestion[] {
-  const q = query.trim().toLowerCase()
-  if (!q) return AREA_SUGGESTIONS.slice(0, 5)
-  return AREA_SUGGESTIONS.filter(
-    (s) =>
-      s.label.toLowerCase().includes(q) ||
-      s.keyword.toLowerCase().includes(q) ||
-      (s.subtitle?.toLowerCase().includes(q) ?? false),
-  ).slice(0, 6)
-}
-
-export function HomePage() {
+/**
+ * Camera focus lives in a ref — updating .current does not re-render HomePage.
+ * Only bumping mapFocusToken (intentional fly-to) notifies the memoized map.
+ */
+function HomePageComponent() {
   const { isAuthenticated, isLoading, needsProfileSetup } = useAuth()
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
+  const mapsReady = Boolean(apiKey && mapsLoaded)
+  const { schools, loading: schoolsLoading } = useNearbyGuestSchools(mapsReady && isAuthenticated)
+
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [disrupted, setDisrupted] = useState(false)
-  const [keyword, setKeyword] = useState('')
+  const [districtId, setDistrictId] = useState(GUEST_DISTRICTS[0].id)
+  const [wardId, setWardId] = useState('')
+  const [schoolId, setSchoolId] = useState('')
+  const [keyword, setKeyword] = useState(
+    buildGuestSearchKeyword({ districtKeyword: GUEST_DISTRICTS[0].keyword }),
+  )
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
-  const [searchExpanded, setSearchExpanded] = useState(false)
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [placeSuggestions, setPlaceSuggestions] = useState<AreaSuggestion[]>([])
-  const [mapFocus, setMapFocus] = useState<{ lat: number; lng: number; zoom?: number } | null>(
-    null,
+  const [panelSection, setPanelSection] = useState<MapAppSection | null>(null)
+  const [searchQuery, setSearchQuery] = useState(GUEST_DISTRICTS[0].label)
+  const panelOpen = panelSection !== null
+  const openListingsPanel = useCallback(() => setPanelSection('listings'), [])
+  const closePanel = useCallback(() => setPanelSection(null), [])
+  const openAppSection = useCallback((section: MapAppSection) => {
+    setPanelSection(section)
+  }, [])
+
+  const mapFocusRef = useRef<HomeMapFocus | null>({ ...GUEST_DEFAULT_FOCUS })
+  const [mapFocusToken, setMapFocusToken] = useState(0)
+  const mapFocus = useMemo(
+    () => (mapFocusRef.current ? { ...mapFocusRef.current } : null),
+    [mapFocusToken],
   )
-  const listRef = useRef<HTMLDivElement>(null)
-  const searchWrapRef = useRef<HTMLDivElement>(null)
+
+  const commitMapFocus = useCallback((focus: HomeMapFocus) => {
+    mapFocusRef.current = { ...focus }
+    setMapFocusToken((n) => n + 1)
+  }, [])
+
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locating, setLocating] = useState(false)
+  const [locationError, setLocationError] = useState('')
   const disruptedRef = useRef(false)
+  const locateRequestRef = useRef(0)
+  const userLocationRef = useRef(userLocation)
+  userLocationRef.current = userLocation
   disruptedRef.current = disrupted
   const filtersRef = useRef({ keyword, minPrice, maxPrice, selectedAmenities })
   filtersRef.current = { keyword, minPrice, maxPrice, selectedAmenities }
   const authGate = useHomejiLoading(isLoading)
-  const postsGate = useHomejiLoading(loading, disrupted)
-  const placesEnabled = Boolean(apiKey && mapsLoaded)
+  const { showLoader: showPostsLoader, onIntroComplete: onPostsIntroComplete } = useHomejiLoading(
+    loading,
+    disrupted,
+  )
 
-  const onPlaceResults = useCallback((items: AreaSuggestion[]) => {
-    setPlaceSuggestions(items)
-  }, [])
+  const wards = useMemo(() => wardsForDistrict(districtId), [districtId])
+  const district = GUEST_DISTRICTS.find((d) => d.id === districtId) ?? GUEST_DISTRICTS[0]
+  const ward = wards.find((w) => w.id === wardId)
+  const school = schools.find((s) => s.id === schoolId)
+
+  const filterSummary = school?.label || ward?.label || district.label
+
+  useEffect(() => {
+    onPostsIntroComplete()
+  }, [loading, disrupted, onPostsIntroComplete])
 
   const loadPosts = useCallback(async () => {
     if (!disruptedRef.current) setLoading(true)
@@ -207,7 +108,7 @@ export function HomePage() {
       filtersRef.current
     try {
       const data = await searchRentalPosts({
-        keyword: kw || undefined,
+        keyword: kw.trim() || 'Thủ Đức',
         minPrice: minP ? Number(minP) : undefined,
         maxPrice: maxP ? Number(maxP) : undefined,
         amenities: am.length ? am : undefined,
@@ -243,7 +144,7 @@ export function HomePage() {
     return () => window.clearInterval(t)
   }, [isAuthenticated, disrupted, loadPosts])
 
-  // Chip amenity → auto search (debounce)
+  // Chip amenity → auto search (debounce ~350ms)
   const amenitiesKey = selectedAmenities.slice().sort().join('|')
   const skipAmenitySearch = useRef(true)
   useEffect(() => {
@@ -257,71 +158,263 @@ export function HomePage() {
   }, [amenitiesKey, isAuthenticated, isLoading, loadPosts])
 
   useEffect(() => {
-    if (!placesEnabled) setPlaceSuggestions([])
-  }, [placesEnabled])
-
-  useEffect(() => {
-    const onPointer = (e: MouseEvent) => {
-      if (!searchWrapRef.current?.contains(e.target as Node)) {
-        setSearchFocused(false)
-      }
+    if (!selectedPostId) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedPostId(null)
     }
-    document.addEventListener('mousedown', onPointer)
-    return () => document.removeEventListener('mousedown', onPointer)
-  }, [])
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedPostId])
 
-  const localSuggestions = useMemo(() => matchLocalSuggestions(keyword), [keyword])
+  const selectedPost = useMemo(
+    () => posts.find((p) => p.id === selectedPostId) ?? null,
+    [posts, selectedPostId],
+  )
 
-  const suggestions = useMemo(() => {
-    const seen = new Set<string>()
-    const merged: AreaSuggestion[] = []
-    for (const s of [...localSuggestions, ...placeSuggestions]) {
-      const key = s.label.toLowerCase()
-      if (seen.has(key)) continue
-      seen.add(key)
-      merged.push(s)
-      if (merged.length >= 7) break
-    }
-    return merged
-  }, [localSuggestions, placeSuggestions])
-
-  const showSuggestions = searchFocused && suggestions.length > 0
-
-  const toggleAmenity = (amenity: string) => {
+  const toggleAmenity = useCallback((amenity: string) => {
     setSelectedAmenities((prev) =>
       prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity],
     )
-  }
+  }, [])
 
-  const handleSelectPost = (postId: string) => {
+  const applyAreaFilters = useCallback(
+    (next: { districtId?: string; wardId?: string; schoolId?: string }) => {
+      const nextDistrictId = next.districtId ?? districtId
+      const nextWardId = next.wardId ?? wardId
+      const nextSchoolId = next.schoolId ?? schoolId
+
+      const nextDistrict =
+        GUEST_DISTRICTS.find((d) => d.id === nextDistrictId) ?? GUEST_DISTRICTS[0]
+      const nextWards = wardsForDistrict(nextDistrictId)
+      const nextWard = nextWards.find((w) => w.id === nextWardId)
+      const nextSchool = schools.find((s) => s.id === nextSchoolId)
+
+      const nextKeyword = buildGuestSearchKeyword({
+        schoolKeyword: nextSchool?.keyword,
+        wardKeyword: nextWard?.keyword,
+        districtKeyword: nextDistrict.keyword,
+      })
+      const focus =
+        nextSchool?.focus ?? nextWard?.focus ?? nextDistrict.focus ?? GUEST_DEFAULT_FOCUS
+
+      setKeyword(nextKeyword)
+      commitMapFocus({ ...focus })
+      setSearchQuery(nextSchool?.label || nextWard?.label || nextDistrict.label)
+      setSelectedPostId(null)
+      filtersRef.current = {
+        ...filtersRef.current,
+        keyword: nextKeyword,
+      }
+      openListingsPanel()
+      void loadPosts()
+    },
+    [districtId, wardId, schoolId, schools, loadPosts, openListingsPanel, commitMapFocus],
+  )
+
+  const handleSelectPost = useCallback((postId: string) => {
     setSelectedPostId(postId)
-    const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }
+    setMapFocusToken((n) => n + 1)
+  }, [])
 
-  const applySuggestion = (s: AreaSuggestion) => {
-    setKeyword(s.keyword)
-    setSearchFocused(false)
-    setSearchExpanded(false)
-    if (s.lat != null && s.lng != null) {
-      setMapFocus({ lat: s.lat, lng: s.lng, zoom: 15 })
-    } else if (s.placeId && placesEnabled && typeof google !== 'undefined') {
-      const div = document.createElement('div')
-      const svc = new google.maps.places.PlacesService(div)
-      svc.getDetails(
-        { placeId: s.placeId, fields: ['geometry', 'name', 'formatted_address'] },
-        (place) => {
-          const loc = place?.geometry?.location
-          if (loc) setMapFocus({ lat: loc.lat(), lng: loc.lng(), zoom: 15 })
-        },
-      )
-    }
+  const handleOmniboxPick = useCallback(
+    (item: MapOmniboxSuggestion) => {
+      if (item.kind === 'post' && item.postId) {
+        setSearchQuery(item.title)
+        if (item.focus) commitMapFocus({ ...item.focus })
+        handleSelectPost(item.postId)
+        return
+      }
+      if (item.kind === 'district' && item.districtId) {
+        setDistrictId(item.districtId)
+        setWardId('')
+        setSchoolId('')
+        applyAreaFilters({ districtId: item.districtId, wardId: '', schoolId: '' })
+        return
+      }
+      if (item.kind === 'ward' && item.wardId) {
+        const ward = GUEST_WARDS.find((w) => w.id === item.wardId)
+        const nextDistrict = item.districtId || ward?.districtId || districtId
+        setDistrictId(nextDistrict)
+        setWardId(item.wardId)
+        setSchoolId('')
+        applyAreaFilters({
+          districtId: nextDistrict,
+          wardId: item.wardId,
+          schoolId: '',
+        })
+        return
+      }
+      if (item.kind === 'school' && item.schoolId) {
+        setSchoolId(item.schoolId)
+        applyAreaFilters({ schoolId: item.schoolId })
+        return
+      }
+      const nextKeyword = item.keyword.trim() || 'Thủ Đức'
+      setKeyword(nextKeyword)
+      setSearchQuery(item.title)
+      if (item.focus) commitMapFocus({ ...item.focus })
+      filtersRef.current = { ...filtersRef.current, keyword: nextKeyword }
+      setSelectedPostId(null)
+      openListingsPanel()
+      void loadPosts()
+    },
+    [applyAreaFilters, districtId, loadPosts, handleSelectPost, openListingsPanel, commitMapFocus],
+  )
+
+  const handleOmniboxSearch = useCallback(
+    (raw: string) => {
+      const nextKeyword = raw.trim() || 'Thủ Đức'
+      setKeyword(nextKeyword)
+      setSearchQuery(raw.trim())
+      filtersRef.current = { ...filtersRef.current, keyword: nextKeyword }
+      setSelectedPostId(null)
+      openListingsPanel()
+      void loadPosts()
+    },
+    [loadPosts, openListingsPanel],
+  )
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedPostId((prev) => (prev == null ? prev : null))
+  }, [])
+
+  const handleDetailLabelChange = useCallback((label: string | null) => {
+    if (label) setSearchQuery(label)
+  }, [])
+
+  const handleSearchQueryChange = useCallback(
+    (value: string) => {
+      setSearchQuery(value)
+      if (!value.trim()) handleClearSelection()
+    },
+    [handleClearSelection],
+  )
+
+  const handleApplyPrice = useCallback(() => {
     filtersRef.current = {
       ...filtersRef.current,
-      keyword: s.keyword,
+      minPrice,
+      maxPrice,
+    }
+    setSelectedPostId(null)
+    openListingsPanel()
+    void loadPosts()
+  }, [minPrice, maxPrice, loadPosts, openListingsPanel])
+
+  const locateMe = useCallback(() => {
+    const requestId = ++locateRequestRef.current
+    setLocating(true)
+    setLocationError('')
+
+    void (async () => {
+      try {
+        const loc = await getDeviceLocation()
+        if (requestId !== locateRequestRef.current) return
+        const next = { lat: loc.lat, lng: loc.lng }
+        setUserLocation(next)
+        commitMapFocus({ ...next, zoom: 15 })
+        setSelectedPostId(null)
+        setLocationError('')
+      } catch (err) {
+        if (requestId !== locateRequestRef.current) return
+        const prev = userLocationRef.current
+        if (prev) {
+          commitMapFocus({ ...prev, zoom: 15 })
+          setLocationError('')
+        } else {
+          setLocationError(
+            err instanceof DeviceLocationError
+              ? err.message
+              : 'Không thể lấy vị trí hiện tại.',
+          )
+        }
+      } finally {
+        if (requestId === locateRequestRef.current) setLocating(false)
+      }
+    })()
+  }, [commitMapFocus])
+
+  const resetFilters = useCallback(() => {
+    const nextKeyword = buildGuestSearchKeyword({
+      districtKeyword: GUEST_DISTRICTS[0].keyword,
+    })
+    setDistrictId(GUEST_DISTRICTS[0].id)
+    setWardId('')
+    setSchoolId('')
+    setKeyword(nextKeyword)
+    setMinPrice('')
+    setMaxPrice('')
+    setSelectedAmenities([])
+    setSearchQuery(GUEST_DISTRICTS[0].label)
+    commitMapFocus({ ...GUEST_DEFAULT_FOCUS })
+    setSelectedPostId(null)
+    filtersRef.current = {
+      keyword: nextKeyword,
+      minPrice: '',
+      maxPrice: '',
+      selectedAmenities: [],
     }
     void loadPosts()
-  }
+  }, [loadPosts, commitMapFocus])
+
+  useEffect(() => {
+    if (!panelOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePanel()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [panelOpen, closePanel])
+
+  const omnibox = useMemo(
+    () => (
+      <MapOmnibox
+        query={searchQuery}
+        onQueryChange={handleSearchQueryChange}
+        onSearch={handleOmniboxSearch}
+        onPickSuggestion={handleOmniboxPick}
+        posts={posts}
+        schools={schools}
+        schoolsLoading={schoolsLoading}
+        districtId={districtId}
+        wardId={wardId}
+        schoolId={schoolId}
+        filterLabel={filterSummary}
+        amenities={AMENITY_OPTIONS_LIST}
+        selectedAmenities={selectedAmenities}
+        onToggleAmenity={toggleAmenity}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        onMinPriceChange={setMinPrice}
+        onMaxPriceChange={setMaxPrice}
+        onApplyPrice={handleApplyPrice}
+        onReset={resetFilters}
+        onOpenSection={openAppSection}
+        activeSection={panelSection}
+      />
+    ),
+    [
+      searchQuery,
+      handleSearchQueryChange,
+      handleOmniboxSearch,
+      handleOmniboxPick,
+      posts,
+      schools,
+      schoolsLoading,
+      districtId,
+      wardId,
+      schoolId,
+      filterSummary,
+      selectedAmenities,
+      toggleAmenity,
+      minPrice,
+      maxPrice,
+      handleApplyPrice,
+      resetFilters,
+      openAppSection,
+      panelSection,
+    ],
+  )
 
   if (authGate.showLoader) {
     return <HomejiLoader fullPage onIntroComplete={authGate.onIntroComplete} />
@@ -443,181 +536,38 @@ export function HomePage() {
             </li>
           </ul>
         </section>
+
+        <GuestMapSection />
       </div>
     )
   }
 
   return (
-    <div className="home-map-page">
-      {placesEnabled && (
-        <PlacePredictionsBridge keyword={keyword} onResults={onPlaceResults} />
-      )}
-      <section className="home-map-panel">
-        <RentalMap
-          posts={posts}
-          selectedPostId={selectedPostId}
-          onSelectPost={handleSelectPost}
-          onClearSelection={() => setSelectedPostId(null)}
-          focus={mapFocus}
-        />
-
-        <div className={`home-map-overlay${searchExpanded ? ' is-expanded' : ''}`}>
-          <button
-            type="button"
-            className="home-map-search-toggle"
-            aria-expanded={searchExpanded}
-            onClick={() => setSearchExpanded((v) => !v)}
-          >
-            <span aria-hidden>⌕</span>
-            <span className="home-map-search-toggle-text">
-              {keyword || 'Tìm khu vực, giá, tiện ích…'}
-            </span>
-            <span className="home-map-search-toggle-chevron" aria-hidden>
-              {searchExpanded ? '▴' : '▾'}
-            </span>
-          </button>
-
-          <form
-            className="home-map-search"
-            onSubmit={(e) => {
-              e.preventDefault()
-              setSearchFocused(false)
-              void loadPosts()
-              setSearchExpanded(false)
-            }}
-          >
-            <div className="home-map-search-field home-map-search-field-grow" ref={searchWrapRef}>
-              <span className="home-map-search-icon" aria-hidden>
-                ⌕
-              </span>
-              <input
-                className="home-map-search-input"
-                placeholder="Tìm kiếm khu vực (ví dụ: Làng Đại học)..."
-                value={keyword}
-                onChange={(e) => {
-                  setKeyword(e.target.value)
-                  setSearchFocused(true)
-                }}
-                onFocus={() => setSearchFocused(true)}
-                autoComplete="off"
-                role="combobox"
-                aria-expanded={showSuggestions}
-                aria-controls="home-search-suggestions"
-                aria-autocomplete="list"
-              />
-              {showSuggestions && (
-                <ul
-                  id="home-search-suggestions"
-                  className="home-search-suggestions"
-                  role="listbox"
-                >
-                  {suggestions.map((s) => (
-                    <li key={s.id} role="option">
-                      <button
-                        type="button"
-                        className="home-search-suggestion"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applySuggestion(s)}
-                      >
-                        <span className="home-search-suggestion-label">{s.label}</span>
-                        {s.subtitle && (
-                          <span className="home-search-suggestion-sub">{s.subtitle}</span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="home-map-search-field">
-              <span className="home-map-search-label">Giá tối thiểu</span>
-              <input
-                className="home-map-search-input home-map-search-input-sm"
-                type="number"
-                placeholder="VND"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-              />
-            </div>
-            <div className="home-map-search-field">
-              <span className="home-map-search-label">Giá tối đa</span>
-              <input
-                className="home-map-search-input home-map-search-input-sm"
-                type="number"
-                placeholder="VND"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary btn-sm">
-              Tìm
-            </button>
-          </form>
-
-          <div className="home-map-chips">
-            {AMENITY_OPTIONS.slice(0, 6).map((amenity) => (
-              <button
-                key={amenity}
-                type="button"
-                className={`amenity-chip ${selectedAmenities.includes(amenity) ? 'active' : ''}`}
-                onClick={() => toggleAmenity(amenity)}
-              >
-                {amenity}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {needsProfileSetup && (
-          <div className="home-map-banner">
-            Chào mừng! <Link to="/profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
-          </div>
-        )}
-      </section>
-
-      <aside className="home-list-panel">
-        <div className="home-list-header">
-          <h1>Khu vực Thủ Đức & Q.9</h1>
-          <p>
-            {loading
-              ? 'Đang tải tin đăng...'
-              : `${posts.length} phòng phù hợp dành cho sinh viên`}
-          </p>
-        </div>
-
-        <div className="home-list-body" ref={listRef}>
-          {error && !disrupted && <div className="alert alert-error">{error}</div>}
-
-          {postsGate.showLoader ? (
-            <HomejiLoader
-              label="Đang tải tin đăng..."
-              message={disrupted ? error : undefined}
-              onIntroComplete={postsGate.onIntroComplete}
-            />
-          ) : posts.length === 0 ? (
-            <p className="home-list-empty-hint">
-              Chưa có tin phù hợp — thử gõ khu vực trên thanh tìm kiếm bản đồ.
-            </p>
-          ) : (
-            posts.map((post, index) => (
-              <div key={post.id} data-post-id={post.id}>
-                <MapListingCard
-                  post={post}
-                  active={selectedPostId === post.id}
-                  staggerIndex={index}
-                  onHover={() => setSelectedPostId(post.id)}
-                  onLeave={() => {
-                    if (window.matchMedia('(hover: hover)').matches) {
-                      setSelectedPostId(null)
-                    }
-                  }}
-                  onSelect={() => handleSelectPost(post.id)}
-                />
-              </div>
-            ))
-          )}
-        </div>
-      </aside>
-    </div>
+    <AuthenticatedHomeMapShell
+      posts={posts}
+      selectedPostId={selectedPostId}
+      selectedPost={selectedPost}
+      onSelectPost={handleSelectPost}
+      onClearSelection={handleClearSelection}
+      focus={mapFocus}
+      focusToken={mapFocusToken}
+      userLocation={userLocation}
+      onLocate={locateMe}
+      locating={locating}
+      locationError={locationError}
+      panelOpen={panelOpen}
+      panelSection={panelSection}
+      closePanel={closePanel}
+      openListingsPanel={openListingsPanel}
+      loading={loading}
+      showPostsLoader={showPostsLoader}
+      error={error}
+      onResetFilters={resetFilters}
+      needsProfileSetup={needsProfileSetup}
+      omnibox={omnibox}
+      onDetailLabelChange={handleDetailLabelChange}
+    />
   )
 }
+
+export const HomePage = memo(HomePageComponent)

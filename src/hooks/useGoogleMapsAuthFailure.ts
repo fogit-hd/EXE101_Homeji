@@ -11,6 +11,11 @@ const MAP_ERROR_PATTERNS = [
   /REQUEST_DENIED/i,
 ]
 
+/** Ignore known non-auth Maps warnings so they don't trip auth UI. */
+const MAP_IGNORE_PATTERNS = [
+  /Attempted to load a Vector Map, but failed/i,
+]
+
 function extractMapsReason(text: string): string {
   const code =
     text.match(
@@ -40,6 +45,10 @@ export function useGoogleMapsAuthFailure() {
     const origError = console.error.bind(console)
     console.error = (...args: unknown[]) => {
       const text = args.map(String).join(' ')
+      if (MAP_IGNORE_PATTERNS.some((p) => p.test(text))) {
+        origError(...args)
+        return
+      }
       if (MAP_ERROR_PATTERNS.some((p) => p.test(text))) {
         setAuthFailed(true)
         setReason((r) => r ?? extractMapsReason(text))

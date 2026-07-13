@@ -745,10 +745,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     try {
       const result = await checkEmail({ email: value })
       if (isEmailTaken(result)) {
-        setError(
-          result.message?.trim() ||
-            'Email này đã được dùng rồi — thử email khác nhé.',
-        )
+        setError('Email này đã được dùng rồi — thử email khác nhé.')
         return false
       }
       setError('')

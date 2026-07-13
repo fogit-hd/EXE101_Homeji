@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { memo } from 'react'
 import type { RentalPostSummary } from '../api/types'
 import { formatPrice, rentalPostTypeLabel } from '../lib/labels'
 import './MapListingCard.css'
@@ -6,23 +6,51 @@ import './MapListingCard.css'
 type Props = {
   post: RentalPostSummary
   active?: boolean
+  highlighted?: boolean
   staggerIndex?: number
   onHover?: () => void
   onLeave?: () => void
   onSelect?: () => void
 }
 
-export function MapListingCard({
+/** Keep the lead phrase before marketing fluff (dash / pipe). */
+export function shortListingTitle(title: string, max = 36) {
+  const lead = title.split(/\s*[-–—|·]\s*/)[0]?.trim() || title.trim()
+  if (lead.length <= max) return lead
+  return `${lead.slice(0, max - 1).trimEnd()}…`
+}
+
+/** Street + ward only — drop city / province tails. */
+export function shortListingAddress(address: string) {
+  const parts = address
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
+  if (parts.length <= 2) return address
+  return parts.slice(0, 2).join(', ')
+}
+
+export const MapListingCard = memo(function MapListingCard({
   post,
   active,
+  highlighted,
   staggerIndex = 0,
   onHover,
   onLeave,
   onSelect,
 }: Props) {
+  const title = shortListingTitle(post.title || 'Tin đăng')
+  const address = shortListingAddress(post.address || 'Chưa có địa chỉ')
+
   return (
     <article
-      className={`map-listing-card ${active ? 'active' : ''}`}
+      className={[
+        'map-listing-card',
+        active ? 'is-active' : '',
+        highlighted ? 'is-highlighted' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={{ ['--stagger' as string]: staggerIndex }}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
@@ -36,10 +64,11 @@ export function MapListingCard({
       role="button"
       tabIndex={0}
       aria-pressed={active}
+      aria-label={`${title}, ${formatPrice(post.price)}/tháng`}
     >
       <div className="map-listing-card-image">
         {post.thumbnailPath ? (
-          <img src={post.thumbnailPath} alt={post.title} />
+          <img src={post.thumbnailPath} alt="" />
         ) : (
           <div className="map-listing-card-placeholder">Chưa có ảnh</div>
         )}
@@ -50,16 +79,9 @@ export function MapListingCard({
           <span className="map-listing-tag">{rentalPostTypeLabel[post.type]}</span>
           <span>{post.area} m²</span>
         </div>
-        <h3>{post.title || 'Tin đăng mới'}</h3>
-        <p className="map-listing-address">{post.address || 'Chưa có địa chỉ'}</p>
-        <Link
-          to={`/posts/${post.id}`}
-          className="map-listing-link"
-          onClick={(e) => e.stopPropagation()}
-        >
-          Xem chi tiết →
-        </Link>
+        <h3>{title}</h3>
+        <p className="map-listing-address">{address}</p>
       </div>
     </article>
   )
-}
+})

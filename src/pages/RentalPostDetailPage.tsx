@@ -14,6 +14,7 @@ import {
 import { ReportTargetType, RentalPostType, UserRole } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { getErrorMessage } from '../lib/errors'
 import {
   formatDate,
@@ -24,7 +25,8 @@ import {
 
 export function RentalPostDetailPage() {
   const { postId } = useParams<{ postId: string }>()
-  const { profile } = useAuth()
+  const { profile, isAuthenticated } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const navigate = useNavigate()
 
   const [post, setPost] = useState<RentalPost | null>(null)
@@ -38,23 +40,36 @@ export function RentalPostDetailPage() {
 
   const loadFn = useCallback(async () => {
     if (!postId) return
-    const [detail, saved] = await Promise.all([
-      getRentalPost(postId),
-      getSavedPosts().catch(() => []),
-    ])
+    const detail = await getRentalPost(postId, { auth: isAuthenticated })
     setPost(detail)
+
+    if (!isAuthenticated) {
+      setSavedIds(new Set())
+      setCandidates([])
+      return
+    }
+
+    const saved = await getSavedPosts().catch(() => [])
     setSavedIds(new Set(saved.map((s) => s.id)))
     if (detail.type === RentalPostType.RoommateShare) {
       const list = await getRoommateCandidates(postId).catch(() => [])
       setCandidates(list)
     }
-  }, [postId])
+  }, [postId, isAuthenticated])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted } = usePersistentLoad(
     loadFn,
-    [postId],
+    [postId, isAuthenticated],
     { enabled: !!postId },
   )
+
+  const requireAuth = (intent: 'contact' | 'save' | 'invite' | 'report', onSuccess: () => void) => {
+    if (isAuthenticated) {
+      onSuccess()
+      return
+    }
+    openAuthModal({ mode: 'login', intent, onSuccess })
+  }
 
   const toggleSave = async () => {
     if (!postId) return
@@ -69,10 +84,28 @@ export function RentalPostDetailPage() {
       } else {
         await savePost(postId)
         setSavedIds((prev) => new Set(prev).add(postId))
+        setMessage('Đã lưu tin.')
       }
     } catch (err) {
       setError(getErrorMessage(err, 'Thao tác lưu tin thất bại'))
     }
+  }
+
+  const handleContact = () => {
+    requireAuth('contact', () => {
+      setMessage('Đã sẵn sàng liên hệ. Chat trực tiếp sẽ sớm có — bạn có thể lưu tin để theo dõi.')
+      document.getElementById('detail-contact')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+
+  const handleSaveClick = () => {
+    requireAuth('save', () => {
+      void toggleSave()
+    })
+  }
+
+  const handleReportOpen = () => {
+    requireAuth('report', () => setShowReport(true))
   }
 
   const handleReport = async (e: React.FormEvent) => {
@@ -134,16 +167,21 @@ export function RentalPostDetailPage() {
         </div>
         <div className="detail-actions">
           {!isOwner && (
-            <button type="button" className="btn btn-primary" onClick={() => void toggleSave()}>
-              {savedIds.has(post.id) ? 'Đã lưu' : 'Lưu tin'}
-            </button>
+            <>
+              <button type="button" className="btn btn-primary" onClick={handleContact}>
+                Liên hệ chủ
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={handleSaveClick}>
+                {savedIds.has(post.id) ? 'Đã lưu' : 'Lưu tin'}
+              </button>
+            </>
           )}
           {isOwner && (
             <button type="button" className="btn btn-secondary" onClick={() => navigate(`/posts/${post.id}/edit`)}>
               Chỉnh sửa
             </button>
           )}
-          <button type="button" className="btn btn-ghost" onClick={() => setShowReport(true)}>
+          <button type="button" className="btn btn-ghost" onClick={handleReportOpen}>
             Báo cáo
           </button>
         </div>
@@ -188,6 +226,18 @@ export function RentalPostDetailPage() {
             <div><dt>Lượt lưu</dt><dd>{post.saveCount}</dd></div>
             <div><dt>Ngày đăng</dt><dd>{formatDate(post.createdAt)}</dd></div>
           </dl>
+          {!isOwner && (
+            <div id="detail-contact" className="detail-contact">
+              <button type="button" className="btn btn-primary" style={{ width: '100%' }} onClick={handleContact}>
+                Liên hệ chủ
+              </button>
+              <p className="detail-contact__hint">
+                {isAuthenticated
+                  ? 'Chat trực tiếp sẽ sớm có trên Homeji.'
+                  : 'Đăng nhập để liên hệ — bạn vẫn ở trang này sau khi đăng nhập.'}
+              </p>
+            </div>
+          )}
           {post.moderationReason && (
             <div className="alert alert-error">Lý do kiểm duyệt: {post.moderationReason}</div>
           )}
@@ -205,7 +255,15 @@ export function RentalPostDetailPage() {
                   <p>{c.school ?? '—'} · {c.preferredArea ?? '—'}</p>
                   <span className="badge badge-green">Độ phù hợp: {c.matchScore}%</span>
                 </div>
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => void inviteCandidate(c.userId)}>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() =>
+                    requireAuth('invite', () => {
+                      void inviteCandidate(c.userId)
+                    })
+                  }
+                >
                   Mời ở ghép
                 </button>
               </div>

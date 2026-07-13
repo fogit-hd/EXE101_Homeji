@@ -3,7 +3,7 @@ import { NetworkError } from '../lib/errors'
 
 /**
  * Dev: same-origin → Vite proxy.
- * Production (Render Web Service): same-origin → scripts/serve-prod.mjs proxy → Fly.
+ * Production (Render Web Service): same-origin → scripts/serve-prod.mjs proxy → Render API.
  * Chỉ set VITE_API_BASE_URL khi gọi API trực tiếp (cần CORS trên backend).
  */
 function resolveApiBase(): string {
@@ -122,8 +122,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
-  } catch (err) {
-    throw new NetworkError()
+  } catch {
+    // Wi‑Fi vẫn bật nhưng API/proxy chết ≠ mất mạng của user
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new NetworkError()
+    }
+    throw new ApiRequestError(0, {
+      detail: 'Không kết nối được máy chủ. Vui lòng thử lại sau.',
+    })
   }
 
   if (response.status === 204) {

@@ -15,8 +15,6 @@ type NetworkStatus = 'online' | 'offline' | 'reconnecting'
 type NetworkStatusContextValue = {
   status: NetworkStatus
   isOnline: boolean
-  /** Đăng ký callback chạy khi vừa có mạng lại (sau khi verify) */
-  onReconnect: (callback: () => void) => () => void
 }
 
 const NetworkStatusContext = createContext<NetworkStatusContextValue | null>(null)
@@ -24,32 +22,71 @@ const NetworkStatusContext = createContext<NetworkStatusContextValue | null>(nul
 const PROBE_INTERVAL_OFFLINE_MS = 2500
 const PROBE_INTERVAL_ONLINE_MS = 20000
 const RESTORED_BANNER_MS = 2800
+const OFFLINE_FAIL_THRESHOLD = 2
+
+/** Module-level listeners — useOnReconnect does NOT subscribe to status context. */
+const reconnectListeners = new Set<() => void>()
+
+function notifyReconnectListeners() {
+  reconnectListeners.forEach((cb) => {
+    try {
+      cb()
+    } catch (err) {
+      console.error('[network] reconnect callback failed', err)
+    }
+  })
+}
 
 async function probeConnectivity(signal?: AbortSignal): Promise<boolean> {
-  // 1) Browser báo offline → chắc chắn mất mạng
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return false
 
-  // 2) Probe nhẹ: favicon/same-origin (không phụ thuộc API)
+  const url = `${window.location.origin}/?_net=${Date.now()}`
   try {
     const controller = new AbortController()
-    const onAbort = () => controller.abort()
+    const onAbort = () => {
+      try {
+        controller.abort()
+      } catch {
+        /* ignore */
+      }
+    }
     signal?.addEventListener('abort', onAbort, { once: true })
-    const timeout = window.setTimeout(() => controller.abort(), 4000)
+    const timeout = window.setTimeout(() => {
+      try {
+        controller.abort()
+      } catch {
+        /* ignore */
+      }
+    }, 4000)
 
-    const res = await fetch(`${window.location.origin}/favicon.png?_net=${Date.now()}`, {
-      method: 'HEAD',
-      cache: 'no-store',
-      signal: controller.signal,
-    })
-    window.clearTimeout(timeout)
-    signal?.removeEventListener('abort', onAbort)
-    return res.ok || res.status === 404 || res.type === 'opaque'
+    try {
+      const res = await fetch(url, {
+        method: 'HEAD',
+        cache: 'no-store',
+        signal: controller.signal,
+      })
+      window.clearTimeout(timeout)
+      signal?.removeEventListener('abort', onAbort)
+      return res.type === 'opaque' || res.status > 0
+    } catch (err) {
+      window.clearTimeout(timeout)
+      signal?.removeEventListener('abort', onAbort)
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return typeof navigator !== 'undefined' ? navigator.onLine : false
+      }
+      throw err
+    }
   } catch {
-    // Fallback: thử no-cors ping tới origin
     try {
       const controller = new AbortController()
-      const timeout = window.setTimeout(() => controller.abort(), 4000)
-      await fetch(`${window.location.origin}/?_net=${Date.now()}`, {
+      const timeout = window.setTimeout(() => {
+        try {
+          controller.abort()
+        } catch {
+          /* ignore */
+        }
+      }, 4000)
+      await fetch(url, {
         method: 'GET',
         cache: 'no-store',
         mode: 'no-cors',
@@ -58,7 +95,7 @@ async function probeConnectivity(signal?: AbortSignal): Promise<boolean> {
       window.clearTimeout(timeout)
       return true
     } catch {
-      return false
+      return typeof navigator !== 'undefined' ? navigator.onLine : false
     }
   }
 }
@@ -68,32 +105,23 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
     typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'online',
   )
   const [showRestored, setShowRestored] = useState(false)
-  const listenersRef = useRef(new Set<() => void>())
   const statusRef = useRef(status)
   const probingRef = useRef(false)
+  const failStreakRef = useRef(0)
 
   useEffect(() => {
     statusRef.current = status
   }, [status])
 
-  const notifyReconnect = useCallback(() => {
-    listenersRef.current.forEach((cb) => {
-      try {
-        cb()
-      } catch (err) {
-        console.error('[network] reconnect callback failed', err)
-      }
-    })
-  }, [])
-
   const goOnline = useCallback(() => {
+    failStreakRef.current = 0
     const wasOffline = statusRef.current !== 'online'
     setStatus('online')
     if (wasOffline) {
       setShowRestored(true)
-      notifyReconnect()
+      notifyReconnectListeners()
     }
-  }, [notifyReconnect])
+  }, [])
 
   const goOffline = useCallback(() => {
     setShowRestored(false)
@@ -102,35 +130,51 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
 
   const goReconnecting = useCallback(() => {
     setShowRestored(false)
-    setStatus((prev) => (prev === 'online' ? 'reconnecting' : prev === 'offline' ? 'reconnecting' : prev))
+    setStatus((prev) =>
+      prev === 'online' ? 'reconnecting' : prev === 'offline' ? 'reconnecting' : prev,
+    )
   }, [])
 
-  const check = useCallback(async (signal?: AbortSignal) => {
-    if (probingRef.current) return
-    probingRef.current = true
-    try {
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        goOffline()
-        return
-      }
+  const check = useCallback(
+    async (signal?: AbortSignal) => {
+      if (probingRef.current) return
+      probingRef.current = true
+      try {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          failStreakRef.current = OFFLINE_FAIL_THRESHOLD
+          goOffline()
+          return
+        }
 
-      if (statusRef.current === 'offline') {
-        goReconnecting()
-      }
+        if (statusRef.current === 'offline') {
+          goReconnecting()
+        }
 
-      const ok = await probeConnectivity(signal)
-      if (signal?.aborted) return
-      if (ok) goOnline()
-      else goOffline()
-    } finally {
-      probingRef.current = false
-    }
-  }, [goOffline, goOnline, goReconnecting])
+        const ok = await probeConnectivity(signal)
+        if (signal?.aborted) return
+        if (ok) {
+          goOnline()
+          return
+        }
+
+        failStreakRef.current += 1
+        if (failStreakRef.current >= OFFLINE_FAIL_THRESHOLD) {
+          goOffline()
+        }
+      } finally {
+        probingRef.current = false
+      }
+    },
+    [goOffline, goOnline, goReconnecting],
+  )
 
   useEffect(() => {
     const ac = new AbortController()
 
-    const onOffline = () => goOffline()
+    const onOffline = () => {
+      failStreakRef.current = OFFLINE_FAIL_THRESHOLD
+      goOffline()
+    }
     const onOnline = () => {
       goReconnecting()
       void check(ac.signal)
@@ -139,27 +183,21 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
     window.addEventListener('offline', onOffline)
     window.addEventListener('online', onOnline)
 
-    // Probe ngay + định kỳ (nhanh hơn khi đang offline)
     void check(ac.signal)
-    let timer = window.setInterval(
+    const timer = window.setInterval(
       () => void check(ac.signal),
       statusRef.current === 'online' ? PROBE_INTERVAL_ONLINE_MS : PROBE_INTERVAL_OFFLINE_MS,
     )
 
-    const syncInterval = window.setInterval(() => {
-      window.clearInterval(timer)
-      timer = window.setInterval(
-        () => void check(ac.signal),
-        statusRef.current === 'online' ? PROBE_INTERVAL_ONLINE_MS : PROBE_INTERVAL_OFFLINE_MS,
-      )
-    }, 1000)
-
     return () => {
-      ac.abort()
+      try {
+        ac.abort()
+      } catch {
+        /* ignore */
+      }
       window.removeEventListener('offline', onOffline)
       window.removeEventListener('online', onOnline)
       window.clearInterval(timer)
-      window.clearInterval(syncInterval)
     }
   }, [check, goOffline, goReconnecting])
 
@@ -169,20 +207,12 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(t)
   }, [showRestored])
 
-  const onReconnect = useCallback((callback: () => void) => {
-    listenersRef.current.add(callback)
-    return () => {
-      listenersRef.current.delete(callback)
-    }
-  }, [])
-
   const value = useMemo<NetworkStatusContextValue>(
     () => ({
       status,
       isOnline: status === 'online',
-      onReconnect,
     }),
-    [status, onReconnect],
+    [status],
   )
 
   return (
@@ -201,15 +231,18 @@ export function useNetworkStatus() {
   return ctx
 }
 
-/** Chạy lại callback mỗi khi mạng vừa khôi phục — không cần F5 */
+/** Không dùng useNetworkStatus — tránh re-render HomePage khi status đổi. */
 export function useOnReconnect(callback: () => void) {
-  const { onReconnect } = useNetworkStatus()
   const cbRef = useRef(callback)
   cbRef.current = callback
 
   useEffect(() => {
-    return onReconnect(() => cbRef.current())
-  }, [onReconnect])
+    const wrap = () => cbRef.current()
+    reconnectListeners.add(wrap)
+    return () => {
+      reconnectListeners.delete(wrap)
+    }
+  }, [])
 }
 
 function NetworkStatusBanner({
