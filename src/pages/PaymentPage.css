@@ -51,10 +51,18 @@
   gap: 12px;
 }
 
+.payment-plans__heading {
+  margin: 0 0 2px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
 .payment-plan-card {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface-elevated, var(--surface));
+  background: var(--surface-elevated, #1a1d21);
   overflow: hidden;
 }
 
@@ -68,9 +76,51 @@
   border-color: rgba(212, 175, 55, 0.45);
 }
 
-.payment-plan-card__select {
+.payment-plan-card.is-popular {
+  border-color: rgba(0, 177, 79, 0.45);
+}
+
+.payment-plan-card.is-best-value {
+  border-color: rgba(212, 175, 55, 0.55);
+}
+
+.payment-plan-card__ribbon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.payment-plan-card__ribbon.is-popular {
+  background: rgba(0, 177, 79, 0.18);
+  border: 1px solid rgba(0, 177, 79, 0.45);
+  color: #5dffab;
+}
+
+.payment-plan-card__ribbon.is-best-value {
+  background: rgba(212, 175, 55, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #e8c547;
+}
+
+.payment-plan-card__header {
+  padding: 14px 14px 0;
+}
+
+.payment-plan-card__select-head {
   width: 100%;
-  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 0;
   border: 0;
   background: transparent;
   text-align: left;
@@ -79,50 +129,106 @@
   cursor: pointer;
 }
 
-.payment-plan-card header {
+.payment-plan-card__title-block {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.payment-plan-card__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.payment-plan-card__highlight {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.payment-plan-card__highlight.is-popular {
+  background: rgba(0, 177, 79, 0.18);
+  border: 1px solid rgba(0, 177, 79, 0.45);
+  color: #5dffab;
+}
+
+.payment-plan-card__highlight.is-best-value {
+  background: rgba(212, 175, 55, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #e8c547;
 }
 
 .payment-plan-card h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
   color: var(--text-heading);
 }
 
 .payment-plan-card__badge {
   display: inline-flex;
+  align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.payment-plan-card__badge.is-premium {
   border: 1px solid rgba(212, 175, 55, 0.4);
   background: rgba(212, 175, 55, 0.12);
   color: #e8c547;
-  font-size: 0.7rem;
-  font-weight: 700;
 }
 
-.payment-plan-card.is-basic .payment-plan-card__badge {
-  display: none;
+.payment-plan-card__badge.is-standard {
+  border: 1px solid rgba(154, 160, 166, 0.35);
+  background: rgba(154, 160, 166, 0.12);
+  color: #bdc1c6;
+}
+
+.payment-plan-card__price-block {
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 54%;
 }
 
 .payment-plan-card__price {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 750;
   color: var(--text-heading);
-  text-align: right;
   white-space: nowrap;
 }
 
 .payment-plan-card__price small {
-  display: block;
-  margin-top: 2px;
+  margin-left: 4px;
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 550;
   color: var(--text-secondary);
+}
+
+.payment-plan-card__total {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.payment-plan-card__savings {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #5dffab;
 }
 
 .payment-plan-card ul {
@@ -134,22 +240,55 @@
 }
 
 .payment-plan-card__note {
-  margin: 10px 14px 14px;
+  margin: 8px 14px 0;
   font-size: 0.78rem;
   color: var(--text-secondary);
+}
+
+.payment-plan-card__body {
+  padding: 0 14px;
 }
 
 .payment-plan-card__actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
   gap: 8px;
-  padding: 0 14px 14px;
+  min-height: 36px;
+  padding: 10px 14px 14px;
+}
+
+.payment-plan-card__buy {
+  min-width: 108px;
+}
+
+.payment-plan-card__pay-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-plan-card__momo {
+  border: 0;
+  background: #a50064;
+  color: #fff;
+}
+
+.payment-plan-card__momo:hover:not(:disabled) {
+  background: #8c0055;
 }
 
 .payment-plan-card__current {
   font-size: 0.82rem;
   font-weight: 650;
   color: #e8c547;
+}
+
+.payment-plan-card__current.is-free {
+  color: var(--text-secondary);
 }
 
 .payment-checkout {
@@ -233,4 +372,16 @@
 .payment-status.is-3,
 .payment-status.is-4 {
   color: #ea4335;
+}
+
+@media (max-width: 560px) {
+  .payment-plan-card__select-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .payment-plan-card__price-block {
+    max-width: none;
+    text-align: left;
+  }
 }

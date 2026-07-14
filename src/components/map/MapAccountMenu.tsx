@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { userRoleLabel } from '../../lib/labels'
 import './MapMotion.css'
 import './MapAccountMenu.css'
 
@@ -41,6 +40,8 @@ export function MapAccountMenu({ onOpenProfile, onOpenSubscriptions }: Props) {
 
   const name = profile?.displayName?.trim() || 'Tài khoản'
   const initials = initialsFromName(name)
+  const planTag = profile?.isPremium ? 'Premium' : 'Standard'
+  const planTone = profile?.isPremium ? 'premium' : 'standard'
 
   const handleLogout = () => {
     setOpen(false)
@@ -83,7 +84,7 @@ export function MapAccountMenu({ onOpenProfile, onOpenSubscriptions }: Props) {
             <p className="gmaps-account__name">{name}</p>
             {email ? <p className="gmaps-account__email">{email}</p> : null}
             {profile ? (
-              <p className="gmaps-account__role">{userRoleLabel[profile.role]}</p>
+              <span className={`gmaps-account__plan is-${planTone}`}>{planTag}</span>
             ) : null}
           </div>
         </div>

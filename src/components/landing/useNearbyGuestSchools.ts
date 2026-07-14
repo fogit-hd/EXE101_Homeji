@@ -61,9 +61,9 @@ export function useNearbyGuestSchools(enabled: boolean) {
         seen.add(name.toLowerCase())
         collected.push({
           id: placeId,
-          name,
-          lat: location.lat(),
-          lng: location.lng(),
+          label: name,
+          keyword: name,
+          focus: { lat: location.lat(), lng: location.lng() },
         })
         if (collected.length >= MAX_RESULTS) break
       }

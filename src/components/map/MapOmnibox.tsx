@@ -247,8 +247,8 @@ export function MapOmnibox({
   onReset,
   onOpenSection,
   activeSection = null,
-  onAiSearch,
-  aiSearching = false,
+  onAiSearch: _onAiSearch,
+  aiSearching: _aiSearching = false,
   unreadMessageCount = 0,
   pinLayers,
   onTogglePinLayer,
@@ -930,7 +930,7 @@ export function MapOmnibox({
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'payments' ? ' is-active' : ''}`}
                 onClick={() => openSection('payments')}
               >
-                Gói Premium
+                Gói Đăng Ký
               </button>
               <button
                 type="button"

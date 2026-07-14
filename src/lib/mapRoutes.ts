@@ -96,17 +96,17 @@ async function fetchDirectionsSteps(
     provideRouteAlternatives: false,
   })
   const steps = result.routes[0]?.legs?.[0]?.steps ?? []
-  return steps
-    .map((step) => {
-      const instruction = stripHtml(step.instructions || '')
-      if (!instruction) return null
-      return {
-        instruction,
-        distanceText: step.distance?.text?.trim() || formatDistance(step.distance?.value ?? 0),
-        maneuver: step.maneuver ?? null,
-      } satisfies MapRouteStep
+  const out: MapRouteStep[] = []
+  for (const step of steps) {
+    const instruction = stripHtml(step.instructions || '')
+    if (!instruction) continue
+    out.push({
+      instruction,
+      distanceText: step.distance?.text?.trim() || formatDistance(step.distance?.value ?? 0),
+      maneuver: step.maneuver ?? null,
     })
-    .filter((s): s is MapRouteStep => s != null)
+  }
+  return out
 }
 
 /**

@@ -47,7 +47,7 @@ export const userRoleLabel: Record<UserRole, string> = {
 }
 
 export const subscriptionTierLabel: Record<SubscriptionTier, string> = {
-  [SubscriptionTier.Basic]: 'Basic',
+  [SubscriptionTier.Basic]: 'Standard',
   [SubscriptionTier.Premium]: 'Premium',
 }
 

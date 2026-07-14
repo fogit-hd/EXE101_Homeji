@@ -215,11 +215,9 @@ export async function getDeviceLocation(options?: {
       if (isPositionError(err)) {
         lastError = mapGeoError(err, permission)
         // Only stop early when the *site* permission is really denied.
-        if (lastError.code === 'denied' && permission === 'denied') throw lastError
-        if (lastError.code === 'denied' && permission !== 'granted') {
-          // prompt dismissed — no point retrying other strategies
-          throw lastError
-        }
+        // (permission === 'denied' already returned above; here we still honor
+        // PositionError PERMISSION_DENIED without retrying other strategies.)
+        if (lastError.code === 'denied') throw lastError
         continue
       }
       lastError = new DeviceLocationError(

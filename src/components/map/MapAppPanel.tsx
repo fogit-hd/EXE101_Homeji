@@ -32,11 +32,11 @@ export type MapAppSection =
 const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> = {
   listings: {
     title: 'Khu vực Thủ Đức & Q.9',
-    subtitle: 'Danh sách phòng phù hợp',
+    subtitle: '',
   },
   assistant: {
     title: 'Trợ lý AI',
-    subtitle: 'Hỏi đáp tìm phòng, đồng bộ bản đồ',
+    subtitle: '',
   },
   saved: {
     title: 'Tin đã lưu',
@@ -52,7 +52,7 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
   },
   messages: {
     title: 'Tin nhắn',
-    subtitle: 'Chat với chủ nhà / người thuê',
+    subtitle: '',
   },
   appointments: {
     title: 'Lịch xem phòng',
@@ -68,11 +68,11 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
   },
   marketplace: {
     title: 'Chợ đồ',
-    subtitle: 'Mua bán đồ quanh khu vực thuê',
+    subtitle: '',
   },
   wanted: {
     title: 'Tin tìm phòng',
-    subtitle: 'Nhu cầu thuê từ người dùng',
+    subtitle: '',
   },
   activities: {
     title: 'Nhật ký hoạt động',
@@ -80,7 +80,7 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
   },
   myPosts: {
     title: 'Tin của tôi',
-    subtitle: 'Quản lý tin đăng & thống kê',
+    subtitle: '',
   },
 }
 

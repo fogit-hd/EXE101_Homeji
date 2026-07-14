@@ -119,8 +119,7 @@
   color: var(--text-heading);
 }
 
-.gmaps-account__email,
-.gmaps-account__role {
+.gmaps-account__email {
   margin: 2px 0 0;
   font-size: 0.75rem;
   color: var(--text-secondary);
@@ -128,6 +127,30 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 180px;
+}
+
+.gmaps-account__plan {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+.gmaps-account__plan.is-standard {
+  border: 1px solid rgba(154, 160, 166, 0.35);
+  background: rgba(154, 160, 166, 0.12);
+  color: #bdc1c6;
+}
+
+.gmaps-account__plan.is-premium {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.12);
+  color: #e8c547;
 }
 
 .gmaps-account__actions {

@@ -24,6 +24,7 @@ import {
   paymentStatusLabel,
   subscriptionTierLabel,
 } from '../lib/labels'
+import { getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import './MarketplacePage.css'
 import './PaymentPage.css'
 
@@ -37,6 +38,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [mine, setMine] = useState<MySubscription | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const [payPickerCode, setPayPickerCode] = useState<string | null>(null)
   const [busyCode, setBusyCode] = useState<string | null>(null)
   const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | null>(null)
   const [payUrl, setPayUrl] = useState<string | null>(null)
@@ -105,16 +107,22 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     setBusyMethod(method)
     setPayUrl(null)
     try {
-      const res =
-        method === 'momo'
-          ? await createPremiumMomoPayment(packageCode)
-          : await createPremiumPayOsPayment(packageCode)
-      const url =
-        method === 'momo'
-          ? (res.payUrl ?? res.deeplink ?? res.qrCodeUrl ?? null)
-          : (res.checkoutUrl ?? null)
+      let url: string | null
+      let paymentId: string
+
+      if (method === 'momo') {
+        const res = await createPremiumMomoPayment(packageCode)
+        url = res.payUrl ?? res.deeplink ?? res.qrCodeUrl ?? null
+        paymentId = res.paymentId
+      } else {
+        const res = await createPremiumPayOsPayment(packageCode)
+        url = res.checkoutUrl ?? null
+        paymentId = res.paymentId
+      }
+
       setPayUrl(url)
-      const detail = await getPayment(res.paymentId)
+      setPayPickerCode(null)
+      const detail = await getPayment(paymentId)
       setActivePayment(detail)
       setPayments((prev) => [detail, ...prev.filter((p) => p.id !== detail.id)])
       showToast(
@@ -161,13 +169,17 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
   const premiumPlans = packages.filter((p) => p.tier === SubscriptionTier.Premium)
   const basicPlan = packages.find((p) => p.tier === SubscriptionTier.Basic)
+  const displayPlans = sortPlansForDisplay([
+    ...(basicPlan ? [basicPlan] : []),
+    ...premiumPlans,
+  ])
 
   return (
     <div className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
       {!embedded ? (
         <>
-          <h1 className="page-title">Gói Premium</h1>
-          <p className="page-subtitle">Đăng ký gói và thanh toán MoMo / PayOS</p>
+          <h1 className="page-title">Bảng giá các gói dịch vụ</h1>
+          <p className="page-subtitle">Chọn gói phù hợp và thanh toán qua MoMo hoặc PayOS</p>
         </>
       ) : null}
 
@@ -177,7 +189,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         <div>
           <p className="payment-current__label">Gói hiện tại</p>
           <strong className="payment-current__badge">
-            {mine ? subscriptionTierLabel[mine.tier] ?? mine.badge : 'Basic'}
+            {mine ? subscriptionTierLabel[mine.tier] ?? mine.badge : 'Standard'}
           </strong>
           {mine?.isPremium && mine.packageName ? (
             <p className="payment-current__meta">{mine.packageName}</p>
@@ -223,62 +235,102 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       {tab === 'plans' ? (
         <div className="payment-plans map-motion-fade-up">
-          {basicPlan ? (
-            <article className="payment-plan-card is-basic">
-              <header>
-                <h3>{basicPlan.name}</h3>
-                <p className="payment-plan-card__price">Miễn phí</p>
-              </header>
-              <ul>
-                {basicPlan.benefits.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-              <p className="payment-plan-card__note">Mặc định cho mọi tài khoản</p>
-            </article>
-          ) : null}
+          <p className="payment-plans__heading">Bảng giá các gói dịch vụ</p>
 
-          {premiumPlans.map((plan) => {
+          {displayPlans.map((plan) => {
+            const view = getPlanDisplay(plan)
+            const isPremium = plan.tier === SubscriptionTier.Premium && plan.price > 0
             const selected = selectedCode === plan.code
-            const isCurrent = mine?.isPremium && mine.packageCode === plan.code
+            const isCurrent = isPremium
+              ? !!(mine?.isPremium && mine.packageCode === plan.code)
+              : !mine?.isPremium
             const busy = busyCode === plan.code
+            const pickingPay = payPickerCode === plan.code
+
             return (
               <article
                 key={plan.code}
-                className={`payment-plan-card is-premium${selected ? ' is-selected' : ''}${
-                  isCurrent ? ' is-current' : ''
-                }`}
+                className={[
+                  'payment-plan-card',
+                  isPremium ? 'is-premium' : 'is-basic',
+                  selected ? 'is-selected' : '',
+                  isCurrent ? 'is-current' : '',
+                  view.highlight === 'popular' ? 'is-popular' : '',
+                  view.highlight === 'best-value' ? 'is-best-value' : '',
+                  pickingPay ? 'is-picking-pay' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
-                <button
-                  type="button"
-                  className="payment-plan-card__select"
-                  onClick={() => setSelectedCode(plan.code)}
-                >
-                  <header>
-                    <div>
-                      <h3>{plan.name}</h3>
-                      <span className="payment-plan-card__badge">{plan.badge}</span>
+                <header className="payment-plan-card__header">
+                  <button
+                    type="button"
+                    className="payment-plan-card__select-head"
+                    onClick={() => {
+                      setSelectedCode(plan.code)
+                      if (pickingPay) setPayPickerCode(null)
+                    }}
+                  >
+                    <div className="payment-plan-card__title-block">
+                      <div className="payment-plan-card__title-row">
+                        <h3>{view.title}</h3>
+                        <span
+                          className={`payment-plan-card__badge is-${view.tierTagTone}`}
+                        >
+                          {view.tierTag}
+                        </span>
+                        {view.highlightLabel ? (
+                          <span
+                            className={`payment-plan-card__highlight is-${view.highlight ?? 'popular'}`}
+                          >
+                            {view.highlightLabel}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                    <p className="payment-plan-card__price">
-                      {formatPrice(plan.price)}
-                      <small>/ {plan.durationDays} ngày</small>
-                    </p>
-                  </header>
+                    <div className="payment-plan-card__price-block">
+                      <p className="payment-plan-card__price">
+                        {view.headlinePrice}
+                        {view.headlineSuffix ? (
+                          <small>{view.headlineSuffix}</small>
+                        ) : null}
+                      </p>
+                      {view.totalLine ? (
+                        <p className="payment-plan-card__total">{view.totalLine}</p>
+                      ) : null}
+                      {view.savingsLabel ? (
+                        <p className="payment-plan-card__savings">{view.savingsLabel}</p>
+                      ) : null}
+                    </div>
+                  </button>
+                </header>
+
+                <div className="payment-plan-card__body">
                   <ul>
-                    {plan.benefits.map((b) => (
+                    {view.benefits.map((b) => (
                       <li key={b}>{b}</li>
                     ))}
                   </ul>
-                </button>
+                </div>
+
+                {view.note ? (
+                  <p className="payment-plan-card__note">{view.note}</p>
+                ) : null}
 
                 <div className="payment-plan-card__actions">
-                  {isCurrent ? (
+                  {!isPremium ? (
+                    <span className="payment-plan-card__current is-free">Đang áp dụng</span>
+                  ) : isCurrent ? (
                     <span className="payment-plan-card__current">Đang dùng</span>
-                  ) : (
-                    <>
+                  ) : pickingPay ? (
+                    <div
+                      className="payment-plan-card__pay-options"
+                      role="group"
+                      aria-label="Chọn hình thức thanh toán"
+                    >
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-sm payment-plan-card__momo"
                         disabled={busy}
                         onClick={() => void startCheckout(plan.code, 'momo')}
                       >
@@ -292,7 +344,27 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       >
                         {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
                       </button>
-                    </>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={busy}
+                        onClick={() => setPayPickerCode(null)}
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm payment-plan-card__buy"
+                      disabled={busy}
+                      onClick={() => {
+                        setSelectedCode(plan.code)
+                        setPayPickerCode(plan.code)
+                      }}
+                    >
+                      Mua ngay
+                    </button>
                   )}
                 </div>
               </article>
