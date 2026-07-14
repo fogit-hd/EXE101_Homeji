@@ -1,6 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
-import { importPlacesLibrary } from '../../lib/loadGoogleMaps'
+import {
+  fetchPlacePredictions,
+  resolvePlaceCoordinates,
+  type PlacePredictionItem,
+} from '../../lib/placeAutocomplete'
 import './AddressAutocomplete.css'
 
 export type PlaceResult = {
@@ -18,49 +22,9 @@ type Props = {
   required?: boolean
 }
 
-function collectScrollParents(el: HTMLElement): Array<HTMLElement | Window> {
-  const out: Array<HTMLElement | Window> = [window]
-  let node: HTMLElement | null = el.parentElement
-  while (node) {
-    const style = getComputedStyle(node)
-    const oy = style.overflowY
-    const ox = style.overflowX
-    const o = style.overflow
-    if (
-      /(auto|scroll|overlay)/.test(oy) ||
-      /(auto|scroll|overlay)/.test(ox) ||
-      /(auto|scroll|overlay)/.test(o)
-    ) {
-      out.push(node)
-    }
-    node = node.parentElement
-  }
-  return out
-}
-
-/** Keep .pac-container glued to the input when a scroll parent moves. */
-function syncPacPosition(input: HTMLElement) {
-  const pac = document.querySelector('.pac-container') as HTMLElement | null
-  if (!pac) return
-  if (getComputedStyle(pac).display === 'none') return
-
-  const rect = input.getBoundingClientRect()
-  // Skip tiny off-screen inputs (panel closed).
-  if (rect.width < 8 || rect.bottom < 0 || rect.top > window.innerHeight) return
-
-  pac.classList.add('pac-container--anchored')
-  pac.style.setProperty('position', 'fixed', 'important')
-  pac.style.setProperty('left', `${Math.round(rect.left)}px`, 'important')
-  pac.style.setProperty('top', `${Math.round(rect.bottom + 4)}px`, 'important')
-  pac.style.setProperty('width', `${Math.round(rect.width)}px`, 'important')
-  pac.style.setProperty('right', 'auto', 'important')
-  pac.style.setProperty('transform', 'none', 'important')
-  pac.style.setProperty('margin-top', '0', 'important')
-}
-
 /**
- * Places Autocomplete via official google.maps.places — no vis.gl hooks.
- * Repositions the body-level `.pac-container` on scroll so it stays under the input.
+ * Address autocomplete via Place API (New) — AutocompleteSuggestion.
+ * Does not use legacy google.maps.places.Autocomplete / PlacesService.
  */
 export function AddressAutocomplete({
   value,
@@ -71,148 +35,158 @@ export function AddressAutocomplete({
   required,
 }: Props) {
   const { apiKey, isLoaded } = useGoogleMaps()
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const listId = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
   const onChangeRef = useRef(onChange)
   const onPlaceSelectRef = useRef(onPlaceSelect)
   onChangeRef.current = onChange
   onPlaceSelectRef.current = onPlaceSelect
 
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [items, setItems] = useState<PlacePredictionItem[]>([])
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const [resolving, setResolving] = useState(false)
+
   useEffect(() => {
-    if (!isLoaded || !apiKey || !inputRef.current) return
+    if (!isLoaded || !apiKey) {
+      setItems([])
+      setLoading(false)
+      return
+    }
+
+    const q = value.trim()
+    if (q.length < 2) {
+      setItems([])
+      setLoading(false)
+      return
+    }
 
     let cancelled = false
-    let autocomplete: google.maps.places.Autocomplete | null = null
-    let listener: google.maps.MapsEventListener | null = null
-    let mo: MutationObserver | null = null
-    let pacStyleMo: MutationObserver | null = null
-    let raf = 0
-    let syncing = false
-    const input = inputRef.current
-    const scrollParents = collectScrollParents(input)
-
-    const runSync = () => {
-      if (cancelled || syncing) return
-      syncing = true
-      try {
-        syncPacPosition(input)
-        const pac = document.querySelector('.pac-container')
-        if (pac && !pacStyleMo) {
-          pacStyleMo = new MutationObserver(() => {
-            if (!syncing) scheduleSync()
-          })
-          pacStyleMo.observe(pac, { attributes: true, attributeFilter: ['style'] })
-        }
-      } finally {
-        syncing = false
-      }
-    }
-
-    const scheduleSync = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(runSync)
-    }
-
-    void (async () => {
-      const places = await importPlacesLibrary()
-      if (cancelled || !inputRef.current || !places.Autocomplete) return
-
-      autocomplete = new places.Autocomplete(inputRef.current, {
-        componentRestrictions: { country: 'vn' },
-        fields: ['formatted_address', 'geometry', 'name'],
+    setLoading(true)
+    const timer = window.setTimeout(() => {
+      void fetchPlacePredictions(q, { limit: 6 }).then((next) => {
+        if (cancelled) return
+        setItems(next)
+        setLoading(false)
+        setActiveIndex(next.length ? 0 : -1)
       })
-
-      listener = autocomplete.addListener('place_changed', () => {
-        const place = autocomplete?.getPlace()
-        const location = place?.geometry?.location
-        if (!location) return
-
-        const address = place.formatted_address ?? inputRef.current?.value ?? ''
-        onChangeRef.current(address)
-        onPlaceSelectRef.current({
-          address,
-          lat: location.lat(),
-          lng: location.lng(),
-        })
-      })
-
-      for (const parent of scrollParents) {
-        parent.addEventListener('scroll', scheduleSync, { passive: true, capture: true })
-      }
-      window.addEventListener('resize', scheduleSync)
-
-      mo = new MutationObserver((mutations) => {
-        for (const m of mutations) {
-          for (const n of m.addedNodes) {
-            if (n instanceof HTMLElement && n.classList.contains('pac-container')) {
-              scheduleSync()
-            }
-          }
-        }
-      })
-      mo.observe(document.body, { childList: true })
-
-      input.addEventListener('focus', scheduleSync)
-      input.addEventListener('keydown', scheduleSync)
-      input.addEventListener('input', scheduleSync)
-    })()
+    }, 220)
 
     return () => {
       cancelled = true
-      cancelAnimationFrame(raf)
-      if (listener) google.maps.event.removeListener(listener)
-      if (autocomplete) google.maps.event.clearInstanceListeners(autocomplete)
-      mo?.disconnect()
-      pacStyleMo?.disconnect()
-      for (const parent of scrollParents) {
-        parent.removeEventListener('scroll', scheduleSync, true)
-      }
-      window.removeEventListener('resize', scheduleSync)
-      input.removeEventListener('focus', scheduleSync)
-      input.removeEventListener('keydown', scheduleSync)
-      input.removeEventListener('input', scheduleSync)
+      window.clearTimeout(timer)
     }
-  }, [isLoaded, apiKey])
+  }, [value, isLoaded, apiKey])
 
-  if (!apiKey) {
-    return (
-      <div ref={wrapRef} className="address-autocomplete">
-        <input
-          className={className}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          required={required}
-        />
-      </div>
-    )
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
+
+  const pick = async (item: PlacePredictionItem) => {
+    setOpen(false)
+    setResolving(true)
+    try {
+      const resolved = await resolvePlaceCoordinates(item.placeId)
+      if (resolved) {
+        const address = resolved.address || resolved.name || item.title
+        onChangeRef.current(address)
+        onPlaceSelectRef.current({
+          address,
+          lat: resolved.lat,
+          lng: resolved.lng,
+        })
+      } else {
+        onChangeRef.current(item.title)
+      }
+    } finally {
+      setResolving(false)
+    }
   }
 
-  if (!isLoaded) {
-    return (
-      <div ref={wrapRef} className="address-autocomplete">
-        <input
-          className={className}
-          value={value}
-          disabled
-          placeholder="Đang tải Google Maps..."
-          required={required}
-        />
-      </div>
-    )
-  }
+  const showList = open && (loading || items.length > 0 || value.trim().length >= 2)
 
   return (
-    <div ref={wrapRef} className="address-autocomplete">
+    <div ref={rootRef} className="address-autocomplete">
       <input
-        ref={inputRef}
         className={className}
-        defaultValue={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setOpen(true)
+        }}
+        onFocus={() => setOpen(true)}
+        placeholder={
+          !apiKey
+            ? placeholder
+            : !isLoaded
+              ? 'Đang tải Google Maps...'
+              : resolving
+                ? 'Đang lấy tọa độ…'
+                : placeholder
+        }
         required={required}
+        disabled={!apiKey ? false : !isLoaded || resolving}
         autoComplete="off"
+        role="combobox"
+        aria-expanded={showList}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        onKeyDown={(e) => {
+          if (!showList || items.length === 0) return
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setActiveIndex((i) => (i + 1) % items.length)
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setActiveIndex((i) => (i <= 0 ? items.length - 1 : i - 1))
+          } else if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault()
+            void pick(items[activeIndex])
+          } else if (e.key === 'Escape') {
+            setOpen(false)
+          }
+        }}
       />
+
+      {showList ? (
+        <ul id={listId} className="address-autocomplete__list" role="listbox">
+          {loading && items.length === 0 ? (
+            <li className="address-autocomplete__empty" role="option" aria-disabled>
+              Đang gợi ý địa chỉ…
+            </li>
+          ) : null}
+          {!loading && items.length === 0 ? (
+            <li className="address-autocomplete__empty" role="option" aria-disabled>
+              Không tìm thấy địa chỉ phù hợp
+            </li>
+          ) : null}
+          {items.map((item, index) => (
+            <li key={item.placeId} role="none">
+              <button
+                type="button"
+                role="option"
+                aria-selected={index === activeIndex}
+                className={`address-autocomplete__item${
+                  index === activeIndex ? ' is-active' : ''
+                }`}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => void pick(item)}
+              >
+                <span className="address-autocomplete__item-title">{item.title}</span>
+                {item.subtitle ? (
+                  <span className="address-autocomplete__item-sub">{item.subtitle}</span>
+                ) : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   )
 }

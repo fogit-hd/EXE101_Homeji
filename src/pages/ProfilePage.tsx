@@ -288,11 +288,9 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
             ) : null}
           </div>
           <p className="profile-hero__hint">
-            {profile?.premiumExpiresAt
-              ? `Premium đến ${formatDate(profile.premiumExpiresAt)}`
-              : profile?.updatedAt
-                ? `Cập nhật ${formatDate(profile.updatedAt)}`
-                : 'Hoàn thiện hồ sơ để dùng tốt hơn các tính năng Homeji'}
+            {profile?.updatedAt
+              ? `Cập nhật ${formatDate(profile.updatedAt)}`
+              : 'Hoàn thiện hồ sơ để dùng tốt hơn các tính năng Homeji'}
           </p>
         </div>
       </section>

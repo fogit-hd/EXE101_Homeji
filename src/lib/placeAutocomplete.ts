@@ -61,7 +61,7 @@ function readLatLng(
 
 /**
  * Live address / POI suggestions for the map omnibox (Vietnam-biased).
- * Prefers Places AutocompleteSuggestion; falls back to AutocompleteService.
+ * Uses Places AutocompleteSuggestion (Place API New) only.
  */
 export async function fetchPlacePredictions(
   input: string,
@@ -119,42 +119,14 @@ export async function fetchPlacePredictions(
         out.push({ placeId: pred.placeId, title, subtitle })
         if (out.length >= limit) break
       }
-      if (out.length) return out
+      return out
     } catch {
-      /* fall through to legacy */
+      return []
     }
   }
 
-  if (!places.AutocompleteService) return []
-
-  const service = new places.AutocompleteService()
-  const predictions = await new Promise<google.maps.places.AutocompletePrediction[]>(
-    (resolve) => {
-      service.getPlacePredictions(
-        {
-          input: q,
-          componentRestrictions: { country: 'vn' },
-          language: 'vi',
-          location: new google.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng),
-          radius: 25000,
-        },
-        (results, status) => {
-          if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
-            resolve([])
-            return
-          }
-          resolve(results)
-        },
-      )
-    },
-  )
-
-  return predictions.slice(0, limit).map((p) => ({
-    placeId: p.place_id,
-    title: p.structured_formatting?.main_text || p.description,
-    subtitle:
-      p.structured_formatting?.secondary_text || 'Địa điểm trên Google Maps',
-  }))
+  // No legacy AutocompleteService / PlacesService — those warn for new Maps customers.
+  return []
 }
 
 /** Resolve a Place ID to coordinates for map focus + nearby listing search. */

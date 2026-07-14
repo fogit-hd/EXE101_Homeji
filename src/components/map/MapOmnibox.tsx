@@ -836,7 +836,6 @@ export function MapOmnibox({
 
         <MapAccountMenu
           onOpenProfile={() => openSection('profile')}
-          onOpenSubscriptions={() => openSection('payments')}
         />
       </div>
 

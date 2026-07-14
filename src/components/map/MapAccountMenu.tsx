@@ -13,10 +13,9 @@ function initialsFromName(name: string) {
 
 type Props = {
   onOpenProfile?: () => void
-  onOpenSubscriptions?: () => void
 }
 
-export function MapAccountMenu({ onOpenProfile, onOpenSubscriptions }: Props) {
+export function MapAccountMenu({ onOpenProfile }: Props) {
   const { profile, email, logout } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -83,9 +82,7 @@ export function MapAccountMenu({ onOpenProfile, onOpenSubscriptions }: Props) {
           <div className="gmaps-account__meta">
             <p className="gmaps-account__name">{name}</p>
             {email ? <p className="gmaps-account__email">{email}</p> : null}
-            {profile ? (
-              <span className={`gmaps-account__plan is-${planTone}`}>{planTag}</span>
-            ) : null}
+            {profile ? <span className={`gmaps-account__plan is-${planTone}`}>{planTag}</span> : null}
           </div>
         </div>
 
@@ -100,18 +97,6 @@ export function MapAccountMenu({ onOpenProfile, onOpenSubscriptions }: Props) {
               }}
             >
               Hồ sơ của tôi
-            </button>
-          ) : null}
-          {onOpenSubscriptions ? (
-            <button
-              type="button"
-              className="gmaps-account__action map-motion-press"
-              onClick={() => {
-                setOpen(false)
-                onOpenSubscriptions()
-              }}
-            >
-              Gói Premium
             </button>
           ) : null}
           <button
