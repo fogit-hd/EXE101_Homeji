@@ -158,10 +158,43 @@ export function isPlaceIconClick(
 export function buildDirectionsUrl(
   destination: { lat: number; lng: number },
   origin?: { lat: number; lng: number } | null,
+  options?: { navigate?: boolean },
 ): string {
   const dest = `${destination.lat},${destination.lng}`
-  if (origin) {
-    return `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${dest}`
+  const params = new URLSearchParams({ api: '1', destination: dest })
+  if (origin) params.set('origin', `${origin.lat},${origin.lng}`)
+  if (options?.navigate) {
+    params.set('travelmode', 'driving')
+    params.set('dir_action', 'navigate')
   }
-  return `https://www.google.com/maps/dir/?api=1&destination=${dest}`
+  return `https://www.google.com/maps/dir/?${params.toString()}`
 }
+
+/** Minimal place card when search resolves coords without full Place Details. */
+export function buildSyntheticMapPlace(input: {
+  placeId?: string
+  name: string
+  address?: string
+  lat: number
+  lng: number
+  typeLabel?: string
+}): MapPlaceDetails {
+  return {
+    placeId: input.placeId || `geo:${input.lat},${input.lng}`,
+    name: input.name,
+    address: input.address?.trim() || '',
+    rating: null,
+    ratingCount: null,
+    phone: null,
+    typeLabel: input.typeLabel?.trim() || 'Địa điểm',
+    openNow: null,
+    weekdayHours: [],
+    websiteUri: null,
+    googleMapsUri: null,
+    editorialSummary: null,
+    photoUrls: [],
+    reviews: [],
+    location: { lat: input.lat, lng: input.lng },
+  }
+}
+

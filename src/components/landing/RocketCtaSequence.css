@@ -55,7 +55,7 @@
   margin: 0;
   max-width: min(48vw, 22ch);
   text-align: left;
-  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(1.25rem, 3.4vw, 2.1rem);
   font-weight: 560;
   line-height: 1.35;
@@ -71,7 +71,7 @@
 
 .rocket-seq__line--sub {
   margin-top: 0.35em;
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: 0.58em;
   font-weight: 600;
   letter-spacing: 0.02em;

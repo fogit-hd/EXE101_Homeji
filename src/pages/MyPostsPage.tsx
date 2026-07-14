@@ -1,109 +1,156 @@
+import { useCallback, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { RentalPostType } from '../api/types'
-import { rentalPostTypeLabel } from '../lib/labels'
-import './ExplorePage.css'
+import {
+  archiveRentalPost,
+  getMyRentalPostStats,
+  markRentalPostRented,
+  type RentalPostOwnerStats,
+} from '../api'
+import { RentalPostStatus, RentalPostType } from '../api/types'
+import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { getErrorMessage } from '../lib/errors'
+import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/labels'
 
 function parseType(raw: string | null): RentalPostType | null {
-  if (raw === 'vacant' || raw === String(RentalPostType.VacantRoom)) {
-    return RentalPostType.VacantRoom
-  }
-  if (raw === 'roommate' || raw === String(RentalPostType.RoommateShare)) {
-    return RentalPostType.RoommateShare
-  }
+  if (raw === 'vacant' || raw === String(RentalPostType.VacantRoom)) return RentalPostType.VacantRoom
+  if (raw === 'roommate' || raw === String(RentalPostType.RoommateShare)) return RentalPostType.RoommateShare
   return null
 }
 
-/**
- * Hub quản lý tin — backend chưa có GET /rental-posts/mine.
- * Dùng các API sẵn có: tạo draft, invitations, profile.
- */
-export function MyPostsPage() {
+export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
   const [searchParams] = useSearchParams()
   const typeFilter = parseType(searchParams.get('type'))
-  const isRoommate = typeFilter === RentalPostType.RoommateShare
+  const [stats, setStats] = useState<RentalPostOwnerStats | null>(null)
+  const [actionError, setActionError] = useState('')
+  const [actionMsg, setActionMsg] = useState('')
 
+  const loadFn = useCallback(async () => {
+    setStats(await getMyRentalPostStats())
+  }, [])
+
+  const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn)
+
+  const isRoommate = typeFilter === RentalPostType.RoommateShare
   const title = isRoommate
     ? 'Quản lý tin ở ghép'
     : typeFilter === RentalPostType.VacantRoom
       ? 'Quản lý danh sách phòng'
       : 'Quản lý tin đăng'
-
   const createPath = isRoommate ? '/posts/new?type=roommate' : '/posts/new?type=vacant'
 
+  const posts = (stats?.posts ?? []).filter((p) =>
+    typeFilter == null ? true : p.type === typeFilter,
+  )
+
   return (
-    <div className="explore-page">
-      <header className="explore-page__header">
-        <div className="explore-page__header-inner">
-          <p className="explore-page__eyebrow">Không gian đăng tin</p>
-          <h1 className="explore-page__title">{title}</h1>
-          <p className="explore-page__lead">
+    <div className={embedded ? 'map-embed' : 'container page'}>
+      {!embedded ? (
+        <>
+          <h1 className="page-title">{title}</h1>
+          <p className="page-subtitle">
             {typeFilter ? (
               <>
-                Đang xem nhóm <strong>{rentalPostTypeLabel[typeFilter]}</strong>.{' '}
+                Nhóm <strong>{rentalPostTypeLabel[typeFilter]}</strong>
+                {stats?.isPremium ? ' · Premium' : ''}
               </>
-            ) : null}
-            API hiện hỗ trợ tạo tin nháp (`POST /api/rental-posts/drafts`) và lời mời ở ghép — chưa
-            có endpoint liệt kê toàn bộ tin của bạn.
+            ) : (
+              'Thống kê và thao tác nhanh tin của bạn'
+            )}
           </p>
-        </div>
-      </header>
+        </>
+      ) : null}
 
-      <div className="explore-page__body">
-        <div className="explore-page__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-          <article className="card" style={{ padding: 20 }}>
-            <h2 style={{ marginTop: 0, fontSize: '1.05rem' }}>Đăng tin mới</h2>
-            <p className="explore-page__status" style={{ marginBottom: 16 }}>
-              Tạo nháp {isRoommate ? 'tìm bạn ở ghép' : 'cho thuê phòng'}, rồi chỉnh sửa và gửi duyệt.
-            </p>
-            <Link to={createPath} className="btn btn-primary">
-              {isRoommate ? 'Đăng tin tìm người ở cùng' : 'Đăng tin cho thuê phòng'}
-            </Link>
-          </article>
+      {(actionError || (error && !disrupted)) && (
+        <div className="alert alert-error">{actionError || error}</div>
+      )}
+      {actionMsg ? <div className="alert alert-success">{actionMsg}</div> : null}
 
-          {isRoommate ? (
-            <article className="card" style={{ padding: 20 }}>
-              <h2 style={{ marginTop: 0, fontSize: '1.05rem' }}>Lời mời ở ghép</h2>
-              <p className="explore-page__status" style={{ marginBottom: 16 }}>
-                Xem, chấp nhận hoặc hủy lời mời qua `GET /api/roommate-invitations/mine`.
-              </p>
-              <Link to="/invitations" className="btn btn-secondary">
-                Mở lời mời của tôi
-              </Link>
-            </article>
-          ) : (
-            <article className="card" style={{ padding: 20 }}>
-              <h2 style={{ marginTop: 0, fontSize: '1.05rem' }}>Hồ sơ chủ nhà</h2>
-              <p className="explore-page__status" style={{ marginBottom: 16 }}>
-                Cập nhật thông tin liên hệ trước khi tin được duyệt và liên hệ.
-              </p>
-              <Link to="/profile" className="btn btn-secondary">
-                Mở hồ sơ
-              </Link>
-            </article>
-          )}
-
-          <article className="card" style={{ padding: 20 }}>
-            <h2 style={{ marginTop: 0, fontSize: '1.05rem' }}>Tin đã lưu</h2>
-            <p className="explore-page__status" style={{ marginBottom: 16 }}>
-              Xem các phòng bạn đã lưu trong lúc tìm kiếm.
-            </p>
-            <Link to="/saved" className="btn btn-secondary">
-              Phòng đã lưu
-            </Link>
-          </article>
-        </div>
-
-        <p className="explore-page__map-note" style={{ marginTop: 28 }}>
-          Khi backend bổ sung API “tin của tôi”, trang này sẽ liệt kê trực tiếp tin đăng / tin nháp
-          để chỉnh sửa nhanh hơn.
-        </p>
-
-        <div className="explore-page__cta">
-          <Link to="/" className="explore-page__back">
-            ← Về trang chủ
-          </Link>
-        </div>
+      <div className="page-header-row" style={{ marginBottom: 12 }}>
+        <Link to={createPath} className="btn btn-primary btn-sm">
+          Đăng tin mới
+        </Link>
+        <Link to="/invitations" className="btn btn-secondary btn-sm">
+          Lời mời ở ghép
+        </Link>
       </div>
+
+      {showLoader ? (
+        <HomejiLoader onIntroComplete={onIntroComplete} message={disrupted ? error : undefined} />
+      ) : (
+        <>
+          {stats ? (
+            <div className="card" style={{ marginBottom: 12 }}>
+              <p style={{ margin: 0 }}>
+                <strong>{stats.totalPosts}</strong> tin · {stats.totalViews} lượt xem · {stats.totalSaves} lưu ·{' '}
+                {stats.totalContacts} liên hệ · {stats.totalAppointments} lịch hẹn
+              </p>
+            </div>
+          ) : null}
+
+          {posts.length === 0 ? (
+            <div className="empty-state card">Chưa có tin đăng. Hãy tạo tin mới.</div>
+          ) : (
+            <div className="notification-list">
+              {posts.map((p) => (
+                <article key={p.id} className="card notification-item map-motion-fade-up">
+                  <div>
+                    <span className="badge badge-gray">
+                      {rentalPostStatusLabel[p.status] ?? 'Tin'}
+                      {p.type != null ? ` · ${rentalPostTypeLabel[p.type] ?? ''}` : ''}
+                    </span>
+                    <h3>{p.title || 'Không tiêu đề'}</h3>
+                    <p>
+                      {p.viewCount} xem · {p.saveCount} lưu · {p.contactCount} LH · {p.appointmentCount}{' '}
+                      lịch
+                      {p.boostScore > 0 ? ` · boost ${p.boostScore}` : ''}
+                    </p>
+                    <small>Cập nhật {formatDate(p.updatedAt)}</small>
+                  </div>
+                  <div className="notification-item__actions">
+                    <Link to={`/posts/${p.id}/edit`} className="btn btn-secondary btn-sm">
+                      Sửa
+                    </Link>
+                    {p.status === RentalPostStatus.Active ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => {
+                          setActionError('')
+                          void markRentalPostRented(p.id)
+                            .then(() => {
+                              setActionMsg('Đã đánh dấu cho thuê.')
+                              void reload()
+                            })
+                            .catch((err) => setActionError(getErrorMessage(err, 'Thao tác thất bại')))
+                        }}
+                      >
+                        Đã thuê
+                      </button>
+                    ) : null}
+                    {p.status !== RentalPostStatus.Archived ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          setActionError('')
+                          void archiveRentalPost(p.id)
+                            .then(() => {
+                              setActionMsg('Đã lưu trữ tin.')
+                              void reload()
+                            })
+                            .catch((err) => setActionError(getErrorMessage(err, 'Lưu trữ thất bại')))
+                        }}
+                      >
+                        Lưu trữ
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

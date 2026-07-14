@@ -13,10 +13,15 @@ export type RentalPostType = (typeof RentalPostType)[keyof typeof RentalPostType
 
 export const RentalPostStatus = {
   Draft: 1,
+  Pending: 2,
+  /** @deprecated Use Pending */
   PendingReview: 2,
+  Active: 3,
+  /** @deprecated Use Active */
   Published: 3,
   Rejected: 4,
   Archived: 5,
+  Rented: 6,
 } as const
 export type RentalPostStatus = (typeof RentalPostStatus)[keyof typeof RentalPostStatus]
 
@@ -60,20 +65,34 @@ export const RoommateInvitationStatus = {
 export type RoommateInvitationStatus =
   (typeof RoommateInvitationStatus)[keyof typeof RoommateInvitationStatus]
 
+/** Matches backend NotificationType */
 export const NotificationType = {
-  RentalPostApproved: 1,
-  RentalPostRejected: 2,
+  PostApproved: 1,
+  PostRejected: 2,
   RoommateInvitationReceived: 3,
   RoommateInvitationAccepted: 4,
-  RoommateInvitationRejected: 5,
-  PaymentCompleted: 6,
-  ReportResolved: 7,
+  ReportResolved: 5,
+  NewMessage: 6,
+  ViewingAppointmentRequested: 7,
+  ViewingAppointmentUpdated: 8,
+  LandlordVerificationUpdated: 9,
+  DirectMessage: 10,
+  SavedPostChanged: 11,
+  NewMatchingRentalPost: 12,
+  MarketplaceOrderUpdated: 13,
+  /** @deprecated aliases */
+  RentalPostApproved: 1,
+  RentalPostRejected: 2,
 } as const
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
 
 export const ReportTargetType = {
   RentalPost: 1,
   User: 2,
+  RoommateInvitation: 3,
+  MarketplacePost: 4,
+  RentalReview: 5,
+  RentalWantedPost: 6,
 } as const
 export type ReportTargetType = (typeof ReportTargetType)[keyof typeof ReportTargetType]
 
@@ -98,11 +117,47 @@ export const PaymentStatus = {
 } as const
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
+export const PaymentPurpose = {
+  General: 1,
+  PremiumSubscription: 2,
+} as const
+export type PaymentPurpose = (typeof PaymentPurpose)[keyof typeof PaymentPurpose]
+
 export const MediaType = {
   Image: 1,
   Video: 2,
 } as const
 export type MediaType = (typeof MediaType)[keyof typeof MediaType]
+
+export const ViewingAppointmentStatus = {
+  Pending: 0,
+  Confirmed: 1,
+  Rejected: 2,
+  Cancelled: 3,
+  Completed: 4,
+} as const
+export type ViewingAppointmentStatus =
+  (typeof ViewingAppointmentStatus)[keyof typeof ViewingAppointmentStatus]
+
+export const ConversationSubjectType = {
+  RentalPost: 1,
+  MarketplacePost: 2,
+  WantedPost: 3,
+} as const
+export type ConversationSubjectType =
+  (typeof ConversationSubjectType)[keyof typeof ConversationSubjectType]
+
+export const ChatMessageSender = {
+  User: 1,
+  Assistant: 2,
+} as const
+export type ChatMessageSender = (typeof ChatMessageSender)[keyof typeof ChatMessageSender]
+
+export const SubscriptionTier = {
+  Basic: 1,
+  Premium: 2,
+} as const
+export type SubscriptionTier = (typeof SubscriptionTier)[keyof typeof SubscriptionTier]
 
 export interface AuthSession {
   accessToken: string | null
@@ -143,12 +198,17 @@ export interface UserProfile {
   avatarPath: string | null
   school: string | null
   preferredArea: string | null
+  contactAddress?: string | null
+  rentalNeed?: string | null
   sleepHabit: SleepHabit
   petPreference: PetPreference
   smokingPreference: SmokingPreference
   maxBudget: number | null
   onboardingCompleted: boolean
   landlordVerificationStatus: LandlordVerificationStatus
+  isPremium?: boolean
+  subscriptionBadge?: string
+  premiumExpiresAt?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -174,6 +234,10 @@ export interface RentalPostSummary {
   thumbnailPath: string | null
   viewCount: number
   saveCount: number
+  isOwnerPremium?: boolean
+  ownerBadge?: string | null
+  boostScore?: number
+  highlightTag?: string | null
 }
 
 export interface RentalPost extends RentalPostSummary {
@@ -183,9 +247,20 @@ export interface RentalPost extends RentalPostSummary {
   deposit: number
   amenities: string[]
   media: RentalPostMedia[]
+  electricityPrice?: number
+  waterPrice?: number
+  internetPrice?: number
+  maxOccupants?: number
+  availableSlots?: number
+  houseRules?: string | null
+  availableFrom?: string | null
   moderationReason: string | null
   createdAt: string
   updatedAt: string
+  ownerDisplayName?: string | null
+  ownerPhone?: string | null
+  ownerAvatarPath?: string | null
+  isOwnerVerified?: boolean
 }
 
 export interface RoommateCandidate {
@@ -236,6 +311,8 @@ export interface Payment {
   method: PaymentMethod
   status: PaymentStatus
   amount: number
+  purpose?: PaymentPurpose
+  packageCode?: string | null
   orderCode: string
   requestId: string | null
   description: string
@@ -279,6 +356,9 @@ export interface RentalPostSearchParams {
   maxPrice?: number
   minArea?: number
   maxArea?: number
+  maxDeposit?: number
+  minAvailableSlots?: number
+  availableFromBefore?: string
   minLatitude?: number
   maxLatitude?: number
   minLongitude?: number
@@ -286,6 +366,343 @@ export interface RentalPostSearchParams {
   amenities?: string[]
   page?: number
   pageSize?: number
+}
+
+export interface PostConversation {
+  id: string
+  subjectType: ConversationSubjectType
+  subjectId: string
+  otherParticipantId: string
+  otherParticipantName: string
+  otherParticipantAvatarPath: string | null
+  createdAt: string
+  updatedAt: string
+  lastMessage: string | null
+  lastMessageSenderId: string | null
+  unreadCount: number
+}
+
+export interface PostMessage {
+  id: string
+  conversationId: string
+  senderId: string
+  body: string
+  sentAt: string
+}
+
+export interface ViewingAppointment {
+  id: string
+  rentalPostId: string
+  rentalPostTitle: string
+  requesterId: string
+  ownerId: string
+  scheduledAt: string
+  note: string | null
+  status: ViewingAppointmentStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RentalReview {
+  id: string
+  rentalPostId: string
+  reviewerId: string
+  reviewerDisplayName: string
+  reviewerAvatarPath: string | null
+  rating: number
+  comment: string | null
+  locationRating: number | null
+  valueRating: number | null
+  amenitiesRating: number | null
+  securityRating: number | null
+  cleanlinessRating: number | null
+  accuracyRating: number | null
+  landlordRating: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RentalReviewRatingSummary {
+  location: number | null
+  value: number | null
+  amenities: number | null
+  security: number | null
+  cleanliness: number | null
+  accuracy: number | null
+  landlord: number | null
+}
+
+export interface RentalReviewCollection {
+  rentalPostId: string
+  averageRating: number
+  reviewCount: number
+  criteriaAverages: RentalReviewRatingSummary
+  reviews: RentalReview[]
+}
+
+export interface UpsertRentalReviewInput {
+  rating: number
+  comment?: string
+  locationRating?: number
+  valueRating?: number
+  amenitiesRating?: number
+  securityRating?: number
+  cleanlinessRating?: number
+  accuracyRating?: number
+  landlordRating?: number
+}
+
+export interface AiParsedSearchCriteria {
+  location: string | null
+  keyword: string | null
+  priceMin: number | null
+  priceMax: number | null
+  areaMin: number | null
+  areaMax: number | null
+  criteria: string[]
+}
+
+export interface AiHighlightedRentalPost {
+  post: RentalPostSummary
+  score: number
+  reasons: string[]
+  tag: string
+}
+
+export interface AiHighlightResponse {
+  criteria: AiParsedSearchCriteria
+  posts: AiHighlightedRentalPost[]
+  tag: string
+  mapFocusAddress: string | null
+  mapFocusLatitude: number | null
+  mapFocusLongitude: number | null
+}
+
+export interface ChatbotMessage {
+  id: string
+  conversationId: string
+  sender: ChatMessageSender
+  content: string
+  createdAt: string
+}
+
+export interface ChatbotConversation {
+  id: string
+  title: string
+  lastMessage: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatbotPopupConfig {
+  enabled: boolean
+  title: string
+  greeting: string
+  suggestedPrompts: string[]
+}
+
+export interface ChatbotReply {
+  conversationId: string
+  userMessage: ChatbotMessage
+  assistantMessage: ChatbotMessage
+  searchUpdate: AiHighlightResponse | null
+}
+
+export interface UploadImageResult {
+  url: string
+  publicId: string
+  width: number
+  height: number
+  bytes: number
+  format: string
+}
+
+export interface SubscriptionPackage {
+  code: string
+  name: string
+  tier: SubscriptionTier
+  price: number
+  durationDays: number
+  badge: string
+  benefits: string[]
+}
+
+export interface MySubscription {
+  tier: SubscriptionTier
+  isPremium: boolean
+  badge: string
+  packageCode: string | null
+  packageName: string | null
+  premiumStartedAt: string | null
+  premiumExpiresAt: string | null
+}
+
+export interface RentalPostOwnerStatsItem {
+  id: string
+  title: string
+  type: RentalPostType
+  status: RentalPostStatus
+  viewCount: number
+  saveCount: number
+  contactCount: number
+  appointmentCount: number
+  boostScore: number
+  updatedAt: string
+}
+
+export interface RentalPostOwnerStats {
+  totalPosts: number
+  totalViews: number
+  totalSaves: number
+  totalContacts: number
+  totalAppointments: number
+  isPremium: boolean
+  posts: RentalPostOwnerStatsItem[]
+}
+
+export interface CompareRentalPostItem {
+  post: RentalPost
+  averageRating: number
+  reviewCount: number
+}
+
+export interface CompareRentalPostsResult {
+  posts: CompareRentalPostItem[]
+}
+
+export const MarketplacePostStatus = {
+  Active: 1,
+  Sold: 2,
+  Archived: 3,
+} as const
+export type MarketplacePostStatus = (typeof MarketplacePostStatus)[keyof typeof MarketplacePostStatus]
+
+export const MarketplaceOrderStatus = {
+  Requested: 1,
+  Accepted: 2,
+  Rejected: 3,
+  Cancelled: 4,
+  Completed: 5,
+} as const
+export type MarketplaceOrderStatus =
+  (typeof MarketplaceOrderStatus)[keyof typeof MarketplaceOrderStatus]
+
+export const WantedPostStatus = {
+  Active: 1,
+  Closed: 2,
+} as const
+export type WantedPostStatus = (typeof WantedPostStatus)[keyof typeof WantedPostStatus]
+
+export const UserActivityType = {
+  General: 0,
+  ViewedRentalPost: 1,
+  RentalSearch: 2,
+  SentMessage: 3,
+  RoommateInvitation: 4,
+  Payment: 5,
+  Review: 6,
+  Report: 7,
+} as const
+export type UserActivityType = (typeof UserActivityType)[keyof typeof UserActivityType]
+
+export interface MarketplacePost {
+  id: string
+  sellerId: string
+  sellerDisplayName: string
+  sellerPhone: string | null
+  status: MarketplacePostStatus
+  title: string
+  description: string
+  price: number
+  condition: string
+  category: string
+  address: string
+  latitude: number
+  longitude: number
+  linkedRentalPostId: string | null
+  mediaUrls: string[]
+  distanceKm: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UpsertMarketplacePostInput {
+  title?: string
+  description?: string
+  price: number
+  condition?: string
+  category?: string
+  address?: string
+  latitude: number
+  longitude: number
+  linkedRentalPostId?: string | null
+  mediaUrls: string[]
+}
+
+export interface MarketplaceOrder {
+  id: string
+  marketplacePostId: string
+  buyerId: string
+  sellerId: string
+  agreedPrice: number
+  pickupAt: string
+  pickupAddress: string
+  note: string | null
+  status: MarketplaceOrderStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RentalWantedPost {
+  id: string
+  requesterId: string
+  requesterDisplayName: string
+  requesterAvatarPath: string | null
+  status: WantedPostStatus
+  title: string
+  description: string
+  preferredArea: string
+  maxBudget: number
+  occupantCount: number
+  amenityCodes: string[]
+  desiredMoveInDate: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UpsertRentalWantedPostInput {
+  title: string
+  description: string
+  preferredArea: string
+  maxBudget: number
+  occupantCount: number
+  amenityCodes: string[]
+  desiredMoveInDate: string
+}
+
+export interface LandlordVerification {
+  id: string
+  applicantId: string
+  applicantDisplayName: string
+  documentUrl: string
+  applicantNote: string | null
+  status: LandlordVerificationStatus
+  reviewNote: string | null
+  reviewedBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserActivity {
+  id: string
+  action: string
+  resourcePath: string
+  httpMethod: string
+  responseStatusCode: number
+  type: UserActivityType
+  relatedEntityId: string | null
+  details: string | null
+  occurredAt: string
 }
 
 export interface ApiError {

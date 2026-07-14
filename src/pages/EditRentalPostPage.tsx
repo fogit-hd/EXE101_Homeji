@@ -16,7 +16,8 @@ import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
-import { AMENITY_OPTIONS, rentalPostTypeLabel } from '../lib/labels'
+import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabel } from '../lib/labels'
+import { mapPostUrl } from '../lib/mapDeepLinks'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -51,7 +52,7 @@ export function EditRentalPostPage() {
     setLatitude(String(data.latitude))
     setLongitude(String(data.longitude))
     setType(data.type)
-    setAmenities([...data.amenities])
+    setAmenities(data.amenities.map((a) => normalizeAmenityCode(a)))
   }, [postId])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted } = usePersistentLoad(
@@ -75,7 +76,7 @@ export function EditRentalPostPage() {
         address,
         latitude: isValidCoord(latNum, lngNum) ? latNum : Number(latitude),
         longitude: isValidCoord(latNum, lngNum) ? lngNum : Number(longitude),
-        amenities,
+        amenities: amenities.map((a) => normalizeAmenityCode(a)),
       })
       setPost(updated)
       setMessage('Đã lưu tin đăng.')
@@ -117,7 +118,7 @@ export function EditRentalPostPage() {
     try {
       await submitRentalPost(postId)
       setMessage('Tin đăng đã gửi duyệt.')
-      navigate(`/posts/${postId}`)
+      navigate(mapPostUrl(postId))
     } catch (err) {
       setError(getErrorMessage(err, 'Gửi duyệt thất bại'))
     }
@@ -134,8 +135,9 @@ export function EditRentalPostPage() {
   }
 
   const toggleAmenity = (amenity: string) => {
+    const code = normalizeAmenityCode(amenity)
     setAmenities((prev) =>
-      prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity],
+      prev.includes(code) ? prev.filter((a) => a !== code) : [...prev, code],
     )
   }
 
@@ -248,7 +250,7 @@ export function EditRentalPostPage() {
                 className={`amenity-chip ${amenities.includes(a) ? 'active' : ''}`}
                 onClick={() => toggleAmenity(a)}
               >
-                {a}
+                {amenityLabel(a)}
               </button>
             ))}
           </div>

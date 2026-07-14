@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { UserRole } from '../../api/types'
+import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import './Navbar.css'
 
 export function Navbar() {
@@ -43,10 +44,10 @@ export function Navbar() {
           </NavLink>
           {isAuthenticated && (
             <>
-              <NavLink to="/saved">Đã lưu</NavLink>
-              <NavLink to="/invitations">Ở ghép</NavLink>
-              <NavLink to="/notifications">Thông báo</NavLink>
-              <NavLink to="/payments">Thanh toán</NavLink>
+              <NavLink to={mapSectionUrl('saved')}>Đã lưu</NavLink>
+              <NavLink to={mapSectionUrl('invitations')}>Ở ghép</NavLink>
+              <NavLink to={mapSectionUrl('notifications')}>Thông báo</NavLink>
+              <NavLink to={mapSectionUrl('payments')}>Thanh toán</NavLink>
               {profile?.role === UserRole.Landlord && (
                 <NavLink to="/posts/new">Đăng tin</NavLink>
               )}
@@ -60,7 +61,7 @@ export function Navbar() {
         <div className="navbar-actions navbar-actions--desktop">
           {isAuthenticated ? (
             <>
-              <NavLink to="/profile" className="navbar-profile">
+              <NavLink to={mapSectionUrl('profile')} className="navbar-profile">
                 {profile?.displayName ?? 'Hồ sơ'}
               </NavLink>
               <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogout}>
@@ -107,16 +108,16 @@ export function Navbar() {
                   <NavLink to="/" end onClick={closeMenu}>
                     Tìm phòng
                   </NavLink>
-                  <NavLink to="/saved" onClick={closeMenu}>
+                  <NavLink to={mapSectionUrl('saved')} onClick={closeMenu}>
                     Đã lưu
                   </NavLink>
-                  <NavLink to="/invitations" onClick={closeMenu}>
+                  <NavLink to={mapSectionUrl('invitations')} onClick={closeMenu}>
                     Ở ghép
                   </NavLink>
-                  <NavLink to="/notifications" onClick={closeMenu}>
+                  <NavLink to={mapSectionUrl('notifications')} onClick={closeMenu}>
                     Thông báo
                   </NavLink>
-                  <NavLink to="/payments" onClick={closeMenu}>
+                  <NavLink to={mapSectionUrl('payments')} onClick={closeMenu}>
                     Thanh toán
                   </NavLink>
                   {profile?.role === UserRole.Landlord && (
@@ -129,7 +130,7 @@ export function Navbar() {
                       Quản trị
                     </NavLink>
                   )}
-                  <NavLink to="/profile" onClick={closeMenu}>
+                  <NavLink to={mapSectionUrl('profile')} onClick={closeMenu}>
                     {profile?.displayName ?? 'Hồ sơ'}
                   </NavLink>
                   <button type="button" className="btn btn-secondary" onClick={handleLogout}>

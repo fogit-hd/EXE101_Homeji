@@ -155,3 +155,53 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   return data as T
 }
+
+/** Multipart upload (do not set Content-Type — browser sets boundary). */
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  options?: { auth?: boolean; params?: RequestOptions['params'] },
+): Promise<T> {
+  const auth = options?.auth !== false
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (auth) {
+    const token = getToken()
+    if (token) headers.Authorization = `Bearer ${token}`
+  }
+
+  let response: Response
+  try {
+    response = await fetch(buildUrl(path, options?.params), {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+  } catch {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new NetworkError()
+    }
+    throw new ApiRequestError(0, {
+      detail: 'Không kết nối được máy chủ. Vui lòng thử lại sau.',
+    })
+  }
+
+  const text = await response.text()
+  let data: unknown = null
+  if (text) {
+    try {
+      data = JSON.parse(text) as unknown
+    } catch {
+      data = null
+    }
+  }
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      (data as ApiError) ?? parseErrorBody(text, response.statusText),
+    )
+  }
+
+  return data as T
+}
+

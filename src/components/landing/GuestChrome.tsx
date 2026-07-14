@@ -229,11 +229,13 @@ function useVerticalCoast() {
 
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) return
-      // Let Google Maps own wheel zoom / don't fight drag with page coast.
+      // Let Google Maps / listing panel own the wheel — don't steal for page coast.
       const target = e.target
       if (
         target instanceof Element &&
-        target.closest('.rental-map, .guest-map__map, .gm-style')
+        target.closest(
+          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style',
+        )
       ) {
         stop()
         return
@@ -258,7 +260,9 @@ function useVerticalCoast() {
       const target = e.target
       if (
         target instanceof Element &&
-        target.closest('.rental-map, .guest-map__map, .gm-style')
+        target.closest(
+          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style',
+        )
       ) {
         stop()
       }

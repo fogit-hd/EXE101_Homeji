@@ -12,17 +12,31 @@ export function readSystemMapColorScheme(): MapColorSchemeName {
 
 /**
  * Tracks `prefers-color-scheme` so maps remount when the device/UI theme
- * changes. Google Maps only applies `colorScheme` at Map construction time.
+ * changes. Debounced on change to avoid double-mount tile storms.
+ * Google Maps only applies `colorScheme` at Map construction time.
  */
 export function useSystemMapColorScheme(): MapColorSchemeName {
   const [scheme, setScheme] = useState<MapColorSchemeName>(readSystemMapColorScheme)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const apply = () => setScheme(mq.matches ? 'DARK' : 'LIGHT')
-    apply()
-    mq.addEventListener('change', apply)
-    return () => mq.removeEventListener('change', apply)
+    let timer = 0
+    const apply = (immediate: boolean) => {
+      const next: MapColorSchemeName = mq.matches ? 'DARK' : 'LIGHT'
+      if (immediate) {
+        setScheme(next)
+        return
+      }
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setScheme(next), 280)
+    }
+    apply(true)
+    const onChange = () => apply(false)
+    mq.addEventListener('change', onChange)
+    return () => {
+      window.clearTimeout(timer)
+      mq.removeEventListener('change', onChange)
+    }
   }, [])
 
   return scheme

@@ -7,8 +7,43 @@ import {
 } from '../api'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
+import { NotificationType } from '../api/types'
+import './MarketplacePage.css'
 
-export function NotificationsPage({ embedded = false }: { embedded?: boolean }) {
+function sectionForNotification(n: Notification): 'messages' | 'appointments' | 'invitations' | 'listings' | 'marketplace' | 'profile' | null {
+  switch (n.type) {
+    case NotificationType.NewMessage:
+    case NotificationType.DirectMessage:
+      return 'messages'
+    case NotificationType.ViewingAppointmentRequested:
+    case NotificationType.ViewingAppointmentUpdated:
+      return 'appointments'
+    case NotificationType.RoommateInvitationReceived:
+    case NotificationType.RoommateInvitationAccepted:
+      return 'invitations'
+    case NotificationType.PostApproved:
+    case NotificationType.PostRejected:
+    case NotificationType.NewMatchingRentalPost:
+    case NotificationType.SavedPostChanged:
+      return 'listings'
+    case NotificationType.MarketplaceOrderUpdated:
+      return 'marketplace'
+    case NotificationType.LandlordVerificationUpdated:
+      return 'profile'
+    default:
+      return null
+  }
+}
+
+export function NotificationsPage({
+  embedded = false,
+  refreshKey = 0,
+  onOpenRelated,
+}: {
+  embedded?: boolean
+  refreshKey?: number
+  onOpenRelated?: (notification: Notification) => void
+}) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadOnly, setUnreadOnly] = useState(false)
 
@@ -18,7 +53,7 @@ export function NotificationsPage({ embedded = false }: { embedded?: boolean }) 
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(
     loadFn,
-    [unreadOnly],
+    [unreadOnly, refreshKey],
   )
 
   const handleMarkRead = async (id: string) => {
@@ -46,11 +81,28 @@ export function NotificationsPage({ embedded = false }: { embedded?: boolean }) 
           Đánh dấu tất cả đã đọc
         </button>
       </div>
-      <div className="tabs">
-        <button type="button" className={`tab ${!unreadOnly ? 'active' : ''}`} onClick={() => setUnreadOnly(false)}>
+      <div
+        className="tabs map-section-tabs"
+        style={{ ['--map-tab-cols' as string]: 2 }}
+        role="tablist"
+        aria-label="Lọc thông báo"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={!unreadOnly}
+          className={`tab ${!unreadOnly ? 'active' : ''}`}
+          onClick={() => setUnreadOnly(false)}
+        >
           Tất cả
         </button>
-        <button type="button" className={`tab ${unreadOnly ? 'active' : ''}`} onClick={() => setUnreadOnly(true)}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={unreadOnly}
+          className={`tab ${unreadOnly ? 'active' : ''}`}
+          onClick={() => setUnreadOnly(true)}
+        >
           Chưa đọc
         </button>
       </div>
@@ -67,18 +119,29 @@ export function NotificationsPage({ embedded = false }: { embedded?: boolean }) 
       ) : (
         <div className="notification-list">
           {notifications.map((n) => (
-            <article key={n.id} className={`notification-item card ${n.isRead ? '' : 'unread'}`}>
+            <article key={n.id} className={`notification-item card ${n.isRead ? '' : 'unread'} map-motion-fade-up`}>
               <div>
-                <span className="badge badge-gray">{notificationTypeLabel[n.type]}</span>
+                <span className="badge badge-gray">{notificationTypeLabel[n.type] ?? 'Thông báo'}</span>
                 <h3>{n.title}</h3>
                 <p>{n.message}</p>
                 <small>{formatDate(n.createdAt)}</small>
               </div>
-              {!n.isRead && (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => void handleMarkRead(n.id)}>
-                  Đánh dấu đã đọc
-                </button>
-              )}
+              <div className="notification-item__actions">
+                {onOpenRelated && sectionForNotification(n) ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => onOpenRelated(n)}
+                  >
+                    Mở
+                  </button>
+                ) : null}
+                {!n.isRead && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => void handleMarkRead(n.id)}>
+                    Đánh dấu đã đọc
+                  </button>
+                )}
+              </div>
             </article>
           ))}
         </div>

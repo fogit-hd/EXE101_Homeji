@@ -2,20 +2,25 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
+  getAdminLandlordVerifications,
   getAdminReports,
   getPendingRentalPosts,
   rejectRentalPost,
   rejectReport,
   resolveReport,
+  reviewLandlordVerification,
+  type LandlordVerification,
   type RentalPostSummary,
   type Report,
 } from '../api'
-import { ReportStatus } from '../api/types'
+import { LandlordVerificationStatus, ReportStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { getErrorMessage } from '../lib/errors'
+import { mapPostUrl } from '../lib/mapDeepLinks'
 import {
   formatDate,
   formatPrice,
+  landlordVerificationLabel,
   reportStatusLabel,
   reportTargetLabel,
   rentalPostTypeLabel,
@@ -24,7 +29,8 @@ import {
 export function AdminModerationPage() {
   const [pendingPosts, setPendingPosts] = useState<RentalPostSummary[]>([])
   const [reports, setReports] = useState<Report[]>([])
-  const [tab, setTab] = useState<'posts' | 'reports'>('posts')
+  const [verifications, setVerifications] = useState<LandlordVerification[]>([])
+  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications'>('posts')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
@@ -32,12 +38,14 @@ export function AdminModerationPage() {
   const [message, setMessage] = useState('')
 
   const loadFn = useCallback(async () => {
-    const [posts, reportList] = await Promise.all([
+    const [posts, reportList, verificationList] = await Promise.all([
       getPendingRentalPosts(),
       getAdminReports(reportStatus),
+      getAdminLandlordVerifications(LandlordVerificationStatus.Pending),
     ])
     setPendingPosts(posts)
     setReports(reportList)
+    setVerifications(verificationList)
   }, [reportStatus])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted, reload } = usePersistentLoad(
@@ -113,6 +121,13 @@ export function AdminModerationPage() {
         <button type="button" className={`tab ${tab === 'reports' ? 'active' : ''}`} onClick={() => setTab('reports')}>
           Báo cáo
         </button>
+        <button
+          type="button"
+          className={`tab ${tab === 'verifications' ? 'active' : ''}`}
+          onClick={() => setTab('verifications')}
+        >
+          Xác minh chủ nhà ({verifications.length})
+        </button>
       </div>
 
       {tab === 'posts' && (
@@ -126,7 +141,7 @@ export function AdminModerationPage() {
                   <span className="badge badge-green">{rentalPostTypeLabel[post.type]}</span>
                   <h3>{post.title || 'Tin nháp'}</h3>
                   <p>{formatPrice(post.price)}/tháng · {post.area} m² · {post.address}</p>
-                  <Link to={`/posts/${post.id}`}>Xem chi tiết</Link>
+                  <Link to={mapPostUrl(post.id)}>Xem trên bản đồ</Link>
                 </div>
                 <div className="admin-actions">
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleApprove(post.id)}>
@@ -196,6 +211,65 @@ export function AdminModerationPage() {
             )}
           </div>
         </>
+      )}
+      {tab === 'verifications' && (
+        <div className="admin-list">
+          {verifications.length === 0 ? (
+            <div className="empty-state card">Không có yêu cầu xác minh chờ duyệt.</div>
+          ) : (
+            verifications.map((v) => (
+              <article key={v.id} className="card admin-item">
+                <div>
+                  <span className="badge badge-gray">{landlordVerificationLabel[v.status]}</span>
+                  <h3>{v.applicantDisplayName}</h3>
+                  <p>{v.applicantNote || 'Không có ghi chú'}</p>
+                  <p>
+                    <a href={v.documentUrl} target="_blank" rel="noreferrer">
+                      Xem giấy tờ
+                    </a>
+                  </p>
+                  <small>{formatDate(v.createdAt)}</small>
+                </div>
+                <div className="admin-actions">
+                  <input
+                    className="form-input"
+                    placeholder="Ghi chú duyệt"
+                    value={resolutionNote}
+                    onChange={(e) => setResolutionNote(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      void reviewLandlordVerification(v.id, { approved: true, note: resolutionNote || undefined })
+                        .then(() => {
+                          setMessage('Đã duyệt xác minh.')
+                          void reload()
+                        })
+                        .catch((err) => setError(getErrorMessage(err, 'Duyệt thất bại')))
+                    }}
+                  >
+                    Duyệt
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => {
+                      void reviewLandlordVerification(v.id, { approved: false, note: resolutionNote || undefined })
+                        .then(() => {
+                          setMessage('Đã từ chối xác minh.')
+                          void reload()
+                        })
+                        .catch((err) => setError(getErrorMessage(err, 'Từ chối thất bại')))
+                    }}
+                  >
+                    Từ chối
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
       )}
         </>
       )}

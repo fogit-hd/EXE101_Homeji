@@ -1,17 +1,34 @@
-import { apiRequest } from './client'
+import { apiRequest, apiUpload } from './client'
 import type {
   AccountMessage,
+  AiHighlightResponse,
+  AiParsedSearchCriteria,
   AuthSession,
   AuthUrl,
+  ChatbotConversation,
+  ChatbotMessage,
+  ChatbotPopupConfig,
+  ChatbotReply,
+  CompareRentalPostsResult,
   EmailAvailabilityResult,
+  LandlordVerification,
+  MarketplaceOrder,
+  MarketplacePost,
   MomoPaymentResponse,
+  MySubscription,
   Notification,
   PayOsPaymentResponse,
   Payment,
   PetPreference,
+  PostConversation,
+  PostMessage,
   RentalPost,
+  RentalPostOwnerStats,
   RentalPostSearchParams,
   RentalPostSummary,
+  RentalReview,
+  RentalReviewCollection,
+  RentalWantedPost,
   Report,
   ReportStatus,
   RentalPostType,
@@ -19,7 +36,15 @@ import type {
   RoommateInvitation,
   SleepHabit,
   SmokingPreference,
+  SubscriptionPackage,
+  UploadImageResult,
+  UpsertMarketplacePostInput,
+  UpsertRentalReviewInput,
+  UpsertRentalWantedPostInput,
+  UserActivity,
+  UserActivityType,
   UserProfile,
+  ViewingAppointment,
 } from './types'
 import { MediaType, ReportTargetType, UserRole } from './types'
 
@@ -42,7 +67,6 @@ export const resetPassword = (data: { accessToken: string; newPassword: string }
 export const getGoogleLoginUrl = (redirectTo?: string) =>
   apiRequest<AuthUrl>('/api/account/google/url', { auth: false, params: { redirectTo } })
 
-/** Kiểm tra email đã tồn tại chưa (intro signup). */
 export const checkEmail = (data: { email: string }) =>
   apiRequest<EmailAvailabilityResult>('/api/account/email-availability', {
     method: 'GET',
@@ -65,6 +89,8 @@ export const updateMyProfile = (data: {
   avatarPath?: string
   school?: string
   preferredArea?: string
+  contactAddress?: string
+  rentalNeed?: string
 }) => apiRequest<UserProfile>('/api/profile/me', { method: 'PUT', body: data })
 
 export const updateMyLifestyle = (data: {
@@ -89,29 +115,51 @@ export const searchRentalPosts = (
 export const getRentalPost = (postId: string, options?: { auth?: boolean }) =>
   apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { auth: options?.auth })
 
+export const compareRentalPosts = (postIds: string[]) =>
+  apiRequest<CompareRentalPostsResult>('/api/rental-posts/compare', {
+    method: 'POST',
+    body: { postIds },
+  })
+
+export const getMyRentalPostStats = () =>
+  apiRequest<RentalPostOwnerStats>('/api/rental-posts/mine/stats')
+
 export const createRentalPostDraft = (type: RentalPostType) =>
   apiRequest<RentalPost>('/api/rental-posts/drafts', { method: 'POST', body: { type } })
 
-export const updateRentalPost = (postId: string, data: {
-  type: RentalPostType
-  title?: string
-  description?: string
-  price: number
-  deposit: number
-  area: number
-  address?: string
-  latitude: number
-  longitude: number
-  amenities: string[]
-}) => apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { method: 'PUT', body: data })
+export const updateRentalPost = (
+  postId: string,
+  data: {
+    type: RentalPostType
+    title?: string
+    description?: string
+    price: number
+    deposit: number
+    area: number
+    address?: string
+    latitude: number
+    longitude: number
+    amenities: string[]
+    electricityPrice?: number
+    waterPrice?: number
+    internetPrice?: number
+    maxOccupants?: number
+    availableSlots?: number
+    houseRules?: string
+    availableFrom?: string
+  },
+) => apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { method: 'PUT', body: data })
 
-export const addRentalPostMedia = (postId: string, data: {
-  mediaType: MediaType
-  bucket?: string
-  path?: string
-  isThumbnail: boolean
-  sortOrder: number
-}) => apiRequest<RentalPost>(`/api/rental-posts/${postId}/media`, { method: 'POST', body: data })
+export const addRentalPostMedia = (
+  postId: string,
+  data: {
+    mediaType: MediaType
+    bucket?: string
+    path?: string
+    isThumbnail: boolean
+    sortOrder: number
+  },
+) => apiRequest<RentalPost>(`/api/rental-posts/${postId}/media`, { method: 'POST', body: data })
 
 export const deleteRentalPostMedia = (postId: string, mediaId: string) =>
   apiRequest<void>(`/api/rental-posts/${postId}/media/${mediaId}`, { method: 'DELETE' })
@@ -121,6 +169,24 @@ export const submitRentalPost = (postId: string) =>
 
 export const archiveRentalPost = (postId: string) =>
   apiRequest<void>(`/api/rental-posts/${postId}/archive`, { method: 'POST' })
+
+export const markRentalPostRented = (postId: string) =>
+  apiRequest<void>(`/api/rental-posts/${postId}/mark-rented`, { method: 'POST' })
+
+// Reviews
+export const getRentalPostReviews = (rentalPostId: string, options?: { auth?: boolean }) =>
+  apiRequest<RentalReviewCollection>(`/api/rental-posts/${rentalPostId}/reviews`, {
+    auth: options?.auth,
+  })
+
+export const upsertMyRentalReview = (rentalPostId: string, data: UpsertRentalReviewInput) =>
+  apiRequest<RentalReview>(`/api/rental-posts/${rentalPostId}/reviews/mine`, {
+    method: 'PUT',
+    body: data,
+  })
+
+export const deleteMyRentalReview = (rentalPostId: string) =>
+  apiRequest<void>(`/api/rental-posts/${rentalPostId}/reviews/mine`, { method: 'DELETE' })
 
 // Saved Posts
 export const getSavedPosts = () => apiRequest<RentalPostSummary[]>('/api/saved-posts')
@@ -152,6 +218,112 @@ export const rejectInvitation = (invitationId: string) =>
 export const cancelInvitation = (invitationId: string) =>
   apiRequest<RoommateInvitation>(`/api/roommate-invitations/${invitationId}/cancel`, { method: 'POST' })
 
+// Conversations
+export const getConversations = () => apiRequest<PostConversation[]>('/api/conversations')
+
+export const startRentalPostConversation = (postId: string) =>
+  apiRequest<PostConversation>(`/api/conversations/rental-posts/${postId}`, { method: 'POST' })
+
+export const getConversationMessages = (conversationId: string) =>
+  apiRequest<PostMessage[]>(`/api/conversations/${conversationId}/messages`)
+
+export const sendConversationMessage = (conversationId: string, body: string) =>
+  apiRequest<PostMessage>(`/api/conversations/${conversationId}/messages`, {
+    method: 'POST',
+    body: { body },
+  })
+
+// Viewing appointments
+export const getViewingAppointments = () =>
+  apiRequest<ViewingAppointment[]>('/api/viewing-appointments')
+
+export const createViewingAppointment = (
+  rentalPostId: string,
+  data: { scheduledAt: string; note?: string },
+) =>
+  apiRequest<ViewingAppointment>(`/api/rental-posts/${rentalPostId}/viewing-appointments`, {
+    method: 'POST',
+    body: data,
+  })
+
+export const confirmViewingAppointment = (id: string) =>
+  apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/confirm`, { method: 'POST' })
+
+export const rejectViewingAppointment = (id: string) =>
+  apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/reject`, { method: 'POST' })
+
+export const cancelViewingAppointment = (id: string) =>
+  apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/cancel`, { method: 'POST' })
+
+export const rescheduleViewingAppointment = (
+  id: string,
+  data: { scheduledAt: string },
+) =>
+  apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/reschedule`, {
+    method: 'POST',
+    body: data,
+  })
+
+export const completeViewingAppointment = (id: string) =>
+  apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/complete`, { method: 'POST' })
+
+// AI
+export const parseAiSearch = (text: string) =>
+  apiRequest<AiParsedSearchCriteria>('/api/ai/parse-search', {
+    method: 'POST',
+    body: { text },
+  })
+
+export const highlightRentalPosts = (data: { text?: string; maxResults?: number }) =>
+  apiRequest<AiHighlightResponse>('/api/ai/highlight-rental-posts', {
+    method: 'POST',
+    body: { text: data.text, maxResults: data.maxResults ?? 8 },
+  })
+
+// Chatbot
+export const getChatbotPopupConfig = () =>
+  apiRequest<ChatbotPopupConfig>('/api/chatbot/popup-config')
+
+export const getChatbotConversations = () =>
+  apiRequest<ChatbotConversation[]>('/api/chatbot/conversations')
+
+export const getChatbotMessages = (conversationId: string) =>
+  apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
+
+export const sendChatbotMessage = (data: { conversationId?: string; message: string }) =>
+  apiRequest<ChatbotReply>('/api/chatbot/messages', {
+    method: 'POST',
+    body: {
+      message: data.message,
+      ...(data.conversationId ? { conversationId: data.conversationId } : {}),
+    },
+  })
+
+// Upload
+export const uploadImages = (files: File[], folder?: string) => {
+  const form = new FormData()
+  for (const file of files) form.append('files', file)
+  return apiUpload<UploadImageResult[]>('/api/upload/image', form, {
+    params: folder ? { folder } : undefined,
+  })
+}
+
+// Subscriptions
+export const getSubscriptionPackages = () =>
+  apiRequest<SubscriptionPackage[]>('/api/subscriptions/packages', { auth: false })
+
+export const getMySubscription = () => apiRequest<MySubscription>('/api/subscriptions/me')
+
+export const createPremiumMomoPayment = (packageCode: string) =>
+  apiRequest<MomoPaymentResponse>(`/api/subscriptions/premium/${packageCode}/momo/create`, {
+    method: 'POST',
+  })
+
+export const createPremiumPayOsPayment = (packageCode: string) =>
+  apiRequest<PayOsPaymentResponse>(`/api/subscriptions/premium/${packageCode}/payos/create`, {
+    method: 'POST',
+  })
+
 // Notifications
 export const getNotifications = (unreadOnly = false) =>
   apiRequest<Notification[]>('/api/notifications', { params: { unreadOnly } })
@@ -171,6 +343,9 @@ export const createReport = (data: {
 }) => apiRequest<Report>('/api/reports', { method: 'POST', body: data })
 
 // Payments
+export const getPayments = (params?: { status?: number; take?: number }) =>
+  apiRequest<Payment[]>('/api/payments', { params })
+
 export const getPayment = (paymentId: string) =>
   apiRequest<Payment>(`/api/payments/${paymentId}`)
 
@@ -216,3 +391,107 @@ export const rejectReport = (reportId: string, resolutionNote?: string) =>
     method: 'POST',
     body: { resolutionNote },
   })
+
+// Marketplace
+export const searchMarketplacePosts = (params?: {
+  keyword?: string
+  category?: string
+  minPrice?: number
+  maxPrice?: number
+  latitude?: number
+  longitude?: number
+  radiusKm?: number
+  nearRentalPostId?: string
+  page?: number
+  pageSize?: number
+}) => apiRequest<MarketplacePost[]>('/api/marketplace-posts', { params, auth: false })
+
+export const getMarketplacePost = (id: string) =>
+  apiRequest<MarketplacePost>(`/api/marketplace-posts/${id}`, { auth: false })
+
+export const createMarketplacePost = (data: UpsertMarketplacePostInput) =>
+  apiRequest<MarketplacePost>('/api/marketplace-posts', { method: 'POST', body: data })
+
+export const updateMarketplacePost = (id: string, data: UpsertMarketplacePostInput) =>
+  apiRequest<MarketplacePost>(`/api/marketplace-posts/${id}`, { method: 'PUT', body: data })
+
+export const markMarketplacePostSold = (id: string) =>
+  apiRequest<void>(`/api/marketplace-posts/${id}/sold`, { method: 'POST' })
+
+export const archiveMarketplacePost = (id: string) =>
+  apiRequest<void>(`/api/marketplace-posts/${id}/archive`, { method: 'POST' })
+
+export const getMyMarketplaceOrders = () =>
+  apiRequest<MarketplaceOrder[]>('/api/marketplace-orders')
+
+export const createMarketplaceOrder = (
+  postId: string,
+  data: { pickupAt: string; pickupAddress?: string; note?: string },
+) =>
+  apiRequest<MarketplaceOrder>(`/api/marketplace-posts/${postId}/orders`, {
+    method: 'POST',
+    body: data,
+  })
+
+export const acceptMarketplaceOrder = (id: string) =>
+  apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/accept`, { method: 'POST' })
+
+export const rejectMarketplaceOrder = (id: string) =>
+  apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/reject`, { method: 'POST' })
+
+export const cancelMarketplaceOrder = (id: string) =>
+  apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/cancel`, { method: 'POST' })
+
+export const completeMarketplaceOrder = (id: string) =>
+  apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/complete`, { method: 'POST' })
+
+export const startMarketplaceConversation = (postId: string) =>
+  apiRequest<PostConversation>(`/api/conversations/marketplace-posts/${postId}`, { method: 'POST' })
+
+// Wanted posts
+export const searchWantedPosts = (params?: {
+  area?: string
+  maxBudget?: number
+  page?: number
+  pageSize?: number
+}) => apiRequest<RentalWantedPost[]>('/api/rental-wanted-posts', { params, auth: false })
+
+export const getWantedPost = (id: string) =>
+  apiRequest<RentalWantedPost>(`/api/rental-wanted-posts/${id}`, { auth: false })
+
+export const createWantedPost = (data: UpsertRentalWantedPostInput) =>
+  apiRequest<RentalWantedPost>('/api/rental-wanted-posts', { method: 'POST', body: data })
+
+export const updateWantedPost = (id: string, data: UpsertRentalWantedPostInput) =>
+  apiRequest<RentalWantedPost>(`/api/rental-wanted-posts/${id}`, { method: 'PUT', body: data })
+
+export const closeWantedPost = (id: string) =>
+  apiRequest<void>(`/api/rental-wanted-posts/${id}/close`, { method: 'POST' })
+
+export const startWantedPostConversation = (postId: string) =>
+  apiRequest<PostConversation>(`/api/conversations/rental-wanted-posts/${postId}`, {
+    method: 'POST',
+  })
+
+// Landlord verification
+export const getMyLandlordVerification = () =>
+  apiRequest<LandlordVerification | null>('/api/landlord-verifications/mine')
+
+export const submitLandlordVerification = (data: { documentUrl?: string; note?: string }) =>
+  apiRequest<LandlordVerification>('/api/landlord-verifications', { method: 'POST', body: data })
+
+export const getAdminLandlordVerifications = (status?: number) =>
+  apiRequest<LandlordVerification[]>('/api/admin/landlord-verifications', { params: { status } })
+
+export const reviewLandlordVerification = (
+  id: string,
+  data: { approved: boolean; note?: string },
+) =>
+  apiRequest<LandlordVerification>(`/api/admin/landlord-verifications/${id}/review`, {
+    method: 'POST',
+    body: data,
+  })
+
+// Activities
+export const getMyActivities = (params?: { type?: UserActivityType; take?: number }) =>
+  apiRequest<UserActivity[]>('/api/activities', { params })

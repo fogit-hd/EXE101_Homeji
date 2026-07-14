@@ -58,7 +58,8 @@ export function AppLayout() {
       <Navbar />
       <main className={isMapHome ? 'main-map-layout' : 'main-content'}>
         <div
-          key={location.pathname}
+          /* Stable key on map home — remounting Outlet remounts Google Map → GPU flash */
+          key={isMapHome ? 'map-home' : location.pathname}
           className={isMapHome ? undefined : 'route-outlet'}
           data-nav={navType}
         >
@@ -72,7 +73,7 @@ export function AppLayout() {
           </div>
         </footer>
       )}
-      <MobileTabBar />
+      {!isMapHome ? <MobileTabBar /> : null}
     </div>
   )
 }

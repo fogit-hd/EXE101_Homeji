@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import type { RentalPost } from '../../api/types'
-import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import {
-  buildDirectionsUrl,
-  type MapPlaceDetails,
-} from '../../lib/mapPlace'
-import { useMountTransition } from './useMountTransition'
+  createViewingAppointment,
+  getRentalPostReviews,
+  markRentalPostRented,
+  startRentalPostConversation,
+  upsertMyRentalReview,
+  UserRole,
+  RentalPostStatus,
+  type RentalPost,
+  type RentalReviewCollection,
+} from '../../api'
+import { getStoredSession } from '../../api/client'
+import { useAuth } from '../../contexts/AuthContext'
+import { getErrorMessage } from '../../lib/errors'
+import { formatPrice, rentalPostTypeLabel, amenityLabel } from '../../lib/labels'
+import { maneuverGlyph, type MapRouteStep } from '../../lib/mapRoutes'
+import { mapPostUrl } from '../../lib/mapDeepLinks'
+import { type MapPlaceDetails } from '../../lib/mapPlace'
+import { streetViewStaticUrl } from '../../lib/mapStaticMedia'
 import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
 
@@ -28,34 +39,74 @@ type MapPlaceDetailPanelProps = {
     thumbnailPath: string | null
     latitude: number
     longitude: number
+    isOwnerPremium?: boolean
+    ownerBadge?: string | null
+    highlightTag?: string | null
   } | null
   listingLoading?: boolean
   userLocation?: { lat: number; lng: number } | null
   onNearby?: (loc: { lat: number; lng: number }) => void
+  /** Draw driving route on Homeji map (Routes API). */
+  onDirections?: (destination: { lat: number; lng: number }) => void
+  onClearNavigation?: () => void
+  routeSummary?: {
+    distanceText: string
+    durationText: string
+    steps?: MapRouteStep[]
+    trafficAware?: boolean
+    mode?: 'preview' | 'navigate'
+  } | null
+  routeError?: string | null
   onSaveListing?: () => void
   listingSaved?: boolean
   saveBusy?: boolean
+  onOpenMessages?: (conversationId?: string) => void
+  onOpenAppointments?: () => void
 }
 
-function Stars({ rating }: { rating: number }) {
+function Stars({
+  rating,
+  interactive = false,
+  onChange,
+  label = 'Đánh giá',
+}: {
+  rating: number
+  interactive?: boolean
+  onChange?: (value: number) => void
+  label?: string
+}) {
   const full = Math.round(rating)
-  return (
-    <span className="map-detail__stars" aria-hidden>
-      {'★★★★★'.slice(0, Math.min(5, Math.max(0, full)))}
-      <span className="map-detail__stars-empty">
-        {'★★★★★'.slice(0, Math.max(0, 5 - full))}
+  if (!interactive) {
+    return (
+      <span className="map-detail__stars" aria-hidden>
+        {'★★★★★'.slice(0, Math.min(5, Math.max(0, full)))}
+        <span className="map-detail__stars-empty">
+          {'★★★★★'.slice(0, Math.max(0, 5 - full))}
+        </span>
       </span>
-    </span>
+    )
+  }
+
+  return (
+    <div className="map-detail__star-picker" role="radiogroup" aria-label={label}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={rating === n}
+          aria-label={`${n} sao`}
+          className={`map-detail__star-btn${n <= rating ? ' is-on' : ''}`}
+          onClick={() => onChange?.(n)}
+        >
+          ★
+        </button>
+      ))}
+    </div>
   )
 }
 
-function InfoRow({
-  icon,
-  children,
-}: {
-  icon: string
-  children: ReactNode
-}) {
+function InfoRow({ icon, children }: { icon: string; children: ReactNode }) {
   return (
     <div className="map-detail__info-row">
       <span className="map-detail__info-icon" aria-hidden>
@@ -76,13 +127,23 @@ export function MapPlaceDetailPanel({
   listingLoading = false,
   userLocation = null,
   onNearby,
+  onDirections,
+  onClearNavigation,
+  routeSummary = null,
+  routeError = null,
   onSaveListing,
   listingSaved = false,
   saveBusy = false,
+  onOpenMessages,
+  onOpenAppointments,
 }: MapPlaceDetailPanelProps) {
-  const motion = useMountTransition(open, 360)
+  const { profile, isAuthenticated } = useAuth()
   const isListing = !!(listing || listingSummary)
   const post = listing ?? listingSummary
+  const isRenter = profile?.role === UserRole.Renter
+  const isLandlord = profile?.role === UserRole.Landlord
+  const myId = getStoredSession()?.userId
+  const isOwner = !!(listing && myId && listing.ownerId === myId)
 
   const placeTabs = useMemo(
     () =>
@@ -98,6 +159,7 @@ export function MapPlaceDetailPanel({
       [
         { id: 'overview', label: 'Tổng quan' },
         { id: 'amenities', label: 'Tiện ích' },
+        { id: 'reviews', label: 'Đánh giá' },
         { id: 'about', label: 'Chi tiết' },
       ] as const,
     [],
@@ -105,17 +167,66 @@ export function MapPlaceDetailPanel({
 
   const tabs = isListing ? listingTabs : placeTabs
   const [tab, setTab] = useState<DetailTab>('overview')
+  const [tabPhase, setTabPhase] = useState<'enter' | 'exit'>('enter')
+  const [tabNonce, setTabNonce] = useState(0)
+  const [reviews, setReviews] = useState<RentalReviewCollection | null>(null)
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewBusy, setReviewBusy] = useState(false)
+  const [scheduleAt, setScheduleAt] = useState('')
+  const [scheduleNote, setScheduleNote] = useState('')
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [actionBusy, setActionBusy] = useState(false)
+  const [actionMsg, setActionMsg] = useState<string | null>(null)
+  const [actionTone, setActionTone] = useState<'ok' | 'err'>('ok')
+  const [streetViewFailed, setStreetViewFailed] = useState(false)
 
   useEffect(() => {
-    if (open) setTab('overview')
+    if (open) {
+      setTab('overview')
+      setTabPhase('enter')
+      setTabNonce((n) => n + 1)
+      setScheduleOpen(false)
+      setActionMsg(null)
+      setStreetViewFailed(false)
+    }
   }, [open, place?.placeId, post?.id])
+
+  const switchTab = (next: string) => {
+    if (next === tab) return
+    setTabPhase('exit')
+    window.setTimeout(() => {
+      setTab(next)
+      setTabPhase('enter')
+      setTabNonce((n) => n + 1)
+    }, 180)
+  }
+
+  useEffect(() => {
+    if (!open || !isListing || !post?.id || tab !== 'reviews') return
+    let cancelled = false
+    setReviewsLoading(true)
+    void getRentalPostReviews(post.id)
+      .then((data) => {
+        if (!cancelled) setReviews(data)
+      })
+      .catch(() => {
+        if (!cancelled) setReviews(null)
+      })
+      .finally(() => {
+        if (!cancelled) setReviewsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, isListing, post?.id, tab])
 
   const heroUrl = useMemo(() => {
     if (isListing) {
       if (listing?.media?.length) {
         const thumb =
-          listing.media.find((m) => m.isThumbnail)?.path ||
-          listing.media[0]?.path
+          listing.media.find((m) => m.isThumbnail)?.path || listing.media[0]?.path
         if (thumb) return thumb
       }
       return listingSummary?.thumbnailPath || listing?.thumbnailPath || null
@@ -132,29 +243,34 @@ export function MapPlaceDetailPanel({
     : place?.typeLabel || 'Địa điểm trên bản đồ'
 
   const destination = useMemo(() => {
-    if (isListing && post) {
-      return { lat: post.latitude, lng: post.longitude }
-    }
+    if (isListing && post) return { lat: post.latitude, lng: post.longitude }
     return place?.location ?? null
   }, [isListing, post, place])
 
   const handleDirections = () => {
-    if (!destination) return
-    window.open(buildDirectionsUrl(destination, userLocation), '_blank', 'noopener,noreferrer')
+    if (!destination || !onDirections) return
+    onDirections(destination)
   }
+
+  const streetViewUrl = useMemo(() => {
+    if (!destination || streetViewFailed) return null
+    return streetViewStaticUrl(destination, { width: 640, height: 280 })
+  }, [destination, streetViewFailed])
 
   const handleShare = async () => {
     const text = isListing
       ? `${post?.title || 'Tin Homeji'} — ${post?.address || ''}`
       : `${place?.name || ''} — ${place?.address || ''}`
-    const url = isListing && post ? `${window.location.origin}/posts/${post.id}` : window.location.href
+    const url =
+      isListing && post
+        ? `${window.location.origin}${mapPostUrl(post.id)}`
+        : window.location.href
     try {
       if (navigator.share) {
         await navigator.share({ title: text, text, url })
         return
       }
     } catch {
-      /* user cancelled */
       return
     }
     try {
@@ -169,23 +285,110 @@ export function MapPlaceDetailPanel({
     onNearby(destination)
   }
 
-  if (!motion.mounted) return null
+  const notify = (message: string, tone: 'ok' | 'err' = 'ok') => {
+    setActionTone(tone)
+    setActionMsg(message)
+  }
+
+  const handleMessage = async () => {
+    if (!post?.id || !isAuthenticated || !isRenter) {
+      notify('Chỉ người thuê đã đăng nhập mới nhắn chủ nhà.', 'err')
+      return
+    }
+    setActionBusy(true)
+    setActionMsg(null)
+    try {
+      const convo = await startRentalPostConversation(post.id)
+      onOpenMessages?.(convo.id)
+      notify('Đã mở hội thoại với chủ nhà.')
+    } catch (e) {
+      notify(getErrorMessage(e, 'Không mở được chat'), 'err')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+  const handleBookViewing = async () => {
+    if (!post?.id || !scheduleAt) return
+    if (!isAuthenticated || !isRenter) {
+      notify('Chỉ người thuê đã đăng nhập mới đặt lịch xem.', 'err')
+      return
+    }
+    setActionBusy(true)
+    setActionMsg(null)
+    try {
+      await createViewingAppointment(post.id, {
+        scheduledAt: new Date(scheduleAt).toISOString(),
+        note: scheduleNote.trim() || undefined,
+      })
+      setScheduleOpen(false)
+      setScheduleNote('')
+      notify('Đã gửi yêu cầu xem phòng.')
+      onOpenAppointments?.()
+    } catch (e) {
+      notify(getErrorMessage(e, 'Đặt lịch thất bại'), 'err')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+  const handleMarkRented = async () => {
+    if (!listing?.id || !isOwner || !isLandlord) return
+    setActionBusy(true)
+    setActionMsg(null)
+    try {
+      await markRentalPostRented(listing.id)
+      notify('Đã đánh dấu tin là đã cho thuê.')
+    } catch (e) {
+      notify(getErrorMessage(e, 'Không cập nhật được trạng thái'), 'err')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+  const handleSubmitReview = async () => {
+    if (!post?.id) return
+    setReviewBusy(true)
+    setActionMsg(null)
+    try {
+      await upsertMyRentalReview(post.id, {
+        rating: reviewRating,
+        comment: reviewComment.trim() || undefined,
+      })
+      const data = await getRentalPostReviews(post.id)
+      setReviews(data)
+      setReviewComment('')
+      notify('Đã lưu đánh giá.')
+    } catch (e) {
+      notify(getErrorMessage(e, 'Không gửi được đánh giá'), 'err')
+    } finally {
+      setReviewBusy(false)
+    }
+  }
 
   const loading = isListing ? listingLoading && !post : placeLoading && !place
+  const highlight =
+    listingSummary?.highlightTag ||
+    (listing as RentalPost | null)?.highlightTag ||
+    null
+  const ownerBadge =
+    listing?.ownerBadge || listingSummary?.ownerBadge || null
+  const isPremium =
+    listing?.isOwnerPremium || listingSummary?.isOwnerPremium || false
 
   return (
     <aside
-      className={`map-detail-panel${motion.active ? ' is-open' : ''}${isListing ? ' is-listing' : ' is-place'}`}
+      className={`map-detail-panel${open ? ' is-visible' : ''}${isListing ? ' is-listing' : ' is-place'}`}
       role="dialog"
       aria-modal="false"
+      aria-hidden={!open}
       aria-label={title}
     >
-      <button
-        type="button"
-        className="map-detail-panel__close"
-        aria-label="Đóng"
-        onClick={onClose}
-      >
+      <div className="map-detail-panel__handle" aria-hidden>
+        <span />
+      </div>
+
+      <button type="button" className="map-detail-panel__close" aria-label="Đóng" onClick={onClose}>
         ×
       </button>
 
@@ -198,13 +401,7 @@ export function MapPlaceDetailPanel({
               {loading ? 'Đang tải…' : isListing ? 'Chưa có ảnh' : 'Google Places'}
             </div>
           )}
-          {!isListing && place && place.photoUrls.length > 1 ? (
-            <div className="map-detail-panel__thumbs" aria-label="Ảnh địa điểm">
-              {place.photoUrls.slice(0, 4).map((url) => (
-                <img key={url} src={url} alt="" />
-              ))}
-            </div>
-          ) : null}
+          {highlight ? <span className="map-detail-panel__badge">{highlight}</span> : null}
         </div>
 
         <div className="map-detail-panel__header">
@@ -219,16 +416,163 @@ export function MapPlaceDetailPanel({
             <p className="map-detail-panel__rating-line">
               <strong>{place.rating.toFixed(1).replace('.', ',')}</strong>
               <Stars rating={place.rating} />
-              {place.ratingCount != null ? (
-                <span className="map-detail-panel__muted">
-                  ({place.ratingCount.toLocaleString('vi-VN')})
-                </span>
-              ) : null}
             </p>
           ) : null}
 
           <p className="map-detail-panel__category">{category}</p>
+          {isListing && (isPremium || ownerBadge || listing?.isOwnerVerified) ? (
+            <p className="map-detail-panel__owner-badges">
+              {listing?.isOwnerVerified ? <span>Đã xác minh</span> : null}
+              {isPremium ? <span>Premium</span> : null}
+              {ownerBadge ? <span>{ownerBadge}</span> : null}
+            </p>
+          ) : null}
         </div>
+
+        <div className="map-detail-panel__actions">
+          <button
+            type="button"
+            className={`map-detail-action${routeSummary && !routeError ? ' is-primary' : ''}`}
+            disabled={!destination || !onDirections}
+            onClick={handleDirections}
+          >
+            <span className="map-detail-action__icon" aria-hidden>➤</span>
+            <span className="map-detail-action__label">Đường đi</span>
+          </button>
+          {isListing ? (
+            <button type="button" className="map-detail-action" disabled={!onSaveListing || saveBusy} onClick={onSaveListing}>
+              <span className="map-detail-action__icon" aria-hidden>{listingSaved ? '★' : '☆'}</span>
+              <span className="map-detail-action__label">{listingSaved ? 'Đã lưu' : 'Lưu'}</span>
+            </button>
+          ) : null}
+          {isListing && isRenter ? (
+            <button type="button" className="map-detail-action" disabled={actionBusy} onClick={() => void handleMessage()}>
+              <span className="map-detail-action__icon" aria-hidden>💬</span>
+              <span className="map-detail-action__label">Nhắn tin</span>
+            </button>
+          ) : null}
+          {isListing && isRenter ? (
+            <button
+              type="button"
+              className="map-detail-action"
+              onClick={() => setScheduleOpen((v) => !v)}
+            >
+              <span className="map-detail-action__icon" aria-hidden>📅</span>
+              <span className="map-detail-action__label">Xem phòng</span>
+            </button>
+          ) : null}
+          {isListing && isOwner && isLandlord && listing?.status !== RentalPostStatus.Rented ? (
+            <button
+              type="button"
+              className="map-detail-action"
+              disabled={actionBusy}
+              onClick={() => void handleMarkRented()}
+            >
+              <span className="map-detail-action__icon" aria-hidden>✓</span>
+              <span className="map-detail-action__label">Đã thuê</span>
+            </button>
+          ) : null}
+          <button type="button" className="map-detail-action" disabled={!destination || !onNearby} onClick={handleNearby}>
+            <span className="map-detail-action__icon" aria-hidden>⌖</span>
+            <span className="map-detail-action__label">Gần đó</span>
+          </button>
+          <button type="button" className="map-detail-action" onClick={() => void handleShare()}>
+            <span className="map-detail-action__icon" aria-hidden>⤴</span>
+            <span className="map-detail-action__label">Chia sẻ</span>
+          </button>
+          {isListing && post ? (
+          <button type="button" className="map-detail-action" onClick={() => switchTab('about')}>
+            <span className="map-detail-action__icon" aria-hidden>▣</span>
+            <span className="map-detail-action__label">Chi tiết</span>
+          </button>
+          ) : null}
+        </div>
+
+        {routeSummary || routeError ? (
+          <div className={`map-detail-panel__route-block${routeError ? ' is-error' : ''}`}>
+            <div className={`map-detail-panel__route${routeError ? ' is-error' : ''}`}>
+              {routeError ? (
+                <p>{routeError}</p>
+              ) : (
+                <div className="map-detail-panel__route-head">
+                  <p>
+                    <span className="map-detail-panel__route-mode">Đường đi</span>
+                    <strong>{routeSummary!.durationText}</strong>
+                    <span> · {routeSummary!.distanceText}</span>
+                  </p>
+                  {!userLocation ? <span> · cần vị trí của bạn</span> : null}
+                </div>
+              )}
+              {onClearNavigation ? (
+                <button
+                  type="button"
+                  className="map-detail-panel__route-clear"
+                  onClick={onClearNavigation}
+                >
+                  Xóa đường đi
+                </button>
+              ) : null}
+            </div>
+            {!routeError && routeSummary?.steps && routeSummary.steps.length > 0 ? (
+              <ol className="map-detail-panel__route-steps" aria-label="Chi tiết lộ trình">
+                {routeSummary.steps.map((step, i) => (
+                  <li key={`${i}-${step.instruction.slice(0, 24)}`}>
+                    <span className="map-detail-panel__route-maneuver" aria-hidden>
+                      {maneuverGlyph(step.maneuver)}
+                    </span>
+                    <div className="map-detail-panel__route-step-body">
+                      <p>{step.instruction}</p>
+                      {step.distanceText ? (
+                        <small>{step.distanceText}</small>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+            {!routeError && routeSummary && (!routeSummary.steps || routeSummary.steps.length === 0) ? (
+              <p className="map-detail-panel__route-empty">
+                Đã vẽ tuyến trên bản đồ. Chi tiết từng bước tạm thời không khả dụng.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className={`map-detail-schedule${scheduleOpen ? ' is-visible' : ''}`} aria-hidden={!scheduleOpen}>
+          <label>
+            Thời gian xem
+            <input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+            />
+          </label>
+          <label>
+            Ghi chú
+            <input
+              value={scheduleNote}
+              onChange={(e) => setScheduleNote(e.target.value)}
+              placeholder="Ví dụ: mình đến sau 18h"
+            />
+          </label>
+          <button
+            type="button"
+            className="map-detail-schedule__submit map-motion-press"
+            disabled={!scheduleAt || actionBusy}
+            onClick={() => void handleBookViewing()}
+          >
+            Gửi yêu cầu
+          </button>
+        </div>
+
+        {actionMsg ? (
+          <p
+            className={`map-detail-panel__toast map-detail-panel__toast--${actionTone} map-motion-fade`}
+            role="status"
+          >
+            {actionMsg}
+          </p>
+        ) : null}
 
         <div className="map-detail-panel__tabs" role="tablist">
           {tabs.map((t) => (
@@ -238,168 +582,211 @@ export function MapPlaceDetailPanel({
               role="tab"
               aria-selected={tab === t.id}
               className={`map-detail-panel__tab${tab === t.id ? ' is-active' : ''}`}
-              onClick={() => setTab(t.id)}
+              onClick={() => switchTab(t.id)}
             >
               {t.label}
             </button>
           ))}
         </div>
 
-        <div className="map-detail-panel__actions">
-          <button
-            type="button"
-            className="map-detail-action is-primary"
-            disabled={!destination}
-            onClick={handleDirections}
-          >
-            <span className="map-detail-action__icon" aria-hidden>
-              ➤
-            </span>
-            <span className="map-detail-action__label">Đường đi</span>
-          </button>
-
-          {isListing ? (
-            <button
-              type="button"
-              className="map-detail-action"
-              disabled={!onSaveListing || saveBusy}
-              onClick={onSaveListing}
-            >
-              <span className="map-detail-action__icon" aria-hidden>
-                {listingSaved ? '★' : '☆'}
-              </span>
-              <span className="map-detail-action__label">
-                {listingSaved ? 'Đã lưu' : 'Lưu'}
-              </span>
-            </button>
-          ) : (
-            <button type="button" className="map-detail-action" disabled title="Sắp có">
-              <span className="map-detail-action__icon" aria-hidden>
-                ☆
-              </span>
-              <span className="map-detail-action__label">Lưu</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            className="map-detail-action"
-            disabled={!destination || !onNearby}
-            onClick={handleNearby}
-          >
-            <span className="map-detail-action__icon" aria-hidden>
-              ⌖
-            </span>
-            <span className="map-detail-action__label">Gần đó</span>
-          </button>
-
-          <button type="button" className="map-detail-action" onClick={() => void handleShare()}>
-            <span className="map-detail-action__icon" aria-hidden>
-              ⤴
-            </span>
-            <span className="map-detail-action__label">Chia sẻ</span>
-          </button>
-
-          {isListing && post ? (
-            <Link to={`/posts/${post.id}`} className="map-detail-action">
-              <span className="map-detail-action__icon" aria-hidden>
-                ▣
-              </span>
-              <span className="map-detail-action__label">Chi tiết</span>
-            </Link>
-          ) : null}
-        </div>
-
-        <div className="map-detail-panel__body" role="tabpanel">
-          {loading ? (
-            <p className="map-detail-panel__loading">Đang tải thông tin…</p>
-          ) : null}
+        <div
+          key={`${tab}-${tabNonce}`}
+          className={`map-detail-panel__body map-detail-panel__body--${tabPhase}`}
+          role="tabpanel"
+        >
+          {loading ? <p className="map-detail-panel__loading">Đang tải thông tin…</p> : null}
 
           {!loading && tab === 'overview' && isListing && post ? (
             <div className="map-detail-panel__section">
-              <InfoRow icon="📍">
-                <p>{post.address || 'Chưa có địa chỉ'}</p>
-              </InfoRow>
-              <InfoRow icon="📐">
-                <p>
-                  Diện tích <strong>{post.area} m²</strong>
-                </p>
-              </InfoRow>
+              {streetViewUrl ? (
+                <div className="map-detail-panel__street">
+                  <img
+                    src={streetViewUrl}
+                    alt={`Góc phố gần ${title}`}
+                    loading="lazy"
+                    onError={() => setStreetViewFailed(true)}
+                  />
+                </div>
+              ) : null}
+              <InfoRow icon="📍"><p>{post.address || 'Chưa có địa chỉ'}</p></InfoRow>
+              <InfoRow icon="📐"><p>Diện tích <strong>{post.area} m²</strong></p></InfoRow>
               <InfoRow icon="💰">
                 <p>
                   Giá thuê <strong>{formatPrice(post.price)}/tháng</strong>
-                  {listing && listing.deposit > 0 ? (
-                    <>
-                      {' '}
-                      · Cọc {formatPrice(listing.deposit)}
-                    </>
-                  ) : null}
+                  {listing && listing.deposit > 0 ? <> · Cọc {formatPrice(listing.deposit)}</> : null}
                 </p>
               </InfoRow>
               {listing ? (
-                <InfoRow icon="👁">
-                  <p>
-                    {listing.viewCount} lượt xem · {listing.saveCount} lượt lưu
-                  </p>
-                </InfoRow>
+                <>
+                  <InfoRow icon="👥">
+                    <p>
+                      Còn {listing.availableSlots ?? '—'}/{listing.maxOccupants ?? '—'} chỗ ·{' '}
+                      {listing.availableFrom ? `Nhận từ ${listing.availableFrom}` : 'Linh hoạt ngày nhận'}
+                    </p>
+                  </InfoRow>
+                  <InfoRow icon="⚡">
+                    <p>
+                      Điện {formatPrice(listing.electricityPrice ?? 0)} · Nước{' '}
+                      {formatPrice(listing.waterPrice ?? 0)} · Net{' '}
+                      {formatPrice(listing.internetPrice ?? 0)}
+                    </p>
+                  </InfoRow>
+                  <InfoRow icon="👁">
+                    <p>{listing.viewCount} lượt xem · {listing.saveCount} lượt lưu</p>
+                  </InfoRow>
+                  {listing.ownerDisplayName ? (
+                    <InfoRow icon="👤">
+                      <p>
+                        Chủ nhà <strong>{listing.ownerDisplayName}</strong>
+                        {listing.ownerPhone ? ` · ${listing.ownerPhone}` : ''}
+                      </p>
+                    </InfoRow>
+                  ) : null}
+                </>
               ) : null}
             </div>
           ) : null}
 
           {!loading && tab === 'overview' && !isListing && place ? (
             <div className="map-detail-panel__section">
-              {place.openNow != null ? (
-                <InfoRow icon="🕒">
-                  <p>
-                    <span className={place.openNow ? 'is-open-now' : 'is-closed-now'}>
-                      {place.openNow ? 'Đang mở cửa' : 'Đã đóng cửa'}
-                    </span>
-                    {place.weekdayHours[0] ? (
-                      <span className="map-detail-panel__muted">
-                        {' '}
-                        · {place.weekdayHours[0]}
-                      </span>
-                    ) : null}
-                  </p>
-                </InfoRow>
+              {streetViewUrl ? (
+                <div className="map-detail-panel__street">
+                  <img
+                    src={streetViewUrl}
+                    alt={`Góc phố gần ${title}`}
+                    loading="lazy"
+                    onError={() => setStreetViewFailed(true)}
+                  />
+                </div>
               ) : null}
-              {place.address ? (
-                <InfoRow icon="📍">
-                  <p>{place.address}</p>
-                </InfoRow>
-              ) : null}
+              {place.address ? <InfoRow icon="📍"><p>{place.address}</p></InfoRow> : null}
               {place.phone ? (
-                <InfoRow icon="📞">
-                  <a href={`tel:${place.phone}`}>{place.phone}</a>
-                </InfoRow>
-              ) : null}
-              {place.websiteUri ? (
-                <InfoRow icon="🌐">
-                  <a href={place.websiteUri} target="_blank" rel="noreferrer">
-                    {place.websiteUri.replace(/^https?:\/\//, '').split('/')[0]}
-                  </a>
-                </InfoRow>
+                <InfoRow icon="📞"><a href={`tel:${place.phone}`}>{place.phone}</a></InfoRow>
               ) : null}
             </div>
           ) : null}
 
-          {!loading && tab === 'reviews' && place ? (
-            <div className="map-detail-panel__section">
-              {place.reviews.length === 0 ? (
-                <p className="map-detail-panel__empty">Chưa có bài đánh giá công khai.</p>
+          {!loading && tab === 'reviews' && isListing ? (
+            <div className="map-detail-panel__section map-detail-reviews">
+              {reviewsLoading ? (
+                <p className="map-detail-panel__loading">Đang tải đánh giá…</p>
               ) : (
-                place.reviews.map((r, i) => (
-                  <article key={`${r.author}-${i}`} className="map-detail-review">
-                    <header>
-                      <strong>{r.author}</strong>
-                      {r.rating != null ? <Stars rating={r.rating} /> : null}
-                      {r.relativeTime ? (
-                        <span className="map-detail-panel__muted">{r.relativeTime}</span>
-                      ) : null}
-                    </header>
-                    {r.text ? <p>{r.text}</p> : null}
-                  </article>
-                ))
+                <>
+                  <div className="map-detail-reviews__summary">
+                    <div className="map-detail-reviews__score-block">
+                      <span className="map-detail-reviews__avg">
+                        {(reviews?.averageRating ?? 0).toFixed(1)}
+                      </span>
+                      <div className="map-detail-reviews__score-meta">
+                        <Stars rating={reviews?.averageRating ?? 0} />
+                        <p className="map-detail-reviews__count">
+                          {reviews?.reviewCount
+                            ? `${reviews.reviewCount} đánh giá`
+                            : 'Chưa có đánh giá'}
+                        </p>
+                      </div>
+                    </div>
+                    {!reviews || reviews.reviews.length === 0 ? (
+                      <p className="map-detail-reviews__hint">
+                        Chưa có đánh giá công khai — hãy là người đầu tiên chia sẻ trải nghiệm.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {reviews && reviews.reviews.length > 0 ? (
+                    <ul className="map-detail-reviews__list">
+                      {reviews.reviews.map((r) => (
+                        <li key={r.id}>
+                          <article className="map-detail-review">
+                            <header>
+                              <strong>{r.reviewerDisplayName}</strong>
+                              <Stars rating={r.rating} />
+                            </header>
+                            {r.comment ? <p>{r.comment}</p> : null}
+                          </article>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {isAuthenticated && isRenter ? (
+                    <div className="map-detail-review-form">
+                      <h3 className="map-detail-review-form__title">Viết đánh giá</h3>
+                      <p className="map-detail-reviews__hint">
+                        Cần hoàn tất lịch xem phòng với chủ nhà trước khi gửi đánh giá đầu tiên.
+                      </p>
+                      <div className="map-detail-review-form__field">
+                        <span className="map-detail-review-form__label">Điểm của bạn</span>
+                        <Stars
+                          rating={reviewRating}
+                          interactive
+                          onChange={setReviewRating}
+                          label="Chọn điểm từ 1 đến 5 sao"
+                        />
+                      </div>
+                      <label className="map-detail-review-form__field">
+                        <span className="map-detail-review-form__label">Nhận xét</span>
+                        <textarea
+                          rows={3}
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          placeholder="Trải nghiệm của bạn về phòng / chủ nhà…"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="map-detail-review-form__submit map-motion-press"
+                        disabled={reviewBusy}
+                        onClick={() => void handleSubmitReview()}
+                      >
+                        {reviewBusy ? 'Đang gửi…' : 'Gửi đánh giá'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="map-detail-reviews__guest">
+                      Đăng nhập bằng tài khoản người thuê để gửi đánh giá.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          ) : null}
+
+          {!loading && tab === 'reviews' && !isListing && place ? (
+            <div className="map-detail-panel__section map-detail-reviews">
+              <div className="map-detail-reviews__summary">
+                <div className="map-detail-reviews__score-block">
+                  <span className="map-detail-reviews__avg">
+                    {place.rating != null ? place.rating.toFixed(1) : '—'}
+                  </span>
+                  <div className="map-detail-reviews__score-meta">
+                    {place.rating != null ? <Stars rating={place.rating} /> : null}
+                    <p className="map-detail-reviews__count">
+                      {place.ratingCount
+                        ? `${place.ratingCount} đánh giá Google`
+                        : place.reviews.length
+                          ? `${place.reviews.length} bài đánh giá`
+                          : 'Chưa có đánh giá công khai'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {place.reviews.length === 0 ? (
+                <p className="map-detail-reviews__hint">Chưa có bài đánh giá công khai từ Google.</p>
+              ) : (
+                <ul className="map-detail-reviews__list">
+                  {place.reviews.map((r, i) => (
+                    <li key={`${r.author}-${i}`}>
+                      <article className="map-detail-review">
+                        <header>
+                          <strong>{r.author}</strong>
+                          {r.rating != null ? <Stars rating={r.rating} /> : null}
+                        </header>
+                        {r.text ? <p>{r.text}</p> : null}
+                      </article>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           ) : null}
@@ -411,19 +798,17 @@ export function MapPlaceDetailPanel({
               ) : (
                 <ul className="map-detail-amenities">
                   {listing.amenities.map((a) => (
-                    <li key={a}>
-                      <span aria-hidden>✓</span> {a}
-                    </li>
+                    <li key={a}><span aria-hidden>✓</span> {amenityLabel(a)}</li>
                   ))}
                 </ul>
               )}
+              {listing.houseRules ? (
+                <>
+                  <h3 className="map-detail-panel__subhead">Nội quy</h3>
+                  <p>{listing.houseRules}</p>
+                </>
+              ) : null}
             </div>
-          ) : null}
-
-          {!loading && tab === 'amenities' && !listing ? (
-            <p className="map-detail-panel__empty">
-              {listingLoading ? 'Đang tải tiện ích…' : 'Chưa cập nhật tiện ích.'}
-            </p>
           ) : null}
 
           {!loading && tab === 'about' && isListing ? (
@@ -431,17 +816,8 @@ export function MapPlaceDetailPanel({
               {listing?.description?.trim() ? (
                 <p>{listing.description}</p>
               ) : (
-                <p className="map-detail-panel__empty">
-                  {listingLoading
-                    ? 'Đang tải mô tả…'
-                    : 'Chủ nhà chưa thêm mô tả chi tiết.'}
-                </p>
+                <p className="map-detail-panel__empty">Chủ nhà chưa thêm mô tả chi tiết.</p>
               )}
-              {post ? (
-                <Link to={`/posts/${post.id}`} className="map-detail-panel__cta">
-                  Xem trang chi tiết phòng →
-                </Link>
-              ) : null}
             </div>
           ) : null}
 
@@ -450,20 +826,8 @@ export function MapPlaceDetailPanel({
               {place.editorialSummary ? (
                 <p>{place.editorialSummary}</p>
               ) : (
-                <p className="map-detail-panel__empty">
-                  Chưa có phần giới thiệu từ Google cho địa điểm này.
-                </p>
+                <p className="map-detail-panel__empty">Chưa có phần giới thiệu từ Google.</p>
               )}
-              {place.weekdayHours.length > 0 ? (
-                <>
-                  <h3 className="map-detail-panel__subhead">Giờ mở cửa</h3>
-                  <ul className="map-detail-hours">
-                    {place.weekdayHours.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : null}
             </div>
           ) : null}
         </div>

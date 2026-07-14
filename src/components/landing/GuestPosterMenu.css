@@ -2,7 +2,7 @@
   position: relative;
   justify-self: end;
   z-index: 5;
-  font-family: var(--landing-body, 'Manrope', system-ui, sans-serif);
+  font-family: var(--landing-body, 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif);
 }
 
 .guest-poster-menu__trigger {
@@ -62,7 +62,7 @@
 .guest-poster-menu__panel {
   position: fixed;
   z-index: 60;
-  width: min(340px, calc(100vw - 32px));
+  width: min(280px, calc(100vw - 32px));
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -72,7 +72,7 @@
     0 8px 20px rgba(0, 0, 0, 0.35),
     0 0 0 1px rgba(0, 0, 0, 0.4);
   color: #fff;
-  font-family: var(--landing-body, 'Manrope', system-ui, sans-serif);
+  font-family: var(--landing-body, 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif);
   transform-origin: top right;
   animation: guest-poster-menu-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -86,54 +86,15 @@
   line-height: 1.45;
 }
 
-.guest-poster-menu__group {
-  padding: 10px 0 4px;
-}
-
-.guest-poster-menu__group--divided {
-  margin-top: 6px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.guest-poster-menu__group-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-  padding: 2px 10px 8px;
-}
-
-.guest-poster-menu__badge {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  flex-shrink: 0;
-}
-
-.guest-poster-menu__badge--home {
-  background: rgba(0, 177, 79, 0.18);
+.guest-poster-menu__hint-link {
   color: #5dffab;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.guest-poster-menu__badge--people {
-  background: rgba(126, 156, 255, 0.18);
-  color: #a9bfff;
-}
-
-.guest-poster-menu__icon {
-  width: 16px;
-  height: 16px;
-}
-
-.guest-poster-menu__group-title {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
+.guest-poster-menu__hint-link:hover {
+  color: #8dffc4;
 }
 
 .guest-poster-menu__list {

@@ -19,13 +19,64 @@
 .invitation-item,
 .admin-item {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
+.notification-item > div:first-child,
+.invitation-item > div:first-child,
+.admin-item > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-item__actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
 .notification-item.unread {
   border-left: 4px solid var(--grab-green);
+}
+
+.notification-item h3 {
+  color: var(--text-heading);
+}
+
+.notification-item p,
+.notification-item small {
+  color: var(--text-secondary);
+}
+
+.activity-item {
+  align-items: stretch;
+}
+
+.activity-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.activity-item__time {
+  margin-left: auto;
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .invitation-actions,
@@ -59,8 +110,12 @@
   .notification-item,
   .invitation-item,
   .admin-item {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  .notification-item__actions {
+    align-self: flex-start;
   }
 
   .invitation-actions,

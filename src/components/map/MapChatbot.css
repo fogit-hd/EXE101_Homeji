@@ -1,0 +1,220 @@
+.map-chatbot {
+  position: absolute;
+  right: 16px;
+  bottom: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.map-chatbot--embedded {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  width: 100%;
+  align-items: stretch;
+  pointer-events: auto;
+}
+
+.map-chatbot--embedded .map-chatbot__panel {
+  width: 100%;
+  max-height: none;
+  min-height: min(52dvh, 420px);
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+.map-chatbot--embedded .map-chatbot__body {
+  min-height: 200px;
+  max-height: min(42dvh, 360px);
+}
+
+.map-chatbot__fab {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--maps-blue, #1a73e8);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(var(--shadow-color, 9, 29, 46), 0.28);
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease,
+    background 0.2s ease;
+}
+
+.map-chatbot__fab.is-open {
+  background: var(--text-heading);
+  color: var(--surface);
+}
+
+.map-chatbot__panel {
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(52dvh, 480px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--surface-elevated, #fff);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px rgba(var(--shadow-color, 9, 29, 46), 0.22);
+  opacity: 0;
+  transform: translate3d(0, 20px, 0) scale(0.96);
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  overflow: hidden;
+}
+
+.map-chatbot__panel.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  pointer-events: auto;
+}
+
+.map-chatbot__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.map-chatbot__head strong {
+  color: var(--text-heading);
+}
+
+.map-chatbot__head p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.map-chatbot__close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-heading);
+}
+
+.map-chatbot__body {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 160px;
+}
+
+.map-chatbot__greeting p {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.map-chatbot__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.map-chatbot__suggestions button {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-input, #f1f3f4);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.map-chatbot__msg {
+  max-width: 92%;
+  align-self: flex-start;
+  padding: 8px 11px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface-input, #f1f3f4);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  animation: map-scale-in 0.25s ease both;
+  white-space: pre-wrap;
+}
+
+.map-chatbot__msg.is-user {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--maps-blue-soft, rgba(26, 115, 232, 0.14));
+}
+
+.map-chatbot__error {
+  margin: 0;
+  padding: 0 12px 6px;
+  color: var(--error);
+  font-size: 0.78rem;
+}
+
+.map-chatbot__form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.map-chatbot__form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-input, #f1f3f4);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.map-chatbot__form input::placeholder {
+  color: var(--text-secondary);
+}
+
+.map-chatbot__form button {
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--maps-blue, #1a73e8);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-chatbot__form button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .map-chatbot {
+    right: 12px;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+}

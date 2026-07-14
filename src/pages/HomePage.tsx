@@ -1,5 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { searchRentalPosts, type RentalPostSummary } from '../api'
+import { useSearchParams } from 'react-router-dom'
+import {
+  getRentalPost,
+  highlightRentalPosts,
+  searchRentalPosts,
+  type AiHighlightResponse,
+  type RentalPostSummary,
+} from '../api'
 import { HomejiLoader, SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
 import { AuthenticatedHomeMapShell } from '../components/map/AuthenticatedHomeMapShell'
 import type { HomeMapFocus } from '../components/map/HomeMapStage'
@@ -10,7 +17,21 @@ import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
 import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
+import { MAP_FOCUS_ZOOM } from '../lib/googleMaps'
+import {
+  loadMapPinLayers,
+  saveMapPinLayers,
+  type MapPinLayer,
+  type MapPinLayers,
+} from '../lib/mapPinLayers'
 import { AMENITY_OPTIONS } from '../lib/labels'
+import {
+  bboxAround,
+  resolvePlaceCoordinates,
+  resolveSearchLocation,
+  type MapSearchBBox,
+  type ResolvedPlaceLocation,
+} from '../lib/placeAutocomplete'
 import { GuestChrome } from '../components/landing/GuestChrome'
 import { GuestHero } from '../components/landing/GuestHero'
 import { GuestMapSection } from '../components/landing/GuestMapSection'
@@ -38,6 +59,7 @@ function HomePageComponent() {
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
   const mapsReady = Boolean(apiKey && mapsLoaded)
   const { schools, loading: schoolsLoading } = useNearbyGuestSchools(mapsReady && isAuthenticated)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,23 +77,92 @@ function HomePageComponent() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
   const [panelSection, setPanelSection] = useState<MapAppSection | null>(null)
   const [searchQuery, setSearchQuery] = useState(GUEST_DISTRICTS[0].label)
+  const [aiSearching, setAiSearching] = useState(false)
+  const [pinLayers, setPinLayers] = useState<MapPinLayers>(() => loadMapPinLayers())
   const panelOpen = panelSection !== null
   const openListingsPanel = useCallback(() => setPanelSection('listings'), [])
   const closePanel = useCallback(() => setPanelSection(null), [])
   const openAppSection = useCallback((section: MapAppSection) => {
     setPanelSection(section)
   }, [])
+  const togglePinLayer = useCallback((layer: MapPinLayer) => {
+    setPinLayers((prev) => {
+      const next = { ...prev, [layer]: !prev[layer] }
+      saveMapPinLayers(next)
+      return next
+    })
+  }, [])
 
   const mapFocusRef = useRef<HomeMapFocus | null>({ ...GUEST_DEFAULT_FOCUS })
   const [mapFocusToken, setMapFocusToken] = useState(0)
+  const [listingsFitToken, setListingsFitToken] = useState(0)
   const mapFocus = useMemo(
     () => (mapFocusRef.current ? { ...mapFocusRef.current } : null),
     [mapFocusToken],
   )
 
+  // Deep links from retired standalone pages: /?section=… /?post=…
+  useEffect(() => {
+    if (!isAuthenticated || isLoading) return
+    const section = searchParams.get('section')
+    const postId = searchParams.get('post')
+    if (!section && !postId) return
+
+    const allowed: MapAppSection[] = [
+      'listings',
+      'assistant',
+      'saved',
+      'invitations',
+      'notifications',
+      'appointments',
+      'payments',
+      'profile',
+      'marketplace',
+      'wanted',
+      'activities',
+      'myPosts',
+    ]
+    if (section && (allowed as string[]).includes(section)) {
+      setPanelSection(section as MapAppSection)
+    }
+    if (postId) {
+      setSelectedPostId(postId)
+      void getRentalPost(postId, { auth: true })
+        .then((post) => {
+          setPosts((prev) => (prev.some((p) => p.id === post.id) ? prev : [post, ...prev]))
+          mapFocusRef.current = {
+            lat: post.latitude,
+            lng: post.longitude,
+            zoom: MAP_FOCUS_ZOOM,
+          }
+          setMapFocusToken((n) => n + 1)
+        })
+        .catch(() => {
+          /* keep selection; detail panel will show load error state */
+        })
+    }
+    setSearchParams({}, { replace: true })
+  }, [isAuthenticated, isLoading, searchParams, setSearchParams])
+
   const commitMapFocus = useCallback((focus: HomeMapFocus) => {
     mapFocusRef.current = { ...focus }
     setMapFocusToken((n) => n + 1)
+  }, [])
+
+  const [mapPlaceFocus, setMapPlaceFocus] = useState<{
+    placeId?: string
+    lat: number
+    lng: number
+    name: string
+    address: string
+  } | null>(null)
+  const [mapPlaceFocusToken, setMapPlaceFocusToken] = useState(0)
+
+  const pinFilterResults = useCallback(() => {
+    // Prefer fitting pins over a prior area focus / user pan.
+    mapFocusRef.current = null
+    setMapFocusToken((n) => n + 1)
+    setListingsFitToken((n) => n + 1)
   }, [])
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -82,20 +173,25 @@ function HomePageComponent() {
   const userLocationRef = useRef(userLocation)
   userLocationRef.current = userLocation
   disruptedRef.current = disrupted
-  const filtersRef = useRef({ keyword, minPrice, maxPrice, selectedAmenities })
-  filtersRef.current = { keyword, minPrice, maxPrice, selectedAmenities }
+  const filtersRef = useRef<{
+    keyword: string
+    minPrice: string
+    maxPrice: string
+    selectedAmenities: string[]
+    bbox: MapSearchBBox | null
+  }>({ keyword, minPrice, maxPrice, selectedAmenities, bbox: null })
+  filtersRef.current = {
+    keyword,
+    minPrice,
+    maxPrice,
+    selectedAmenities,
+    bbox: filtersRef.current.bbox,
+  }
   const authGate = useHomejiLoading(isLoading)
   const { showLoader: showPostsLoader, onIntroComplete: onPostsIntroComplete } = useHomejiLoading(
     loading,
     disrupted,
   )
-
-  const wards = useMemo(() => wardsForDistrict(districtId), [districtId])
-  const district = GUEST_DISTRICTS.find((d) => d.id === districtId) ?? GUEST_DISTRICTS[0]
-  const ward = wards.find((w) => w.id === wardId)
-  const school = schools.find((s) => s.id === schoolId)
-
-  const filterSummary = school?.label || ward?.label || district.label
 
   useEffect(() => {
     onPostsIntroComplete()
@@ -104,25 +200,121 @@ function HomePageComponent() {
   const loadPosts = useCallback(async () => {
     if (!disruptedRef.current) setLoading(true)
     setError('')
-    const { keyword: kw, minPrice: minP, maxPrice: maxP, selectedAmenities: am } =
-      filtersRef.current
+    const {
+      keyword: kw,
+      minPrice: minP,
+      maxPrice: maxP,
+      selectedAmenities: am,
+      bbox,
+    } = filtersRef.current
     try {
       const data = await searchRentalPosts({
-        keyword: kw.trim() || 'Thủ Đức',
+        // With a map bbox, skip the default "Thủ Đức" keyword so nearby pins show.
+        keyword: bbox ? kw.trim() || undefined : kw.trim() || 'Thủ Đức',
         minPrice: minP ? Number(minP) : undefined,
         maxPrice: maxP ? Number(maxP) : undefined,
         amenities: am.length ? am : undefined,
+        ...(bbox ?? {}),
       })
       setPosts(data)
       setSelectedPostId((prev) => (prev && data.some((p) => p.id === prev) ? prev : null))
       setDisrupted(false)
+      // Keep intentional place focus; otherwise fit to filtered pins.
+      if (!bbox) pinFilterResults()
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải danh sách phòng'))
       setDisrupted(isServiceDisruption(err))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [pinFilterResults])
+
+  const flyToResolvedPlace = useCallback(
+    (resolved: ResolvedPlaceLocation, zoom = MAP_FOCUS_ZOOM) => {
+      const bbox = bboxAround(resolved.lat, resolved.lng, 1.8)
+      const label = resolved.address || resolved.name
+      setKeyword('')
+      setSearchQuery(label)
+      setWardId('')
+      setSchoolId('')
+      setSelectedPostId(null)
+      filtersRef.current = {
+        ...filtersRef.current,
+        keyword: '',
+        bbox,
+      }
+      commitMapFocus({ lat: resolved.lat, lng: resolved.lng, zoom })
+      // Close right "0 phòng" panel — show the place on the map instead.
+      closePanel()
+      setMapPlaceFocus({
+        placeId: resolved.placeId || undefined,
+        lat: resolved.lat,
+        lng: resolved.lng,
+        name: resolved.name,
+        address: resolved.address,
+      })
+      setMapPlaceFocusToken((n) => n + 1)
+      // Quietly refresh nearby pins without opening listings.
+      void loadPosts()
+    },
+    [closePanel, commitMapFocus, loadPosts],
+  )
+
+  const applyAiSearchUpdate = useCallback(
+    (update: AiHighlightResponse) => {
+      const c = update.criteria
+      const nextKeyword = (c.keyword || c.location || update.tag || '').trim()
+      if (nextKeyword) {
+        setKeyword(nextKeyword)
+        setSearchQuery(nextKeyword)
+      }
+      if (c.priceMin != null) setMinPrice(String(Math.round(c.priceMin)))
+      if (c.priceMax != null) setMaxPrice(String(Math.round(c.priceMax)))
+      filtersRef.current = {
+        ...filtersRef.current,
+        bbox: null,
+        keyword: nextKeyword || filtersRef.current.keyword,
+        minPrice: c.priceMin != null ? String(Math.round(c.priceMin)) : filtersRef.current.minPrice,
+        maxPrice: c.priceMax != null ? String(Math.round(c.priceMax)) : filtersRef.current.maxPrice,
+      }
+      if (update.posts.length > 0) {
+        setPosts(update.posts.map((p) => p.post))
+        setSelectedPostId(null)
+        if (update.mapFocusLatitude == null || update.mapFocusLongitude == null) {
+          pinFilterResults()
+        }
+      } else {
+        void loadPosts()
+      }
+      if (update.mapFocusLatitude != null && update.mapFocusLongitude != null) {
+        commitMapFocus({
+          lat: Number(update.mapFocusLatitude),
+          lng: Number(update.mapFocusLongitude),
+          zoom: MAP_FOCUS_ZOOM,
+        })
+      }
+      setPanelSection('listings')
+    },
+    [commitMapFocus, loadPosts, pinFilterResults],
+  )
+
+  const handleAiSearch = useCallback(
+    async (text: string) => {
+      const q = text.trim()
+      if (!q) return
+      setAiSearching(true)
+      setError('')
+      try {
+        const update = await highlightRentalPosts({ text: q, maxResults: 12 })
+        applyAiSearchUpdate(update)
+      } catch (err) {
+        setError(getErrorMessage(err, 'AI tìm kiếm tạm thời không khả dụng'))
+      } finally {
+        setAiSearching(false)
+      }
+    },
+    [applyAiSearchUpdate],
+  )
 
   useEffect(() => {
     if (isLoading) return
@@ -144,7 +336,7 @@ function HomePageComponent() {
     return () => window.clearInterval(t)
   }, [isAuthenticated, disrupted, loadPosts])
 
-  // Chip amenity → auto search (debounce ~350ms)
+  // Chip amenity → auto search (debounce ~350ms) + open list + pin on map
   const amenitiesKey = selectedAmenities.slice().sort().join('|')
   const skipAmenitySearch = useRef(true)
   useEffect(() => {
@@ -153,9 +345,13 @@ function HomePageComponent() {
       skipAmenitySearch.current = false
       return
     }
-    const t = window.setTimeout(() => void loadPosts(), 350)
+    const t = window.setTimeout(() => {
+      setSelectedPostId(null)
+      openListingsPanel()
+      void loadPosts()
+    }, 350)
     return () => window.clearTimeout(t)
-  }, [amenitiesKey, isAuthenticated, isLoading, loadPosts])
+  }, [amenitiesKey, isAuthenticated, isLoading, loadPosts, openListingsPanel])
 
   useEffect(() => {
     if (!selectedPostId) return
@@ -204,6 +400,7 @@ function HomePageComponent() {
       filtersRef.current = {
         ...filtersRef.current,
         keyword: nextKeyword,
+        bbox: null,
       }
       openListingsPanel()
       void loadPosts()
@@ -220,8 +417,48 @@ function HomePageComponent() {
     (item: MapOmniboxSuggestion) => {
       if (item.kind === 'post' && item.postId) {
         setSearchQuery(item.title)
+        filtersRef.current = { ...filtersRef.current, bbox: null }
         if (item.focus) commitMapFocus({ ...item.focus })
         handleSelectPost(item.postId)
+        return
+      }
+      if (item.kind === 'place' && item.placeId) {
+        void (async () => {
+          const resolved = await resolvePlaceCoordinates(item.placeId!)
+          if (!resolved) {
+            const fallback = await resolveSearchLocation(item.title || item.keyword)
+            if (fallback) {
+              flyToResolvedPlace(fallback)
+              return
+            }
+            const nextKeyword = item.title.trim() || item.keyword.trim() || 'Thủ Đức'
+            setKeyword(nextKeyword)
+            setSearchQuery(item.title)
+            filtersRef.current = {
+              ...filtersRef.current,
+              keyword: nextKeyword,
+              bbox: null,
+            }
+            setSelectedPostId(null)
+            openListingsPanel()
+            void loadPosts()
+            return
+          }
+          flyToResolvedPlace(resolved)
+        })()
+        return
+      }
+      // Re-open a recent place suggestion that still carries a Place ID.
+      if (item.placeId && (item.kind === 'recent' || item.kind === 'query')) {
+        void (async () => {
+          const resolved = await resolvePlaceCoordinates(item.placeId!)
+          if (resolved) {
+            flyToResolvedPlace(resolved)
+            return
+          }
+          const fallback = await resolveSearchLocation(item.title || item.keyword)
+          if (fallback) flyToResolvedPlace(fallback)
+        })()
         return
       }
       if (item.kind === 'district' && item.districtId) {
@@ -252,26 +489,55 @@ function HomePageComponent() {
       const nextKeyword = item.keyword.trim() || 'Thủ Đức'
       setKeyword(nextKeyword)
       setSearchQuery(item.title)
-      if (item.focus) commitMapFocus({ ...item.focus })
-      filtersRef.current = { ...filtersRef.current, keyword: nextKeyword }
+      filtersRef.current = { ...filtersRef.current, keyword: nextKeyword, bbox: null }
+      if (item.focus) {
+        commitMapFocus({ ...item.focus })
+        if (item.kind === 'recent' && item.focus) {
+          const bbox = bboxAround(item.focus.lat, item.focus.lng, 1.8)
+          filtersRef.current = { ...filtersRef.current, keyword: nextKeyword, bbox }
+        }
+      }
       setSelectedPostId(null)
       openListingsPanel()
       void loadPosts()
     },
-    [applyAreaFilters, districtId, loadPosts, handleSelectPost, openListingsPanel, commitMapFocus],
+    [
+      applyAreaFilters,
+      districtId,
+      loadPosts,
+      handleSelectPost,
+      openListingsPanel,
+      commitMapFocus,
+      flyToResolvedPlace,
+    ],
   )
 
   const handleOmniboxSearch = useCallback(
     (raw: string) => {
-      const nextKeyword = raw.trim() || 'Thủ Đức'
-      setKeyword(nextKeyword)
-      setSearchQuery(raw.trim())
-      filtersRef.current = { ...filtersRef.current, keyword: nextKeyword }
-      setSelectedPostId(null)
-      openListingsPanel()
-      void loadPosts()
+      const nextKeyword = raw.trim()
+      if (!nextKeyword) return
+
+      void (async () => {
+        // Always try to resolve a map location first (Places / text / geocode).
+        const resolved = await resolveSearchLocation(nextKeyword)
+        if (resolved) {
+          flyToResolvedPlace(resolved)
+          return
+        }
+
+        setKeyword(nextKeyword)
+        setSearchQuery(nextKeyword)
+        filtersRef.current = {
+          ...filtersRef.current,
+          keyword: nextKeyword,
+          bbox: null,
+        }
+        setSelectedPostId(null)
+        openListingsPanel()
+        void loadPosts()
+      })()
     },
-    [loadPosts, openListingsPanel],
+    [loadPosts, openListingsPanel, flyToResolvedPlace],
   )
 
   const handleClearSelection = useCallback(() => {
@@ -279,7 +545,8 @@ function HomePageComponent() {
   }, [])
 
   const handleDetailLabelChange = useCallback((label: string | null) => {
-    if (label) setSearchQuery(label)
+    // Open detail → sync title into omnibox; close (map click / X) → empty ready-to-type.
+    setSearchQuery(label ?? '')
   }, [])
 
   const handleSearchQueryChange = useCallback(
@@ -312,14 +579,14 @@ function HomePageComponent() {
         if (requestId !== locateRequestRef.current) return
         const next = { lat: loc.lat, lng: loc.lng }
         setUserLocation(next)
-        commitMapFocus({ ...next, zoom: 15 })
+        commitMapFocus({ ...next, zoom: MAP_FOCUS_ZOOM })
         setSelectedPostId(null)
         setLocationError('')
       } catch (err) {
         if (requestId !== locateRequestRef.current) return
         const prev = userLocationRef.current
         if (prev) {
-          commitMapFocus({ ...prev, zoom: 15 })
+          commitMapFocus({ ...prev, zoom: MAP_FOCUS_ZOOM })
           setLocationError('')
         } else {
           setLocationError(
@@ -353,6 +620,7 @@ function HomePageComponent() {
       minPrice: '',
       maxPrice: '',
       selectedAmenities: [],
+      bbox: null,
     }
     void loadPosts()
   }, [loadPosts, commitMapFocus])
@@ -379,7 +647,6 @@ function HomePageComponent() {
         districtId={districtId}
         wardId={wardId}
         schoolId={schoolId}
-        filterLabel={filterSummary}
         amenities={AMENITY_OPTIONS_LIST}
         selectedAmenities={selectedAmenities}
         onToggleAmenity={toggleAmenity}
@@ -391,6 +658,10 @@ function HomePageComponent() {
         onReset={resetFilters}
         onOpenSection={openAppSection}
         activeSection={panelSection}
+        onAiSearch={handleAiSearch}
+        aiSearching={aiSearching}
+        pinLayers={pinLayers}
+        onTogglePinLayer={togglePinLayer}
       />
     ),
     [
@@ -404,7 +675,6 @@ function HomePageComponent() {
       districtId,
       wardId,
       schoolId,
-      filterSummary,
       selectedAmenities,
       toggleAmenity,
       minPrice,
@@ -413,6 +683,10 @@ function HomePageComponent() {
       resetFilters,
       openAppSection,
       panelSection,
+      handleAiSearch,
+      aiSearching,
+      pinLayers,
+      togglePinLayer,
     ],
   )
 
@@ -551,21 +825,27 @@ function HomePageComponent() {
       onClearSelection={handleClearSelection}
       focus={mapFocus}
       focusToken={mapFocusToken}
+      listingsFitToken={listingsFitToken}
+      placeFocus={mapPlaceFocus}
+      placeFocusToken={mapPlaceFocusToken}
       userLocation={userLocation}
       onLocate={locateMe}
       locating={locating}
       locationError={locationError}
+      onClearLocationError={() => setLocationError('')}
       panelOpen={panelOpen}
       panelSection={panelSection}
       closePanel={closePanel}
-      openListingsPanel={openListingsPanel}
+      openAppSection={openAppSection}
       loading={loading}
       showPostsLoader={showPostsLoader}
       error={error}
       onResetFilters={resetFilters}
       needsProfileSetup={needsProfileSetup}
       omnibox={omnibox}
+      pinLayers={pinLayers}
       onDetailLabelChange={handleDetailLabelChange}
+      onAiSearchUpdate={applyAiSearchUpdate}
     />
   )
 }

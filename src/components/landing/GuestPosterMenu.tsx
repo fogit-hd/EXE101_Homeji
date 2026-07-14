@@ -6,77 +6,7 @@ import { useAuthModal } from '../../contexts/AuthModalContext'
 import { pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import './GuestPosterMenu.css'
 
-type PosterAction = {
-  id: string
-  label: string
-  path: string
-}
-
-type PosterGroup = {
-  id: string
-  title: string
-  icon: 'home' | 'people'
-  items: PosterAction[]
-}
-
-const GROUPS: PosterGroup[] = [
-  {
-    id: 'landlord',
-    title: 'Dành cho chủ trọ',
-    icon: 'home',
-    items: [
-      {
-        id: 'landlord-create',
-        label: 'Đăng tin cho thuê phòng',
-        path: '/posts/new?type=vacant',
-      },
-      {
-        id: 'landlord-manage',
-        label: 'Quản lý danh sách phòng',
-        path: '/my-posts?type=vacant',
-      },
-    ],
-  },
-  {
-    id: 'roommate',
-    title: 'Dành cho tìm ở ghép',
-    icon: 'people',
-    items: [
-      {
-        id: 'roommate-create',
-        label: 'Đăng tin tìm người ở cùng',
-        path: '/posts/new?type=roommate',
-      },
-      {
-        id: 'roommate-manage',
-        label: 'Quản lý tin ở ghép',
-        path: '/my-posts?type=roommate',
-      },
-    ],
-  },
-]
-
-function GroupIcon({ kind }: { kind: PosterGroup['icon'] }) {
-  if (kind === 'people') {
-    return (
-      <svg className="guest-poster-menu__icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M16.5 12a3.5 3.5 0 1 0-3.48-3.9A4.75 4.75 0 0 0 8 12.75V14h1.5v-.75A3.25 3.25 0 0 1 12.75 10h.08A3.49 3.49 0 0 0 16.5 12Zm-9-1A3 3 0 1 0 4.5 8a3 3 0 0 0 3 3Zm0 1.5c-2.5 0-4.5 1.4-4.5 3.25V17H8v-1.25c0-.7.28-1.34.75-1.85A6.1 6.1 0 0 0 7.5 13.5Zm9 1.25c0-1.3.95-2.4 2.35-3.05A4.4 4.4 0 0 1 21 15.75V17h-4.5v-2.25Z"
-        />
-      </svg>
-    )
-  }
-
-  return (
-    <svg className="guest-poster-menu__icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M12 3.2 3.5 10.2V21h6.2v-5.4h4.6V21h6.2V10.2L12 3.2Zm0 2.3 6.3 5.2V19.2h-2.8v-5.4H8.5v5.4H5.7v-8.5L12 5.5Z"
-      />
-    </svg>
-  )
-}
+const MANAGE_POSTS_PATH = '/my-posts'
 
 type PanelPos = { top: number; right: number }
 
@@ -90,25 +20,17 @@ export function GuestPosterMenu() {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
-  const flatItems = GROUPS.flatMap((g) => g.items)
-  const [focusIndex, setFocusIndex] = useState(-1)
 
   const close = useCallback(() => {
     setOpen(false)
-    setFocusIndex(-1)
     resumeGuestCoast()
   }, [])
 
   const toggle = () => {
     setOpen((prev) => {
       const next = !prev
-      if (next) {
-        pauseGuestCoast()
-        setFocusIndex(0)
-      } else {
-        resumeGuestCoast()
-        setFocusIndex(-1)
-      }
+      if (next) pauseGuestCoast()
+      else resumeGuestCoast()
       return next
     })
   }
@@ -159,49 +81,30 @@ export function GuestPosterMenu() {
 
   useEffect(() => () => resumeGuestCoast(), [])
 
-  const runAction = (path: string) => {
-    close()
-    if (isAuthenticated) {
-      navigate(path)
-      return
-    }
+  const openLogin = () => {
     openAuthModal({
       mode: 'login',
       intent: 'post',
-      onSuccess: () => navigate(path),
+      onSuccess: () => navigate(MANAGE_POSTS_PATH),
     })
   }
 
-  const onMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (!open || flatItems.length === 0) return
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setFocusIndex((i) => (i + 1) % flatItems.length)
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setFocusIndex((i) => (i <= 0 ? flatItems.length - 1 : i - 1))
-    } else if (e.key === 'Home') {
-      e.preventDefault()
-      setFocusIndex(0)
-    } else if (e.key === 'End') {
-      e.preventDefault()
-      setFocusIndex(flatItems.length - 1)
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      if (focusIndex >= 0) {
-        e.preventDefault()
-        runAction(flatItems[focusIndex].path)
-      }
+  const runManagePosts = () => {
+    close()
+    if (isAuthenticated) {
+      navigate(MANAGE_POSTS_PATH)
+      return
     }
+    openLogin()
   }
 
-  useEffect(() => {
-    if (!open || focusIndex < 0) return
-    const el = panelRef.current?.querySelector<HTMLButtonElement>(
-      `[data-poster-index="${focusIndex}"]`,
-    )
-    el?.focus()
-  }, [open, focusIndex])
+  const onMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      runManagePosts()
+    }
+  }
 
   const panel = open ? (
     <div
@@ -209,52 +112,41 @@ export function GuestPosterMenu() {
       id={menuId}
       className="guest-poster-menu__panel"
       role="menu"
-      aria-label="Tác vụ đăng tin"
+      aria-label="Quản lý tin đăng"
       style={{ top: panelPos.top, right: panelPos.right }}
       onKeyDown={onMenuKeyDown}
     >
-      <p className="guest-poster-menu__hint">
-        {isAuthenticated
-          ? 'Chọn việc bạn muốn làm tiếp.'
-          : 'Cần đăng nhập trước khi đăng tin hoặc quản lý tin.'}
-      </p>
-
-      {GROUPS.map((group, groupIndex) => {
-        const offset = GROUPS.slice(0, groupIndex).reduce((n, g) => n + g.items.length, 0)
-        return (
-          <div
-            key={group.id}
-            className={`guest-poster-menu__group${groupIndex > 0 ? ' guest-poster-menu__group--divided' : ''}`}
+      {!isAuthenticated ? (
+        <p className="guest-poster-menu__hint">
+          Cần{' '}
+          <a
+            href="#login"
+            className="guest-poster-menu__hint-link"
+            onClick={(e) => {
+              e.preventDefault()
+              close()
+              openLogin()
+            }}
           >
-            <div className="guest-poster-menu__group-head">
-              <span className={`guest-poster-menu__badge guest-poster-menu__badge--${group.icon}`}>
-                <GroupIcon kind={group.icon} />
-              </span>
-              <span className="guest-poster-menu__group-title">{group.title}</span>
-            </div>
-            <ul className="guest-poster-menu__list">
-              {group.items.map((item, itemIndex) => {
-                const index = offset + itemIndex
-                return (
-                  <li key={item.id} role="none" className="guest-poster-menu__row">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="guest-poster-menu__item"
-                        data-poster-index={index}
-                        tabIndex={open && focusIndex === index ? 0 : -1}
-                        onMouseEnter={() => setFocusIndex(index)}
-                        onClick={() => runAction(item.path)}
-                      >
-                        <span className="guest-poster-menu__item-label">{item.label}</span>
-                      </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )
-      })}
+            đăng nhập
+          </a>{' '}
+          trước khi quản lý tin.
+        </p>
+      ) : null}
+
+      <ul className="guest-poster-menu__list">
+        <li role="none" className="guest-poster-menu__row">
+          <button
+            type="button"
+            role="menuitem"
+            className="guest-poster-menu__item"
+            tabIndex={0}
+            onClick={runManagePosts}
+          >
+            <span className="guest-poster-menu__item-label">Quản lý tin đăng</span>
+          </button>
+        </li>
+      </ul>
     </div>
   ) : null
 

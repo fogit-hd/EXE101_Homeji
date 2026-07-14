@@ -5,6 +5,12 @@ export const DEFAULT_MAP_CENTER = { lat: 10.8706, lng: 106.7974 }
 export const DEFAULT_MAP_ZOOM = 13
 
 /**
+ * Zoom khi người dùng focus một điểm (địa điểm, tin trọ, chợ đồ, tin nhắn, định vị).
+ * Giữ đồng bộ mọi thao tác chọn pin / mở chi tiết.
+ */
+export const MAP_FOCUS_ZOOM = 18
+
+/**
  * Fallback Map ID for Advanced Markers / cloud styles.
  * Prefer a real Cloud Map ID via VITE_GOOGLE_MAP_ID.
  */
@@ -62,7 +68,7 @@ export function applyMapsColorScheme(map: google.maps.Map) {
   }
 }
 
-/** Shared MapOptions — official Maps JS API only. */
+/** Shared MapOptions — official Maps JS API only. No tile prefetch / warm-up. */
 export function createMapOptions(
   mapId: string = getGoogleMapId(),
   overrides?: Partial<google.maps.MapOptions>,
@@ -87,6 +93,8 @@ export function createMapOptions(
     keyboardShortcuts: false,
     draggable: true,
     scrollwheel: true,
+    // Let Maps SDK manage Vector tile fetch/cache for the visible viewport only.
+    isFractionalZoomEnabled: false,
     ...rest,
   }
 }
@@ -181,7 +189,12 @@ export function readAdvancedMarkerLatLng(
 
 export async function geocodeAddress(
   address: string,
-): Promise<{ lat: number; lng: number; formattedAddress: string } | null> {
+): Promise<{
+  lat: number
+  lng: number
+  formattedAddress: string
+  types: string[]
+} | null> {
   if (!address.trim() || typeof google === 'undefined') return null
 
   try {
@@ -198,8 +211,25 @@ export async function geocodeAddress(
       lat: location.lat(),
       lng: location.lng(),
       formattedAddress: result.formatted_address ?? address,
+      types: result.types ?? [],
     }
   } catch {
     return null
   }
+}
+
+/** Prefer geocoding when the query looks like a street / place address. */
+export function looksLikeAddressQuery(raw: string): boolean {
+  const t = raw.trim()
+  if (t.length < 4) return false
+  if (/\d{1,5}[/\-]?\w*\s+\S+/.test(t)) return true
+  if (t.includes(',') && t.split(',').filter((p) => p.trim()).length >= 2) return true
+  if (
+    /(đường|duong|phố|pho|phường|phuong|quận|quan|hẻm|hem|ngõ|ngo|tòa|toa|chung cư|chung cu|khu phố|khu pho|tp\.|thành phố|thanh pho)/i.test(
+      t,
+    )
+  ) {
+    return true
+  }
+  return t.split(/\s+/).filter(Boolean).length >= 4
 }

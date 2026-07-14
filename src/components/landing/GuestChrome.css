@@ -5,7 +5,7 @@
   z-index: 40;
   display: grid;
   transform: translateY(-50%);
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
 }
 
 .guest-side-nav__layer {
@@ -80,7 +80,7 @@
   align-items: center;
   gap: 8px;
   transform: translateY(-50%);
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   color: #fff;
   mix-blend-mode: difference;
   pointer-events: none;
@@ -167,7 +167,7 @@
   overflow: hidden;
   border-radius: 2px;
   box-shadow: 0 10px 30px rgba(9, 29, 46, 0.18);
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   will-change: transform, opacity;
   pointer-events: none;
   opacity: 0;

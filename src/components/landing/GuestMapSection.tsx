@@ -11,16 +11,18 @@ import { MapPlaceDetailPanel } from '../map/MapPlaceDetailPanel'
 import { useAuthModal } from '../../contexts/AuthModalContext'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { getErrorMessage } from '../../lib/errors'
+import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import {
   GUEST_CITY,
   GUEST_DEFAULT_FOCUS,
   GUEST_DISTRICTS,
+  GUEST_SCHOOL_FALLBACK,
   buildGuestSearchKeyword,
+  schoolsForWard,
   wardsForDistrict,
   type MapFocusPoint,
 } from './guestMapAreas'
-import { useNearbyGuestSchools } from './useNearbyGuestSchools'
 import '../map/MapPlaceDetailPanel.css'
 import './GuestMapSection.css'
 
@@ -33,8 +35,6 @@ export function GuestMapSection() {
   const { openAuthModal } = useAuthModal()
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
   const mapsReady = Boolean(apiKey && mapsLoaded)
-  const { schools, loading: schoolsLoading } =
-    useNearbyGuestSchools(mapsReady)
 
   const [districtId, setDistrictId] = useState(GUEST_DISTRICTS[0].id)
   const [wardId, setWardId] = useState('')
@@ -55,6 +55,10 @@ export function GuestMapSection() {
   const [mapFocusToken, setMapFocusToken] = useState(0)
 
   const wards = useMemo(() => wardsForDistrict(districtId), [districtId])
+  const schoolsInWard = useMemo(
+    () => schoolsForWard(GUEST_SCHOOL_FALLBACK, wardId),
+    [wardId],
+  )
 
   const load = useCallback(async (keyword: string) => {
     setLoading(true)
@@ -98,7 +102,9 @@ export function GuestMapSection() {
         GUEST_DISTRICTS.find((d) => d.id === nextDistrictId) ?? GUEST_DISTRICTS[0]
       const nextWards = wardsForDistrict(nextDistrictId)
       const nextWard = nextWards.find((w) => w.id === nextWardId)
-      const nextSchool = schools.find((s) => s.id === nextSchoolId)
+      const schoolsAvailable = schoolsForWard(GUEST_SCHOOL_FALLBACK, nextWardId)
+      const nextSchool = schoolsAvailable.find((s) => s.id === nextSchoolId)
+      const resolvedSchoolId = nextSchool?.id ?? ''
 
       const keyword = buildGuestSearchKeyword({
         schoolKeyword: nextSchool?.keyword,
@@ -109,12 +115,13 @@ export function GuestMapSection() {
       const focus =
         nextSchool?.focus ?? nextWard?.focus ?? nextDistrict.focus ?? GUEST_DEFAULT_FOCUS
 
+      setSchoolId(resolvedSchoolId)
       setSearchKeyword(keyword)
       setMapFocus({ ...focus })
       setSelectedPostId(null)
       setHoveredPostId(null)
     },
-    [districtId, wardId, schoolId, schools],
+    [districtId, wardId, schoolId],
   )
 
   const openGate = (intent: GateIntent) => {
@@ -192,7 +199,7 @@ export function GuestMapSection() {
   }, [selectedPost, selectedPlace])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
-    setMapFocus({ lat: loc.lat, lng: loc.lng, zoom: 16 })
+    setMapFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setMapFocusToken((n) => n + 1)
   }, [])
 
@@ -246,7 +253,8 @@ export function GuestMapSection() {
                 onChange={(e) => {
                   const id = e.target.value
                   setWardId(id)
-                  applyFilters({ wardId: id })
+                  setSchoolId('')
+                  applyFilters({ wardId: id, schoolId: '' })
                 }}
               >
                 <option value="">Tất cả phường</option>
@@ -259,7 +267,7 @@ export function GuestMapSection() {
             </label>
 
             <label className="guest-map__field">
-              <span>Gần trường {schoolsLoading ? '(đang tải…)' : ''}</span>
+              <span>Gần trường</span>
               <select
                 className="guest-map__select"
                 value={schoolId}
@@ -270,7 +278,7 @@ export function GuestMapSection() {
                 }}
               >
                 <option value="">Chọn trường (tuỳ chọn)</option>
-                {schools.map((s) => (
+                {schoolsInWard.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.label}
                   </option>
@@ -278,13 +286,27 @@ export function GuestMapSection() {
               </select>
             </label>
 
-            <button
-              type="button"
-              className="guest-map__advanced"
-              onClick={() => openGate('browse')}
+            <div
+              className="guest-map__advanced-wrap"
+              tabIndex={0}
+              aria-describedby="guest-advanced-filter-tip"
             >
-              Bộ lọc nâng cao
-            </button>
+              <button
+                type="button"
+                className="guest-map__advanced is-locked"
+                disabled
+                aria-disabled="true"
+              >
+                Bộ lọc nâng cao
+              </button>
+              <span
+                id="guest-advanced-filter-tip"
+                className="guest-map__advanced-tip"
+                role="tooltip"
+              >
+                Bạn cần phải có tài khoản để sử dụng tính năng này
+              </span>
+            </div>
           </form>
 
           <p className="guest-map__hint">
@@ -349,38 +371,41 @@ export function GuestMapSection() {
             ) : (
               <>
                 <p className="guest-map__count">{posts.length} tin trên bản đồ</p>
-                <div className="guest-map__cards">
-                  {posts.map((post) => (
-                    <div
-                      key={post.id}
-                      className={`guest-map__card-wrap${selectedPostId === post.id ? ' is-active' : ''}${hoveredPostId === post.id ? ' is-highlighted' : ''}`}
-                      onMouseEnter={() => handleHoverPost(post.id)}
-                      onMouseLeave={() => handleHoverPost(null)}
-                      onClick={() => handleSelectPost(post.id)}
-                    >
-                      <RentalPostCard
-                        post={post}
-                        showSave
-                        onSave={() => openGate('save')}
-                      />
-                    </div>
-                  ))}
+                <div className="guest-map__list-scroll">
+                  <div className="guest-map__cards">
+                    {posts.map((post) => (
+                      <div
+                        key={post.id}
+                        className={`guest-map__card-wrap${selectedPostId === post.id ? ' is-active' : ''}${hoveredPostId === post.id ? ' is-highlighted' : ''}`}
+                        onMouseEnter={() => handleHoverPost(post.id)}
+                        onMouseLeave={() => handleHoverPost(null)}
+                        onClick={() => handleSelectPost(post.id)}
+                      >
+                        <RentalPostCard
+                          post={post}
+                          showSave
+                          onSave={() => openGate('save')}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
 
-            <div className="guest-map__cta">
-              <p className="guest-map__cta-copy">
-                Đăng ký để mở SĐT chủ nhà, nhắn tin ở ghép, lọc nâng cao và lưu tin yêu thích.
-              </p>
-              <button
-                type="button"
-                className="guest-map__cta-btn"
-                onClick={() => openGate('browse')}
+            <p className="guest-map__more">
+              <a
+                href="#login"
+                className="guest-map__more-link"
+                onClick={(e) => {
+                  e.preventDefault()
+                  openAuthModal({ mode: 'login', intent: 'browse' })
+                }}
               >
-                Đăng ký / Đăng nhập miễn phí
-              </button>
-            </div>
+                đăng nhập
+              </a>{' '}
+              để xem thêm
+            </p>
           </aside>
         </div>
       </div>

@@ -112,14 +112,20 @@
   color: var(--text-secondary);
 }
 
-.map-listing-tag {
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 10px;
-  white-space: nowrap;
+.map-listing-tag.is-highlight {
+  background: var(--error-soft);
+  color: var(--error);
+  animation: map-fade-up 0.3s ease both;
+}
+
+.map-listing-tag.is-premium {
+  background: color-mix(in srgb, #fbbc04 22%, transparent);
+  color: color-mix(in srgb, #fbbc04 55%, var(--text-heading));
+}
+
+.map-listing-tag.is-badge {
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .map-listing-card-body h3 {

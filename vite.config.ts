@@ -15,6 +15,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      '/hubs': {
+        target: 'https://homeji-be.onrender.com',
+        changeOrigin: true,
+        secure: true,
+        ws: true,
+      },
     },
   },
 })

@@ -89,3 +89,7 @@ export async function importMarkerLibrary(): Promise<google.maps.MarkerLibrary> 
 export async function importMapsLibrary(): Promise<google.maps.MapsLibrary> {
   return (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
 }
+
+export async function importRoutesLibrary(): Promise<google.maps.RoutesLibrary> {
+  return (await google.maps.importLibrary('routes')) as google.maps.RoutesLibrary
+}
