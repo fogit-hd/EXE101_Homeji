@@ -4,6 +4,13 @@ import { getApiBaseUrl } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthModalIntent, AuthModalMode } from '../../contexts/AuthModalContext'
 import { getErrorMessage } from '../../lib/errors'
+import {
+  normalizeEmail,
+  normalizeFullName,
+  USER_INPUT_LIMITS,
+  validateFullName,
+  validateRegistrationEmail,
+} from '../../lib/userInputValidation'
 import './AuthModal.css'
 
 type Props = {
@@ -82,9 +89,16 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
     e.preventDefault()
     setError('')
     setMessage('')
+    const nextName = normalizeFullName(displayName)
+    const nextEmail = normalizeEmail(email)
+    const validationError = validateFullName(nextName) || validateRegistrationEmail(nextEmail)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
     setSubmitting(true)
     try {
-      const session = await register(email, password, displayName)
+      const session = await register(nextEmail, password, nextName)
       if (session.emailConfirmationRequired) {
         setMessage(session.message || 'Vui lòng xác nhận email trước khi đăng nhập.')
       } else {
@@ -193,6 +207,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
+                  maxLength={USER_INPUT_LIMITS.fullName}
                   autoComplete="name"
                   placeholder="Nguyễn Văn A"
                 />
@@ -208,8 +223,9 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  maxLength={USER_INPUT_LIMITS.email}
                   autoComplete="email"
-                  placeholder="ban@email.com"
+                  placeholder="ban@gmail.com"
                 />
               </div>
               <div className="form-group">

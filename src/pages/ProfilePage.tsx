@@ -19,6 +19,13 @@ import { MapToast } from '../components/map/MapToast'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import {
+  normalizeFullName,
+  sanitizePhoneInput,
+  USER_INPUT_LIMITS,
+  validateFullName,
+  validateVietnamPhone,
+} from '../lib/userInputValidation'
+import {
   formatDate,
   formatPrice,
   landlordVerificationLabel,
@@ -48,6 +55,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
   const [tab, setTab] = useState<ProfileTab>('basic')
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
+  const [profileErrors, setProfileErrors] = useState<{ displayName?: string; phone?: string }>({})
   const [school, setSchool] = useState('')
   const [contactAddress, setContactAddress] = useState('')
   const [rentalNeed, setRentalNeed] = useState('')
@@ -128,12 +136,12 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
       if (!url) throw new Error('Upload thất bại')
       setAvatarPath(url)
       await updateMyProfile({
-        displayName: displayName || profile?.displayName || 'Người dùng Homeji',
-        phone: phone || undefined,
-        school: school.trim() || undefined,
+        displayName: profile?.displayName || 'Người dùng Homeji',
+        phone: profile?.phone || undefined,
+        school: profile?.school || undefined,
         preferredArea: 'Thủ Đức',
-        contactAddress: contactAddress || undefined,
-        rentalNeed: rentalNeed || undefined,
+        contactAddress: profile?.contactAddress || undefined,
+        rentalNeed: profile?.rentalNeed || undefined,
         avatarPath: url,
       })
       await refreshProfile()
@@ -148,11 +156,22 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    const nextName = normalizeFullName(displayName)
+    const nextPhone = sanitizePhoneInput(phone)
+    const errors = {
+      displayName: validateFullName(nextName) ?? undefined,
+      phone: validateVietnamPhone(nextPhone) ?? undefined,
+    }
+    setProfileErrors(errors)
+    if (errors.displayName || errors.phone) {
+      showToast(errors.displayName || errors.phone || 'Thông tin chưa hợp lệ.', 'error')
+      return
+    }
     setSavingProfile(true)
     try {
       await updateMyProfile({
-        displayName,
-        phone: phone || undefined,
+        displayName: nextName,
+        phone: nextPhone || undefined,
         school: school.trim() || undefined,
         preferredArea: 'Thủ Đức',
         contactAddress: contactAddress || undefined,
@@ -347,11 +366,19 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
                 id="profile-name"
                 className="form-input"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value)
+                  setProfileErrors((current) => ({ ...current, displayName: undefined }))
+                }}
                 required
-                maxLength={100}
+                maxLength={USER_INPUT_LIMITS.fullName}
                 autoComplete="name"
+                aria-invalid={Boolean(profileErrors.displayName)}
+                aria-describedby={profileErrors.displayName ? 'profile-name-error' : undefined}
               />
+              {profileErrors.displayName ? (
+                <small id="profile-name-error" className="profile-field-error" role="alert">{profileErrors.displayName}</small>
+              ) : null}
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-phone">
@@ -361,12 +388,22 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
                 id="profile-phone"
                 className="form-input"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                maxLength={30}
-                inputMode="tel"
+                onChange={(e) => {
+                  setPhone(sanitizePhoneInput(e.target.value))
+                  setProfileErrors((current) => ({ ...current, phone: undefined }))
+                }}
+                maxLength={USER_INPUT_LIMITS.phone}
+                inputMode="numeric"
                 autoComplete="tel"
-                placeholder="VD: 0903…"
+                placeholder="VD: 0901234567"
+                aria-invalid={Boolean(profileErrors.phone)}
+                aria-describedby={profileErrors.phone ? 'profile-phone-error' : 'profile-phone-hint'}
               />
+              {profileErrors.phone ? (
+                <small id="profile-phone-error" className="profile-field-error" role="alert">{profileErrors.phone}</small>
+              ) : (
+                <small id="profile-phone-hint" className="profile-field-hint">Gồm đúng 10 chữ số, bắt đầu bằng 0.</small>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-school">

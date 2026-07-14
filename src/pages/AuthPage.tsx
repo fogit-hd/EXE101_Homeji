@@ -4,6 +4,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { checkEmail, getApiBaseUrl, isEmailTaken } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
+import {
+  normalizeEmail,
+  normalizeFullName,
+  USER_INPUT_LIMITS,
+  validateFullName,
+  validateRegistrationEmail,
+} from '../lib/userInputValidation'
 import { ConfettiConfirmButton, ConfettiDoneMark, warmConfettiLottie, type ConfettiConfirmHandle } from './AuthPageConfetti'
 import { ConnectHomejiCta, warmConnectLottie } from './AuthPageConnect'
 import { AiVoiceFloat, PasswordEyeToggle, voiceTravelDuration } from './AuthPageMotion'
@@ -23,8 +30,6 @@ const TYPE_MS = 46
 const VOICE_LEAD_MS = 480
 /** Nghỉ ngắn sau khi gõ xong trước khi chuyển bước. */
 const VOICE_TAIL_MS = 520
-
-const EMAIL_FORMAT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const COPY = {
   context1:
@@ -686,15 +691,16 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   const skipIntro = () => {
     if (!showStory || submitting) return
     // Đồng bộ draft → form card
-    if (draftName.trim()) setDisplayName(draftName.trim())
-    if (draftEmail.trim()) setEmail(draftEmail.trim())
+    if (draftName.trim()) setDisplayName(normalizeFullName(draftName))
+    if (draftEmail.trim()) setEmail(normalizeEmail(draftEmail))
     if (draftPassword) setPassword(draftPassword)
     revealFormCard()
   }
 
   const validateName = (): boolean => {
-    if (draftName.trim().length < 2) {
-      setError('Tên hơi ngắn — thử thêm chút nữa nhé.')
+    const validationError = validateFullName(draftName)
+    if (validationError) {
+      setError(validationError)
       return false
     }
     setError('')
@@ -702,7 +708,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }
 
   const applyName = () => {
-    const name = draftName.trim()
+    const name = normalizeFullName(draftName)
     setError('')
 
     // Sửa tại chỗ: fade “Xin chào…” → gõ “Tên hay quá…” — không kẹt story
@@ -737,9 +743,10 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }
 
   const validateEmail = async (): Promise<boolean> => {
-    const value = draftEmail.trim()
-    if (!EMAIL_FORMAT_RE.test(value)) {
-      setError('Email chưa đúng định dạng — kiểm tra lại giúp mình.')
+    const value = normalizeEmail(draftEmail)
+    const validationError = validateRegistrationEmail(value)
+    if (validationError) {
+      setError(validationError)
       return false
     }
     try {
@@ -771,7 +778,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }
 
   const applyEmail = () => {
-    const value = draftEmail.trim()
+    const value = normalizeEmail(draftEmail)
     setEmail(value)
     setError('')
 
@@ -894,14 +901,25 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   const finishInlineRegister = useCallback(async () => {
     if (submitting) return
+    const nextEmail = normalizeEmail(email || draftEmail)
+    const nextName = normalizeFullName(displayName || draftName)
+    const validationError = validateFullName(nextName) || validateRegistrationEmail(nextEmail)
+    if (validationError) {
+      setConnectError(validationError)
+      return
+    }
+    if ((password || draftPassword).length < 6) {
+      setConnectError('Mật khẩu cần từ 6 ký tự trở lên.')
+      return
+    }
     setSubmitting(true)
     setConnectError('')
     setError('')
     try {
       const session = await register(
-        email || draftEmail.trim(),
+        nextEmail,
         password || draftPassword,
-        displayName || draftName.trim(),
+        nextName,
       )
       if (session.emailConfirmationRequired) {
         // Ở lại intro — báo qua mây chat (không nhảy form / không Perfect Wrong)
@@ -936,9 +954,16 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     e.preventDefault()
     setError('')
     setMessage('')
+    const nextName = normalizeFullName(displayName)
+    const nextEmail = normalizeEmail(email)
+    const validationError = validateFullName(nextName) || validateRegistrationEmail(nextEmail)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
     setSubmitting(true)
     try {
-      const session = await register(email, password, displayName)
+      const session = await register(nextEmail, password, nextName)
       if (session.emailConfirmationRequired) {
         setMessage(session.message || 'Vui lòng xác nhận email trước khi đăng nhập.')
       } else {
@@ -1245,6 +1270,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         }
                       }}
                       placeholder="Họ tên của bạn"
+                      maxLength={USER_INPUT_LIMITS.fullName}
                       autoComplete="name"
                       autoFocus
                       aria-label="Họ tên"
@@ -1255,9 +1281,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                       onValidate={validateName}
                       onSuccess={applyName}
                       onInvalid={() => {
-                        if (draftName.trim().length < 2) {
-                          setError('Tên hơi ngắn — thử thêm chút nữa nhé.')
-                        }
+                        setError(validateFullName(draftName) || 'Họ tên chưa hợp lệ.')
                       }}
                       label="Xác nhận tên"
                     />
@@ -1416,7 +1440,8 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                             emailConfirmRef.current?.confirm()
                           }
                         }}
-                        placeholder="ban@email.com"
+                        placeholder="ban@gmail.com"
+                        maxLength={USER_INPUT_LIMITS.email}
                         autoComplete="email"
                         autoFocus
                         aria-label="Email"
@@ -1696,6 +1721,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         required
+                        maxLength={USER_INPUT_LIMITS.fullName}
                         autoComplete="name"
                         placeholder="Nguyễn Văn A"
                       />
@@ -1708,8 +1734,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        maxLength={USER_INPUT_LIMITS.email}
                         autoComplete="email"
-                        placeholder="ban@email.com"
+                        placeholder="ban@gmail.com"
                       />
                     </div>
                     <div className="auth-cinema__field">

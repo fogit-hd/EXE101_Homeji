@@ -179,6 +179,14 @@
   font-size: 0.75rem;
 }
 
+.profile-field-error {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger, #d93025);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .profile-section__actions {
   display: flex;
   justify-content: flex-end;
