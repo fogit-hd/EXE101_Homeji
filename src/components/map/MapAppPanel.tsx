@@ -59,7 +59,7 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
     subtitle: '',
   },
   payments: {
-    title: 'Gói Premium',
+    title: 'Gói Đăng ký',
     subtitle: '',
   },
   profile: {
