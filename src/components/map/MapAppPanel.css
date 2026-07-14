@@ -1,5 +1,5 @@
 .map-app-panel {
-  z-index: 500;
+  z-index: 9999;
 }
 
 .map-app-panel__section {
@@ -7,19 +7,42 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  will-change: transform, opacity;
 }
 
-.map-app-panel__section.map-motion-enter {
-  opacity: 0;
-  transform: translateX(16px);
-  transition:
-    opacity var(--map-dur, 280ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    transform var(--map-dur-slow, 360ms) var(--map-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+.map-app-panel__section.is-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  gap: 0;
 }
 
-.map-app-panel__section.map-motion-enter.is-active {
-  opacity: 1;
-  transform: translateX(0);
+.home-list-panel.is-messages .home-list-body.map-app-panel__body {
+  overflow: hidden;
+  min-height: 0;
+  padding: 10px 14px 12px;
+}
+
+.map-app-panel__section--enter {
+  animation: map-slide-right-in var(--map-dur, 280ms) var(--map-ease, ease-in-out) both;
+}
+
+.map-app-panel__section--exit {
+  animation: map-section-exit var(--map-dur, 280ms) var(--map-ease, ease-in-out) forwards;
+}
+
+.map-app-panel__heading--enter,
+.map-app-panel__sub--enter {
+  animation: map-fade-up var(--map-dur, 280ms) var(--map-ease, ease-in-out) both;
+}
+
+.map-app-panel__heading--exit,
+.map-app-panel__sub--exit {
+  animation: map-fade-down-out var(--map-dur, 280ms) var(--map-ease, ease-in-out) forwards;
+}
+
+.map-app-panel__sub--enter {
+  animation-delay: 40ms;
 }
 
 .map-app-panel__body {
@@ -88,9 +111,33 @@
   box-shadow: none;
 }
 
-.map-app-panel__body .map-embed .card h2 {
+.map-app-panel__body .map-embed .card h2,
+.map-app-panel__body .map-embed .card h3 {
   margin: 0 0 12px;
   font-size: 0.95rem;
+  color: var(--text-heading);
+}
+
+.map-app-panel__body .map-embed .card p,
+.map-app-panel__body .map-embed .card small {
+  color: var(--text-secondary);
+}
+
+.map-app-panel__body .map-embed .tab {
+  color: var(--text-secondary);
+}
+
+.map-app-panel__body .map-embed .tab.active,
+.map-app-panel__body .map-embed .tab:hover {
+  color: var(--text-heading);
+}
+
+.map-app-panel__body .map-embed .btn-secondary {
+  color: var(--text-heading);
+}
+
+.map-app-panel__body .map-embed .btn-ghost {
+  color: var(--grab-blue);
 }
 
 .map-app-panel__body .map-embed .form-group {

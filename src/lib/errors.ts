@@ -63,6 +63,18 @@ export function isServiceDisruption(err: unknown): boolean {
   return isNetworkLike(err) || isSystemApiError(err)
 }
 
+export const PROFILE_INCOMPLETE_MESSAGE =
+  'Vui lòng hoàn thiện hồ sơ trước khi dùng tính năng này.'
+
+export const REVIEW_REQUIRES_VIEWING_MESSAGE =
+  'Bạn cần hoàn tất lịch xem phòng trước khi đánh giá tin này.'
+
+export const REVIEW_OWN_POST_MESSAGE =
+  'Bạn không thể đánh giá tin đăng của chính mình.'
+
+export const RATE_LIMIT_MESSAGE =
+  'Bạn thao tác hơi nhanh. Vui lòng đợi vài giây rồi thử lại.'
+
 /**
  * Đổi mọi lỗi kỹ thuật thành 2 nhóm thông báo thân thiện:
  * - Mạng → kiểm tra kết nối
@@ -71,13 +83,55 @@ export function isServiceDisruption(err: unknown): boolean {
  */
 export function getErrorMessage(err?: unknown, fallback?: string): string {
   if (isNetworkLike(err)) return NETWORK_ERROR_MESSAGE
-  if (isSystemApiError(err)) return SYSTEM_ERROR_MESSAGE
-  // API 4xx khác (404/400/403…) — vẫn quy về lỗi hệ thống cho người dùng cuối
-  if (err instanceof ApiRequestError) return SYSTEM_ERROR_MESSAGE
+  if (err instanceof ApiRequestError) {
+    if (err.status === 429) return RATE_LIMIT_MESSAGE
+    if (err.status === 403) {
+      const detail = (err.body.detail || err.message || '').toLowerCase()
+      // Match real profile gate only — not other "Complete …" 403s (e.g. viewing appointment).
+      if (
+        detail.includes('complete your profile') ||
+        detail.includes('hồ sơ') ||
+        (detail.includes('profile') && detail.includes('before using'))
+      ) {
+        return PROFILE_INCOMPLETE_MESSAGE
+      }
+      if (
+        detail.includes('viewing appointment') ||
+        detail.includes('before reviewing')
+      ) {
+        return REVIEW_REQUIRES_VIEWING_MESSAGE
+      }
+      if (
+        detail.includes('cannot review their own') ||
+        detail.includes('own rental post')
+      ) {
+        return REVIEW_OWN_POST_MESSAGE
+      }
+      return err.body.detail || 'Bạn không có quyền thực hiện thao tác này.'
+    }
+    if (isSystemApiError(err)) {
+      const detail = err.body.detail
+      if (detail && !isTechnicalMessage(detail)) return detail
+      return SYSTEM_ERROR_MESSAGE
+    }
+    const fromErrors = firstValidationMessage(err.body.errors)
+    if (fromErrors && !isTechnicalMessage(fromErrors)) return fromErrors
+    if (err.body.detail && !isTechnicalMessage(err.body.detail)) return err.body.detail
+    return SYSTEM_ERROR_MESSAGE
+  }
   if (err instanceof Error && err.message && !isTechnicalMessage(err.message)) {
     return err.message
   }
   return fallback || SYSTEM_ERROR_MESSAGE
+}
+
+function firstValidationMessage(errors?: Record<string, string[]>): string | null {
+  if (!errors) return null
+  for (const messages of Object.values(errors)) {
+    const first = messages?.find((m) => typeof m === 'string' && m.trim())
+    if (first) return first.trim()
+  }
+  return null
 }
 
 function isTechnicalMessage(message: string): boolean {

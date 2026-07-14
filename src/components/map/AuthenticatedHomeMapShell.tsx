@@ -1,21 +1,32 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  getNotifications,
   getRentalPost,
   getSavedPosts,
   savePost,
+  searchMarketplacePosts,
   unsavePost,
   type RentalPost,
   type RentalPostSummary,
 } from '../../api'
+import { MarketplacePostStatus } from '../../api/types'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
+import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace'
+import { chatLocationKindLabel, type ChatLocationKind } from '../../lib/chatLocation'
+import { DEFAULT_MAP_CENTER, isValidCoord, MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import type { MapPinLayers } from '../../lib/mapPinLayers'
 import { useAuth } from '../../contexts/AuthContext'
 import { HomeListingSkeleton } from '../HomeListingSkeleton'
 import { MapListingCard } from '../MapListingCard'
-import { MapAppPanel, type MapAppSection } from './MapAppPanel'
+import { MapAppPanel, isWideMapSection, type MapAppSection } from './MapAppPanel'
+import { MapChatDock } from './MapChatDock'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
-import { useMountTransition } from './useMountTransition'
+import { MapToast } from './MapToast'
+import type { MarketplaceMapPin } from './RentalMap'
+import { useNotificationHub } from '../../hooks/useNotificationHub'
+import { NotificationType, type Notification } from '../../api'
 import './MapPlaceDetailPanel.css'
 
 type AuthenticatedHomeMapShellProps = {
@@ -26,23 +37,35 @@ type AuthenticatedHomeMapShellProps = {
   onClearSelection: () => void
   focus: HomeMapFocus | null
   focusToken: number
+  /** Bumped after filter search — map auto-fits / pins matching listings. */
+  listingsFitToken?: number
+  /** Omnibox address search — fly map + open place detail (not listings panel). */
+  placeFocus?: {
+    placeId?: string
+    lat: number
+    lng: number
+    name: string
+    address: string
+  } | null
+  placeFocusToken?: number
   userLocation: { lat: number; lng: number } | null
   onLocate: () => void
   locating: boolean
   locationError: string
+  onClearLocationError?: () => void
   panelOpen: boolean
   panelSection: MapAppSection | null
   closePanel: () => void
-  openListingsPanel: () => void
+  openAppSection?: (section: MapAppSection) => void
   loading: boolean
   showPostsLoader: boolean
   error: string
   onResetFilters: () => void
   needsProfileSetup: boolean
-  /** Omnibox + other chrome rendered inside the map frame (sibling of map). */
   omnibox: React.ReactNode
-  /** Sync search bar text with the open place/listing title (Google Maps pattern). */
+  pinLayers?: MapPinLayers
   onDetailLabelChange?: (label: string | null) => void
+  onAiSearchUpdate?: (update: import('../../api').AiHighlightResponse) => void
 }
 
 /**
@@ -57,23 +80,38 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   onClearSelection,
   focus,
   focusToken,
+  listingsFitToken = 0,
+  placeFocus = null,
+  placeFocusToken = 0,
   userLocation,
   onLocate,
   locating,
   locationError,
+  onClearLocationError,
   panelOpen,
   panelSection,
   closePanel,
-  openListingsPanel,
+  openAppSection,
   loading,
   showPostsLoader,
   error,
   onResetFilters,
   needsProfileSetup,
   omnibox,
+  pinLayers,
   onDetailLabelChange,
+  onAiSearchUpdate,
 }: AuthenticatedHomeMapShellProps) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, profile } = useAuth()
+
+  const userAvatarUrl = profile?.avatarPath ?? null
+  const userAvatarInitials = useMemo(() => {
+    const name = profile?.displayName?.trim() || ''
+    const parts = name.split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return '?'
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return `${parts[0][0] ?? ''}${parts[parts.length - 1]?.[0] ?? ''}`.toUpperCase()
+  }, [profile?.displayName])
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceDetails | null>(null)
   const [placeLoading, setPlaceLoading] = useState(false)
@@ -83,25 +121,317 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [saveBusy, setSaveBusy] = useState(false)
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
   const [nearbyToken, setNearbyToken] = useState(0)
+  /** Pin for chat "Mở trên bản đồ" — independent of selected place red pin. */
+  const [sharedLocationPin, setSharedLocationPin] = useState<{
+    lat: number
+    lng: number
+    title: string
+    kindLabel: string
+    token: number
+    /** Chat window that opened this pin — cleared when that window closes. */
+    conversationId?: string
+  } | null>(null)
+  const [navigationRequest, setNavigationRequest] = useState<{
+    origin: { lat: number; lng: number }
+    destination: { lat: number; lng: number }
+    token: number
+    trafficAware?: boolean
+    mode?: 'preview' | 'navigate'
+  } | null>(null)
+  const [routeSummary, setRouteSummary] = useState<{
+    distanceText: string
+    durationText: string
+    steps: import('../../lib/mapRoutes').MapRouteStep[]
+    trafficAware: boolean
+    mode: 'preview' | 'navigate'
+  } | null>(null)
+  const [routeError, setRouteError] = useState<string | null>(null)
+  const [chatInboxOpen, setChatInboxOpen] = useState(false)
+  const [openChatIds, setOpenChatIds] = useState<string[]>([])
+  const [notificationRefreshKey, setNotificationRefreshKey] = useState(0)
+  const [unreadBadge, setUnreadBadge] = useState(0)
+  const [toast, setToast] = useState<string | null>(null)
+  const [marketplacePins, setMarketplacePins] = useState<MarketplaceMapPin[]>([])
+  const [selectedMarketplaceId, setSelectedMarketplaceId] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const hoverLeaveTimerRef = useRef<number | null>(null)
+  const placeFocusRef = useRef(placeFocus)
+  placeFocusRef.current = placeFocus
   const listingFetchSeq = useRef(0)
 
-  const detailOpen = !!(selectedPost || selectedPlace || placeLoading)
-  const detailMotion = useMountTransition(detailOpen, 360)
+  const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
+
+  useNotificationHub({
+    enabled: isAuthenticated,
+    onNotification: (n: Notification) => {
+      setNotificationRefreshKey((k) => k + 1)
+      const isMessage =
+        n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage
+      if (isMessage && !n.isRead) {
+        setUnreadBadge((c) => c + 1)
+      }
+      setToast(n.title || 'Có thông báo mới')
+    },
+  })
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadBadge(0)
+      return
+    }
+    let cancelled = false
+    void getNotifications(true)
+      .then((list) => {
+        if (cancelled) return
+        const messageUnread = list.filter(
+          (n) =>
+            !n.isRead &&
+            (n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage),
+        ).length
+        setUnreadBadge(messageUnread)
+      })
+      .catch(() => {
+        /* keep realtime counter */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, notificationRefreshKey])
+
+  useEffect(() => {
+    if (chatInboxOpen || openChatIds.length > 0) setUnreadBadge(0)
+  }, [chatInboxOpen, openChatIds])
+
+  const openChatWindow = useCallback((conversationId: string) => {
+    setOpenChatIds((prev) => {
+      if (prev.includes(conversationId)) {
+        // Move to front (most recent)
+        return [...prev.filter((id) => id !== conversationId), conversationId]
+      }
+      return [...prev, conversationId].slice(-3)
+    })
+    setUnreadBadge(0)
+  }, [])
+
+  const closeChatWindow = useCallback((conversationId: string) => {
+    setOpenChatIds((prev) => prev.filter((id) => id !== conversationId))
+    // Drop map pins that came from “Mở trên bản đồ” in this chat thread.
+    setSharedLocationPin((pin) => {
+      if (!pin) return null
+      if (!pin.conversationId || pin.conversationId === conversationId) return null
+      return pin
+    })
+  }, [])
+
+  const toggleChatInbox = useCallback(() => {
+    setChatInboxOpen((v) => !v)
+    setUnreadBadge(0)
+  }, [])
+
+  const handleOpenAppSection = useCallback(
+    (section: MapAppSection) => {
+      if (section === 'messages') {
+        toggleChatInbox()
+        return
+      }
+      openAppSection?.(section)
+    },
+    [openAppSection, toggleChatInbox],
+  )
+  useEffect(() => {
+    if (!error) return
+    setToast(error)
+  }, [error])
+
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(null), 4200)
+    return () => window.clearTimeout(t)
+  }, [toast])
+
+  useEffect(() => {
+    if (!locationError) return
+    const t = window.setTimeout(() => onClearLocationError?.(), 4800)
+    return () => window.clearTimeout(t)
+  }, [locationError, onClearLocationError])
 
   const selectedPlacePin = useMemo(() => {
     if (selectedPost) return null
+    // Chat shared pin owns the map marker — avoid a duplicate red place pin.
+    if (sharedLocationPin) return null
     if (!selectedPlace?.location) return null
     return {
       lat: selectedPlace.location.lat,
       lng: selectedPlace.location.lng,
       title: selectedPlace.name,
     }
-  }, [selectedPost, selectedPlace])
+  }, [selectedPost, selectedPlace, sharedLocationPin])
 
   const mapFocus = nearbyFocus ?? focus
   const mapFocusToken = nearbyFocus ? nearbyToken : focusToken
+
+  const selectedPlaceShare = useMemo(() => {
+    if (!selectedPlace) return null
+    return {
+      name: selectedPlace.name,
+      address: selectedPlace.address || undefined,
+      lat: selectedPlace.location?.lat,
+      lng: selectedPlace.location?.lng,
+    }
+  }, [selectedPlace])
+
+  const selectedListingShare = useMemo(() => {
+    const listing = selectedPost
+    if (!listing) return null
+    return {
+      name: listing.title,
+      address: listing.address,
+      lat: listing.latitude,
+      lng: listing.longitude,
+    }
+  }, [selectedPost])
+
+  const mapAreaShare = useMemo(() => {
+    if (mapFocus && Number.isFinite(mapFocus.lat) && Number.isFinite(mapFocus.lng)) {
+      return {
+        name: 'Khu vực đang xem trên bản đồ',
+        lat: mapFocus.lat,
+        lng: mapFocus.lng,
+      }
+    }
+    return {
+      name: 'Thủ Đức & Quận 9',
+      lat: 10.8494,
+      lng: 106.7537,
+    }
+  }, [mapFocus])
+
+  const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
+    setSelectedPlace(place)
+    setPlaceLoading(false)
+    setNearbyFocus(null)
+  }, [])
+
+  const handleFocusMapFromChat = useCallback(
+    (loc: {
+      lat: number
+      lng: number
+      title?: string
+      address?: string
+      kind?: ChatLocationKind
+      conversationId?: string
+    }) => {
+      const title = loc.title?.trim() || 'Vị trí từ tin nhắn'
+      const kindLabel = loc.kind
+        ? `Tin nhắn · ${chatLocationKindLabel(loc.kind)}`
+        : 'Từ tin nhắn'
+
+      // Open place detail only when no app tab / detail panel is already open.
+      const detailAlreadyOpen = !!(selectedPostId || selectedPlace || placeLoading)
+      if (!panelOpen && !detailAlreadyOpen) {
+        handleSelectPlace(
+          buildSyntheticMapPlace({
+            name: title,
+            address: loc.address,
+            lat: loc.lat,
+            lng: loc.lng,
+            typeLabel: kindLabel,
+          }),
+        )
+      }
+
+      // Always fly camera + show chat shared pin (after select — select clears nearbyFocus).
+      setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
+      setNearbyToken((t) => t + 1)
+      setSharedLocationPin((prev) => ({
+        lat: loc.lat,
+        lng: loc.lng,
+        title,
+        kindLabel,
+        token: (prev?.token ?? 0) + 1,
+        conversationId: loc.conversationId,
+      }))
+      setToast('Đang xem vị trí đối phương gửi trên bản đồ')
+    },
+    [panelOpen, selectedPostId, selectedPlace, placeLoading, handleSelectPlace],
+  )
+
+  const handleMarketplacePostsForMap = useCallback((pins: MarketplaceMapPin[]) => {
+    setMarketplacePins(pins)
+  }, [])
+
+  /** Load marketplace pins with the home map so all layers show on first paint. */
+  useEffect(() => {
+    let cancelled = false
+    void searchMarketplacePosts({
+      latitude: DEFAULT_MAP_CENTER.lat,
+      longitude: DEFAULT_MAP_CENTER.lng,
+      radiusKm: 25,
+      pageSize: 40,
+    })
+      .then((list) => {
+        if (cancelled) return
+        const pins: MarketplaceMapPin[] = list
+          .filter(
+            (p) =>
+              isValidCoord(p.latitude, p.longitude) &&
+              (p.status === MarketplacePostStatus.Active || p.status == null),
+          )
+          .map((p) => ({
+            id: p.id,
+            title: p.title,
+            lat: p.latitude,
+            lng: p.longitude,
+            price: p.price,
+          }))
+        setMarketplacePins(pins)
+      })
+      .catch(() => {
+        /* keep map usable without marketplace layer */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleMarketplaceFocusMap = useCallback(
+    (loc: { lat: number; lng: number; zoom?: number }) => {
+      setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: loc.zoom ?? MAP_FOCUS_ZOOM })
+      setNearbyToken((t) => t + 1)
+    },
+    [],
+  )
+
+  const handleSelectMarketplace = useCallback(
+    (id: string) => {
+      setSelectedMarketplaceId(id)
+      const pin = marketplacePins.find((p) => p.id === id)
+      if (pin) {
+        setNearbyFocus({ lat: pin.lat, lng: pin.lng, zoom: MAP_FOCUS_ZOOM })
+        setNearbyToken((t) => t + 1)
+      }
+      openAppSection?.('marketplace')
+    },
+    [marketplacePins, openAppSection],
+  )
+
+  useEffect(() => {
+    if (panelSection !== 'marketplace') {
+      setSelectedMarketplaceId(null)
+    }
+  }, [panelSection])
+
+  useEffect(() => {
+    if (!listingsFitToken) return
+    setSelectedPlace(null)
+    setPlaceLoading(false)
+    setSelectedMarketplaceId(null)
+    setNearbyFocus(null)
+    setSharedLocationPin(null)
+    setNavigationRequest(null)
+    setRouteSummary(null)
+    setRouteError(null)
+  }, [listingsFitToken])
 
   // Keep omnibox text in sync with the open detail title.
   useEffect(() => {
@@ -186,14 +516,115 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     setListingDetail(null)
     setListingLoading(false)
     setNearbyFocus(null)
+    setSharedLocationPin(null)
+    setNavigationRequest(null)
+    setRouteSummary(null)
+    setRouteError(null)
+    setSelectedMarketplaceId(null)
     onClearSelection()
   }, [onClearSelection])
 
-  const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
-    setSelectedPlace(place)
-    setPlaceLoading(false)
-    setNearbyFocus(null)
+  const handleNavigationResult = useCallback(
+    (
+      summary: {
+        distanceMeters: number
+        durationMillis: number
+        distanceText: string
+        durationText: string
+        steps: import('../../lib/mapRoutes').MapRouteStep[]
+        trafficAware: boolean
+        mode: 'preview' | 'navigate'
+      } | null,
+      error?: string | null,
+    ) => {
+      if (error) {
+        setRouteSummary(null)
+        setRouteError(error)
+        setToast(error)
+        return
+      }
+      setRouteError(null)
+      setRouteSummary(
+        summary
+          ? {
+              distanceText: summary.distanceText,
+              durationText: summary.durationText,
+              steps: summary.steps,
+              trafficAware: summary.trafficAware,
+              mode: summary.mode,
+            }
+          : null,
+      )
+    },
+    [],
+  )
+
+  const startInMapDirections = useCallback(
+    (destination: { lat: number; lng: number }) => {
+      if (!userLocation) {
+        setToast('Bật vị trí của bạn để xem đường đi trên bản đồ')
+        onLocate()
+        return
+      }
+      setNearbyFocus(null)
+      setRouteError(null)
+      setRouteSummary(null)
+      setNavigationRequest((prev) => ({
+        origin: { lat: userLocation.lat, lng: userLocation.lng },
+        destination,
+        trafficAware: false,
+        mode: 'preview',
+        token: (prev?.token ?? 0) + 1,
+      }))
+    },
+    [userLocation, onLocate],
+  )
+
+  const handleClearNavigation = useCallback(() => {
+    setNavigationRequest(null)
+    setRouteSummary(null)
+    setRouteError(null)
   }, [])
+
+  // Omnibox address search → pin + place detail (left), not the listings empty panel.
+  useEffect(() => {
+    const next = placeFocusRef.current
+    if (!placeFocusToken || !next) return
+    onClearSelection()
+    setSelectedMarketplaceId(null)
+    setListingDetail(null)
+    setNearbyFocus(null)
+
+    const synthetic = buildSyntheticMapPlace({
+      placeId: next.placeId,
+      name: next.name,
+      address: next.address,
+      lat: next.lat,
+      lng: next.lng,
+    })
+
+    const placeId = next.placeId?.trim()
+    if (!placeId || placeId.startsWith('geo:') || placeId.startsWith('text:')) {
+      handleSelectPlace(synthetic)
+      return
+    }
+
+    let cancelled = false
+    setPlaceLoading(true)
+    handleSelectPlace(synthetic)
+    void fetchMapPlaceDetails(placeId)
+      .then((details) => {
+        if (cancelled || !details) return
+        handleSelectPlace(details)
+      })
+      .finally(() => {
+        if (!cancelled) setPlaceLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [placeFocusToken, handleSelectPlace, onClearSelection])
 
   const handleSelectPost = useCallback(
     (postId: string) => {
@@ -210,7 +641,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   )
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
-    setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: 16 })
+    setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setNearbyToken((n) => n + 1)
   }, [])
 
@@ -304,8 +735,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   return (
     <div
       className={`home-map-page${panelOpen ? '' : ' is-sidebar-collapsed'}${
-        detailMotion.mounted ? ' has-place-detail' : ''
-      }`}
+        detailOpen ? ' has-place-detail' : ''
+      }${panelOpen && isWideMapSection(panelSection) ? ' has-wide-panel' : ''}`}
     >
       <section className="home-map-panel">
         <div className="home-map-frame">
@@ -318,62 +749,146 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             onSelectPlace={handleSelectPlace}
             onPlaceLoading={setPlaceLoading}
             selectedPlacePin={selectedPlacePin}
+            sharedLocationPin={sharedLocationPin}
+            marketplacePins={marketplacePins}
+            selectedMarketplaceId={selectedMarketplaceId}
+            onSelectMarketplace={handleSelectMarketplace}
+            pinLayers={pinLayers}
             focus={mapFocus}
             focusToken={mapFocusToken}
+            listingsFitToken={listingsFitToken}
+            navigationRequest={navigationRequest}
+            onNavigationResult={handleNavigationResult}
             userLocation={userLocation}
+            userAvatarUrl={userAvatarUrl}
+            userAvatarInitials={userAvatarInitials}
             onLocate={onLocate}
             locating={locating}
-            locationError={locationError}
           />
-          {omnibox}
         </div>
 
         <MapPlaceDetailPanel
           open={detailOpen}
           onClose={handleClearMapSelection}
-          place={selectedPost ? null : selectedPlace}
-          placeLoading={selectedPost ? false : placeLoading}
-          listing={selectedPost ? listingDetail : null}
-          listingSummary={selectedPost}
-          listingLoading={!!selectedPost && listingLoading}
+          place={selectedPostId ? null : selectedPlace}
+          placeLoading={selectedPostId ? false : placeLoading}
+          listing={selectedPostId ? listingDetail : null}
+          listingSummary={selectedPost ?? listingDetail}
+          listingLoading={!!selectedPostId && listingLoading}
           userLocation={userLocation}
           onNearby={handleNearby}
+          onDirections={startInMapDirections}
+          onClearNavigation={handleClearNavigation}
+          routeSummary={routeSummary}
+          routeError={routeError}
           onSaveListing={
-            selectedPost && isAuthenticated ? () => void handleSaveListing() : undefined
+            selectedPostId && isAuthenticated ? () => void handleSaveListing() : undefined
           }
           listingSaved={listingSaved}
           saveBusy={saveBusy}
+          onOpenMessages={(conversationId) => {
+            if (conversationId) openChatWindow(conversationId)
+            else toggleChatInbox()
+          }}
+          onOpenAppointments={() => openAppSection?.('appointments')}
         />
+
+        {/* Outside .home-map-frame so z-index can sit above MapPlaceDetailPanel
+            (frame uses isolation:isolate and would trap omnibox underneath). */}
+        {omnibox && isValidElement(omnibox)
+          ? cloneElement(
+              omnibox as React.ReactElement<{
+                unreadMessageCount?: number
+                onOpenSection?: (section: MapAppSection) => void
+                activeSection?: MapAppSection | null
+              }>,
+              {
+                unreadMessageCount: unreadBadge,
+                onOpenSection: handleOpenAppSection,
+                activeSection:
+                  chatInboxOpen || openChatIds.length > 0
+                    ? 'messages'
+                    : panelSection,
+              },
+            )
+          : omnibox}
 
         {needsProfileSetup && (
           <div className="home-map-banner">
-            Chào mừng! <Link to="/profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
+            Chào mừng! <Link to="/?section=profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
           </div>
         )}
-
-        <button
-          type="button"
-          className="home-sidebar-toggle"
-          aria-expanded={panelOpen}
-          aria-controls="home-list-panel"
-          onClick={() => {
-            if (panelOpen) closePanel()
-            else openListingsPanel()
-          }}
-        >
-          {panelOpen ? 'Thu gọn danh sách' : 'Mở danh sách'}
-          <span aria-hidden>{panelOpen ? '›' : '‹'}</span>
-        </button>
       </section>
+
+      <MapChatDock
+        inboxOpen={chatInboxOpen}
+        openChatIds={openChatIds}
+        onCloseInbox={() => setChatInboxOpen(false)}
+        onCloseChat={closeChatWindow}
+        onOpenChat={openChatWindow}
+        userLocation={userLocation}
+        selectedPlace={selectedPlaceShare}
+        selectedListing={selectedListingShare}
+        mapArea={mapAreaShare}
+        onFocusMap={handleFocusMapFromChat}
+        refreshKey={notificationRefreshKey}
+      />
 
       <MapAppPanel
         section={panelSection ?? 'listings'}
-        open={panelOpen}
+        open={panelOpen && panelSection !== 'messages'}
         onClose={closePanel}
         listingsSubtitle={
           loading ? 'Đang tìm phòng phù hợp…' : `${posts.length} phòng phù hợp`
         }
         listingsContent={listingsContent}
+        notificationRefreshKey={notificationRefreshKey}
+        onAiSearchUpdate={onAiSearchUpdate}
+        onMarketplacePostsForMap={handleMarketplacePostsForMap}
+        onMarketplaceFocusMap={handleMarketplaceFocusMap}
+        selectedMarketplaceId={selectedMarketplaceId}
+        onSelectMarketplaceId={setSelectedMarketplaceId}
+        onNotificationOpen={(n) => {
+          if (
+            n.type === NotificationType.NewMessage ||
+            n.type === NotificationType.DirectMessage
+          ) {
+            if (n.relatedEntityId) openChatWindow(n.relatedEntityId)
+            else toggleChatInbox()
+            return
+          }
+          if (
+            n.type === NotificationType.ViewingAppointmentRequested ||
+            n.type === NotificationType.ViewingAppointmentUpdated
+          ) {
+            openAppSection?.('appointments')
+            return
+          }
+          if (
+            n.type === NotificationType.RoommateInvitationReceived ||
+            n.type === NotificationType.RoommateInvitationAccepted
+          ) {
+            openAppSection?.('invitations')
+            return
+          }
+          if (n.type === NotificationType.MarketplaceOrderUpdated) {
+            openAppSection?.('marketplace')
+            return
+          }
+          if (n.type === NotificationType.LandlordVerificationUpdated) {
+            openAppSection?.('profile')
+            return
+          }
+          openAppSection?.('listings')
+        }}
+      />
+      <MapToast
+        message={locationError || toast}
+        tone={locationError || error ? 'error' : 'info'}
+        onDismiss={() => {
+          if (locationError) onClearLocationError?.()
+          else setToast(null)
+        }}
       />
     </div>
   )

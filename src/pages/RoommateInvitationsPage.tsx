@@ -11,6 +11,7 @@ import { RoommateInvitationStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
+import { mapPostUrl } from '../lib/mapDeepLinks'
 
 export function RoommateInvitationsPage({ embedded = false }: { embedded?: boolean }) {
   const { profile } = useAuth()
@@ -53,7 +54,8 @@ export function RoommateInvitationsPage({ embedded = false }: { embedded?: boole
                 <div>
                   <span className="badge badge-blue">{invitationStatusLabel[inv.status]}</span>
                   <p>
-                    Tin đăng: <Link to={`/posts/${inv.rentalPostId}`}>{inv.rentalPostId.slice(0, 8)}...</Link>
+                    Tin đăng:{' '}
+                    <Link to={mapPostUrl(inv.rentalPostId)}>{inv.rentalPostId.slice(0, 8)}...</Link>
                   </p>
                   <p>{isReceiver ? 'Bạn được mời' : isSender ? 'Bạn đã gửi' : 'Lời mời'}</p>
                   <small>{formatDate(inv.createdAt)}</small>

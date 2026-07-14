@@ -1,6 +1,7 @@
 /**
- * Map surface CSS — keep free of transition/transform on the canvas host.
- * Do NOT set transform:none on .gm-style descendants (Maps uses transforms for tiles).
+ * Map surface CSS.
+ * Promote outer chrome layers for stable compositing; keep transforms OFF the
+ * WebGL host (`.rental-map__host`) so Maps Vector tiles aren't fought.
  */
 
 .rental-map,
@@ -16,12 +17,14 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background: #e8eef2;
+  background-color: var(--map-canvas-bg, #e8eef2);
   touch-action: manipulation;
   overscroll-behavior: none;
-  /* No transform / will-change on the map shell — fights WebGL compositing */
-  transform: none !important;
-  will-change: auto !important;
+  -webkit-tap-highlight-color: transparent;
+  isolation: isolate;
+  /* Outer shell may promote; host below stays transform-free for WebGL */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .rental-map--placeholder {
@@ -32,7 +35,7 @@
   color: #69727d;
   font-size: 14px;
   touch-action: auto;
-  transform: none !important;
+  background-color: var(--map-canvas-bg, #e8eef2);
 }
 
 .rental-map__host {
@@ -44,6 +47,11 @@
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--map-canvas-bg, #e8eef2);
+  /* Critical: no translateZ/will-change here — Google Maps owns this layer */
+  transform: none;
+  will-change: auto;
   transition: none !important;
   animation: none !important;
 }
@@ -53,6 +61,8 @@
   height: 100%;
   position: absolute;
   inset: 0;
+  background-color: var(--map-canvas-bg, #e8eef2);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .rental-map__loader {
@@ -61,7 +71,8 @@
   z-index: 2;
   display: grid;
   place-items: center;
-  background: linear-gradient(160deg, #edf4ff 0%, #f4faf6 100%);
+  /* Neutral — avoid green-tinted gradient flash behind the map */
+  background: var(--map-canvas-bg, #e8eef2);
   pointer-events: none;
   transition: none !important;
 }
@@ -228,8 +239,12 @@
   border: 1px solid #d5d8dc;
   touch-action: manipulation;
   overscroll-behavior: none;
+  background-color: var(--map-canvas-bg, #e8eef2);
+  -webkit-tap-highlight-color: transparent;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  isolation: isolate;
   transition: none !important;
-  transform: none !important;
 }
 
 .location-picker-map .rental-map__host {
@@ -248,7 +263,7 @@
   text-align: center;
   color: #69727d;
   font-size: 14px;
-  background: linear-gradient(160deg, #edf4ff 0%, #f4faf6 100%);
+  background: var(--map-canvas-bg, #e8eef2);
 }
 
 .map-placeholder-hint {
@@ -355,9 +370,17 @@
   right: 336px;
 }
 
+.home-map-page.has-wide-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+  right: calc(min(800px, 72vw) + 16px);
+}
+
 @media (min-width: 1024px) {
   .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
     right: 356px;
+  }
+
+  .home-map-page.has-wide-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+    right: calc(min(850px, 70%) + 16px);
   }
 }
 
@@ -366,6 +389,11 @@
 }
 
 @media (max-width: 900px) {
+  /* Pinch-zoom / gesture on the map — no on-screen +/- buttons */
+  .rental-map__zoom {
+    display: none !important;
+  }
+
   .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
     right: 12px;
     bottom: calc(52dvh + 12px);

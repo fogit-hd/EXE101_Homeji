@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { userRoleLabel } from '../../lib/labels'
-import { useMountTransition } from './useMountTransition'
 import './MapMotion.css'
 import './MapAccountMenu.css'
 
@@ -15,14 +14,14 @@ function initialsFromName(name: string) {
 
 type Props = {
   onOpenProfile?: () => void
+  onOpenSubscriptions?: () => void
 }
 
-export function MapAccountMenu({ onOpenProfile }: Props) {
+export function MapAccountMenu({ onOpenProfile, onOpenSubscriptions }: Props) {
   const { profile, email, logout } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
-  const motion = useMountTransition(open, 220)
 
   useEffect(() => {
     if (!open) return
@@ -66,52 +65,63 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
         )}
       </button>
 
-      {motion.mounted ? (
-        <div
-          className={`gmaps-account__popover${motion.active ? ' is-visible' : ''}`}
-          role="dialog"
-          aria-label="Thông tin tài khoản"
-        >
-          <div className="gmaps-account__head">
-            <span className="gmaps-account__avatar gmaps-account__avatar--lg" aria-hidden>
-              {profile?.avatarPath ? (
-                <img src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
-              ) : (
-                initials
-              )}
-            </span>
-            <div className="gmaps-account__meta">
-              <p className="gmaps-account__name">{name}</p>
-              {email ? <p className="gmaps-account__email">{email}</p> : null}
-              {profile ? (
-                <p className="gmaps-account__role">{userRoleLabel[profile.role]}</p>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="gmaps-account__actions">
-            {onOpenProfile ? (
-              <button
-                type="button"
-                className="gmaps-account__action map-motion-press"
-                onClick={() => {
-                  setOpen(false)
-                  onOpenProfile()
-                }}
-              >
-                Hồ sơ của tôi
-              </button>
+      <div
+        className={`gmaps-account__popover${open ? ' is-visible' : ''}`}
+        role="dialog"
+        aria-label="Thông tin tài khoản"
+        aria-hidden={!open}
+      >
+        <div className="gmaps-account__head">
+          <span className="gmaps-account__avatar gmaps-account__avatar--lg" aria-hidden>
+            {profile?.avatarPath ? (
+              <img src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
+            ) : (
+              initials
+            )}
+          </span>
+          <div className="gmaps-account__meta">
+            <p className="gmaps-account__name">{name}</p>
+            {email ? <p className="gmaps-account__email">{email}</p> : null}
+            {profile ? (
+              <p className="gmaps-account__role">{userRoleLabel[profile.role]}</p>
             ) : null}
-            <button
-              type="button"
-              className="gmaps-account__logout map-motion-press"
-              onClick={handleLogout}
-            >
-              Đăng xuất
-            </button>
           </div>
         </div>
-      ) : null}
+
+        <div className="gmaps-account__actions">
+          {onOpenProfile ? (
+            <button
+              type="button"
+              className="gmaps-account__action map-motion-press"
+              onClick={() => {
+                setOpen(false)
+                onOpenProfile()
+              }}
+            >
+              Hồ sơ của tôi
+            </button>
+          ) : null}
+          {onOpenSubscriptions ? (
+            <button
+              type="button"
+              className="gmaps-account__action map-motion-press"
+              onClick={() => {
+                setOpen(false)
+                onOpenSubscriptions()
+              }}
+            >
+              Gói Premium
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="gmaps-account__logout map-motion-press"
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

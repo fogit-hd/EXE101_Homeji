@@ -11,7 +11,7 @@ export function MapFallback({ message }: { message?: string }) {
         <code>npm run dev:clean</code>
       </p>
       <p className="map-placeholder-hint">
-        <Link to="/profile">Hoàn thiện hồ sơ</Link>
+        <Link to="/?section=profile">Hoàn thiện hồ sơ</Link>
       </p>
     </div>
   )

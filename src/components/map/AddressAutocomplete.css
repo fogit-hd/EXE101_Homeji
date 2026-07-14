@@ -1,0 +1,79 @@
+/**
+ * Google Places Autocomplete (.pac-*) is injected on document.body.
+ * Uses Homeji CSS variables so light/dark follow the app theme.
+ *
+ * "Powered by Google" in the dropdown is omitted when a Google Map
+ * is already shown on the same screen (LocationPickerMap below).
+ */
+
+.pac-container {
+  z-index: 10050 !important;
+  margin-top: 4px;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: var(--surface-elevated) !important;
+  box-shadow: 0 12px 28px rgba(var(--shadow-color), 0.28) !important;
+  color: var(--text-primary) !important;
+  font-family: inherit;
+  overflow: hidden;
+  color-scheme: inherit;
+}
+
+/* Anchored under the input after scroll sync (fixed to viewport). */
+.pac-container.pac-container--anchored {
+  position: fixed !important;
+  margin-top: 0 !important;
+}
+
+.pac-container:after {
+  display: none !important;
+  background-image: none !important;
+  height: 0 !important;
+  content: none !important;
+}
+
+.pac-item {
+  border-top: 1px solid var(--border) !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  padding: 10px 12px !important;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.pac-item:first-child {
+  border-top: 0 !important;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background: var(--maps-blue-soft, rgba(26, 115, 232, 0.16)) !important;
+}
+
+.pac-item-query {
+  color: var(--text-heading) !important;
+  font-size: 0.92rem;
+}
+
+.pac-matched {
+  color: var(--maps-blue, #1a73e8) !important;
+  font-weight: 700;
+}
+
+.pac-icon {
+  opacity: 0.9;
+}
+
+html[data-theme='dark'] .pac-icon {
+  filter: invert(1) brightness(1.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .pac-icon {
+    filter: invert(1) brightness(1.2);
+  }
+}
+
+.pac-logo::after {
+  display: none !important;
+}

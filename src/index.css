@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 
 :root {
   --grab-green: #00b14f;
@@ -23,6 +23,8 @@
   --maps-hover: rgba(60, 64, 67, 0.08);
   --error: #ea4335;
   --success: #39b54a;
+  --error-soft: rgba(234, 67, 53, 0.1);
+  --success-soft: rgba(57, 181, 74, 0.12);
   --shadow-sm: rgba(0, 0, 0, 0.15) 0px 5px 12px 0px;
   --shadow-md: rgba(87, 85, 85, 0.176) 0px 3px 4px 0px;
   --radius-sm: 4px;
@@ -40,6 +42,8 @@
   --dur-fast: 150ms;
   --dur-med: 280ms;
   --dur-slow: 420ms;
+  /* Map chrome fill — never brand green (prevents GPU clear flash). */
+  --map-canvas-bg: #e8eef2;
   color-scheme: light;
   font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
@@ -49,6 +53,7 @@
   text-size-adjust: 100%;
 }
 
+/* Shared dark tokens — OS preference and html[data-theme] stay in sync. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -76,7 +81,41 @@
     --shadow-md: rgba(0, 0, 0, 0.4) 0px 4px 12px 0px;
     --error: #f28b82;
     --success: #81c995;
+    --error-soft: rgba(242, 139, 130, 0.14);
+    --success-soft: rgba(129, 201, 149, 0.14);
+    --map-canvas-bg: #1a1d21;
   }
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --grab-green: #1ad66a;
+  --grab-green-hover: #14b85a;
+  --grab-blue: #4b9fff;
+  --grab-blue-hover: #2f86f0;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --text-heading: #f1f3f4;
+  --border: #3c4043;
+  --surface: #1a1d21;
+  --surface-muted: #121417;
+  --surface-input: #2a2e33;
+  --surface-elevated: #23272c;
+  --surface-glass: rgba(26, 29, 33, 0.94);
+  --overlay-scrim: rgba(0, 0, 0, 0.55);
+  --shadow-color: 0, 0, 0;
+  --maps-blue: #8ab4f8;
+  --maps-blue-hover: #aecbfa;
+  --maps-blue-soft: rgba(138, 180, 248, 0.16);
+  --maps-blue-text: #8ab4f8;
+  --maps-hover: rgba(255, 255, 255, 0.08);
+  --shadow-sm: rgba(0, 0, 0, 0.35) 0px 5px 16px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.4) 0px 4px 12px 0px;
+  --error: #f28b82;
+  --success: #81c995;
+  --error-soft: rgba(242, 139, 130, 0.14);
+  --success-soft: rgba(129, 201, 149, 0.14);
+  --map-canvas-bg: #1a1d21;
 }
 
 *,
@@ -85,10 +124,33 @@
   box-sizing: border-box;
 }
 
+/* Kill tap / focus flash (esp. green brand flash on click/tap over the map). */
+html,
+body,
+#root,
+button,
+a,
+summary,
+[role='button'],
+[role='tab'],
+[role='menuitem'],
+input,
+select,
+textarea,
+label {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+
+html {
+  background-color: var(--surface-muted);
+}
+
 html,
 body,
 #root {
   min-height: 100%;
+  background-color: var(--surface-muted);
 }
 
 body {
@@ -96,6 +158,21 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   /* Do NOT set overflow-x:hidden here — it breaks GSAP ScrollTrigger pin. */
+}
+
+/* Mouse/touch focus must not paint brand-green outlines; keep keyboard a11y. */
+:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--maps-blue);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--maps-blue-soft);
+  color: var(--text-heading);
 }
 
 .app-shell {
@@ -122,6 +199,9 @@ body {
   max-height: 100%;
   overflow: hidden;
   --nav-height: 0px;
+  background-color: var(--map-canvas-bg);
+  /* Disable View Transition snapshots on map chrome */
+  view-transition-name: none;
 }
 
 @supports (height: 100svh) {
@@ -140,6 +220,7 @@ body {
   max-width: none;
   width: 100%;
   overflow: hidden;
+  background-color: var(--map-canvas-bg);
 }
 
 /* React Router outlet wrapper must fill main — otherwise home-map-page height:100% = 0 */
@@ -150,6 +231,11 @@ body {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  background-color: var(--map-canvas-bg);
+  /* Stable compositor layer — avoids full-screen flash on click/tap */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  isolation: isolate;
 }
 
 a {
@@ -216,6 +302,12 @@ p {
   transform: scale(0.97);
 }
 
+/* On map shell, avoid transform press (GPU layer thrash over WebGL) */
+.app-shell--map .btn:active:not(:disabled) {
+  transform: none;
+  filter: brightness(0.96);
+}
+
 .btn:disabled {
   background: var(--border);
   color: var(--text-secondary);
@@ -229,7 +321,7 @@ p {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--grab-green-hover);
-  box-shadow: rgb(236, 236, 236) 0px 0px 15px 1px;
+  box-shadow: 0 0 15px 1px color-mix(in srgb, var(--grab-green) 35%, transparent);
 }
 
 .btn-secondary {
@@ -289,11 +381,11 @@ p {
 .form-textarea {
   width: 100%;
   background: var(--surface-input);
-  border: 1px solid #fdfdfd;
+  border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   padding: 12px 20px;
   font: 400 14px Arial, sans-serif;
-  color: #000;
+  color: var(--text-primary);
 }
 
 .form-textarea {
@@ -307,8 +399,14 @@ p {
 .form-textarea:focus {
   outline: none;
   border-color: var(--grab-blue);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(19, 111, 216, 0.1);
+  background: var(--surface-elevated);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--grab-blue) 22%, transparent);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.85;
 }
 
 .form-error {
@@ -399,13 +497,13 @@ p {
 }
 
 .tab.active {
-  color: #161a1d;
+  color: var(--text-heading);
   font-weight: 600;
   border-bottom-color: var(--grab-green);
 }
 
 .tab:hover {
-  color: #383e43;
+  color: var(--text-heading);
 }
 
 .tab:active {

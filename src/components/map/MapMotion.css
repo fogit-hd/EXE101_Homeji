@@ -1,12 +1,12 @@
 /** Shared map UI motion — keep timings in sync across omnibox / panels / buttons. */
 
 :root {
-  --map-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --map-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --map-ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
-  --map-dur-fast: 160ms;
-  --map-dur: 280ms;
-  --map-dur-slow: 400ms;
+  --map-ease: ease;
+  --map-ease-out: ease;
+  --map-ease-soft: ease;
+  --map-dur-fast: 200ms;
+  --map-dur: 300ms;
+  --map-dur-slow: 300ms;
 }
 
 @keyframes map-fade-in {
@@ -93,6 +93,17 @@
   }
 }
 
+@keyframes map-section-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
 @keyframes map-chip-in {
   from {
     opacity: 0;
@@ -137,16 +148,19 @@
 
 .map-motion-press {
   transition:
-    transform var(--map-dur-fast) var(--map-ease),
     background-color var(--map-dur-fast) ease,
     box-shadow var(--map-dur-fast) ease,
     color var(--map-dur-fast) ease,
     border-color var(--map-dur-fast) ease,
-    opacity var(--map-dur-fast) ease;
+    opacity var(--map-dur-fast) ease,
+    filter var(--map-dur-fast) ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
+/* Avoid transform:scale on press — it promotes/destroys layers over WebGL → green flash */
 .map-motion-press:active:not(:disabled) {
-  transform: scale(0.94);
+  filter: brightness(0.94);
+  opacity: 0.92;
 }
 
 /* Enter / exit helpers for mount-transition UIs */
@@ -187,7 +201,13 @@
   .map-motion-enter,
   .map-motion-enter.is-active,
   .map-motion-exit,
-  .map-motion-exit:not(.is-active) {
+  .map-motion-exit:not(.is-active),
+  .map-app-panel__section--enter,
+  .map-app-panel__section--exit,
+  .map-app-panel__heading--enter,
+  .map-app-panel__heading--exit,
+  .map-app-panel__sub--enter,
+  .map-app-panel__sub--exit {
     animation: none !important;
     transition: none !important;
     transform: none !important;

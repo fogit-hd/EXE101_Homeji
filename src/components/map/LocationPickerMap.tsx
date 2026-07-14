@@ -7,6 +7,7 @@ import {
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
+  MAP_FOCUS_ZOOM,
   createMapOptions,
   createStyledPin,
   isValidCoord,
@@ -16,6 +17,7 @@ import {
   readAdvancedMarkerLatLng,
   resolveMapsColorScheme,
 } from '../../lib/googleMaps'
+import { moveMapCamera } from '../../lib/mapCamera'
 import { waitForMapHostSize } from '../../lib/mapWebGL'
 import { MapErrorPanel } from './MapErrorPanel'
 import './RentalMap.css'
@@ -69,7 +71,7 @@ function LocationPickerMapComponent({
         mapDiv,
         createMapOptions(mapId, {
           center: hasPin ? { lat: latitude, lng: longitude } : DEFAULT_MAP_CENTER,
-          zoom: hasPin ? 16 : DEFAULT_MAP_ZOOM,
+          zoom: hasPin ? MAP_FOCUS_ZOOM : DEFAULT_MAP_ZOOM,
           gestureHandling: 'cooperative',
           zoomControl: true,
           disableDefaultUI: false,
@@ -150,7 +152,7 @@ function LocationPickerMapComponent({
         cb(next.lat, next.lng)
       })
       markerRef.current = marker
-      map.panTo(pos)
+      moveMapCamera(map, { center: pos, zoom: MAP_FOCUS_ZOOM })
     } else {
       markerRef.current.map = map
       markerRef.current.gmpDraggable = Boolean(onLocationChangeRef.current)
@@ -161,7 +163,7 @@ function LocationPickerMapComponent({
         Math.abs(cur.lng - longitude) > 1e-7
       ) {
         markerRef.current.position = pos
-        map.panTo(pos)
+        moveMapCamera(map, { center: pos })
       }
     }
   }, [mapReady, latitude, longitude])

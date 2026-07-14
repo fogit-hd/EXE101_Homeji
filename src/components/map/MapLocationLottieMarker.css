@@ -1,0 +1,81 @@
+.map-location-lottie {
+  position: relative;
+  /* Keep geometric center on lat/lng — Lottie pin tip / rings are centered in-file.
+     Never set transform here; Google AdvancedMarker applies its own. */
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  z-index: 1;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  contain: layout size style;
+}
+
+.map-location-lottie__canvas {
+  display: block;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  contain: layout size style;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.map-location-lottie__canvas canvas,
+.map-location-lottie__canvas svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  pointer-events: none;
+}
+
+/* Chat shared location — independent from selected-place Lottie pin */
+.map-shared-location-pin {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.45));
+}
+
+.map-shared-location-pin__badge {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  max-width: 220px;
+  min-width: 120px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(18, 22, 28, 0.94);
+  border: 1px solid rgba(110, 168, 254, 0.55);
+  color: #f4f7fb;
+  text-align: center;
+  line-height: 1.25;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+.map-shared-location-pin__kind {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8ec5ff;
+  margin-bottom: 2px;
+}
+
+.map-shared-location-pin__title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.map-shared-location-pin__lottie {
+  position: absolute;
+  inset: 0;
+}

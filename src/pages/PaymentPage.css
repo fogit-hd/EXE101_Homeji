@@ -1,0 +1,236 @@
+.payment-page,
+.payment-embed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.payment-current {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, rgba(212, 175, 55, 0.12), transparent 55%),
+    var(--surface-elevated, var(--surface));
+}
+
+.payment-current__label {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.payment-current__badge {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 750;
+  color: var(--text-heading);
+}
+
+.payment-current__meta {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.payment-current__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.payment-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-plan-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-elevated, var(--surface));
+  overflow: hidden;
+}
+
+.payment-plan-card.is-selected,
+.payment-plan-card.is-premium.is-selected {
+  border-color: rgba(26, 115, 232, 0.45);
+  box-shadow: 0 0 0 1px rgba(26, 115, 232, 0.2);
+}
+
+.payment-plan-card.is-current {
+  border-color: rgba(212, 175, 55, 0.45);
+}
+
+.payment-plan-card__select {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.payment-plan-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.payment-plan-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--text-heading);
+}
+
+.payment-plan-card__badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.12);
+  color: #e8c547;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.payment-plan-card.is-basic .payment-plan-card__badge {
+  display: none;
+}
+
+.payment-plan-card__price {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--text-heading);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.payment-plan-card__price small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.payment-plan-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.payment-plan-card__note {
+  margin: 10px 14px 14px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.payment-plan-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.payment-plan-card__current {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: #e8c547;
+}
+
+.payment-checkout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.payment-checkout h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-heading);
+}
+
+.payment-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-history__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-elevated, var(--surface));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.payment-history__row.is-active {
+  border-color: rgba(26, 115, 232, 0.45);
+}
+
+.payment-history__row strong {
+  display: block;
+  color: var(--text-heading);
+}
+
+.payment-history__row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.payment-history__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.payment-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.payment-status.is-2,
+.payment-status.is-1 {
+  color: var(--grab-green, #00b14f);
+}
+
+.payment-status.is-3,
+.payment-status.is-4 {
+  color: #ea4335;
+}

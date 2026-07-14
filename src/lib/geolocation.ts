@@ -17,28 +17,69 @@ export class DeviceLocationError extends Error {
   }
 }
 
-function getPosition(options: PositionOptions): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, options)
-  })
+type GeoPermissionState = PermissionState | 'unknown'
+
+/** Duck-type — `instanceof GeolocationPositionError` often fails across realms. */
+function isPositionError(err: unknown): err is GeolocationPositionError {
+  if (!err || typeof err !== 'object') return false
+  const code = (err as { code?: unknown }).code
+  return typeof code === 'number' && code >= 1 && code <= 3
 }
 
-function mapGeoError(err: GeolocationPositionError): DeviceLocationError {
-  if (err.code === err.PERMISSION_DENIED) {
+async function queryGeoPermission(): Promise<GeoPermissionState> {
+  try {
+    if (!navigator.permissions?.query) return 'unknown'
+    const status = await navigator.permissions.query({
+      name: 'geolocation' as PermissionName,
+    })
+    return status.state
+  } catch {
+    return 'unknown'
+  }
+}
+
+/**
+ * Map browser PositionError → app error.
+ * Important: Chrome often returns code 1 (PERMISSION_DENIED) when the *site*
+ * already allowed Location but Windows blocked the browser / no provider.
+ * Only blame the user when Permissions API says `denied`.
+ */
+function mapGeoError(
+  err: GeolocationPositionError,
+  permission: GeoPermissionState,
+): DeviceLocationError {
+  const siteAllowed = permission === 'granted'
+
+  if (err.code === 1 /* PERMISSION_DENIED */) {
+    if (siteAllowed) {
+      return new DeviceLocationError(
+        'unavailable',
+        'Trình duyệt đã cho phép vị trí, nhưng Windows/Chrome chưa trả được tọa độ. Bật Location cho Chrome trong Windows Settings, tắt VPN (WARP) rồi thử lại.',
+      )
+    }
+    if (permission === 'denied') {
+      return new DeviceLocationError(
+        'denied',
+        'Bạn đã từ chối quyền vị trí.',
+      )
+    }
+    // prompt / unknown — user may have dismissed the prompt once
     return new DeviceLocationError(
       'denied',
-      'Bạn đã từ chối quyền vị trí. Bấm ổ khóa cạnh URL → Cho phép Vị trí.',
+      'Chưa có quyền vị trí.',
     )
   }
-  if (err.code === err.TIMEOUT) {
+
+  if (err.code === 3 /* TIMEOUT */) {
     return new DeviceLocationError(
       'timeout',
       'Không lấy được vị trí kịp thời. Thử lại sau vài giây.',
     )
   }
+
   return new DeviceLocationError(
     'unavailable',
-    'Không lấy được vị trí thiết bị. Cho phép Location trong trình duyệt rồi thử lại.',
+    'Không lấy được vị trí thiết bị. Kiểm tra Location của Windows đang bật, rồi thử lại.',
   )
 }
 
@@ -54,9 +95,63 @@ function fromPosition(
   }
 }
 
+function getPosition(options: PositionOptions): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options)
+  })
+}
+
 /**
- * Browser geolocation only (Google Maps style) — never IP.
- * Order: recent cache → high accuracy → network.
+ * First fix via watchPosition (closer to Google Maps) — often succeeds on
+ * desktop/Wi‑Fi when a single getCurrentPosition(highAccuracy) fails.
+ */
+function watchFirstFix(
+  options: PositionOptions,
+  source: DeviceLocationSource,
+): Promise<DeviceLocation> {
+  const timeoutMs = options.timeout ?? 20_000
+  return new Promise((resolve, reject) => {
+    let settled = false
+    const finish = (fn: () => void) => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timer)
+      navigator.geolocation.clearWatch(watchId)
+      fn()
+    }
+
+    const timer = window.setTimeout(() => {
+      finish(() =>
+        reject(
+          Object.assign(new Error('Timeout expired'), {
+            code: 3,
+            PERMISSION_DENIED: 1,
+            POSITION_UNAVAILABLE: 2,
+            TIMEOUT: 3,
+          }),
+        ),
+      )
+    }, timeoutMs)
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        finish(() => resolve(fromPosition(pos, source)))
+      },
+      (err) => {
+        finish(() => reject(err))
+      },
+      {
+        enableHighAccuracy: options.enableHighAccuracy,
+        maximumAge: options.maximumAge,
+        timeout: timeoutMs,
+      },
+    )
+  })
+}
+
+/**
+ * Browser geolocation only (same API Google Maps uses in Chrome).
+ * Never IP. Prefer watch-first, then low-accuracy getCurrentPosition.
  */
 export async function getDeviceLocation(options?: {
   signal?: AbortSignal
@@ -76,58 +171,61 @@ export async function getDeviceLocation(options?: {
     throw new DeviceLocationError('unavailable', 'Đã hủy lấy vị trí.')
   }
 
+  const permission = await queryGeoPermission()
+  if (permission === 'denied') {
+    throw new DeviceLocationError(
+      'denied',
+      'Bạn đã từ chối quyền vị trí.',
+    )
+  }
+
   let lastError: DeviceLocationError | null = null
 
-  // 1) Prefer a fresh-enough cached fix so re-clicks feel instant (like Google Maps).
-  try {
-    const pos = await getPosition({
-      enableHighAccuracy: false,
-      timeout: 4_000,
-      maximumAge: 120_000,
-    })
-    return fromPosition(pos, 'cached')
-  } catch (err) {
-    if (err instanceof GeolocationPositionError) {
-      lastError = mapGeoError(err)
-      if (lastError.code === 'denied') throw lastError
+  const attempts: Array<() => Promise<DeviceLocation>> = [
+    () =>
+      getPosition({
+        enableHighAccuracy: false,
+        timeout: 12_000,
+        maximumAge: 300_000,
+      }).then((pos) => fromPosition(pos, 'cached')),
+    () =>
+      watchFirstFix(
+        {
+          enableHighAccuracy: true,
+          timeout: 20_000,
+          maximumAge: 60_000,
+        },
+        'gps',
+      ),
+    () =>
+      getPosition({
+        enableHighAccuracy: false,
+        timeout: 20_000,
+        maximumAge: 600_000,
+      }).then((pos) => fromPosition(pos, 'network')),
+  ]
+
+  for (const attempt of attempts) {
+    if (signal?.aborted) {
+      throw new DeviceLocationError('unavailable', 'Đã hủy lấy vị trí.')
     }
-  }
-
-  if (signal?.aborted) {
-    throw new DeviceLocationError('unavailable', 'Đã hủy lấy vị trí.')
-  }
-
-  // 2) High accuracy (GPS / Windows location provider).
-  try {
-    const pos = await getPosition({
-      enableHighAccuracy: true,
-      timeout: 15_000,
-      maximumAge: 30_000,
-    })
-    return fromPosition(pos, 'gps')
-  } catch (err) {
-    if (err instanceof GeolocationPositionError) {
-      lastError = mapGeoError(err)
-      if (lastError.code === 'denied') throw lastError
-    }
-  }
-
-  if (signal?.aborted) {
-    throw new DeviceLocationError('unavailable', 'Đã hủy lấy vị trí.')
-  }
-
-  // 3) Network / Wi‑Fi without requiring a brand-new fix.
-  try {
-    const pos = await getPosition({
-      enableHighAccuracy: false,
-      timeout: 12_000,
-      maximumAge: 600_000,
-    })
-    return fromPosition(pos, 'network')
-  } catch (err) {
-    if (err instanceof GeolocationPositionError) {
-      lastError = mapGeoError(err)
-      if (lastError.code === 'denied') throw lastError
+    try {
+      return await attempt()
+    } catch (err) {
+      if (isPositionError(err)) {
+        lastError = mapGeoError(err, permission)
+        // Only stop early when the *site* permission is really denied.
+        if (lastError.code === 'denied' && permission === 'denied') throw lastError
+        if (lastError.code === 'denied' && permission !== 'granted') {
+          // prompt dismissed — no point retrying other strategies
+          throw lastError
+        }
+        continue
+      }
+      lastError = new DeviceLocationError(
+        'unavailable',
+        'Không lấy được vị trí thiết bị. Thử lại sau vài giây.',
+      )
     }
   }
 
@@ -135,7 +233,7 @@ export async function getDeviceLocation(options?: {
     lastError ??
     new DeviceLocationError(
       'unavailable',
-      'Không lấy được vị trí thiết bị. Cho phép Location trong trình duyệt rồi thử lại.',
+      'Không lấy được vị trí thiết bị. Kiểm tra Location của Windows đang bật, rồi thử lại.',
     )
   )
 }

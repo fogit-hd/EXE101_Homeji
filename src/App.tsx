@@ -7,23 +7,16 @@ import { AuthModalProvider } from './contexts/AuthModalContext'
 import { GoogleMapsProvider } from './contexts/GoogleMapsProvider'
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
 import { ThemeSync } from './components/ThemeSync'
-import { SteveSplash } from './components/SteveSplash'
+import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import { AdminModerationPage } from './pages/AdminModerationPage'
 import { CreateRentalPostPage } from './pages/CreateRentalPostPage'
 import { EditRentalPostPage } from './pages/EditRentalPostPage'
 import { ExplorePage } from './pages/ExplorePage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
-import { MyPostsPage } from './pages/MyPostsPage'
 import { LoginPage } from './pages/LoginPage'
-import { NotificationsPage } from './pages/NotificationsPage'
-import { PaymentPage } from './pages/PaymentPage'
-import { ProfilePage } from './pages/ProfilePage'
 import { RegisterPage } from './pages/RegisterPage'
-import { RentalPostDetailPage } from './pages/RentalPostDetailPage'
 import { AuthCallbackPage, ResetPasswordPage } from './pages/ResetPasswordPage'
-import { RoommateInvitationsPage } from './pages/RoommateInvitationsPage'
-import { SavedPostsPage } from './pages/SavedPostsPage'
 import './components/layout/footer.css'
 import './pages/HomePage.css'
 import './pages/auth.css'
@@ -43,15 +36,22 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-        <Route path="/posts/:postId" element={<RentalPostDetailPage />} />
+        {/* Listing detail lives in the map place-info panel — no standalone page. */}
+        <Route path="/posts/:postId" element={<MapHomePostRedirect />} />
         <Route path="/posts/new" element={<ProtectedRoute><CreateRentalPostPage /></ProtectedRoute>} />
         <Route path="/posts/:postId/edit" element={<ProtectedRoute><EditRentalPostPage /></ProtectedRoute>} />
-        <Route path="/my-posts" element={<ProtectedRoute><MyPostsPage /></ProtectedRoute>} />
-        <Route path="/saved" element={<ProtectedRoute><SavedPostsPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-        <Route path="/invitations" element={<ProtectedRoute><RoommateInvitationsPage /></ProtectedRoute>} />
-        <Route path="/payments" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
+
+        {/* Former full-page shells → map home + right panel section */}
+        <Route path="/my-posts" element={<ProtectedRoute><MapHomeSectionRedirect section="myPosts" /></ProtectedRoute>} />
+        <Route path="/marketplace" element={<ProtectedRoute><MapHomeSectionRedirect section="marketplace" /></ProtectedRoute>} />
+        <Route path="/wanted" element={<ProtectedRoute><MapHomeSectionRedirect section="wanted" /></ProtectedRoute>} />
+        <Route path="/activities" element={<ProtectedRoute><MapHomeSectionRedirect section="activities" /></ProtectedRoute>} />
+        <Route path="/saved" element={<ProtectedRoute><MapHomeSectionRedirect section="saved" /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><MapHomeSectionRedirect section="profile" /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><MapHomeSectionRedirect section="notifications" /></ProtectedRoute>} />
+        <Route path="/invitations" element={<ProtectedRoute><MapHomeSectionRedirect section="invitations" /></ProtectedRoute>} />
+        <Route path="/payments" element={<ProtectedRoute><MapHomeSectionRedirect section="payments" /></ProtectedRoute>} />
+
         <Route
           path="/admin"
           element={
@@ -72,22 +72,20 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
-      <SteveSplash>
-        <ThemeSync />
-        <NetworkStatusProvider>
-          <GoogleMapsProvider>
-            <AuthProvider>
-              <BrowserRouter>
-                <AuthModalProvider>
-                  <ErrorBoundary reloadOnRetry>
-                    <AppRoutes />
-                  </ErrorBoundary>
-                </AuthModalProvider>
-              </BrowserRouter>
-            </AuthProvider>
-          </GoogleMapsProvider>
-        </NetworkStatusProvider>
-      </SteveSplash>
+      <ThemeSync />
+      <NetworkStatusProvider>
+        <GoogleMapsProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AuthModalProvider>
+                <ErrorBoundary reloadOnRetry>
+                  <AppRoutes />
+                </ErrorBoundary>
+              </AuthModalProvider>
+            </BrowserRouter>
+          </AuthProvider>
+        </GoogleMapsProvider>
+      </NetworkStatusProvider>
     </ErrorBoundary>
   )
 }

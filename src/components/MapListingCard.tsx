@@ -78,6 +78,13 @@ export const MapListingCard = memo(function MapListingCard({
         <div className="map-listing-card-tags">
           <span className="map-listing-tag">{rentalPostTypeLabel[post.type]}</span>
           <span>{post.area} m²</span>
+          {post.highlightTag ? (
+            <span className="map-listing-tag is-highlight">{post.highlightTag}</span>
+          ) : null}
+          {post.isOwnerPremium ? <span className="map-listing-tag is-premium">Premium</span> : null}
+          {post.ownerBadge && !post.isOwnerPremium ? (
+            <span className="map-listing-tag is-badge">{post.ownerBadge}</span>
+          ) : null}
         </div>
         <h3>{title}</h3>
         <p className="map-listing-address">{address}</p>

@@ -21,7 +21,14 @@ const CONSOLE = {
   credentials: 'https://console.cloud.google.com/apis/credentials',
   mapsJs: 'https://console.cloud.google.com/apis/library/maps-backend.googleapis.com',
   places: 'https://console.cloud.google.com/apis/library/places-backend.googleapis.com',
+  placesNew: 'https://console.cloud.google.com/apis/library/places.googleapis.com',
   geocoding: 'https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com',
+  routes: 'https://console.cloud.google.com/apis/library/routes.googleapis.com',
+  distanceMatrix:
+    'https://console.cloud.google.com/apis/library/distance-matrix-backend.googleapis.com',
+  streetView:
+    'https://console.cloud.google.com/apis/library/street-view-image-backend.googleapis.com',
+  mapsStatic: 'https://console.cloud.google.com/apis/library/static-maps-backend.googleapis.com',
   mapsOverview: 'https://console.cloud.google.com/google/maps-apis/overview',
 }
 
@@ -81,7 +88,7 @@ function buildDiagnosis(codes: MapsErrorCode[], googleMessage: string): MapsErro
           title: '② API restrictions của KEY đang chặn Maps JavaScript API',
           steps: [
             'Credentials → bấm vào đúng API key → mục API restrictions.',
-            'Nếu đang “Restrict key”: phải tick Maps JavaScript API (+ Places, Geocoding nếu dùng).',
+            'Nếu đang “Restrict key”: phải tick Maps JavaScript API (+ Places, Geocoding, Routes nếu dùng).',
             'Test nhanh: chọn Don’t restrict key → Save → đợi 1–5 phút → F5.',
             'Lưu ý: bật API trong Library ≠ cho phép trên key. Restrict key mà quên tick = ApiTargetBlocked.',
           ],
@@ -93,12 +100,19 @@ function buildDiagnosis(codes: MapsErrorCode[], googleMessage: string): MapsErro
           title: 'Chưa bật Maps API trên project',
           steps: [
             'Bật Maps JavaScript API trên đúng project của key.',
-            'Places API / Geocoding API nếu dùng autocomplete hoặc geocode.',
+            'Places API (New) / Places / Geocoding cho chi tiết địa điểm & tìm kiếm.',
+            'Routes API để chỉ đường / ETA trên map Homeji.',
+            'Street View Static + Maps Static (tuỳ chọn) cho ảnh góc phố / thumbnail.',
           ],
           consoleLinks: [
             { label: 'Maps JavaScript API', url: CONSOLE.mapsJs },
+            { label: 'Places API (New)', url: CONSOLE.placesNew },
             { label: 'Places API', url: CONSOLE.places },
             { label: 'Geocoding API', url: CONSOLE.geocoding },
+            { label: 'Routes API', url: CONSOLE.routes },
+            { label: 'Distance Matrix API', url: CONSOLE.distanceMatrix },
+            { label: 'Street View Static API', url: CONSOLE.streetView },
+            { label: 'Maps Static API', url: CONSOLE.mapsStatic },
             ...baseLinks,
           ],
         })

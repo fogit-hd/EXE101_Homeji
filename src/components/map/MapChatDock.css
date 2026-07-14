@@ -1,0 +1,68 @@
+.map-chat-dock {
+  position: fixed;
+  right: 16px;
+  bottom: 20px;
+  z-index: 10020;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.map-chat-dock__window {
+  pointer-events: auto;
+  width: min(360px, calc(100vw - 28px));
+  height: min(520px, calc(100dvh - 96px));
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px 16px 8px 8px;
+  background: var(--surface-elevated, #fff);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px rgba(var(--shadow-color, 9, 29, 46), 0.28);
+  overflow: hidden;
+  animation: map-chat-dock-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.map-chat-dock__window.is-inbox {
+  height: min(440px, calc(100dvh - 96px));
+  width: min(340px, calc(100vw - 28px));
+}
+
+.map-chat-dock__window .map-messages {
+  height: 100%;
+  min-height: 0;
+}
+
+@keyframes map-chat-dock-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .map-chat-dock {
+    right: 10px;
+    left: 10px;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .map-chat-dock__window,
+  .map-chat-dock__window.is-inbox {
+    width: 100%;
+    height: min(58dvh, 520px);
+  }
+
+  /* Stack: show only the most recent thread + inbox on small screens */
+  .map-chat-dock__window:not(.is-inbox):not(:first-child) {
+    display: none;
+  }
+}

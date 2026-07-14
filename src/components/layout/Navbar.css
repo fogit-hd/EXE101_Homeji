@@ -4,16 +4,16 @@
   z-index: 100;
   height: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--surface-glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(9, 29, 46, 0.04);
+  box-shadow: 0 1px 0 rgba(var(--shadow-color), 0.04);
 }
 
 .app-shell--map .navbar {
-  border-bottom: 1px solid rgba(9, 29, 46, 0.1);
-  box-shadow: 0 8px 24px rgba(9, 29, 46, 0.06);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(var(--shadow-color), 0.06);
 }
 
 .navbar-inner {
@@ -62,7 +62,7 @@
 }
 
 .navbar-links a {
-  color: #383e43;
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 400;
   text-decoration: none;

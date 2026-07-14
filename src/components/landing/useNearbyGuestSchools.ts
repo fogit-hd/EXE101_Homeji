@@ -1,109 +1,117 @@
 import { useEffect, useState } from 'react'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
-import { DEFAULT_MAP_CENTER } from '../../lib/googleMaps'
-import { importPlacesLibrary } from '../../lib/loadGoogleMaps'
-import {
-  GUEST_SCHOOL_FALLBACK,
-  type GuestAreaOption,
-} from './guestMapAreas'
+import { GUEST_SCHOOL_FALLBACK, type GuestAreaOption } from './guestMapAreas'
 
-type NearbySchool = GuestAreaOption & { placeId?: string }
+const THU_DUC_CENTER = { lat: 10.8505, lng: 106.772 }
+const SEARCH_RADIUS_M = 12000
+const MAX_RESULTS = 40
 
-/** Places searchNearby via official google.maps.places.Place API. */
-export function useNearbyGuestSchools(enabled: boolean): {
-  schools: NearbySchool[]
-  loading: boolean
-  source: 'google' | 'fallback'
-} {
-  const { isLoaded: mapsLoaded } = useGoogleMaps()
-  const [schools, setSchools] = useState<NearbySchool[]>(GUEST_SCHOOL_FALLBACK)
+function isLikelyUniversity(name: string, types: string[] | undefined): boolean {
+  const lower = name.toLowerCase()
+  if (types?.some((t) => t === 'university' || t === 'school')) return true
+  return (
+    lower.includes('đại học') ||
+    lower.includes('dai hoc') ||
+    lower.includes('university') ||
+    lower.includes('học viện') ||
+    lower.includes('hoc vien') ||
+    lower.includes('cao đẳng') ||
+    lower.includes('cao dang') ||
+    lower.includes('college')
+  )
+}
+
+/**
+ * Nearby universities for authenticated MapOmnibox (Places API + fallback).
+ * Guest landing uses curated GUEST_SCHOOL_FALLBACK + ward filter instead.
+ */
+export function useNearbyGuestSchools(enabled: boolean) {
+  const [schools, setSchools] = useState<GuestAreaOption[]>(GUEST_SCHOOL_FALLBACK)
   const [loading, setLoading] = useState(false)
-  const [source, setSource] = useState<'google' | 'fallback'>('fallback')
 
   useEffect(() => {
-    if (!enabled || !mapsLoaded) {
+    if (!enabled || typeof window === 'undefined' || !window.google?.maps?.places) {
       setSchools(GUEST_SCHOOL_FALLBACK)
-      setSource('fallback')
+      setLoading(false)
       return
     }
 
     let cancelled = false
     setLoading(true)
 
-    void (async () => {
-      try {
-        const placesLib = await importPlacesLibrary()
-        const Place = placesLib.Place
-        if (!Place?.searchNearby) {
-          if (!cancelled) {
-            setSchools(GUEST_SCHOOL_FALLBACK)
-            setSource('fallback')
-            setLoading(false)
-          }
-          return
-        }
+    const service = new google.maps.places.PlacesService(document.createElement('div'))
+    const collected: GuestAreaOption[] = []
+    const seen = new Set<string>()
 
-        const { places } = await Place.searchNearby({
-          fields: ['displayName', 'location', 'id', 'formattedAddress'],
-          locationRestriction: {
-            center: DEFAULT_MAP_CENTER,
-            radius: 10000,
-          },
-          includedPrimaryTypes: ['university'],
-          maxResultCount: 20,
+    const finalize = () => {
+      if (cancelled) return
+      const next = collected.length > 0 ? collected : GUEST_SCHOOL_FALLBACK
+      setSchools(next)
+      setLoading(false)
+    }
+
+    const pushResults = (results: google.maps.places.PlaceResult[] | null) => {
+      for (const place of results ?? []) {
+        const name = place.name?.trim()
+        const placeId = place.place_id
+        const location = place.geometry?.location
+        if (!name || !placeId || !location) continue
+        if (!isLikelyUniversity(name, place.types)) continue
+        if (seen.has(placeId) || seen.has(name.toLowerCase())) continue
+        seen.add(placeId)
+        seen.add(name.toLowerCase())
+        collected.push({
+          id: placeId,
+          name,
+          lat: location.lat(),
+          lng: location.lng(),
         })
+        if (collected.length >= MAX_RESULTS) break
+      }
+    }
 
-        if (cancelled) return
-        setLoading(false)
+    service.nearbySearch(
+      {
+        location: THU_DUC_CENTER,
+        radius: SEARCH_RADIUS_M,
+        type: 'university',
+        keyword: 'đại học',
+      },
+      (results, status) => {
+        if (
+          status === google.maps.places.PlacesServiceStatus.OK ||
+          status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS
+        ) {
+          pushResults(results)
+        }
 
-        if (!places?.length) {
-          setSchools(GUEST_SCHOOL_FALLBACK)
-          setSource('fallback')
+        if (collected.length >= 12 || cancelled) {
+          finalize()
           return
         }
 
-        const fromGoogle: NearbySchool[] = places
-          .filter((p) => p.id && p.displayName && p.location)
-          .slice(0, 20)
-          .map((p) => {
-            const loc = p.location!
-            const lat =
-              typeof loc.lat === 'function' ? loc.lat() : Number(loc.lat)
-            const lng =
-              typeof loc.lng === 'function' ? loc.lng() : Number(loc.lng)
-            const label =
-              typeof p.displayName === 'string'
-                ? p.displayName
-                : String(p.displayName ?? 'Trường')
-            return {
-              id: p.id!,
-              label,
-              keyword: label,
-              placeId: p.id,
-              focus: { lat, lng, zoom: 15 },
+        service.textSearch(
+          {
+            query: 'đại học Thành phố Thủ Đức Hồ Chí Minh',
+            location: THU_DUC_CENTER,
+            radius: SEARCH_RADIUS_M,
+          },
+          (textResults, textStatus) => {
+            if (
+              textStatus === google.maps.places.PlacesServiceStatus.OK ||
+              textStatus === google.maps.places.PlacesServiceStatus.ZERO_RESULTS
+            ) {
+              pushResults(textResults)
             }
-          })
-
-        if (fromGoogle.length) {
-          setSchools(fromGoogle)
-          setSource('google')
-        } else {
-          setSchools(GUEST_SCHOOL_FALLBACK)
-          setSource('fallback')
-        }
-      } catch {
-        if (!cancelled) {
-          setSchools(GUEST_SCHOOL_FALLBACK)
-          setSource('fallback')
-          setLoading(false)
-        }
-      }
-    })()
+            finalize()
+          },
+        )
+      },
+    )
 
     return () => {
       cancelled = true
     }
-  }, [enabled, mapsLoaded])
+  }, [enabled])
 
-  return { schools, loading, source }
+  return { schools, loading }
 }

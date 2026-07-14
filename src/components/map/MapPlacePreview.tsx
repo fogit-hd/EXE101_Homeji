@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import './MapPlacePreview.css'
 
@@ -14,14 +15,19 @@ export function MapPlacePreview({
   leaving = false,
   onClose,
 }: MapPlacePreviewProps) {
-  if (!loading && !place) return null
+  const open = !leaving && !!(loading || place)
+  const cachedPlace = useRef(place)
+  if (place) cachedPlace.current = place
+
+  const shown = place ?? cachedPlace.current
 
   return (
     <div
-      className={`map-place-preview${leaving ? ' is-leaving' : ''}`}
+      className={`map-place-preview${open ? ' is-visible' : ''}`}
       role="dialog"
       aria-modal="false"
-      aria-label={place ? `Địa điểm: ${place.name}` : 'Đang tải địa điểm'}
+      aria-hidden={!open}
+      aria-label={shown ? `Địa điểm: ${shown.name}` : 'Đang tải địa điểm'}
     >
       <button
         type="button"
@@ -32,36 +38,36 @@ export function MapPlacePreview({
         ×
       </button>
 
-      {loading && !place ? (
+      {loading && !shown ? (
         <div className="map-place-preview__body">
           <p className="map-place-preview__eyebrow">Google Maps</p>
           <h2 className="map-place-preview__title">Đang tải thông tin…</h2>
         </div>
-      ) : place ? (
+      ) : shown ? (
         <div className="map-place-preview__body">
           <p className="map-place-preview__eyebrow">
-            {place.typeLabel || 'Địa điểm trên bản đồ'}
-            {place.openNow == null
+            {shown.typeLabel || 'Địa điểm trên bản đồ'}
+            {shown.openNow == null
               ? ''
-              : place.openNow
+              : shown.openNow
                 ? ' · Đang mở'
                 : ' · Đã đóng'}
           </p>
-          <h2 className="map-place-preview__title">{place.name}</h2>
-          {place.address ? (
-            <p className="map-place-preview__addr">{place.address}</p>
+          <h2 className="map-place-preview__title">{shown.name}</h2>
+          {shown.address ? (
+            <p className="map-place-preview__addr">{shown.address}</p>
           ) : null}
-          {place.rating != null ? (
+          {shown.rating != null ? (
             <p className="map-place-preview__rating">
-              ★ {place.rating.toFixed(1)}
-              {place.ratingCount != null
-                ? ` · ${place.ratingCount.toLocaleString('vi-VN')} đánh giá`
+              ★ {shown.rating.toFixed(1)}
+              {shown.ratingCount != null
+                ? ` · ${shown.ratingCount.toLocaleString('vi-VN')} đánh giá`
                 : ''}
             </p>
           ) : null}
-          {place.phone ? (
-            <a className="map-place-preview__phone" href={`tel:${place.phone}`}>
-              {place.phone}
+          {shown.phone ? (
+            <a className="map-place-preview__phone" href={`tel:${shown.phone}`}>
+              {shown.phone}
             </a>
           ) : null}
           <p className="map-place-preview__note">

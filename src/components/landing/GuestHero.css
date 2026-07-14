@@ -1,7 +1,7 @@
 .guest-landing {
-  --landing-display: 'Sora', Inter, system-ui, sans-serif;
-  --landing-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --landing-body: 'Manrope', Inter, system-ui, sans-serif;
+  --landing-display: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --landing-serif: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --landing-body: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   --landing-navy: #091d2e;
   --landing-green: #00b14f;
   --landing-green-deep: #009241;
@@ -513,7 +513,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 
 .guest-mission__eyebrow {
   margin: 0 0 28px;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -524,7 +524,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-mission__quote {
   margin: 0 0 28px;
   max-width: 18ch;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-style: normal;
   font-weight: 650;
   font-size: clamp(1.75rem, 3.8vw, 2.85rem);
@@ -552,7 +552,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 
 .guest-mission__stat strong {
   display: block;
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--landing-ink);
@@ -594,7 +594,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-audience__eyebrow,
 .guest-trust__eyebrow {
   margin: 0 0 20px;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -607,7 +607,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-trust__title {
   margin: 0 0 16px;
   max-width: 16ch;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-weight: 650;
   font-size: clamp(1.7rem, 3.4vw, 2.6rem);
   line-height: 1.18;
@@ -643,7 +643,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 }
 
 .guest-steps__n {
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -654,7 +654,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-steps__item strong {
   display: block;
   margin-bottom: 8px;
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--landing-ink);
@@ -682,7 +682,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 
 .guest-audience__card h3 {
   margin: 0 0 12px;
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--landing-ink);
@@ -718,7 +718,7 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 }
 
 .guest-trust__points strong {
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--landing-display);
   font-size: 1.05rem;
   color: var(--landing-ink);
 }

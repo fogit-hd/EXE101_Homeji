@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { RentalPostSummary } from '../../api/types'
 import { UserRole } from '../../api/types'
 import { useAuth } from '../../contexts/AuthContext'
-import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
+import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { amenityLabel, formatPrice, rentalPostTypeLabel } from '../../lib/labels'
+import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import {
+  MAP_PIN_LAYER_OPTIONS,
+  type MapPinLayer,
+  type MapPinLayers,
+} from '../../lib/mapPinLayers'
+import { fetchPlacePredictions } from '../../lib/placeAutocomplete'
 import type { GuestAreaOption } from '../landing/guestMapAreas'
 import { GUEST_DISTRICTS, GUEST_WARDS } from '../landing/guestMapAreas'
 import type { MapAppSection } from './MapAppPanel'
 import { MapAccountMenu } from './MapAccountMenu'
-import { useMountTransition } from './useMountTransition'
 import './MapMotion.css'
 import './MapOmnibox.css'
 
@@ -27,7 +34,7 @@ export type MapOmniboxSchool = {
 
 export type MapOmniboxSuggestion = {
   id: string
-  kind: 'district' | 'ward' | 'school' | 'post' | 'recent' | 'query'
+  kind: 'district' | 'ward' | 'school' | 'post' | 'recent' | 'query' | 'place'
   title: string
   subtitle?: string
   meta?: string
@@ -38,6 +45,8 @@ export type MapOmniboxSuggestion = {
   wardId?: string
   schoolId?: string
   postId?: string
+  /** Google Place ID — resolve to lat/lng on pick. */
+  placeId?: string
 }
 
 type Props = {
@@ -51,7 +60,6 @@ type Props = {
   districtId: string
   wardId: string
   schoolId: string
-  filterLabel: string
   amenities: string[]
   selectedAmenities: string[]
   onToggleAmenity: (amenity: string) => void
@@ -64,6 +72,12 @@ type Props = {
   /** Open a section in the right map panel (Google Maps style). */
   onOpenSection?: (section: MapAppSection) => void
   activeSection?: MapAppSection | null
+  onAiSearch?: (query: string) => void
+  aiSearching?: boolean
+  /** Unread chat / message notifications — badge on Chat rail button. */
+  unreadMessageCount?: number
+  pinLayers?: MapPinLayers
+  onTogglePinLayer?: (layer: MapPinLayer) => void
 }
 
 function loadRecent(): MapOmniboxSuggestion[] {
@@ -132,7 +146,7 @@ function postToSuggestion(post: RentalPostSummary): MapOmniboxSuggestion {
     meta: `${formatPrice(post.price)}/tháng · ${post.area} m² · ${rentalPostTypeLabel[post.type]}`,
     badge: rentalPostTypeLabel[post.type],
     keyword: post.address || post.title,
-    focus: { lat: post.latitude, lng: post.longitude, zoom: 16 },
+    focus: { lat: post.latitude, lng: post.longitude, zoom: MAP_FOCUS_ZOOM },
     postId: post.id,
   }
 }
@@ -145,91 +159,6 @@ function matchesQuery(item: MapOmniboxSuggestion, q: string) {
     (item.subtitle?.toLowerCase().includes(q) ?? false) ||
     (item.meta?.toLowerCase().includes(q) ?? false) ||
     (item.badge?.toLowerCase().includes(q) ?? false)
-  )
-}
-
-function ChipScroller({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  const scrollerRef = useRef<HTMLDivElement>(null)
-  const [canPrev, setCanPrev] = useState(false)
-  const [canNext, setCanNext] = useState(false)
-
-  const updateArrows = useCallback(() => {
-    const el = scrollerRef.current
-    if (!el) {
-      setCanPrev(false)
-      setCanNext(false)
-      return
-    }
-    const max = el.scrollWidth - el.clientWidth
-    setCanPrev(el.scrollLeft > 4)
-    setCanNext(max > 4 && el.scrollLeft < max - 4)
-  }, [])
-
-  useEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
-    updateArrows()
-    const onScroll = () => updateArrows()
-    el.addEventListener('scroll', onScroll, { passive: true })
-    const ro = new ResizeObserver(() => updateArrows())
-    ro.observe(el)
-    window.addEventListener('resize', updateArrows)
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      ro.disconnect()
-      window.removeEventListener('resize', updateArrows)
-    }
-  }, [updateArrows, children])
-
-  const scrollByDir = (dir: -1 | 1) => {
-    const el = scrollerRef.current
-    if (!el) return
-    el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.65), behavior: 'smooth' })
-  }
-
-  return (
-    <div className={`gmaps-omnibox__chips-wrap${canPrev ? ' has-prev' : ''}${canNext ? ' has-next' : ''}`}>
-      {canPrev ? (
-        <button
-          type="button"
-          className="gmaps-omnibox__chips-arrow is-prev map-motion-press"
-          aria-label="Cuộn chip sang trái"
-          onClick={() => scrollByDir(-1)}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-            <path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-          </svg>
-        </button>
-      ) : null}
-
-      <div
-        ref={scrollerRef}
-        className="gmaps-omnibox__chips"
-        role="list"
-        aria-label={label}
-      >
-        {children}
-      </div>
-
-      {canNext ? (
-        <button
-          type="button"
-          className="gmaps-omnibox__chips-arrow is-next map-motion-press"
-          aria-label="Cuộn chip sang phải"
-          onClick={() => scrollByDir(1)}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-            <path fill="currentColor" d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-          </svg>
-        </button>
-      ) : null}
-    </div>
   )
 }
 
@@ -249,22 +178,27 @@ function SuggestionRow({
       onClick={() => onPick(item)}
     >
       <span className={`gmaps-omnibox__row-icon is-${item.kind}`} aria-hidden>
-        {item.kind === 'school' || item.kind === 'post' ? (
-          item.kind === 'post' ? (
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path
-                fill="currentColor"
-                d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
-              />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path
-                fill="currentColor"
-                d="M12 3 1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"
-              />
-            </svg>
-          )
+        {item.kind === 'post' ? (
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              fill="currentColor"
+              d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+            />
+          </svg>
+        ) : item.kind === 'school' ? (
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              fill="currentColor"
+              d="M12 3 1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"
+            />
+          </svg>
+        ) : item.kind === 'place' ? (
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              fill="currentColor"
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
+            />
+          </svg>
         ) : item.kind === 'recent' ? (
           <svg viewBox="0 0 24 24" width="18" height="18">
             <path
@@ -302,7 +236,6 @@ export function MapOmnibox({
   districtId,
   wardId,
   schoolId,
-  filterLabel,
   amenities,
   selectedAmenities,
   onToggleAmenity,
@@ -314,28 +247,63 @@ export function MapOmnibox({
   onReset,
   onOpenSection,
   activeSection = null,
+  onAiSearch,
+  aiSearching = false,
+  unreadMessageCount = 0,
+  pinLayers,
+  onTogglePinLayer,
 }: Props) {
   const { profile } = useAuth()
+  const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
   const [open, setOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [recent, setRecent] = useState<MapOmniboxSuggestion[]>([])
+  const [placeSuggestions, setPlaceSuggestions] = useState<MapOmniboxSuggestion[]>([])
+  const [placesLoading, setPlacesLoading] = useState(false)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 900px)').matches : false,
+  )
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const navMotion = useMountTransition(navOpen, 280)
-  const dropdownMotion = useMountTransition(open, 220)
 
   useEffect(() => {
     setRecent(loadRecent())
   }, [])
 
   useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)')
+    const sync = () => setIsMobile(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  useEffect(() => {
+    const page = rootRef.current?.closest('.home-map-page')
+    if (!page) return
+    const on = open && isMobile
+    page.classList.toggle('is-mobile-searching', on)
+    return () => page.classList.remove('is-mobile-searching')
+  }, [open, isMobile])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  useEffect(() => {
     const onDoc = (e: MouseEvent) => {
+      if (isMobile && open) return // backdrop handles dismiss on mobile
       if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
-  }, [])
+  }, [isMobile, open])
 
   useEffect(() => {
     if (!navOpen) return
@@ -345,6 +313,46 @@ export function MapOmnibox({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [navOpen])
+
+  // Google Places address / POI suggestions (debounced) for detailed addresses.
+  useEffect(() => {
+    const q = query.trim()
+    if (!apiKey || !mapsLoaded || q.length < 2) {
+      setPlaceSuggestions([])
+      setPlacesLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setPlacesLoading(true)
+    const t = window.setTimeout(() => {
+      void fetchPlacePredictions(q, { limit: 6 })
+        .then((items) => {
+          if (cancelled) return
+          setPlaceSuggestions(
+            items.map((p) => ({
+              id: `place-${p.placeId}`,
+              kind: 'place' as const,
+              title: p.title,
+              subtitle: p.subtitle,
+              keyword: p.title,
+              placeId: p.placeId,
+            })),
+          )
+        })
+        .catch(() => {
+          if (!cancelled) setPlaceSuggestions([])
+        })
+        .finally(() => {
+          if (!cancelled) setPlacesLoading(false)
+        })
+    }, 280)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(t)
+    }
+  }, [query, apiKey, mapsLoaded])
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -365,6 +373,7 @@ export function MapOmnibox({
     if (!q) {
       return {
         recent: recentItems.slice(0, 5),
+        places: [] as MapOmniboxSuggestion[],
         districts: districts.slice(0, 2),
         wards: wards.slice(0, 5),
         schools: schoolItems.slice(0, 6),
@@ -374,15 +383,17 @@ export function MapOmnibox({
 
     return {
       recent: recentItems.slice(0, 4),
+      places: placeSuggestions.slice(0, 6),
       districts: districts.slice(0, 4),
       wards: wards.slice(0, 8),
       schools: schoolItems.slice(0, 10),
       posts: postItems.slice(0, 8),
     }
-  }, [query, schools, recent, posts])
+  }, [query, schools, recent, posts, placeSuggestions])
 
   const totalHits =
     suggestions.recent.length +
+    suggestions.places.length +
     suggestions.districts.length +
     suggestions.wards.length +
     suggestions.schools.length +
@@ -391,7 +402,7 @@ export function MapOmnibox({
   const pick = (item: MapOmniboxSuggestion) => {
     saveRecent(item)
     setRecent(loadRecent())
-    onQueryChange(item.title)
+    onQueryChange(item.kind === 'place' && item.subtitle ? `${item.title}` : item.title)
     onPickSuggestion(item)
     setOpen(false)
   }
@@ -399,13 +410,19 @@ export function MapOmnibox({
   const submit = () => {
     const keyword = query.trim()
     if (!keyword) return
+    // Prefer the top Google place row so Enter flies to the location.
+    const topPlace = placeSuggestions[0]
+    if (topPlace?.placeId) {
+      pick(topPlace)
+      return
+    }
     const item: MapOmniboxSuggestion = {
       id: `query-${keyword}`,
       kind: 'query',
       title: keyword,
-      subtitle: 'Tìm kiếm từ khóa trên Homeji',
-      meta: 'Lọc tin đăng theo khu vực / địa chỉ / tên phòng',
-      badge: 'Từ khóa',
+      subtitle: 'Tìm kiếm địa chỉ / từ khóa trên Homeji',
+      meta: 'Bay tới địa điểm hoặc lọc tin đăng',
+      badge: 'Tìm kiếm',
       keyword,
     }
     saveRecent(item)
@@ -414,52 +431,17 @@ export function MapOmnibox({
     setOpen(false)
   }
 
+  const closeSearch = () => {
+    setOpen(false)
+    inputRef.current?.blur()
+  }
+
   const closeNav = () => setNavOpen(false)
 
   const openSection = (section: MapAppSection) => {
     onOpenSection?.(section)
     closeNav()
   }
-
-  const chips = [
-    {
-      id: 'thu-duc',
-      label: 'Thủ Đức',
-      active: districtId === 'thu-duc' && !wardId && !schoolId,
-      onClick: () => {
-        const d = GUEST_DISTRICTS.find((x) => x.id === 'thu-duc')!
-        pick(areaToSuggestion(d, 'district'))
-      },
-    },
-    {
-      id: 'q9',
-      label: 'Quận 9',
-      active: districtId === 'q9' && !wardId && !schoolId,
-      onClick: () => {
-        const d = GUEST_DISTRICTS.find((x) => x.id === 'q9')!
-        pick(areaToSuggestion(d, 'district'))
-      },
-    },
-    ...GUEST_WARDS.slice(0, 4).map((w) => ({
-      id: w.id,
-      label: w.label.replace(/^Phường\s+/i, ''),
-      active: wardId === w.id,
-      onClick: () => pick(areaToSuggestion(w, 'ward', w.districtId)),
-    })),
-    ...schools.slice(0, 3).map((s) => {
-      const short = s.label
-        .replace(/^Trường\s+/i, '')
-        .replace(/^Đại học\s+/i, '')
-        .split('(')[0]
-        .trim()
-      return {
-        id: `chip-school-${s.id}`,
-        label: short.length > 14 ? `${short.slice(0, 13)}…` : short,
-        active: schoolId === s.id,
-        onClick: () => pick(schoolToSuggestion(s)),
-      }
-    }),
-  ]
 
   return (
     <>
@@ -495,25 +477,45 @@ export function MapOmnibox({
           <span className="gmaps-nav-rail__label">Đã lưu</span>
         </button>
 
+        <div className="gmaps-nav-rail__divider" role="presentation" />
+
         <button
           type="button"
-          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'listings' ? ' is-active' : ''}`}
-          onClick={() => {
-            openSection('listings')
-            setOpen(true)
-            inputRef.current?.focus()
-          }}
+          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'messages' ? ' is-active' : ''}`}
+          onClick={() => openSection('messages')}
+        >
+          <span className="gmaps-nav-rail__icon-wrap">
+            <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"
+              />
+            </svg>
+            {unreadMessageCount > 0 ? (
+              <span
+                className="gmaps-nav-rail__badge"
+                aria-label={`${unreadMessageCount} tin nhắn chưa đọc`}
+              >
+                {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+              </span>
+            ) : null}
+          </span>
+          <span className="gmaps-nav-rail__label">Chat</span>
+        </button>
+
+        <button
+          type="button"
+          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'appointments' ? ' is-active' : ''}`}
+          onClick={() => openSection('appointments')}
         >
           <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
             <path
               fill="currentColor"
-              d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+              d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
             />
           </svg>
-          <span className="gmaps-nav-rail__label">Gần đây</span>
+          <span className="gmaps-nav-rail__label">Lịch</span>
         </button>
-
-        <div className="gmaps-nav-rail__divider" role="presentation" />
 
         <button
           type="button"
@@ -544,7 +546,19 @@ export function MapOmnibox({
         </button>
       </aside>
 
-      <div className="gmaps-omnibox" ref={rootRef}>
+      <div
+        className={`gmaps-omnibox${open && isMobile ? ' is-mobile-search' : ''}`}
+        ref={rootRef}
+      >
+        <button
+          type="button"
+          className={`gmaps-omnibox__search-scrim${open && isMobile ? ' is-visible' : ''}`}
+          aria-label="Đóng tìm kiếm"
+          aria-hidden={!(open && isMobile)}
+          tabIndex={open && isMobile ? 0 : -1}
+          onClick={closeSearch}
+        />
+
         <div className={`gmaps-omnibox__card${open ? ' is-open' : ''}`}>
           <form
             className="gmaps-omnibox__bar"
@@ -553,30 +567,51 @@ export function MapOmnibox({
               submit()
             }}
           >
-            <button
-              type="button"
-              className="gmaps-omnibox__icon-btn gmaps-omnibox__menu-btn map-motion-press"
-              aria-label="Mở menu"
-              aria-expanded={navOpen}
-              onClick={() => {
-                setOpen(false)
-                setNavOpen(true)
-              }}
-            >
-              <span className="gmaps-omnibox__menu" aria-hidden>
-                <span />
-                <span />
-                <span />
-              </span>
-            </button>
+            {open && isMobile ? (
+              <button
+                type="button"
+                className="gmaps-omnibox__icon-btn gmaps-omnibox__back-btn map-motion-press"
+                aria-label="Quay lại bản đồ"
+                onClick={closeSearch}
+              >
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+                  <path
+                    fill="currentColor"
+                    d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                  />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="gmaps-omnibox__icon-btn gmaps-omnibox__menu-btn map-motion-press"
+                aria-label="Mở menu"
+                aria-expanded={navOpen}
+                onClick={() => {
+                  setOpen(false)
+                  setNavOpen(true)
+                }}
+              >
+                <span className="gmaps-omnibox__menu" aria-hidden>
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </button>
+            )}
 
             <input
               ref={inputRef}
               className="gmaps-omnibox__input"
               value={query}
-              placeholder="Tìm phòng, phường, trường, địa chỉ…"
+              placeholder={
+                isMobile
+                  ? 'Tìm một địa điểm'
+                  : 'Tìm kiếm với Homeji...'
+              }
               aria-label="Tìm kiếm trên Homeji Maps"
               autoComplete="off"
+              enterKeyHint="search"
               onFocus={() => setOpen(true)}
               onChange={(e) => {
                 onQueryChange(e.target.value)
@@ -613,16 +648,16 @@ export function MapOmnibox({
             </button>
           </form>
 
-          {dropdownMotion.mounted ? (
-            <div
-              className={`gmaps-omnibox__dropdown${dropdownMotion.active ? ' is-visible' : ''}`}
-              role="listbox"
-            >
-              {totalHits === 0 ? (
+          <div
+            className={`gmaps-omnibox__dropdown${open ? ' is-visible' : ''}`}
+            role="listbox"
+            aria-hidden={!open}
+          >
+              {totalHits === 0 && !placesLoading ? (
                 <p className="gmaps-omnibox__empty">
                   {schoolsLoading
                     ? 'Đang tải gợi ý khu vực & trường…'
-                    : 'Không có gợi ý. Thử “Linh Trung”, “FPT”, hoặc địa chỉ cụ thể.'}
+                    : 'Không có gợi ý. Thử địa chỉ cụ thể (số nhà, đường), “Linh Trung”, hoặc “FPT”.'}
                 </p>
               ) : null}
 
@@ -632,6 +667,20 @@ export function MapOmnibox({
                   {suggestions.recent.map((item) => (
                     <SuggestionRow key={item.id} item={item} onPick={pick} />
                   ))}
+                </div>
+              ) : null}
+
+              {suggestions.places.length > 0 ? (
+                <div className="gmaps-omnibox__section">
+                  <p className="gmaps-omnibox__section-title">Địa điểm</p>
+                  {suggestions.places.map((item) => (
+                    <SuggestionRow key={item.id} item={item} onPick={pick} />
+                  ))}
+                </div>
+              ) : placesLoading && query.trim().length >= 2 ? (
+                <div className="gmaps-omnibox__section">
+                  <p className="gmaps-omnibox__section-title">Địa điểm</p>
+                  <p className="gmaps-omnibox__empty">Đang tìm địa chỉ chi tiết…</p>
                 </div>
               ) : null}
 
@@ -699,8 +748,10 @@ export function MapOmnibox({
                 </button>
               </div>
 
-              {advancedOpen ? (
-                <div className="gmaps-omnibox__advanced map-motion-fade-up">
+              <div
+                className={`gmaps-omnibox__advanced${advancedOpen ? ' is-visible' : ''}`}
+                aria-hidden={!advancedOpen}
+              >
                   <div className="gmaps-omnibox__price">
                     <label>
                       <span>Giá tối thiểu</span>
@@ -740,46 +791,70 @@ export function MapOmnibox({
                         }`}
                         onClick={() => onToggleAmenity(amenity)}
                       >
-                        {amenity}
+                        {amenityLabel(amenity)}
                       </button>
                     ))}
                   </div>
-                </div>
-              ) : null}
+              </div>
             </div>
-          ) : null}
         </div>
 
-        <ChipScroller label={`Lọc nhanh · ${filterLabel}`}>
-          {chips.map((chip, index) => (
-            <button
-              key={chip.id}
-              type="button"
-              role="listitem"
-              className={`gmaps-omnibox__chip map-motion-press${chip.active ? ' is-on' : ''}`}
-              style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
-              onClick={chip.onClick}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </ChipScroller>
+        {pinLayers && onTogglePinLayer ? (
+          <div className="gmaps-omnibox__chips-wrap" role="group" aria-label="Lọc loại ghim">
+            <div className="gmaps-omnibox__chips">
+              {MAP_PIN_LAYER_OPTIONS.map((opt) => {
+                const on = pinLayers[opt.id]
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={`gmaps-omnibox__chip map-motion-press${on ? ' is-on' : ''}`}
+                    style={
+                      on
+                        ? {
+                            borderColor: opt.accent,
+                            background: `color-mix(in srgb, ${opt.accent} 18%, var(--surface-elevated))`,
+                            color: opt.accent,
+                          }
+                        : undefined
+                    }
+                    aria-pressed={on}
+                    onClick={() => onTogglePinLayer(opt.id)}
+                  >
+                    <span
+                      className="gmaps-omnibox__chip-dot"
+                      style={{ background: opt.accent }}
+                      aria-hidden
+                    />
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <MapAccountMenu
+          onOpenProfile={() => openSection('profile')}
+          onOpenSubscriptions={() => openSection('payments')}
+        />
       </div>
 
-      {navMotion.mounted ? (
-        <>
-          <button
-            type="button"
-            className={`gmaps-nav-backdrop${navMotion.active ? ' is-visible' : ''}`}
-            aria-label="Đóng menu"
-            onClick={closeNav}
-          />
-          <aside
-            className={`gmaps-nav-drawer${navMotion.active ? ' is-visible' : ''}`}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu Homeji"
-          >
+      <button
+        type="button"
+        className={`gmaps-nav-backdrop${navOpen ? ' is-visible' : ''}`}
+        aria-label="Đóng menu"
+        aria-hidden={!navOpen}
+        tabIndex={navOpen ? 0 : -1}
+        onClick={closeNav}
+      />
+      <aside
+        className={`gmaps-nav-drawer${navOpen ? ' is-visible' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!navOpen}
+        aria-label="Menu Homeji"
+      >
             <div className="gmaps-nav-drawer__head">
               <Link to="/" className="gmaps-nav-drawer__brand" onClick={closeNav}>
                 <img src="/brand/homeji-logo.png" alt="Homeji" width={120} height={34} />
@@ -793,6 +868,27 @@ export function MapOmnibox({
                 onClick={() => openSection('listings')}
               >
                 Tìm phòng
+              </button>
+              <button
+                type="button"
+                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'assistant' ? ' is-active' : ''}`}
+                onClick={() => openSection('assistant')}
+              >
+                Trợ lý AI
+              </button>
+              <button
+                type="button"
+                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'marketplace' ? ' is-active' : ''}`}
+                onClick={() => openSection('marketplace')}
+              >
+                Chợ đồ
+              </button>
+              <button
+                type="button"
+                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'wanted' ? ' is-active' : ''}`}
+                onClick={() => openSection('wanted')}
+              >
+                Tin tìm phòng
               </button>
               <button
                 type="button"
@@ -817,15 +913,45 @@ export function MapOmnibox({
               </button>
               <button
                 type="button"
+                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'messages' ? ' is-active' : ''}`}
+                onClick={() => openSection('messages')}
+              >
+                Tin nhắn
+              </button>
+              <button
+                type="button"
+                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'appointments' ? ' is-active' : ''}`}
+                onClick={() => openSection('appointments')}
+              >
+                Lịch xem phòng
+              </button>
+              <button
+                type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'payments' ? ' is-active' : ''}`}
                 onClick={() => openSection('payments')}
               >
-                Thanh toán
+                Gói Premium
+              </button>
+              <button
+                type="button"
+                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'activities' ? ' is-active' : ''}`}
+                onClick={() => openSection('activities')}
+              >
+                Nhật ký hoạt động
               </button>
               {profile?.role === UserRole.Landlord ? (
-                <Link to="/posts/new" className="gmaps-nav-drawer__item map-motion-press" onClick={closeNav}>
-                  Đăng tin
-                </Link>
+                <>
+                  <button
+                    type="button"
+                    className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'myPosts' ? ' is-active' : ''}`}
+                    onClick={() => openSection('myPosts')}
+                  >
+                    Tin của tôi
+                  </button>
+                  <Link to="/posts/new" className="gmaps-nav-drawer__item map-motion-press" onClick={closeNav}>
+                    Đăng tin
+                  </Link>
+                </>
               ) : null}
               {profile?.role === UserRole.Admin ? (
                 <Link to="/admin" className="gmaps-nav-drawer__item map-motion-press" onClick={closeNav}>
@@ -833,11 +959,7 @@ export function MapOmnibox({
                 </Link>
               ) : null}
             </nav>
-          </aside>
-        </>
-      ) : null}
-
-      <MapAccountMenu onOpenProfile={() => openSection('profile')} />
+      </aside>
     </>
   )
 }

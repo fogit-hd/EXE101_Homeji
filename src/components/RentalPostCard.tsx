@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { RentalPostSummary } from '../api/types'
 import { formatPrice, rentalPostTypeLabel } from '../lib/labels'
+import { mapPostUrl } from '../lib/mapDeepLinks'
 import './RentalPostCard.css'
 
 type Props = {
@@ -14,7 +15,7 @@ type Props = {
 export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved }: Props) {
   return (
     <article className="post-card card">
-      <Link to={`/posts/${post.id}`} className="post-card-link">
+      <Link to={mapPostUrl(post.id)} className="post-card-link">
         <div className="post-card-image">
           {post.thumbnailPath ? (
             <img src={post.thumbnailPath} alt={post.title} />
