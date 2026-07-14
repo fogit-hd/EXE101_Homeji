@@ -103,16 +103,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   onDetailLabelChange,
   onAiSearchUpdate,
 }: AuthenticatedHomeMapShellProps) {
-  const { isAuthenticated, profile } = useAuth()
-
-  const userAvatarUrl = profile?.avatarPath ?? null
-  const userAvatarInitials = useMemo(() => {
-    const name = profile?.displayName?.trim() || ''
-    const parts = name.split(/\s+/).filter(Boolean)
-    if (parts.length === 0) return '?'
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-    return `${parts[0][0] ?? ''}${parts[parts.length - 1]?.[0] ?? ''}`.toUpperCase()
-  }, [profile?.displayName])
+  const { isAuthenticated } = useAuth()
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceDetails | null>(null)
   const [placeLoading, setPlaceLoading] = useState(false)
@@ -761,8 +752,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             navigationRequest={navigationRequest}
             onNavigationResult={handleNavigationResult}
             userLocation={userLocation}
-            userAvatarUrl={userAvatarUrl}
-            userAvatarInitials={userAvatarInitials}
             onLocate={onLocate}
             locating={locating}
           />

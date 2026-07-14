@@ -51,8 +51,6 @@ type HomeMapStageProps = {
     error?: string | null,
   ) => void
   userLocation: { lat: number; lng: number } | null
-  userAvatarUrl?: string | null
-  userAvatarInitials?: string
   onLocate: () => void
   locating: boolean
 }
@@ -81,8 +79,6 @@ export const HomeMapStage = memo(function HomeMapStage({
   navigationRequest = null,
   onNavigationResult,
   userLocation,
-  userAvatarUrl = null,
-  userAvatarInitials = '?',
   onLocate,
   locating,
 }: HomeMapStageProps) {
@@ -103,8 +99,6 @@ export const HomeMapStage = memo(function HomeMapStage({
       pinLayers={pinLayers}
       focus={focus}
       userLocation={userLocation}
-      userAvatarUrl={userAvatarUrl}
-      userAvatarInitials={userAvatarInitials}
       onLocate={onLocate}
       locating={locating}
       focusToken={focusToken}

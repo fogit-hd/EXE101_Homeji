@@ -5,15 +5,11 @@ export type MapPinContentHandle = {
   dispose: () => void
 }
 
-function uid(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 9)}`
-}
-
 /**
- * 0×0 anchor at lat/lng — pin sits above with translate(-50%, -100%)
- * so the tip stays glued to the coordinate at every zoom (Google Maps pattern).
+ * 0×0 anchor at lat/lng. Each marker class decides whether its visual is
+ * centered on the coordinate or lifted so a pin tip touches the coordinate.
  */
-function tipAnchorRoot(
+function coordinateAnchorRoot(
   title: string,
   className: string,
   options?: { interactive?: boolean },
@@ -55,37 +51,23 @@ function formatPinPrice(price?: number): string | null {
 const PIN_PATH =
   'M24 0C13.5 0 5 8.5 5 19c0 14 19 45 19 45s19-31 19-45C43 8.5 34.5 0 24 0z'
 
-/** Green pin with account avatar / initials — “vị trí của tôi”. */
-export function createAvatarLocationPinContent(options: {
-  avatarUrl?: string | null
-  initials?: string
+/** Google Maps-style blue dot for the device's current location. */
+export function createUserLocationDotContent(options: {
   title?: string
   size?: number
 }): MapPinContentHandle {
-  const size = options.size ?? 44
-  const visualH = Math.round(size * (64 / 48))
-  const { root, mount } = tipAnchorRoot(
+  const size = options.size ?? 46
+  const { root, mount } = coordinateAnchorRoot(
     options.title ?? 'Vị trí của bạn',
-    'map-avatar-pin',
+    'map-user-location-dot',
   )
 
-  const clipId = uid('av')
-  const initials = (options.initials || '?').slice(0, 2).toUpperCase()
-  const avatarUrl = options.avatarUrl?.trim() || ''
-
+  mount.style.width = `${size}px`
+  mount.style.height = `${size}px`
   mount.innerHTML = `
-    <svg class="map-avatar-pin__svg" viewBox="0 0 48 64" width="${size}" height="${visualH}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <clipPath id="${clipId}"><circle cx="24" cy="20" r="13"/></clipPath>
-      </defs>
-      <path fill="#00B14F" stroke="#0A7A3A" stroke-width="1.4" d="${PIN_PATH}"/>
-      <circle cx="24" cy="20" r="14" fill="#fff"/>
-      ${
-        avatarUrl
-          ? `<image href="${avatarUrl.replace(/"/g, '')}" x="11" y="7" width="26" height="26" clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice"/>`
-          : `<text x="24" y="25" text-anchor="middle" fill="#0A7A3A" font-size="11" font-weight="700" font-family="system-ui,sans-serif">${initials}</text>`
-      }
-    </svg>
+    <span class="map-user-location-dot__accuracy" aria-hidden="true"></span>
+    <span class="map-user-location-dot__pulse" aria-hidden="true"></span>
+    <span class="map-user-location-dot__core" aria-hidden="true"></span>
   `
 
   return {
@@ -104,7 +86,7 @@ export function createChatLocationPinContent(options: {
 }): MapPinContentHandle {
   const size = options.size ?? 40
   const visualH = Math.round(size * (64 / 48))
-  const { root, mount } = tipAnchorRoot(options.title, 'map-chat-pin')
+  const { root, mount } = coordinateAnchorRoot(options.title, 'map-chat-pin')
 
   const badge = document.createElement('div')
   badge.className = 'map-chat-pin__badge'
@@ -154,7 +136,7 @@ export function createMarketplacePinContent(options: {
   const visualH = Math.round(size * (64 / 48))
   const fill = selected ? '#EA580C' : '#F59E0B'
   const stroke = selected ? '#C2410C' : '#D97706'
-  const { root, mount } = tipAnchorRoot(options.title, 'map-market-pin', {
+  const { root, mount } = coordinateAnchorRoot(options.title, 'map-market-pin', {
     interactive: true,
   })
   if (selected) root.classList.add('is-selected')
@@ -244,7 +226,7 @@ export function createRentalPinContent(options: {
   const fill = selected ? theme.fillSel : theme.fill
   const stroke = selected ? theme.strokeSel : theme.stroke
   const className = kind === 'roommate' ? 'map-roommate-pin' : 'map-rental-pin'
-  const { root, mount } = tipAnchorRoot(options.title, className, { interactive: true })
+  const { root, mount } = coordinateAnchorRoot(options.title, className, { interactive: true })
   if (selected) root.classList.add('is-selected')
   if (hot) root.classList.add('is-hot')
 

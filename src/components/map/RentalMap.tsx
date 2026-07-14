@@ -37,7 +37,7 @@ import {
 } from '../../hooks/useSystemMapColorScheme'
 import { MapErrorPanel } from './MapErrorPanel'
 import {
-  createAvatarLocationPinContent,
+  createUserLocationDotContent,
   createMarketplacePinContent,
   createRentalPinContent,
   type MapPinContentHandle,
@@ -69,8 +69,8 @@ export type MarketplaceMapPin = {
 }
 
 type LatLng = { lat: number; lng: number }
-type MapDisplayMode = 'roadmap' | 'satellite' | 'streetview'
-type BaseMapMode = Exclude<MapDisplayMode, 'streetview'>
+type BaseMapMode = 'roadmap' | 'satellite'
+type MapDisplayMode = BaseMapMode | 'streetview-select' | 'streetview'
 
 type RentalMapProps = {
   posts: RentalPostSummary[]
@@ -96,9 +96,6 @@ type RentalMapProps = {
   pinLayers?: MapPinLayers
   focus?: MapFocus | null
   userLocation?: LatLng | null
-  /** Account avatar for “vị trí của tôi” pin. */
-  userAvatarUrl?: string | null
-  userAvatarInitials?: string
   zoomControlSide?: 'LEFT' | 'RIGHT'
   onLocate?: () => void
   locating?: boolean
@@ -184,8 +181,6 @@ function RentalMapComponent({
   pinLayers = DEFAULT_MAP_PIN_LAYERS,
   focus = null,
   userLocation = null,
-  userAvatarUrl = null,
-  userAvatarInitials = '?',
   onLocate,
   locating = false,
   selectionPad = DEFAULT_PAD,
@@ -224,6 +219,12 @@ function RentalMapComponent({
   const syncMarkersRef = useRef<() => void>(() => {})
   const cameraRef = useRef<MapCameraScheduler | null>(null)
   const baseMapModeRef = useRef<BaseMapMode>('roadmap')
+  const streetViewCoverageRef = useRef<google.maps.StreetViewCoverageLayer | null>(null)
+  const streetViewServiceRef = useRef<google.maps.StreetViewService | null>(null)
+  const streetViewSelectRef = useRef(false)
+  const streetViewBusyRef = useRef(false)
+  const streetViewRequestRef = useRef(0)
+  const openStreetViewAtRef = useRef<(position: google.maps.LatLng) => void>(() => {})
 
   const onSelectPostRef = useRef(onSelectPost)
   const onClearSelectionRef = useRef(onClearSelection)
@@ -488,6 +489,12 @@ function RentalMapComponent({
       )
       listeners.push(
         map.addListener('click', (event: google.maps.MapMouseEvent) => {
+          if (streetViewSelectRef.current) {
+            event.stop()
+            if (event.latLng) openStreetViewAtRef.current(event.latLng)
+            return
+          }
+
           // Always suppress Google's default white POI InfoWindow first.
           // (Early-returning for drag-guard without stop() lets that popup show —
           // and dark-theme text colors make its title nearly invisible.)
@@ -554,6 +561,12 @@ function RentalMapComponent({
       userPinContentRef.current = null
       sharedPinContentRef.current?.dispose()
       sharedPinContentRef.current = null
+      streetViewRequestRef.current += 1
+      streetViewSelectRef.current = false
+      streetViewBusyRef.current = false
+      streetViewCoverageRef.current?.setMap(null)
+      streetViewCoverageRef.current = null
+      streetViewServiceRef.current = null
       for (const line of routePolylinesRef.current) line.setMap(null)
       routePolylinesRef.current = []
       for (const m of routeMarkersRef.current) m.map = null
@@ -645,11 +658,9 @@ function RentalMapComponent({
     userPinContentRef.current?.dispose()
     userPinContentRef.current = null
 
-    const content = createAvatarLocationPinContent({
-      avatarUrl: userAvatarUrl,
-      initials: userAvatarInitials,
+    const content = createUserLocationDotContent({
       title,
-      size: 44,
+      size: 46,
     })
     userPinContentRef.current = content
     userMarkerRef.current = new lib.AdvancedMarkerElement({
@@ -659,7 +670,7 @@ function RentalMapComponent({
       title,
       zIndex: 2000,
     })
-  }, [mapReady, userLocation, userAvatarUrl, userAvatarInitials])
+  }, [mapReady, userLocation])
 
   // Selected place — Google Maps–style red pin only while detail is open.
   // REQUIRED_AND_HIDES_OPTIONAL hides overlapping basemap POI icons/labels
@@ -970,16 +981,71 @@ function RentalMapComponent({
   const selectBaseMap = useCallback((mode: BaseMapMode) => {
     const map = mapRef.current
     if (!map) return
+    streetViewRequestRef.current += 1
+    streetViewSelectRef.current = false
+    streetViewBusyRef.current = false
+    streetViewCoverageRef.current?.setMap(null)
+    map.setOptions({ draggableCursor: null })
     map.getStreetView().setVisible(false)
     map.setMapTypeId(mode)
     baseMapModeRef.current = mode
     setDisplayMode(mode)
+    setStreetViewBusy(false)
     setStreetViewError(null)
   }, [])
 
+  const openStreetViewAt = useCallback(async (position: google.maps.LatLng) => {
+    const map = mapRef.current
+    const service = streetViewServiceRef.current
+    if (!map || !service || !streetViewSelectRef.current || streetViewBusyRef.current) return
+
+    const requestId = ++streetViewRequestRef.current
+    streetViewBusyRef.current = true
+    setStreetViewBusy(true)
+    setStreetViewError(null)
+    try {
+      const response = await service.getPanorama({
+        location: position,
+        radius: 80,
+      })
+      if (
+        mapRef.current !== map ||
+        requestId !== streetViewRequestRef.current ||
+        !streetViewSelectRef.current
+      ) {
+        return
+      }
+
+      const panoramaId = response.data.location?.pano
+      if (!panoramaId) throw new Error('Street View panorama unavailable')
+
+      streetViewSelectRef.current = false
+      streetViewCoverageRef.current?.setMap(null)
+      map.setOptions({ draggableCursor: null })
+      const panorama = map.getStreetView()
+      panorama.setPano(panoramaId)
+      panorama.setPov({ heading: 0, pitch: 0 })
+      panorama.setVisible(true)
+      setDisplayMode('streetview')
+    } catch {
+      if (mapRef.current === map && requestId === streetViewRequestRef.current) {
+        setStreetViewError('Điểm này chưa có ảnh Xem phố. Hãy chọn một tuyến màu xanh khác.')
+      }
+    } finally {
+      if (mapRef.current === map && requestId === streetViewRequestRef.current) {
+        streetViewBusyRef.current = false
+        setStreetViewBusy(false)
+      }
+    }
+  }, [])
+
+  openStreetViewAtRef.current = (position) => {
+    void openStreetViewAt(position)
+  }
+
   const toggleStreetView = useCallback(async () => {
     const map = mapRef.current
-    if (!map || streetViewBusy) return
+    if (!map || streetViewBusyRef.current) return
 
     const panorama = map.getStreetView()
     if (panorama.getVisible()) {
@@ -989,36 +1055,41 @@ function RentalMapComponent({
       return
     }
 
-    const center = map.getCenter()
-    if (!center) {
-      setStreetViewError('Chưa xác định được vị trí để mở Xem phố.')
+    if (streetViewSelectRef.current) {
+      streetViewRequestRef.current += 1
+      streetViewSelectRef.current = false
+      streetViewCoverageRef.current?.setMap(null)
+      map.setOptions({ draggableCursor: null })
+      setDisplayMode(baseMapModeRef.current)
+      setStreetViewError(null)
       return
     }
 
+    const requestId = ++streetViewRequestRef.current
+    streetViewBusyRef.current = true
     setStreetViewBusy(true)
     setStreetViewError(null)
     try {
-      const { StreetViewService } = await loadStreetViewLibrary()
-      const response = await new StreetViewService().getPanorama({
-        location: center,
-        radius: 500,
-      })
-      if (mapRef.current !== map) return
+      const { StreetViewCoverageLayer, StreetViewService } = await loadStreetViewLibrary()
+      if (mapRef.current !== map || requestId !== streetViewRequestRef.current) return
 
-      const panoramaId = response.data.location?.pano
-      if (!panoramaId) throw new Error('Street View panorama unavailable')
-      panorama.setPano(panoramaId)
-      panorama.setPov({ heading: 0, pitch: 0 })
-      panorama.setVisible(true)
-      setDisplayMode('streetview')
+      streetViewServiceRef.current ??= new StreetViewService()
+      streetViewCoverageRef.current ??= new StreetViewCoverageLayer()
+      streetViewCoverageRef.current.setMap(map)
+      streetViewSelectRef.current = true
+      map.setOptions({ draggableCursor: 'crosshair' })
+      setDisplayMode('streetview-select')
     } catch {
-      if (mapRef.current === map) {
-        setStreetViewError('Khu vực này chưa có ảnh Xem phố. Hãy di chuyển bản đồ và thử lại.')
+      if (mapRef.current === map && requestId === streetViewRequestRef.current) {
+        setStreetViewError('Không thể tải dữ liệu Xem phố. Vui lòng thử lại.')
       }
     } finally {
-      if (mapRef.current === map) setStreetViewBusy(false)
+      if (mapRef.current === map && requestId === streetViewRequestRef.current) {
+        streetViewBusyRef.current = false
+        setStreetViewBusy(false)
+      }
     }
-  }, [streetViewBusy])
+  }, [])
 
   if (!apiKey) {
     return (
@@ -1056,6 +1127,12 @@ function RentalMapComponent({
 
       {mapReady ? (
         <div className="rental-map__view-switcher-wrap">
+          {displayMode === 'streetview-select' ? (
+            <div className="rental-map__view-guide" role="status">
+              <span aria-hidden />
+              Chọn một tuyến đường màu xanh để mở Xem phố
+            </div>
+          ) : null}
           {streetViewError ? (
             <div className="rental-map__view-error" role="status">
               {streetViewError}
@@ -1080,8 +1157,10 @@ function RentalMapComponent({
             </button>
             <button
               type="button"
-              className={`${displayMode === 'streetview' ? 'is-active' : ''}${streetViewBusy ? ' is-loading' : ''}`}
-              aria-pressed={displayMode === 'streetview'}
+              className={`${displayMode === 'streetview' || displayMode === 'streetview-select' ? 'is-active' : ''}${streetViewBusy ? ' is-loading' : ''}`}
+              aria-pressed={
+                displayMode === 'streetview' || displayMode === 'streetview-select'
+              }
               aria-busy={streetViewBusy}
               disabled={streetViewBusy}
               onClick={() => void toggleStreetView()}
@@ -1176,8 +1255,6 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.pinLayers?.marketplace === next.pinLayers?.marketplace &&
     focusOk &&
     userOk &&
-    prev.userAvatarUrl === next.userAvatarUrl &&
-    prev.userAvatarInitials === next.userAvatarInitials &&
     prev.onLocate === next.onLocate &&
     prev.locating === next.locating &&
     prev.focusToken === next.focusToken &&
