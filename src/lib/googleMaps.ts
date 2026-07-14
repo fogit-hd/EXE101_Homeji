@@ -11,6 +11,13 @@ export const DEFAULT_MAP_ZOOM = 13
 export const MAP_FOCUS_ZOOM = 18
 
 /**
+ * Max zoom when fitting filter / pin-layer results (Phòng trọ, Ở ghép, Chợ đồ).
+ * Lower than MAP_FOCUS_ZOOM so a sparse layer (e.g. only roommate) does not
+ * feel “more zoomed” than a denser vacant/marketplace set.
+ */
+export const MAP_FIT_MAX_ZOOM = 15
+
+/**
  * Fallback Map ID for Advanced Markers / cloud styles.
  * Prefer a real Cloud Map ID via VITE_GOOGLE_MAP_ID.
  */

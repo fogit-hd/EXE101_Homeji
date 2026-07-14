@@ -48,7 +48,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   )
 
   const lookupId = searchParams.get('paymentId')
-  const lookupOrder = searchParams.get('orderCode')
+  const lookupOrder =
+    searchParams.get('orderCode') ?? searchParams.get('orderId')
 
   const loadFn = useCallback(async () => {
     const [pkgList, current, history] = await Promise.all([

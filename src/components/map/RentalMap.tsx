@@ -14,6 +14,7 @@ import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
+  MAP_FIT_MAX_ZOOM,
   MAP_FOCUS_ZOOM,
   createMapOptions,
   isValidCoord,
@@ -153,7 +154,8 @@ function styleFor(
   return {
     kind,
     key: `${kind}|${selected ? 'sel' : hot ? 'hot' : 'idle'}`,
-    z: selected ? 1000 : hot ? 500 : roommate ? 50 : 40,
+    // Same base z for vacant & roommate — neither layer should feel prioritized.
+    z: selected ? 1000 : hot ? 500 : 40,
   }
 }
 
@@ -213,6 +215,8 @@ function RentalMapComponent({
   const focusAppliedRef = useRef('')
   const selectAppliedRef = useRef('')
   const userGestureRef = useRef(false)
+  /** First overview fit only — pin-layer chips must not re-zoom the map. */
+  const overviewFitDoneRef = useRef(false)
   const ignoreClickUntilRef = useRef(0)
   const syncMarkersRef = useRef<() => void>(() => {})
   const cameraRef = useRef<MapCameraScheduler | null>(null)
@@ -234,6 +238,13 @@ function RentalMapComponent({
     () => (pinLayers.marketplace ? marketplacePins : []),
     [marketplacePins, pinLayers.marketplace],
   )
+  /** All on-map points for overview / filter fits — vacant, roommate, chợ đồ alike. */
+  const visibleFitPoints = useMemo(() => {
+    const pts: { lat: number; lng: number }[] = []
+    for (const p of pins) pts.push({ lat: p.latitude, lng: p.longitude })
+    for (const m of visibleMarketplacePins) pts.push({ lat: m.lat, lng: m.lng })
+    return pts
+  }, [pins, visibleMarketplacePins])
   const selectedPost = useMemo(
     () => pins.find((p) => p.id === selectedPostId) ?? null,
     [pins, selectedPostId],
@@ -528,6 +539,8 @@ function RentalMapComponent({
       fittedKeyRef.current = ''
       focusAppliedRef.current = ''
       selectAppliedRef.current = ''
+      overviewFitDoneRef.current = false
+      userGestureRef.current = false
       if (mapDiv) {
         mapDiv.replaceChildren()
         mapDiv.remove()
@@ -794,42 +807,55 @@ function RentalMapComponent({
 
   /**
    * Single coalesced camera controller.
-   * Priority: listingsFit (filter) > focus > place pin > selected listing > initial fitBounds.
-   * Smooth pan/fitBounds via scheduler (no setCenter hard jumps).
+   * Priority: listingsFit (filter) > focus > place pin > selected listing > initial overview.
+   * Pin-layer chips (Phòng trọ / Ở ghép / Chợ đồ) only show/hide markers — no re-zoom.
+   * Filter/overview fits use the same maxZoom for every layer mix.
    */
   useEffect(() => {
     if (!mapReady) return
     const camera = cameraRef.current
     if (!camera) return
 
-    if (listingsFitToken > 0 && pins.length > 0) {
+    const fitPad = {
+      top: selectionPad.top,
+      bottom: selectionPad.bottom,
+      left: 48,
+      right: 72,
+    }
+
+    const scheduleLayerFit = (
+      key: string,
+      points: { lat: number; lng: number }[],
+    ) => {
+      if (points.length === 0) return
+      if (points.length === 1) {
+        camera.schedule(key, {
+          center: points[0],
+          zoom: MAP_FIT_MAX_ZOOM,
+          maxZoom: MAP_FIT_MAX_ZOOM,
+        })
+        return
+      }
+      const bounds = new google.maps.LatLngBounds()
+      for (const p of points) bounds.extend(p)
+      const mid = bounds.getCenter()
+      camera.schedule(key, {
+        center: { lat: mid.lat(), lng: mid.lng() },
+        bounds,
+        padding: fitPad,
+        maxZoom: MAP_FIT_MAX_ZOOM,
+      })
+    }
+
+    if (listingsFitToken > 0 && visibleFitPoints.length > 0) {
       const key = `listings-fit:${listingsFitToken}`
       if (key !== fittedKeyRef.current) {
         fittedKeyRef.current = key
         userGestureRef.current = false
         selectAppliedRef.current = ''
         focusAppliedRef.current = ''
-
-        if (pins.length === 1) {
-          camera.schedule(key, {
-            center: { lat: pins[0].latitude, lng: pins[0].longitude },
-            zoom: MAP_FOCUS_ZOOM,
-          })
-        } else {
-          const bounds = new google.maps.LatLngBounds()
-          for (const p of pins) bounds.extend({ lat: p.latitude, lng: p.longitude })
-          const mid = bounds.getCenter()
-          camera.schedule(key, {
-            center: { lat: mid.lat(), lng: mid.lng() },
-            bounds,
-            padding: {
-              top: selectionPad.top,
-              bottom: selectionPad.bottom,
-              left: 48,
-              right: 72,
-            },
-          })
-        }
+        overviewFitDoneRef.current = true
+        scheduleLayerFit(key, visibleFitPoints)
         return
       }
     }
@@ -879,32 +905,12 @@ function RentalMapComponent({
       return
     }
 
-    if (userGestureRef.current || pins.length === 0) return
-    const fitKey = pins.map((p) => p.id).join('|')
-    if (fitKey === fittedKeyRef.current) return
-    fittedKeyRef.current = fitKey
-
-    if (pins.length === 1) {
-      camera.schedule(`fit:${fitKey}`, {
-        center: { lat: pins[0].latitude, lng: pins[0].longitude },
-        zoom: MAP_FOCUS_ZOOM,
-      })
-      return
-    }
-
-    const bounds = new google.maps.LatLngBounds()
-    for (const p of pins) bounds.extend({ lat: p.latitude, lng: p.longitude })
-    const mid = bounds.getCenter()
-    camera.schedule(`fit:${fitKey}`, {
-      center: { lat: mid.lat(), lng: mid.lng() },
-      bounds,
-      padding: {
-        top: selectionPad.top,
-        bottom: selectionPad.bottom,
-        left: 48,
-        right: 48,
-      },
-    })
+    // One overview fit on first pins — toggling layer chips must not re-fit.
+    if (userGestureRef.current || overviewFitDoneRef.current) return
+    if (visibleFitPoints.length === 0) return
+    overviewFitDoneRef.current = true
+    fittedKeyRef.current = `overview:${visibleFitPoints.length}`
+    scheduleLayerFit(`overview:${fittedKeyRef.current}`, visibleFitPoints)
   }, [
     mapReady,
     listingsFitToken,
@@ -913,7 +919,7 @@ function RentalMapComponent({
     navigationRequest,
     selectedPlacePin,
     selectedPost,
-    pins,
+    visibleFitPoints,
     selectionPad.top,
     selectionPad.bottom,
   ])

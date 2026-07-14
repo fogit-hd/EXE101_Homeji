@@ -42,6 +42,8 @@ export type MapCameraTarget = {
   /** fitBounds padding — when set with bounds, preferred over center/zoom */
   bounds?: google.maps.LatLngBounds
   padding?: number | google.maps.Padding
+  /** After settle, never zoom in closer than this (equalizes layer/filter fits). */
+  maxZoom?: number
 }
 
 /**
@@ -68,6 +70,11 @@ export function moveMapCamera(map: google.maps.Map, target: MapCameraTarget) {
   window.setTimeout(() => {
     map.setZoom(wantZoom)
   }, 120)
+}
+
+export function clampMapZoom(map: google.maps.Map, maxZoom: number) {
+  const z = map.getZoom()
+  if (z != null && z > maxZoom) map.setZoom(maxZoom)
 }
 
 /** @deprecated Use moveMapCamera — kept for call sites that still import jump. */
@@ -102,6 +109,9 @@ export function createMapCameraScheduler(options?: {
     try {
       moveMapCamera(map, next.target)
       await waitForMapIdle(map)
+      if (next.target.maxZoom != null) {
+        clampMapZoom(map, next.target.maxZoom)
+      }
     } finally {
       busy = false
       if (pending) {

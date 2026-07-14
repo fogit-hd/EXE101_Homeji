@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { isMapSectionRedirectPath } from '../../lib/mapDeepLinks'
 import { MobileTabBar } from './MobileTabBar'
 import { Navbar } from './Navbar'
 import './footer.css'
@@ -43,7 +44,11 @@ export function AppLayout() {
   const location = useLocation()
   const navType = useNavigationType()
   const { isAuthenticated } = useAuth()
-  const isMapHome = location.pathname === '/' && isAuthenticated
+  // Treat /payments (and other retired shells) as map chrome so payment return
+  // URLs never flash Navbar + old page before Navigate to /?section=…
+  const isMapHome =
+    isAuthenticated &&
+    (location.pathname === '/' || isMapSectionRedirectPath(location.pathname))
   const isGuestLanding = location.pathname === '/' && !isAuthenticated
   const isAuthCinema =
     location.pathname === '/login' || location.pathname === '/register'

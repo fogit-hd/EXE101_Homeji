@@ -102,6 +102,7 @@ function HomePageComponent() {
   )
 
   // Deep links from retired standalone pages: /?section=… /?post=…
+  // Keep gateway return params (paymentId, orderCode, …) for PaymentPage.
   useEffect(() => {
     if (!isAuthenticated || isLoading) return
     const section = searchParams.get('section')
@@ -141,7 +142,15 @@ function HomePageComponent() {
           /* keep selection; detail panel will show load error state */
         })
     }
-    setSearchParams({}, { replace: true })
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('section')
+        next.delete('post')
+        return next
+      },
+      { replace: true },
+    )
   }, [isAuthenticated, isLoading, searchParams, setSearchParams])
 
   const commitMapFocus = useCallback((focus: HomeMapFocus) => {
