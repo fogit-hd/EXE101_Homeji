@@ -19,6 +19,7 @@ import {
   createMapOptions,
   isValidCoord,
   loadMarkerLibrary,
+  loadStreetViewLibrary,
   resolveMapsColorScheme,
 } from '../../lib/googleMaps'
 import {
@@ -68,6 +69,8 @@ export type MarketplaceMapPin = {
 }
 
 type LatLng = { lat: number; lng: number }
+type MapDisplayMode = 'roadmap' | 'satellite' | 'streetview'
+type BaseMapMode = Exclude<MapDisplayMode, 'streetview'>
 
 type RentalMapProps = {
   posts: RentalPostSummary[]
@@ -220,6 +223,7 @@ function RentalMapComponent({
   const ignoreClickUntilRef = useRef(0)
   const syncMarkersRef = useRef<() => void>(() => {})
   const cameraRef = useRef<MapCameraScheduler | null>(null)
+  const baseMapModeRef = useRef<BaseMapMode>('roadmap')
 
   const onSelectPostRef = useRef(onSelectPost)
   const onClearSelectionRef = useRef(onClearSelection)
@@ -232,6 +236,15 @@ function RentalMapComponent({
   const placeFetchSeqRef = useRef(0)
 
   const [mapReady, setMapReady] = useState(false)
+  const [displayMode, setDisplayMode] = useState<MapDisplayMode>('roadmap')
+  const [streetViewBusy, setStreetViewBusy] = useState(false)
+  const [streetViewError, setStreetViewError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!streetViewError) return
+    const timer = window.setTimeout(() => setStreetViewError(null), 5000)
+    return () => window.clearTimeout(timer)
+  }, [streetViewError])
 
   const pins = useMemo(() => mappablePosts(posts, pinLayers), [posts, pinLayers])
   const visibleMarketplacePins = useMemo(
@@ -438,11 +451,27 @@ function RentalMapComponent({
       }
 
       mapRef.current = map
+      const panorama = map.getStreetView()
+      panorama.setOptions({
+        addressControl: false,
+        enableCloseButton: false,
+        fullscreenControl: false,
+        linksControl: false,
+        motionTrackingControl: false,
+        panControl: false,
+        zoomControl: false,
+      })
       const camera = createMapCameraScheduler({ debounceMs: 100 })
       camera.attach(map)
       cameraRef.current = camera
       ;(window as Window & { __HOMEJI_MAP?: google.maps.Map }).__HOMEJI_MAP = map
       setMapReady(true)
+
+      listeners.push(
+        panorama.addListener('visible_changed', () => {
+          setDisplayMode(panorama.getVisible() ? 'streetview' : baseMapModeRef.current)
+        }),
+      )
 
       // Click-guard only — never fetch listing data on drag / bounds_changed.
       listeners.push(
@@ -541,12 +570,16 @@ function RentalMapComponent({
       selectAppliedRef.current = ''
       overviewFitDoneRef.current = false
       userGestureRef.current = false
+      baseMapModeRef.current = 'roadmap'
       if (mapDiv) {
         mapDiv.replaceChildren()
         mapDiv.remove()
       }
       host.replaceChildren()
       setMapReady(false)
+      setDisplayMode('roadmap')
+      setStreetViewBusy(false)
+      setStreetViewError(null)
     }
     // Remount when OS/UI light↔dark changes — colorScheme is init-only.
   }, [isLoaded, apiKey, mapId, mapColorScheme])
@@ -934,6 +967,59 @@ function RentalMapComponent({
     map.setZoom(next)
   }, [])
 
+  const selectBaseMap = useCallback((mode: BaseMapMode) => {
+    const map = mapRef.current
+    if (!map) return
+    map.getStreetView().setVisible(false)
+    map.setMapTypeId(mode)
+    baseMapModeRef.current = mode
+    setDisplayMode(mode)
+    setStreetViewError(null)
+  }, [])
+
+  const toggleStreetView = useCallback(async () => {
+    const map = mapRef.current
+    if (!map || streetViewBusy) return
+
+    const panorama = map.getStreetView()
+    if (panorama.getVisible()) {
+      panorama.setVisible(false)
+      setDisplayMode(baseMapModeRef.current)
+      setStreetViewError(null)
+      return
+    }
+
+    const center = map.getCenter()
+    if (!center) {
+      setStreetViewError('Chưa xác định được vị trí để mở Xem phố.')
+      return
+    }
+
+    setStreetViewBusy(true)
+    setStreetViewError(null)
+    try {
+      const { StreetViewService } = await loadStreetViewLibrary()
+      const response = await new StreetViewService().getPanorama({
+        location: center,
+        radius: 500,
+      })
+      if (mapRef.current !== map) return
+
+      const panoramaId = response.data.location?.pano
+      if (!panoramaId) throw new Error('Street View panorama unavailable')
+      panorama.setPano(panoramaId)
+      panorama.setPov({ heading: 0, pitch: 0 })
+      panorama.setVisible(true)
+      setDisplayMode('streetview')
+    } catch {
+      if (mapRef.current === map) {
+        setStreetViewError('Khu vực này chưa có ảnh Xem phố. Hãy di chuyển bản đồ và thử lại.')
+      }
+    } finally {
+      if (mapRef.current === map) setStreetViewBusy(false)
+    }
+  }, [streetViewBusy])
+
   if (!apiKey) {
     return (
       <div className="rental-map rental-map--placeholder">
@@ -968,38 +1054,78 @@ function RentalMapComponent({
         </div>
       ) : null}
 
-      <div className="rental-map__controls" aria-label="Điều khiển bản đồ">
-        {onLocate ? (
-          <button
-            type="button"
-            className="rental-map__btn"
-            onClick={onLocate}
-            disabled={locating}
-            title="Vị trí của tôi"
-            aria-label="Vị trí của tôi"
-          >
-            ⌖
-          </button>
-        ) : null}
-        <div className="rental-map__zoom" role="group" aria-label="Thu phóng">
-          <button
-            type="button"
-            className="rental-map__btn rental-map__btn--zoom"
-            onClick={() => zoomBy(1)}
-            aria-label="Phóng to"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            className="rental-map__btn rental-map__btn--zoom"
-            onClick={() => zoomBy(-1)}
-            aria-label="Thu nhỏ"
-          >
-            −
-          </button>
+      {mapReady ? (
+        <div className="rental-map__view-switcher-wrap">
+          {streetViewError ? (
+            <div className="rental-map__view-error" role="status">
+              {streetViewError}
+            </div>
+          ) : null}
+          <div className="rental-map__view-switcher" role="group" aria-label="Chế độ xem bản đồ">
+            <button
+              type="button"
+              className={displayMode === 'roadmap' ? 'is-active' : ''}
+              aria-pressed={displayMode === 'roadmap'}
+              onClick={() => selectBaseMap('roadmap')}
+            >
+              Bản đồ
+            </button>
+            <button
+              type="button"
+              className={displayMode === 'satellite' ? 'is-active' : ''}
+              aria-pressed={displayMode === 'satellite'}
+              onClick={() => selectBaseMap('satellite')}
+            >
+              Vệ tinh
+            </button>
+            <button
+              type="button"
+              className={`${displayMode === 'streetview' ? 'is-active' : ''}${streetViewBusy ? ' is-loading' : ''}`}
+              aria-pressed={displayMode === 'streetview'}
+              aria-busy={streetViewBusy}
+              disabled={streetViewBusy}
+              onClick={() => void toggleStreetView()}
+            >
+              Xem phố
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {displayMode !== 'streetview' ? (
+        <div className="rental-map__controls" aria-label="Điều khiển bản đồ">
+          {onLocate ? (
+            <button
+              type="button"
+              className="rental-map__btn"
+              onClick={onLocate}
+              disabled={locating}
+              title="Vị trí của tôi"
+              aria-label="Vị trí của tôi"
+            >
+              ⌖
+            </button>
+          ) : null}
+          <div className="rental-map__zoom" role="group" aria-label="Thu phóng">
+            <button
+              type="button"
+              className="rental-map__btn rental-map__btn--zoom"
+              onClick={() => zoomBy(1)}
+              aria-label="Phóng to"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              className="rental-map__btn rental-map__btn--zoom"
+              onClick={() => zoomBy(-1)}
+              aria-label="Thu nhỏ"
+            >
+              −
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {mapReady && pins.length === 0 && posts.length > 0 ? (
         <div className="rental-map__hint">Các tin đăng chưa có tọa độ trên bản đồ.</div>

@@ -12,12 +12,10 @@ import './MapChatbot.css'
 
 type Props = {
   onSearchUpdate?: (update: AiHighlightResponse) => void
-  /** Render inside map app panel (no floating FAB). */
-  embedded?: boolean
 }
 
-export function MapChatbot({ onSearchUpdate, embedded = false }: Props) {
-  const [open, setOpen] = useState(embedded)
+export function MapChatbot({ onSearchUpdate }: Props) {
+  const [open, setOpen] = useState(false)
   const [config, setConfig] = useState<ChatbotPopupConfig | null>(null)
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [messages, setMessages] = useState<ChatbotMessage[]>([])
@@ -25,6 +23,7 @@ export function MapChatbot({ onSearchUpdate, embedded = false }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -48,9 +47,22 @@ export function MapChatbot({ onSearchUpdate, embedded = false }: Props) {
   }, [])
 
   useEffect(() => {
-    if (!embedded && !open) return
+    if (!open) return
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, open, embedded])
+  }, [messages, open])
+
+  useEffect(() => {
+    if (!open) return
+    const focusFrame = window.requestAnimationFrame(() => inputRef.current?.focus())
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      window.cancelAnimationFrame(focusFrame)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
 
   if (config && !config.enabled) return null
 
@@ -117,6 +129,7 @@ export function MapChatbot({ onSearchUpdate, embedded = false }: Props) {
         }}
       >
         <input
+          ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Hỏi về phòng, giá, khu vực…"
@@ -129,39 +142,13 @@ export function MapChatbot({ onSearchUpdate, embedded = false }: Props) {
     </>
   )
 
-  if (embedded) {
-    return (
-      <div className="map-chatbot map-chatbot--embedded" role="region" aria-label={title}>
-        <div className="map-chatbot__panel is-visible">
-          <header className="map-chatbot__head">
-            <div>
-              <strong>{title}</strong>
-              <p>Đồng bộ tìm kiếm trên bản đồ</p>
-            </div>
-          </header>
-          {chatBody}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="map-chatbot" style={{ pointerEvents: 'none' }}>
-      <button
-        type="button"
-        className={`map-chatbot__fab map-motion-press${open ? ' is-open' : ''}`}
-        style={{ pointerEvents: 'auto' }}
-        aria-expanded={open}
-        aria-label={open ? 'Đóng trợ lý AI' : 'Mở trợ lý AI'}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {open ? '×' : 'AI'}
-      </button>
-
       <div
         className={`map-chatbot__panel${open ? ' is-visible' : ''}`}
         style={{ pointerEvents: open ? 'auto' : 'none' }}
         aria-hidden={!open}
+        inert={!open}
         role="dialog"
         aria-label={title}
       >
@@ -176,6 +163,19 @@ export function MapChatbot({ onSearchUpdate, embedded = false }: Props) {
         </header>
         {chatBody}
       </div>
+
+      <button
+        type="button"
+        className={`map-chatbot__fab map-motion-press${open ? ' is-open' : ''}`}
+        style={{ pointerEvents: 'auto' }}
+        aria-expanded={open}
+        aria-label={open ? 'Đóng chatbot Homeji' : 'Mở chatbot Homeji'}
+        title={open ? 'Đóng chatbot Homeji' : 'Chatbot Homeji'}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <img src="/brand/homeji-logo.png" alt="" width="44" height="44" />
+        {open ? <span className="map-chatbot__fab-close" aria-hidden>×</span> : null}
+      </button>
     </div>
   )
 }

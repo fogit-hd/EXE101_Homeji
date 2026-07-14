@@ -448,7 +448,7 @@ export function MapOmnibox({
       <aside className="gmaps-nav-rail" aria-label="Điều hướng Homeji">
         <button
           type="button"
-          className="gmaps-nav-rail__btn map-motion-press"
+          className="gmaps-nav-rail__btn gmaps-nav-rail__btn--menu map-motion-press"
           aria-label="Mở menu"
           aria-expanded={navOpen}
           onClick={() => {
@@ -465,15 +465,18 @@ export function MapOmnibox({
 
         <button
           type="button"
-          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'saved' ? ' is-active' : ''}`}
+          className={`gmaps-nav-rail__btn gmaps-nav-rail__btn--saved map-motion-press${activeSection === 'saved' ? ' is-active' : ''}`}
+          aria-pressed={activeSection === 'saved'}
           onClick={() => openSection('saved')}
         >
-          <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-            <path
-              fill="currentColor"
-              d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15-5-2.18L7 18V5h10v13z"
-            />
-          </svg>
+          <span className="gmaps-nav-rail__icon-wrap">
+            <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15-5-2.18L7 18V5h10v13z"
+              />
+            </svg>
+          </span>
           <span className="gmaps-nav-rail__label">Đã lưu</span>
         </button>
 
@@ -481,7 +484,8 @@ export function MapOmnibox({
 
         <button
           type="button"
-          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'messages' ? ' is-active' : ''}`}
+          className={`gmaps-nav-rail__btn gmaps-nav-rail__btn--messages map-motion-press${activeSection === 'messages' ? ' is-active' : ''}`}
+          aria-pressed={activeSection === 'messages'}
           onClick={() => openSection('messages')}
         >
           <span className="gmaps-nav-rail__icon-wrap">
@@ -505,43 +509,52 @@ export function MapOmnibox({
 
         <button
           type="button"
-          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'appointments' ? ' is-active' : ''}`}
+          className={`gmaps-nav-rail__btn gmaps-nav-rail__btn--appointments map-motion-press${activeSection === 'appointments' ? ' is-active' : ''}`}
+          aria-pressed={activeSection === 'appointments'}
           onClick={() => openSection('appointments')}
         >
-          <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-            <path
-              fill="currentColor"
-              d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
-            />
-          </svg>
+          <span className="gmaps-nav-rail__icon-wrap">
+            <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
+              />
+            </svg>
+          </span>
           <span className="gmaps-nav-rail__label">Lịch</span>
         </button>
 
         <button
           type="button"
-          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'notifications' ? ' is-active' : ''}`}
+          className={`gmaps-nav-rail__btn gmaps-nav-rail__btn--notifications map-motion-press${activeSection === 'notifications' ? ' is-active' : ''}`}
+          aria-pressed={activeSection === 'notifications'}
           onClick={() => openSection('notifications')}
         >
-          <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-            <path
-              fill="currentColor"
-              d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-            />
-          </svg>
+          <span className="gmaps-nav-rail__icon-wrap">
+            <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+              />
+            </svg>
+          </span>
           <span className="gmaps-nav-rail__label">Thông báo</span>
         </button>
 
         <button
           type="button"
-          className={`gmaps-nav-rail__btn map-motion-press${activeSection === 'invitations' ? ' is-active' : ''}`}
+          className={`gmaps-nav-rail__btn gmaps-nav-rail__btn--invitations map-motion-press${activeSection === 'invitations' ? ' is-active' : ''}`}
+          aria-pressed={activeSection === 'invitations'}
           onClick={() => openSection('invitations')}
         >
-          <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-            <path
-              fill="currentColor"
-              d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-            />
-          </svg>
+          <span className="gmaps-nav-rail__icon-wrap">
+            <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+              />
+            </svg>
+          </span>
           <span className="gmaps-nav-rail__label">Ở ghép</span>
         </button>
       </aside>
@@ -867,13 +880,6 @@ export function MapOmnibox({
                 onClick={() => openSection('listings')}
               >
                 Tìm phòng
-              </button>
-              <button
-                type="button"
-                className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'assistant' ? ' is-active' : ''}`}
-                onClick={() => openSection('assistant')}
-              >
-                Trợ lý AI
               </button>
               <button
                 type="button"

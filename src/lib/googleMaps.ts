@@ -1,4 +1,4 @@
-import { importMarkerLibrary } from './loadGoogleMaps'
+import { importMarkerLibrary, importStreetViewLibrary } from './loadGoogleMaps'
 
 /** Trung tâm Thủ Đức / Q.9 — khu Làng Đại học */
 export const DEFAULT_MAP_CENTER = { lat: 10.8706, lng: 106.7974 }
@@ -116,6 +116,10 @@ export function isValidCoord(lat: number, lng: number): boolean {
 /** Load marker library once (AdvancedMarkerElement + PinElement). */
 export function loadMarkerLibrary(): Promise<google.maps.MarkerLibrary> {
   return importMarkerLibrary()
+}
+
+export function loadStreetViewLibrary(): Promise<google.maps.StreetViewLibrary> {
+  return importStreetViewLibrary()
 }
 
 export type PinStyle = {

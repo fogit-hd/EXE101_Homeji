@@ -21,6 +21,7 @@ import { HomeListingSkeleton } from '../HomeListingSkeleton'
 import { MapListingCard } from '../MapListingCard'
 import { MapAppPanel, isWideMapSection, type MapAppSection } from './MapAppPanel'
 import { MapChatDock } from './MapChatDock'
+import { MapChatbot } from './MapChatbot'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
 import { MapToast } from './MapToast'
@@ -820,6 +821,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         )}
       </section>
 
+      <MapChatbot onSearchUpdate={onAiSearchUpdate} />
+
       <MapChatDock
         inboxOpen={chatInboxOpen}
         openChatIds={openChatIds}
@@ -843,7 +846,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         }
         listingsContent={listingsContent}
         notificationRefreshKey={notificationRefreshKey}
-        onAiSearchUpdate={onAiSearchUpdate}
         onMarketplacePostsForMap={handleMarketplacePostsForMap}
         onMarketplaceFocusMap={handleMarketplaceFocusMap}
         selectedMarketplaceId={selectedMarketplaceId}

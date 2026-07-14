@@ -111,7 +111,6 @@ function HomePageComponent() {
 
     const allowed: MapAppSection[] = [
       'listings',
-      'assistant',
       'saved',
       'invitations',
       'notifications',

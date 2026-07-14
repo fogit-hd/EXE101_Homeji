@@ -9,14 +9,11 @@ import { WantedPostsPage } from '../../pages/WantedPostsPage'
 import { ActivitiesPage } from '../../pages/ActivitiesPage'
 import { MyPostsPage } from '../../pages/MyPostsPage'
 import { MapAppointmentsPanel } from './MapAppointmentsPanel'
-import { MapChatbot } from './MapChatbot'
-import type { AiHighlightResponse } from '../../api'
 import './MapMotion.css'
 import './MapAppPanel.css'
 
 export type MapAppSection =
   | 'listings'
-  | 'assistant'
   | 'saved'
   | 'invitations'
   | 'notifications'
@@ -32,10 +29,6 @@ export type MapAppSection =
 const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> = {
   listings: {
     title: 'Khu vực Thủ Đức & Q.9',
-    subtitle: '',
-  },
-  assistant: {
-    title: 'Trợ lý AI',
     subtitle: '',
   },
   saved: {
@@ -112,7 +105,6 @@ type Props = {
   listingsContent: ReactNode
   notificationRefreshKey?: number
   onNotificationOpen?: (notification: import('../../api').Notification) => void
-  onAiSearchUpdate?: (update: AiHighlightResponse) => void
   onMarketplacePostsForMap?: (pins: import('./RentalMap').MarketplaceMapPin[]) => void
   onMarketplaceFocusMap?: (loc: { lat: number; lng: number; zoom?: number }) => void
   selectedMarketplaceId?: string | null
@@ -120,7 +112,7 @@ type Props = {
 }
 
 const OUTSIDE_CLOSE_IGNORE =
-  '.home-list-panel, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .mobile-tabbar, .map-chat-dock'
+  '.home-list-panel, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .mobile-tabbar, .map-chat-dock, .map-chatbot'
 
 export function MapAppPanel({
   section,
@@ -130,7 +122,6 @@ export function MapAppPanel({
   listingsContent,
   notificationRefreshKey = 0,
   onNotificationOpen,
-  onAiSearchUpdate,
   onMarketplacePostsForMap,
   onMarketplaceFocusMap,
   selectedMarketplaceId = null,
@@ -237,9 +228,6 @@ export function MapAppPanel({
             }`}
           >
             {displayed === 'listings' ? listingsContent : null}
-            {displayed === 'assistant' ? (
-              <MapChatbot embedded onSearchUpdate={onAiSearchUpdate} />
-            ) : null}
             {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
             {displayed === 'invitations' ? <RoommateInvitationsPage embedded /> : null}
             {displayed === 'notifications' ? (
