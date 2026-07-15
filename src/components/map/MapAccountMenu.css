@@ -1,12 +1,183 @@
 /* Account — fixed top-right (desktop); inside search pill (mobile). */
 
-.gmaps-omnibox > .gmaps-account {
+.gmaps-omnibox__top-actions {
   position: fixed;
   top: 12px;
   right: 12px;
   left: auto;
-  /* Above right map panel (9999) so opening Hồ sơ / sections does not shove the avatar. */
   z-index: 10010;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.gmaps-omnibox__notify {
+  --notify-pastel: #d4a89a;
+  --notify-pastel-soft: rgba(212, 168, 154, 0.22);
+  --notify-pastel-border: rgba(212, 168, 154, 0.42);
+  --notify-badge: #e8b4a8;
+  --notify-badge-text: #5c4038;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--notify-pastel-border);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface-elevated, #fff) 88%, var(--notify-pastel));
+  color: var(--notify-pastel);
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(var(--shadow-color), 0.2),
+    0 1px 3px 1px rgba(var(--shadow-color), 0.1);
+  transition:
+    transform var(--map-dur-fast, 220ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    box-shadow var(--map-dur-fast, 220ms) ease,
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease;
+}
+
+.gmaps-omnibox__notify:hover,
+.gmaps-omnibox__notify.is-active {
+  background: var(--notify-pastel-soft);
+  border-color: var(--notify-pastel-border);
+  color: var(--notify-pastel);
+  transform: scale(1.04);
+}
+
+.gmaps-omnibox__notify.is-unread {
+  color: var(--notify-pastel);
+  border-color: var(--notify-pastel-border);
+  background: color-mix(in srgb, var(--surface-elevated, #fff) 82%, var(--notify-pastel));
+  animation: gmaps-notify-pulse 1.6s ease-in-out infinite;
+}
+
+.gmaps-omnibox__notify:focus-visible {
+  outline: 2px solid var(--notify-pastel);
+  outline-offset: 2px;
+}
+
+.gmaps-omnibox__notify-motion {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  transform-origin: 50% 12%;
+  will-change: transform;
+}
+
+.gmaps-omnibox__notify-motion.is-animating {
+  animation: gmaps-notify-ring 0.85s ease-in-out infinite;
+}
+
+.gmaps-omnibox__notify-bell {
+  display: block;
+  overflow: visible;
+}
+
+.gmaps-omnibox__notify-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  left: auto;
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(92, 64, 56, 0.22));
+}
+
+.gmaps-omnibox__notify-badge-bg {
+  fill: var(--notify-badge);
+  stroke: color-mix(in srgb, var(--surface-elevated, #fff) 70%, var(--notify-pastel));
+  stroke-width: 1.5;
+}
+
+.gmaps-omnibox__notify-badge-text {
+  fill: var(--notify-badge-text);
+  font-size: 9px;
+  font-weight: 750;
+  font-family: inherit;
+}
+
+@keyframes gmaps-notify-ring {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  10% {
+    transform: rotate(18deg) translateY(-1px);
+  }
+  20% {
+    transform: rotate(-16deg) translateY(0);
+  }
+  30% {
+    transform: rotate(14deg) translateY(-1px);
+  }
+  40% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  70% {
+    transform: rotate(3deg);
+  }
+  80%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes gmaps-notify-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 1px 2px rgba(var(--shadow-color), 0.2),
+      0 0 0 0 rgba(212, 168, 154, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 1px 2px rgba(var(--shadow-color), 0.2),
+      0 0 0 6px rgba(212, 168, 154, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gmaps-omnibox__notify.is-unread {
+    animation: none;
+  }
+
+  .gmaps-omnibox__notify-motion.is-animating {
+    animation: gmaps-notify-soft-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes gmaps-notify-soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: scale(1.06);
+  }
+}
+
+.gmaps-omnibox > .gmaps-account,
+.gmaps-omnibox__top-actions > .gmaps-account {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  z-index: auto;
   flex: none;
   margin: 0;
   pointer-events: auto;
@@ -195,40 +366,52 @@
   background: var(--surface-input);
 }
 
-/* Mobile: avatar sits inside the search pill (right side) */
+/* Mobile: notify + avatar sit inside the search pill (right side) */
 @media (max-width: 900px) {
-  .gmaps-omnibox > .gmaps-account {
+  .gmaps-omnibox__top-actions {
     position: absolute;
     top: 8px;
     right: 14px;
     left: auto;
     z-index: 6;
+    gap: 6px;
   }
 
-  .home-map-page:not(.is-sidebar-collapsed) .gmaps-omnibox > .gmaps-account {
+  .home-map-page:not(.is-sidebar-collapsed) .gmaps-omnibox__top-actions {
     right: 14px;
   }
 
-  .gmaps-omnibox > .gmaps-account .gmaps-account__avatar {
+  .gmaps-omnibox__notify {
+    width: 32px;
+    height: 32px;
+    box-shadow: none;
+  }
+
+  .gmaps-omnibox__notify:hover,
+  .gmaps-omnibox__notify.is-active {
+    transform: none;
+  }
+
+  .gmaps-omnibox__top-actions .gmaps-account__avatar {
     width: 32px;
     height: 32px;
     font-size: 0.68rem;
     box-shadow: none;
   }
 
-  .gmaps-omnibox > .gmaps-account .gmaps-account__avatar.is-open,
-  .gmaps-omnibox > .gmaps-account .gmaps-account__avatar:hover {
+  .gmaps-omnibox__top-actions .gmaps-account__avatar.is-open,
+  .gmaps-omnibox__top-actions .gmaps-account__avatar:hover {
     transform: none;
     box-shadow: none;
   }
 
-  .gmaps-omnibox > .gmaps-account .gmaps-account__popover {
+  .gmaps-omnibox__top-actions .gmaps-account__popover {
     right: 0;
     left: auto;
   }
 
-  .gmaps-omnibox.is-mobile-search > .gmaps-account,
-  .home-map-page.has-place-detail .gmaps-omnibox > .gmaps-account {
+  .gmaps-omnibox.is-mobile-search > .gmaps-omnibox__top-actions,
+  .home-map-page.has-place-detail .gmaps-omnibox__top-actions {
     display: none;
   }
 }

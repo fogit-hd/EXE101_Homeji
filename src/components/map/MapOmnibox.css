@@ -95,11 +95,6 @@
   --rail-soft: rgba(4, 120, 87, 0.13);
 }
 
-.gmaps-nav-rail__btn--notifications {
-  --rail-accent: #c2410c;
-  --rail-soft: rgba(194, 65, 12, 0.13);
-}
-
 .gmaps-nav-rail__btn--invitations {
   --rail-accent: #be185d;
   --rail-soft: rgba(190, 24, 93, 0.13);
@@ -949,7 +944,7 @@
   }
 
   .gmaps-omnibox__bar {
-    padding: 0 44px 0 4px;
+    padding: 0 78px 0 4px;
     min-height: 48px;
     border-radius: 24px;
   }

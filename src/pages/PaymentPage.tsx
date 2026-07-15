@@ -263,16 +263,16 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   .filter(Boolean)
                   .join(' ')}
               >
-                <header className="payment-plan-card__header">
-                  <button
-                    type="button"
-                    className="payment-plan-card__select-head"
-                    onClick={() => {
-                      setSelectedCode(plan.code)
-                      if (pickingPay) setPayPickerCode(null)
-                    }}
-                  >
-                    <div className="payment-plan-card__title-block">
+                <div className="payment-plan-card__grid">
+                  <div className="payment-plan-card__main">
+                    <button
+                      type="button"
+                      className="payment-plan-card__select-head"
+                      onClick={() => {
+                        setSelectedCode(plan.code)
+                        if (pickingPay) setPayPickerCode(null)
+                      }}
+                    >
                       <div className="payment-plan-card__title-row">
                         <h3>{view.title}</h3>
                         <span
@@ -288,8 +288,30 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           </span>
                         ) : null}
                       </div>
+                    </button>
+
+                    <div className="payment-plan-card__body">
+                      <ul>
+                        {view.benefits.map((b) => (
+                          <li key={b}>{b}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="payment-plan-card__price-block">
+
+                    {view.note ? (
+                      <p className="payment-plan-card__note">{view.note}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="payment-plan-card__aside">
+                    <button
+                      type="button"
+                      className="payment-plan-card__price-block"
+                      onClick={() => {
+                        setSelectedCode(plan.code)
+                        if (pickingPay) setPayPickerCode(null)
+                      }}
+                    >
                       <p className="payment-plan-card__price">
                         {view.headlinePrice}
                         {view.headlineSuffix ? (
@@ -302,71 +324,59 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       {view.savingsLabel ? (
                         <p className="payment-plan-card__savings">{view.savingsLabel}</p>
                       ) : null}
-                    </div>
-                  </button>
-                </header>
-
-                <div className="payment-plan-card__body">
-                  <ul>
-                    {view.benefits.map((b) => (
-                      <li key={b}>{b}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                {view.note ? (
-                  <p className="payment-plan-card__note">{view.note}</p>
-                ) : null}
-
-                <div className="payment-plan-card__actions">
-                  {!isPremium ? (
-                    <span className="payment-plan-card__current is-free">Đang áp dụng</span>
-                  ) : isCurrent ? (
-                    <span className="payment-plan-card__current">Đang dùng</span>
-                  ) : pickingPay ? (
-                    <div
-                      className="payment-plan-card__pay-options"
-                      role="group"
-                      aria-label="Chọn hình thức thanh toán"
-                    >
-                      <button
-                        type="button"
-                        className="btn btn-sm payment-plan-card__momo"
-                        disabled={busy}
-                        onClick={() => void startCheckout(plan.code, 'momo')}
-                      >
-                        {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        disabled={busy}
-                        onClick={() => void startCheckout(plan.code, 'payos')}
-                      >
-                        {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        disabled={busy}
-                        onClick={() => setPayPickerCode(null)}
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm payment-plan-card__buy"
-                      disabled={busy}
-                      onClick={() => {
-                        setSelectedCode(plan.code)
-                        setPayPickerCode(plan.code)
-                      }}
-                    >
-                      Mua ngay
                     </button>
-                  )}
+
+                    <div className="payment-plan-card__actions">
+                      {!isPremium ? (
+                        <span className="payment-plan-card__current is-free">Đang áp dụng</span>
+                      ) : isCurrent ? (
+                        <span className="payment-plan-card__current">Đang dùng</span>
+                      ) : pickingPay ? (
+                        <div
+                          className="payment-plan-card__pay-options"
+                          role="group"
+                          aria-label="Chọn hình thức thanh toán"
+                        >
+                          <button
+                            type="button"
+                            className="btn btn-sm payment-plan-card__momo"
+                            disabled={busy}
+                            onClick={() => void startCheckout(plan.code, 'momo')}
+                          >
+                            {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            disabled={busy}
+                            onClick={() => void startCheckout(plan.code, 'payos')}
+                          >
+                            {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            disabled={busy}
+                            onClick={() => setPayPickerCode(null)}
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm payment-plan-card__buy"
+                          disabled={busy}
+                          onClick={() => {
+                            setSelectedCode(plan.code)
+                            setPayPickerCode(plan.code)
+                          }}
+                        >
+                          Mua ngay
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </article>
             )

@@ -534,22 +534,7 @@
 }
 
 .home-list-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 9998;
-  border: 0;
-  margin: 0;
-  padding: 0;
-  background: var(--overlay-scrim);
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.home-list-backdrop.is-visible {
-  opacity: 1;
-  pointer-events: auto;
+  display: none !important;
 }
 
 .home-list-panel {
@@ -557,7 +542,8 @@
   top: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  /* Below Homie chatbot (9999) and chat dock (10020); above map (1). */
+  z-index: 5000;
   width: min(320px, 34vw);
   max-width: 340px;
   min-width: 260px;
@@ -630,15 +616,6 @@
   margin: 0;
   font-size: 0.88rem;
   color: var(--text-secondary);
-}
-
-@keyframes home-list-backdrop-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .home-list-body {

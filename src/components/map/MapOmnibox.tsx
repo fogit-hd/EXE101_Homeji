@@ -76,6 +76,8 @@ type Props = {
   aiSearching?: boolean
   /** Unread chat / message notifications — badge on Chat rail button. */
   unreadMessageCount?: number
+  /** Unread non-message notifications — animated bell + count badge. */
+  unreadNotificationCount?: number
   pinLayers?: MapPinLayers
   onTogglePinLayer?: (layer: MapPinLayer) => void
 }
@@ -250,6 +252,7 @@ export function MapOmnibox({
   onAiSearch: _onAiSearch,
   aiSearching: _aiSearching = false,
   unreadMessageCount = 0,
+  unreadNotificationCount = 0,
   pinLayers,
   onTogglePinLayer,
 }: Props) {
@@ -522,23 +525,6 @@ export function MapOmnibox({
             </svg>
           </span>
           <span className="gmaps-nav-rail__label">Lịch</span>
-        </button>
-
-        <button
-          type="button"
-          className={`gmaps-nav-rail__btn gmaps-nav-rail__btn--notifications map-motion-press${activeSection === 'notifications' ? ' is-active' : ''}`}
-          aria-pressed={activeSection === 'notifications'}
-          onClick={() => openSection('notifications')}
-        >
-          <span className="gmaps-nav-rail__icon-wrap">
-            <svg className="gmaps-nav-rail__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-              <path
-                fill="currentColor"
-                d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-              />
-            </svg>
-          </span>
-          <span className="gmaps-nav-rail__label">Thông báo</span>
         </button>
 
         <button
@@ -847,9 +833,68 @@ export function MapOmnibox({
           </div>
         ) : null}
 
-        <MapAccountMenu
-          onOpenProfile={() => openSection('profile')}
-        />
+        <div className="gmaps-omnibox__top-actions">
+          <button
+            type="button"
+            className={[
+              'gmaps-omnibox__notify',
+              'map-motion-press',
+              activeSection === 'notifications' ? 'is-active' : '',
+              unreadNotificationCount > 0 ? 'is-unread' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            aria-label={
+              unreadNotificationCount > 0
+                ? `Thông báo, ${unreadNotificationCount} chưa đọc`
+                : 'Thông báo'
+            }
+            aria-pressed={activeSection === 'notifications'}
+            title="Thông báo"
+            onClick={() => openSection('notifications')}
+          >
+            <span
+              className={`gmaps-omnibox__notify-motion${
+                unreadNotificationCount > 0 ? ' is-animating' : ''
+              }`}
+              aria-hidden
+            >
+              <svg
+                className="gmaps-omnibox__notify-bell"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+              >
+                <path
+                  className="gmaps-omnibox__notify-bell-body"
+                  fill="currentColor"
+                  d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                />
+              </svg>
+            </span>
+            {unreadNotificationCount > 0 ? (
+              <svg
+                className="gmaps-omnibox__notify-badge"
+                viewBox="0 0 22 22"
+                width="18"
+                height="18"
+                aria-hidden
+              >
+                <circle cx="11" cy="11" r="10" className="gmaps-omnibox__notify-badge-bg" />
+                <text
+                  x="11"
+                  y="11.5"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="gmaps-omnibox__notify-badge-text"
+                >
+                  {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                </text>
+              </svg>
+            ) : null}
+          </button>
+          <MapAccountMenu onOpenProfile={() => openSection('profile')} />
+        </div>
       </div>
 
       <button

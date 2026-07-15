@@ -905,6 +905,7 @@
   z-index: 990;
 }
 
+.home-map-page.has-place-detail .gmaps-omnibox__top-actions,
 .home-map-page.has-place-detail .gmaps-account {
   z-index: 1110;
 }

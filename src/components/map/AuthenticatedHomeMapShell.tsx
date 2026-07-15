@@ -142,6 +142,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [openChatIds, setOpenChatIds] = useState<string[]>([])
   const [notificationRefreshKey, setNotificationRefreshKey] = useState(0)
   const [unreadBadge, setUnreadBadge] = useState(0)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const [marketplacePins, setMarketplacePins] = useState<MarketplaceMapPin[]>([])
   const [selectedMarketplaceId, setSelectedMarketplaceId] = useState<string | null>(null)
@@ -159,8 +160,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       setNotificationRefreshKey((k) => k + 1)
       const isMessage =
         n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage
-      if (isMessage && !n.isRead) {
-        setUnreadBadge((c) => c + 1)
+      if (!n.isRead) {
+        if (isMessage) setUnreadBadge((c) => c + 1)
+        setUnreadNotificationCount((c) => c + 1)
       }
       setToast(n.title || 'Có thông báo mới')
     },
@@ -169,18 +171,24 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   useEffect(() => {
     if (!isAuthenticated) {
       setUnreadBadge(0)
+      setUnreadNotificationCount(0)
       return
     }
     let cancelled = false
     void getNotifications(true)
       .then((list) => {
         if (cancelled) return
-        const messageUnread = list.filter(
-          (n) =>
-            !n.isRead &&
-            (n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage),
-        ).length
+        let messageUnread = 0
+        let otherUnread = 0
+        for (const n of list) {
+          if (n.isRead) continue
+          const isMessage =
+            n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage
+          if (isMessage) messageUnread += 1
+          else otherUnread += 1
+        }
         setUnreadBadge(messageUnread)
+        setUnreadNotificationCount(messageUnread + otherUnread)
       })
       .catch(() => {
         /* keep realtime counter */
@@ -791,11 +799,13 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           ? cloneElement(
               omnibox as React.ReactElement<{
                 unreadMessageCount?: number
+                unreadNotificationCount?: number
                 onOpenSection?: (section: MapAppSection) => void
                 activeSection?: MapAppSection | null
               }>,
               {
                 unreadMessageCount: unreadBadge,
+                unreadNotificationCount,
                 onOpenSection: handleOpenAppSection,
                 activeSection:
                   chatInboxOpen || openChatIds.length > 0
@@ -811,8 +821,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           </div>
         )}
       </section>
-
-      <MapChatbot onSearchUpdate={onAiSearchUpdate} />
 
       <MapChatDock
         inboxOpen={chatInboxOpen}
@@ -878,6 +886,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           openAppSection?.('listings')
         }}
       />
+
+      {/* After list panel so Homie stays above the right section */}
+      <MapChatbot onSearchUpdate={onAiSearchUpdate} />
+
       <MapToast
         message={locationError || toast}
         tone={locationError || error ? 'error' : 'info'}

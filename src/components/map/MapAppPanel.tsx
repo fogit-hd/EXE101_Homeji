@@ -79,8 +79,9 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
 
 const SECTION_EXIT_MS = 280
 
-/** Right panel ~2.5× default width (same as Chợ đồ). */
+/** Right panel ~2.5× default width — every section except messages. */
 export const WIDE_MAP_SECTIONS = new Set<MapAppSection>([
+  'listings',
   'marketplace',
   'saved',
   'notifications',
@@ -115,7 +116,7 @@ type Props = {
 }
 
 const OUTSIDE_CLOSE_IGNORE =
-  '.home-list-panel, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .mobile-tabbar, .map-chat-dock, .map-chatbot'
+  '.home-list-panel, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .gmaps-omnibox__top-actions, .gmaps-omnibox__notify, .mobile-tabbar, .map-chat-dock, .map-chatbot'
 
 export function MapAppPanel({
   section,
@@ -188,82 +189,71 @@ export function MapAppPanel({
   const isWide = WIDE_MAP_SECTIONS.has(displayed)
 
   return (
-    <>
-      <button
-        type="button"
-        className={`home-list-backdrop${open ? ' is-visible' : ''}`}
-        aria-label="Đóng panel"
-        aria-hidden={!open}
-        tabIndex={open ? 0 : -1}
-        onClick={onClose}
-      />
-
-      <aside
-        id="home-list-panel"
-        className={`home-list-panel map-app-panel${open ? ' is-visible' : ''}${
-          isMessages ? ' is-messages' : ''
-        }${isWide ? ' is-wide' : ''}${displayed === 'marketplace' ? ' is-marketplace' : ''}`}
-        aria-hidden={!open}
-      >
-        {!isMessages ? (
-          <div className="home-list-header">
-            <div className="home-list-header__top">
-              <h1
-                key={`title-${displayed}-${enterNonce}`}
-                className={`map-app-panel__heading map-app-panel__heading--${phase}`}
-              >
-                {meta.title}
-              </h1>
-            </div>
-            {subtitle ? (
-              <p
-                key={`sub-${displayed}-${enterNonce}`}
-                className={`map-app-panel__sub map-app-panel__sub--${phase}`}
-              >
-                {subtitle}
-              </p>
-            ) : null}
+    <aside
+      id="home-list-panel"
+      className={`home-list-panel map-app-panel${open ? ' is-visible' : ''}${
+        isMessages ? ' is-messages' : ''
+      }${isWide ? ' is-wide' : ''}${displayed === 'marketplace' ? ' is-marketplace' : ''}`}
+      aria-hidden={!open}
+    >
+      {!isMessages ? (
+        <div className="home-list-header">
+          <div className="home-list-header__top">
+            <h1
+              key={`title-${displayed}-${enterNonce}`}
+              className={`map-app-panel__heading map-app-panel__heading--${phase}`}
+            >
+              {meta.title}
+            </h1>
           </div>
-        ) : null}
-
-        <div className="home-list-body map-app-panel__body">
-          <div
-            key={`${displayed}-${enterNonce}-${notificationRefreshKey}`}
-            className={`map-app-panel__section map-app-panel__section--${phase}${
-              isMessages ? ' is-fill' : ''
-            }`}
-          >
-            {displayed === 'listings' ? listingsContent : null}
-            {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
-            {displayed === 'invitations' ? <RoommateInvitationsPage embedded /> : null}
-            {displayed === 'notifications' ? (
-              <NotificationsPage
-                embedded
-                refreshKey={notificationRefreshKey}
-                onOpenRelated={onNotificationOpen}
-              />
-            ) : null}
-            {displayed === 'appointments' ? <MapAppointmentsPanel embedded /> : null}
-            {displayed === 'payments' ? <PaymentPage embedded /> : null}
-            {displayed === 'profile' ? <ProfilePage embedded /> : null}
-            {displayed === 'marketplace' ? (
-              <MarketplacePage
-                embedded
-                onPostsForMap={onMarketplacePostsForMap}
-                onFocusMap={onMarketplaceFocusMap}
-                selectedMarketplaceId={selectedMarketplaceId}
-                onSelectMarketplaceId={onSelectMarketplaceId}
-                userLocation={userLocation}
-                onRequestLocation={onRequestLocation}
-                locating={locating}
-              />
-            ) : null}
-            {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}
-            {displayed === 'activities' ? <ActivitiesPage embedded /> : null}
-            {displayed === 'myPosts' ? <MyPostsPage embedded /> : null}
-          </div>
+          {subtitle ? (
+            <p
+              key={`sub-${displayed}-${enterNonce}`}
+              className={`map-app-panel__sub map-app-panel__sub--${phase}`}
+            >
+              {subtitle}
+            </p>
+          ) : null}
         </div>
-      </aside>
-    </>
+      ) : null}
+
+      <div className="home-list-body map-app-panel__body">
+        <div
+          key={`${displayed}-${enterNonce}-${notificationRefreshKey}`}
+          className={`map-app-panel__section map-app-panel__section--${phase}${
+            isMessages ? ' is-fill' : ''
+          }`}
+        >
+          {displayed === 'listings' ? listingsContent : null}
+          {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
+          {displayed === 'invitations' ? <RoommateInvitationsPage embedded /> : null}
+          {displayed === 'notifications' ? (
+            <NotificationsPage
+              embedded
+              refreshKey={notificationRefreshKey}
+              onOpenRelated={onNotificationOpen}
+            />
+          ) : null}
+          {displayed === 'appointments' ? <MapAppointmentsPanel embedded /> : null}
+          {displayed === 'payments' ? <PaymentPage embedded /> : null}
+          {displayed === 'profile' ? <ProfilePage embedded /> : null}
+          {displayed === 'marketplace' ? (
+            <MarketplacePage
+              embedded
+              onPostsForMap={onMarketplacePostsForMap}
+              onFocusMap={onMarketplaceFocusMap}
+              selectedMarketplaceId={selectedMarketplaceId}
+              onSelectMarketplaceId={onSelectMarketplaceId}
+              userLocation={userLocation}
+              onRequestLocation={onRequestLocation}
+              locating={locating}
+            />
+          ) : null}
+          {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}
+          {displayed === 'activities' ? <ActivitiesPage embedded /> : null}
+          {displayed === 'myPosts' ? <MyPostsPage embedded /> : null}
+        </div>
+      </div>
+    </aside>
   )
 }
