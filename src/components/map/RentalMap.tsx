@@ -412,6 +412,14 @@ function RentalMapComponent({
           zIndex: selected ? 2700 : 900,
           gmpClickable: true,
         })
+        const raiseOnHover = () => {
+          marker.zIndex = selected ? 2900 : 2800
+        }
+        const restoreAfterHover = () => {
+          marker.zIndex = selected ? 2700 : 900
+        }
+        content.element.addEventListener('mouseenter', raiseOnHover)
+        content.element.addEventListener('mouseleave', restoreAfterHover)
         marker.addListener('gmp-click', () => {
           if (performance.now() < ignoreClickUntilRef.current) return
           onSelectMarketplaceRef.current?.(item.id)
@@ -421,7 +429,11 @@ function RentalMapComponent({
           postId: item.id,
           styleKey,
           el: content.element,
-          dispose: content.dispose,
+          dispose: () => {
+            content.element.removeEventListener('mouseenter', raiseOnHover)
+            content.element.removeEventListener('mouseleave', restoreAfterHover)
+            content.dispose()
+          },
           kind: 'marketplace',
         })
         markerKindsRef.current.set(marker, 'marketplace')
@@ -435,9 +447,21 @@ function RentalMapComponent({
             imageUrl: item.imageUrl,
             selected,
           })
+          const raiseOnHover = () => {
+            entry.marker.zIndex = selected ? 2900 : 2800
+          }
+          const restoreAfterHover = () => {
+            entry.marker.zIndex = selected ? 2700 : 900
+          }
+          content.element.addEventListener('mouseenter', raiseOnHover)
+          content.element.addEventListener('mouseleave', restoreAfterHover)
           entry.marker.content = content.element
           entry.el = content.element
-          entry.dispose = content.dispose
+          entry.dispose = () => {
+            content.element.removeEventListener('mouseenter', raiseOnHover)
+            content.element.removeEventListener('mouseleave', restoreAfterHover)
+            content.dispose()
+          }
           entry.styleKey = styleKey
         }
         entry.marker.zIndex = selected ? 2700 : 900
