@@ -1,8 +1,8 @@
 # Food preset image attributions
 
-These images are demonstration templates only. Sellers must replace them with photos of the actual food and portion they offer.
+These demonstration templates are hosted on the project's Cloudinary account and rendered from their HTTPS URLs. Sellers must replace them with photos of the actual food and portion they offer.
 
-Downloaded on 2026-07-15 under the source platform's published license:
+Source attribution for the Cloudinary-hosted copies:
 
 | File | Author / source | License |
 |---|---|---|
