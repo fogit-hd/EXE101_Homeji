@@ -14,6 +14,8 @@ import type {
   LandlordVerification,
   MarketplaceOrder,
   MarketplacePost,
+  MarketplaceSellerPlan,
+  MarketplaceSellerSubscription,
   MomoPaymentResponse,
   MySubscription,
   Notification,
@@ -45,6 +47,8 @@ import type {
   UserActivityType,
   UserProfile,
   ViewingAppointment,
+  Wallet,
+  WalletTransaction,
 } from './types'
 import { MediaType, ReportTargetType, UserRole } from './types'
 
@@ -426,7 +430,7 @@ export const getMyMarketplaceOrders = () =>
 
 export const createMarketplaceOrder = (
   postId: string,
-  data: { pickupAt: string; pickupAddress?: string; note?: string },
+  data: { pickupAt: string; pickupAddress?: string; note?: string; quantity?: number },
 ) =>
   apiRequest<MarketplaceOrder>(`/api/marketplace-posts/${postId}/orders`, {
     method: 'POST',
@@ -447,6 +451,24 @@ export const completeMarketplaceOrder = (id: string) =>
 
 export const startMarketplaceConversation = (postId: string) =>
   apiRequest<PostConversation>(`/api/conversations/marketplace-posts/${postId}`, { method: 'POST' })
+
+// Homeji balance and marketplace seller packages
+export const getMyWallet = () => apiRequest<Wallet>('/api/wallet')
+
+export const getMyWalletTransactions = (take = 50) =>
+  apiRequest<WalletTransaction[]>('/api/wallet/transactions', { params: { take } })
+
+export const getMarketplaceSellerPlans = () =>
+  apiRequest<MarketplaceSellerPlan[]>('/api/marketplace-seller-plans')
+
+export const getMyMarketplaceSellerPlan = () =>
+  apiRequest<MarketplaceSellerSubscription>('/api/marketplace-seller-plans/mine')
+
+export const purchaseMarketplaceSellerPlan = (packageCode: string) =>
+  apiRequest<MarketplaceSellerSubscription>(
+    `/api/marketplace-seller-plans/${encodeURIComponent(packageCode)}/purchase`,
+    { method: 'POST' },
+  )
 
 // Wanted posts
 export const searchWantedPosts = (params?: {

@@ -120,6 +120,7 @@ export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 export const PaymentPurpose = {
   General: 1,
   PremiumSubscription: 2,
+  WalletTopUp: 3,
 } as const
 export type PaymentPurpose = (typeof PaymentPurpose)[keyof typeof PaymentPurpose]
 
@@ -577,12 +578,31 @@ export const MarketplacePostStatus = {
 } as const
 export type MarketplacePostStatus = (typeof MarketplacePostStatus)[keyof typeof MarketplacePostStatus]
 
+export const MarketplaceListingType = {
+  SecondHand: 1,
+  Food: 2,
+} as const
+export type MarketplaceListingType =
+  (typeof MarketplaceListingType)[keyof typeof MarketplaceListingType]
+
+export const WalletTransactionKind = {
+  TopUp: 1,
+  Purchase: 2,
+  Refund: 3,
+  SaleProceeds: 4,
+  PlatformFee: 5,
+  SellerPlanPurchase: 6,
+} as const
+export type WalletTransactionKind =
+  (typeof WalletTransactionKind)[keyof typeof WalletTransactionKind]
+
 export const MarketplaceOrderStatus = {
   Requested: 1,
   Accepted: 2,
   Rejected: 3,
   Cancelled: 4,
   Completed: 5,
+  Expired: 6,
 } as const
 export type MarketplaceOrderStatus =
   (typeof MarketplaceOrderStatus)[keyof typeof MarketplaceOrderStatus]
@@ -624,6 +644,11 @@ export interface MarketplacePost {
   distanceKm: number | null
   createdAt: string
   updatedAt: string
+  listingType: MarketplaceListingType
+  availableQuantity: number
+  reservedQuantity: number
+  unit: string
+  preparationMinutes: number | null
 }
 
 export interface UpsertMarketplacePostInput {
@@ -637,6 +662,10 @@ export interface UpsertMarketplacePostInput {
   longitude: number
   linkedRentalPostId?: string | null
   mediaUrls: string[]
+  listingType?: MarketplaceListingType
+  availableQuantity?: number
+  unit?: string
+  preparationMinutes?: number | null
 }
 
 export interface MarketplaceOrder {
@@ -651,6 +680,55 @@ export interface MarketplaceOrder {
   status: MarketplaceOrderStatus
   createdAt: string
   updatedAt: string
+  unitPrice: number
+  quantity: number
+  platformFeeRate: number
+  platformFeeAmount: number
+  sellerNetAmount: number
+  fundsReleasedAt: string | null
+  refundedAt: string | null
+}
+
+export interface Wallet {
+  userId: string
+  balance: number
+  totalDeposited: number
+  totalSpent: number
+  totalEarned: number
+  isActivated: boolean
+  minimumTopUp: number
+  maximumTopUp: number
+  updatedAt: string | null
+}
+
+export interface WalletTransaction {
+  id: string
+  kind: WalletTransactionKind
+  amount: number
+  balanceAfter: number
+  referenceId: string
+  description: string
+  createdAt: string
+}
+
+export interface MarketplaceSellerPlan {
+  code: string
+  name: string
+  monthlyPrice: number
+  commissionRate: number
+  durationDays: number
+  isCurrent: boolean
+  expiresAt: string | null
+}
+
+export interface MarketplaceSellerSubscription {
+  packageCode: string
+  packageName: string
+  price: number
+  commissionRate: number
+  startsAt: string
+  expiresAt: string | null
+  isPaidPlan: boolean
 }
 
 export interface RentalWantedPost {

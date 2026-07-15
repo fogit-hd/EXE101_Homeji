@@ -6,16 +6,32 @@ import {
   completeMarketplaceOrder,
   createMarketplaceOrder,
   createMarketplacePost,
+  createMomoPayment,
+  createPayOsPayment,
+  getMarketplaceSellerPlans,
+  getMyMarketplaceSellerPlan,
   getMyMarketplaceOrders,
+  getMyWallet,
+  getMyWalletTransactions,
   getStoredSession,
   markMarketplacePostSold,
   rejectMarketplaceOrder,
   searchMarketplacePosts,
+  purchaseMarketplaceSellerPlan,
   uploadImages,
   type MarketplaceOrder,
   type MarketplacePost,
+  type MarketplaceSellerPlan,
+  type MarketplaceSellerSubscription,
+  type Wallet,
+  type WalletTransaction,
 } from '../api'
-import { MarketplaceOrderStatus, MarketplacePostStatus } from '../api/types'
+import {
+  MarketplaceListingType,
+  MarketplaceOrderStatus,
+  MarketplacePostStatus,
+  WalletTransactionKind,
+} from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { AddressAutocomplete, type PlaceResult } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
@@ -24,6 +40,7 @@ import type { MarketplaceMapPin } from '../components/map/RentalMap'
 import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
+import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import {
   formatDate,
   formatPrice,
@@ -37,8 +54,16 @@ import './MarketplacePage.css'
 const DEFAULT_LAT = 10.8706
 const DEFAULT_LNG = 106.7974
 /** Placeholder — API requires ≥1 media URL when no file selected. */
-const DEFAULT_MEDIA = '/vite.svg'
+const DEFAULT_MEDIA = '/brand/homeji-logo.png'
 const MAX_MEDIA = 10
+const WALLET_TRANSACTION_LABELS: Record<number, string> = {
+  [WalletTransactionKind.TopUp]: 'Nạp số dư',
+  [WalletTransactionKind.Purchase]: 'Thanh toán đơn',
+  [WalletTransactionKind.Refund]: 'Hoàn tiền',
+  [WalletTransactionKind.SaleProceeds]: 'Doanh thu bán hàng',
+  [WalletTransactionKind.PlatformFee]: 'Phí nền tảng',
+  [WalletTransactionKind.SellerPlanPurchase]: 'Gói người bán',
+}
 
 type MediaDraft = {
   id: string
@@ -46,7 +71,7 @@ type MediaDraft = {
   previewUrl: string
 }
 
-type MarketTab = 'browse' | 'mine' | 'sell' | 'orders'
+type MarketTab = 'food' | 'browse' | 'mine' | 'sell' | 'orders' | 'wallet'
 
 type Props = {
   embedded?: boolean
@@ -83,7 +108,7 @@ export function MarketplacePage({
   const { profile } = useAuth()
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
 
-  const [tab, setTab] = useState<MarketTab>('browse')
+  const [tab, setTab] = useState<MarketTab>('food')
   const [posts, setPosts] = useState<MarketplacePost[]>([])
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
   const [keyword, setKeyword] = useState('')
@@ -101,6 +126,18 @@ export function MarketplacePage({
   const [longitude, setLongitude] = useState(String(DEFAULT_LNG))
   const [mediaFiles, setMediaFiles] = useState<MediaDraft[]>([])
   const [uploading, setUploading] = useState(false)
+  const [listingType, setListingType] = useState<MarketplaceListingType>(MarketplaceListingType.Food)
+  const [availableQuantity, setAvailableQuantity] = useState('10')
+  const [unit, setUnit] = useState('phần')
+  const [preparationMinutes, setPreparationMinutes] = useState('20')
+  const [presetImageUrl, setPresetImageUrl] = useState('')
+  const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
+  const [wallet, setWallet] = useState<Wallet | null>(null)
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
+  const [sellerPlans, setSellerPlans] = useState<MarketplaceSellerPlan[]>([])
+  const [sellerPlan, setSellerPlan] = useState<MarketplaceSellerSubscription | null>(null)
+  const [topUpAmount, setTopUpAmount] = useState('100000')
+  const [walletBusy, setWalletBusy] = useState('')
 
   const latNum = Number(latitude)
   const lngNum = Number(longitude)
@@ -158,6 +195,19 @@ export function MarketplacePage({
   }
 
   const loadFn = useCallback(async () => {
+    if (tab === 'wallet') {
+      const [nextWallet, transactions, plans, currentPlan] = await Promise.all([
+        getMyWallet(),
+        getMyWalletTransactions(50),
+        getMarketplaceSellerPlans(),
+        getMyMarketplaceSellerPlan(),
+      ])
+      setWallet(nextWallet)
+      setWalletTransactions(transactions)
+      setSellerPlans(plans)
+      setSellerPlan(currentPlan)
+      return
+    }
     if (tab === 'orders') {
       setOrders(await getMyMarketplaceOrders())
       return
@@ -175,7 +225,7 @@ export function MarketplacePage({
     })
     setPosts(list)
 
-    if (tab === 'browse') {
+    if (tab === 'browse' || tab === 'food') {
       const forMap = list.filter(
         (p) =>
           isValidCoord(p.latitude, p.longitude) &&
@@ -183,7 +233,7 @@ export function MarketplacePage({
       )
       onPostsForMap?.(toPins(forMap))
     }
-  }, [tab, keyword, category, onPostsForMap, myUserId])
+  }, [tab, keyword, category, onPostsForMap])
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn, [
     tab,
@@ -192,16 +242,12 @@ export function MarketplacePage({
     myUserId,
   ])
 
-  const [loadErrorHidden, setLoadErrorHidden] = useState(false)
-
-  useEffect(() => {
-    setLoadErrorHidden(false)
-  }, [error])
+  const [hiddenLoadError, setHiddenLoadError] = useState('')
 
   const toastMessage =
     actionError ||
     actionMsg ||
-    (error && !disrupted && !loadErrorHidden ? error : '') ||
+    (error && !disrupted && error !== hiddenLoadError ? error : '') ||
     null
   const toastTone = actionMsg && !actionError ? 'success' : 'error'
 
@@ -210,7 +256,7 @@ export function MarketplacePage({
     const timer = window.setTimeout(() => {
       setActionMsg('')
       setActionError('')
-      if (error && !disrupted) setLoadErrorHidden(true)
+      if (error && !disrupted) setHiddenLoadError(error)
     }, 5000)
     return () => window.clearTimeout(timer)
   }, [toastMessage, error, disrupted])
@@ -235,7 +281,7 @@ export function MarketplacePage({
     }
     try {
       setUploading(true)
-      let urls: string[] = [DEFAULT_MEDIA]
+      let urls: string[] = presetImageUrl ? [presetImageUrl] : [DEFAULT_MEDIA]
       if (mediaFiles.length > 0) {
         const uploaded = await uploadImages(
           mediaFiles.map((m) => m.file),
@@ -247,6 +293,10 @@ export function MarketplacePage({
           return
         }
       }
+      if (listingType === MarketplaceListingType.Food && urls[0] === DEFAULT_MEDIA) {
+        setActionError('Chọn ảnh món thật hoặc một ảnh mẫu có giấy phép trước khi đăng.')
+        return
+      }
       await createMarketplacePost({
         title,
         description,
@@ -257,11 +307,17 @@ export function MarketplacePage({
         latitude: latNum,
         longitude: lngNum,
         mediaUrls: urls,
+        listingType,
+        availableQuantity: Number(availableQuantity) || 1,
+        unit: unit.trim() || 'phần',
+        preparationMinutes:
+          listingType === MarketplaceListingType.Food ? Number(preparationMinutes) || 0 : null,
       })
       setActionMsg('Đã đăng tin chợ đồ — xem trong “Tin của tôi”.')
       setTitle('')
       setDescription('')
       setPrice('')
+      setPresetImageUrl('')
       for (const m of mediaFiles) URL.revokeObjectURL(m.previewUrl)
       setMediaFiles([])
       setTab('mine')
@@ -274,19 +330,72 @@ export function MarketplacePage({
     }
   }
 
-  const handleOrder = async (postId: string) => {
+  const handleOrder = async (post: MarketplacePost) => {
     setActionError('')
     try {
       const pickupAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      await createMarketplaceOrder(postId, {
+      const quantity = orderQuantities[post.id] ?? 1
+      await createMarketplaceOrder(post.id, {
         pickupAt,
         pickupAddress: 'Thỏa thuận khi chat',
         note: 'Đặt từ Homeji map',
+        quantity,
       })
       setActionMsg('Đã gửi yêu cầu mua.')
       setTab('orders')
     } catch (err) {
       setActionError(getErrorMessage(err, 'Đặt mua thất bại'))
+    }
+  }
+
+  const applyFoodPreset = (preset: FoodPreset) => {
+    setListingType(MarketplaceListingType.Food)
+    setTitle(preset.title)
+    setDescription(preset.description)
+    setPrice(String(preset.price))
+    setCondition('Mới làm trong ngày')
+    setSellCategory(preset.category)
+    setUnit(preset.unit)
+    setPreparationMinutes(String(preset.preparationMinutes))
+    setAvailableQuantity('10')
+    setPresetImageUrl(preset.imageUrl)
+  }
+
+  const startWalletTopUp = async (method: 'momo' | 'payos') => {
+    const amount = Number(topUpAmount)
+    setWalletBusy(method)
+    setActionError('')
+    try {
+      let url: string | null | undefined
+      if (method === 'momo') {
+        const result = await createMomoPayment(amount, 'Nạp Số dư Homeji')
+        url = result.payUrl ?? result.deeplink ?? result.qrCodeUrl
+      } else {
+        const result = await createPayOsPayment(amount, 'Nạp Số dư Homeji')
+        url = result.checkoutUrl
+      }
+      if (!url) throw new Error('Cổng thanh toán chưa trả về đường dẫn thanh toán.')
+      window.open(url, '_blank', 'noopener,noreferrer')
+      setActionMsg('Đã mở cổng thanh toán. Số dư chỉ được cộng sau callback xác thực từ nhà cung cấp.')
+    } catch (err) {
+      setActionError(getErrorMessage(err, 'Không tạo được giao dịch nạp số dư'))
+    } finally {
+      setWalletBusy('')
+    }
+  }
+
+  const buySellerPlan = async (code: string) => {
+    setWalletBusy(code)
+    setActionError('')
+    try {
+      const current = await purchaseMarketplaceSellerPlan(code)
+      setSellerPlan(current)
+      setActionMsg(`Đã kích hoạt gói ${current.packageName}.`)
+      await reload()
+    } catch (err) {
+      setActionError(getErrorMessage(err, 'Không mua được gói người bán'))
+    } finally {
+      setWalletBusy('')
     }
   }
 
@@ -317,7 +426,11 @@ export function MarketplacePage({
           <div className="marketplace-card__body">
             <div className="marketplace-card__meta-row">
               <span className={`marketplace-card__badge${mine ? ' is-mine' : ''}`}>
-                {mine ? 'Tin của tôi' : marketplacePostStatusLabel[p.status] ?? p.category}
+                {mine
+                  ? 'Tin của tôi'
+                  : p.listingType === MarketplaceListingType.Food
+                    ? 'Đồ ăn gần bạn'
+                    : marketplacePostStatusLabel[p.status] ?? p.category}
               </span>
               {mine ? (
                 <span className="marketplace-card__status">
@@ -326,11 +439,19 @@ export function MarketplacePage({
               ) : null}
             </div>
             <h3 className="marketplace-card__title">{p.title}</h3>
-            <p className="marketplace-card__price">{formatPrice(p.price)}</p>
+            <p className="marketplace-card__price">
+              {formatPrice(p.price)}{p.unit ? ` / ${p.unit}` : ''}
+            </p>
             <p className="marketplace-card__info">
               {p.condition}
               {p.category ? ` · ${p.category}` : ''}
             </p>
+            {p.listingType === MarketplaceListingType.Food ? (
+              <p className="marketplace-card__info">
+                Còn {p.availableQuantity} {p.unit}
+                {p.preparationMinutes ? ` · Chuẩn bị khoảng ${p.preparationMinutes} phút` : ''}
+              </p>
+            ) : null}
             {p.address ? <p className="marketplace-card__addr">{p.address}</p> : null}
             {!mine && p.sellerDisplayName ? (
               <p className="marketplace-card__seller">Người bán: {p.sellerDisplayName}</p>
@@ -345,13 +466,15 @@ export function MarketplacePage({
           ) : null}
           {mine && p.status === MarketplacePostStatus.Active ? (
             <>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => void markMarketplacePostSold(p.id).then(() => reload())}
-              >
-                Đã bán
-              </button>
+              {p.listingType !== MarketplaceListingType.Food ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => void markMarketplacePostSold(p.id).then(() => reload())}
+                >
+                  Đã bán
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
@@ -362,31 +485,63 @@ export function MarketplacePage({
             </>
           ) : null}
           {!mine && p.status === MarketplacePostStatus.Active ? (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => void handleOrder(p.id)}
-            >
-              Đặt mua
-            </button>
+            <>
+              {p.listingType === MarketplaceListingType.Food ? (
+                <label className="marketplace-quantity">
+                  <span>Số lượng</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={p.availableQuantity}
+                    value={orderQuantities[p.id] ?? 1}
+                    onChange={(event) => setOrderQuantities((current) => ({
+                      ...current,
+                      [p.id]: Math.max(1, Math.min(p.availableQuantity, Number(event.target.value) || 1)),
+                    }))}
+                    aria-label={`Số lượng ${p.title}`}
+                  />
+                </label>
+              ) : null}
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => void handleOrder(p)}
+              >
+                Mua bằng số dư
+              </button>
+            </>
           ) : null}
         </div>
       </article>
     )
   }
 
-  const listForTab = tab === 'mine' ? myPosts : browsePosts
+  const listForTab = tab === 'mine'
+    ? myPosts
+    : tab === 'food'
+      ? browsePosts.filter((post) => post.listingType === MarketplaceListingType.Food)
+      : browsePosts.filter((post) => post.listingType !== MarketplaceListingType.Food)
+  const selectedFoodPreset = FOOD_PRESETS.find((preset) => preset.imageUrl === presetImageUrl)
 
   return (
     <div className={embedded ? 'map-embed marketplace-embed' : 'container page marketplace-page'}>
       {!embedded ? (
         <>
-          <h1 className="page-title">Chợ đồ</h1>
-          <p className="page-subtitle">Mua bán đồ nội thất / đồ dùng quanh khu vực thuê</p>
+          <h1 className="page-title">Chợ Homeji</h1>
+          <p className="page-subtitle">Đồ ăn sinh viên và đồ dùng gần nơi ở — thanh toán an toàn bằng Số dư Homeji</p>
         </>
       ) : null}
 
-      <div className="tabs marketplace-tabs" role="tablist" aria-label="Chợ đồ" style={{ ['--map-tab-cols' as string]: 4 }}>
+      <div className="tabs marketplace-tabs" role="tablist" aria-label="Chợ Homeji" style={{ ['--map-tab-cols' as string]: 6 }}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'food'}
+          className={`tab ${tab === 'food' ? 'active' : ''}`}
+          onClick={() => setTab('food')}
+        >
+          Đồ ăn
+        </button>
         <button
           type="button"
           role="tab"
@@ -394,7 +549,7 @@ export function MarketplacePage({
           className={`tab ${tab === 'browse' ? 'active' : ''}`}
           onClick={() => setTab('browse')}
         >
-          Đang bán
+          Chợ đồ
         </button>
         <button
           type="button"
@@ -423,9 +578,18 @@ export function MarketplacePage({
         >
           Đơn hàng
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'wallet'}
+          className={`tab ${tab === 'wallet' ? 'active' : ''}`}
+          onClick={() => setTab('wallet')}
+        >
+          Số dư
+        </button>
       </div>
 
-      {tab === 'browse' || tab === 'mine' ? (
+      {tab === 'browse' || tab === 'food' || tab === 'mine' ? (
         <div className="marketplace-filters">
           <input
             className="form-input"
@@ -458,6 +622,59 @@ export function MarketplacePage({
         <HomejiLoader onIntroComplete={onIntroComplete} message={disrupted ? error : undefined} />
       ) : tab === 'sell' ? (
         <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
+          <div className="marketplace-listing-type" role="group" aria-label="Loại mặt hàng">
+            <button
+              type="button"
+              className={listingType === MarketplaceListingType.Food ? 'is-active' : ''}
+              onClick={() => {
+                setListingType(MarketplaceListingType.Food)
+                setCondition('Mới làm trong ngày')
+                setSellCategory('Cơm nhà')
+                setUnit('phần')
+                setAvailableQuantity('10')
+              }}
+            >
+              🍱 Đồ ăn
+            </button>
+            <button
+              type="button"
+              className={listingType === MarketplaceListingType.SecondHand ? 'is-active' : ''}
+              onClick={() => {
+                setListingType(MarketplaceListingType.SecondHand)
+                setCondition(MARKETPLACE_CONDITIONS[2])
+                setSellCategory('Nội thất')
+                setUnit('sản phẩm')
+                setAvailableQuantity('1')
+                setPresetImageUrl('')
+              }}
+            >
+              🪑 Đồ dùng
+            </button>
+          </div>
+
+          {listingType === MarketplaceListingType.Food ? (
+            <section className="food-preset-section" aria-labelledby="food-preset-heading">
+              <div>
+                <h3 id="food-preset-heading">Món phổ biến cho sinh viên</h3>
+                <p>Chọn để điền nhanh giá gợi ý. Ảnh chỉ là mẫu có giấy phép; hãy thay bằng ảnh món thật trước khi bán.</p>
+              </div>
+              <div className="food-preset-grid">
+                {FOOD_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={presetImageUrl === preset.imageUrl ? 'is-selected' : ''}
+                    onClick={() => applyFoodPreset(preset)}
+                  >
+                    <img src={preset.imageUrl} alt="" />
+                    <span>{preset.title}</span>
+                    <strong>{formatPrice(preset.price)}</strong>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <div className="form-group">
             <label className="form-label">Tiêu đề</label>
             <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -479,6 +696,9 @@ export function MarketplacePage({
                 onChange={(e) => setCondition(e.target.value)}
                 required
               >
+                {listingType === MarketplaceListingType.Food ? (
+                  <option value="Mới làm trong ngày">Mới làm trong ngày</option>
+                ) : null}
                 {MARKETPLACE_CONDITIONS.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -501,6 +721,42 @@ export function MarketplacePage({
                 ))}
               </select>
             </div>
+            <div className="form-group">
+              <label className="form-label">Số lượng sẵn bán</label>
+              <input
+                className="form-input"
+                type="number"
+                min={1}
+                max={listingType === MarketplaceListingType.Food ? 100 : 1}
+                value={availableQuantity}
+                onChange={(e) => setAvailableQuantity(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Đơn vị</label>
+              <input
+                className="form-input"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                maxLength={30}
+                placeholder="phần, ly, ổ..."
+                required
+              />
+            </div>
+            {listingType === MarketplaceListingType.Food ? (
+              <div className="form-group">
+                <label className="form-label">Thời gian chuẩn bị (phút)</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={0}
+                  max={240}
+                  value={preparationMinutes}
+                  onChange={(e) => setPreparationMinutes(e.target.value)}
+                />
+              </div>
+            ) : null}
           </div>
           <div className="form-group">
             <label className="form-label">Địa chỉ / điểm giao</label>
@@ -558,14 +814,151 @@ export function MarketplacePage({
                   </li>
                 ))}
               </ul>
+            ) : presetImageUrl ? (
+              <div className="food-preset-selected">
+                <img src={presetImageUrl} alt="Ảnh món mẫu đang chọn" />
+                <p>
+                  Đang dùng ảnh mẫu. Người bán chịu trách nhiệm thay bằng ảnh đúng món và khẩu phần thực tế.
+                  {selectedFoodPreset ? (
+                    <> Nguồn ảnh: <a href={selectedFoodPreset.imageSource} target="_blank" rel="noreferrer">{selectedFoodPreset.imageAuthor}</a>.</>
+                  ) : null}
+                </p>
+              </div>
             ) : (
-              <p className="form-hint">Chưa chọn ảnh — sẽ dùng ảnh mặc định.</p>
+              <p className="form-hint">
+                {listingType === MarketplaceListingType.Food
+                  ? 'Đồ ăn bắt buộc có ảnh món thật hoặc chọn ảnh mẫu.'
+                  : 'Chưa chọn ảnh — sẽ dùng ảnh mặc định.'}
+              </p>
             )}
           </div>
           <button type="submit" className="btn btn-primary" disabled={uploading}>
             {uploading ? 'Đang tải ảnh / đăng tin…' : 'Đăng tin'}
           </button>
         </form>
+      ) : tab === 'wallet' ? (
+        <div className="marketplace-wallet">
+          <section className="wallet-balance-card card">
+            <div>
+              <span>Số dư khả dụng</span>
+              <strong>{formatPrice(wallet?.balance ?? 0)}</strong>
+              <small>
+                {wallet?.isActivated
+                  ? 'Đã kích hoạt mua bán qua Số dư Homeji'
+                  : `Nạp tối thiểu ${formatPrice(wallet?.minimumTopUp ?? 100_000)} để kích hoạt`}
+              </small>
+            </div>
+            <div className="wallet-stats">
+              <span>Đã nạp <b>{formatPrice(wallet?.totalDeposited ?? 0)}</b></span>
+              <span>Đã mua <b>{formatPrice(wallet?.totalSpent ?? 0)}</b></span>
+              <span>Đã kiếm <b>{formatPrice(wallet?.totalEarned ?? 0)}</b></span>
+            </div>
+          </section>
+
+          <section className="wallet-topup card">
+            <div className="wallet-section-head">
+              <div>
+                <h3>Nạp Số dư Homeji</h3>
+                <p>Tiền chỉ được cộng sau webhook có chữ ký từ MoMo/PayOS, không cộng theo trang chuyển hướng.</p>
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void reload()}>
+                Làm mới
+              </button>
+            </div>
+            <div className="wallet-quick-amounts">
+              {[100_000, 200_000, 500_000].map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  className={Number(topUpAmount) === amount ? 'is-active' : ''}
+                  onClick={() => setTopUpAmount(String(amount))}
+                >
+                  {formatPrice(amount)}
+                </button>
+              ))}
+            </div>
+            <div className="wallet-topup-actions">
+              <input
+                className="form-input"
+                type="number"
+                min={wallet?.minimumTopUp ?? 100_000}
+                max={wallet?.maximumTopUp ?? 5_000_000}
+                step={10_000}
+                value={topUpAmount}
+                onChange={(event) => setTopUpAmount(event.target.value)}
+                aria-label="Số tiền nạp"
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={Boolean(walletBusy)}
+                onClick={() => void startWalletTopUp('momo')}
+              >
+                {walletBusy === 'momo' ? 'Đang tạo…' : 'Nạp qua MoMo'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={Boolean(walletBusy)}
+                onClick={() => void startWalletTopUp('payos')}
+              >
+                {walletBusy === 'payos' ? 'Đang tạo…' : 'Nạp qua PayOS'}
+              </button>
+            </div>
+          </section>
+
+          <section className="seller-plans card">
+            <div className="wallet-section-head">
+              <div>
+                <h3>Gói người bán</h3>
+                <p>Gói hiện tại: <strong>{sellerPlan?.packageName ?? 'Bắt đầu'}</strong>. Phí gói trừ từ số dư; luôn giữ quỹ đảm bảo 100.000đ.</p>
+              </div>
+            </div>
+            <div className="seller-plan-grid">
+              {sellerPlans.map((plan) => (
+                <article key={plan.code} className={plan.isCurrent ? 'is-current' : ''}>
+                  <span>{plan.name}</span>
+                  <strong>{plan.monthlyPrice ? formatPrice(plan.monthlyPrice) : 'Miễn phí'}</strong>
+                  <p>Hoa hồng {(plan.commissionRate * 100).toFixed(0)}% mỗi đơn hoàn tất</p>
+                  {plan.monthlyPrice > 0 ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={Boolean(walletBusy) || plan.isCurrent}
+                      onClick={() => void buySellerPlan(plan.code)}
+                    >
+                      {plan.isCurrent ? 'Đang dùng' : walletBusy === plan.code ? 'Đang mua…' : 'Mua bằng số dư'}
+                    </button>
+                  ) : (
+                    <small>Tự áp dụng khi chưa có gói trả phí</small>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="wallet-history card">
+            <div className="wallet-section-head"><h3>Lịch sử số dư</h3></div>
+            {walletTransactions.length === 0 ? (
+              <p className="marketplace-tab-hint">Chưa có giao dịch số dư.</p>
+            ) : (
+              <ul>
+                {walletTransactions.map((transaction) => (
+                  <li key={transaction.id}>
+                    <div>
+                      <strong>{WALLET_TRANSACTION_LABELS[transaction.kind] ?? transaction.description}</strong>
+                      <small>{transaction.description} · {formatDate(transaction.createdAt)}</small>
+                    </div>
+                    <div className={transaction.amount >= 0 ? 'is-credit' : 'is-debit'}>
+                      <b>{transaction.amount >= 0 ? '+' : ''}{formatPrice(transaction.amount)}</b>
+                      <small>Còn {formatPrice(transaction.balanceAfter)}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       ) : tab === 'orders' ? (
         orders.length === 0 ? (
           <div className="empty-state card">Chưa có đơn hàng.</div>
@@ -588,13 +981,22 @@ export function MarketplacePage({
                       </span>
                     </div>
                     <p className="marketplace-card__price">{formatPrice(o.agreedPrice)}</p>
+                    <p className="marketplace-card__info">
+                      {o.quantity} × {formatPrice(o.unitPrice)} · Phí nền tảng {(o.platformFeeRate * 100).toFixed(0)}%
+                    </p>
+                    {iAmSeller ? (
+                      <p className="marketplace-card__info">
+                        Bạn nhận {formatPrice(o.sellerNetAmount)} sau khi người mua xác nhận hoàn tất
+                        {' · '}phí {formatPrice(o.platformFeeAmount)}
+                      </p>
+                    ) : null}
                     <p className="marketplace-card__addr">{o.pickupAddress}</p>
                     <small className="marketplace-card__seller">{formatDate(o.pickupAt)}</small>
                     {requested && iAmBuyer ? (
-                      <p className="marketplace-card__info">Đang chờ người bán xác nhận yêu cầu của bạn.</p>
+                      <p className="marketplace-card__info">Tiền đang được giữ. Đơn sẽ tự hết hạn và hoàn tiền nếu người bán không phản hồi trong 30 phút.</p>
                     ) : null}
                     {requested && iAmSeller ? (
-                      <p className="marketplace-card__info">Người mua đang chờ bạn nhận hoặc từ chối.</p>
+                      <p className="marketplace-card__info">Người mua đang chờ. Hãy nhận hoặc từ chối trong 30 phút trước khi đơn tự hết hạn.</p>
                     ) : null}
                   </div>
                   <div className="marketplace-card__actions">
@@ -616,26 +1018,26 @@ export function MarketplacePage({
                         </button>
                       </>
                     ) : null}
-                    {requested && iAmBuyer ? (
+                    {(requested || accepted) && iAmBuyer ? (
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
                         onClick={() => void cancelMarketplaceOrder(o.id).then(() => reload())}
                       >
-                        Hủy yêu cầu
+                        Hủy và hoàn tiền
                       </button>
                     ) : null}
-                    {accepted && iAmSeller ? (
+                    {accepted && iAmBuyer ? (
                       <button
                         type="button"
                         className="btn btn-primary btn-sm"
                         onClick={() => void completeMarketplaceOrder(o.id).then(() => reload())}
                       >
-                        Hoàn tất
+                        Đã nhận món · Hoàn tất
                       </button>
                     ) : null}
-                    {accepted && iAmBuyer ? (
-                      <p className="marketplace-card__info">Người bán đã nhận — chờ giao / hoàn tất.</p>
+                    {accepted && iAmSeller ? (
+                      <p className="marketplace-card__info">Chờ người mua xác nhận đã nhận món để giải ngân.</p>
                     ) : null}
                   </div>
                 </article>
@@ -645,7 +1047,11 @@ export function MarketplacePage({
         )
       ) : listForTab.length === 0 ? (
         <div className="empty-state card">
-          {tab === 'mine' ? 'Bạn chưa có tin đăng nào.' : 'Chưa có tin đang bán quanh đây.'}
+          {tab === 'mine'
+            ? 'Bạn chưa có tin đăng nào.'
+            : tab === 'food'
+              ? 'Chưa có món ăn đang bán quanh đây.'
+              : 'Chưa có đồ dùng đang bán quanh đây.'}
         </div>
       ) : (
         <div className="marketplace-list">
@@ -659,7 +1065,7 @@ export function MarketplacePage({
         onDismiss={() => {
           setActionMsg('')
           setActionError('')
-          if (error && !disrupted) setLoadErrorHidden(true)
+          if (error && !disrupted) setHiddenLoadError(error)
         }}
       />
     </div>

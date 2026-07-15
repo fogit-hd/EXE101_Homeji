@@ -152,6 +152,7 @@ export const marketplaceOrderStatusLabel: Record<number, string> = {
   [MarketplaceOrderStatus.Rejected]: 'Từ chối',
   [MarketplaceOrderStatus.Cancelled]: 'Đã hủy',
   [MarketplaceOrderStatus.Completed]: 'Hoàn tất',
+  [MarketplaceOrderStatus.Expired]: 'Hết hạn',
 }
 
 export const wantedPostStatusLabel: Record<number, string> = {
@@ -312,6 +313,11 @@ export const MARKETPLACE_CONDITIONS = [
 
 /** Marketplace category — free string on BE; search filters by exact match. */
 export const MARKETPLACE_CATEGORIES = [
+  'Ăn sáng',
+  'Cơm nhà',
+  'Mì / bún',
+  'Đồ uống',
+  'Ăn vặt',
   'Nội thất',
   'Điện tử',
   'Đồ bếp',

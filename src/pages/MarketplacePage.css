@@ -321,6 +321,280 @@
   margin-bottom: 14px;
 }
 
+.marketplace-quantity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.marketplace-quantity input {
+  width: 58px;
+  min-height: 32px;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-input);
+  color: var(--text-heading);
+}
+
+.marketplace-listing-type {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--surface-input);
+}
+
+.marketplace-listing-type button,
+.wallet-quick-amounts button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.marketplace-listing-type button.is-active,
+.wallet-quick-amounts button.is-active {
+  border-color: color-mix(in srgb, var(--grab-green, #00b14f) 45%, var(--border));
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 13%, var(--surface-elevated));
+  color: var(--grab-green, #00b14f);
+}
+
+.food-preset-section {
+  margin-bottom: 18px;
+}
+
+.food-preset-section h3,
+.wallet-section-head h3 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1rem;
+}
+
+.food-preset-section p,
+.wallet-section-head p,
+.seller-plan-grid p {
+  margin: 4px 0 10px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.food-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.food-preset-grid button {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  text-align: left;
+  cursor: pointer;
+}
+
+.food-preset-grid button.is-selected {
+  border-color: var(--grab-green, #00b14f);
+  box-shadow: 0 0 0 1px var(--grab-green, #00b14f);
+}
+
+.food-preset-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.food-preset-grid span,
+.food-preset-grid strong {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.74rem;
+}
+
+.food-preset-grid strong {
+  color: var(--grab-green, #00b14f);
+}
+
+.food-preset-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 9%, var(--surface-input));
+}
+
+.food-preset-selected img {
+  width: 64px;
+  height: 48px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.food-preset-selected p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.marketplace-wallet {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wallet-balance-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--grab-green, #00b14f) 16%, var(--surface-elevated)), var(--surface-elevated));
+}
+
+.wallet-balance-card > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wallet-balance-card span,
+.wallet-balance-card small {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.wallet-balance-card > div:first-child > strong {
+  color: var(--grab-green, #00b14f);
+  font-size: clamp(1.65rem, 5vw, 2.25rem);
+}
+
+.wallet-stats {
+  display: grid;
+  gap: 7px;
+  align-content: center;
+}
+
+.wallet-stats span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wallet-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wallet-quick-amounts,
+.wallet-topup-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wallet-quick-amounts {
+  margin: 8px 0 12px;
+}
+
+.wallet-quick-amounts button {
+  border-color: var(--border);
+}
+
+.seller-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.seller-plan-grid article {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-input);
+}
+
+.seller-plan-grid article.is-current {
+  border-color: var(--grab-green, #00b14f);
+}
+
+.seller-plan-grid article > strong {
+  color: var(--grab-green, #00b14f);
+  font-size: 1.05rem;
+}
+
+.seller-plan-grid .btn,
+.seller-plan-grid small {
+  margin-top: auto;
+}
+
+.wallet-history ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.wallet-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.wallet-history li:last-child {
+  border-bottom: 0;
+}
+
+.wallet-history li > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wallet-history li > div:last-child {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.wallet-history small {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.wallet-history .is-credit b {
+  color: var(--grab-green, #00b14f);
+}
+
+.wallet-history .is-debit b {
+  color: var(--danger, #dc2626);
+}
+
 @media (max-width: 720px) {
   .marketplace-filters {
     grid-template-columns: 1fr;
@@ -343,6 +617,27 @@
   }
 
   .marketplace-sell-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-embed .marketplace-tabs,
+  .marketplace-page .marketplace-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .marketplace-tabs .tab {
+    min-width: 88px;
+  }
+
+  .food-preset-grid,
+  .seller-plan-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wallet-balance-card,
+  .wallet-topup-actions {
     grid-template-columns: 1fr;
   }
 
