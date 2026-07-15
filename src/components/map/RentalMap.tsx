@@ -6,6 +6,11 @@ import {
   useRef,
   useState,
 } from 'react'
+import {
+  MarkerClusterer,
+  SuperClusterAlgorithm,
+  type Renderer,
+} from '@googlemaps/markerclusterer'
 import type { RentalPostSummary } from '../../api/types'
 import { RentalPostType } from '../../api/types'
 import { HomejiLoader } from '../HomejiLoader'
@@ -38,8 +43,10 @@ import {
 import { MapErrorPanel } from './MapErrorPanel'
 import {
   createUserLocationDotContent,
+  createMapClusterContent,
   createMarketplacePinContent,
   createRentalPinContent,
+  type MapClusterKind,
   type MapPinContentHandle,
 } from './mapLocationPins'
 import {
@@ -134,6 +141,7 @@ type MarkerEntry = {
   styleKey: string
   el: HTMLDivElement
   dispose?: () => void
+  kind: MapClusterKind
 }
 
 function mappablePosts(posts: RentalPostSummary[], layers: MapPinLayers) {
@@ -197,6 +205,10 @@ function RentalMapComponent({
   const mapRef = useRef<google.maps.Map | null>(null)
   const markersRef = useRef<Map<string, MarkerEntry>>(new Map())
   const marketplaceMarkersRef = useRef<Map<string, MarkerEntry>>(new Map())
+  const markerClustererRef = useRef<MarkerClusterer | null>(null)
+  const markerKindsRef = useRef<WeakMap<google.maps.marker.AdvancedMarkerElement, MapClusterKind>>(
+    new WeakMap(),
+  )
   const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const placePinRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const sharedPinRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
@@ -217,6 +229,7 @@ function RentalMapComponent({
   const overviewFitDoneRef = useRef(false)
   const ignoreClickUntilRef = useRef(0)
   const syncMarkersRef = useRef<() => void>(() => {})
+  const syncMarketplaceMarkersRef = useRef<() => void>(() => {})
   const cameraRef = useRef<MapCameraScheduler | null>(null)
   const baseMapModeRef = useRef<BaseMapMode>('roadmap')
   const streetViewCoverageRef = useRef<google.maps.StreetViewCoverageLayer | null>(null)
@@ -264,6 +277,20 @@ function RentalMapComponent({
     [pins, selectedPostId],
   )
 
+  const refreshClusters = useCallback(() => {
+    const clusterer = markerClustererRef.current
+    if (!clusterer) return
+    const markers = [
+      ...Array.from(markersRef.current.values(), (entry) => entry.marker),
+      ...Array.from(marketplaceMarkersRef.current.values(), (entry) => entry.marker),
+    ]
+    clusterer.clearMarkers(true)
+    clusterer.addMarkers(markers, true)
+    clusterer.render()
+    ;(window as Window & { __HOMEJI_CLUSTERED_MARKER_COUNT?: number })
+      .__HOMEJI_CLUSTERED_MARKER_COUNT = markers.length
+  }, [])
+
   const syncMarkers = useCallback(() => {
     const map = mapRef.current
     const lib = libRef.current
@@ -286,7 +313,7 @@ function RentalMapComponent({
       const pos = { lat: post.latitude, lng: post.longitude }
       const styleKey = `${s.key}|${post.title}`
 
-      let entry = markersRef.current.get(post.id)
+      const entry = markersRef.current.get(post.id)
       if (!entry) {
         const content = createRentalPinContent({
           kind: s.kind,
@@ -295,7 +322,6 @@ function RentalMapComponent({
           hot: Boolean(hot),
         })
         const marker = new AdvancedMarkerElement({
-          map,
           position: pos,
           content: content.element,
           title: post.title || 'Tin đăng Homeji',
@@ -312,7 +338,9 @@ function RentalMapComponent({
           styleKey,
           el: content.element,
           dispose: content.dispose,
+          kind: s.kind,
         })
+        markerKindsRef.current.set(marker, s.kind)
       } else {
         const cur = entry.marker.position as google.maps.LatLngLiteral | null
         if (
@@ -336,15 +364,17 @@ function RentalMapComponent({
           entry.styleKey = styleKey
         }
         entry.marker.zIndex = s.z
-        if (entry.marker.map !== map) entry.marker.map = map
       }
     }
 
     ;(window as Window & { __HOMEJI_MARKER_COUNT?: number }).__HOMEJI_MARKER_COUNT =
       markersRef.current.size
-  }, [pins, selectedPostId, hoveredPostId])
+    refreshClusters()
+  }, [pins, selectedPostId, hoveredPostId, refreshClusters])
 
-  syncMarkersRef.current = syncMarkers
+  useEffect(() => {
+    syncMarkersRef.current = syncMarkers
+  }, [syncMarkers])
 
   const syncMarketplaceMarkers = useCallback(() => {
     const map = mapRef.current
@@ -366,7 +396,7 @@ function RentalMapComponent({
       const selected = item.id === selectedMarketplaceId
       const pos = { lat: item.lat, lng: item.lng }
       const styleKey = `${selected ? 'sel' : 'idle'}|${item.price ?? ''}|${item.title}`
-      let entry = marketplaceMarkersRef.current.get(item.id)
+      const entry = marketplaceMarkersRef.current.get(item.id)
       if (!entry) {
         const content = createMarketplacePinContent({
           title: item.title || 'Chợ đồ',
@@ -374,7 +404,6 @@ function RentalMapComponent({
           selected,
         })
         const marker = new AdvancedMarkerElement({
-          map,
           position: pos,
           content: content.element,
           title: item.title || 'Chợ đồ',
@@ -391,7 +420,9 @@ function RentalMapComponent({
           styleKey,
           el: content.element,
           dispose: content.dispose,
+          kind: 'marketplace',
         })
+        markerKindsRef.current.set(marker, 'marketplace')
       } else {
         entry.marker.position = pos
         if (entry.styleKey !== styleKey) {
@@ -407,10 +438,14 @@ function RentalMapComponent({
           entry.styleKey = styleKey
         }
         entry.marker.zIndex = selected ? 2700 : 900
-        if (entry.marker.map !== map) entry.marker.map = map
       }
     }
-  }, [visibleMarketplacePins, selectedMarketplaceId])
+    refreshClusters()
+  }, [visibleMarketplacePins, selectedMarketplaceId, refreshClusters])
+
+  useEffect(() => {
+    syncMarketplaceMarkersRef.current = syncMarketplaceMarkers
+  }, [syncMarketplaceMarkers])
 
   useEffect(() => {
     if (!mapReady) return
@@ -527,7 +562,45 @@ function RentalMapComponent({
       const lib = await loadMarkerLibrary()
       if (cancelled) return
       libRef.current = lib
+      const clusterRenderer: Renderer = {
+        render: (cluster) => {
+          const kindCounts: Record<MapClusterKind, number> = {
+            vacant: 0,
+            roommate: 0,
+            marketplace: 0,
+          }
+          for (const marker of cluster.markers) {
+            const kind = markerKindsRef.current.get(
+              marker as google.maps.marker.AdvancedMarkerElement,
+            )
+            if (kind) kindCounts[kind] += 1
+          }
+          const content = createMapClusterContent({ count: cluster.count, kindCounts })
+          return new lib.AdvancedMarkerElement({
+            position: cluster.position,
+            content,
+            title: `${cluster.count} vị trí gần nhau. Nhấn để phóng to.`,
+            zIndex: 3000 + cluster.count,
+            gmpClickable: true,
+          })
+        },
+      }
+      markerClustererRef.current = new MarkerClusterer({
+        map,
+        markers: [],
+        algorithm: new SuperClusterAlgorithm({
+          radius: 80,
+          maxZoom: 17,
+        }),
+        renderer: clusterRenderer,
+        onClusterClick: (event, cluster, clusterMap) => {
+          event.stop()
+          const bounds = cluster.bounds
+          if (bounds) clusterMap.fitBounds(bounds, 72)
+        },
+      })
       syncMarkersRef.current()
+      syncMarketplaceMarkersRef.current()
     })()
 
     return () => {
@@ -535,6 +608,9 @@ function RentalMapComponent({
       listeners.forEach((l) => google.maps.event.removeListener(l))
       cameraRef.current?.dispose()
       cameraRef.current = null
+      markerClustererRef.current?.clearMarkers(true)
+      markerClustererRef.current?.setMap(null)
+      markerClustererRef.current = null
       markersRef.current.forEach((e) => {
         e.marker.map = null
         e.dispose?.()

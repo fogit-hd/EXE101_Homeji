@@ -5,6 +5,8 @@ export type MapPinContentHandle = {
   dispose: () => void
 }
 
+export type MapClusterKind = 'vacant' | 'roommate' | 'marketplace'
+
 /**
  * 0×0 anchor at lat/lng. Each marker class decides whether its visual is
  * centered on the coordinate or lifted so a pin tip touches the coordinate.
@@ -45,6 +47,56 @@ function formatPinPrice(price?: number): string | null {
   }
   if (price >= 1000) return `${Math.round(price / 1000)}k`
   return `${Math.round(price)}₫`
+}
+
+const CLUSTER_COLORS: Record<MapClusterKind, string> = {
+  vacant: '#65A30D',
+  roommate: '#4F46E5',
+  marketplace: '#EA580C',
+}
+
+/** Center-anchored cluster rendered by MarkerClusterer at low/mid zoom levels. */
+export function createMapClusterContent(options: {
+  count: number
+  kindCounts: Record<MapClusterKind, number>
+}): HTMLDivElement {
+  const count = Math.max(2, Math.round(options.count))
+  const title = `${count} vị trí gần nhau. Nhấn để phóng to.`
+  const { root, mount } = coordinateAnchorRoot(title, 'map-pin-cluster', {
+    interactive: true,
+  })
+  const size = Math.min(64, 44 + Math.round(Math.log2(count) * 4))
+  const activeKinds = (Object.keys(CLUSTER_COLORS) as MapClusterKind[])
+    .filter((kind) => options.kindCounts[kind] > 0)
+
+  let cursor = 0
+  const gradientStops: string[] = []
+  for (const kind of activeKinds) {
+    const start = cursor
+    cursor += (options.kindCounts[kind] / count) * 100
+    gradientStops.push(`${CLUSTER_COLORS[kind]} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`)
+  }
+
+  const bubble = document.createElement('div')
+  bubble.className = 'map-pin-cluster__bubble'
+  bubble.style.width = `${size}px`
+  bubble.style.height = `${size}px`
+  bubble.style.setProperty(
+    '--map-pin-cluster-gradient',
+    activeKinds.length > 0
+      ? `conic-gradient(${gradientStops.join(', ')})`
+      : CLUSTER_COLORS.vacant,
+  )
+
+  const value = document.createElement('strong')
+  value.className = 'map-pin-cluster__count'
+  value.textContent = String(count)
+  const label = document.createElement('span')
+  label.className = 'map-pin-cluster__label'
+  label.textContent = 'vị trí'
+  bubble.append(value, label)
+  mount.appendChild(bubble)
+  return root
 }
 
 /** Pin path: tip exactly at (24, 64) — bottom-center of viewBox. */

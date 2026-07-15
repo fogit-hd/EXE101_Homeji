@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@lottiefiles/dotlottie-react": "^0.19.9",
     "@microsoft/signalr": "^10.0.0",
     "gsap": "^3.15.0",
