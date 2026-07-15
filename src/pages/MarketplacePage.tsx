@@ -79,6 +79,9 @@ type Props = {
   onFocusMap?: (loc: { lat: number; lng: number; zoom?: number }) => void
   selectedMarketplaceId?: string | null
   onSelectMarketplaceId?: (id: string | null) => void
+  userLocation?: { lat: number; lng: number } | null
+  onRequestLocation?: () => void
+  locating?: boolean
 }
 
 function postThumb(p: MarketplacePost): string | null {
@@ -95,7 +98,16 @@ function toPins(list: MarketplacePost[]): MarketplaceMapPin[] {
       lat: p.latitude,
       lng: p.longitude,
       price: p.price,
+      imageUrl: postThumb(p),
     }))
+}
+
+function formatDistanceKm(distanceKm: number): string {
+  const digits = distanceKm < 10 ? 1 : 0
+  return `${new Intl.NumberFormat('vi-VN', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(distanceKm)} km`
 }
 
 export function MarketplacePage({
@@ -104,6 +116,9 @@ export function MarketplacePage({
   onFocusMap,
   selectedMarketplaceId = null,
   onSelectMarketplaceId,
+  userLocation = null,
+  onRequestLocation,
+  locating = false,
 }: Props) {
   const { profile } = useAuth()
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
@@ -218,10 +233,10 @@ export function MarketplacePage({
     const list = await searchMarketplacePosts({
       keyword: keyword.trim() || undefined,
       category: category.trim() || undefined,
-      latitude: DEFAULT_LAT,
-      longitude: DEFAULT_LNG,
-      radiusKm: 25,
-      pageSize: 40,
+      latitude: userLocation?.lat,
+      longitude: userLocation?.lng,
+      radiusKm: userLocation ? 50 : undefined,
+      pageSize: 50,
     })
     setPosts(list)
 
@@ -233,7 +248,7 @@ export function MarketplacePage({
       )
       onPostsForMap?.(toPins(forMap))
     }
-  }, [tab, keyword, category, onPostsForMap])
+  }, [tab, keyword, category, onPostsForMap, userLocation])
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn, [
     tab,
@@ -452,6 +467,15 @@ export function MarketplacePage({
                 {p.preparationMinutes ? ` · Chuẩn bị khoảng ${p.preparationMinutes} phút` : ''}
               </p>
             ) : null}
+            {!mine && p.distanceKm != null ? (
+              <p
+                className="marketplace-card__distance"
+                title="Khoảng cách đường chim bay từ vị trí của bạn"
+              >
+                <span aria-hidden="true">◎</span>
+                {formatDistanceKm(p.distanceKm)} đường chim bay
+              </p>
+            ) : null}
             {p.address ? <p className="marketplace-card__addr">{p.address}</p> : null}
             {!mine && p.sellerDisplayName ? (
               <p className="marketplace-card__seller">Người bán: {p.sellerDisplayName}</p>
@@ -516,11 +540,18 @@ export function MarketplacePage({
     )
   }
 
-  const listForTab = tab === 'mine'
-    ? myPosts
-    : tab === 'food'
-      ? browsePosts.filter((post) => post.listingType === MarketplaceListingType.Food)
-      : browsePosts.filter((post) => post.listingType !== MarketplaceListingType.Food)
+  const listForTab = useMemo(() => {
+    const list = tab === 'mine'
+      ? myPosts
+      : tab === 'food'
+        ? browsePosts.filter((post) => post.listingType === MarketplaceListingType.Food)
+        : browsePosts.filter((post) => post.listingType !== MarketplaceListingType.Food)
+    if (tab === 'mine' || !userLocation) return list
+    return [...list].sort((left, right) =>
+      (left.distanceKm ?? Number.POSITIVE_INFINITY) -
+      (right.distanceKm ?? Number.POSITIVE_INFINITY),
+    )
+  }, [tab, myPosts, browsePosts, userLocation])
   const selectedFoodPreset = FOOD_PRESETS.find((preset) => preset.imageUrl === presetImageUrl)
 
   return (
@@ -611,6 +642,26 @@ export function MarketplacePage({
               </option>
             ))}
           </select>
+          {tab !== 'mine' ? (
+            <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
+              {userLocation ? (
+                <>
+                  <span aria-hidden="true">⌖</span>
+                  <span>Đang xếp gần → xa theo đường chim bay</span>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={locating || !onRequestLocation}
+                  onClick={onRequestLocation}
+                >
+                  <span aria-hidden="true">⌖</span>
+                  {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

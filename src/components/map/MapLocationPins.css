@@ -240,6 +240,57 @@
   display: block;
 }
 
+.map-market-pin__photo-shell {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--map-market-pin-size, 44px) * 0.105);
+  left: 50%;
+  width: calc(var(--map-market-pin-size, 44px) * 0.57);
+  height: calc(var(--map-market-pin-size, 44px) * 0.57);
+  overflow: hidden;
+  transform: translateX(-50%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #fff7ed;
+  box-shadow: 0 1px 3px rgba(124, 45, 18, 0.28);
+  pointer-events: none;
+}
+
+.map-market-pin__photo,
+.map-market-pin__photo-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map-market-pin__photo {
+  z-index: 2;
+  display: block;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.map-market-pin__photo-shell.has-image .map-market-pin__photo {
+  opacity: 1;
+}
+
+.map-market-pin__photo-fallback {
+  display: grid;
+  place-items: center;
+  color: #c2410c;
+  font-size: calc(var(--map-market-pin-size, 44px) * 0.3);
+  font-weight: 850;
+  line-height: 1;
+}
+
+.map-market-pin.is-selected .map-market-pin__photo-shell {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.92),
+    0 4px 12px rgba(124, 45, 18, 0.35);
+}
+
 .map-chat-pin__pulse,
 .map-market-pin__pulse,
 .map-rental-pin__pulse,
@@ -289,7 +340,7 @@
   z-index: 1;
 }
 
-.map-market-pin__svg.is-bounce,
+.map-market-pin__graphic.is-bounce,
 .map-rental-pin__svg.is-bounce,
 .map-roommate-pin__svg.is-bounce {
   animation: map-market-pin-bounce 1.1s ease-in-out infinite;
@@ -364,6 +415,15 @@
 @media (prefers-reduced-motion: reduce) {
   .map-pin-cluster__bubble {
     transition: none;
+  }
+
+  .map-market-pin__photo {
+    transition: none;
+  }
+
+  .map-market-pin__graphic.is-bounce,
+  .map-market-pin__pulse {
+    animation: none;
   }
 
   .map-user-location-dot__pulse {

@@ -109,6 +109,9 @@ type Props = {
   onMarketplaceFocusMap?: (loc: { lat: number; lng: number; zoom?: number }) => void
   selectedMarketplaceId?: string | null
   onSelectMarketplaceId?: (id: string | null) => void
+  userLocation?: { lat: number; lng: number } | null
+  onRequestLocation?: () => void
+  locating?: boolean
 }
 
 const OUTSIDE_CLOSE_IGNORE =
@@ -126,6 +129,9 @@ export function MapAppPanel({
   onMarketplaceFocusMap,
   selectedMarketplaceId = null,
   onSelectMarketplaceId,
+  userLocation = null,
+  onRequestLocation,
+  locating = false,
 }: Props) {
   const displayedRef = useRef(section)
   const wasOpenRef = useRef(open)
@@ -247,6 +253,9 @@ export function MapAppPanel({
                 onFocusMap={onMarketplaceFocusMap}
                 selectedMarketplaceId={selectedMarketplaceId}
                 onSelectMarketplaceId={onSelectMarketplaceId}
+                userLocation={userLocation}
+                onRequestLocation={onRequestLocation}
+                locating={locating}
               />
             ) : null}
             {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}

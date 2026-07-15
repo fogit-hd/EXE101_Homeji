@@ -180,11 +180,12 @@ export function createChatLocationPinContent(options: {
 export function createMarketplacePinContent(options: {
   title: string
   price?: number
+  imageUrl?: string | null
   selected?: boolean
   size?: number
 }): MapPinContentHandle {
   const selected = Boolean(options.selected)
-  const size = options.size ?? (selected ? 46 : 36)
+  const size = options.size ?? (selected ? 52 : 44)
   const visualH = Math.round(size * (64 / 48))
   const fill = selected ? '#EA580C' : '#F59E0B'
   const stroke = selected ? '#C2410C' : '#D97706'
@@ -215,21 +216,49 @@ export function createMarketplacePinContent(options: {
   }
 
   const pinWrap = document.createElement('div')
-  pinWrap.className = 'map-market-pin__graphic'
+  pinWrap.className = `map-market-pin__graphic${selected ? ' is-bounce' : ''}`
+  pinWrap.style.setProperty('--map-market-pin-size', `${size}px`)
   pinWrap.innerHTML = `
     <span class="map-market-pin__pulse" aria-hidden="true"></span>
     <span class="map-market-pin__pulse map-market-pin__pulse--delay" aria-hidden="true"></span>
-    <svg class="map-market-pin__svg${selected ? ' is-bounce' : ''}" viewBox="0 0 48 64" width="${size}" height="${visualH}" xmlns="http://www.w3.org/2000/svg">
+    <svg class="map-market-pin__svg" viewBox="0 0 48 64" width="${size}" height="${visualH}" xmlns="http://www.w3.org/2000/svg">
       <path fill="${fill}" stroke="${stroke}" stroke-width="1.4" d="${PIN_PATH}"/>
-      <circle cx="24" cy="20" r="11" fill="#fff"/>
-      <text x="24" y="24.5" text-anchor="middle" fill="${stroke}" font-size="13" font-weight="800" font-family="system-ui,sans-serif">₫</text>
+      <circle cx="24" cy="20" r="14.5" fill="#fff"/>
     </svg>
   `
+
+  const photoShell = document.createElement('span')
+  photoShell.className = 'map-market-pin__photo-shell'
+  photoShell.setAttribute('aria-hidden', 'true')
+  const fallback = document.createElement('span')
+  fallback.className = 'map-market-pin__photo-fallback'
+  fallback.textContent = '₫'
+  photoShell.appendChild(fallback)
+
+  let image: HTMLImageElement | null = null
+  const imageUrl = options.imageUrl?.trim()
+  if (imageUrl) {
+    image = document.createElement('img')
+    image.className = 'map-market-pin__photo'
+    image.src = imageUrl
+    image.alt = ''
+    image.loading = 'lazy'
+    image.decoding = 'async'
+    image.referrerPolicy = 'no-referrer'
+    image.onload = () => photoShell.classList.add('has-image')
+    image.onerror = () => image?.remove()
+    photoShell.appendChild(image)
+  }
+  pinWrap.appendChild(photoShell)
   mount.appendChild(pinWrap)
 
   return {
     element: root,
     dispose: () => {
+      if (image) {
+        image.onload = null
+        image.onerror = null
+      }
       root.remove()
     },
   }

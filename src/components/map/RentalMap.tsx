@@ -73,6 +73,7 @@ export type MarketplaceMapPin = {
   lat: number
   lng: number
   price?: number
+  imageUrl?: string | null
 }
 
 type LatLng = { lat: number; lng: number }
@@ -395,12 +396,13 @@ function RentalMapComponent({
       if (!isValidCoord(item.lat, item.lng)) continue
       const selected = item.id === selectedMarketplaceId
       const pos = { lat: item.lat, lng: item.lng }
-      const styleKey = `${selected ? 'sel' : 'idle'}|${item.price ?? ''}|${item.title}`
+      const styleKey = `${selected ? 'sel' : 'idle'}|${item.price ?? ''}|${item.title}|${item.imageUrl ?? ''}`
       const entry = marketplaceMarkersRef.current.get(item.id)
       if (!entry) {
         const content = createMarketplacePinContent({
           title: item.title || 'Chợ đồ',
           price: item.price,
+          imageUrl: item.imageUrl,
           selected,
         })
         const marker = new AdvancedMarkerElement({
@@ -430,6 +432,7 @@ function RentalMapComponent({
           const content = createMarketplacePinContent({
             title: item.title || 'Chợ đồ',
             price: item.price,
+            imageUrl: item.imageUrl,
             selected,
           })
           entry.marker.content = content.element

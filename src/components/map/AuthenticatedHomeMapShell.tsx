@@ -375,6 +375,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             lat: p.latitude,
             lng: p.longitude,
             price: p.price,
+            imageUrl:
+              p.mediaUrls?.find((url) => url && !url.endsWith('/vite.svg')) ?? null,
           }))
         setMarketplacePins(pins)
       })
@@ -839,6 +841,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         onMarketplaceFocusMap={handleMarketplaceFocusMap}
         selectedMarketplaceId={selectedMarketplaceId}
         onSelectMarketplaceId={setSelectedMarketplaceId}
+        userLocation={userLocation}
+        onRequestLocation={onLocate}
+        locating={locating}
         onNotificationOpen={(n) => {
           if (
             n.type === NotificationType.NewMessage ||

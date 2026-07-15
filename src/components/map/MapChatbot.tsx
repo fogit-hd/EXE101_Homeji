@@ -7,6 +7,7 @@ import {
   type ChatbotMessage,
   type ChatbotPopupConfig,
 } from '../../api'
+import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import './MapChatbot.css'
 
@@ -15,7 +16,9 @@ type Props = {
 }
 
 export function MapChatbot({ onSearchUpdate }: Props) {
+  const { profile } = useAuth()
   const [open, setOpen] = useState(false)
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false)
   const [config, setConfig] = useState<ChatbotPopupConfig | null>(null)
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [messages, setMessages] = useState<ChatbotMessage[]>([])
@@ -68,6 +71,12 @@ export function MapChatbot({ onSearchUpdate }: Props) {
 
   const title = config?.title || 'Homeji Assistant'
   const greeting = config?.greeting || 'Xin chào! Mình có thể giúp tìm phòng.'
+  const displayName = profile?.displayName?.trim() || 'bạn'
+
+  const openChatbot = () => {
+    setWelcomeDismissed(true)
+    setOpen(true)
+  }
 
   const send = async (text: string) => {
     const message = text.trim()
@@ -164,6 +173,30 @@ export function MapChatbot({ onSearchUpdate }: Props) {
         {chatBody}
       </div>
 
+      {!open && !welcomeDismissed ? (
+        <div className="map-chatbot__welcome" role="status" aria-live="polite">
+          <button
+            type="button"
+            className="map-chatbot__welcome-text"
+            onClick={openChatbot}
+            style={{ pointerEvents: 'auto' }}
+          >
+            <strong>Xin chào, {displayName} 👋</strong>
+            <span>Hôm nay bạn cần tìm gì?</span>
+          </button>
+          <button
+            type="button"
+            className="map-chatbot__welcome-close"
+            aria-label="Ẩn lời chào"
+            title="Ẩn lời chào"
+            onClick={() => setWelcomeDismissed(true)}
+            style={{ pointerEvents: 'auto' }}
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
+
       <button
         type="button"
         className={`map-chatbot__fab map-motion-press${open ? ' is-open' : ''}`}
@@ -171,7 +204,10 @@ export function MapChatbot({ onSearchUpdate }: Props) {
         aria-expanded={open}
         aria-label={open ? 'Đóng chatbot Homeji' : 'Mở chatbot Homeji'}
         title={open ? 'Đóng chatbot Homeji' : 'Chatbot Homeji'}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setWelcomeDismissed(true)
+          setOpen((v) => !v)
+        }}
       >
         <img src="/brand/homeji-logo.png" alt="" width="44" height="44" />
         {open ? <span className="map-chatbot__fab-close" aria-hidden>×</span> : null}

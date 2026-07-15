@@ -157,6 +157,26 @@
   margin-bottom: 10px;
 }
 
+.marketplace-distance-sort {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.marketplace-distance-sort.is-active {
+  gap: 6px;
+  color: var(--grab-green, #00b14f);
+  font-weight: 650;
+}
+
+.marketplace-distance-sort .btn {
+  gap: 6px;
+  padding-inline: 10px;
+}
+
 .marketplace-tab-hint {
   margin: 0 0 14px;
   font-size: 0.82rem;
@@ -270,11 +290,20 @@
 
 .marketplace-card__info,
 .marketplace-card__addr,
-.marketplace-card__seller {
+.marketplace-card__seller,
+.marketplace-card__distance {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.35;
   color: var(--text-secondary);
+}
+
+.marketplace-card__distance {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--maps-blue-text, #1967d2);
+  font-weight: 700;
 }
 
 .marketplace-card__addr {
