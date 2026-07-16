@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   acceptMarketplaceOrder,
   archiveMarketplacePost,
@@ -110,6 +111,7 @@ type Props = {
   userLocation?: { lat: number; lng: number } | null
   onRequestLocation?: () => void
   locating?: boolean
+  onCartOpenChange?: (open: boolean) => void
 }
 
 function postThumb(p: MarketplacePost): string | null {
@@ -165,6 +167,7 @@ export function MarketplacePage({
   userLocation = null,
   onRequestLocation,
   locating = false,
+  onCartOpenChange,
 }: Props) {
   const { profile } = useAuth()
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
@@ -204,6 +207,7 @@ export function MarketplacePage({
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
+  const [withdrawalsUnavailable, setWithdrawalsUnavailable] = useState(false)
   const [sellerPlans, setSellerPlans] = useState<MarketplaceSellerPlan[]>([])
   const [sellerPlan, setSellerPlan] = useState<MarketplaceSellerSubscription | null>(null)
   const [topUpAmount, setTopUpAmount] = useState('100000')
@@ -227,6 +231,12 @@ export function MarketplacePage({
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [cartBusy, cartOpen])
+
+  useEffect(() => {
+    onCartOpenChange?.(cartOpen)
+  }, [cartOpen, onCartOpenChange])
+
+  useEffect(() => () => onCartOpenChange?.(false), [onCartOpenChange])
 
   const latNum = Number(latitude)
   const lngNum = Number(longitude)
@@ -311,18 +321,21 @@ export function MarketplacePage({
 
   const loadFn = useCallback(async () => {
     if (tab === 'wallet') {
-      const [nextWallet, transactions, plans, currentPlan, nextWithdrawals] = await Promise.all([
+      const [nextWallet, transactions, plans, currentPlan, withdrawalResult] = await Promise.all([
         getMyWallet(),
         getMyWalletTransactions(50),
         getMarketplaceSellerPlans(),
         getMyMarketplaceSellerPlan(),
-        getMyWalletWithdrawals(),
+        getMyWalletWithdrawals()
+          .then((items) => ({ items, unavailable: false }))
+          .catch(() => ({ items: [] as WalletWithdrawal[], unavailable: true })),
       ])
       setWallet(nextWallet)
       setWalletTransactions(transactions)
       setSellerPlans(plans)
       setSellerPlan(currentPlan)
-      setWithdrawals(nextWithdrawals)
+      setWithdrawals(withdrawalResult.items)
+      setWithdrawalsUnavailable(withdrawalResult.unavailable)
       return
     }
     if (tab === 'orders') {
@@ -1267,6 +1280,11 @@ export function MarketplacePage({
                 </p>
               </div>
             </div>
+            {withdrawalsUnavailable ? (
+              <p className="wallet-withdraw-unavailable" role="status">
+                Rút tiền đang tạm khóa vì database chưa được cập nhật. Các chức năng số dư khác vẫn hoạt động bình thường.
+              </p>
+            ) : null}
             <div className="wallet-withdraw-grid">
               <input
                 className="form-input"
@@ -1308,7 +1326,7 @@ export function MarketplacePage({
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={Boolean(walletBusy) || !wallet || wallet.balance <= (wallet.minimumWithdrawalReserve ?? 20_000)}
+                disabled={withdrawalsUnavailable || Boolean(walletBusy) || !wallet || wallet.balance <= (wallet.minimumWithdrawalReserve ?? 20_000)}
                 onClick={() => void submitWithdrawal()}
               >
                 {walletBusy === 'withdraw' ? 'Đang gửi yêu cầu…' : 'Gửi yêu cầu rút tiền'}
@@ -1602,7 +1620,7 @@ export function MarketplacePage({
         </button>
       ) : null}
 
-      {cartOpen ? (
+      {cartOpen ? createPortal((
         <div
           className="food-cart-backdrop"
           role="presentation"
@@ -1707,7 +1725,7 @@ export function MarketplacePage({
             </footer>
           </section>
         </div>
-      ) : null}
+      ), document.body) : null}
 
       <MapToast
         message={toastMessage}

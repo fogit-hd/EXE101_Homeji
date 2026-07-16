@@ -149,6 +149,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [openChatIds, setOpenChatIds] = useState<string[]>([])
   const [homieDismiss, setHomieDismiss] = useState(0)
   const [homieOpen, setHomieOpen] = useState(false)
+  const [marketplaceCartOpen, setMarketplaceCartOpen] = useState(false)
   const [notificationRefreshKey, setNotificationRefreshKey] = useState(0)
   const [unreadBadge, setUnreadBadge] = useState(0)
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
@@ -922,6 +923,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         userLocation={userLocation}
         onRequestLocation={onLocate}
         locating={locating}
+        onMarketplaceCartOpenChange={setMarketplaceCartOpen}
         onNotificationReadStateChange={handleNotificationReadStateChange}
         onNotificationOpen={(n) => {
           if (
@@ -963,8 +965,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         onSearchUpdate={onAiSearchUpdate}
         dismissSignal={homieDismiss}
         onOpenChange={handleHomieOpenChange}
+        avoidRightContent={panelOpen && panelSection === 'marketplace'}
         hideFab={
           detailOpen ||
+          marketplaceCartOpen ||
           (isMobileSheetViewport() &&
             (panelOpen || chatInboxOpen || openChatIds.length > 0 || homieOpen))
         }

@@ -518,8 +518,10 @@
 
 .food-cart-backdrop {
   position: fixed;
-  z-index: 1100;
+  z-index: 12000;
   inset: 0;
+  width: 100vw;
+  height: 100dvh;
   display: flex;
   justify-content: flex-end;
   background: rgba(13, 31, 24, 0.42);
@@ -529,9 +531,12 @@
 
 .food-cart-drawer {
   width: min(440px, 100%);
-  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--surface-elevated);
   color: var(--text-heading);
   box-shadow: -18px 0 48px rgba(0, 0, 0, 0.2);
@@ -539,6 +544,7 @@
 }
 
 .food-cart-drawer__header {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -694,6 +700,10 @@
 }
 
 .food-cart-drawer__footer {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  flex: 0 0 auto;
   padding: 18px 20px max(18px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
   background: var(--surface-elevated);
@@ -1219,6 +1229,17 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.wallet-withdraw-unavailable {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, #d97706 35%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface-elevated));
+  color: #9a5b00;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .wallet-withdraw-grid .btn {

@@ -37,6 +37,8 @@ type Props = {
   onOpenChange?: (open: boolean) => void
   /** Ẩn nút Homie khi overlay mobile đang mở (chat, tab, v.v.). */
   hideFab?: boolean
+  /** Tự né sang mép trái khi một panel rộng đang chiếm phần nội dung bên phải. */
+  avoidRightContent?: boolean
 }
 
 type DisplayMessage = ChatbotMessage & {
@@ -210,6 +212,7 @@ export function MapChatbot({
   dismissSignal = 0,
   onOpenChange,
   hideFab = false,
+  avoidRightContent = false,
 }: Props) {
   const { profile } = useAuth()
   const reactId = useId()
@@ -239,6 +242,7 @@ export function MapChatbot({
     originY: number
     moved: boolean
   } | null>(null)
+  const autoAvoidOriginRef = useRef<FabPos | null>(null)
 
   const panel = computePanelLayout(fabPos)
   const welcome = welcomeLayout(fabPos, panel.side)
@@ -277,6 +281,26 @@ export function MapChatbot({
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  useEffect(() => {
+    if (sheetMode) return
+    if (avoidRightContent) {
+      setWelcomeDismissed(true)
+      setFabPos((current) => {
+        autoAvoidOriginRef.current ??= current
+        return clampFabPos({
+          x: 84,
+          y: current.y,
+        })
+      })
+      return
+    }
+
+    const previous = autoAvoidOriginRef.current
+    if (!previous) return
+    autoAvoidOriginRef.current = null
+    setFabPos(clampFabPos(previous))
+  }, [avoidRightContent, sheetMode])
 
   useEffect(() => {
     if (!open) return
@@ -346,6 +370,7 @@ export function MapChatbot({
 
     if (!drag.moved) {
       drag.moved = true
+      autoAvoidOriginRef.current = null
       setDragging(true)
       setWelcomeDismissed(true)
     }
