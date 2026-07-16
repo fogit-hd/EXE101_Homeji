@@ -31,7 +31,10 @@ function sectionForNotification(n: Notification): 'messages' | 'appointments' | 
     case NotificationType.SavedPostChanged:
       return 'listings'
     case NotificationType.MarketplaceOrderUpdated:
+    case NotificationType.MarketplaceTip:
       return 'marketplace'
+    case NotificationType.SafetyTip:
+      return 'listings'
     case NotificationType.LandlordVerificationUpdated:
       return 'profile'
     default:

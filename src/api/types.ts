@@ -80,6 +80,11 @@ export const NotificationType = {
   SavedPostChanged: 11,
   NewMatchingRentalPost: 12,
   MarketplaceOrderUpdated: 13,
+  /** Client-provided onboarding notifications; values stay outside the backend enum range. */
+  SystemAnnouncement: 1001,
+  Promotion: 1002,
+  MarketplaceTip: 1003,
+  SafetyTip: 1004,
   /** @deprecated aliases */
   RentalPostApproved: 1,
   RentalPostRejected: 2,
