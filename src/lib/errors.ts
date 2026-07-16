@@ -1,4 +1,5 @@
 import { ApiRequestError } from '../api/client'
+import { localizeApiMessage } from './apiMessagesVi'
 
 /** Lỗi mất mạng / không gọi được server */
 export class NetworkError extends Error {
@@ -111,12 +112,14 @@ export function getErrorMessage(err?: unknown, fallback?: string): string {
     }
     if (isSystemApiError(err)) {
       const detail = err.body.detail
-      if (detail && !isTechnicalMessage(detail)) return detail
+      if (detail && !isTechnicalMessage(detail)) return localizeApiMessage(detail)
       return SYSTEM_ERROR_MESSAGE
     }
     const fromErrors = firstValidationMessage(err.body.errors)
-    if (fromErrors && !isTechnicalMessage(fromErrors)) return fromErrors
-    if (err.body.detail && !isTechnicalMessage(err.body.detail)) return err.body.detail
+    if (fromErrors && !isTechnicalMessage(fromErrors)) return localizeApiMessage(fromErrors)
+    if (err.body.detail && !isTechnicalMessage(err.body.detail)) {
+      return localizeApiMessage(err.body.detail)
+    }
     return SYSTEM_ERROR_MESSAGE
   }
   if (err instanceof Error && err.message && !isTechnicalMessage(err.message)) {

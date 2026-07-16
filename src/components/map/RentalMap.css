@@ -430,6 +430,28 @@
   text-align: center;
 }
 
+.map-error-panel__dev {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #69727d;
+  text-align: left;
+}
+
+.map-error-panel__dev > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #69727d;
+  list-style-position: outside;
+}
+
+.map-error-panel__dev-body {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .map-error-panel__code {
   margin: 0;
   font-size: 12px;

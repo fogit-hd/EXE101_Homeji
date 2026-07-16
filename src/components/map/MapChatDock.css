@@ -4,9 +4,10 @@
   bottom: 20px;
   z-index: 10020;
   display: flex;
-  flex-direction: row;
+  /* Inbox first in DOM → row-reverse pins it on the right; threads grow leftward */
+  flex-direction: row-reverse;
   align-items: flex-end;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 12px;
   pointer-events: none;
 }
@@ -28,9 +29,16 @@
 .map-chat-dock__window.is-inbox {
   height: min(440px, calc(100dvh - 96px));
   width: min(340px, calc(100vw - 28px));
+  flex: 0 0 auto;
+  order: 0;
+}
+
+.map-chat-dock__window:not(.is-inbox) {
+  flex: 0 0 auto;
 }
 
 .map-chat-dock__window .map-messages {
+  width: 100%;
   height: 100%;
   min-height: 0;
 }
@@ -46,23 +54,82 @@
   }
 }
 
+/* Mobile + high zoom: full-screen sheet (absolute children — avoids flex-end stack bugs) */
 @media (max-width: 900px) {
   .map-chat-dock {
-    right: 10px;
-    left: 10px;
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-    flex-direction: column;
-    align-items: stretch;
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: block;
+    padding: 0;
+    pointer-events: none;
   }
 
-  .map-chat-dock__window,
+  .map-chat-dock__window {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    animation: map-chat-sheet-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
   .map-chat-dock__window.is-inbox {
     width: 100%;
-    height: min(58dvh, 520px);
+    height: 100%;
+    max-height: none;
   }
 
-  /* Stack: show only the most recent thread + inbox on small screens */
-  .map-chat-dock__window:not(.is-inbox):not(:first-child) {
+  .map-chat-dock__window .map-messages {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    transform: none;
+  }
+
+  /* Thread open → hide inbox list */
+  .map-chat-dock:has(.map-chat-dock__window:not(.is-inbox)) .map-chat-dock__window.is-inbox {
     display: none;
+  }
+
+  /* Only show the most recent thread (last window in dock) */
+  .map-chat-dock__window:not(.is-inbox):not(:last-child) {
+    display: none;
+  }
+
+  /* Active window receives pointer events */
+  .map-chat-dock__window {
+    pointer-events: auto;
+  }
+
+  .map-messages.is-floating .map-messages__float-head,
+  .map-messages.is-floating .map-messages__thread-head {
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+  }
+
+  .map-messages.is-floating .map-messages__composer-wrap {
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    background: var(--surface-elevated, #fff);
+  }
+}
+
+@keyframes map-chat-sheet-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-chat-dock__window {
+    animation: none;
   }
 }

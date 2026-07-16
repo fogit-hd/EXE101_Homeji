@@ -255,6 +255,14 @@
   background: var(--surface-elevated);
 }
 
+.gmaps-omnibox__bar.is-place-open .gmaps-omnibox__search {
+  display: none;
+}
+
+.gmaps-omnibox__bar.is-place-open .gmaps-omnibox__detail-close {
+  margin-left: auto;
+}
+
 /* Desktop: menu lives on the left rail, not inside search.
    Need higher specificity than `.gmaps-omnibox__icon-btn { display: grid }`. */
 .gmaps-omnibox__icon-btn.gmaps-omnibox__menu-btn {
@@ -330,6 +338,11 @@
 
 .gmaps-omnibox__search {
   color: var(--text-secondary);
+}
+
+.gmaps-omnibox__detail-close {
+  color: var(--text-heading);
+  font-size: 1.35rem;
 }
 
 .gmaps-omnibox__dropdown {

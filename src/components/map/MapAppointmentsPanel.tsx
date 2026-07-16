@@ -11,7 +11,9 @@ import {
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
+import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
 import { formatDate, viewingAppointmentStatusLabel } from '../../lib/labels'
+import { isoToLocalInputValue } from '../../lib/scheduleDateTime'
 import './MapAppointmentsPanel.css'
 
 type Props = {
@@ -60,6 +62,11 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
   const submitReschedule = async (id: string) => {
     if (!rescheduleAt) {
       setError('Chọn thời gian mới.')
+      return
+    }
+    const selected = new Date(rescheduleAt)
+    if (Number.isNaN(selected.getTime()) || selected.getTime() <= Date.now()) {
+      setError('Thời gian xem phòng phải ở tương lai.')
       return
     }
     await run(id, () =>
@@ -155,7 +162,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
                     disabled={busyId === item.id}
                     onClick={() => {
                       setRescheduleId(item.id)
-                      setRescheduleAt(item.scheduledAt.slice(0, 16))
+                      setRescheduleAt(isoToLocalInputValue(item.scheduledAt))
                     }}
                   >
                     Đổi lịch
@@ -165,31 +172,33 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
 
               {rescheduleId === item.id ? (
                 <div className="map-appointments__reschedule">
-                  <input
-                    type="datetime-local"
-                    className="form-input"
+                  <ScheduleDateTimePicker
+                    label="Thời gian mới"
+                    className="map-appointments__reschedule-picker"
                     value={rescheduleAt}
-                    onChange={(e) => setRescheduleAt(e.target.value)}
-                    aria-label="Thời gian mới"
+                    onChange={setRescheduleAt}
                   />
-                  <button
-                    type="button"
-                    className="map-motion-press is-primary"
-                    disabled={busyId === item.id}
-                    onClick={() => void submitReschedule(item.id)}
-                  >
-                    Lưu lịch mới
-                  </button>
-                  <button
-                    type="button"
-                    className="map-motion-press"
-                    onClick={() => {
-                      setRescheduleId(null)
-                      setRescheduleAt('')
-                    }}
-                  >
-                    Hủy
-                  </button>
+                  <div className="map-appointments__reschedule-actions">
+                    <button
+                      type="button"
+                      className="map-appointments__reschedule-btn map-appointments__reschedule-btn--save map-motion-press"
+                      disabled={busyId === item.id}
+                      onClick={() => void submitReschedule(item.id)}
+                    >
+                      Lưu lịch mới
+                    </button>
+                    <button
+                      type="button"
+                      className="map-appointments__reschedule-btn map-appointments__reschedule-btn--cancel map-motion-press"
+                      disabled={busyId === item.id}
+                      onClick={() => {
+                        setRescheduleId(null)
+                        setRescheduleAt('')
+                      }}
+                    >
+                      Hủy
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </li>
