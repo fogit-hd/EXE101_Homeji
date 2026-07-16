@@ -133,6 +133,51 @@
   color: var(--text-secondary);
 }
 
+.profile-hero__avatar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 9px;
+}
+
+.profile-avatar-upload {
+  min-height: 40px;
+  border: 1px solid color-mix(in srgb, var(--maps-blue, #1a73e8) 48%, var(--border));
+  border-radius: 9px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: color-mix(in srgb, var(--maps-blue, #1a73e8) 10%, var(--surface));
+  color: var(--maps-blue, #1a73e8);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-avatar-upload:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--maps-blue, #1a73e8) 17%, var(--surface));
+}
+
+.profile-avatar-upload:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--maps-blue, #1a73e8) 32%, transparent);
+  outline-offset: 2px;
+}
+
+.profile-avatar-upload:disabled {
+  opacity: 0.68;
+  cursor: wait;
+}
+
+.profile-avatar-help {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .profile-section {
   display: flex;
   flex-direction: column;

@@ -43,6 +43,9 @@ import './ProfilePage.css'
 
 type ProfileTab = 'basic' | 'lifestyle' | 'verify'
 
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024
+const AVATAR_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
 function initialsFromName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
@@ -129,6 +132,20 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   const handleAvatarPick = async (file: File | null) => {
     if (!file) return
+    if (!AVATAR_CONTENT_TYPES.has(file.type)) {
+      showToast('Ảnh đại diện chỉ hỗ trợ JPG, PNG hoặc WebP.', 'error')
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+      return
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      showToast('Ảnh đại diện không được lớn hơn 5 MB.', 'error')
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+      return
+    }
+
+    const previousAvatarPath = avatarPath
+    const previewUrl = URL.createObjectURL(file)
+    setAvatarPath(previewUrl)
     setAvatarBusy(true)
     try {
       const uploaded = await uploadImages([file], 'avatars')
@@ -147,8 +164,10 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
       await refreshProfile()
       showToast('Đã cập nhật ảnh đại diện.', 'success')
     } catch (err) {
+      setAvatarPath(previousAvatarPath)
       showToast(getErrorMessage(err, 'Tải ảnh thất bại'), 'error')
     } finally {
+      URL.revokeObjectURL(previewUrl)
       setAvatarBusy(false)
       if (avatarInputRef.current) avatarInputRef.current.value = ''
     }
@@ -254,13 +273,13 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
       ) : null}
 
       <section className="profile-hero map-motion-fade-up">
-        <div className="profile-hero__avatar-wrap">
+        <div className="profile-hero__avatar-wrap" aria-busy={avatarBusy}>
           <button
             type="button"
             className="profile-hero__avatar map-motion-press"
             onClick={() => avatarInputRef.current?.click()}
             disabled={avatarBusy}
-            aria-label="Đổi ảnh đại diện"
+            aria-label={avatarPath ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện lên'}
           >
             {avatarPath ? (
               <img src={avatarPath} alt="" className="profile-hero__avatar-img" />
@@ -272,7 +291,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
           <input
             ref={avatarInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             hidden
             onChange={(e) => void handleAvatarPick(e.target.files?.[0] ?? null)}
           />
@@ -311,6 +330,23 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
               ? `Cập nhật ${formatDate(profile.updatedAt)}`
               : 'Hoàn thiện hồ sơ để dùng tốt hơn các tính năng Homeji'}
           </p>
+          <div className="profile-hero__avatar-actions">
+            <button
+              type="button"
+              className="profile-avatar-upload map-motion-press"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarBusy}
+            >
+              <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 3a1 1 0 0 1 1 1v7.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 14a1 1 0 0 1 1 1v3h12v-3a1 1 0 1 1 2 0v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a1 1 0 0 1 1-1Z"
+                />
+              </svg>
+              {avatarBusy ? 'Đang tải ảnh…' : avatarPath ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'}
+            </button>
+            <span className="profile-avatar-help">JPG, PNG hoặc WebP · tối đa 5 MB</span>
+          </div>
         </div>
       </section>
 
