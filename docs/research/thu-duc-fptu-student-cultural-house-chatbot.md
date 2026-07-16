@@ -1,7 +1,7 @@
 # Dữ liệu nền chatbot: khu vực Thủ Đức cũ, FPTU TP.HCM và Nhà Văn hóa Sinh viên
 
-> Ngày rà soát: 16/07/2026  
-> Phạm vi: dữ kiện địa danh và hai mốc sinh viên hiện hữu để chatbot hiểu cách gọi mới/cũ khi tư vấn phòng trọ.  
+> Ngày rà soát: 16/07/2026
+> Phạm vi: dữ kiện địa danh và hai mốc sinh viên hiện hữu để chatbot hiểu cách gọi mới/cũ khi tư vấn phòng trọ.
 > Nguyên tắc: ưu tiên nguồn cơ quan nhà nước, trường/cơ sở chủ quản; không tự suy ra khoảng cách hoặc thời gian di chuyển.
 
 ## 1. Kết luận dùng ngay
