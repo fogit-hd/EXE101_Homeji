@@ -10,6 +10,10 @@ import { formatDate, notificationTypeLabel } from '../lib/labels'
 import { NotificationType } from '../api/types'
 import './MarketplacePage.css'
 
+export type NotificationReadChange =
+  | { kind: 'one'; notification: Notification }
+  | { kind: 'all' }
+
 function sectionForNotification(n: Notification): 'messages' | 'appointments' | 'invitations' | 'listings' | 'marketplace' | 'profile' | null {
   switch (n.type) {
     case NotificationType.NewMessage:
@@ -39,10 +43,12 @@ export function NotificationsPage({
   embedded = false,
   refreshKey = 0,
   onOpenRelated,
+  onReadStateChange,
 }: {
   embedded?: boolean
   refreshKey?: number
   onOpenRelated?: (notification: Notification) => void
+  onReadStateChange?: (change: NotificationReadChange) => void
 }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadOnly, setUnreadOnly] = useState(false)
@@ -57,12 +63,17 @@ export function NotificationsPage({
   )
 
   const handleMarkRead = async (id: string) => {
+    const before = notifications.find((n) => n.id === id)
     const updated = await markNotificationRead(id)
     setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)))
+    if (before && !before.isRead) {
+      onReadStateChange?.({ kind: 'one', notification: before })
+    }
   }
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead()
+    onReadStateChange?.({ kind: 'all' })
     void reload()
   }
 

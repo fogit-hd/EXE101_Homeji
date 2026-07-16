@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   createViewingAppointment,
   getRentalPostReviews,
@@ -18,6 +18,7 @@ import { maneuverGlyph, type MapRouteStep } from '../../lib/mapRoutes'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { type MapPlaceDetails } from '../../lib/mapPlace'
 import { streetViewStaticUrl } from '../../lib/mapStaticMedia'
+import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
 import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
 
@@ -168,7 +169,8 @@ export function MapPlaceDetailPanel({
   const tabs = isListing ? listingTabs : placeTabs
   const [tab, setTab] = useState<DetailTab>('overview')
   const [tabPhase, setTabPhase] = useState<'enter' | 'exit'>('enter')
-  const [tabNonce, setTabNonce] = useState(0)
+  const panelRef = useRef<HTMLElement | null>(null)
+  const tabSwitchScrollTopRef = useRef<number | null>(null)
   const [reviews, setReviews] = useState<RentalReviewCollection | null>(null)
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewRating, setReviewRating] = useState(5)
@@ -181,25 +183,31 @@ export function MapPlaceDetailPanel({
   const [actionMsg, setActionMsg] = useState<string | null>(null)
   const [actionTone, setActionTone] = useState<'ok' | 'err'>('ok')
   const [streetViewFailed, setStreetViewFailed] = useState(false)
+  const [heroImageFailed, setHeroImageFailed] = useState(false)
 
   useEffect(() => {
     if (open) {
       setTab('overview')
       setTabPhase('enter')
-      setTabNonce((n) => n + 1)
       setScheduleOpen(false)
       setActionMsg(null)
       setStreetViewFailed(false)
+      setHeroImageFailed(false)
     }
   }, [open, place?.placeId, post?.id])
 
   const switchTab = (next: string) => {
     if (next === tab) return
+    tabSwitchScrollTopRef.current = panelRef.current?.scrollTop ?? null
     setTabPhase('exit')
     window.setTimeout(() => {
       setTab(next)
       setTabPhase('enter')
-      setTabNonce((n) => n + 1)
+      const savedScrollTop = tabSwitchScrollTopRef.current
+      if (savedScrollTop == null) return
+      window.requestAnimationFrame(() => {
+        if (panelRef.current) panelRef.current.scrollTop = savedScrollTop
+      })
     }, 180)
   }
 
@@ -256,6 +264,20 @@ export function MapPlaceDetailPanel({
     if (!destination || streetViewFailed) return null
     return streetViewStaticUrl(destination, { width: 640, height: 280 })
   }, [destination, streetViewFailed])
+
+  const resolvedHeroUrl = useMemo(() => {
+    if (heroUrl && !heroImageFailed) return heroUrl
+    if (streetViewUrl) return streetViewUrl
+    return null
+  }, [heroUrl, heroImageFailed, streetViewUrl])
+
+  const handleHeroError = () => {
+    if (heroUrl && !heroImageFailed && resolvedHeroUrl === heroUrl) {
+      setHeroImageFailed(true)
+      return
+    }
+    setStreetViewFailed(true)
+  }
 
   const handleShare = async () => {
     const text = isListing
@@ -375,12 +397,17 @@ export function MapPlaceDetailPanel({
     listing?.ownerBadge || listingSummary?.ownerBadge || null
   const isPremium =
     listing?.isOwnerPremium || listingSummary?.isOwnerPremium || false
+  const ownerBadgeText = ownerBadge?.trim() || ''
+  const ownerBadgeIsPremium = /premium/i.test(ownerBadgeText)
+  const showPremiumBadge = isPremium || ownerBadgeIsPremium
+  const showOwnerBadge = ownerBadgeText.length > 0 && !ownerBadgeIsPremium
 
   return (
     <aside
+      ref={panelRef}
       className={`map-detail-panel${open ? ' is-visible' : ''}${isListing ? ' is-listing' : ' is-place'}`}
       role="dialog"
-      aria-modal="false"
+      aria-modal="true"
       aria-hidden={!open}
       aria-label={title}
     >
@@ -392,10 +419,15 @@ export function MapPlaceDetailPanel({
         ×
       </button>
 
-      <div className="map-detail-panel__scroll">
+      <div className="map-detail-panel__intro">
         <div className="map-detail-panel__hero">
-          {heroUrl ? (
-            <img src={heroUrl} alt="" className="map-detail-panel__hero-img" />
+          {resolvedHeroUrl ? (
+            <img
+              src={resolvedHeroUrl}
+              alt=""
+              className="map-detail-panel__hero-img"
+              onError={handleHeroError}
+            />
           ) : (
             <div className="map-detail-panel__hero-empty" aria-hidden>
               {loading ? 'Đang tải…' : isListing ? 'Chưa có ảnh' : 'Google Places'}
@@ -420,11 +452,11 @@ export function MapPlaceDetailPanel({
           ) : null}
 
           <p className="map-detail-panel__category">{category}</p>
-          {isListing && (isPremium || ownerBadge || listing?.isOwnerVerified) ? (
+          {isListing && (showPremiumBadge || showOwnerBadge || listing?.isOwnerVerified) ? (
             <p className="map-detail-panel__owner-badges">
-              {listing?.isOwnerVerified ? <span>Đã xác minh</span> : null}
-              {isPremium ? <span>Premium</span> : null}
-              {ownerBadge ? <span>{ownerBadge}</span> : null}
+              {listing?.isOwnerVerified ? <span className="is-verified">Đã xác minh</span> : null}
+              {showPremiumBadge ? <span className="is-premium">Premium</span> : null}
+              {showOwnerBadge ? <span className="is-owner">{ownerBadgeText}</span> : null}
             </p>
           ) : null}
         </div>
@@ -539,14 +571,11 @@ export function MapPlaceDetailPanel({
         ) : null}
 
         <div className={`map-detail-schedule${scheduleOpen ? ' is-visible' : ''}`} aria-hidden={!scheduleOpen}>
-          <label>
-            Thời gian xem
-            <input
-              type="datetime-local"
-              value={scheduleAt}
-              onChange={(e) => setScheduleAt(e.target.value)}
-            />
-          </label>
+          <ScheduleDateTimePicker
+            label="Thời gian xem"
+            value={scheduleAt}
+            onChange={setScheduleAt}
+          />
           <label>
             Ghi chú
             <input
@@ -573,32 +602,29 @@ export function MapPlaceDetailPanel({
             {actionMsg}
           </p>
         ) : null}
+      </div>
 
-        <div className="map-detail-panel__tabs" role="tablist">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              className={`map-detail-panel__tab${tab === t.id ? ' is-active' : ''}`}
-              onClick={() => switchTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="map-detail-panel__tabs" role="tablist">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            className={`map-detail-panel__tab${tab === t.id ? ' is-active' : ''}`}
+            onClick={() => switchTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-        <div
-          key={`${tab}-${tabNonce}`}
-          className={`map-detail-panel__body map-detail-panel__body--${tabPhase}`}
-          role="tabpanel"
-        >
+      <div className={`map-detail-panel__content map-detail-panel__body--${tabPhase}`} role="tabpanel">
           {loading ? <p className="map-detail-panel__loading">Đang tải thông tin…</p> : null}
 
           {!loading && tab === 'overview' && isListing && post ? (
             <div className="map-detail-panel__section">
-              {streetViewUrl ? (
+              {streetViewUrl && resolvedHeroUrl !== streetViewUrl ? (
                 <div className="map-detail-panel__street">
                   <img
                     src={streetViewUrl}
@@ -649,7 +675,7 @@ export function MapPlaceDetailPanel({
 
           {!loading && tab === 'overview' && !isListing && place ? (
             <div className="map-detail-panel__section">
-              {streetViewUrl ? (
+              {streetViewUrl && resolvedHeroUrl !== streetViewUrl ? (
                 <div className="map-detail-panel__street">
                   <img
                     src={streetViewUrl}
@@ -792,7 +818,7 @@ export function MapPlaceDetailPanel({
           ) : null}
 
           {!loading && tab === 'amenities' && listing ? (
-            <div className="map-detail-panel__section">
+            <div className="map-detail-panel__section map-detail-panel__amenities">
               {listing.amenities.length === 0 ? (
                 <p className="map-detail-panel__empty">Chưa cập nhật tiện ích.</p>
               ) : (
@@ -803,10 +829,10 @@ export function MapPlaceDetailPanel({
                 </ul>
               )}
               {listing.houseRules ? (
-                <>
+                <div className="map-detail-panel__rules">
                   <h3 className="map-detail-panel__subhead">Nội quy</h3>
                   <p>{listing.houseRules}</p>
-                </>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -830,7 +856,6 @@ export function MapPlaceDetailPanel({
               )}
             </div>
           ) : null}
-        </div>
       </div>
     </aside>
   )

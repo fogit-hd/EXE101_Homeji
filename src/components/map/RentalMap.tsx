@@ -621,7 +621,22 @@ function RentalMapComponent({
         }),
         renderer: clusterRenderer,
         onClusterClick: (event, cluster, clusterMap) => {
-          event.stop()
+          // MarkerClusterer may emit different click event shapes depending on marker type/version.
+          // Guard all stop/prevent methods to avoid runtime errors.
+          const evt = event as {
+            stop?: () => void
+            stopPropagation?: () => void
+            preventDefault?: () => void
+            domEvent?: {
+              stopPropagation?: () => void
+              preventDefault?: () => void
+            }
+          }
+          evt.stop?.()
+          evt.stopPropagation?.()
+          evt.preventDefault?.()
+          evt.domEvent?.stopPropagation?.()
+          evt.domEvent?.preventDefault?.()
           const bounds = cluster.bounds
           if (bounds) clusterMap.fitBounds(bounds, 72)
         },
@@ -1198,7 +1213,7 @@ function RentalMapComponent({
     return (
       <div className="rental-map rental-map--placeholder">
         <p>
-          Thêm <code>VITE_GOOGLE_MAPS_API_KEY</code> vào file <code>.env</code>.
+          Bản đồ chưa được cấu hình trên hệ thống. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.
         </p>
       </div>
     )

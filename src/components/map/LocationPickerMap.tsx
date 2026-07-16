@@ -171,7 +171,7 @@ function LocationPickerMapComponent({
   if (!apiKey) {
     return (
       <div className="map-placeholder-msg">
-        Thêm <code>VITE_GOOGLE_MAPS_API_KEY</code> vào file .env.
+        Bản đồ chưa được cấu hình trên hệ thống. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.
       </div>
     )
   }

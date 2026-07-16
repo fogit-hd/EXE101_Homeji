@@ -1,6 +1,24 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ChatShareTarget } from './MapMessagesPanel'
 import { MapMessagesPanel } from './MapMessagesPanel'
 import './MapChatDock.css'
+
+const SHEET_MEDIA = '(max-width: 900px)'
+
+function useMobileSheetMode(): boolean {
+  const [sheet, setSheet] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(SHEET_MEDIA).matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(SHEET_MEDIA)
+    const sync = () => setSheet(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+  return sheet
+}
 
 const MAX_OPEN_CHATS = 3
 
@@ -42,12 +60,26 @@ export function MapChatDock({
   onFocusMap,
   refreshKey = 0,
 }: Props) {
+  const mobileSheet = useMobileSheetMode()
   const chats = openChatIds.slice(-MAX_OPEN_CHATS)
 
   if (!inboxOpen && chats.length === 0) return null
 
-  return (
+  const dock = (
     <div className="map-chat-dock" aria-label="Cửa sổ chat Homeji">
+      {inboxOpen ? (
+        <div className="map-chat-dock__window is-inbox">
+          <MapMessagesPanel
+            layout="floating-inbox"
+            onCloseWindow={onCloseInbox}
+            refreshKey={refreshKey}
+            onPickConversation={(id) => {
+              onOpenChat(id)
+            }}
+          />
+        </div>
+      ) : null}
+
       {chats.map((id) => (
         <div key={id} className="map-chat-dock__window">
           <MapMessagesPanel
@@ -62,19 +94,12 @@ export function MapChatDock({
           />
         </div>
       ))}
-
-      {inboxOpen ? (
-        <div className="map-chat-dock__window is-inbox">
-          <MapMessagesPanel
-            layout="floating-inbox"
-            onCloseWindow={onCloseInbox}
-            refreshKey={refreshKey}
-            onPickConversation={(id) => {
-              onOpenChat(id)
-            }}
-          />
-        </div>
-      ) : null}
     </div>
   )
+
+  if (mobileSheet && typeof document !== 'undefined') {
+    return createPortal(dock, document.body)
+  }
+
+  return dock
 }

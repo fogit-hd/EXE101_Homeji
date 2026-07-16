@@ -2,6 +2,46 @@
   z-index: 9999;
 }
 
+.map-app-panel__close {
+  display: none;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-input, #f1f3f4);
+  color: var(--text-heading);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-app-panel__close:hover {
+  background: color-mix(in srgb, var(--maps-blue, #1a73e8) 12%, var(--surface-input, #f1f3f4));
+}
+
+.map-app-panel__close:focus-visible {
+  outline: 2px solid var(--maps-blue, #1a73e8);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .map-app-panel__close {
+    display: grid;
+    place-items: center;
+  }
+
+  .home-list-panel.map-app-panel .home-list-header__top {
+    align-items: center;
+  }
+
+  .home-list-panel.map-app-panel .home-list-header {
+    padding-top: max(14px, env(safe-area-inset-top, 0px));
+  }
+}
+
 .map-app-panel__section {
   display: flex;
   flex-direction: column;

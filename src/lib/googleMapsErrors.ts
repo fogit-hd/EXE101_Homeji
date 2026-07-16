@@ -10,6 +10,13 @@ export type MapsErrorCode =
 export type MapsErrorDiagnosis = {
   code: MapsErrorCode
   codes: MapsErrorCode[]
+  /** Tiêu đề ngắn, dễ hiểu cho người dùng app */
+  userTitle: string
+  /** Giải thích bằng ngôn ngữ thường — không cần biết Google Cloud */
+  userMessage: string
+  /** Việc người dùng có thể tự làm ngay */
+  userSteps: string[]
+  /** Chi tiết cho người cấu hình API key */
   title: string
   googleMessage: string
   steps: string[]
@@ -49,6 +56,54 @@ function detectCodes(text: string): MapsErrorCode[] {
   return found.length > 0 ? [...new Set(found)] : ['Unknown']
 }
 
+function isLikelyNetworkIssue(text: string): boolean {
+  return /FETCH_FAILED|failed to fetch|network|load failed|ERR_INTERNET|ETIMEDOUT/i.test(text)
+}
+
+function buildUserFacing(
+  codes: MapsErrorCode[],
+  googleMessage: string,
+): Pick<MapsErrorDiagnosis, 'userTitle' | 'userMessage' | 'userSteps'> {
+  if (isLikelyNetworkIssue(googleMessage)) {
+    return {
+      userTitle: 'Không tải được bản đồ',
+      userMessage:
+        'Thiết bị có thể đang mất kết nối mạng hoặc mạng không ổn định, nên bản đồ chưa hiển thị được.',
+      userSteps: [
+        'Kiểm tra Wi‑Fi hoặc dữ liệu di động.',
+        'Tải lại trang (F5 hoặc nút bên dưới).',
+        'Nếu vẫn lỗi, thử lại sau vài phút.',
+      ],
+    }
+  }
+
+  const isConfigIssue = codes.some((c) => c !== 'Unknown')
+
+  if (isConfigIssue) {
+    return {
+      userTitle: 'Bản đồ tạm thời không khả dụng',
+      userMessage:
+        'Tính năng bản đồ trên Homeji đang được cấu hình hoặc bảo trì. Bạn vẫn có thể xem tin đăng và dùng các chức năng khác bình thường.',
+      userSteps: [
+        'Tải lại trang để thử lại.',
+        'Nếu lỗi kéo dài, báo cho quản trị viên hoặc bộ phận hỗ trợ của website.',
+        'Khi liên hệ, bạn có thể gửi nút “Copy báo lỗi” ở mục chi tiết kỹ thuật bên dưới.',
+      ],
+    }
+  }
+
+  return {
+    userTitle: 'Không hiển thị được bản đồ',
+    userMessage:
+      'Chúng tôi chưa tải được bản đồ. Có thể do kết nối mạng hoặc hệ thống đang gặp sự cố tạm thời.',
+    userSteps: [
+      'Kiểm tra kết nối Internet rồi tải lại trang.',
+      'Thử lại sau vài phút.',
+      'Nếu vẫn không được, liên hệ bộ phận hỗ trợ.',
+    ],
+  }
+}
+
 function buildDiagnosis(codes: MapsErrorCode[], googleMessage: string): MapsErrorDiagnosis {
   const baseLinks = [
     { label: 'Credentials (API keys)', url: CONSOLE.credentials },
@@ -59,7 +114,11 @@ function buildDiagnosis(codes: MapsErrorCode[], googleMessage: string): MapsErro
   const links: { label: string; url: string }[] = []
   const titles: string[] = []
 
-  const add = (partial: Omit<MapsErrorDiagnosis, 'code' | 'codes' | 'googleMessage'>) => {
+  const add = (partial: {
+    title: string
+    steps: string[]
+    consoleLinks: { label: string; url: string }[]
+  }) => {
     titles.push(partial.title)
     for (const s of partial.steps) {
       if (!steps.includes(s)) steps.push(s)
@@ -162,9 +221,12 @@ function buildDiagnosis(codes: MapsErrorCode[], googleMessage: string): MapsErro
     }
   }
 
+  const userFacing = buildUserFacing(codes, googleMessage)
+
   return {
     code: codes[0] ?? 'Unknown',
     codes,
+    ...userFacing,
     title: titles.join(' · '),
     googleMessage,
     steps,

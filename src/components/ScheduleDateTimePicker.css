@@ -1,0 +1,311 @@
+.schedule-dt {
+  position: relative;
+  display: grid;
+  gap: 4px;
+}
+
+.schedule-dt__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.schedule-dt__trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-input, #f1f3f4);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.schedule-dt__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--maps-blue, #1a73e8) 45%, var(--border));
+}
+
+.schedule-dt.is-open .schedule-dt__trigger,
+.schedule-dt__trigger:focus-visible {
+  outline: none;
+  border-color: var(--maps-blue, #1a73e8);
+  box-shadow: 0 0 0 2px var(--maps-blue-soft, rgba(26, 115, 232, 0.16));
+}
+
+.schedule-dt__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.schedule-dt__trigger-icon {
+  display: inline-flex;
+  color: var(--maps-blue-text, #1967d2);
+  flex-shrink: 0;
+}
+
+.schedule-dt__trigger-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.schedule-dt__trigger-placeholder {
+  color: var(--text-secondary);
+}
+
+.schedule-dt__trigger-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-dt__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 212px;
+  max-width: 100%;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-md);
+  animation: schedule-dt-in 0.15s var(--ease-out, ease) both;
+}
+
+@keyframes schedule-dt-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes schedule-dt-in-mobile {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.schedule-dt__top {
+  display: grid;
+  gap: 2px;
+}
+
+.schedule-dt__preview {
+  margin: 0;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--maps-blue-text, #1967d2);
+  line-height: 1.2;
+}
+
+.schedule-dt__calendar {
+  display: grid;
+  gap: 2px;
+}
+
+.schedule-dt__cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.schedule-dt__month {
+  flex: 1;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-heading, var(--text-primary));
+  white-space: nowrap;
+}
+
+.schedule-dt__nav {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.schedule-dt__nav:hover {
+  background: var(--maps-hover);
+}
+
+.schedule-dt__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+}
+
+.schedule-dt__weekdays span {
+  text-align: center;
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.schedule-dt__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+}
+
+.schedule-dt__day {
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.schedule-dt__day:hover {
+  background: var(--maps-hover);
+}
+
+.schedule-dt__day.is-outside {
+  color: var(--text-secondary);
+  opacity: 0.45;
+}
+
+.schedule-dt__day.is-today:not(.is-selected) {
+  box-shadow: inset 0 0 0 1px var(--maps-blue, #1a73e8);
+}
+
+.schedule-dt__day.is-selected {
+  background: var(--maps-blue, #1a73e8);
+  color: #fff;
+  font-weight: 700;
+}
+
+.schedule-dt__footer {
+  display: grid;
+  gap: 4px;
+  padding-top: 2px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.schedule-dt__time-fields {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.schedule-dt__select {
+  height: 24px;
+  min-width: 0;
+  width: 52px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.schedule-dt__time-sep {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.schedule-dt__quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.schedule-dt__quick-btn {
+  height: 22px;
+  padding: 0 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.schedule-dt__quick-btn:hover {
+  background: var(--maps-hover);
+  color: var(--text-primary);
+}
+
+.schedule-dt__quick-btn.is-accent {
+  border-color: color-mix(in srgb, var(--maps-blue, #1a73e8) 35%, var(--border));
+  color: var(--maps-blue-text, #1967d2);
+  background: var(--maps-blue-soft, rgba(26, 115, 232, 0.1));
+}
+
+.schedule-dt__confirm {
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--maps-blue, #1a73e8);
+  color: #fff;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.schedule-dt__confirm:hover {
+  background: color-mix(in srgb, var(--maps-blue, #1a73e8) 88%, #000);
+}
+
+@media (max-width: 420px) {
+  .schedule-dt__panel {
+    position: fixed;
+    top: auto;
+    bottom: calc(var(--safe-bottom, 0px) + 8px);
+    left: 50%;
+    right: auto;
+    width: min(212px, calc(100vw - 24px));
+    transform: translateX(-50%);
+    animation-name: schedule-dt-in-mobile;
+    max-height: min(70vh, 360px);
+    overflow: auto;
+  }
+}

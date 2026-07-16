@@ -106,14 +106,63 @@
 }
 
 .map-appointments__reschedule {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-input, #f1f3f4) 42%, transparent);
+  display: grid;
+  gap: 12px;
 }
 
-.map-appointments__reschedule .form-input {
-  flex: 1 1 180px;
-  min-width: 0;
+.map-appointments__reschedule-picker {
+  width: 100%;
+}
+
+.map-appointments__reschedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.map-appointments__reschedule-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.map-appointments__reschedule-btn--save {
+  border: 0;
+  background: var(--maps-blue, #1a73e8);
+  color: #fff;
+}
+
+.map-appointments__reschedule-btn--save:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--maps-blue, #1a73e8) 88%, #000);
+}
+
+.map-appointments__reschedule-btn--cancel {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.map-appointments__reschedule-btn--cancel:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--border) 28%, transparent);
+  color: var(--text-primary, inherit);
+}
+
+.map-appointments__reschedule-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

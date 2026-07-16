@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { SavedPostsPage } from '../../pages/SavedPostsPage'
 import { RoommateInvitationsPage } from '../../pages/RoommateInvitationsPage'
-import { NotificationsPage } from '../../pages/NotificationsPage'
+import { NotificationsPage, type NotificationReadChange } from '../../pages/NotificationsPage'
 import { PaymentPage } from '../../pages/PaymentPage'
 import { ProfilePage } from '../../pages/ProfilePage'
 import { MarketplacePage } from '../../pages/MarketplacePage'
@@ -106,6 +106,7 @@ type Props = {
   listingsContent: ReactNode
   notificationRefreshKey?: number
   onNotificationOpen?: (notification: import('../../api').Notification) => void
+  onNotificationReadStateChange?: (change: NotificationReadChange) => void
   onMarketplacePostsForMap?: (pins: import('./RentalMap').MarketplaceMapPin[]) => void
   onMarketplaceFocusMap?: (loc: { lat: number; lng: number; zoom?: number }) => void
   selectedMarketplaceId?: string | null
@@ -126,6 +127,7 @@ export function MapAppPanel({
   listingsContent,
   notificationRefreshKey = 0,
   onNotificationOpen,
+  onNotificationReadStateChange,
   onMarketplacePostsForMap,
   onMarketplaceFocusMap,
   selectedMarketplaceId = null,
@@ -172,7 +174,10 @@ export function MapAppPanel({
 
   useEffect(() => {
     if (!open) return
+
+    const sheetQuery = window.matchMedia('(max-width: 900px)')
     const onPointerDown = (e: PointerEvent) => {
+      if (sheetQuery.matches) return
       const el = e.target
       if (!(el instanceof Element)) return
       if (el.closest(OUTSIDE_CLOSE_IGNORE)) return
@@ -187,13 +192,20 @@ export function MapAppPanel({
     displayed === 'listings' && listingsSubtitle ? listingsSubtitle : meta.subtitle
   const isMessages = displayed === 'messages'
   const isWide = WIDE_MAP_SECTIONS.has(displayed)
+  const isListings = displayed === 'listings'
+  const isWanted = displayed === 'wanted'
+  const slideFromRight = isListings || isWanted
 
   return (
     <aside
       id="home-list-panel"
       className={`home-list-panel map-app-panel${open ? ' is-visible' : ''}${
         isMessages ? ' is-messages' : ''
-      }${isWide ? ' is-wide' : ''}${displayed === 'marketplace' ? ' is-marketplace' : ''}`}
+      }${isListings ? ' is-listings' : ''}${isWanted ? ' is-wanted' : ''}${
+        slideFromRight ? ' is-slide-right' : ''
+      }${isWide ? ' is-wide' : ''}${
+        displayed === 'marketplace' ? ' is-marketplace' : ''
+      }`}
       aria-hidden={!open}
     >
       {!isMessages ? (
@@ -205,6 +217,14 @@ export function MapAppPanel({
             >
               {meta.title}
             </h1>
+            <button
+              type="button"
+              className="map-app-panel__close map-motion-press"
+              aria-label="Đóng"
+              onClick={onClose}
+            >
+              ✕
+            </button>
           </div>
           {subtitle ? (
             <p
@@ -232,6 +252,7 @@ export function MapAppPanel({
               embedded
               refreshKey={notificationRefreshKey}
               onOpenRelated={onNotificationOpen}
+              onReadStateChange={onNotificationReadStateChange}
             />
           ) : null}
           {displayed === 'appointments' ? <MapAppointmentsPanel embedded /> : null}

@@ -400,8 +400,10 @@ export function HorizontalScrollShowcase() {
           return
         }
 
-        // Horizontal swipe → drive vertical scroll that scrubs the track
-        e.preventDefault()
+        // Horizontal swipe → drive vertical scroll that scrubs the track.
+        // Some browsers may dispatch non-cancelable touch events while scrolling.
+        // Guarding avoids console intervention warnings.
+        if (e.cancelable) e.preventDefault()
         sticky.classList.add('is-h-dragging')
         sticky.classList.add('has-h-swiped')
 

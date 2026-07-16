@@ -80,6 +80,10 @@ type Props = {
   unreadNotificationCount?: number
   pinLayers?: MapPinLayers
   onTogglePinLayer?: (layer: MapPinLayer) => void
+  /** Close currently opened place/listing detail panel. */
+  onClosePlaceDetail?: () => void
+  /** Whether place/listing detail panel is currently visible. */
+  placeDetailOpen?: boolean
 }
 
 function loadRecent(): MapOmniboxSuggestion[] {
@@ -255,6 +259,8 @@ export function MapOmnibox({
   unreadNotificationCount = 0,
   pinLayers,
   onTogglePinLayer,
+  onClosePlaceDetail,
+  placeDetailOpen = false,
 }: Props) {
   const { profile } = useAuth()
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
@@ -440,6 +446,7 @@ export function MapOmnibox({
   }
 
   const closeNav = () => setNavOpen(false)
+  const canClosePlaceDetail = placeDetailOpen && !!onClosePlaceDetail
 
   const openSection = (section: MapAppSection) => {
     onOpenSection?.(section)
@@ -560,7 +567,7 @@ export function MapOmnibox({
 
         <div className={`gmaps-omnibox__card${open ? ' is-open' : ''}`}>
           <form
-            className="gmaps-omnibox__bar"
+            className={`gmaps-omnibox__bar${canClosePlaceDetail ? ' is-place-open' : ''}`}
             onSubmit={(e) => {
               e.preventDefault()
               submit()
@@ -618,7 +625,7 @@ export function MapOmnibox({
               }}
             />
 
-            {query ? (
+            {!canClosePlaceDetail && query ? (
               <button
                 type="button"
                 className="gmaps-omnibox__icon-btn map-motion-press"
@@ -645,6 +652,22 @@ export function MapOmnibox({
                 />
               </svg>
             </button>
+
+            {canClosePlaceDetail ? (
+              <button
+                type="button"
+                className="gmaps-omnibox__icon-btn gmaps-omnibox__detail-close map-motion-press"
+                aria-label="Đóng thông tin địa điểm"
+                title="Đóng thông tin địa điểm"
+                onClick={() => {
+                  onClosePlaceDetail?.()
+                  setOpen(false)
+                  inputRef.current?.blur()
+                }}
+              >
+                ×
+              </button>
+            ) : null}
           </form>
 
           <div
