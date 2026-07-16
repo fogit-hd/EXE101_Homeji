@@ -10,6 +10,7 @@ import {
 } from 'react'
 import {
   ApiRequestError,
+  AUTH_EXPIRED_EVENT,
   clearSession,
   getMyProfile,
   getStoredSession,
@@ -47,6 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authDisrupted, setAuthDisrupted] = useState(false)
   const refreshInFlight = useRef(false)
 
+  const resetAuthState = useCallback(() => {
+    setHasToken(false)
+    setProfile(null)
+    setNeedsProfileSetup(false)
+    setEmail(null)
+    setAuthDisrupted(false)
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener(AUTH_EXPIRED_EVENT, resetAuthState)
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, resetAuthState)
+  }, [resetAuthState])
+
   const applySession = useCallback((session: AuthSession) => {
     if (!session.accessToken) return
     persistSession(session.accessToken, session.userId, session.email)
@@ -83,11 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Token hết hạn / không hợp lệ
       if (err instanceof ApiRequestError && err.status === 401) {
         clearSession()
-        setHasToken(false)
-        setProfile(null)
-        setNeedsProfileSetup(false)
-        setEmail(null)
-        setAuthDisrupted(false)
+        resetAuthState()
         return
       }
 
@@ -103,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       refreshInFlight.current = false
     }
-  }, [])
+  }, [resetAuthState])
 
   useEffect(() => {
     void (async () => {
@@ -150,12 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearSession()
-    setHasToken(false)
-    setProfile(null)
-    setNeedsProfileSetup(false)
-    setEmail(null)
-    setAuthDisrupted(false)
-  }, [])
+    resetAuthState()
+  }, [resetAuthState])
 
   const value = useMemo<AuthContextValue>(
     () => ({

@@ -200,6 +200,7 @@ export function MarketplacePage({
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
   const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
+  const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [expandedFoodSellerIds, setExpandedFoodSellerIds] = useState<Set<string>>(
     () => new Set(),
   )
@@ -808,16 +809,16 @@ export function MarketplacePage({
   const orderGroups = useMemo(() => {
     const grouped = new Map<string, MarketplaceOrder[]>()
     for (const order of orders) {
-      const counterpartId = order.buyerId === myUserId ? order.sellerId : order.buyerId
-      const current = grouped.get(counterpartId) ?? []
+      const groupKey = `${order.buyerId}:${order.sellerId}:${order.createdAt}`
+      const current = grouped.get(groupKey) ?? []
       current.push(order)
-      grouped.set(counterpartId, current)
+      grouped.set(groupKey, current)
     }
-    return Array.from(grouped.entries()).map(([counterpartId, groupedOrders]) => {
+    return Array.from(grouped.entries()).map(([groupKey, groupedOrders]) => {
       const first = groupedOrders[0]
       const iAmBuyer = first?.buyerId === myUserId
       return {
-        counterpartId,
+        groupKey,
         name: iAmBuyer
           ? first?.sellerDisplayName || 'Người bán Homeji'
           : first?.buyerDisplayName || 'Người mua Homeji',
@@ -827,6 +828,26 @@ export function MarketplacePage({
       }
     })
   }, [orders, myUserId])
+
+  const handleOrderGroupAction = async (
+    groupKey: string,
+    action: () => Promise<unknown>,
+    successMessage: string,
+  ) => {
+    if (orderGroupBusy) return
+    setOrderGroupBusy(groupKey)
+    setActionError('')
+    setActionMsg('')
+    try {
+      await action()
+      setActionMsg(successMessage)
+      await reload()
+    } catch (err) {
+      setActionError(getErrorMessage(err, 'Không thể cập nhật đơn hàng'))
+    } finally {
+      setOrderGroupBusy('')
+    }
+  }
   const sellerLocationPost = myPosts[0] ?? null
   const selectedFoodPreset = FOOD_PRESETS.find((preset) => preset.imageUrl === presetImageUrl)
 
@@ -1418,8 +1439,20 @@ export function MarketplacePage({
           <div className="empty-state card">Chưa có đơn hàng.</div>
         ) : (
           <div className="marketplace-order-groups">
-            {orderGroups.map((group) => (
-              <section key={group.counterpartId} className="marketplace-order-group">
+            {orderGroups.map((group) => {
+              const firstOrder = group.orders[0]
+              const iAmBuyer = Boolean(myUserId && firstOrder?.buyerId === myUserId)
+              const iAmSeller = Boolean(myUserId && firstOrder?.sellerId === myUserId)
+              const allRequested = group.orders.every(
+                (order) => order.status === MarketplaceOrderStatus.Requested,
+              )
+              const allAccepted = group.orders.every(
+                (order) => order.status === MarketplaceOrderStatus.Accepted,
+              )
+              const busy = orderGroupBusy === group.groupKey
+
+              return (
+              <section key={group.groupKey} className="marketplace-order-group">
                 <header className="marketplace-order-group__header">
                   <div className="marketplace-store-avatar" aria-hidden="true">
                     {group.name.slice(0, 1).toUpperCase()}
@@ -1436,7 +1469,6 @@ export function MarketplacePage({
               const iAmBuyer = Boolean(myUserId && o.buyerId === myUserId)
               const iAmSeller = Boolean(myUserId && o.sellerId === myUserId)
               const requested = o.status === MarketplaceOrderStatus.Requested
-              const accepted = o.status === MarketplaceOrderStatus.Accepted
               return (
                 <article key={o.id} className="marketplace-order card map-motion-fade-up">
                   <div className="marketplace-order__body">
@@ -1473,53 +1505,79 @@ export function MarketplacePage({
                       <p className="marketplace-card__info">Người mua đang chờ. Hãy nhận hoặc từ chối trong 30 phút trước khi đơn tự hết hạn.</p>
                     ) : null}
                   </div>
-                  <div className="marketplace-card__actions">
-                    {requested && iAmSeller ? (
-                      <>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          onClick={() => void acceptMarketplaceOrder(o.id).then(() => reload())}
-                        >
-                          Nhận đơn
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => void rejectMarketplaceOrder(o.id).then(() => reload())}
-                        >
-                          Từ chối
-                        </button>
-                      </>
-                    ) : null}
-                    {(requested || accepted) && iAmBuyer ? (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => void cancelMarketplaceOrder(o.id).then(() => reload())}
-                      >
-                        Hủy và hoàn tiền
-                      </button>
-                    ) : null}
-                    {accepted && iAmBuyer ? (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => void completeMarketplaceOrder(o.id).then(() => reload())}
-                      >
-                        Đã nhận món · Hoàn tất
-                      </button>
-                    ) : null}
-                    {accepted && iAmSeller ? (
-                      <p className="marketplace-card__info">Chờ người mua xác nhận đã nhận món để giải ngân.</p>
-                    ) : null}
-                  </div>
                 </article>
               )
             })}
                 </div>
+                {(allRequested || allAccepted) && firstOrder ? (
+                  <footer className="marketplace-order-group__actions">
+                    {allRequested && iAmSeller ? (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          disabled={busy}
+                          onClick={() => void handleOrderGroupAction(
+                            group.groupKey,
+                            () => acceptMarketplaceOrder(firstOrder.id),
+                            'Đã xác nhận toàn bộ đơn hàng.',
+                          )}
+                        >
+                          {busy ? 'Đang xử lý…' : 'Nhận toàn bộ đơn'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={busy}
+                          onClick={() => void handleOrderGroupAction(
+                            group.groupKey,
+                            () => rejectMarketplaceOrder(firstOrder.id),
+                            'Đã từ chối và hoàn tiền toàn bộ đơn.',
+                          )}
+                        >
+                          Từ chối toàn bộ đơn
+                        </button>
+                      </>
+                    ) : null}
+                    {allRequested && iAmBuyer ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={busy}
+                        onClick={() => {
+                          if (!window.confirm(`Hủy toàn bộ đơn gồm ${group.orders.length} món và hoàn tiền?`)) return
+                          void handleOrderGroupAction(
+                            group.groupKey,
+                            () => cancelMarketplaceOrder(firstOrder.id),
+                            'Đã hủy và hoàn tiền toàn bộ đơn.',
+                          )
+                        }}
+                      >
+                        {busy ? 'Đang hủy…' : 'Hủy đơn và hoàn tiền'}
+                      </button>
+                    ) : null}
+                    {allAccepted && iAmBuyer ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        disabled={busy}
+                        onClick={() => void handleOrderGroupAction(
+                          group.groupKey,
+                          () => completeMarketplaceOrder(firstOrder.id),
+                          'Đã hoàn tất toàn bộ đơn hàng.',
+                        )}
+                      >
+                        {busy ? 'Đang xử lý…' : 'Đã nhận đủ món · Hoàn tất đơn'}
+                      </button>
+                    ) : null}
+                    {allAccepted && iAmSeller ? (
+                      <p className="marketplace-card__info">Chờ người mua xác nhận đã nhận đủ món để giải ngân.</p>
+                    ) : null}
+                  </footer>
+                ) : null}
               </section>
-            ))}
+              )
+            })}
           </div>
         )
       ) : listForTab.length === 0 ? (

@@ -1,5 +1,11 @@
 import type { ApiError } from './types'
 import { NetworkError } from '../lib/errors'
+import {
+  clearStoredAuth,
+  expireStoredAuth,
+  readAuthTokenState,
+  type AuthTokenState,
+} from './authSession'
 
 /**
  * Dev: same-origin → Vite proxy.
@@ -26,8 +32,8 @@ export class ApiRequestError extends Error {
   }
 }
 
-function getToken(): string | null {
-  return localStorage.getItem('homeji_access_token')
+function getTokenState(): AuthTokenState {
+  return readAuthTokenState()
 }
 
 export function setStoredToken(token: string | null) {
@@ -39,7 +45,7 @@ export function setStoredToken(token: string | null) {
 }
 
 export function getStoredSession(): { accessToken: string; userId: string | null; email: string | null } | null {
-  const accessToken = localStorage.getItem('homeji_access_token')
+  const { token: accessToken } = getTokenState()
   if (!accessToken) return null
   return {
     accessToken,
@@ -59,9 +65,7 @@ export function getApiBaseUrl(): string {
 }
 
 export function clearSession() {
-  localStorage.removeItem('homeji_access_token')
-  localStorage.removeItem('homeji_user_id')
-  localStorage.removeItem('homeji_email')
+  clearStoredAuth()
 }
 
 type RequestOptions = {
@@ -100,6 +104,15 @@ function parseErrorBody(text: string, statusText: string): ApiError {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true, params } = options
+  const tokenState = auth ? getTokenState() : { token: null, expired: false }
+  if (auth && !tokenState.token) {
+    throw new ApiRequestError(401, {
+      detail: tokenState.expired
+        ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+        : 'Bạn cần đăng nhập để sử dụng chức năng này.',
+    })
+  }
+
   const headers: Record<string, string> = {
     Accept: 'application/json',
   }
@@ -108,12 +121,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers['Content-Type'] = 'application/json'
   }
 
-  if (auth) {
-    const token = getToken()
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-  }
+  if (tokenState.token) headers.Authorization = `Bearer ${tokenState.token}`
 
   let response: Response
   try {
@@ -147,6 +155,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
+    if (auth && tokenState.token && response.status === 401) {
+      expireStoredAuth()
+    }
     throw new ApiRequestError(
       response.status,
       (data as ApiError) ?? parseErrorBody(text, response.statusText),
@@ -163,11 +174,17 @@ export async function apiUpload<T>(
   options?: { auth?: boolean; params?: RequestOptions['params'] },
 ): Promise<T> {
   const auth = options?.auth !== false
-  const headers: Record<string, string> = { Accept: 'application/json' }
-  if (auth) {
-    const token = getToken()
-    if (token) headers.Authorization = `Bearer ${token}`
+  const tokenState = auth ? getTokenState() : { token: null, expired: false }
+  if (auth && !tokenState.token) {
+    throw new ApiRequestError(401, {
+      detail: tokenState.expired
+        ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+        : 'Bạn cần đăng nhập để sử dụng chức năng này.',
+    })
   }
+
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (tokenState.token) headers.Authorization = `Bearer ${tokenState.token}`
 
   let response: Response
   try {
@@ -196,6 +213,9 @@ export async function apiUpload<T>(
   }
 
   if (!response.ok) {
+    if (auth && tokenState.token && response.status === 401) {
+      expireStoredAuth()
+    }
     throw new ApiRequestError(
       response.status,
       (data as ApiError) ?? parseErrorBody(text, response.statusText),

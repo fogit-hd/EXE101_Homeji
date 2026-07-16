@@ -61,6 +61,7 @@ import type {
 import { MediaType, ReportTargetType, UserRole } from './types'
 
 export * from './client'
+export * from './authSession'
 export * from './types'
 
 // Account
