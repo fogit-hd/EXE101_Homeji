@@ -114,10 +114,11 @@ type Props = {
   userLocation?: { lat: number; lng: number } | null
   onRequestLocation?: () => void
   locating?: boolean
+  onMarketplaceCartOpenChange?: (open: boolean) => void
 }
 
 const OUTSIDE_CLOSE_IGNORE =
-  '.home-list-panel, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .gmaps-omnibox__top-actions, .gmaps-omnibox__notify, .mobile-tabbar, .map-chat-dock, .map-chatbot'
+  '.home-list-panel, .food-cart-backdrop, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .gmaps-omnibox__top-actions, .gmaps-omnibox__notify, .mobile-tabbar, .map-chat-dock, .map-chatbot'
 
 export function MapAppPanel({
   section,
@@ -135,6 +136,7 @@ export function MapAppPanel({
   userLocation = null,
   onRequestLocation,
   locating = false,
+  onMarketplaceCartOpenChange,
 }: Props) {
   const displayedRef = useRef(section)
   const wasOpenRef = useRef(open)
@@ -268,6 +270,7 @@ export function MapAppPanel({
               userLocation={userLocation}
               onRequestLocation={onRequestLocation}
               locating={locating}
+              onCartOpenChange={onMarketplaceCartOpenChange}
             />
           ) : null}
           {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}

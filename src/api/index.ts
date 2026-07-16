@@ -1,4 +1,10 @@
 import { apiRequest, apiUpload } from './client'
+import {
+  getDefaultNotifications,
+  isDefaultNotificationId,
+  markAllDefaultNotificationsRead,
+  markDefaultNotificationRead,
+} from '../lib/defaultNotifications'
 import type {
   AccountMessage,
   AiHighlightResponse,
@@ -331,14 +337,26 @@ export const createPremiumPayOsPayment = (packageCode: string) =>
   })
 
 // Notifications
-export const getNotifications = (unreadOnly = false) =>
-  apiRequest<Notification[]>('/api/notifications', { params: { unreadOnly } })
+export const getNotifications = async (unreadOnly = false) => {
+  const serverNotifications = await apiRequest<Notification[]>('/api/notifications', {
+    params: { unreadOnly },
+  })
+  return [...serverNotifications, ...getDefaultNotifications(unreadOnly)].sort(
+    (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+  )
+}
 
-export const markNotificationRead = (notificationId: string) =>
-  apiRequest<Notification>(`/api/notifications/${notificationId}/read`, { method: 'POST' })
+export const markNotificationRead = (notificationId: string) => {
+  if (isDefaultNotificationId(notificationId)) {
+    return Promise.resolve(markDefaultNotificationRead(notificationId))
+  }
+  return apiRequest<Notification>(`/api/notifications/${notificationId}/read`, { method: 'POST' })
+}
 
-export const markAllNotificationsRead = () =>
-  apiRequest<void>('/api/notifications/read-all', { method: 'POST' })
+export const markAllNotificationsRead = async () => {
+  markAllDefaultNotificationsRead()
+  await apiRequest<void>('/api/notifications/read-all', { method: 'POST' })
+}
 
 // Reports
 export const createReport = (data: {

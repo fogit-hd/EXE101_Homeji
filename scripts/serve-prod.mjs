@@ -77,6 +77,61 @@ function proxyApi(req, res) {
   req.pipe(upstream)
 }
 
+function writeUpgradeResponse(socket, response) {
+  const statusCode = response.statusCode || 502
+  const statusMessage = response.statusMessage || 'Bad Gateway'
+  const headerLines = []
+  for (let index = 0; index < response.rawHeaders.length; index += 2) {
+    headerLines.push(`${response.rawHeaders[index]}: ${response.rawHeaders[index + 1]}`)
+  }
+  socket.write(`HTTP/1.1 ${statusCode} ${statusMessage}\r\n${headerLines.join('\r\n')}\r\n\r\n`)
+}
+
+/** Preserve SignalR WebSocket upgrades when the SPA and API share one Render origin. */
+function proxyWebSocket(req, socket, head) {
+  const targetUrl = new URL(req.url, API_TARGET)
+  const lib = targetUrl.protocol === 'https:' ? https : http
+  const headers = { ...req.headers, host: targetUrl.host }
+  delete headers['accept-encoding']
+
+  const upstream = lib.request({
+    protocol: targetUrl.protocol,
+    hostname: targetUrl.hostname,
+    port: targetUrl.port || undefined,
+    path: `${targetUrl.pathname}${targetUrl.search}`,
+    method: req.method,
+    headers,
+  })
+
+  upstream.on('upgrade', (response, upstreamSocket, upstreamHead) => {
+    writeUpgradeResponse(socket, response)
+    if (head.length > 0) upstreamSocket.write(head)
+    if (upstreamHead.length > 0) socket.write(upstreamHead)
+    upstreamSocket.pipe(socket).pipe(upstreamSocket)
+
+    const closePeer = () => {
+      if (!upstreamSocket.destroyed) upstreamSocket.destroy()
+      if (!socket.destroyed) socket.destroy()
+    }
+    socket.on('error', closePeer)
+    upstreamSocket.on('error', closePeer)
+  })
+
+  upstream.on('response', (response) => {
+    writeUpgradeResponse(socket, response)
+    response.pipe(socket)
+  })
+
+  upstream.on('error', (err) => {
+    console.error('[websocket-proxy]', err.message)
+    if (!socket.destroyed) {
+      socket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+    }
+  })
+
+  upstream.end()
+}
+
 function serveStatic(req, res) {
   const urlPath = req.url === '/' ? '/index.html' : req.url.split('?')[0]
   let filePath = safeDistPath(urlPath)
@@ -107,6 +162,14 @@ const server = http.createServer((req, res) => {
     return
   }
   serveStatic(req, res)
+})
+
+server.on('upgrade', (req, socket, head) => {
+  if (req.url?.startsWith('/hubs')) {
+    proxyWebSocket(req, socket, head)
+    return
+  }
+  socket.destroy()
 })
 
 server.listen(PORT, '0.0.0.0', () => {
