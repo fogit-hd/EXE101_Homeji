@@ -39,16 +39,6 @@ function coordinateAnchorRoot(
   return { root, mount }
 }
 
-function formatPinPrice(price?: number): string | null {
-  if (price == null || !Number.isFinite(price) || price < 0) return null
-  if (price >= 1_000_000) {
-    const m = price / 1_000_000
-    return `${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}tr`
-  }
-  if (price >= 1000) return `${Math.round(price / 1000)}k`
-  return `${Math.round(price)}₫`
-}
-
 const CLUSTER_COLORS: Record<MapClusterKind, string> = {
   vacant: '#65A30D',
   roommate: '#4F46E5',
@@ -179,8 +169,7 @@ export function createChatLocationPinContent(options: {
  */
 export function createMarketplacePinContent(options: {
   title: string
-  price?: number
-  imageUrl?: string | null
+  itemCount?: number
   selected?: boolean
   size?: number
 }): MapPinContentHandle {
@@ -194,22 +183,21 @@ export function createMarketplacePinContent(options: {
   })
   if (selected) root.classList.add('is-selected')
 
-  const priceLabel = formatPinPrice(options.price)
   if (selected) {
     const badge = document.createElement('div')
     badge.className = 'map-market-pin__badge'
     const kind = document.createElement('span')
     kind.className = 'map-market-pin__kind'
-    kind.textContent = 'Chợ đồ'
+    kind.textContent = 'Người bán'
     const name = document.createElement('strong')
     name.className = 'map-market-pin__title'
     name.textContent = options.title
     badge.appendChild(kind)
     badge.appendChild(name)
-    if (priceLabel) {
+    if (options.itemCount) {
       const priceEl = document.createElement('span')
       priceEl.className = 'map-market-pin__price'
-      priceEl.textContent = priceLabel
+      priceEl.textContent = `${options.itemCount} mặt hàng`
       badge.appendChild(priceEl)
     }
     mount.appendChild(badge)
@@ -224,41 +212,15 @@ export function createMarketplacePinContent(options: {
     <svg class="map-market-pin__svg" viewBox="0 0 48 64" width="${size}" height="${visualH}" xmlns="http://www.w3.org/2000/svg">
       <path fill="${fill}" stroke="${stroke}" stroke-width="1.4" d="${PIN_PATH}"/>
       <circle cx="24" cy="20" r="14.5" fill="#fff"/>
+      <circle cx="24" cy="17" r="5.2" fill="${fill}"/>
+      <path fill="${fill}" d="M14.5 31.5c.8-6 4.1-9 9.5-9s8.7 3 9.5 9c-2.7 2-5.9 3-9.5 3s-6.8-1-9.5-3Z"/>
     </svg>
   `
-
-  const photoShell = document.createElement('span')
-  photoShell.className = 'map-market-pin__photo-shell'
-  photoShell.setAttribute('aria-hidden', 'true')
-  const fallback = document.createElement('span')
-  fallback.className = 'map-market-pin__photo-fallback'
-  fallback.textContent = '₫'
-  photoShell.appendChild(fallback)
-
-  let image: HTMLImageElement | null = null
-  const imageUrl = options.imageUrl?.trim()
-  if (imageUrl) {
-    image = document.createElement('img')
-    image.className = 'map-market-pin__photo'
-    image.src = imageUrl
-    image.alt = ''
-    image.loading = 'lazy'
-    image.decoding = 'async'
-    image.referrerPolicy = 'no-referrer'
-    image.onload = () => photoShell.classList.add('has-image')
-    image.onerror = () => image?.remove()
-    photoShell.appendChild(image)
-  }
-  pinWrap.appendChild(photoShell)
   mount.appendChild(pinWrap)
 
   return {
     element: root,
     dispose: () => {
-      if (image) {
-        image.onload = null
-        image.onerror = null
-      }
       root.remove()
     },
   }

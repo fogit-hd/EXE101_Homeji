@@ -58,6 +58,8 @@ import {
   DEFAULT_MAP_PIN_LAYERS,
   type MapPinLayers,
 } from '../../lib/mapPinLayers'
+import { isInHomejiServiceArea } from '../../lib/homejiServiceArea'
+import type { MarketplaceMapPin } from '../../lib/marketplaceSellerPins'
 import './RentalMap.css'
 
 export type { MapPlaceDetails }
@@ -67,14 +69,7 @@ export { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM }
 export type MapFocus = { lat: number; lng: number; zoom?: number }
 export type MapViewportPad = { top: number; bottom: number }
 
-export type MarketplaceMapPin = {
-  id: string
-  title: string
-  lat: number
-  lng: number
-  price?: number
-  imageUrl?: string | null
-}
+export type { MarketplaceMapPin } from '../../lib/marketplaceSellerPins'
 
 type LatLng = { lat: number; lng: number }
 type BaseMapMode = 'roadmap' | 'satellite'
@@ -147,7 +142,10 @@ type MarkerEntry = {
 
 function mappablePosts(posts: RentalPostSummary[], layers: MapPinLayers) {
   return posts.filter((p) => {
-    if (!isValidCoord(p.latitude, p.longitude)) return false
+    if (
+      !isValidCoord(p.latitude, p.longitude) ||
+      !isInHomejiServiceArea(p.latitude, p.longitude)
+    ) return false
     const roommate = p.type === RentalPostType.RoommateShare
     return roommate ? layers.roommate : layers.vacant
   })
@@ -396,13 +394,12 @@ function RentalMapComponent({
       if (!isValidCoord(item.lat, item.lng)) continue
       const selected = item.id === selectedMarketplaceId
       const pos = { lat: item.lat, lng: item.lng }
-      const styleKey = `${selected ? 'sel' : 'idle'}|${item.price ?? ''}|${item.title}|${item.imageUrl ?? ''}`
+      const styleKey = `${selected ? 'sel' : 'idle'}|${item.title}|${item.itemCount}`
       const entry = marketplaceMarkersRef.current.get(item.id)
       if (!entry) {
         const content = createMarketplacePinContent({
           title: item.title || 'Chợ đồ',
-          price: item.price,
-          imageUrl: item.imageUrl,
+          itemCount: item.itemCount,
           selected,
         })
         const marker = new AdvancedMarkerElement({
@@ -443,8 +440,7 @@ function RentalMapComponent({
           entry.dispose?.()
           const content = createMarketplacePinContent({
             title: item.title || 'Chợ đồ',
-            price: item.price,
-            imageUrl: item.imageUrl,
+            itemCount: item.itemCount,
             selected,
           })
           const raiseOnHover = () => {

@@ -10,11 +10,10 @@ import {
   type RentalPost,
   type RentalPostSummary,
 } from '../../api'
-import { MarketplacePostStatus } from '../../api/types'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace'
 import { chatLocationKindLabel, type ChatLocationKind } from '../../lib/chatLocation'
-import { DEFAULT_MAP_CENTER, isValidCoord, MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
 import { useAuth } from '../../contexts/AuthContext'
 import { HomeListingSkeleton } from '../HomeListingSkeleton'
@@ -26,6 +25,7 @@ import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
+import { marketplacePostsToSellerPins } from '../../lib/marketplaceSellerPins'
 import { useNotificationHub } from '../../hooks/useNotificationHub'
 import { NotificationType, type Notification } from '../../api'
 import type { NotificationReadChange } from '../../pages/NotificationsPage'
@@ -451,21 +451,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     })
       .then((list) => {
         if (cancelled) return
-        const pins: MarketplaceMapPin[] = list
-          .filter(
-            (p) =>
-              isValidCoord(p.latitude, p.longitude) &&
-              (p.status === MarketplacePostStatus.Active || p.status == null),
-          )
-          .map((p) => ({
-            id: p.id,
-            title: p.title,
-            lat: p.latitude,
-            lng: p.longitude,
-            price: p.price,
-            imageUrl:
-              p.mediaUrls?.find((url) => url && !url.endsWith('/vite.svg')) ?? null,
-          }))
+        const pins = marketplacePostsToSellerPins(list)
         setMarketplacePins(pins)
       })
       .catch(() => {

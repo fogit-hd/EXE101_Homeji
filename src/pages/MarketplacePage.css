@@ -205,6 +205,34 @@
   border-bottom: 1px solid var(--border);
 }
 
+.food-store__header {
+  padding: 0;
+}
+
+.food-store__toggle {
+  width: 100%;
+  min-height: 72px;
+  border: 0;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.food-store__toggle:hover {
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 8%, transparent);
+}
+
+.food-store__toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--grab-green, #00b14f) 32%, transparent);
+  outline-offset: -3px;
+}
+
 .marketplace-store-avatar {
   display: grid;
   place-items: center;
@@ -237,6 +265,7 @@
 }
 
 .food-store__identity h2,
+.food-store__name,
 .marketplace-order-group__header h3 {
   margin: 0;
   color: var(--text-heading);
@@ -244,7 +273,12 @@
   line-height: 1.25;
 }
 
+.food-store__name {
+  display: block;
+}
+
 .food-store__identity p,
+.food-store__address,
 .marketplace-order-group__header p {
   overflow: hidden;
   margin: 3px 0 0;
@@ -253,6 +287,10 @@
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.food-store__address {
+  display: block;
 }
 
 .food-store__distance,
@@ -264,6 +302,19 @@
   color: var(--grab-green, #00b14f);
   font-size: 0.72rem;
   font-weight: 800;
+}
+
+.food-store__chevron {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  line-height: 1;
+  transform: rotate(-90deg);
+  transition: transform 160ms ease;
+}
+
+.food-store__toggle[aria-expanded='true'] .food-store__chevron {
+  transform: rotate(0deg);
 }
 
 .food-menu-grid {
