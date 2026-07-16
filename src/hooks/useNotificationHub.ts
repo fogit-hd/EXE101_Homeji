@@ -7,6 +7,13 @@ import {
 } from '@microsoft/signalr'
 import type { Notification } from '../api/types'
 import { getApiBaseUrl, getStoredSession } from '../api/client'
+import { AUTH_EXPIRED_EVENT, expireStoredAuth } from '../api/authSession'
+import {
+  createNotificationHubRetryPolicy,
+  isUnauthorizedHubError,
+  NotificationHubAuthenticationError,
+  requireNotificationHubAccessToken,
+} from './notificationHubRetryPolicy'
 
 type Options = {
   enabled?: boolean
@@ -21,6 +28,7 @@ function resolveHubUrl(): string {
 }
 
 function isBenignHubError(err: unknown): boolean {
+  if (err instanceof NotificationHubAuthenticationError) return true
   const msg = err instanceof Error ? err.message : String(err ?? '')
   return (
     /stopped during negotiation/i.test(msg) ||
@@ -37,8 +45,11 @@ function isBenignHubError(err: unknown): boolean {
  */
 export function useNotificationHub({ enabled = true, onNotification }: Options) {
   const handlerRef = useRef(onNotification)
-  handlerRef.current = onNotification
   const connectionRef = useRef<HubConnection | null>(null)
+
+  useEffect(() => {
+    handlerRef.current = onNotification
+  }, [onNotification])
 
   useEffect(() => {
     if (!enabled) return
@@ -46,13 +57,17 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
     if (!session?.accessToken) return
 
     let cancelled = false
+    const getAccessToken = () => getStoredSession()?.accessToken ?? null
     const connection = new HubConnectionBuilder()
       .withUrl(resolveHubUrl(), {
-        accessTokenFactory: () => getStoredSession()?.accessToken ?? '',
+        accessTokenFactory: () => requireNotificationHubAccessToken(getAccessToken),
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .withAutomaticReconnect(createNotificationHubRetryPolicy({
+        getAccessToken,
+        onUnauthorized: expireStoredAuth,
+      }))
       // Page-freeze / tab-sleep warnings are expected in Chrome — keep console quiet.
-      .configureLogging(LogLevel.Error)
+      .configureLogging(LogLevel.None)
       .build()
 
     connectionRef.current = connection
@@ -61,11 +76,18 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
       handlerRef.current?.(payload)
     })
 
+    const stopForExpiredSession = () => {
+      cancelled = true
+      void connection.stop().catch(() => undefined)
+    }
+    window.addEventListener(AUTH_EXPIRED_EVENT, stopForExpiredSession)
+
     void (async () => {
       try {
         if (cancelled) return
         await connection.start()
       } catch (err) {
+        if (isUnauthorizedHubError(err)) expireStoredAuth()
         if (cancelled || isBenignHubError(err)) return
         /* hub may be unavailable offline / CORS — silent */
       }
@@ -73,6 +95,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
 
     return () => {
       cancelled = true
+      window.removeEventListener(AUTH_EXPIRED_EVENT, stopForExpiredSession)
       connection.off('notificationReceived')
       connectionRef.current = null
       void (async () => {

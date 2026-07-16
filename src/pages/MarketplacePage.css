@@ -783,6 +783,24 @@
   border-bottom: 0;
 }
 
+.marketplace-order-group__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 94%, var(--grab-green, #00b14f));
+}
+
+.marketplace-order-group__actions .marketplace-card__info {
+  margin: 0;
+}
+
+.marketplace-order-group__actions .btn-primary {
+  margin-left: auto;
+}
+
 .marketplace-order__product {
   display: flex;
   align-items: center;
