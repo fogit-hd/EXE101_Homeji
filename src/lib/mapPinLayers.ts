@@ -5,11 +5,13 @@ export type MapPinLayers = Record<MapPinLayer, boolean>
 
 export const DEFAULT_MAP_PIN_LAYERS: MapPinLayers = {
   vacant: true,
-  roommate: true,
-  marketplace: true,
+  roommate: false,
+  marketplace: false,
 }
 
-const STORAGE_KEY = 'homeji:map-pin-layers'
+// Start the refreshed map experience with rentals only. After the user opts in
+// to another layer, their choice is persisted as before.
+const STORAGE_KEY = 'homeji:map-pin-layers:v2'
 
 export const MAP_PIN_LAYER_OPTIONS: {
   id: MapPinLayer
