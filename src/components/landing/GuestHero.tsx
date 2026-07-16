@@ -32,12 +32,15 @@ export function GuestHero() {
         </div>
 
         <div className="guest-hero__center">
-          <h1 className="guest-hero__hello">
-            Chào mừng bạn
-            <span>đến với Homeji</span>
-          </h1>
+          <div className="guest-hero__slogan-wrap">
+            <h1 className="guest-hero__hello">
+              Trọ an tâm
+              <br />
+              Nâng tầm cuộc sống
+            </h1>
+          </div>
           <p className="guest-hero__sub">
-            Nền tảng tìm phòng trọ &amp; bạn ở ghép an toàn dành cho sinh viên
+            Nền tảng tìm phòng trọ &amp; bạn ở ghép an toàn
           </p>
 
           <div className="guest-hero__rule" aria-hidden="true" />

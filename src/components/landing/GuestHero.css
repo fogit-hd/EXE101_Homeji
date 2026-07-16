@@ -1,6 +1,6 @@
 .guest-landing {
-  --landing-display: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-  --landing-serif: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --landing-display: 'Manrope', 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --landing-serif: 'Manrope', 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   --landing-body: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   --landing-navy: #091d2e;
   --landing-green: #00b14f;
@@ -131,39 +131,66 @@ html:has(.guest-landing) body::-webkit-scrollbar {
   padding: 24px 0;
 }
 
+.guest-hero__slogan-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 56rem);
+  margin: 0 auto;
+  padding: 24px 0;
+  font-family: 'Lexend', 'Inter', 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  user-select: none;
+}
+
 .guest-hero__hello {
+  position: relative;
+  z-index: 10;
   margin: 0;
-  font-family: var(--landing-serif);
-  font-weight: 400;
-  font-style: italic;
-  font-size: clamp(2.4rem, 7vw, 4.75rem);
+  font-size: 48px;
+  font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.02em;
   color: #fff;
-  text-shadow: 0 2px 28px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.34);
 }
 
-.guest-hero__hello span {
-  display: block;
+@media (min-width: 768px) {
+  .guest-hero__hello {
+    font-size: 64px;
+  }
 }
 
 .guest-hero__sub {
   margin: clamp(14px, 2.4vh, 20px) 0 0;
-  max-width: 36ch;
+  max-width: 40ch;
   font-family: var(--landing-body);
-  font-size: clamp(0.95rem, 1.6vw, 1.12rem);
-  font-weight: 500;
-  line-height: 1.55;
+  font-size: clamp(0.92rem, 1.35vw, 1.04rem);
+  font-weight: 480;
+  line-height: 1.62;
   letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.88);
   text-shadow: 0 1px 16px rgba(0, 0, 0, 0.4);
 }
 
 .guest-hero__rule {
+  position: relative;
   width: min(520px, 72vw);
   height: 1px;
   margin: clamp(20px, 3.6vh, 32px) auto;
   background: rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+
+.guest-hero__rule::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(125, 255, 181, 0.7), transparent);
+  transform: translateX(130%);
+  opacity: 0;
 }
 
 .guest-hero__meta {
@@ -370,6 +397,11 @@ html:has(.guest-landing) body::-webkit-scrollbar {
   .guest-hero__explore-go {
     transition: none;
   }
+
+  .guest-hero__sub,
+  .guest-hero__rule::after {
+    animation: none !important;
+  }
 }
 
 .guest-hero__bottom {
@@ -505,6 +537,8 @@ html:has(.guest-landing) body::-webkit-scrollbar {
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   gap: clamp(28px, 5vw, 72px);
   align-items: center;
+  max-width: min(1120px, 100%);
+  margin: 0 auto;
 }
 
 .guest-mission__copy {
@@ -523,28 +557,29 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 
 .guest-mission__quote {
   margin: 0 0 28px;
-  max-width: 18ch;
+  max-width: 20ch;
   font-family: var(--landing-display);
   font-style: normal;
-  font-weight: 650;
-  font-size: clamp(1.75rem, 3.8vw, 2.85rem);
-  line-height: 1.18;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  font-size: clamp(1.58rem, 3vw, 2.3rem);
+  line-height: 1.24;
+  letter-spacing: -0.02em;
   color: var(--landing-ink);
+  text-wrap: balance;
 }
 
 .guest-mission__body {
   margin: 0;
-  max-width: 42ch;
-  font-size: clamp(1rem, 1.5vw, 1.15rem);
-  line-height: 1.7;
+  max-width: 48ch;
+  font-size: clamp(0.98rem, 1.15vw, 1.08rem);
+  line-height: 1.74;
   color: #3d4a52;
 }
 
 .guest-mission__stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 40px;
+  gap: 28px;
   margin-top: 48px;
   padding-top: 32px;
   border-top: 1px solid rgba(9, 29, 46, 0.12);
@@ -553,14 +588,14 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-mission__stat strong {
   display: block;
   font-family: var(--landing-display);
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: 1.22rem;
+  font-weight: 650;
   color: var(--landing-ink);
 }
 
 .guest-mission__stat span {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #6a7680;
 }
@@ -590,6 +625,14 @@ html:has(.guest-landing) body::-webkit-scrollbar {
   background: #fff;
 }
 
+.guest-steps > *,
+.guest-audience > *,
+.guest-trust > * {
+  width: min(1080px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .guest-steps__eyebrow,
 .guest-audience__eyebrow,
 .guest-trust__eyebrow {
@@ -606,21 +649,22 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-audience__title,
 .guest-trust__title {
   margin: 0 0 16px;
-  max-width: 16ch;
+  max-width: 18ch;
   font-family: var(--landing-display);
-  font-weight: 650;
-  font-size: clamp(1.7rem, 3.4vw, 2.6rem);
-  line-height: 1.18;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  font-size: clamp(1.48rem, 2.7vw, 2.1rem);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: var(--landing-ink);
+  text-wrap: balance;
 }
 
 .guest-steps__lead,
 .guest-trust__body {
   margin: 0 0 48px;
   max-width: 46ch;
-  font-size: clamp(1rem, 1.4vw, 1.12rem);
-  line-height: 1.7;
+  font-size: clamp(0.98rem, 1.12vw, 1.05rem);
+  line-height: 1.75;
   color: #3d4a52;
 }
 
@@ -655,15 +699,15 @@ html:has(.guest-landing) body::-webkit-scrollbar {
   display: block;
   margin-bottom: 8px;
   font-family: var(--landing-display);
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: 1.08rem;
+  font-weight: 650;
   color: var(--landing-ink);
 }
 
 .guest-steps__item p {
   margin: 0;
   max-width: 48ch;
-  line-height: 1.65;
+  line-height: 1.72;
   color: #4a5864;
 }
 
@@ -683,14 +727,14 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 .guest-audience__card h3 {
   margin: 0 0 12px;
   font-family: var(--landing-display);
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.08rem;
+  font-weight: 650;
   color: var(--landing-ink);
 }
 
 .guest-audience__card p {
   margin: 0;
-  line-height: 1.65;
+  line-height: 1.72;
   color: #4a5864;
   max-width: 32ch;
 }
@@ -719,12 +763,13 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 
 .guest-trust__points strong {
   font-family: var(--landing-display);
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-weight: 650;
   color: var(--landing-ink);
 }
 
 .guest-trust__points span {
-  line-height: 1.6;
+  line-height: 1.72;
   color: #4a5864;
 }
 
@@ -752,6 +797,20 @@ html:has(.guest-landing) body::-webkit-scrollbar {
 }
 
 @media (max-width: 640px) {
+  .guest-hero__slogan-wrap {
+    width: min(100%, 420px);
+  }
+
+  .guest-hero__hello {
+    font-size: clamp(1.72rem, 9.2vw, 2.62rem);
+    line-height: 1.08;
+  }
+
+  .guest-hero__sub {
+    font-size: 0.9rem;
+    max-width: 32ch;
+  }
+
   .guest-hero__meta {
     grid-template-columns: 1fr;
     width: min(320px, 100%);
