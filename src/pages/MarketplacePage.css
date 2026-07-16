@@ -177,6 +177,260 @@
   padding-inline: 10px;
 }
 
+.food-store-list,
+.marketplace-order-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.food-store,
+.marketplace-order-group {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 18px;
+  background: var(--surface-elevated);
+  box-shadow: 0 8px 28px color-mix(in srgb, #000 8%, transparent);
+}
+
+.food-store__header,
+.marketplace-order-group__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--grab-green, #00b14f) 12%, var(--surface-elevated)),
+    var(--surface-elevated) 66%);
+  border-bottom: 1px solid var(--border);
+}
+
+.marketplace-store-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--grab-green, #00b14f);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--grab-green, #00b14f) 28%, transparent);
+}
+
+.food-store__identity,
+.marketplace-order-group__header > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.food-store__eyebrow,
+.marketplace-order-group__header span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--grab-green, #00b14f);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.food-store__identity h2,
+.marketplace-order-group__header h3 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.food-store__identity p,
+.marketplace-order-group__header p {
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-store__distance,
+.marketplace-order-group__header > strong {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 14%, transparent);
+  color: var(--grab-green, #00b14f);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.food-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.food-menu-item {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-input);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.food-menu-item:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--grab-green, #00b14f) 45%, var(--border));
+  box-shadow: 0 8px 20px color-mix(in srgb, #000 10%, transparent);
+}
+
+.food-menu-item__visual {
+  position: relative;
+  display: block;
+  width: 116px;
+  min-height: 128px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 10%, var(--surface-input));
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.food-menu-item__visual img {
+  width: 100%;
+  height: 100%;
+  min-height: 128px;
+  object-fit: cover;
+}
+
+.food-menu-item__distance {
+  position: absolute;
+  left: 7px;
+  bottom: 7px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #126a37;
+  font-size: 0.66rem;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+
+.food-menu-item__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px;
+}
+
+.food-menu-item__body h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 0.9rem;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.food-menu-item__body p {
+  margin: 3px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.food-menu-item__body > strong {
+  margin-top: auto;
+  color: var(--grab-green, #00b14f);
+  font-size: 0.92rem;
+}
+
+.food-menu-item__buy {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.food-menu-item__buy .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.food-menu-item__buy input {
+  width: 46px;
+  min-height: 32px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+}
+
+.food-menu-item__add {
+  flex: 1;
+  min-height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--grab-green, #00b14f);
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.marketplace-order-group .marketplace-list {
+  gap: 0;
+  padding: 0 14px;
+}
+
+.marketplace-order-group .marketplace-order {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.marketplace-order-group .marketplace-order:last-child {
+  border-bottom: 0;
+}
+
+.marketplace-order__product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+}
+
+.marketplace-order__product img {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.marketplace-order__product strong {
+  color: var(--text-heading);
+  font-size: 0.88rem;
+}
+
 .marketplace-tab-hint {
   margin: 0 0 14px;
   font-size: 0.82rem;
@@ -674,4 +928,37 @@
     margin-left: 0;
     width: 100%;
   }
+
+  .food-menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .food-menu-item {
+    grid-template-columns: 104px minmax(0, 1fr);
+  }
+
+  .food-menu-item__visual {
+    width: 104px;
+  }
+}
+
+.seller-location-lock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--grab-green, #00b14f) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 8%, var(--surface-input));
+}
+
+.seller-location-lock strong {
+  color: var(--text-heading);
+  font-size: 0.86rem;
+}
+
+.seller-location-lock span {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }

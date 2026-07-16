@@ -687,6 +687,11 @@ export interface MarketplaceOrder {
   sellerNetAmount: number
   fundsReleasedAt: string | null
   refundedAt: string | null
+  postTitle: string | null
+  postImageUrl: string | null
+  buyerDisplayName: string | null
+  sellerDisplayName: string | null
+  sellerAddress: string | null
 }
 
 export interface Wallet {

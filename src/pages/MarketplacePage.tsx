@@ -113,6 +113,12 @@ function formatDistanceKm(distanceKm: number): string {
   }).format(distanceKm)} km`
 }
 
+function formatNearbyDistance(distanceKm: number | null): string {
+  if (distanceKm == null) return 'Bật vị trí'
+  const limit = distanceKm <= 1 ? 1 : Math.ceil(distanceKm)
+  return `< ${new Intl.NumberFormat('vi-VN').format(limit)} km`
+}
+
 export function MarketplacePage({
   embedded = false,
   onPostsForMap,
@@ -233,6 +239,7 @@ export function MarketplacePage({
       return
     }
     if (tab === 'sell') {
+      setPosts(await searchMarketplacePosts({ pageSize: 50 }))
       return
     }
     const list = await searchMarketplacePosts({
@@ -449,7 +456,7 @@ export function MarketplacePage({
                 {mine
                   ? 'Tin của tôi'
                   : p.listingType === MarketplaceListingType.Food
-                    ? 'Đồ ăn gần bạn'
+                    ? formatNearbyDistance(p.distanceKm)
                     : marketplacePostStatusLabel[p.status] ?? p.category}
               </span>
               {mine ? (
@@ -475,10 +482,10 @@ export function MarketplacePage({
             {!mine && p.distanceKm != null ? (
               <p
                 className="marketplace-card__distance"
-                title="Khoảng cách đường chim bay từ vị trí của bạn"
+                title="Khoảng cách ước tính từ vị trí của bạn"
               >
                 <span aria-hidden="true">◎</span>
-                {formatDistanceKm(p.distanceKm)} đường chim bay
+                Cách bạn khoảng {formatDistanceKm(p.distanceKm)}
               </p>
             ) : null}
             {p.address ? <p className="marketplace-card__addr">{p.address}</p> : null}
@@ -557,6 +564,49 @@ export function MarketplacePage({
       (right.distanceKm ?? Number.POSITIVE_INFINITY),
     )
   }, [tab, myPosts, browsePosts, userLocation])
+  const foodSellerGroups = useMemo(() => {
+    if (tab !== 'food') return []
+    const grouped = new Map<string, MarketplacePost[]>()
+    for (const post of listForTab) {
+      const current = grouped.get(post.sellerId) ?? []
+      current.push(post)
+      grouped.set(post.sellerId, current)
+    }
+    return Array.from(grouped.entries()).map(([sellerId, sellerPosts]) => ({
+      sellerId,
+      sellerName: sellerPosts[0]?.sellerDisplayName || 'Bếp Homeji',
+      address: sellerPosts[0]?.address || '',
+      distanceKm: sellerPosts.reduce<number | null>((nearest, post) => {
+        if (post.distanceKm == null) return nearest
+        return nearest == null ? post.distanceKm : Math.min(nearest, post.distanceKm)
+      }, null),
+      posts: sellerPosts,
+    }))
+  }, [tab, listForTab])
+
+  const orderGroups = useMemo(() => {
+    const grouped = new Map<string, MarketplaceOrder[]>()
+    for (const order of orders) {
+      const counterpartId = order.buyerId === myUserId ? order.sellerId : order.buyerId
+      const current = grouped.get(counterpartId) ?? []
+      current.push(order)
+      grouped.set(counterpartId, current)
+    }
+    return Array.from(grouped.entries()).map(([counterpartId, groupedOrders]) => {
+      const first = groupedOrders[0]
+      const iAmBuyer = first?.buyerId === myUserId
+      return {
+        counterpartId,
+        name: iAmBuyer
+          ? first?.sellerDisplayName || 'Người bán Homeji'
+          : first?.buyerDisplayName || 'Người mua Homeji',
+        role: iAmBuyer ? 'Người bán' : 'Người mua',
+        address: first?.sellerAddress || '',
+        orders: groupedOrders,
+      }
+    })
+  }, [orders, myUserId])
+  const sellerLocationPost = myPosts[0] ?? null
   const selectedFoodPreset = FOOD_PRESETS.find((preset) => preset.imageUrl === presetImageUrl)
 
   return (
@@ -652,7 +702,7 @@ export function MarketplacePage({
               {userLocation ? (
                 <>
                   <span aria-hidden="true">⌖</span>
-                  <span>Đang xếp gần → xa theo đường chim bay</span>
+                  <span>Gần tôi · xếp từ gần đến xa</span>
                 </>
               ) : (
                 <button
@@ -815,26 +865,39 @@ export function MarketplacePage({
             ) : null}
           </div>
           <div className="form-group">
-            <label className="form-label">Địa chỉ / điểm giao</label>
-            <AddressAutocomplete
-              value={address}
-              onChange={setAddress}
-              onPlaceSelect={handlePlaceSelect}
-              placeholder="Nhập địa chỉ — gợi ý Places API"
-              required
-            />
+            <label className="form-label">Địa chỉ / điểm giao cố định</label>
+            {sellerLocationPost ? (
+              <div className="seller-location-lock">
+                <strong>{sellerLocationPost.address}</strong>
+                <span>Mọi món của bạn dùng chung điểm bán này để người mua dễ gom đơn.</span>
+              </div>
+            ) : (
+              <AddressAutocomplete
+                value={address}
+                onChange={setAddress}
+                onPlaceSelect={handlePlaceSelect}
+                placeholder="Nhập địa chỉ — gợi ý Places API"
+                required
+              />
+            )}
           </div>
           <div className="form-group">
             <label className="form-label">Vị trí trên bản đồ</label>
-            <p className="form-hint">Chọn gợi ý địa chỉ hoặc kéo pin để gắn tin chợ đồ lên map.</p>
-            <LocationPickerMap
-              latitude={latNum}
-              longitude={lngNum}
-              onLocationChange={(lat, lng) => {
-                setLatitude(String(lat))
-                setLongitude(String(lng))
-              }}
-            />
+            {sellerLocationPost ? (
+              <p className="form-hint">Vị trí được khóa theo điểm bán đầu tiên của tài khoản.</p>
+            ) : (
+              <>
+                <p className="form-hint">Chọn gợi ý địa chỉ hoặc kéo pin để gắn tin chợ đồ lên map.</p>
+                <LocationPickerMap
+                  latitude={latNum}
+                  longitude={lngNum}
+                  onLocationChange={(lat, lng) => {
+                    setLatitude(String(lat))
+                    setLongitude(String(lng))
+                  }}
+                />
+              </>
+            )}
           </div>
           <div className="form-group">
             <label className="form-label">Ảnh sản phẩm</label>
@@ -1019,8 +1082,22 @@ export function MarketplacePage({
         orders.length === 0 ? (
           <div className="empty-state card">Chưa có đơn hàng.</div>
         ) : (
-          <div className="marketplace-list">
-            {orders.map((o) => {
+          <div className="marketplace-order-groups">
+            {orderGroups.map((group) => (
+              <section key={group.counterpartId} className="marketplace-order-group">
+                <header className="marketplace-order-group__header">
+                  <div className="marketplace-store-avatar" aria-hidden="true">
+                    {group.name.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div>
+                    <span>{group.role}</span>
+                    <h3>{group.name}</h3>
+                    {group.address ? <p>{group.address}</p> : null}
+                  </div>
+                  <strong>{group.orders.length} món</strong>
+                </header>
+                <div className="marketplace-list">
+            {group.orders.map((o) => {
               const iAmBuyer = Boolean(myUserId && o.buyerId === myUserId)
               const iAmSeller = Boolean(myUserId && o.sellerId === myUserId)
               const requested = o.status === MarketplaceOrderStatus.Requested
@@ -1036,7 +1113,13 @@ export function MarketplacePage({
                         {iAmSeller ? 'Bạn là người bán' : iAmBuyer ? 'Bạn là người mua' : 'Đơn hàng'}
                       </span>
                     </div>
-                    <p className="marketplace-card__price">{formatPrice(o.agreedPrice)}</p>
+                    <div className="marketplace-order__product">
+                      {o.postImageUrl ? <img src={o.postImageUrl} alt="" /> : null}
+                      <div>
+                        <strong>{o.postTitle || 'Món Homeji'}</strong>
+                        <p className="marketplace-card__price">{formatPrice(o.agreedPrice)}</p>
+                      </div>
+                    </div>
                     <p className="marketplace-card__info">
                       {o.quantity} × {formatPrice(o.unitPrice)} · Phí nền tảng {(o.platformFeeRate * 100).toFixed(0)}%
                     </p>
@@ -1099,6 +1182,9 @@ export function MarketplacePage({
                 </article>
               )
             })}
+                </div>
+              </section>
+            ))}
           </div>
         )
       ) : listForTab.length === 0 ? (
@@ -1108,6 +1194,62 @@ export function MarketplacePage({
             : tab === 'food'
               ? 'Chưa có món ăn đang bán quanh đây.'
               : 'Chưa có đồ dùng đang bán quanh đây.'}
+        </div>
+      ) : tab === 'food' ? (
+        <div className="food-store-list">
+          {foodSellerGroups.map((group) => (
+            <section key={group.sellerId} className="food-store map-motion-fade-up">
+              <header className="food-store__header">
+                <div className="marketplace-store-avatar" aria-hidden="true">
+                  {group.sellerName.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="food-store__identity">
+                  <span className="food-store__eyebrow">Bếp Homeji</span>
+                  <h2>{group.sellerName}</h2>
+                  <p>{group.address}</p>
+                </div>
+                <span className="food-store__distance">{formatNearbyDistance(group.distanceKm)}</span>
+              </header>
+              <div className="food-menu-grid">
+                {group.posts.map((post) => {
+                  const thumb = postThumb(post)
+                  return (
+                    <article key={post.id} className="food-menu-item">
+                      <button type="button" className="food-menu-item__visual" onClick={() => showOnMap(post)}>
+                        {thumb ? <img src={thumb} alt={post.title} loading="lazy" /> : <span>Homeji Food</span>}
+                        <span className="food-menu-item__distance">{formatNearbyDistance(post.distanceKm)}</span>
+                      </button>
+                      <div className="food-menu-item__body">
+                        <div>
+                          <h3>{post.title}</h3>
+                          <p>{post.category} · {post.preparationMinutes || 0} phút</p>
+                        </div>
+                        <strong>{formatPrice(post.price)}</strong>
+                        <div className="food-menu-item__buy">
+                          <label>
+                            <span className="sr-only">Số lượng {post.title}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={post.availableQuantity}
+                              value={orderQuantities[post.id] ?? 1}
+                              onChange={(event) => setOrderQuantities((current) => ({
+                                ...current,
+                                [post.id]: Math.max(1, Math.min(post.availableQuantity, Number(event.target.value) || 1)),
+                              }))}
+                            />
+                          </label>
+                          <button type="button" className="food-menu-item__add" onClick={() => void handleOrder(post)}>
+                            Thêm
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       ) : (
         <div className="marketplace-list">
