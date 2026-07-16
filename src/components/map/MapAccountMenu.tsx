@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getMyWallet, type Wallet } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+import { formatPrice } from '../../lib/labels'
+import { requestMarketplaceTab } from '../../lib/marketplaceNavigation'
 import './MapMotion.css'
 import './MapAccountMenu.css'
 
@@ -19,6 +22,9 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
   const { profile, email, logout } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [wallet, setWallet] = useState<Wallet | null>(null)
+  const [walletLoading, setWalletLoading] = useState(false)
+  const [walletUnavailable, setWalletUnavailable] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,6 +43,28 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+
+    let active = true
+    void getMyWallet()
+      .then((nextWallet) => {
+        if (!active) return
+        setWallet(nextWallet)
+      })
+      .catch(() => {
+        if (!active) return
+        setWalletUnavailable(true)
+      })
+      .finally(() => {
+        if (active) setWalletLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [open])
+
   const name = profile?.displayName?.trim() || 'Tài khoản'
   const initials = initialsFromName(name)
   const planTag = profile?.isPremium ? 'Premium' : 'Standard'
@@ -48,6 +76,21 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
     navigate('/')
   }
 
+  const handleToggleMenu = () => {
+    const nextOpen = !open
+    if (nextOpen) {
+      setWalletLoading(true)
+      setWalletUnavailable(false)
+    }
+    setOpen(nextOpen)
+  }
+
+  const handleOpenWallet = () => {
+    setOpen(false)
+    requestMarketplaceTab('wallet')
+    navigate('/?section=marketplace')
+  }
+
   return (
     <div className="gmaps-account" ref={rootRef}>
       <button
@@ -56,7 +99,7 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
         aria-label="Tài khoản"
         aria-expanded={open}
         aria-haspopup="dialog"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggleMenu}
       >
         {profile?.avatarPath ? (
           <img src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
@@ -87,6 +130,31 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
         </div>
 
         <div className="gmaps-account__actions">
+          <button
+            type="button"
+            className="gmaps-account__wallet map-motion-press"
+            onClick={handleOpenWallet}
+          >
+            <span className="gmaps-account__wallet-icon" aria-hidden>
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path
+                  fill="currentColor"
+                  d="M4 5.5A2.5 2.5 0 0 1 6.5 3h10A2.5 2.5 0 0 1 19 5.5V7h.5A2.5 2.5 0 0 1 22 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A4.5 4.5 0 0 1 2 15.5v-10A2.5 2.5 0 0 1 4.5 3H6v2H4.5a.5.5 0 0 0-.5.5c0 .83.67 1.5 1.5 1.5H17V5.5a.5.5 0 0 0-.5-.5h-10A.5.5 0 0 0 6 5.5V7h13.5a.5.5 0 0 1 .5.5V9h-3.5a3.5 3.5 0 1 0 0 7H20v1.5a.5.5 0 0 1-.5.5h-13A2.5 2.5 0 0 1 4 15.5V8.56c.45.28.97.44 1.5.44H20v5h-3.5a1.5 1.5 0 1 1 0-3H22V9.5A2.5 2.5 0 0 0 19.5 7H19V5.5A2.5 2.5 0 0 0 16.5 3h-10A2.5 2.5 0 0 0 4 5.5Z"
+                />
+              </svg>
+            </span>
+            <span className="gmaps-account__wallet-copy">
+              <span className="gmaps-account__wallet-label">Ví của tôi</span>
+              <span className="gmaps-account__wallet-balance" aria-live="polite">
+                {walletLoading
+                  ? 'Đang tải số dư…'
+                  : walletUnavailable
+                    ? 'Không tải được số dư'
+                    : formatPrice(wallet?.balance ?? 0)}
+              </span>
+            </span>
+            <span className="gmaps-account__wallet-chevron" aria-hidden>›</span>
+          </button>
           {onOpenProfile ? (
             <button
               type="button"

@@ -42,6 +42,11 @@ import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import {
+  subscribeToMarketplaceTabRequests,
+  takeMarketplaceTabRequest,
+  type MarketplaceTab,
+} from '../lib/marketplaceNavigation'
+import {
   formatDate,
   formatPrice,
   MARKETPLACE_CATEGORIES,
@@ -70,8 +75,6 @@ type MediaDraft = {
   file: File
   previewUrl: string
 }
-
-type MarketTab = 'food' | 'browse' | 'mine' | 'sell' | 'orders' | 'wallet'
 
 type Props = {
   embedded?: boolean
@@ -123,7 +126,7 @@ export function MarketplacePage({
   const { profile } = useAuth()
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
 
-  const [tab, setTab] = useState<MarketTab>('food')
+  const [tab, setTab] = useState<MarketplaceTab>(() => takeMarketplaceTabRequest('food'))
   const [posts, setPosts] = useState<MarketplacePost[]>([])
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
   const [keyword, setKeyword] = useState('')
@@ -153,6 +156,8 @@ export function MarketplacePage({
   const [sellerPlan, setSellerPlan] = useState<MarketplaceSellerSubscription | null>(null)
   const [topUpAmount, setTopUpAmount] = useState('100000')
   const [walletBusy, setWalletBusy] = useState('')
+
+  useEffect(() => subscribeToMarketplaceTabRequests(setTab), [])
 
   const latNum = Number(latitude)
   const lngNum = Number(longitude)

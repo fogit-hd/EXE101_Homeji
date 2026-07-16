@@ -247,7 +247,7 @@
   top: calc(100% + 8px);
   right: 0;
   width: max-content;
-  min-width: 200px;
+  min-width: 232px;
   max-width: min(260px, calc(100vw - 24px));
   padding: 12px;
   border-radius: 12px;
@@ -315,7 +315,7 @@
 .gmaps-account__plan.is-standard {
   border: 1px solid rgba(154, 160, 166, 0.35);
   background: rgba(154, 160, 166, 0.12);
-  color: #bdc1c6;
+  color: var(--text-secondary);
 }
 
 .gmaps-account__plan.is-premium {
@@ -331,6 +331,7 @@
 }
 
 .gmaps-account__action,
+.gmaps-account__wallet,
 .gmaps-account__logout {
   width: 100%;
   padding: 8px 10px;
@@ -347,13 +348,70 @@
     transform var(--map-dur-fast, 220ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
-.gmaps-account__action {
-  background: var(--surface-input);
+.gmaps-account__wallet {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--maps-blue) 24%, var(--border));
+  background: color-mix(in srgb, var(--maps-blue-soft) 66%, var(--surface-elevated));
+  color: var(--text-primary);
+}
+
+.gmaps-account__wallet:hover {
+  border-color: color-mix(in srgb, var(--maps-blue) 48%, var(--border));
+  background: color-mix(in srgb, var(--maps-blue-soft) 88%, var(--surface-elevated));
+}
+
+.gmaps-account__wallet-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--maps-blue);
+  color: var(--surface-elevated);
+}
+
+.gmaps-account__wallet-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gmaps-account__wallet-label {
   color: var(--text-heading);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.gmaps-account__wallet-balance {
+  overflow: hidden;
+  color: var(--maps-blue-text);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmaps-account__wallet-chevron {
+  color: var(--maps-blue-text);
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.gmaps-account__action {
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
 }
 
 .gmaps-account__action:hover {
-  background: var(--border);
+  border-color: color-mix(in srgb, var(--maps-blue) 42%, var(--border));
+  background: var(--maps-blue-soft);
+  color: var(--maps-blue-text);
 }
 
 .gmaps-account__logout {
