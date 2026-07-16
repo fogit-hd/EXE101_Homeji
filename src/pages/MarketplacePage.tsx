@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   acceptMarketplaceOrder,
   archiveMarketplacePost,
   cancelMarketplaceOrder,
   completeMarketplaceOrder,
+  createMarketplaceCartOrder,
   createMarketplaceOrder,
   createMarketplacePost,
   createMomoPayment,
@@ -13,11 +14,13 @@ import {
   getMyMarketplaceOrders,
   getMyWallet,
   getMyWalletTransactions,
+  getMyWalletWithdrawals,
   getStoredSession,
   markMarketplacePostSold,
   rejectMarketplaceOrder,
   searchMarketplacePosts,
   purchaseMarketplaceSellerPlan,
+  createWalletWithdrawal,
   uploadImages,
   type MarketplaceOrder,
   type MarketplacePost,
@@ -25,12 +28,14 @@ import {
   type MarketplaceSellerSubscription,
   type Wallet,
   type WalletTransaction,
+  type WalletWithdrawal,
 } from '../api'
 import {
   MarketplaceListingType,
   MarketplaceOrderStatus,
   MarketplacePostStatus,
   WalletTransactionKind,
+  WalletWithdrawalStatus,
 } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { MarketplaceLoadingSkeleton } from '../components/MarketplaceLoadingSkeleton'
@@ -65,6 +70,7 @@ const DEFAULT_LNG = 106.7974
 /** Placeholder — API requires ≥1 media URL when no file selected. */
 const DEFAULT_MEDIA = '/brand/homeji-logo.png'
 const MAX_MEDIA = 10
+const MINIMUM_FOOD_CART_TOTAL = 25_000
 const WALLET_TRANSACTION_LABELS: Record<number, string> = {
   [WalletTransactionKind.TopUp]: 'Nạp số dư',
   [WalletTransactionKind.Purchase]: 'Thanh toán đơn',
@@ -72,12 +78,27 @@ const WALLET_TRANSACTION_LABELS: Record<number, string> = {
   [WalletTransactionKind.SaleProceeds]: 'Doanh thu bán hàng',
   [WalletTransactionKind.PlatformFee]: 'Phí nền tảng',
   [WalletTransactionKind.SellerPlanPurchase]: 'Gói người bán',
+  [WalletTransactionKind.Withdrawal]: 'Rút tiền',
+  [WalletTransactionKind.WithdrawalRefund]: 'Hoàn tiền rút',
 }
 
 type MediaDraft = {
   id: string
   file: File
   previewUrl: string
+}
+
+type MarketplaceCartItem = {
+  postId: string
+  sellerId: string
+  sellerName: string
+  sellerAddress: string
+  title: string
+  price: number
+  unit: string
+  quantity: number
+  availableQuantity: number
+  imageUrl: string | null
 }
 
 type Props = {
@@ -104,10 +125,35 @@ function formatDistanceKm(distanceKm: number): string {
   }).format(distanceKm)} km`
 }
 
-function formatNearbyDistance(distanceKm: number | null): string {
-  if (distanceKm == null) return 'Bật vị trí'
+function formatNearbyDistance(
+  distanceKm: number | null,
+  locating: boolean,
+  hasUserLocation: boolean,
+): string {
+  if (distanceKm == null) {
+    if (locating) return 'Đang định vị…'
+    return hasUserLocation ? 'Chưa rõ khoảng cách' : 'Chưa có vị trí'
+  }
   const limit = distanceKm <= 1 ? 1 : Math.ceil(distanceKm)
   return `< ${new Intl.NumberFormat('vi-VN').format(limit)} km`
+}
+
+function readCart(storageKey: string): MarketplaceCartItem[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey) ?? '[]') as MarketplaceCartItem[]
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item) =>
+      item
+      && typeof item.postId === 'string'
+      && typeof item.sellerId === 'string'
+      && typeof item.title === 'string'
+      && Number.isFinite(item.price)
+      && Number.isInteger(item.quantity)
+      && item.quantity > 0,
+    )
+  } catch {
+    return []
+  }
 }
 
 export function MarketplacePage({
@@ -122,6 +168,7 @@ export function MarketplacePage({
 }: Props) {
   const { profile } = useAuth()
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
+  const cartStorageKey = `homeji:marketplace-cart:v1:${myUserId ?? 'guest'}`
 
   const [tab, setTab] = useState<MarketplaceTab>(() => takeMarketplaceTabRequest('food'))
   const [posts, setPosts] = useState<MarketplacePost[]>([])
@@ -147,17 +194,39 @@ export function MarketplacePage({
   const [preparationMinutes, setPreparationMinutes] = useState('20')
   const [presetImageUrl, setPresetImageUrl] = useState('')
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
+  const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartBusy, setCartBusy] = useState(false)
   const [expandedFoodSellerIds, setExpandedFoodSellerIds] = useState<Set<string>>(
     () => new Set(),
   )
+  const handledMarketplaceSelectionRef = useRef<string | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
+  const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [sellerPlans, setSellerPlans] = useState<MarketplaceSellerPlan[]>([])
   const [sellerPlan, setSellerPlan] = useState<MarketplaceSellerSubscription | null>(null)
   const [topUpAmount, setTopUpAmount] = useState('100000')
   const [walletBusy, setWalletBusy] = useState('')
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [withdrawBankName, setWithdrawBankName] = useState('')
+  const [withdrawAccountNumber, setWithdrawAccountNumber] = useState('')
+  const [withdrawAccountHolder, setWithdrawAccountHolder] = useState('')
 
   useEffect(() => subscribeToMarketplaceTabRequests(setTab), [])
+
+  useEffect(() => {
+    localStorage.setItem(cartStorageKey, JSON.stringify(cartItems))
+  }, [cartItems, cartStorageKey])
+
+  useEffect(() => {
+    if (!cartOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !cartBusy) setCartOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [cartBusy, cartOpen])
 
   const latNum = Number(latitude)
   const lngNum = Number(longitude)
@@ -180,7 +249,14 @@ export function MarketplacePage({
   const myPosts = useMemo(() => posts.filter((p) => isMine(p)), [posts, isMine])
 
   useEffect(() => {
-    if (!selectedMarketplaceId || posts.length === 0) return
+    if (!selectedMarketplaceId) {
+      handledMarketplaceSelectionRef.current = null
+      return
+    }
+    if (
+      posts.length === 0 ||
+      handledMarketplaceSelectionRef.current === selectedMarketplaceId
+    ) return
     const sellerPosts = posts.filter(
       (post) =>
         post.sellerId === selectedMarketplaceId &&
@@ -195,6 +271,7 @@ export function MarketplacePage({
     if (nextTab === 'food') {
       setExpandedFoodSellerIds(new Set([selectedMarketplaceId]))
     }
+    handledMarketplaceSelectionRef.current = selectedMarketplaceId
   }, [posts, selectedMarketplaceId])
 
   useEffect(() => {
@@ -234,16 +311,18 @@ export function MarketplacePage({
 
   const loadFn = useCallback(async () => {
     if (tab === 'wallet') {
-      const [nextWallet, transactions, plans, currentPlan] = await Promise.all([
+      const [nextWallet, transactions, plans, currentPlan, nextWithdrawals] = await Promise.all([
         getMyWallet(),
         getMyWalletTransactions(50),
         getMarketplaceSellerPlans(),
         getMyMarketplaceSellerPlan(),
+        getMyWalletWithdrawals(),
       ])
       setWallet(nextWallet)
       setWalletTransactions(transactions)
       setSellerPlans(plans)
       setSellerPlan(currentPlan)
+      setWithdrawals(nextWithdrawals)
       return
     }
     if (tab === 'orders') {
@@ -274,12 +353,11 @@ export function MarketplacePage({
     }
   }, [tab, keyword, category, onPostsForMap, userLocation])
 
-  const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn, [
-    tab,
-    keyword,
-    category,
-    myUserId,
-  ])
+  const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(
+    loadFn,
+    [tab, keyword, category, myUserId],
+    { holdForIntro: false },
+  )
 
   const [hiddenLoadError, setHiddenLoadError] = useState('')
 
@@ -423,6 +501,113 @@ export function MarketplacePage({
     }
   }
 
+  const addToCart = (post: MarketplacePost) => {
+    const quantity = orderQuantities[post.id] ?? 1
+    const currentSellerId = cartItems[0]?.sellerId
+    if (currentSellerId && currentSellerId !== post.sellerId) {
+      const replaceCart = window.confirm(
+        'Giỏ hàng đang có món của một bếp khác. Xóa giỏ cũ để thêm món này?',
+      )
+      if (!replaceCart) return
+    }
+
+    setCartItems((current) => {
+      const sameSellerItems = currentSellerId && currentSellerId !== post.sellerId ? [] : current
+      const existing = sameSellerItems.find((item) => item.postId === post.id)
+      if (existing) {
+        return sameSellerItems.map((item) => item.postId === post.id
+          ? {
+              ...item,
+              quantity: Math.min(item.availableQuantity, item.quantity + quantity),
+            }
+          : item)
+      }
+
+      return [...sameSellerItems, {
+        postId: post.id,
+        sellerId: post.sellerId,
+        sellerName: post.sellerDisplayName || 'Bếp Homeji',
+        sellerAddress: post.address,
+        title: post.title,
+        price: post.price,
+        unit: post.unit,
+        quantity,
+        availableQuantity: post.availableQuantity,
+        imageUrl: postThumb(post),
+      }]
+    })
+    setOrderQuantities((current) => ({ ...current, [post.id]: 1 }))
+    setActionError('')
+    setActionMsg(`Đã thêm ${post.title} vào giỏ.`)
+  }
+
+  const updateCartQuantity = (postId: string, quantity: number) => {
+    setCartItems((current) => current.map((item) => item.postId === postId
+      ? { ...item, quantity: Math.max(1, Math.min(item.availableQuantity, quantity)) }
+      : item))
+  }
+
+  const checkoutCart = async () => {
+    if (cartItems.length === 0 || cartBusy) return
+    setCartBusy(true)
+    setActionError('')
+    try {
+      await createMarketplaceCartOrder({
+        items: cartItems.map((item) => ({ postId: item.postId, quantity: item.quantity })),
+        pickupAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        pickupAddress: cartItems[0]?.sellerAddress || 'Nhận tại bếp Homeji',
+        note: 'Đặt từ giỏ hàng Homeji',
+      })
+      const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+      setCartItems([])
+      setCartOpen(false)
+      setActionMsg(`Đã đặt ${itemCount} món. Chờ bếp xác nhận.`)
+      setTab('orders')
+      await reload()
+    } catch (err) {
+      setActionError(getErrorMessage(err, 'Thanh toán giỏ hàng thất bại'))
+    } finally {
+      setCartBusy(false)
+    }
+  }
+
+  const submitWithdrawal = async () => {
+    const amount = Number(withdrawAmount)
+    const reserve = wallet?.minimumWithdrawalReserve ?? 20_000
+    if (!Number.isInteger(amount) || amount <= 0) {
+      setActionError('Số tiền rút phải là số nguyên dương.')
+      return
+    }
+    if (!wallet || wallet.balance - amount < reserve) {
+      setActionError(`Ví phải còn tối thiểu ${formatPrice(reserve)} sau khi rút.`)
+      return
+    }
+    if (!withdrawBankName.trim() || !withdrawAccountNumber.trim() || !withdrawAccountHolder.trim()) {
+      setActionError('Vui lòng nhập đầy đủ thông tin tài khoản nhận tiền.')
+      return
+    }
+    if (!window.confirm(`Xác nhận gửi yêu cầu rút ${formatPrice(amount)}? Số tiền sẽ được trừ khỏi ví ngay.`)) return
+
+    setWalletBusy('withdraw')
+    setActionError('')
+    setActionMsg('')
+    try {
+      await createWalletWithdrawal({
+        amount,
+        bankName: withdrawBankName.trim(),
+        accountNumber: withdrawAccountNumber.trim(),
+        accountHolder: withdrawAccountHolder.trim(),
+      })
+      setWithdrawAmount('')
+      setActionMsg('Đã tạo yêu cầu rút tiền. Số dư đã được giữ lại để admin xử lý.')
+      await reload()
+    } catch (err) {
+      setActionError(getErrorMessage(err, 'Không thể tạo yêu cầu rút tiền.'))
+    } finally {
+      setWalletBusy('')
+    }
+  }
+
   const buySellerPlan = async (code: string) => {
     setWalletBusy(code)
     setActionError('')
@@ -468,7 +653,7 @@ export function MarketplacePage({
                 {mine
                   ? 'Tin của tôi'
                   : p.listingType === MarketplaceListingType.Food
-                    ? formatNearbyDistance(p.distanceKm)
+                    ? formatNearbyDistance(p.distanceKm, locating, Boolean(userLocation))
                     : marketplacePostStatusLabel[p.status] ?? p.category}
               </span>
               {mine ? (
@@ -598,6 +783,14 @@ export function MarketplacePage({
       posts: sellerPosts,
     }))
   }, [tab, listForTab])
+  const cartItemCount = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems],
+  )
+  const cartTotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems],
+  )
 
   const orderGroups = useMemo(() => {
     const grouped = new Map<string, MarketplaceOrder[]>()
@@ -739,6 +932,18 @@ export function MarketplacePage({
               )}
             </div>
           ) : null}
+          {tab === 'food' ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm marketplace-cart-trigger"
+              onClick={() => setCartOpen(true)}
+              aria-label={`Mở giỏ hàng có ${cartItemCount} món`}
+            >
+              <span aria-hidden="true">🛒</span>
+              Giỏ hàng
+              <strong>{cartItemCount}</strong>
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -750,7 +955,7 @@ export function MarketplacePage({
         disrupted ? (
           <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
         ) : (
-          <MarketplaceLoadingSkeleton tab={tab} onReady={onIntroComplete} />
+          <MarketplaceLoadingSkeleton tab={tab} />
         )
       ) : tab === 'sell' ? (
         <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
@@ -1052,11 +1257,97 @@ export function MarketplacePage({
             </div>
           </section>
 
+          <section className="wallet-withdraw card">
+            <div className="wallet-section-head">
+              <div>
+                <h3>Rút tiền về tài khoản cá nhân</h3>
+                <p>
+                  Admin sẽ kiểm tra và chuyển khoản thủ công. Ví phải còn tối thiểu{' '}
+                  <strong>{formatPrice(wallet?.minimumWithdrawalReserve ?? 20_000)}</strong>.
+                </p>
+              </div>
+            </div>
+            <div className="wallet-withdraw-grid">
+              <input
+                className="form-input"
+                value={withdrawBankName}
+                onChange={(event) => setWithdrawBankName(event.target.value)}
+                placeholder="Tên ngân hàng"
+                aria-label="Tên ngân hàng nhận tiền"
+                maxLength={120}
+              />
+              <input
+                className="form-input"
+                value={withdrawAccountNumber}
+                onChange={(event) => setWithdrawAccountNumber(event.target.value)}
+                placeholder="Số tài khoản"
+                aria-label="Số tài khoản nhận tiền"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={40}
+              />
+              <input
+                className="form-input"
+                value={withdrawAccountHolder}
+                onChange={(event) => setWithdrawAccountHolder(event.target.value.toUpperCase())}
+                placeholder="Tên chủ tài khoản"
+                aria-label="Tên chủ tài khoản nhận tiền"
+                maxLength={120}
+              />
+              <input
+                className="form-input"
+                type="number"
+                min={1}
+                max={Math.max(0, (wallet?.balance ?? 0) - (wallet?.minimumWithdrawalReserve ?? 20_000))}
+                step={1_000}
+                value={withdrawAmount}
+                onChange={(event) => setWithdrawAmount(event.target.value)}
+                placeholder="Số tiền muốn rút"
+                aria-label="Số tiền muốn rút"
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={Boolean(walletBusy) || !wallet || wallet.balance <= (wallet.minimumWithdrawalReserve ?? 20_000)}
+                onClick={() => void submitWithdrawal()}
+              >
+                {walletBusy === 'withdraw' ? 'Đang gửi yêu cầu…' : 'Gửi yêu cầu rút tiền'}
+              </button>
+            </div>
+            <div className="wallet-withdraw-history">
+              <h4>Yêu cầu gần đây</h4>
+              {withdrawals.length === 0 ? (
+                <p className="marketplace-tab-hint">Chưa có yêu cầu rút tiền.</p>
+              ) : (
+                <ul>
+                  {withdrawals.map((request) => (
+                    <li key={request.id}>
+                      <div>
+                        <strong>{formatPrice(request.amount)}</strong>
+                        <small>{request.bankName} · ••••{request.accountNumber.slice(-4)} · {formatDate(request.createdAt)}</small>
+                      </div>
+                      <span className={`withdrawal-status is-${request.status}`}>
+                        {request.status === WalletWithdrawalStatus.Pending
+                          ? 'Chờ xử lý'
+                          : request.status === WalletWithdrawalStatus.Completed
+                            ? 'Đã chuyển'
+                            : 'Đã từ chối'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+
           <section className="seller-plans card">
             <div className="wallet-section-head">
               <div>
                 <h3>Gói người bán</h3>
-                <p>Gói hiện tại: <strong>{sellerPlan?.packageName ?? 'Bắt đầu'}</strong>. Phí gói trừ từ số dư; luôn giữ quỹ đảm bảo 100.000đ.</p>
+                <p>
+                  Gói hiện tại: <strong>{sellerPlan?.packageName ?? 'Bắt đầu'}</strong>. Phí gói trừ từ số dư;
+                  luôn giữ quỹ đảm bảo {formatPrice(wallet?.minimumWithdrawalReserve ?? 20_000)}.
+                </p>
               </div>
             </div>
             <div className="seller-plan-grid">
@@ -1245,7 +1536,9 @@ export function MarketplacePage({
                     <span className="food-store__name">{group.sellerName}</span>
                     <span className="food-store__address">{group.address}</span>
                   </span>
-                  <span className="food-store__distance">{formatNearbyDistance(group.distanceKm)}</span>
+                  <span className="food-store__distance">
+                    {formatNearbyDistance(group.distanceKm, locating, Boolean(userLocation))}
+                  </span>
                   <span className="food-store__chevron" aria-hidden="true">⌄</span>
                 </button>
               </header>
@@ -1256,7 +1549,9 @@ export function MarketplacePage({
                     <article key={post.id} className="food-menu-item">
                       <button type="button" className="food-menu-item__visual" onClick={() => showOnMap(post)}>
                         {thumb ? <img src={thumb} alt={post.title} loading="lazy" /> : <span>Homeji Food</span>}
-                        <span className="food-menu-item__distance">{formatNearbyDistance(post.distanceKm)}</span>
+                        <span className="food-menu-item__distance">
+                          {formatNearbyDistance(post.distanceKm, locating, Boolean(userLocation))}
+                        </span>
                       </button>
                       <div className="food-menu-item__body">
                         <div>
@@ -1278,8 +1573,8 @@ export function MarketplacePage({
                               }))}
                             />
                           </label>
-                          <button type="button" className="food-menu-item__add" onClick={() => void handleOrder(post)}>
-                            Thêm
+                          <button type="button" className="food-menu-item__add" onClick={() => addToCart(post)}>
+                            Thêm vào giỏ
                           </button>
                         </div>
                       </div>
@@ -1295,6 +1590,124 @@ export function MarketplacePage({
           {listForTab.map((p) => renderPostCard(p, tab === 'mine' ? 'mine' : 'browse'))}
         </div>
       )}
+
+      {tab === 'food' && cartItems.length > 0 && !cartOpen ? (
+        <button type="button" className="food-cart-sticky" onClick={() => setCartOpen(true)}>
+          <span className="food-cart-sticky__count" aria-hidden="true">{cartItemCount}</span>
+          <span>
+            <small>{cartItems[0]?.sellerName}</small>
+            <strong>Xem giỏ hàng</strong>
+          </span>
+          <b>{formatPrice(cartTotal)}</b>
+        </button>
+      ) : null}
+
+      {cartOpen ? (
+        <div
+          className="food-cart-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !cartBusy) setCartOpen(false)
+          }}
+        >
+          <section
+            className="food-cart-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="food-cart-title"
+          >
+            <header className="food-cart-drawer__header">
+              <div>
+                <span>Giỏ hàng · {cartItems[0]?.sellerName || 'Bếp Homeji'}</span>
+                <h2 id="food-cart-title">Món bạn đã chọn</h2>
+              </div>
+              <button
+                type="button"
+                className="food-cart-drawer__close"
+                onClick={() => setCartOpen(false)}
+                disabled={cartBusy}
+                aria-label="Đóng giỏ hàng"
+              >
+                ×
+              </button>
+            </header>
+
+            {cartItems.length === 0 ? (
+              <div className="food-cart-empty">
+                <span aria-hidden="true">🛒</span>
+                <strong>Giỏ hàng đang trống</strong>
+                <p>Chọn món từ một bếp để bắt đầu đặt hàng.</p>
+              </div>
+            ) : (
+              <ul className="food-cart-list">
+                {cartItems.map((item) => (
+                  <li key={item.postId}>
+                    {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <span className="food-cart-list__placeholder">H</span>}
+                    <div className="food-cart-list__info">
+                      <strong>{item.title}</strong>
+                      <span>{formatPrice(item.price)} / {item.unit}</span>
+                      <button
+                        type="button"
+                        onClick={() => setCartItems((current) => current.filter((entry) => entry.postId !== item.postId))}
+                        disabled={cartBusy}
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                    <div className="food-cart-list__quantity" aria-label={`Số lượng ${item.title}`}>
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(item.postId, item.quantity - 1)}
+                        disabled={cartBusy || item.quantity <= 1}
+                        aria-label={`Giảm ${item.title}`}
+                      >−</button>
+                      <span>{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(item.postId, item.quantity + 1)}
+                        disabled={cartBusy || item.quantity >= item.availableQuantity}
+                        aria-label={`Tăng ${item.title}`}
+                      >+</button>
+                    </div>
+                    <b>{formatPrice(item.price * item.quantity)}</b>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <footer className="food-cart-drawer__footer">
+              <div>
+                <span>Tạm tính · {cartItemCount} món</span>
+                <strong>{formatPrice(cartTotal)}</strong>
+              </div>
+              {cartItems.length > 0 && cartTotal < MINIMUM_FOOD_CART_TOTAL ? (
+                <p>
+                  Thêm {formatPrice(MINIMUM_FOOD_CART_TOTAL - cartTotal)} để đạt đơn tối thiểu{' '}
+                  {formatPrice(MINIMUM_FOOD_CART_TOTAL)}.
+                </p>
+              ) : null}
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={cartBusy || cartItems.length === 0 || cartTotal < MINIMUM_FOOD_CART_TOTAL}
+                onClick={() => void checkoutCart()}
+              >
+                {cartBusy ? 'Đang đặt món…' : `Đặt món · ${formatPrice(cartTotal)}`}
+              </button>
+              {cartItems.length > 0 ? (
+                <button
+                  type="button"
+                  className="food-cart-clear"
+                  onClick={() => setCartItems([])}
+                  disabled={cartBusy}
+                >
+                  Xóa toàn bộ giỏ
+                </button>
+              ) : null}
+            </footer>
+          </section>
+        </div>
+      ) : null}
 
       <MapToast
         message={toastMessage}

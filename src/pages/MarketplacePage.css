@@ -446,6 +446,317 @@
   cursor: pointer;
 }
 
+.marketplace-cart-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.marketplace-cart-trigger strong {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  padding-inline: 5px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--grab-green, #00b14f);
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+.food-cart-sticky {
+  position: sticky;
+  z-index: 20;
+  bottom: 12px;
+  width: calc(100% - 24px);
+  min-height: 58px;
+  margin: 18px 12px 0;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: 16px;
+  background: #08783f;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 82, 42, 0.3);
+  animation: food-cart-enter 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.food-cart-sticky__count {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 800;
+}
+
+.food-cart-sticky span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.food-cart-sticky small {
+  overflow: hidden;
+  opacity: 0.8;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-cart-sticky strong,
+.food-cart-sticky b {
+  font-size: 0.88rem;
+}
+
+.food-cart-backdrop {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(13, 31, 24, 0.42);
+  backdrop-filter: blur(3px);
+  animation: food-cart-backdrop-in 180ms ease-out;
+}
+
+.food-cart-drawer {
+  width: min(440px, 100%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  box-shadow: -18px 0 48px rgba(0, 0, 0, 0.2);
+  animation: food-cart-drawer-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.food-cart-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.food-cart-drawer__header span {
+  color: var(--grab-green, #00b14f);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.food-cart-drawer__header h2 {
+  margin: 3px 0 0;
+  font-size: 1.25rem;
+}
+
+.food-cart-drawer__close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-input);
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.food-cart-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 20px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.food-cart-list li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.food-cart-list img,
+.food-cart-list__placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
+.food-cart-list__placeholder {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 14%, var(--surface-input));
+  color: var(--grab-green, #00b14f);
+  font-weight: 900;
+}
+
+.food-cart-list__info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.food-cart-list__info strong {
+  overflow: hidden;
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-cart-list__info span {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.food-cart-list__info button,
+.food-cart-clear {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #c43a3a;
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.food-cart-list__quantity {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  gap: 8px;
+}
+
+.food-cart-list__quantity button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-input);
+  color: var(--grab-green, #00b14f);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.food-cart-list__quantity button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.food-cart-list li > b {
+  grid-column: 3;
+  grid-row: 2;
+  color: var(--grab-green, #00b14f);
+  font-size: 0.78rem;
+}
+
+.food-cart-empty {
+  flex: 1;
+  display: grid;
+  padding: 40px 24px;
+  place-content: center;
+  justify-items: center;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.food-cart-empty > span {
+  font-size: 2rem;
+}
+
+.food-cart-empty strong {
+  margin-top: 10px;
+  color: var(--text-heading);
+}
+
+.food-cart-empty p {
+  margin: 5px 0 0;
+  font-size: 0.8rem;
+}
+
+.food-cart-drawer__footer {
+  padding: 18px 20px max(18px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: 0 -8px 24px color-mix(in srgb, #000 6%, transparent);
+}
+
+.food-cart-drawer__footer > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.food-cart-drawer__footer span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.food-cart-drawer__footer strong {
+  color: var(--grab-green, #00b14f);
+  font-size: 1.1rem;
+}
+
+.food-cart-drawer__footer p {
+  margin: -4px 0 12px;
+  color: #b06a00;
+  font-size: 0.74rem;
+}
+
+.food-cart-drawer__footer > .btn {
+  width: 100%;
+  min-height: 44px;
+}
+
+.food-cart-clear {
+  display: block;
+  margin: 12px auto 0;
+}
+
+@keyframes food-cart-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes food-cart-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes food-cart-drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .food-cart-sticky,
+  .food-cart-backdrop,
+  .food-cart-drawer {
+    animation: none;
+  }
+}
+
 .marketplace-order-group .marketplace-list {
   gap: 0;
   padding: 0 14px;
@@ -902,6 +1213,57 @@
 
 .wallet-history li:last-child {
   border-bottom: 0;
+}
+
+.wallet-withdraw-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wallet-withdraw-grid .btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.wallet-withdraw-history {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.wallet-withdraw-history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wallet-withdraw-history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.wallet-withdraw-history li div {
+  display: grid;
+  gap: 4px;
+}
+
+.withdrawal-status {
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.withdrawal-status.is-1 { color: #b7791f; }
+.withdrawal-status.is-2 { color: #16855b; }
+.withdrawal-status.is-3 { color: #c53030; }
+
+@media (max-width: 700px) {
+  .wallet-withdraw-grid { grid-template-columns: 1fr; }
 }
 
 .wallet-history li > div {

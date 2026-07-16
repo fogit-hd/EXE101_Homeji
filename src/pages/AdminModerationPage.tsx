@@ -2,18 +2,22 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
+  completeWalletWithdrawal,
+  getAdminWalletWithdrawals,
   getAdminLandlordVerifications,
   getAdminReports,
   getPendingRentalPosts,
   rejectRentalPost,
+  rejectWalletWithdrawal,
   rejectReport,
   resolveReport,
   reviewLandlordVerification,
   type LandlordVerification,
   type RentalPostSummary,
   type Report,
+  type WalletWithdrawal,
 } from '../api'
-import { LandlordVerificationStatus, ReportStatus } from '../api/types'
+import { LandlordVerificationStatus, ReportStatus, WalletWithdrawalStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
@@ -30,7 +34,8 @@ export function AdminModerationPage() {
   const [pendingPosts, setPendingPosts] = useState<RentalPostSummary[]>([])
   const [reports, setReports] = useState<Report[]>([])
   const [verifications, setVerifications] = useState<LandlordVerification[]>([])
-  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications'>('posts')
+  const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
+  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals'>('posts')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
@@ -38,14 +43,16 @@ export function AdminModerationPage() {
   const [message, setMessage] = useState('')
 
   const loadFn = useCallback(async () => {
-    const [posts, reportList, verificationList] = await Promise.all([
+    const [posts, reportList, verificationList, withdrawalList] = await Promise.all([
       getPendingRentalPosts(),
       getAdminReports(reportStatus),
       getAdminLandlordVerifications(LandlordVerificationStatus.Pending),
+      getAdminWalletWithdrawals(WalletWithdrawalStatus.Pending),
     ])
     setPendingPosts(posts)
     setReports(reportList)
     setVerifications(verificationList)
+    setWithdrawals(withdrawalList)
   }, [reportStatus])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted, reload } = usePersistentLoad(
@@ -97,6 +104,38 @@ export function AdminModerationPage() {
     }
   }
 
+  const handleCompleteWithdrawal = async (id: string) => {
+    if (!resolutionNote.trim()) {
+      setError('Vui lòng nhập mã giao dịch chuyển khoản trước khi xác nhận.')
+      return
+    }
+    if (!window.confirm('Xác nhận tiền đã được chuyển tới đúng tài khoản người dùng?')) return
+    try {
+      await completeWalletWithdrawal(id, resolutionNote || undefined)
+      setMessage('Đã xác nhận chuyển khoản thành công.')
+      setResolutionNote('')
+      void reload()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể hoàn tất yêu cầu rút tiền.'))
+    }
+  }
+
+  const handleRejectWithdrawal = async (id: string) => {
+    if (!resolutionNote.trim()) {
+      setError('Vui lòng nhập lý do từ chối để người dùng đối soát.')
+      return
+    }
+    if (!window.confirm('Từ chối yêu cầu này và hoàn toàn bộ số tiền về ví?')) return
+    try {
+      await rejectWalletWithdrawal(id, resolutionNote || undefined)
+      setMessage('Đã từ chối và hoàn tiền vào ví người dùng.')
+      setResolutionNote('')
+      void reload()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể từ chối yêu cầu rút tiền.'))
+    }
+  }
+
   return (
     <div className="container page">
       <h1 className="page-title">Quản trị</h1>
@@ -127,6 +166,13 @@ export function AdminModerationPage() {
           onClick={() => setTab('verifications')}
         >
           Xác minh chủ nhà ({verifications.length})
+        </button>
+        <button
+          type="button"
+          className={`tab ${tab === 'withdrawals' ? 'active' : ''}`}
+          onClick={() => setTab('withdrawals')}
+        >
+          Rút tiền ({withdrawals.length})
         </button>
       </div>
 
@@ -264,6 +310,48 @@ export function AdminModerationPage() {
                     }}
                   >
                     Từ chối
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      )}
+      {tab === 'withdrawals' && (
+        <div className="admin-list">
+          {withdrawals.length === 0 ? (
+            <div className="empty-state card">Không có yêu cầu rút tiền chờ xử lý.</div>
+          ) : (
+            withdrawals.map((withdrawal) => (
+              <article key={withdrawal.id} className="card admin-item">
+                <div>
+                  <span className="badge badge-blue">Chờ chuyển khoản</span>
+                  <h3>{formatPrice(withdrawal.amount)}</h3>
+                  <p><strong>{withdrawal.bankName}</strong> · {withdrawal.accountNumber}</p>
+                  <p>Chủ tài khoản: <strong>{withdrawal.accountHolder}</strong></p>
+                  <small>User ID: {withdrawal.userId} · {formatDate(withdrawal.createdAt)}</small>
+                </div>
+                <div className="admin-actions">
+                  <input
+                    className="form-input"
+                    placeholder="Mã giao dịch hoặc lý do từ chối"
+                    value={resolutionNote}
+                    onChange={(event) => setResolutionNote(event.target.value)}
+                    maxLength={300}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => void handleCompleteWithdrawal(withdrawal.id)}
+                  >
+                    Xác nhận đã chuyển
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => void handleRejectWithdrawal(withdrawal.id)}
+                  >
+                    Từ chối & hoàn tiền
                   </button>
                 </div>
               </article>

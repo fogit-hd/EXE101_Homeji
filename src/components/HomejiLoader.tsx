@@ -69,10 +69,11 @@ type PersistentLoadResult = {
 export function usePersistentLoad(
   loadFn: () => Promise<void>,
   deps: unknown[] = [],
-  options?: { enabled?: boolean; retryIntervalMs?: number },
+  options?: { enabled?: boolean; retryIntervalMs?: number; holdForIntro?: boolean },
 ): PersistentLoadResult {
   const enabled = options?.enabled ?? true
   const retryIntervalMs = options?.retryIntervalMs ?? SERVICE_RETRY_MS
+  const holdForIntro = options?.holdForIntro ?? true
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [disrupted, setDisrupted] = useState(false)
@@ -122,7 +123,13 @@ export function usePersistentLoad(
     return () => window.clearInterval(t)
   }, [enabled, disrupted, reload, retryIntervalMs])
 
-  return { showLoader, onIntroComplete, error, disrupted, reload }
+  return {
+    showLoader: holdForIntro ? showLoader : loading || disrupted,
+    onIntroComplete,
+    error,
+    disrupted,
+    reload,
+  }
 }
 
 /**
