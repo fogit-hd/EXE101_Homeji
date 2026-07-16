@@ -10,6 +10,7 @@ import {
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
+import { ChatbotMessageContent } from './ChatbotMessageContent'
 import './MapChatbot.css'
 
 const HOMIE_TITLE = 'Homie'
@@ -477,7 +478,11 @@ export function MapChatbot({
                 </span>
               ) : null}
               <div className="map-chatbot__bubble">
-                <span className="map-chatbot__bubble-text">{m.content}</span>
+                {isUser ? (
+                  <span className="map-chatbot__bubble-text">{m.content}</span>
+                ) : (
+                  <ChatbotMessageContent content={m.content} />
+                )}
               </div>
             </div>
           )

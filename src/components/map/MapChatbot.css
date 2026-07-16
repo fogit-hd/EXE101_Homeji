@@ -484,6 +484,93 @@
   animation-delay: 80ms;
 }
 
+.map-chatbot__formatted-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  animation: map-chatbot-text-reveal 520ms ease both;
+  animation-delay: 80ms;
+}
+
+.map-chatbot__formatted-content :is(h3, h4, h5, p, ul, ol, pre) {
+  margin: 0;
+}
+
+.map-chatbot__formatted-content :is(h3, h4, h5) {
+  color: var(--text-heading);
+  font-size: 0.92rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.map-chatbot__formatted-content h4 {
+  font-size: 0.88rem;
+}
+
+.map-chatbot__formatted-content h5 {
+  font-size: 0.84rem;
+}
+
+.map-chatbot__formatted-content :is(ul, ol) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 20px;
+}
+
+.map-chatbot__formatted-content li {
+  padding-left: 2px;
+}
+
+.map-chatbot__formatted-content li::marker {
+  color: var(--maps-blue-text, var(--maps-blue, #1a73e8));
+  font-weight: 700;
+}
+
+.map-chatbot__formatted-content strong {
+  color: var(--text-heading);
+  font-weight: 750;
+}
+
+.map-chatbot__formatted-content a {
+  color: var(--maps-blue-text, var(--maps-blue, #1a73e8));
+  font-weight: 650;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.map-chatbot__formatted-content a:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--maps-blue, #1a73e8);
+  outline-offset: 2px;
+}
+
+.map-chatbot__formatted-content code {
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-elevated, #fff);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+.map-chatbot__formatted-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated, #fff);
+}
+
+.map-chatbot__formatted-content pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  white-space: pre;
+}
+
 .map-chatbot__msg.is-pending .map-chatbot__bubble {
   opacity: 0.88;
 }
