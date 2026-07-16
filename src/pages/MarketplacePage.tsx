@@ -33,6 +33,7 @@ import {
   WalletTransactionKind,
 } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { MarketplaceLoadingSkeleton } from '../components/MarketplaceLoadingSkeleton'
 import { AddressAutocomplete, type PlaceResult } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { MapToast } from '../components/map/MapToast'
@@ -746,7 +747,11 @@ export function MarketplacePage({
       ) : null}
 
       {showLoader ? (
-        <HomejiLoader onIntroComplete={onIntroComplete} message={disrupted ? error : undefined} />
+        disrupted ? (
+          <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
+        ) : (
+          <MarketplaceLoadingSkeleton tab={tab} onReady={onIntroComplete} />
+        )
       ) : tab === 'sell' ? (
         <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
           <div className="marketplace-listing-type" role="group" aria-label="Loại mặt hàng">
