@@ -573,6 +573,33 @@
   min-width: 320px;
 }
 
+/* Listings + Tin tìm phòng: slide in from the right at 90% width */
+.home-list-panel.is-slide-right {
+  left: auto;
+  right: 0;
+  width: 90%;
+  max-width: 90vw;
+  min-width: 0;
+}
+
+.home-list-panel.is-slide-right:not(.is-visible) {
+  transform: translate3d(100%, 0, 0);
+  opacity: 0;
+}
+
+.home-list-panel.is-slide-right.is-visible {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  pointer-events: auto;
+  border-left-color: var(--border);
+  box-shadow: -12px 0 32px rgba(var(--shadow-color), 0.18);
+}
+
+.home-list-panel.is-slide-right .home-list-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* Wide sections (~2.5× default): chợ đồ, đã lưu, thông báo, lịch xem, tìm phòng, ở ghép, tin của tôi… */
 .home-list-panel.is-wide,
 .home-list-panel.is-marketplace {
@@ -744,67 +771,99 @@
   }
 
   .home-list-panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: 0;
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    height: 48%;
-    max-height: 52dvh;
+    position: fixed;
+    z-index: 10040;
     border-left: 0;
-    border-top: 1px solid var(--border);
-    border-radius: 16px 16px 0 0;
-    /* Peek bar when closed */
-    transform: translate3d(0, calc(100% - 48px), 0);
+    border-top: 0;
+    border-radius: 0;
     opacity: 1;
-    pointer-events: auto;
-    box-shadow: 0 -8px 28px rgba(var(--shadow-color), 0.14);
+    pointer-events: none;
+    box-shadow: none;
     transition:
-      transform 0.3s ease,
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
       opacity 0.3s ease,
       box-shadow 0.3s ease,
       background-color 0.3s ease;
   }
 
-  .home-list-panel.is-messages,
-  .home-list-panel.is-marketplace,
-  .home-list-panel.is-wide {
+  /* Most tabs: full-screen bottom sheet */
+  .home-list-panel:not(.is-slide-right) {
+    inset: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
     width: 100%;
     max-width: none;
     min-width: 0;
+    height: 100%;
+    max-height: 100dvh;
+    transform: translate3d(0, 100%, 0);
   }
 
-  .home-list-panel.is-visible {
+  .home-list-panel:not(.is-slide-right).is-visible {
     transform: translate3d(0, 0, 0);
     opacity: 1;
     pointer-events: auto;
-    box-shadow: 0 -8px 28px rgba(var(--shadow-color), 0.14);
+    box-shadow: none;
+  }
+
+  /* Listings + Tin tìm phòng: slide in from right, 90% width */
+  .home-list-panel.is-slide-right {
+    inset: 0;
+    left: auto;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 90%;
+    max-width: none;
+    min-width: 0;
+    height: 100%;
+    max-height: 100dvh;
+    border-left: 1px solid var(--border);
+    box-shadow: -12px 0 32px rgba(var(--shadow-color), 0.18);
+    transform: translate3d(100%, 0, 0);
+  }
+
+  .home-list-panel.is-slide-right.is-visible {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .home-list-panel.is-messages,
+  .home-list-panel.is-marketplace,
+  .home-list-panel.is-wide:not(.is-slide-right) {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: 100%;
+    max-height: 100dvh;
   }
 
   .home-list-panel.is-messages.is-visible,
   .home-list-panel.is-marketplace.is-visible,
-  .home-list-panel.is-wide.is-visible {
-    height: 70%;
-    max-height: 82dvh;
+  .home-list-panel.is-wide:not(.is-slide-right).is-visible {
+    height: 100%;
+    max-height: 100dvh;
   }
 
   .home-list-panel:not(.is-visible) .home-list-body {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
   }
 
   .home-list-panel.is-visible .home-list-body {
     opacity: 1;
     pointer-events: auto;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.24s ease 0.08s;
   }
 
   .home-list-body {
     max-height: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
   }
 
   .home-map-overlay {
@@ -816,11 +875,11 @@
 }
 
 @media (max-width: 768px) {
+  /* Map home has no mobile tab bar — full viewport (tabbar offset caused ~64px black gap) */
   .app-shell--map .home-map-page {
-    height: calc(
-      100dvh - var(--mobile-tabbar-height) - var(--safe-bottom)
-    );
+    height: 100%;
     min-height: 0;
+    max-height: none;
     overflow: hidden;
   }
 
@@ -834,8 +893,8 @@
 
   .app-shell--map .home-list-panel,
   .app-shell--map .home-list-panel.is-visible {
-    height: 44%;
-    max-height: 46dvh;
+    height: 100%;
+    max-height: 100dvh;
     bottom: 0;
   }
 

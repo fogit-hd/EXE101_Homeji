@@ -165,10 +165,9 @@
 }
 
 @media (max-width: 640px) {
-  .guest-poster-menu__trigger {
-    max-width: 46vw;
-    padding-inline: 12px;
-    font-size: 0.7rem;
+  .guest-poster-menu {
+    transform: scale(0.6);
+    transform-origin: center right;
   }
 }
 

@@ -19,6 +19,14 @@
     opacity 0.3s ease,
     transform 0.3s ease;
   will-change: transform, opacity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.map-detail-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .map-detail-panel.is-visible {
@@ -51,10 +59,21 @@
 .map-detail-panel__owner-badges span {
   padding: 3px 8px;
   border-radius: 999px;
-  background: var(--maps-blue-soft, rgba(26, 115, 232, 0.1));
-  color: var(--maps-blue, #1a73e8);
+  background: color-mix(in srgb, var(--surface-input, #f1f3f4) 76%, transparent);
+  color: var(--text-secondary);
   font-size: 0.72rem;
   font-weight: 650;
+}
+
+.map-detail-panel__owner-badges .is-verified {
+  background: var(--maps-blue-soft, rgba(26, 115, 232, 0.1));
+  color: var(--maps-blue, #1a73e8);
+}
+
+.map-detail-panel__owner-badges .is-premium {
+  background: color-mix(in srgb, #f59e0b 20%, transparent);
+  color: #d97706;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #f59e0b 40%, transparent);
 }
 
 .map-detail-panel__toast {
@@ -96,7 +115,7 @@
 }
 
 .map-detail-schedule.is-visible {
-  max-height: 220px;
+  max-height: 260px;
   padding: 12px;
   opacity: 1;
   transform: translate3d(0, 0, 0);
@@ -133,22 +152,49 @@
   cursor: pointer;
 }
 
-.map-detail-panel__body--enter {
+.map-detail-panel__scroll,
+.map-detail-panel__intro {
+  flex-shrink: 0;
+}
+
+.map-detail-panel__content {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 4px 0 28px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.map-detail-panel__content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.map-detail-panel__body--enter,
+.map-detail-panel__content.map-detail-panel__body--enter {
   animation: map-fade-up 0.3s ease both;
 }
 
-.map-detail-panel__body--exit {
+.map-detail-panel__body--exit,
+.map-detail-panel__content.map-detail-panel__body--exit {
   animation: map-fade-down-out 0.2s ease both;
 }
 
 .map-detail-review-form {
-  margin: 4px 16px 8px;
+  margin: 4px 16px 16px;
   padding: 14px;
   display: grid;
   gap: 14px;
   border-radius: 14px;
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface-input, #2a2a2a) 55%, var(--surface-elevated, #1e1e1e));
+  box-sizing: border-box;
 }
 
 .map-detail-review-form__title {
@@ -211,7 +257,9 @@
 
 .map-detail-reviews {
   gap: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .map-detail-reviews__summary {
@@ -347,14 +395,19 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/legacy Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .map-detail-panel__scroll::-webkit-scrollbar {
   width: 0;
   height: 0;
   display: none;
+}
+
+.map-detail-panel__intro {
+  display: block;
+  width: 100%;
 }
 
 .map-detail-panel__hero {
@@ -496,11 +549,13 @@
 
 .map-detail-panel__tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 4px;
   padding: 4px 12px 0;
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
+  background: var(--surface-elevated);
 }
 
 .map-detail-panel__tabs::-webkit-scrollbar {
@@ -536,9 +591,10 @@
 .map-detail-panel__actions {
   display: flex;
   gap: 4px;
-  padding: 14px 10px 10px;
+  padding: 10px 8px 12px;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .map-detail-panel__actions::-webkit-scrollbar {
@@ -546,13 +602,13 @@
 }
 
 .map-detail-action {
-  flex: 1 0 auto;
-  min-width: 64px;
+  flex: 0 0 auto;
+  min-width: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
+  gap: 4px;
+  padding: 2px 4px 0;
   border: 0;
   background: transparent;
   color: var(--maps-blue);
@@ -588,21 +644,24 @@
 }
 
 .map-detail-action__label {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 600;
   color: var(--text-heading);
   text-align: center;
-  max-width: 72px;
-  line-height: 1.2;
+  max-width: 64px;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .map-detail-panel__body {
-  padding: 4px 0 28px;
+  padding: 0;
 }
 
 .map-detail-panel__section {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
 }
 
 .map-detail-panel__route-block {
@@ -809,7 +868,10 @@
   margin: 0;
   padding: 8px 18px 0;
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .map-detail-amenities li {
@@ -843,6 +905,20 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-heading);
+}
+
+.map-detail-panel__rules {
+  padding: 12px 18px 4px;
+  display: grid;
+  gap: 8px;
+}
+
+.map-detail-panel__rules > p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  white-space: pre-wrap;
 }
 
 .map-detail-hours {
@@ -879,6 +955,7 @@
 /* Search above place-detail only — below nav drawer (10001) so menu tabs stay clickable. */
 .home-map-page.has-place-detail {
   --map-detail-width: min(456px, 94vw);
+  --map-detail-inset-top: calc(env(safe-area-inset-top, 0px) + 72px);
 }
 
 .home-map-page.has-place-detail .gmaps-omnibox {
@@ -912,20 +989,28 @@
 
 @media (max-width: 900px) {
   .map-detail-panel {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    top: auto;
     bottom: 0;
     width: 100%;
     max-width: none;
-    height: min(62dvh, 640px);
+    height: auto;
+    max-height: none;
+    margin: 0;
+    border: 0;
     border-right: 0;
-    border-top: 1px solid var(--border);
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -10px 32px rgba(var(--shadow-color), 0.2);
-    transform: translate3d(0, 20px, 0);
-    z-index: 9999;
+    border-top: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transform: translate3d(0, 100%, 0);
+    z-index: 10045;
     padding-top: 0;
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .map-detail-panel.is-visible {
@@ -933,62 +1018,81 @@
   }
 
   .map-detail-panel__handle {
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
-    padding: 10px 0 4px;
-    background: var(--surface-elevated);
-    border-radius: 16px 16px 0 0;
-  }
-
-  .map-detail-panel__handle span {
-    width: 36px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--border);
+    display: none;
   }
 
   .map-detail-panel__close {
+    position: absolute;
     top: 8px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: 6;
+    width: 40px;
+    height: 40px;
+    font-size: 1.35rem;
+    background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(var(--shadow-color), 0.16);
   }
 
-  .map-detail-panel__scroll {
-    display: flex;
-    flex-direction: column;
+  .map-detail-panel__intro {
+    flex-shrink: 0;
+    width: 100%;
   }
 
-  /* GMaps mobile order: title → actions → photos → tabs/body */
+  .map-detail-panel__hero {
+    height: min(46vw, 220px);
+    margin: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
   .map-detail-panel__header {
-    order: 1;
-    padding: 4px 16px 8px;
+    padding: 10px 16px 6px;
   }
 
   .map-detail-panel__title {
-    font-size: 1.25rem;
-    padding-right: 36px;
+    font-size: 1.15rem;
+    padding-right: 44px;
+    line-height: 1.3;
+  }
+
+  .map-detail-panel__intro:has(.map-detail-panel__route-block) {
+    max-height: none;
+    overflow: visible;
   }
 
   .map-detail-panel__actions {
-    order: 2;
-    padding: 8px 8px 12px;
-    gap: 2px;
-    border-bottom: 1px solid var(--border);
+    padding: 10px 8px 12px;
+    gap: 4px;
+    border-bottom: 0;
+  }
+
+  .map-detail-action__icon {
+    width: 40px;
+    height: 40px;
+    font-size: 0.92rem;
   }
 
   .map-detail-action.is-primary .map-detail-action__icon {
     background: var(--maps-blue);
   }
 
-  .map-detail-panel__hero {
-    order: 3;
-    height: 160px;
-    margin: 0 12px 8px;
-    border-radius: 12px;
-    overflow: hidden;
+  .map-detail-panel__tabs {
+    padding: 4px 12px 0;
+    gap: 4px;
+  }
+
+  .map-detail-panel__tab {
+    padding: 12px 12px 10px;
+    font-size: 0.88rem;
+    border-bottom-width: 3px;
+  }
+
+  .map-detail-panel__content {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
   }
 
   .map-detail-panel__thumbs {
@@ -1005,20 +1109,37 @@
     object-fit: cover;
   }
 
-  .map-detail-panel__tabs {
-    order: 4;
-  }
-
-  .map-detail-panel__body {
-    order: 5;
-  }
-
   .home-map-page.has-place-detail .gmaps-omnibox {
-    left: 10px;
-    right: 10px;
-    width: auto;
+    left: 0;
+    right: 0;
+    top: max(8px, env(safe-area-inset-top, 0px));
+    width: 100%;
     max-width: none;
-    z-index: 10000; /* still under nav drawer tabs */
+    padding: 0 10px;
+    box-sizing: border-box;
+    z-index: 10050;
+    pointer-events: none !important;
+  }
+
+  .home-map-page.has-place-detail .gmaps-omnibox__bar {
+    padding-right: 6px;
+  }
+
+  .home-map-page.has-place-detail .gmaps-omnibox > * {
+    pointer-events: none !important;
+  }
+
+  /* Keep search bar actions interactive (notably the right-side X close button). */
+  .home-map-page.has-place-detail .gmaps-omnibox__card,
+  .home-map-page.has-place-detail .gmaps-omnibox__card * {
+    pointer-events: auto !important;
+  }
+
+  .home-map-page.has-place-detail .gmaps-omnibox__search-scrim,
+  .home-map-page.has-place-detail .gmaps-omnibox__search-scrim.is-visible {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   .home-map-page.has-place-detail .gmaps-omnibox__card {
@@ -1026,7 +1147,18 @@
     max-width: none;
   }
 
-  /* Collapse listings peek while viewing a place */
+  .home-map-page.has-place-detail .gmaps-omnibox__top-actions {
+    display: none;
+  }
+
+  .home-map-page.has-place-detail .gmaps-nav-backdrop {
+    z-index: 10060;
+  }
+
+  .home-map-page.has-place-detail .gmaps-nav-drawer {
+    z-index: 10061;
+  }
+
   .home-map-page.has-place-detail .home-list-panel:not(.is-visible) {
     opacity: 0;
     pointer-events: none;

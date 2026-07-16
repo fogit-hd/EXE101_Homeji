@@ -28,7 +28,14 @@ import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
 import { useNotificationHub } from '../../hooks/useNotificationHub'
 import { NotificationType, type Notification } from '../../api'
+import type { NotificationReadChange } from '../../pages/NotificationsPage'
 import './MapPlaceDetailPanel.css'
+
+const MOBILE_SHEET_MEDIA = '(max-width: 900px)'
+
+function isMobileSheetViewport(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(MOBILE_SHEET_MEDIA).matches
+}
 
 type AuthenticatedHomeMapShellProps = {
   posts: RentalPostSummary[]
@@ -140,6 +147,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [routeError, setRouteError] = useState<string | null>(null)
   const [chatInboxOpen, setChatInboxOpen] = useState(false)
   const [openChatIds, setOpenChatIds] = useState<string[]>([])
+  const [homieDismiss, setHomieDismiss] = useState(0)
+  const [homieOpen, setHomieOpen] = useState(false)
   const [notificationRefreshKey, setNotificationRefreshKey] = useState(0)
   const [unreadBadge, setUnreadBadge] = useState(0)
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
@@ -198,11 +207,74 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     }
   }, [isAuthenticated, notificationRefreshKey])
 
+  const dismissHomie = useCallback(() => {
+    setHomieDismiss((n) => n + 1)
+  }, [])
+
+  const closeChatAll = useCallback(() => {
+    setChatInboxOpen(false)
+    setOpenChatIds([])
+  }, [])
+
+  const prepareMobileChatOpen = useCallback(() => {
+    if (!isMobileSheetViewport()) return
+    dismissHomie()
+    closePanel()
+  }, [closePanel, dismissHomie])
+
+  const openAppSectionMobileSafe = useCallback(
+    (section: MapAppSection) => {
+      if (isMobileSheetViewport()) {
+        dismissHomie()
+        closeChatAll()
+      }
+      openAppSection?.(section)
+    },
+    [openAppSection, dismissHomie, closeChatAll],
+  )
+
+  const handleHomieOpenChange = useCallback(
+    (open: boolean) => {
+      setHomieOpen(open)
+      if (!open || !isMobileSheetViewport()) return
+      closePanel()
+      closeChatAll()
+    },
+    [closePanel, closeChatAll],
+  )
+
+  useEffect(() => {
+    if (!isMobileSheetViewport() || !panelOpen) return
+    dismissHomie()
+    closeChatAll()
+  }, [panelOpen, panelSection, dismissHomie, closeChatAll])
+
+  useEffect(() => {
+    if (!isMobileSheetViewport()) return
+    if (!chatInboxOpen && openChatIds.length === 0) return
+    dismissHomie()
+    closePanel()
+  }, [chatInboxOpen, openChatIds, closePanel, dismissHomie])
+
+  const handleNotificationReadStateChange = useCallback((change: NotificationReadChange) => {
+    if (change.kind === 'all') {
+      setUnreadBadge(0)
+      setUnreadNotificationCount(0)
+      return
+    }
+    const n = change.notification
+    const isMessage =
+      n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage
+    setUnreadNotificationCount((c) => Math.max(0, c - 1))
+    if (isMessage) setUnreadBadge((c) => Math.max(0, c - 1))
+  }, [])
+
   useEffect(() => {
     if (chatInboxOpen || openChatIds.length > 0) setUnreadBadge(0)
   }, [chatInboxOpen, openChatIds])
 
   const openChatWindow = useCallback((conversationId: string) => {
+    prepareMobileChatOpen()
     setOpenChatIds((prev) => {
       if (prev.includes(conversationId)) {
         // Move to front (most recent)
@@ -211,7 +283,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       return [...prev, conversationId].slice(-3)
     })
     setUnreadBadge(0)
-  }, [])
+  }, [prepareMobileChatOpen])
 
   const closeChatWindow = useCallback((conversationId: string) => {
     setOpenChatIds((prev) => prev.filter((id) => id !== conversationId))
@@ -224,9 +296,12 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [])
 
   const toggleChatInbox = useCallback(() => {
-    setChatInboxOpen((v) => !v)
+    setChatInboxOpen((v) => {
+      if (!v) prepareMobileChatOpen()
+      return !v
+    })
     setUnreadBadge(0)
-  }, [])
+  }, [prepareMobileChatOpen])
 
   const handleOpenAppSection = useCallback(
     (section: MapAppSection) => {
@@ -234,9 +309,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         toggleChatInbox()
         return
       }
-      openAppSection?.(section)
+      openAppSectionMobileSafe(section)
     },
-    [openAppSection, toggleChatInbox],
+    [openAppSectionMobileSafe, toggleChatInbox],
   )
   useEffect(() => {
     if (!error) return
@@ -321,6 +396,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       kind?: ChatLocationKind
       conversationId?: string
     }) => {
+      if (isMobileSheetViewport()) {
+        dismissHomie()
+        closePanel()
+      }
+
       const title = loc.title?.trim() || 'Vị trí từ tin nhắn'
       const kindLabel = loc.kind
         ? `Tin nhắn · ${chatLocationKindLabel(loc.kind)}`
@@ -353,7 +433,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       }))
       setToast('Đang xem vị trí đối phương gửi trên bản đồ')
     },
-    [panelOpen, selectedPostId, selectedPlace, placeLoading, handleSelectPlace],
+    [panelOpen, selectedPostId, selectedPlace, placeLoading, handleSelectPlace, closePanel, dismissHomie],
   )
 
   const handleMarketplacePostsForMap = useCallback((pins: MarketplaceMapPin[]) => {
@@ -412,9 +492,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         setNearbyFocus({ lat: pin.lat, lng: pin.lng, zoom: MAP_FOCUS_ZOOM })
         setNearbyToken((t) => t + 1)
       }
-      openAppSection?.('marketplace')
+      openAppSectionMobileSafe('marketplace')
     },
-    [marketplacePins, openAppSection],
+    [marketplacePins, openAppSectionMobileSafe],
   )
 
   useEffect(() => {
@@ -790,7 +870,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             if (conversationId) openChatWindow(conversationId)
             else toggleChatInbox()
           }}
-          onOpenAppointments={() => openAppSection?.('appointments')}
+          onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
         />
 
         {/* Outside .home-map-frame so z-index can sit above MapPlaceDetailPanel
@@ -802,11 +882,15 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
                 unreadNotificationCount?: number
                 onOpenSection?: (section: MapAppSection) => void
                 activeSection?: MapAppSection | null
+                onClosePlaceDetail?: () => void
+                placeDetailOpen?: boolean
               }>,
               {
                 unreadMessageCount: unreadBadge,
                 unreadNotificationCount,
                 onOpenSection: handleOpenAppSection,
+                onClosePlaceDetail: handleClearMapSelection,
+                placeDetailOpen: detailOpen,
                 activeSection:
                   chatInboxOpen || openChatIds.length > 0
                     ? 'messages'
@@ -852,6 +936,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         userLocation={userLocation}
         onRequestLocation={onLocate}
         locating={locating}
+        onNotificationReadStateChange={handleNotificationReadStateChange}
         onNotificationOpen={(n) => {
           if (
             n.type === NotificationType.NewMessage ||
@@ -865,30 +950,39 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             n.type === NotificationType.ViewingAppointmentRequested ||
             n.type === NotificationType.ViewingAppointmentUpdated
           ) {
-            openAppSection?.('appointments')
+            openAppSectionMobileSafe('appointments')
             return
           }
           if (
             n.type === NotificationType.RoommateInvitationReceived ||
             n.type === NotificationType.RoommateInvitationAccepted
           ) {
-            openAppSection?.('invitations')
+            openAppSectionMobileSafe('invitations')
             return
           }
           if (n.type === NotificationType.MarketplaceOrderUpdated) {
-            openAppSection?.('marketplace')
+            openAppSectionMobileSafe('marketplace')
             return
           }
           if (n.type === NotificationType.LandlordVerificationUpdated) {
-            openAppSection?.('profile')
+            openAppSectionMobileSafe('profile')
             return
           }
-          openAppSection?.('listings')
+          openAppSectionMobileSafe('listings')
         }}
       />
 
       {/* After list panel so Homie stays above the right section */}
-      <MapChatbot onSearchUpdate={onAiSearchUpdate} />
+      <MapChatbot
+        onSearchUpdate={onAiSearchUpdate}
+        dismissSignal={homieDismiss}
+        onOpenChange={handleHomieOpenChange}
+        hideFab={
+          detailOpen ||
+          (isMobileSheetViewport() &&
+            (panelOpen || chatInboxOpen || openChatIds.length > 0 || homieOpen))
+        }
+      />
 
       <MapToast
         message={locationError || toast}

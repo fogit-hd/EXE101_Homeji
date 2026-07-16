@@ -23,9 +23,19 @@ const FAB_GAP = 12
 const VIEW_MARGIN = 12
 const DRAG_THRESHOLD = 6
 const FAB_POS_KEY = 'homeji.homie.fabPos'
+const SHEET_MEDIA = '(max-width: 900px)'
+
+function isSheetViewport(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(SHEET_MEDIA).matches
+}
 
 type Props = {
   onSearchUpdate?: (update: AiHighlightResponse) => void
+  /** Tăng giá trị để đóng Homie từ bên ngoài (mobile overlay exclusivity). */
+  dismissSignal?: number
+  onOpenChange?: (open: boolean) => void
+  /** Ẩn nút Homie khi overlay mobile đang mở (chat, tab, v.v.). */
+  hideFab?: boolean
 }
 
 type DisplayMessage = ChatbotMessage & {
@@ -194,7 +204,12 @@ function welcomeLayout(fab: FabPos, side: PanelSide) {
   return { left, top, width: welcomeW, tip }
 }
 
-export function MapChatbot({ onSearchUpdate }: Props) {
+export function MapChatbot({
+  onSearchUpdate,
+  dismissSignal = 0,
+  onOpenChange,
+  hideFab = false,
+}: Props) {
   const { profile } = useAuth()
   const reactId = useId()
   const [open, setOpen] = useState(false)
@@ -211,6 +226,7 @@ export function MapChatbot({ onSearchUpdate }: Props) {
     typeof window === 'undefined' ? { x: 0, y: 0 } : readStoredFabPos(),
   )
   const [dragging, setDragging] = useState(false)
+  const [sheetMode, setSheetMode] = useState(isSheetViewport)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const pendingIdRef = useRef(0)
@@ -248,6 +264,14 @@ export function MapChatbot({ onSearchUpdate }: Props) {
   }, [])
 
   useEffect(() => {
+    const mq = window.matchMedia(SHEET_MEDIA)
+    const onChange = () => setSheetMode(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
     const onResize = () => setFabPos((prev) => clampFabPos(prev))
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
@@ -270,6 +294,14 @@ export function MapChatbot({ onSearchUpdate }: Props) {
       document.removeEventListener('keydown', closeOnEscape)
     }
   }, [open])
+
+  useEffect(() => {
+    onOpenChange?.(open)
+  }, [open, onOpenChange])
+
+  useEffect(() => {
+    if (dismissSignal > 0) setOpen(false)
+  }, [dismissSignal])
 
   if (config && !config.enabled) return null
 
@@ -507,7 +539,9 @@ export function MapChatbot({ onSearchUpdate }: Props) {
       style={{ pointerEvents: 'none' }}
     >
       <div
-        className={`map-chatbot__panel is-${panel.side}${open ? ' is-visible' : ''}`}
+        className={`map-chatbot__panel is-${panel.side}${open ? ' is-visible' : ''}${
+          sheetMode ? ' is-sheet' : ''
+        }`}
         style={{
           pointerEvents: open ? 'auto' : 'none',
           left: panel.left,
@@ -542,7 +576,7 @@ export function MapChatbot({ onSearchUpdate }: Props) {
         {chatBody}
       </div>
 
-      {!open && !welcomeDismissed ? (
+      {!hideFab && !open && !welcomeDismissed ? (
         <div
           className={`map-chatbot__welcome is-tip-${welcome.tip}`}
           role="status"
@@ -574,6 +608,7 @@ export function MapChatbot({ onSearchUpdate }: Props) {
         </div>
       ) : null}
 
+      {!hideFab ? (
       <button
         type="button"
         className={`map-chatbot__fab map-motion-press${open ? ' is-open' : ''}${
@@ -594,6 +629,7 @@ export function MapChatbot({ onSearchUpdate }: Props) {
       >
         <img src="/brand/homeji-logo.png" alt="" width="44" height="44" draggable={false} />
       </button>
+      ) : null}
     </div>
   )
 }
