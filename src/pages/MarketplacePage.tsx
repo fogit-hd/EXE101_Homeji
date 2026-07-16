@@ -51,6 +51,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
+import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
 import {
   subscribeToMarketplaceTabRequests,
   takeMarketplaceTabRequest,
@@ -100,6 +101,54 @@ type MarketplaceCartItem = {
   quantity: number
   availableQuantity: number
   imageUrl: string | null
+  preparationMinutes: number
+}
+
+type OrderView = 'buying' | 'selling'
+
+type MarketplaceOrderGroup = {
+  groupKey: string
+  name: string
+  role: string
+  address: string
+  orders: MarketplaceOrder[]
+  status: MarketplaceOrder['status']
+  createdAt: string
+  pickupAt: string
+  total: number
+  isBuyer: boolean
+  isSeller: boolean
+}
+
+const TERMINAL_ORDER_STATUSES = new Set<number>([
+  MarketplaceOrderStatus.Rejected,
+  MarketplaceOrderStatus.Cancelled,
+  MarketplaceOrderStatus.Completed,
+  MarketplaceOrderStatus.Expired,
+])
+
+function formatOrderEta(group: MarketplaceOrderGroup): string {
+  if (group.status === MarketplaceOrderStatus.Requested) {
+    const expiresAt = new Date(group.createdAt).getTime() + 30 * 60 * 1000
+    const remainingMinutes = Math.max(0, Math.ceil((expiresAt - Date.now()) / 60_000))
+    return remainingMinutes > 0
+      ? `Người bán còn ${remainingMinutes} phút để xác nhận`
+      : 'Đang kiểm tra thời hạn xác nhận'
+  }
+
+  const pickupAt = new Date(group.pickupAt)
+  const remainingMinutes = Math.ceil((pickupAt.getTime() - Date.now()) / 60_000)
+  if (remainingMinutes <= 0) return `Dự kiến nhận: ${formatDate(group.pickupAt)}`
+  if (remainingMinutes < 60) return `Dự kiến sẵn sàng sau ${remainingMinutes} phút`
+  const hours = Math.floor(remainingMinutes / 60)
+  const minutes = remainingMinutes % 60
+  return `Dự kiến sẵn sàng sau ${hours} giờ${minutes ? ` ${minutes} phút` : ''}`
+}
+
+function orderProgressStep(status: MarketplaceOrder['status']): number {
+  if (status === MarketplaceOrderStatus.Completed) return 3
+  if (status === MarketplaceOrderStatus.Accepted) return 2
+  return 1
 }
 
 type Props = {
@@ -152,7 +201,12 @@ function readCart(storageKey: string): MarketplaceCartItem[] {
       && Number.isFinite(item.price)
       && Number.isInteger(item.quantity)
       && item.quantity > 0,
-    )
+    ).map((item) => ({
+      ...item,
+      preparationMinutes: Number.isFinite(item.preparationMinutes)
+        ? Math.max(0, item.preparationMinutes)
+        : 30,
+    }))
   } catch {
     return []
   }
@@ -201,6 +255,7 @@ export function MarketplacePage({
   const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
+  const [orderView, setOrderView] = useState<OrderView | null>(null)
   const [expandedFoodSellerIds, setExpandedFoodSellerIds] = useState<Set<string>>(
     () => new Set(),
   )
@@ -219,6 +274,24 @@ export function MarketplacePage({
   const [withdrawAccountHolder, setWithdrawAccountHolder] = useState('')
 
   useEffect(() => subscribeToMarketplaceTabRequests(setTab), [])
+
+  useEffect(() => {
+    if (!myUserId) return
+    let active = true
+    const refreshOrders = () => {
+      void getMyMarketplaceOrders()
+        .then((nextOrders) => {
+          if (active) setOrders(nextOrders)
+        })
+        .catch(() => undefined)
+    }
+    refreshOrders()
+    const intervalId = window.setInterval(refreshOrders, 30_000)
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+    }
+  }, [myUserId])
 
   useEffect(() => {
     localStorage.setItem(cartStorageKey, JSON.stringify(cartItems))
@@ -322,9 +395,10 @@ export function MarketplacePage({
 
   const loadFn = useCallback(async () => {
     if (tab === 'wallet') {
-      const [nextWallet, transactions, plans, currentPlan, withdrawalResult] = await Promise.all([
+      const [nextWallet, transactions, marketplaceOrders, plans, currentPlan, withdrawalResult] = await Promise.all([
         getMyWallet(),
         getMyWalletTransactions(50),
+        getMyMarketplaceOrders(),
         getMarketplaceSellerPlans(),
         getMyMarketplaceSellerPlan(),
         getMyWalletWithdrawals()
@@ -333,6 +407,7 @@ export function MarketplacePage({
       ])
       setWallet(nextWallet)
       setWalletTransactions(transactions)
+      setOrders(marketplaceOrders)
       setSellerPlans(plans)
       setSellerPlan(currentPlan)
       setWithdrawals(withdrawalResult.items)
@@ -350,6 +425,12 @@ export function MarketplacePage({
     const list = await searchMarketplacePosts({
       keyword: keyword.trim() || undefined,
       category: category.trim() || undefined,
+      listingType:
+        tab === 'food'
+          ? MarketplaceListingType.Food
+          : tab === 'browse'
+            ? MarketplaceListingType.SecondHand
+            : undefined,
       latitude: userLocation?.lat,
       longitude: userLocation?.lng,
       radiusKm: userLocation ? 50 : undefined,
@@ -428,7 +509,7 @@ export function MarketplacePage({
         setActionError('Chọn ảnh món thật hoặc một ảnh mẫu có giấy phép trước khi đăng.')
         return
       }
-      await createMarketplacePost({
+      const createdPost = await createMarketplacePost({
         title,
         description,
         price: Number(price) || 0,
@@ -444,14 +525,21 @@ export function MarketplacePage({
         preparationMinutes:
           listingType === MarketplaceListingType.Food ? Number(preparationMinutes) || 0 : null,
       })
-      setActionMsg('Đã đăng tin chợ đồ — xem trong “Tin của tôi”.')
+      const destinationTab = createdPost.listingType === MarketplaceListingType.Food
+        ? 'food'
+        : 'browse'
+      setActionMsg(
+        destinationTab === 'food'
+          ? 'Đã đăng món ăn — tin được chuyển vào “Đồ ăn”.'
+          : 'Đã đăng vật dụng — tin được chuyển vào “Chợ đồ”.',
+      )
       setTitle('')
       setDescription('')
       setPrice('')
       setPresetImageUrl('')
       for (const m of mediaFiles) URL.revokeObjectURL(m.previewUrl)
       setMediaFiles([])
-      setTab('mine')
+      setTab(destinationTab)
       void reload()
       onFocusMap?.({ lat: latNum, lng: lngNum, zoom: MAP_FOCUS_ZOOM })
     } catch (err) {
@@ -548,6 +636,7 @@ export function MarketplacePage({
         quantity,
         availableQuantity: post.availableQuantity,
         imageUrl: postThumb(post),
+        preparationMinutes: post.preparationMinutes ?? 30,
       }]
     })
     setOrderQuantities((current) => ({ ...current, [post.id]: 1 }))
@@ -561,14 +650,24 @@ export function MarketplacePage({
       : item))
   }
 
+  const removeFromCart = (post: MarketplacePost) => {
+    setCartItems((current) => current.filter((item) => item.postId !== post.id))
+    setActionError('')
+    setActionMsg(`Đã xóa ${post.title} khỏi giỏ.`)
+  }
+
   const checkoutCart = async () => {
     if (cartItems.length === 0 || cartBusy) return
     setCartBusy(true)
     setActionError('')
     try {
+      const estimatedPreparationMinutes = Math.max(
+        10,
+        ...cartItems.map((item) => item.preparationMinutes),
+      )
       await createMarketplaceCartOrder({
         items: cartItems.map((item) => ({ postId: item.postId, quantity: item.quantity })),
-        pickupAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        pickupAt: new Date(Date.now() + estimatedPreparationMinutes * 60 * 1000).toISOString(),
         pickupAddress: cartItems[0]?.sellerAddress || 'Nhận tại bếp Homeji',
         note: 'Đặt từ giỏ hàng Homeji',
       })
@@ -805,8 +904,12 @@ export function MarketplacePage({
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cartItems],
   )
+  const displayedWalletTransactions = useMemo(
+    () => groupMarketplaceOrderRefunds(walletTransactions, orders),
+    [walletTransactions, orders],
+  )
 
-  const orderGroups = useMemo(() => {
+  const orderGroups = useMemo<MarketplaceOrderGroup[]>(() => {
     const grouped = new Map<string, MarketplaceOrder[]>()
     for (const order of orders) {
       const groupKey = `${order.buyerId}:${order.sellerId}:${order.createdAt}`
@@ -815,7 +918,7 @@ export function MarketplacePage({
       grouped.set(groupKey, current)
     }
     return Array.from(grouped.entries()).map(([groupKey, groupedOrders]) => {
-      const first = groupedOrders[0]
+      const first = groupedOrders[0]!
       const iAmBuyer = first?.buyerId === myUserId
       return {
         groupKey,
@@ -825,9 +928,42 @@ export function MarketplacePage({
         role: iAmBuyer ? 'Người bán' : 'Người mua',
         address: first?.sellerAddress || '',
         orders: groupedOrders,
+        status: first.status,
+        createdAt: first.createdAt,
+        pickupAt: first.pickupAt,
+        total: groupedOrders.reduce((sum, order) => sum + order.agreedPrice, 0),
+        isBuyer: iAmBuyer,
+        isSeller: first?.sellerId === myUserId,
       }
-    })
+    }).sort((left, right) =>
+      new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
   }, [orders, myUserId])
+
+  const buyingOrderGroups = useMemo(
+    () => orderGroups.filter((group) => group.isBuyer),
+    [orderGroups],
+  )
+  const sellingOrderGroups = useMemo(
+    () => orderGroups.filter((group) => group.isSeller),
+    [orderGroups],
+  )
+  const sellerActionCount = useMemo(
+    () => sellingOrderGroups.filter(
+      (group) => group.status === MarketplaceOrderStatus.Requested,
+    ).length,
+    [sellingOrderGroups],
+  )
+  const selectedOrderView: OrderView = orderView
+    ?? (sellerActionCount > 0 ? 'selling' : 'buying')
+  const selectedOrderGroups = selectedOrderView === 'selling'
+    ? sellingOrderGroups
+    : buyingOrderGroups
+  const activeOrderGroups = selectedOrderGroups.filter(
+    (group) => !TERMINAL_ORDER_STATUSES.has(group.status),
+  )
+  const historicalOrderGroups = selectedOrderGroups.filter(
+    (group) => TERMINAL_ORDER_STATUSES.has(group.status),
+  )
 
   const handleOrderGroupAction = async (
     groupKey: string,
@@ -912,6 +1048,11 @@ export function MarketplacePage({
           onClick={() => setTab('orders')}
         >
           Đơn hàng
+          {sellerActionCount > 0 ? (
+            <span className="marketplace-tab-alert" aria-label={`${sellerActionCount} đơn bán cần xử lý`}>
+              {sellerActionCount}
+            </span>
+          ) : null}
         </button>
         <button
           type="button"
@@ -1414,11 +1555,11 @@ export function MarketplacePage({
 
           <section className="wallet-history card">
             <div className="wallet-section-head"><h3>Lịch sử số dư</h3></div>
-            {walletTransactions.length === 0 ? (
+            {displayedWalletTransactions.length === 0 ? (
               <p className="marketplace-tab-hint">Chưa có giao dịch số dư.</p>
             ) : (
               <ul>
-                {walletTransactions.map((transaction) => (
+                {displayedWalletTransactions.map((transaction) => (
                   <li key={transaction.id}>
                     <div>
                       <strong>{WALLET_TRANSACTION_LABELS[transaction.kind] ?? transaction.description}</strong>
@@ -1435,151 +1576,220 @@ export function MarketplacePage({
           </section>
         </div>
       ) : tab === 'orders' ? (
-        orders.length === 0 ? (
-          <div className="empty-state card">Chưa có đơn hàng.</div>
-        ) : (
-          <div className="marketplace-order-groups">
-            {orderGroups.map((group) => {
-              const firstOrder = group.orders[0]
-              const iAmBuyer = Boolean(myUserId && firstOrder?.buyerId === myUserId)
-              const iAmSeller = Boolean(myUserId && firstOrder?.sellerId === myUserId)
-              const allRequested = group.orders.every(
-                (order) => order.status === MarketplaceOrderStatus.Requested,
-              )
-              const allAccepted = group.orders.every(
-                (order) => order.status === MarketplaceOrderStatus.Accepted,
-              )
-              const busy = orderGroupBusy === group.groupKey
+        <div className="marketplace-orders-dashboard">
+          <div className="marketplace-order-view" role="tablist" aria-label="Loại đơn hàng">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedOrderView === 'selling'}
+              className={selectedOrderView === 'selling' ? 'is-active' : ''}
+              onClick={() => setOrderView('selling')}
+            >
+              Đơn bán
+              {sellerActionCount > 0 ? <strong>{sellerActionCount} mới</strong> : null}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedOrderView === 'buying'}
+              className={selectedOrderView === 'buying' ? 'is-active' : ''}
+              onClick={() => setOrderView('buying')}
+            >
+              Đơn mua
+              {buyingOrderGroups.length > 0 ? <span>{buyingOrderGroups.length}</span> : null}
+            </button>
+          </div>
 
-              return (
-              <section key={group.groupKey} className="marketplace-order-group">
-                <header className="marketplace-order-group__header">
-                  <div className="marketplace-store-avatar" aria-hidden="true">
-                    {group.name.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div>
-                    <span>{group.role}</span>
-                    <h3>{group.name}</h3>
-                    {group.address ? <p>{group.address}</p> : null}
-                  </div>
-                  <strong>{group.orders.length} món</strong>
-                </header>
-                <div className="marketplace-list">
-            {group.orders.map((o) => {
-              const iAmBuyer = Boolean(myUserId && o.buyerId === myUserId)
-              const iAmSeller = Boolean(myUserId && o.sellerId === myUserId)
-              const requested = o.status === MarketplaceOrderStatus.Requested
-              return (
-                <article key={o.id} className="marketplace-order card map-motion-fade-up">
-                  <div className="marketplace-order__body">
-                    <div className="marketplace-card__meta-row">
-                      <span className={`marketplace-card__badge${iAmSeller ? ' is-mine' : ''}`}>
-                        {marketplaceOrderStatusLabel[o.status] ?? 'Đơn'}
-                      </span>
-                      <span className="marketplace-card__status">
-                        {iAmSeller ? 'Bạn là người bán' : iAmBuyer ? 'Bạn là người mua' : 'Đơn hàng'}
-                      </span>
-                    </div>
-                    <div className="marketplace-order__product">
-                      {o.postImageUrl ? <img src={o.postImageUrl} alt="" /> : null}
+          {selectedOrderView === 'selling' && sellerActionCount > 0 ? (
+            <div className="marketplace-order-alert" role="status">
+              <span aria-hidden="true">!</span>
+              <div>
+                <strong>Bạn có {sellerActionCount} đơn mới cần xác nhận</strong>
+                <p>Người mua đang chờ. Đơn chưa xác nhận sẽ tự hết hạn sau 30 phút.</p>
+              </div>
+            </div>
+          ) : null}
+
+          {activeOrderGroups.length === 0 ? (
+            <div className="empty-state card">
+              {selectedOrderView === 'selling'
+                ? 'Hiện không có đơn bán nào cần xử lý.'
+                : 'Hiện không có đơn mua nào đang xử lý.'}
+            </div>
+          ) : (
+            <div className="marketplace-order-groups">
+              {activeOrderGroups.map((group) => {
+                const firstOrder = group.orders[0]
+                const requested = group.status === MarketplaceOrderStatus.Requested
+                const accepted = group.status === MarketplaceOrderStatus.Accepted
+                const busy = orderGroupBusy === group.groupKey
+                const progressStep = orderProgressStep(group.status)
+
+                return (
+                  <section key={group.groupKey} className="marketplace-order-group is-active-order">
+                    <header className="marketplace-order-group__header">
+                      <div className="marketplace-store-avatar" aria-hidden="true">
+                        {group.name.slice(0, 1).toUpperCase()}
+                      </div>
                       <div>
-                        <strong>{o.postTitle || 'Món Homeji'}</strong>
-                        <p className="marketplace-card__price">{formatPrice(o.agreedPrice)}</p>
+                        <span>{selectedOrderView === 'selling' ? 'Đơn từ người mua' : 'Đơn từ người bán'}</span>
+                        <h3>{group.name}</h3>
+                        <p>{formatDate(group.createdAt)}</p>
+                      </div>
+                      <span className="marketplace-order-status-pill">
+                        {marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'}
+                      </span>
+                    </header>
+
+                    {group.isBuyer ? (
+                      <div className="marketplace-order-progress" aria-label={`Tiến trình đơn hàng: bước ${progressStep} trên 3`}>
+                        {['Đã đặt', 'Bếp xác nhận', 'Đã nhận món'].map((label, index) => {
+                          const step = index + 1
+                          const state = step < progressStep ? 'is-done' : step === progressStep ? 'is-current' : ''
+                          return (
+                            <div key={label} className={state}>
+                              <span aria-hidden="true">{step < progressStep ? '✓' : step}</span>
+                              <strong>{label}</strong>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : null}
+
+                    <div className="marketplace-order-summary">
+                      <div>
+                        <span>{group.orders.length} món · Tổng thanh toán</span>
+                        <strong>{formatPrice(group.total)}</strong>
+                      </div>
+                      <div className="marketplace-order-eta">
+                        <span aria-hidden="true">◷</span>
+                        <div>
+                          <strong>{formatOrderEta(group)}</strong>
+                          <small>{formatDate(group.pickupAt)}</small>
+                        </div>
                       </div>
                     </div>
-                    <p className="marketplace-card__info">
-                      {o.quantity} × {formatPrice(o.unitPrice)} · Phí nền tảng {(o.platformFeeRate * 100).toFixed(0)}%
-                    </p>
-                    {iAmSeller ? (
-                      <p className="marketplace-card__info">
-                        Bạn nhận {formatPrice(o.sellerNetAmount)} sau khi người mua xác nhận hoàn tất
-                        {' · '}phí {formatPrice(o.platformFeeAmount)}
-                      </p>
+
+                    <ul className="marketplace-order-items">
+                      {group.orders.map((order) => (
+                        <li key={order.id}>
+                          {order.postImageUrl ? <img src={order.postImageUrl} alt="" /> : <span aria-hidden="true" />}
+                          <div>
+                            <strong>{order.postTitle || 'Món Homeji'}</strong>
+                            <small>{order.quantity} × {formatPrice(order.unitPrice)}</small>
+                          </div>
+                          <b>{formatPrice(order.agreedPrice)}</b>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="marketplace-order-pickup">
+                      <span aria-hidden="true">⌖</span>
+                      <p>{firstOrder?.pickupAddress || group.address}</p>
+                    </div>
+
+                    {group.isSeller ? (
+                      <div className="marketplace-order-seller-total">
+                        <span>Thực nhận sau phí</span>
+                        <strong>{formatPrice(group.orders.reduce((sum, order) => sum + order.sellerNetAmount, 0))}</strong>
+                      </div>
                     ) : null}
-                    <p className="marketplace-card__addr">{o.pickupAddress}</p>
-                    <small className="marketplace-card__seller">{formatDate(o.pickupAt)}</small>
-                    {requested && iAmBuyer ? (
-                      <p className="marketplace-card__info">Tiền đang được giữ. Đơn sẽ tự hết hạn và hoàn tiền nếu người bán không phản hồi trong 30 phút.</p>
+
+                    {firstOrder && (requested || accepted) ? (
+                      <footer className="marketplace-order-group__actions">
+                        {requested && group.isSeller ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              disabled={busy}
+                              onClick={() => void handleOrderGroupAction(
+                                group.groupKey,
+                                () => rejectMarketplaceOrder(firstOrder.id),
+                                'Đã từ chối và hoàn tiền toàn bộ đơn.',
+                              )}
+                            >
+                              Từ chối đơn
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              disabled={busy}
+                              onClick={() => void handleOrderGroupAction(
+                                group.groupKey,
+                                () => acceptMarketplaceOrder(firstOrder.id),
+                                'Đã xác nhận toàn bộ đơn hàng.',
+                              )}
+                            >
+                              {busy ? 'Đang xử lý…' : 'Xác nhận nhận đơn'}
+                            </button>
+                          </>
+                        ) : null}
+                        {requested && group.isBuyer ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            disabled={busy}
+                            onClick={() => {
+                              if (!window.confirm(`Hủy toàn bộ đơn gồm ${group.orders.length} món và hoàn tiền?`)) return
+                              void handleOrderGroupAction(
+                                group.groupKey,
+                                () => cancelMarketplaceOrder(firstOrder.id),
+                                'Đã hủy và hoàn tiền toàn bộ đơn.',
+                              )
+                            }}
+                          >
+                            {busy ? 'Đang hủy…' : 'Hủy đơn'}
+                          </button>
+                        ) : null}
+                        {accepted && group.isBuyer ? (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={busy}
+                            onClick={() => void handleOrderGroupAction(
+                              group.groupKey,
+                              () => completeMarketplaceOrder(firstOrder.id),
+                              'Đã hoàn tất toàn bộ đơn hàng.',
+                            )}
+                          >
+                            {busy ? 'Đang xử lý…' : 'Đã nhận đủ món'}
+                          </button>
+                        ) : null}
+                        {accepted && group.isSeller ? (
+                          <p className="marketplace-card__info">Đơn đã nhận. Chờ người mua xác nhận để tiền về ví.</p>
+                        ) : null}
+                      </footer>
                     ) : null}
-                    {requested && iAmSeller ? (
-                      <p className="marketplace-card__info">Người mua đang chờ. Hãy nhận hoặc từ chối trong 30 phút trước khi đơn tự hết hạn.</p>
-                    ) : null}
-                  </div>
-                </article>
-              )
-            })}
-                </div>
-                {(allRequested || allAccepted) && firstOrder ? (
-                  <footer className="marketplace-order-group__actions">
-                    {allRequested && iAmSeller ? (
-                      <>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          disabled={busy}
-                          onClick={() => void handleOrderGroupAction(
-                            group.groupKey,
-                            () => acceptMarketplaceOrder(firstOrder.id),
-                            'Đã xác nhận toàn bộ đơn hàng.',
-                          )}
-                        >
-                          {busy ? 'Đang xử lý…' : 'Nhận toàn bộ đơn'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          disabled={busy}
-                          onClick={() => void handleOrderGroupAction(
-                            group.groupKey,
-                            () => rejectMarketplaceOrder(firstOrder.id),
-                            'Đã từ chối và hoàn tiền toàn bộ đơn.',
-                          )}
-                        >
-                          Từ chối toàn bộ đơn
-                        </button>
-                      </>
-                    ) : null}
-                    {allRequested && iAmBuyer ? (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        disabled={busy}
-                        onClick={() => {
-                          if (!window.confirm(`Hủy toàn bộ đơn gồm ${group.orders.length} món và hoàn tiền?`)) return
-                          void handleOrderGroupAction(
-                            group.groupKey,
-                            () => cancelMarketplaceOrder(firstOrder.id),
-                            'Đã hủy và hoàn tiền toàn bộ đơn.',
-                          )
-                        }}
-                      >
-                        {busy ? 'Đang hủy…' : 'Hủy đơn và hoàn tiền'}
-                      </button>
-                    ) : null}
-                    {allAccepted && iAmBuyer ? (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        disabled={busy}
-                        onClick={() => void handleOrderGroupAction(
-                          group.groupKey,
-                          () => completeMarketplaceOrder(firstOrder.id),
-                          'Đã hoàn tất toàn bộ đơn hàng.',
-                        )}
-                      >
-                        {busy ? 'Đang xử lý…' : 'Đã nhận đủ món · Hoàn tất đơn'}
-                      </button>
-                    ) : null}
-                    {allAccepted && iAmSeller ? (
-                      <p className="marketplace-card__info">Chờ người mua xác nhận đã nhận đủ món để giải ngân.</p>
-                    ) : null}
-                  </footer>
-                ) : null}
-              </section>
-              )
-            })}
-          </div>
-        )
+                  </section>
+                )
+              })}
+            </div>
+          )}
+
+          {historicalOrderGroups.length > 0 ? (
+            <details className="marketplace-order-history">
+              <summary>
+                <span>Lịch sử đơn hàng</span>
+                <strong>{historicalOrderGroups.length} đơn</strong>
+              </summary>
+              <div>
+                {historicalOrderGroups.map((group) => (
+                  <article key={group.groupKey} className="marketplace-order-history__row">
+                    <span className="marketplace-order-history__status">
+                      {marketplaceOrderStatusLabel[group.status] ?? 'Đã đóng'}
+                    </span>
+                    <div>
+                      <strong>{group.name}</strong>
+                      <small>{group.orders.length} món · {formatDate(group.createdAt)}</small>
+                    </div>
+                    <b>{formatPrice(group.total)}</b>
+                  </article>
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </div>
       ) : listForTab.length === 0 ? (
         <div className="empty-state card">
           {tab === 'mine'
@@ -1621,6 +1831,7 @@ export function MarketplacePage({
               {expandedFoodSellerIds.has(group.sellerId) ? <div className="food-menu-grid">
                 {group.posts.map((post) => {
                   const thumb = postThumb(post)
+                  const cartItem = cartItems.find((item) => item.postId === post.id)
                   return (
                     <article key={post.id} className="food-menu-item">
                       <button type="button" className="food-menu-item__visual" onClick={() => showOnMap(post)}>
@@ -1649,8 +1860,13 @@ export function MarketplacePage({
                               }))}
                             />
                           </label>
-                          <button type="button" className="food-menu-item__add" onClick={() => addToCart(post)}>
-                            Thêm vào giỏ
+                          <button
+                            type="button"
+                            className={`food-menu-item__add${cartItem ? ' is-added' : ''}`}
+                            aria-pressed={Boolean(cartItem)}
+                            onClick={() => cartItem ? removeFromCart(post) : addToCart(post)}
+                          >
+                            {cartItem ? 'Xóa khỏi giỏ' : 'Thêm vào giỏ'}
                           </button>
                         </div>
                       </div>

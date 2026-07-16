@@ -18,6 +18,7 @@ import type {
   CompareRentalPostsResult,
   EmailAvailabilityResult,
   LandlordVerification,
+  MarketplaceListingType,
   MarketplaceOrder,
   MarketplacePost,
   MarketplaceSellerPlan,
@@ -421,6 +422,7 @@ export const rejectReport = (reportId: string, resolutionNote?: string) =>
 export const searchMarketplacePosts = (params?: {
   keyword?: string
   category?: string
+  listingType?: MarketplaceListingType
   minPrice?: number
   maxPrice?: number
   latitude?: number
