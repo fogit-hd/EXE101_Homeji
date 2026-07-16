@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type WheelEvent } from 'react'
 import {
   createViewingAppointment,
   getRentalPostReviews,
@@ -211,6 +211,16 @@ export function MapPlaceDetailPanel({
     }, 180)
   }
 
+  const handlePanelWheelCapture = (event: WheelEvent<HTMLElement>) => {
+    const panel = panelRef.current
+    if (!panel) return
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+    if (panel.scrollHeight <= panel.clientHeight + 1) return
+    panel.scrollTop += event.deltaY
+    if (event.cancelable) event.preventDefault()
+    event.stopPropagation()
+  }
+
   useEffect(() => {
     if (!open || !isListing || !post?.id || tab !== 'reviews') return
     let cancelled = false
@@ -410,6 +420,7 @@ export function MapPlaceDetailPanel({
       aria-modal="true"
       aria-hidden={!open}
       aria-label={title}
+      onWheelCapture={handlePanelWheelCapture}
     >
       <div className="map-detail-panel__handle" aria-hidden>
         <span />

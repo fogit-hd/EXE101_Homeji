@@ -19,6 +19,10 @@
     opacity 0.3s ease,
     transform 0.3s ease;
   will-change: transform, opacity;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -158,22 +162,13 @@
 }
 
 .map-detail-panel__content {
-  flex: 1;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex: none;
+  min-height: auto;
+  overflow: visible;
   padding: 4px 0 28px;
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.map-detail-panel__content::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
 }
 
 .map-detail-panel__body--enter,
