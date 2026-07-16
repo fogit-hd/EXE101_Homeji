@@ -178,6 +178,7 @@ function HomePageComponent() {
   const [locationError, setLocationError] = useState('')
   const disruptedRef = useRef(false)
   const locateRequestRef = useRef(0)
+  const autoLocateStartedRef = useRef(false)
   const userLocationRef = useRef(userLocation)
   userLocationRef.current = userLocation
   disruptedRef.current = disrupted
@@ -608,6 +609,12 @@ function HomePageComponent() {
       }
     })()
   }, [commitMapFocus])
+
+  useEffect(() => {
+    if (autoLocateStartedRef.current) return
+    autoLocateStartedRef.current = true
+    locateMe()
+  }, [locateMe])
 
   const resetFilters = useCallback(() => {
     const nextKeyword = buildGuestSearchKeyword({

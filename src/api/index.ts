@@ -49,6 +49,8 @@ import type {
   ViewingAppointment,
   Wallet,
   WalletTransaction,
+  WalletWithdrawal,
+  WalletWithdrawalStatus,
 } from './types'
 import { MediaType, ReportTargetType, UserRole } from './types'
 
@@ -457,6 +459,42 @@ export const getMyWallet = () => apiRequest<Wallet>('/api/wallet')
 
 export const getMyWalletTransactions = (take = 50) =>
   apiRequest<WalletTransaction[]>('/api/wallet/transactions', { params: { take } })
+
+export const getMyWalletWithdrawals = () =>
+  apiRequest<WalletWithdrawal[]>('/api/wallet/withdrawals')
+
+export const createWalletWithdrawal = (data: {
+  amount: number
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+}) => apiRequest<WalletWithdrawal>('/api/wallet/withdrawals', { method: 'POST', body: data })
+
+export const getAdminWalletWithdrawals = (status?: WalletWithdrawalStatus) =>
+  apiRequest<WalletWithdrawal[]>('/api/admin/wallet-withdrawals', { params: { status } })
+
+export const completeWalletWithdrawal = (id: string, note?: string) =>
+  apiRequest<WalletWithdrawal>(`/api/admin/wallet-withdrawals/${id}/complete`, {
+    method: 'POST',
+    body: { note },
+  })
+
+export const createMarketplaceCartOrder = (data: {
+  items: Array<{ postId: string; quantity: number }>
+  pickupAt: string
+  pickupAddress: string
+  note?: string
+}) =>
+  apiRequest<MarketplaceOrder[]>('/api/marketplace-orders/cart', {
+    method: 'POST',
+    body: data,
+  })
+
+export const rejectWalletWithdrawal = (id: string, note?: string) =>
+  apiRequest<WalletWithdrawal>(`/api/admin/wallet-withdrawals/${id}/reject`, {
+    method: 'POST',
+    body: { note },
+  })
 
 export const getMarketplaceSellerPlans = () =>
   apiRequest<MarketplaceSellerPlan[]>('/api/marketplace-seller-plans')

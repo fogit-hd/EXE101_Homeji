@@ -1,10 +1,8 @@
-import { useEffect } from 'react'
 import type { MarketplaceTab } from '../lib/marketplaceNavigation'
 import './MarketplaceLoadingSkeleton.css'
 
 type Props = {
   tab: MarketplaceTab
-  onReady?: () => void
 }
 
 function SkeletonBlock({ className = '' }: { className?: string }) {
@@ -54,11 +52,7 @@ function WalletSkeleton() {
 }
 
 /** Keeps the marketplace layout stable while data for the active tab is loading. */
-export function MarketplaceLoadingSkeleton({ tab, onReady }: Props) {
-  useEffect(() => {
-    onReady?.()
-  }, [onReady])
-
+export function MarketplaceLoadingSkeleton({ tab }: Props) {
   const isSellerList = tab === 'food'
   const isWallet = tab === 'wallet'
   const count = tab === 'orders' ? 2 : 4

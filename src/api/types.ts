@@ -592,6 +592,8 @@ export const WalletTransactionKind = {
   SaleProceeds: 4,
   PlatformFee: 5,
   SellerPlanPurchase: 6,
+  Withdrawal: 7,
+  WithdrawalRefund: 8,
 } as const
 export type WalletTransactionKind =
   (typeof WalletTransactionKind)[keyof typeof WalletTransactionKind]
@@ -703,7 +705,30 @@ export interface Wallet {
   isActivated: boolean
   minimumTopUp: number
   maximumTopUp: number
+  minimumWithdrawalReserve: number
   updatedAt: string | null
+}
+
+export const WalletWithdrawalStatus = {
+  Pending: 1,
+  Completed: 2,
+  Rejected: 3,
+} as const
+export type WalletWithdrawalStatus =
+  (typeof WalletWithdrawalStatus)[keyof typeof WalletWithdrawalStatus]
+
+export interface WalletWithdrawal {
+  id: string
+  userId: string
+  amount: number
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+  status: WalletWithdrawalStatus
+  adminNote: string | null
+  processedBy: string | null
+  createdAt: string
+  processedAt: string | null
 }
 
 export interface WalletTransaction {
