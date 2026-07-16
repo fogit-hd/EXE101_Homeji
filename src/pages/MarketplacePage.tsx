@@ -36,7 +36,10 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { AddressAutocomplete, type PlaceResult } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { MapToast } from '../components/map/MapToast'
-import type { MarketplaceMapPin } from '../components/map/RentalMap'
+import {
+  marketplacePostsToSellerPins,
+  type MarketplaceMapPin,
+} from '../lib/marketplaceSellerPins'
 import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
@@ -92,19 +95,6 @@ function postThumb(p: MarketplacePost): string | null {
   return url || null
 }
 
-function toPins(list: MarketplacePost[]): MarketplaceMapPin[] {
-  return list
-    .filter((p) => isValidCoord(p.latitude, p.longitude))
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      lat: p.latitude,
-      lng: p.longitude,
-      price: p.price,
-      imageUrl: postThumb(p),
-    }))
-}
-
 function formatDistanceKm(distanceKm: number): string {
   const digits = distanceKm < 10 ? 1 : 0
   return `${new Intl.NumberFormat('vi-VN', {
@@ -156,6 +146,9 @@ export function MarketplacePage({
   const [preparationMinutes, setPreparationMinutes] = useState('20')
   const [presetImageUrl, setPresetImageUrl] = useState('')
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
+  const [expandedFoodSellerIds, setExpandedFoodSellerIds] = useState<Set<string>>(
+    () => new Set(),
+  )
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
   const [sellerPlans, setSellerPlans] = useState<MarketplaceSellerPlan[]>([])
@@ -184,6 +177,24 @@ export function MarketplacePage({
   )
 
   const myPosts = useMemo(() => posts.filter((p) => isMine(p)), [posts, isMine])
+
+  useEffect(() => {
+    if (!selectedMarketplaceId || posts.length === 0) return
+    const sellerPosts = posts.filter(
+      (post) =>
+        post.sellerId === selectedMarketplaceId &&
+        (post.status === MarketplacePostStatus.Active || post.status == null),
+    )
+    const nextTab = sellerPosts.some(
+      (post) => post.listingType === MarketplaceListingType.Food,
+    )
+      ? 'food'
+      : 'browse'
+    setTab((current) => (current === nextTab ? current : nextTab))
+    if (nextTab === 'food') {
+      setExpandedFoodSellerIds(new Set([selectedMarketplaceId]))
+    }
+  }, [posts, selectedMarketplaceId])
 
   useEffect(() => {
     return () => {
@@ -258,7 +269,7 @@ export function MarketplacePage({
           isValidCoord(p.latitude, p.longitude) &&
           (p.status === MarketplacePostStatus.Active || p.status == null),
       )
-      onPostsForMap?.(toPins(forMap))
+      onPostsForMap?.(marketplacePostsToSellerPins(forMap))
     }
   }, [tab, keyword, category, onPostsForMap, userLocation])
 
@@ -428,7 +439,7 @@ export function MarketplacePage({
 
   const showOnMap = (p: MarketplacePost) => {
     if (!isValidCoord(p.latitude, p.longitude)) return
-    onSelectMarketplaceId?.(p.id)
+    onSelectMarketplaceId?.(p.sellerId)
     onFocusMap?.({ lat: p.latitude, lng: p.longitude, zoom: MAP_FOCUS_ZOOM })
   }
 
@@ -439,7 +450,7 @@ export function MarketplacePage({
       <article
         key={p.id}
         className={`marketplace-card map-motion-fade-up${
-          selectedMarketplaceId === p.id ? ' is-selected' : ''
+          selectedMarketplaceId === p.sellerId ? ' is-selected' : ''
         }`}
       >
         <div className="marketplace-card__main">
@@ -553,17 +564,20 @@ export function MarketplacePage({
   }
 
   const listForTab = useMemo(() => {
-    const list = tab === 'mine'
+    const unfiltered = tab === 'mine'
       ? myPosts
       : tab === 'food'
         ? browsePosts.filter((post) => post.listingType === MarketplaceListingType.Food)
         : browsePosts.filter((post) => post.listingType !== MarketplaceListingType.Food)
+    const list = selectedMarketplaceId && tab !== 'mine'
+      ? unfiltered.filter((post) => post.sellerId === selectedMarketplaceId)
+      : unfiltered
     if (tab === 'mine' || !userLocation) return list
     return [...list].sort((left, right) =>
       (left.distanceKm ?? Number.POSITIVE_INFINITY) -
       (right.distanceKm ?? Number.POSITIVE_INFINITY),
     )
-  }, [tab, myPosts, browsePosts, userLocation])
+  }, [tab, myPosts, browsePosts, userLocation, selectedMarketplaceId])
   const foodSellerGroups = useMemo(() => {
     if (tab !== 'food') return []
     const grouped = new Map<string, MarketplacePost[]>()
@@ -624,7 +638,11 @@ export function MarketplacePage({
           role="tab"
           aria-selected={tab === 'food'}
           className={`tab ${tab === 'food' ? 'active' : ''}`}
-          onClick={() => setTab('food')}
+          onClick={() => {
+            onSelectMarketplaceId?.(null)
+            setExpandedFoodSellerIds(new Set())
+            setTab('food')
+          }}
         >
           Đồ ăn
         </button>
@@ -633,7 +651,10 @@ export function MarketplacePage({
           role="tab"
           aria-selected={tab === 'browse'}
           className={`tab ${tab === 'browse' ? 'active' : ''}`}
-          onClick={() => setTab('browse')}
+          onClick={() => {
+            onSelectMarketplaceId?.(null)
+            setTab('browse')
+          }}
         >
           Chợ đồ
         </button>
@@ -1200,17 +1221,30 @@ export function MarketplacePage({
           {foodSellerGroups.map((group) => (
             <section key={group.sellerId} className="food-store map-motion-fade-up">
               <header className="food-store__header">
-                <div className="marketplace-store-avatar" aria-hidden="true">
-                  {group.sellerName.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="food-store__identity">
-                  <span className="food-store__eyebrow">Bếp Homeji</span>
-                  <h2>{group.sellerName}</h2>
-                  <p>{group.address}</p>
-                </div>
-                <span className="food-store__distance">{formatNearbyDistance(group.distanceKm)}</span>
+                <button
+                  type="button"
+                  className="food-store__toggle"
+                  aria-expanded={expandedFoodSellerIds.has(group.sellerId)}
+                  onClick={() => setExpandedFoodSellerIds((current) => {
+                    const next = new Set(current)
+                    if (next.has(group.sellerId)) next.delete(group.sellerId)
+                    else next.add(group.sellerId)
+                    return next
+                  })}
+                >
+                  <span className="marketplace-store-avatar" aria-hidden="true">
+                    {group.sellerName.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="food-store__identity">
+                    <span className="food-store__eyebrow">Bếp Homeji · {group.posts.length} món</span>
+                    <span className="food-store__name">{group.sellerName}</span>
+                    <span className="food-store__address">{group.address}</span>
+                  </span>
+                  <span className="food-store__distance">{formatNearbyDistance(group.distanceKm)}</span>
+                  <span className="food-store__chevron" aria-hidden="true">⌄</span>
+                </button>
               </header>
-              <div className="food-menu-grid">
+              {expandedFoodSellerIds.has(group.sellerId) ? <div className="food-menu-grid">
                 {group.posts.map((post) => {
                   const thumb = postThumb(post)
                   return (
@@ -1247,7 +1281,7 @@ export function MarketplacePage({
                     </article>
                   )
                 })}
-              </div>
+              </div> : null}
             </section>
           ))}
         </div>
