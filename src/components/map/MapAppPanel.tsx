@@ -79,9 +79,8 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
 
 const SECTION_EXIT_MS = 280
 
-/** Right panel ~2.5× default width — every section except messages. */
+/** Content-heavy utility sections that need a wide workspace. */
 export const WIDE_MAP_SECTIONS = new Set<MapAppSection>([
-  'listings',
   'marketplace',
   'saved',
   'notifications',

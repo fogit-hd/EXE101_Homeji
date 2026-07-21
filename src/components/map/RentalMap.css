@@ -534,6 +534,10 @@
   right: calc(min(800px, 72vw) + 16px);
 }
 
+.home-map-page.has-listings-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+  right: calc(clamp(380px, 40vw, 560px) + 16px);
+}
+
 @media (min-width: 1024px) {
   .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
     right: 356px;
@@ -541,6 +545,10 @@
 
   .home-map-page.has-wide-panel:not(.is-sidebar-collapsed) .rental-map__controls {
     right: calc(min(850px, 70%) + 16px);
+  }
+
+  .home-map-page.has-listings-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+    right: calc(clamp(380px, 40vw, 560px) + 16px);
   }
 }
 
@@ -573,6 +581,10 @@
   .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
     right: 12px;
     bottom: calc(52dvh + 12px);
+  }
+
+  .home-map-page.has-listings-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+    right: 12px;
   }
 
   .home-map-panel.has-pin-preview .rental-map__controls {

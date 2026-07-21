@@ -112,6 +112,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated } = useAuth()
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null)
+  const [focusedPostId, setFocusedPostId] = useState<string | null>(selectedPostId)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceDetails | null>(null)
   const [placeLoading, setPlaceLoading] = useState(false)
   const [listingDetail, setListingDetail] = useState<RentalPost | null>(null)
@@ -157,7 +158,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [marketplacePins, setMarketplacePins] = useState<MarketplaceMapPin[]>([])
   const [selectedMarketplaceId, setSelectedMarketplaceId] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const focusedPostIdRef = useRef(focusedPostId)
+  focusedPostIdRef.current = focusedPostId
   const hoverLeaveTimerRef = useRef<number | null>(null)
+  const listScrollTimerRef = useRef<number | null>(null)
   const placeFocusRef = useRef(placeFocus)
   placeFocusRef.current = placeFocus
   const listingFetchSeq = useRef(0)
@@ -529,8 +533,18 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       if (hoverLeaveTimerRef.current != null) {
         window.clearTimeout(hoverLeaveTimerRef.current)
       }
+      if (listScrollTimerRef.current != null) {
+        window.clearTimeout(listScrollTimerRef.current)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    if (selectedPostId) {
+      focusedPostIdRef.current = selectedPostId
+      setFocusedPostId(selectedPostId)
+    }
+  }, [selectedPostId])
 
   useEffect(() => {
     setHoveredPostId(null)
@@ -580,6 +594,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [selectedPostId, isAuthenticated])
 
   const handleClearMapSelection = useCallback(() => {
+    focusedPostIdRef.current = null
+    setFocusedPostId(null)
     setSelectedPlace(null)
     setPlaceLoading(false)
     setListingDetail(null)
@@ -697,17 +713,68 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleSelectPost = useCallback(
     (postId: string) => {
+      const openDetail = focusedPostId === postId
       setHoveredPostId(null)
       setSelectedPlace(null)
       setPlaceLoading(false)
       setNearbyFocus(null)
-      onSelectPost(postId)
+      focusedPostIdRef.current = postId
+      setFocusedPostId(postId)
+      if (openDetail) {
+        onSelectPost(postId)
+      } else if (selectedPostId) {
+        onClearSelection()
+      }
       if (panelSection !== 'listings') return
       const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
-      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     },
-    [onSelectPost, panelSection],
+    [focusedPostId, selectedPostId, onSelectPost, onClearSelection, panelSection],
   )
+
+  useEffect(() => {
+    if (!panelOpen || panelSection !== 'listings' || posts.length === 0) return
+    const list = listRef.current
+    const scroller = list?.closest('.map-app-panel__body')
+    if (!(scroller instanceof HTMLElement) || !list) return
+
+    const syncFocusedCard = () => {
+      if (listScrollTimerRef.current != null) {
+        window.clearTimeout(listScrollTimerRef.current)
+      }
+      listScrollTimerRef.current = window.setTimeout(() => {
+        const viewport = scroller.getBoundingClientRect()
+        const viewportCenter = viewport.top + viewport.height / 2
+        let closestId: string | null = null
+        let closestDistance = Number.POSITIVE_INFINITY
+
+        for (const node of list.querySelectorAll<HTMLElement>('[data-post-id]')) {
+          const rect = node.getBoundingClientRect()
+          if (rect.bottom < viewport.top || rect.top > viewport.bottom) continue
+          const distance = Math.abs(rect.top + rect.height / 2 - viewportCenter)
+          if (distance < closestDistance) {
+            closestDistance = distance
+            closestId = node.dataset.postId ?? null
+          }
+        }
+
+        if (!closestId) return
+        if (focusedPostIdRef.current === closestId) return
+        if (selectedPostId) onClearSelection()
+        focusedPostIdRef.current = closestId
+        setFocusedPostId(closestId)
+      }, 140)
+    }
+
+    scroller.addEventListener('scroll', syncFocusedCard, { passive: true })
+    return () => {
+      scroller.removeEventListener('scroll', syncFocusedCard)
+      if (listScrollTimerRef.current != null) {
+        window.clearTimeout(listScrollTimerRef.current)
+        listScrollTimerRef.current = null
+      }
+    }
+  }, [panelOpen, panelSection, posts, selectedPostId, onClearSelection])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
     setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
@@ -776,7 +843,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             <div key={post.id} data-post-id={post.id}>
               <MapListingCard
                 post={post}
-                active={selectedPostId === post.id}
+                active={focusedPostId === post.id}
                 highlighted={hoveredPostId === post.id}
                 staggerIndex={index}
                 onHover={() => handleCardHover(post.id)}
@@ -792,7 +859,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       error,
       showPostsLoader,
       posts,
-      selectedPostId,
+      focusedPostId,
       hoveredPostId,
       onResetFilters,
       handleCardHover,
@@ -805,13 +872,15 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     <div
       className={`home-map-page${panelOpen ? '' : ' is-sidebar-collapsed'}${
         detailOpen ? ' has-place-detail' : ''
-      }${panelOpen && isWideMapSection(panelSection) ? ' has-wide-panel' : ''}`}
+      }${panelOpen && panelSection === 'listings' ? ' has-listings-panel' : ''}${
+        panelOpen && isWideMapSection(panelSection) ? ' has-wide-panel' : ''
+      }`}
     >
       <section className="home-map-panel">
         <div className="home-map-frame">
           <HomeMapStage
             posts={posts}
-            selectedPostId={selectedPostId}
+            selectedPostId={focusedPostId}
             hoveredPostId={hoveredPostId}
             onSelectPost={handleSelectPost}
             onClearSelection={handleClearMapSelection}

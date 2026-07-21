@@ -1,0 +1,16 @@
+{
+    # Keep Caddy's automatic HTTPS available when PublicHost is replaced with a DNS name.
+    # For a bare IP, use http://15.134.39.218 instead.
+    auto_https disable_redirects
+}
+
+http://15.134.39.218 {
+    encode gzip
+
+    # SignalR and API go directly to ASP.NET Core; Caddy handles WebSocket upgrades.
+    reverse_proxy /api/* 127.0.0.1:8080
+    reverse_proxy /hubs/* 127.0.0.1:8080
+
+    # The FE process serves dist/ and handles SPA fallback.
+    reverse_proxy 127.0.0.1:3000
+}

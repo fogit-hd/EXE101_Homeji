@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { RentalPostSummary } from '../../api/types'
+import type { RentalPostSummary, UserProfile } from '../../api/types'
 import { UserRole } from '../../api/types'
 import { useAuth } from '../../contexts/AuthContext'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
@@ -21,6 +21,84 @@ import './MapOmnibox.css'
 
 const RECENT_KEY = 'homeji:map-search-recent'
 const MAX_RECENT = 8
+const MAP_TOUR_VERSION = 'v1'
+const NEW_ACCOUNT_TOUR_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
+
+const SECTION_GUIDE: Partial<Record<MapAppSection, { title: string; body: string; tip: string }>> = {
+  listings: {
+    title: 'Tìm phòng trên bản đồ',
+    body: 'Lướt danh sách để Homeji tự đưa bản đồ tới ghim tương ứng.',
+    tip: 'Click một lần để focus ghim; click lần hai để mở đầy đủ chi tiết phòng.',
+  },
+  marketplace: {
+    title: 'Chợ đồ sinh viên',
+    body: 'Mua bán đồ cũ, đồ ăn và vật dụng quanh khu trọ theo vị trí trên bản đồ.',
+    tip: 'Kiểm tra người bán, điểm nhận và trạng thái đơn trước khi thanh toán.',
+  },
+  wanted: {
+    title: 'Tin tìm phòng',
+    body: 'Đăng nhu cầu về khu vực, ngân sách và ngày muốn chuyển vào để chủ phòng chủ động liên hệ.',
+    tip: 'Mô tả càng rõ thì đề xuất nhận được càng sát nhu cầu.',
+  },
+  saved: {
+    title: 'Phòng đã lưu',
+    body: 'Giữ các lựa chọn đáng cân nhắc ở một nơi để xem lại và so sánh nhanh.',
+    tip: 'Bạn có thể bỏ lưu bất cứ lúc nào mà không ảnh hưởng tới tin gốc.',
+  },
+  invitations: {
+    title: 'Kết nối ở ghép',
+    body: 'Theo dõi lời mời ở ghép đã gửi và đã nhận trước khi bắt đầu trò chuyện.',
+    tip: 'Chỉ chấp nhận khi thông tin phòng và thói quen sinh hoạt đã rõ ràng.',
+  },
+  messages: {
+    title: 'Tin nhắn',
+    body: 'Trao đổi trực tiếp theo từng tin đăng và giữ toàn bộ ngữ cảnh trong một cuộc trò chuyện.',
+    tip: 'Không gửi giấy tờ cá nhân hoặc đặt cọc khi phòng chưa được xác minh.',
+  },
+  appointments: {
+    title: 'Lịch xem phòng',
+    body: 'Quản lý yêu cầu, thời gian xác nhận và trạng thái các buổi xem phòng.',
+    tip: 'Hãy xác nhận lại địa điểm và người liên hệ trước khi tới.',
+  },
+  notifications: {
+    title: 'Thông báo',
+    body: 'Xem thay đổi của tin đăng, lời mời, tin nhắn và lịch xem phòng.',
+    tip: 'Mở thông báo sẽ đưa bạn tới đúng nội dung liên quan.',
+  },
+  profile: {
+    title: 'Hồ sơ của bạn',
+    body: 'Cập nhật trường học, khu vực mong muốn và thói quen để Homeji gợi ý phù hợp hơn.',
+    tip: 'Chỉ chia sẻ các thông tin cần thiết cho việc tìm phòng và ở ghép.',
+  },
+  payments: {
+    title: 'Gói đăng ký',
+    body: 'Xem quyền lợi, thời hạn và trạng thái gói Homeji đang sử dụng.',
+    tip: 'Đọc kỹ quyền lợi và tổng tiền trước khi bắt đầu thanh toán.',
+  },
+  activities: {
+    title: 'Nhật ký hoạt động',
+    body: 'Theo dõi những thao tác quan trọng đã thực hiện trên tài khoản.',
+    tip: 'Nếu thấy hoạt động lạ, hãy kiểm tra lại phiên đăng nhập và bảo mật tài khoản.',
+  },
+  myPosts: {
+    title: 'Tin của tôi',
+    body: 'Quản lý tin nháp, tin chờ duyệt, tin đang hiển thị và trạng thái cho thuê.',
+    tip: 'Cập nhật trạng thái kịp thời để người tìm phòng không liên hệ nhầm.',
+  },
+}
+
+function shouldShowMapTour(profile: UserProfile | null): boolean {
+  if (!profile?.id || !profile.createdAt) return false
+  const createdAt = Date.parse(profile.createdAt)
+  if (!Number.isFinite(createdAt) || Date.now() - createdAt > NEW_ACCOUNT_TOUR_WINDOW_MS) {
+    return false
+  }
+  try {
+    return localStorage.getItem(`homeji:map-tour:${MAP_TOUR_VERSION}:${profile.id}`) !== 'done'
+  } catch {
+    return true
+  }
+}
 
 export type MapOmniboxSchool = {
   id: string
@@ -253,8 +331,6 @@ export function MapOmnibox({
   onReset,
   onOpenSection,
   activeSection = null,
-  onAiSearch: _onAiSearch,
-  aiSearching: _aiSearching = false,
   unreadMessageCount = 0,
   unreadNotificationCount = 0,
   pinLayers,
@@ -266,8 +342,10 @@ export function MapOmnibox({
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
   const [open, setOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  const [tourDismissed, setTourDismissed] = useState(false)
+  const [tourSection, setTourSection] = useState<MapAppSection | null>(null)
   const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [recent, setRecent] = useState<MapOmniboxSuggestion[]>([])
+  const [recent, setRecent] = useState<MapOmniboxSuggestion[]>(loadRecent)
   const [placeSuggestions, setPlaceSuggestions] = useState<MapOmniboxSuggestion[]>([])
   const [placesLoading, setPlacesLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(() =>
@@ -276,9 +354,7 @@ export function MapOmnibox({
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    setRecent(loadRecent())
-  }, [])
+  const tourVisible = !tourDismissed && shouldShowMapTour(profile)
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 900px)')
@@ -327,14 +403,16 @@ export function MapOmnibox({
   useEffect(() => {
     const q = query.trim()
     if (!apiKey || !mapsLoaded || q.length < 2) {
-      setPlaceSuggestions([])
-      setPlacesLoading(false)
-      return
+      const clearTimer = window.setTimeout(() => {
+        setPlaceSuggestions([])
+        setPlacesLoading(false)
+      }, 0)
+      return () => window.clearTimeout(clearTimer)
     }
 
     let cancelled = false
-    setPlacesLoading(true)
     const t = window.setTimeout(() => {
+      setPlacesLoading(true)
       void fetchPlacePredictions(q, { limit: 6 })
         .then((items) => {
           if (cancelled) return
@@ -448,9 +526,22 @@ export function MapOmnibox({
   const closeNav = () => setNavOpen(false)
   const canClosePlaceDetail = placeDetailOpen && !!onClosePlaceDetail
 
-  const openSection = (section: MapAppSection) => {
+  const finishTour = () => {
+    if (profile?.id) {
+      try {
+        localStorage.setItem(`homeji:map-tour:${MAP_TOUR_VERSION}:${profile.id}`, 'done')
+      } catch {
+        /* The guide can still be dismissed when storage is unavailable. */
+      }
+    }
+    setTourDismissed(true)
+    setTourSection(null)
+  }
+
+  const openSection = (section: MapAppSection, revealGuide = false) => {
     onOpenSection?.(section)
     closeNav()
+    if (revealGuide && tourVisible && SECTION_GUIDE[section]) setTourSection(section)
   }
 
   return (
@@ -942,73 +1033,79 @@ export function MapOmnibox({
             </div>
 
             <nav className="gmaps-nav-drawer__nav">
+              {tourVisible && !tourSection ? (
+                <div className="gmaps-tour__drawer-note" role="status">
+                  <strong>Chọn một mục để xem hướng dẫn</strong>
+                  <span>Homeji chỉ giải thích chức năng sau khi bạn chọn, không bắt xem một tour dài.</span>
+                </div>
+              ) : null}
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'listings' ? ' is-active' : ''}`}
-                onClick={() => openSection('listings')}
+                onClick={() => openSection('listings', true)}
               >
                 Tìm phòng
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'marketplace' ? ' is-active' : ''}`}
-                onClick={() => openSection('marketplace')}
+                onClick={() => openSection('marketplace', true)}
               >
                 Chợ đồ
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'wanted' ? ' is-active' : ''}`}
-                onClick={() => openSection('wanted')}
+                onClick={() => openSection('wanted', true)}
               >
                 Tin tìm phòng
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'saved' ? ' is-active' : ''}`}
-                onClick={() => openSection('saved')}
+                onClick={() => openSection('saved', true)}
               >
                 Đã lưu
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'invitations' ? ' is-active' : ''}`}
-                onClick={() => openSection('invitations')}
+                onClick={() => openSection('invitations', true)}
               >
                 Ở ghép
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'notifications' ? ' is-active' : ''}`}
-                onClick={() => openSection('notifications')}
+                onClick={() => openSection('notifications', true)}
               >
                 Thông báo
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'messages' ? ' is-active' : ''}`}
-                onClick={() => openSection('messages')}
+                onClick={() => openSection('messages', true)}
               >
                 Tin nhắn
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'appointments' ? ' is-active' : ''}`}
-                onClick={() => openSection('appointments')}
+                onClick={() => openSection('appointments', true)}
               >
                 Lịch xem phòng
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'payments' ? ' is-active' : ''}`}
-                onClick={() => openSection('payments')}
+                onClick={() => openSection('payments', true)}
               >
                 Gói Đăng Ký
               </button>
               <button
                 type="button"
                 className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'activities' ? ' is-active' : ''}`}
-                onClick={() => openSection('activities')}
+                onClick={() => openSection('activities', true)}
               >
                 Nhật ký hoạt động
               </button>
@@ -1017,7 +1114,7 @@ export function MapOmnibox({
                   <button
                     type="button"
                     className={`gmaps-nav-drawer__item map-motion-press${activeSection === 'myPosts' ? ' is-active' : ''}`}
-                    onClick={() => openSection('myPosts')}
+                    onClick={() => openSection('myPosts', true)}
                   >
                     Tin của tôi
                   </button>
@@ -1033,6 +1130,49 @@ export function MapOmnibox({
               ) : null}
             </nav>
       </aside>
+
+      {tourVisible && !navOpen && !tourSection ? (
+        <aside className="gmaps-tour gmaps-tour--menu" aria-label="Hướng dẫn bắt đầu">
+          <span className="gmaps-tour__eyebrow">Bắt đầu với Homeji</span>
+          <strong>Mở menu ba gạch ở góc trái</strong>
+          <p>Chọn Tìm phòng, Chợ đồ, Ở ghép… rồi Homeji mới giải thích chi tiết mục đó.</p>
+          <div className="gmaps-tour__actions">
+            <button type="button" className="gmaps-tour__secondary" onClick={finishTour}>Bỏ qua</button>
+            <button
+              type="button"
+              className="gmaps-tour__primary"
+              onClick={() => {
+                setOpen(false)
+                setNavOpen(true)
+              }}
+            >
+              Mở menu
+            </button>
+          </div>
+        </aside>
+      ) : null}
+
+      {tourVisible && tourSection && SECTION_GUIDE[tourSection] ? (
+        <aside className="gmaps-tour gmaps-tour--section" role="dialog" aria-modal="false" aria-label={`Hướng dẫn ${SECTION_GUIDE[tourSection]!.title}`}>
+          <span className="gmaps-tour__eyebrow">Bạn vừa mở</span>
+          <strong>{SECTION_GUIDE[tourSection]!.title}</strong>
+          <p>{SECTION_GUIDE[tourSection]!.body}</p>
+          <small>{SECTION_GUIDE[tourSection]!.tip}</small>
+          <div className="gmaps-tour__actions">
+            <button
+              type="button"
+              className="gmaps-tour__secondary"
+              onClick={() => {
+                setTourSection(null)
+                setNavOpen(true)
+              }}
+            >
+              Xem mục khác
+            </button>
+            <button type="button" className="gmaps-tour__primary" onClick={finishTour}>Đã hiểu</button>
+          </div>
+        </aside>
+      ) : null}
     </>
   )
 }
