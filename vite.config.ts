@@ -15,14 +15,12 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'https://homeji-be.onrender.com',
+        target: 'http://15.134.39.218:5000',
         changeOrigin: true,
-        secure: true,
       },
       '/hubs': {
-        target: 'https://homeji-be.onrender.com',
+        target: 'http://15.134.39.218:5000',
         changeOrigin: true,
-        secure: true,
         ws: true,
       },
     },

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
 const PORT = Number(process.env.PORT || 3000)
-const API_TARGET = (process.env.API_PROXY_TARGET || 'https://homeji-be.onrender.com').replace(
+const API_TARGET = (process.env.API_PROXY_TARGET || 'http://15.134.39.218:5000').replace(
   /\/$/,
   '',
 )
