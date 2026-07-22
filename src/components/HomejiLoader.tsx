@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
+import { shouldShowPersistentLoader } from './persistentLoadingState'
 import './HomejiLoader.css'
 
 /** Độ dài intro Blender: 63 frames @ 30fps */
@@ -80,7 +81,9 @@ export function usePersistentLoad(
 ): PersistentLoadResult {
   const enabled = options?.enabled ?? true
   const retryIntervalMs = options?.retryIntervalMs ?? SERVICE_RETRY_MS
-  const holdForIntro = options?.holdForIntro ?? true
+  // Data skeletons cannot emit an animation-complete callback. Do not let the
+  // optional branded intro keep otherwise-completed requests blocked forever.
+  const holdForIntro = options?.holdForIntro ?? false
   const timeoutMs = options?.timeoutMs ?? LOAD_TIMEOUT_MS
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -151,7 +154,7 @@ export function usePersistentLoad(
   }, [enabled, disrupted, reload, retryIntervalMs])
 
   return {
-    showLoader: holdForIntro ? showLoader : loading || disrupted,
+    showLoader: shouldShowPersistentLoader(loading, disrupted, showLoader, holdForIntro),
     onIntroComplete,
     error,
     disrupted,
