@@ -10,8 +10,6 @@ import {
   createMarketplacePost,
   createMomoPayment,
   createPayOsPayment,
-  getMarketplaceSellerPlans,
-  getMyMarketplaceSellerPlan,
   getMyMarketplaceOrders,
   getMyWallet,
   getMyWalletTransactions,
@@ -20,13 +18,10 @@ import {
   markMarketplacePostSold,
   rejectMarketplaceOrder,
   searchMarketplacePosts,
-  purchaseMarketplaceSellerPlan,
   createWalletWithdrawal,
   uploadImages,
   type MarketplaceOrder,
   type MarketplacePost,
-  type MarketplaceSellerPlan,
-  type MarketplaceSellerSubscription,
   type Wallet,
   type WalletTransaction,
   type WalletWithdrawal,
@@ -79,7 +74,7 @@ const WALLET_TRANSACTION_LABELS: Record<number, string> = {
   [WalletTransactionKind.Refund]: 'Hoàn tiền',
   [WalletTransactionKind.SaleProceeds]: 'Doanh thu bán hàng',
   [WalletTransactionKind.PlatformFee]: 'Phí nền tảng',
-  [WalletTransactionKind.SellerPlanPurchase]: 'Gói người bán',
+  [WalletTransactionKind.LegacyServicePurchase]: 'Dịch vụ trước đây',
   [WalletTransactionKind.Withdrawal]: 'Rút tiền',
   [WalletTransactionKind.WithdrawalRefund]: 'Hoàn tiền rút',
 }
@@ -264,8 +259,6 @@ export function MarketplacePage({
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [withdrawalsUnavailable, setWithdrawalsUnavailable] = useState(false)
-  const [sellerPlans, setSellerPlans] = useState<MarketplaceSellerPlan[]>([])
-  const [sellerPlan, setSellerPlan] = useState<MarketplaceSellerSubscription | null>(null)
   const [topUpAmount, setTopUpAmount] = useState('100000')
   const [walletBusy, setWalletBusy] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -395,12 +388,10 @@ export function MarketplacePage({
 
   const loadFn = useCallback(async () => {
     if (tab === 'wallet') {
-      const [nextWallet, transactions, marketplaceOrders, plans, currentPlan, withdrawalResult] = await Promise.all([
+      const [nextWallet, transactions, marketplaceOrders, withdrawalResult] = await Promise.all([
         getMyWallet(),
         getMyWalletTransactions(50),
         getMyMarketplaceOrders(),
-        getMarketplaceSellerPlans(),
-        getMyMarketplaceSellerPlan(),
         getMyWalletWithdrawals()
           .then((items) => ({ items, unavailable: false }))
           .catch(() => ({ items: [] as WalletWithdrawal[], unavailable: true })),
@@ -408,8 +399,6 @@ export function MarketplacePage({
       setWallet(nextWallet)
       setWalletTransactions(transactions)
       setOrders(marketplaceOrders)
-      setSellerPlans(plans)
-      setSellerPlan(currentPlan)
       setWithdrawals(withdrawalResult.items)
       setWithdrawalsUnavailable(withdrawalResult.unavailable)
       return
@@ -716,21 +705,6 @@ export function MarketplacePage({
       await reload()
     } catch (err) {
       setActionError(getErrorMessage(err, 'Không thể tạo yêu cầu rút tiền.'))
-    } finally {
-      setWalletBusy('')
-    }
-  }
-
-  const buySellerPlan = async (code: string) => {
-    setWalletBusy(code)
-    setActionError('')
-    try {
-      const current = await purchaseMarketplaceSellerPlan(code)
-      setSellerPlan(current)
-      setActionMsg(`Đã kích hoạt gói ${current.packageName}.`)
-      await reload()
-    } catch (err) {
-      setActionError(getErrorMessage(err, 'Không mua được gói người bán'))
     } finally {
       setWalletBusy('')
     }
@@ -1517,39 +1491,6 @@ export function MarketplacePage({
                   ))}
                 </ul>
               )}
-            </div>
-          </section>
-
-          <section className="seller-plans card">
-            <div className="wallet-section-head">
-              <div>
-                <h3>Gói người bán</h3>
-                <p>
-                  Gói hiện tại: <strong>{sellerPlan?.packageName ?? 'Bắt đầu'}</strong>. Phí gói trừ từ số dư;
-                  luôn giữ quỹ đảm bảo {formatPrice(wallet?.minimumWithdrawalReserve ?? 20_000)}.
-                </p>
-              </div>
-            </div>
-            <div className="seller-plan-grid">
-              {sellerPlans.map((plan) => (
-                <article key={plan.code} className={plan.isCurrent ? 'is-current' : ''}>
-                  <span>{plan.name}</span>
-                  <strong>{plan.monthlyPrice ? formatPrice(plan.monthlyPrice) : 'Miễn phí'}</strong>
-                  <p>Hoa hồng {(plan.commissionRate * 100).toFixed(0)}% mỗi đơn hoàn tất</p>
-                  {plan.monthlyPrice > 0 ? (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      disabled={Boolean(walletBusy) || plan.isCurrent}
-                      onClick={() => void buySellerPlan(plan.code)}
-                    >
-                      {plan.isCurrent ? 'Đang dùng' : walletBusy === plan.code ? 'Đang mua…' : 'Mua bằng số dư'}
-                    </button>
-                  ) : (
-                    <small>Tự áp dụng khi chưa có gói trả phí</small>
-                  )}
-                </article>
-              ))}
             </div>
           </section>
 

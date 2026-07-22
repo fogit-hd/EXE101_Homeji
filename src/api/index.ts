@@ -21,8 +21,6 @@ import type {
   MarketplaceListingType,
   MarketplaceOrder,
   MarketplacePost,
-  MarketplaceSellerPlan,
-  MarketplaceSellerSubscription,
   MessageAttachmentContext,
   MomoPaymentResponse,
   MySubscription,
@@ -551,18 +549,6 @@ export const rejectWalletWithdrawal = (id: string, note?: string) =>
     method: 'POST',
     body: { note },
   })
-
-export const getMarketplaceSellerPlans = () =>
-  apiRequest<MarketplaceSellerPlan[]>('/api/marketplace-seller-plans')
-
-export const getMyMarketplaceSellerPlan = () =>
-  apiRequest<MarketplaceSellerSubscription>('/api/marketplace-seller-plans/mine')
-
-export const purchaseMarketplaceSellerPlan = (packageCode: string) =>
-  apiRequest<MarketplaceSellerSubscription>(
-    `/api/marketplace-seller-plans/${encodeURIComponent(packageCode)}/purchase`,
-    { method: 'POST' },
-  )
 
 // Wanted posts
 export const searchWantedPosts = (params?: {

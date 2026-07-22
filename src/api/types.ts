@@ -663,7 +663,7 @@ export const WalletTransactionKind = {
   Refund: 3,
   SaleProceeds: 4,
   PlatformFee: 5,
-  SellerPlanPurchase: 6,
+  LegacyServicePurchase: 6,
   Withdrawal: 7,
   WithdrawalRefund: 8,
 } as const
@@ -811,26 +811,6 @@ export interface WalletTransaction {
   referenceId: string
   description: string
   createdAt: string
-}
-
-export interface MarketplaceSellerPlan {
-  code: string
-  name: string
-  monthlyPrice: number
-  commissionRate: number
-  durationDays: number
-  isCurrent: boolean
-  expiresAt: string | null
-}
-
-export interface MarketplaceSellerSubscription {
-  packageCode: string
-  packageName: string
-  price: number
-  commissionRate: number
-  startsAt: string
-  expiresAt: string | null
-  isPaidPlan: boolean
 }
 
 export interface RentalWantedPost {
