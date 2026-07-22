@@ -268,9 +268,6 @@ export function MarketplacePage({
   const [cartBusy, setCartBusy] = useState(false)
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [orderView, setOrderView] = useState<OrderView | null>(null)
-  const [expandedFoodSellerIds, setExpandedFoodSellerIds] = useState<Set<string>>(
-    () => new Set(),
-  )
   const handledMarketplaceSelectionRef = useRef<string | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [walletView, setWalletView] = useState<WalletView>('topup')
@@ -363,9 +360,6 @@ export function MarketplacePage({
       ? 'food'
       : 'browse'
     setTab((current) => (current === nextTab ? current : nextTab))
-    if (nextTab === 'food') {
-      setExpandedFoodSellerIds(new Set([selectedMarketplaceId]))
-    }
     handledMarketplaceSelectionRef.current = selectedMarketplaceId
   }, [posts, selectedMarketplaceId])
 
@@ -885,6 +879,11 @@ export function MarketplacePage({
         if (post.distanceKm == null) return nearest
         return nearest == null ? post.distanceKm : Math.min(nearest, post.distanceKm)
       }, null),
+      preparationMinutes: sellerPosts.reduce<number | null>((fastest, post) => {
+        const minutes = post.preparationMinutes ?? 0
+        if (minutes <= 0) return fastest
+        return fastest == null ? minutes : Math.min(fastest, minutes)
+      }, null),
       posts: sellerPosts,
     }))
   }, [tab, listForTab])
@@ -996,7 +995,6 @@ export function MarketplacePage({
           className={`tab ${tab === 'food' ? 'active' : ''}`}
           onClick={() => {
             onSelectMarketplaceId?.(null)
-            setExpandedFoodSellerIds(new Set())
             setTab('food')
           }}
         >
@@ -1848,41 +1846,40 @@ export function MarketplacePage({
               : 'Chưa có đồ dùng đang bán quanh đây.'}
         </div>
       ) : tab === 'food' ? (
-        <div className="food-store-list">
-          {foodSellerGroups.map((group) => (
-            <section key={group.sellerId} className="food-store map-motion-fade-up">
-              <header className="food-store__header">
-                <button
-                  type="button"
-                  className="food-store__toggle"
-                  aria-expanded={expandedFoodSellerIds.has(group.sellerId)}
-                  onClick={() => setExpandedFoodSellerIds((current) => {
-                    const next = new Set(current)
-                    if (next.has(group.sellerId)) next.delete(group.sellerId)
-                    else next.add(group.sellerId)
-                    return next
-                  })}
-                >
-                  <span className="marketplace-store-avatar" aria-hidden="true">
-                    {group.sellerName.slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className="food-store__identity">
-                    <span className="food-store__eyebrow">Bếp Homeji · {group.posts.length} món</span>
-                    <span className="food-store__name">{group.sellerName}</span>
-                    <span className="food-store__address">{group.address}</span>
-                  </span>
-                  <span className="food-store__distance">
-                    {formatNearbyDistance(group.distanceKm, locating, Boolean(userLocation))}
-                  </span>
-                  <span className="food-store__chevron" aria-hidden="true">⌄</span>
-                </button>
-              </header>
-              {expandedFoodSellerIds.has(group.sellerId) ? <div className="food-menu-grid">
-                {group.posts.map((post) => {
-                  const thumb = postThumb(post)
-                  const cartItem = cartItems.find((item) => item.postId === post.id)
-                  return (
-                    <article key={post.id} className="food-menu-item">
+        <div className="food-discovery">
+          <section className="food-discovery__intro" aria-label="Tổng quan món ăn gần bạn">
+            <span className="food-discovery__icon" aria-hidden="true">🍜</span>
+            <div>
+              <h2>Món ngon gần bạn</h2>
+              <p>{listForTab.length} món từ {foodSellerGroups.length} bếp · Chọn món và thêm nhanh vào giỏ</p>
+            </div>
+          </section>
+          <div className="food-store-list">
+            {foodSellerGroups.map((group) => (
+              <section key={group.sellerId} className="food-store map-motion-fade-up">
+                <header className="food-store__header">
+                  <div className="food-store__heading">
+                    <span className="marketplace-store-avatar" aria-hidden="true">
+                      {group.sellerName.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="food-store__identity">
+                      <span className="food-store__eyebrow">Bếp Homeji · {group.posts.length} món</span>
+                      <span className="food-store__name">{group.sellerName}</span>
+                      <span className="food-store__address">{group.address}</span>
+                    </span>
+                    <span className="food-store__meta">
+                      {group.preparationMinutes ? <span>⚡ Từ {group.preparationMinutes} phút</span> : null}
+                      <strong>{formatNearbyDistance(group.distanceKm, locating, Boolean(userLocation))}</strong>
+                    </span>
+                  </div>
+                </header>
+                <div className="food-menu-grid">
+                  {group.posts.map((post) => {
+                    const thumb = postThumb(post)
+                    const cartItem = cartItems.find((item) => item.postId === post.id)
+                    const quantity = orderQuantities[post.id] ?? 1
+                    return (
+                      <article key={post.id} className="food-menu-item">
                       <button type="button" className="food-menu-item__visual" onClick={() => showOnMap(post)}>
                         {thumb ? <img src={thumb} alt={post.title} loading="lazy" /> : <span>Homeji Food</span>}
                         <span className="food-menu-item__distance">
@@ -1892,39 +1889,54 @@ export function MarketplacePage({
                       <div className="food-menu-item__body">
                         <div>
                           <h3>{post.title}</h3>
-                          <p>{post.category} · {post.preparationMinutes || 0} phút</p>
+                          <p>
+                            {post.category} · {post.preparationMinutes || 0} phút · Còn {post.availableQuantity} {post.unit}
+                          </p>
                         </div>
                         <strong>{formatPrice(post.price)}</strong>
                         <div className="food-menu-item__buy">
-                          <label>
-                            <span className="sr-only">Số lượng {post.title}</span>
-                            <input
-                              type="number"
-                              min={1}
-                              max={post.availableQuantity}
-                              value={orderQuantities[post.id] ?? 1}
-                              onChange={(event) => setOrderQuantities((current) => ({
+                          <div className="food-menu-item__quantity" role="group" aria-label={`Số lượng ${post.title}`}>
+                            <button
+                              type="button"
+                              aria-label={`Giảm số lượng ${post.title}`}
+                              disabled={quantity <= 1}
+                              onClick={() => setOrderQuantities((current) => ({
                                 ...current,
-                                [post.id]: Math.max(1, Math.min(post.availableQuantity, Number(event.target.value) || 1)),
+                                [post.id]: Math.max(1, quantity - 1),
                               }))}
-                            />
-                          </label>
+                            >
+                              −
+                            </button>
+                            <output aria-label={`${quantity} phần`}>{quantity}</output>
+                            <button
+                              type="button"
+                              aria-label={`Tăng số lượng ${post.title}`}
+                              disabled={quantity >= post.availableQuantity}
+                              onClick={() => setOrderQuantities((current) => ({
+                                ...current,
+                                [post.id]: Math.min(post.availableQuantity, quantity + 1),
+                              }))}
+                            >
+                              +
+                            </button>
+                          </div>
                           <button
                             type="button"
                             className={`food-menu-item__add${cartItem ? ' is-added' : ''}`}
                             aria-pressed={Boolean(cartItem)}
                             onClick={() => cartItem ? removeFromCart(post) : addToCart(post)}
                           >
-                            {cartItem ? 'Xóa khỏi giỏ' : 'Thêm vào giỏ'}
+                            {cartItem ? 'Đã thêm · Xóa' : 'Thêm vào giỏ'}
                           </button>
                         </div>
                       </div>
-                    </article>
-                  )
-                })}
-              </div> : null}
-            </section>
-          ))}
+                      </article>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="marketplace-list">
