@@ -1032,6 +1032,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       {/* After list panel so Homie stays above the right section */}
       <MapChatbot
         onSearchUpdate={onAiSearchUpdate}
+        onOpenSection={handleOpenAppSection}
         dismissSignal={homieDismiss}
         onOpenChange={handleHomieOpenChange}
         avoidRightContent={panelOpen && panelSection === 'marketplace'}

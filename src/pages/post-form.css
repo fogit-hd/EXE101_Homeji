@@ -44,3 +44,39 @@
   color: var(--text-secondary);
   align-self: center;
 }
+
+.room-transfer-form {
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--grab-blue, #1a73e8) 28%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--grab-blue, #1a73e8) 6%, var(--surface-elevated, #fff));
+}
+
+.room-transfer-form__notice p {
+  margin: 6px 0 18px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.room-transfer-form__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.room-transfer-form__consent input {
+  margin-top: 4px;
+  flex: 0 0 auto;
+}
+
+.room-transfer-form__warning {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #f9ab00 15%, var(--surface-elevated, #fff));
+  color: var(--text-heading);
+  font-size: 0.86rem;
+}

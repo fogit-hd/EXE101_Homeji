@@ -1109,7 +1109,7 @@ export function MapOmnibox({
               >
                 Nhật ký hoạt động
               </button>
-              {profile?.role === UserRole.Landlord ? (
+              {profile?.role === UserRole.Landlord || profile?.role === UserRole.Renter ? (
                 <>
                   <button
                     type="button"
@@ -1118,7 +1118,11 @@ export function MapOmnibox({
                   >
                     Tin của tôi
                   </button>
-                  <Link to="/posts/new" className="gmaps-nav-drawer__item map-motion-press" onClick={closeNav}>
+                  <Link
+                    to={profile?.role === UserRole.Renter ? '/posts/new?type=pass' : '/posts/new'}
+                    className="gmaps-nav-drawer__item map-motion-press"
+                    onClick={closeNav}
+                  >
                     Đăng tin
                   </Link>
                 </>

@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
+  deleteConversationAttachment,
+  downloadConversationAttachment,
   getConversationMessages,
   getConversations,
+  MessageAttachmentContext,
+  MessageAttachmentStatus,
   sendConversationMessage,
+  sendConversationImages,
   type PostConversation,
   type PostMessage,
+  type PostMessageAttachment,
 } from '../../api'
 import { getStoredSession } from '../../api/client'
 import {
@@ -53,6 +59,107 @@ type Props = {
 }
 
 type AttachMode = 'menu' | 'address' | null
+
+const attachmentContextLabel: Record<number, string> = {
+  [MessageAttachmentContext.Other]: 'Ảnh khác',
+  [MessageAttachmentContext.CurrentRoom]: 'Phòng hiện tại',
+  [MessageAttachmentContext.Bathroom]: 'WC / phòng tắm',
+  [MessageAttachmentContext.Kitchen]: 'Bếp',
+  [MessageAttachmentContext.Entrance]: 'Lối vào',
+  [MessageAttachmentContext.UtilityMeter]: 'Đồng hồ điện nước',
+  [MessageAttachmentContext.ExistingDamage]: 'Hư hỏng hiện hữu',
+}
+
+function SecureMessageImage({
+  attachment,
+  conversationId,
+  messageId,
+  mine,
+  onDeleted,
+  onError,
+}: {
+  attachment: PostMessageAttachment
+  conversationId: string
+  messageId: string
+  mine: boolean
+  onDeleted: () => void
+  onError: (message: string) => void
+}) {
+  const [src, setSrc] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (attachment.status !== MessageAttachmentStatus.Ready) return
+    let cancelled = false
+    let objectUrl: string | null = null
+    void downloadConversationAttachment(attachment.contentPath)
+      .then((blob) => {
+        if (cancelled) return
+        objectUrl = URL.createObjectURL(blob)
+        setSrc(objectUrl)
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true)
+      })
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [attachment.contentPath, attachment.status])
+
+  if (attachment.status === MessageAttachmentStatus.Deleted) {
+    return <span className="map-messages__image-deleted">Ảnh đã được người gửi xóa</span>
+  }
+
+  return (
+    <figure className="map-messages__image">
+      {src ? (
+        <button type="button" onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}>
+          <img src={src} alt={attachmentContextLabel[attachment.context] ?? 'Ảnh trong tin nhắn'} />
+        </button>
+      ) : (
+        <span className="map-messages__image-loading">
+          {loadFailed ? 'Không tải được ảnh' : 'Đang tải ảnh…'}
+        </span>
+      )}
+      <figcaption>
+        {attachmentContextLabel[attachment.context] ?? 'Ảnh khác'}
+        {mine ? (
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={async () => {
+              setDeleting(true)
+              try {
+                await deleteConversationAttachment(
+                  conversationId,
+                  messageId,
+                  attachment.id,
+                )
+                onDeleted()
+              } catch (error) {
+                onError(getErrorMessage(error, 'Không xóa được ảnh'))
+              } finally {
+                setDeleting(false)
+              }
+            }}
+          >
+            {deleting ? 'Đang xóa…' : 'Xóa'}
+          </button>
+        ) : null}
+      </figcaption>
+    </figure>
+  )
+}
+
+function PendingImagePreview({ file }: { file: File }) {
+  const src = useMemo(() => URL.createObjectURL(file), [file])
+  useEffect(() => {
+    return () => URL.revokeObjectURL(src)
+  }, [src])
+  return <img src={src} alt={`Ảnh chờ gửi: ${file.name}`} />
+}
 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -197,10 +304,15 @@ export function MapMessagesPanel({
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [matchIndex, setMatchIndex] = useState(0)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imageContext, setImageContext] = useState<MessageAttachmentContext>(
+    MessageAttachmentContext.CurrentRoom,
+  )
   const me = getStoredSession()?.userId
   const bottomRef = useRef<HTMLDivElement>(null)
   const attachRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const loadConversations = useCallback(async (opts?: { soft?: boolean }) => {
@@ -314,6 +426,7 @@ export function MapMessagesPanel({
     resetAddressDraft()
     setSearchOpen(false)
     setSearchQuery('')
+    setImageFiles([])
   }
 
   const closeThread = () => {
@@ -326,6 +439,26 @@ export function MapMessagesPanel({
     resetAddressDraft()
     setSearchOpen(false)
     setSearchQuery('')
+    setImageFiles([])
+  }
+
+  const appendSentMessage = (msg: PostMessage) => {
+    setMessages((prev) => [...prev, msg])
+    setConversations((prev) => {
+      const next = prev.map((c) =>
+        c.id === activeId
+          ? {
+              ...c,
+              lastMessage: msg.body,
+              lastMessageSenderId: msg.senderId,
+              updatedAt: msg.sentAt,
+              unreadCount: 0,
+            }
+          : c,
+      )
+      next.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      return next
+    })
   }
 
   const sendBody = async (body: string) => {
@@ -334,22 +467,7 @@ export function MapMessagesPanel({
     setError(null)
     try {
       const msg = await sendConversationMessage(activeId, body.trim())
-      setMessages((prev) => [...prev, msg])
-      setConversations((prev) => {
-        const next = prev.map((c) =>
-          c.id === activeId
-            ? {
-                ...c,
-                lastMessage: msg.body,
-                lastMessageSenderId: msg.senderId,
-                updatedAt: msg.sentAt,
-                unreadCount: 0,
-              }
-            : c,
-        )
-        next.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        return next
-      })
+      appendSentMessage(msg)
       setDraft('')
       setAttachMode(null)
       resetAddressDraft()
@@ -362,6 +480,42 @@ export function MapMessagesPanel({
 
   const handleSend = async () => {
     await sendBody(draft)
+  }
+
+  const handleImageSelection = (files: FileList | null) => {
+    if (!files) return
+    const selected = Array.from(files)
+    if (selected.length > 5) {
+      setError('Mỗi lần chỉ gửi tối đa 5 ảnh.')
+      return
+    }
+    const invalid = selected.find(
+      (file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024,
+    )
+    if (invalid) {
+      setError('Chỉ nhận JPEG, PNG hoặc WebP; tối đa 8 MB mỗi ảnh.')
+      return
+    }
+    setError(null)
+    setImageFiles(selected)
+    setAttachMode(null)
+  }
+
+  const handleSendImages = async () => {
+    if (!activeId || imageFiles.length === 0 || sending) return
+    setSending(true)
+    setError(null)
+    try {
+      const msg = await sendConversationImages(activeId, imageFiles, imageContext, draft)
+      appendSentMessage(msg)
+      setDraft('')
+      setImageFiles([])
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    } catch (e) {
+      setError(getErrorMessage(e, 'Gửi ảnh thất bại'))
+    } finally {
+      setSending(false)
+    }
   }
 
   const sendLocation = async (payload: ChatLocationPayload) => {
@@ -613,6 +767,34 @@ export function MapMessagesPanel({
                   location ? ' is-location' : ''
                 }${isHit ? ' is-hit' : ''}${isCurrent ? ' is-hit-current' : ''}`}
               >
+                {m.attachments?.length ? (
+                  <div className="map-messages__images">
+                    {m.attachments.map((attachment) => (
+                      <SecureMessageImage
+                        key={attachment.id}
+                        attachment={attachment}
+                        conversationId={m.conversationId}
+                        messageId={m.id}
+                        mine={mine}
+                        onError={setError}
+                        onDeleted={() => {
+                          setMessages((previous) => previous.map((message) =>
+                            message.id === m.id
+                              ? {
+                                  ...message,
+                                  attachments: message.attachments?.map((item) =>
+                                    item.id === attachment.id
+                                      ? { ...item, status: MessageAttachmentStatus.Deleted }
+                                      : item,
+                                  ),
+                                }
+                              : message,
+                          ))
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
                 {location ? (
                   <LocationBubble
                     payload={location}
@@ -633,6 +815,14 @@ export function MapMessagesPanel({
         <div className="map-messages__composer-wrap" ref={attachRef}>
           {attachMode === 'menu' ? (
             <div className="map-messages__attach-menu" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                disabled={sending}
+                onClick={() => imageInputRef.current?.click()}
+              >
+                Gửi ảnh phòng…
+              </button>
               <button type="button" role="menuitem" disabled={sending} onClick={() => void handleSendGps()}>
                 Gửi vị trí hiện tại
               </button>
@@ -682,6 +872,51 @@ export function MapMessagesPanel({
                 Gửi khu vực{mapArea ? `: ${mapArea.name}` : ''}
               </button>
             </div>
+          ) : null}
+
+          <input
+            ref={imageInputRef}
+            className="map-messages__image-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={(event) => handleImageSelection(event.target.files)}
+          />
+
+          {imageFiles.length > 0 ? (
+            <section className="map-messages__image-review" aria-label="Xem lại ảnh trước khi gửi">
+              <div className="map-messages__image-review-head">
+                <strong>{imageFiles.length} ảnh chờ gửi</strong>
+                <button
+                  type="button"
+                  disabled={sending}
+                  onClick={() => {
+                    setImageFiles([])
+                    if (imageInputRef.current) imageInputRef.current.value = ''
+                  }}
+                >
+                  Bỏ ảnh
+                </button>
+              </div>
+              <div className="map-messages__image-previews">
+                {imageFiles.map((file) => (
+                  <PendingImagePreview key={`${file.name}-${file.lastModified}`} file={file} />
+                ))}
+              </div>
+              <label>
+                Nội dung ảnh
+                <select
+                  value={imageContext}
+                  disabled={sending}
+                  onChange={(event) => setImageContext(Number(event.target.value) as MessageAttachmentContext)}
+                >
+                  {Object.entries(attachmentContextLabel).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+              <small>Ảnh được kiểm tra, xóa EXIF/GPS và chỉ thành viên cuộc trò chuyện xem được.</small>
+            </section>
           ) : null}
 
           {attachMode === 'address' ? (
@@ -739,7 +974,7 @@ export function MapMessagesPanel({
             className="map-messages__composer"
             onSubmit={(e) => {
               e.preventDefault()
-              void handleSend()
+              void (imageFiles.length > 0 ? handleSendImages() : handleSend())
             }}
           >
             <button
@@ -759,7 +994,11 @@ export function MapMessagesPanel({
               aria-label="Nội dung tin nhắn"
               disabled={!activeId}
             />
-            <button type="submit" className="map-motion-press" disabled={!draft.trim() || sending}>
+            <button
+              type="submit"
+              className="map-motion-press"
+              disabled={(imageFiles.length === 0 && !draft.trim()) || sending}
+            >
               Gửi
             </button>
           </form>

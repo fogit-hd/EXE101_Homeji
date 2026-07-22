@@ -8,8 +8,15 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 export const RentalPostType = {
   VacantRoom: 1,
   RoommateShare: 2,
+  RoomTransfer: 3,
 } as const
 export type RentalPostType = (typeof RentalPostType)[keyof typeof RentalPostType]
+
+export const RoomTransferKind = {
+  LeaseAssignment: 1,
+  TemporarySublet: 2,
+} as const
+export type RoomTransferKind = (typeof RoomTransferKind)[keyof typeof RoomTransferKind]
 
 export const RentalPostStatus = {
   Draft: 1,
@@ -64,6 +71,26 @@ export const RoommateInvitationStatus = {
 } as const
 export type RoommateInvitationStatus =
   (typeof RoommateInvitationStatus)[keyof typeof RoommateInvitationStatus]
+
+export const MessageAttachmentContext = {
+  Other: 0,
+  CurrentRoom: 1,
+  Bathroom: 2,
+  Kitchen: 3,
+  Entrance: 4,
+  UtilityMeter: 5,
+  ExistingDamage: 6,
+} as const
+export type MessageAttachmentContext =
+  (typeof MessageAttachmentContext)[keyof typeof MessageAttachmentContext]
+
+export const MessageAttachmentStatus = {
+  Ready: 1,
+  Deleted: 2,
+  Rejected: 3,
+} as const
+export type MessageAttachmentStatus =
+  (typeof MessageAttachmentStatus)[keyof typeof MessageAttachmentStatus]
 
 /** Matches backend NotificationType */
 export const NotificationType = {
@@ -244,6 +271,12 @@ export interface RentalPostSummary {
   ownerBadge?: string | null
   boostScore?: number
   highlightTag?: string | null
+  transferKind?: RoomTransferKind | null
+  originalLeaseEndsOn?: string | null
+  passFee?: number
+  ownerConsentVerified?: boolean
+  /** Returned only by the admin moderation endpoint. */
+  ownerConsentContact?: string | null
 }
 
 export interface RentalPost extends RentalPostSummary {
@@ -260,6 +293,9 @@ export interface RentalPost extends RentalPostSummary {
   availableSlots?: number
   houseRules?: string | null
   availableFrom?: string | null
+  transferReason?: string | null
+  ownerConsentConfirmed?: boolean
+  ownerConsentVerifiedAt?: string | null
   moderationReason: string | null
   createdAt: string
   updatedAt: string
@@ -394,6 +430,21 @@ export interface PostMessage {
   senderId: string
   body: string
   sentAt: string
+  attachments?: PostMessageAttachment[]
+}
+
+export interface PostMessageAttachment {
+  id: string
+  uploaderId: string
+  context: MessageAttachmentContext
+  status: MessageAttachmentStatus
+  mimeType: string
+  bytes: number
+  width: number
+  height: number
+  contentPath: string
+  createdAt: string
+  deletedAt: string | null
 }
 
 export interface ViewingAppointment {
@@ -507,11 +558,27 @@ export interface ChatbotPopupConfig {
   suggestedPrompts: string[]
 }
 
+export const ChatbotNavigationActionKind = {
+  OpenSection: 1,
+  Navigate: 2,
+} as const
+export type ChatbotNavigationActionKind =
+  (typeof ChatbotNavigationActionKind)[keyof typeof ChatbotNavigationActionKind]
+
+export interface ChatbotNavigationAction {
+  id: string
+  label: string
+  description: string
+  kind: ChatbotNavigationActionKind
+  target: string
+}
+
 export interface ChatbotReply {
   conversationId: string
   userMessage: ChatbotMessage
   assistantMessage: ChatbotMessage
   searchUpdate: AiHighlightResponse | null
+  actions: ChatbotNavigationAction[]
 }
 
 export interface UploadImageResult {

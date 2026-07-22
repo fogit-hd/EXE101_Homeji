@@ -7,12 +7,14 @@ import {
   getRentalPost,
   submitRentalPost,
   updateRentalPost,
+  uploadImages,
   type RentalPost,
 } from '../api'
-import { MediaType, RentalPostType } from '../api/types'
+import { MediaType, RentalPostType, RoomTransferKind } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
+import { useAuth } from '../contexts/AuthContext'
 import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
@@ -23,6 +25,7 @@ export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
   const navigate = useNavigate()
   const { isLoaded: mapsLoaded } = useGoogleMaps()
+  const { profile } = useAuth()
 
   const [post, setPost] = useState<RentalPost | null>(null)
   const [title, setTitle] = useState('')
@@ -35,9 +38,17 @@ export function EditRentalPostPage() {
   const [longitude, setLongitude] = useState('')
   const [type, setType] = useState<RentalPostType>(RentalPostType.VacantRoom)
   const [amenities, setAmenities] = useState<string[]>([])
-  const [mediaPath, setMediaPath] = useState('')
+  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [uploadingMedia, setUploadingMedia] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [availableFrom, setAvailableFrom] = useState('')
+  const [originalLeaseEndsOn, setOriginalLeaseEndsOn] = useState('')
+  const [transferKind, setTransferKind] = useState<RoomTransferKind>(RoomTransferKind.LeaseAssignment)
+  const [passFee, setPassFee] = useState('0')
+  const [transferReason, setTransferReason] = useState('')
+  const [ownerConsentConfirmed, setOwnerConsentConfirmed] = useState(false)
+  const [ownerConsentContact, setOwnerConsentContact] = useState('')
 
   const loadFn = useCallback(async () => {
     if (!postId) return
@@ -53,6 +64,13 @@ export function EditRentalPostPage() {
     setLongitude(String(data.longitude))
     setType(data.type)
     setAmenities(data.amenities.map((a) => normalizeAmenityCode(a)))
+    setAvailableFrom(data.availableFrom ?? '')
+    setOriginalLeaseEndsOn(data.originalLeaseEndsOn ?? '')
+    setTransferKind(data.transferKind ?? RoomTransferKind.LeaseAssignment)
+    setPassFee(String(data.passFee ?? 0))
+    setTransferReason(data.transferReason ?? '')
+    setOwnerConsentConfirmed(data.ownerConsentConfirmed ?? false)
+    setOwnerConsentContact(data.ownerConsentContact ?? '')
   }, [postId])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted } = usePersistentLoad(
@@ -77,6 +95,13 @@ export function EditRentalPostPage() {
         latitude: isValidCoord(latNum, lngNum) ? latNum : Number(latitude),
         longitude: isValidCoord(latNum, lngNum) ? lngNum : Number(longitude),
         amenities: amenities.map((a) => normalizeAmenityCode(a)),
+        availableFrom: availableFrom || undefined,
+        transferKind: type === RentalPostType.RoomTransfer ? transferKind : undefined,
+        originalLeaseEndsOn: type === RentalPostType.RoomTransfer ? originalLeaseEndsOn : undefined,
+        passFee: type === RentalPostType.RoomTransfer ? Number(passFee) : undefined,
+        transferReason: type === RentalPostType.RoomTransfer ? transferReason : undefined,
+        ownerConsentConfirmed: type === RentalPostType.RoomTransfer ? ownerConsentConfirmed : undefined,
+        ownerConsentContact: type === RentalPostType.RoomTransfer ? ownerConsentContact : undefined,
       })
       setPost(updated)
       setMessage('Đã lưu tin đăng.')
@@ -86,19 +111,38 @@ export function EditRentalPostPage() {
   }
 
   const handleAddMedia = async () => {
-    if (!postId || !mediaPath) return
+    if (!postId || !profile || mediaFiles.length === 0) return
+    setError('')
+    setUploadingMedia(true)
     try {
-      const updated = await addRentalPostMedia(postId, {
-        mediaType: MediaType.Image,
-        path: mediaPath,
-        isThumbnail: (post?.media.length ?? 0) === 0,
-        sortOrder: post?.media.length ?? 0,
-      })
+      const remainingSlots = Math.max(0, 10 - (post?.media.length ?? 0))
+      const selectedFiles = mediaFiles.slice(0, remainingSlots)
+      if (selectedFiles.length === 0) {
+        setError('Mỗi tin được tối đa 10 ảnh.')
+        return
+      }
+
+      const uploaded = await uploadImages(
+        selectedFiles,
+        `rental-posts/${profile.id}/${postId}`,
+      )
+      let updated = post
+      for (const image of uploaded) {
+        updated = await addRentalPostMedia(postId, {
+          mediaType: MediaType.Image,
+          bucket: 'cloudinary',
+          path: image.url,
+          isThumbnail: (updated?.media.length ?? 0) === 0,
+          sortOrder: updated?.media.length ?? 0,
+        })
+      }
       setPost(updated)
-      setMediaPath('')
-      setMessage('Đã thêm ảnh.')
+      setMediaFiles([])
+      setMessage(`Đã tải lên ${uploaded.length} ảnh.`)
     } catch (err) {
       setError(getErrorMessage(err, 'Thêm ảnh thất bại'))
+    } finally {
+      setUploadingMedia(false)
     }
   }
 
@@ -185,6 +229,56 @@ export function EditRentalPostPage() {
       {message && <div className="alert alert-success">{message}</div>}
 
       <form className="card" onSubmit={handleSave}>
+        {type === RentalPostType.RoomTransfer ? (
+          <section className="room-transfer-form" aria-labelledby="room-transfer-title">
+            <div className="room-transfer-form__notice">
+              <strong id="room-transfer-title">Thông tin pass phòng</strong>
+              <p>Homeji tách chuyển hợp đồng và cho thuê lại. Tin chỉ công khai sau khi đội ngũ kiểm tra xác nhận của chủ nhà.</p>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="transfer-kind">Hình thức</label>
+                <select
+                  id="transfer-kind"
+                  className="form-select"
+                  value={transferKind}
+                  onChange={(event) => setTransferKind(Number(event.target.value) as RoomTransferKind)}
+                >
+                  <option value={RoomTransferKind.LeaseAssignment}>Chuyển hợp đồng — rời hẳn</option>
+                  <option value={RoomTransferKind.TemporarySublet}>Cho thuê lại tạm thời — sẽ quay lại</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="transfer-from">Ngày có thể vào</label>
+                <input id="transfer-from" className="form-input" type="date" value={availableFrom} onChange={(event) => setAvailableFrom(event.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="lease-end">Hợp đồng gốc kết thúc</label>
+                <input id="lease-end" className="form-input" type="date" value={originalLeaseEndsOn} onChange={(event) => setOriginalLeaseEndsOn(event.target.value)} required />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="pass-fee">Phí pass (VND, nếu có)</label>
+                <input id="pass-fee" className="form-input" type="number" min="0" value={passFee} onChange={(event) => setPassFee(event.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="owner-contact">Kênh để Homeji xác minh chủ nhà</label>
+                <input id="owner-contact" className="form-input" value={ownerConsentContact} onChange={(event) => setOwnerConsentContact(event.target.value)} maxLength={200} placeholder="Số điện thoại hoặc email chủ nhà/người quản lý" required />
+                <small className="form-hint">Thông tin này chỉ hiển thị cho bộ phận kiểm duyệt.</small>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="transfer-reason">Lý do pass an toàn</label>
+              <textarea id="transfer-reason" className="form-textarea" value={transferReason} onChange={(event) => setTransferReason(event.target.value)} maxLength={500} required />
+            </div>
+            <label className="room-transfer-form__consent">
+              <input type="checkbox" checked={ownerConsentConfirmed} onChange={(event) => setOwnerConsentConfirmed(event.target.checked)} required />
+              Tôi xác nhận chủ nhà/người cho thuê đã đồng ý cho chuyển hợp đồng hoặc cho thuê lại và Homeji có thể liên hệ để kiểm tra.
+            </label>
+            <p className="room-transfer-form__warning">Không đặt cọc trước khi xem phòng, xác minh người cho thuê và đọc văn bản chuyển giao.</p>
+          </section>
+        ) : null}
         <div className="form-group">
           <label className="form-label">Tiêu đề</label>
           <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -262,10 +356,20 @@ export function EditRentalPostPage() {
       <section className="card" style={{ marginTop: 24 }}>
         <h2>Hình ảnh</h2>
         <div className="form-group">
-          <label className="form-label">URL ảnh</label>
+          <label className="form-label" htmlFor="rental-media">Chọn ảnh phòng</label>
+          <p className="form-hint">Tối thiểu 3 ảnh thật, tối đa 10 ảnh. Chấp nhận JPEG, PNG hoặc WebP.</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <input className="form-input" value={mediaPath} onChange={(e) => setMediaPath(e.target.value)} placeholder="https://..." />
-            <button type="button" className="btn btn-secondary" onClick={() => void handleAddMedia()}>Thêm</button>
+            <input
+              id="rental-media"
+              className="form-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(event) => setMediaFiles(Array.from(event.target.files ?? []))}
+            />
+            <button type="button" className="btn btn-secondary" disabled={uploadingMedia || mediaFiles.length === 0} onClick={() => void handleAddMedia()}>
+              {uploadingMedia ? 'Đang tải...' : `Tải ${mediaFiles.length || ''} ảnh`}
+            </button>
           </div>
         </div>
         {post?.media.map((m) => (

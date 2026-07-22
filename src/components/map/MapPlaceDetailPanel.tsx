@@ -7,6 +7,8 @@ import {
   upsertMyRentalReview,
   UserRole,
   RentalPostStatus,
+  RentalPostType,
+  RoomTransferKind,
   type RentalPost,
   type RentalReviewCollection,
 } from '../../api'
@@ -365,7 +367,7 @@ export function MapPlaceDetailPanel({
   }
 
   const handleMarkRented = async () => {
-    if (!listing?.id || !isOwner || !isLandlord) return
+    if (!listing?.id || !isOwner || (!isLandlord && listing.type !== RentalPostType.RoomTransfer)) return
     setActionBusy(true)
     setActionMsg(null)
     try {
@@ -504,7 +506,10 @@ export function MapPlaceDetailPanel({
               <span className="map-detail-action__label">Xem phòng</span>
             </button>
           ) : null}
-          {isListing && isOwner && isLandlord && listing?.status !== RentalPostStatus.Rented ? (
+          {isListing
+          && isOwner
+          && (isLandlord || listing?.type === RentalPostType.RoomTransfer)
+          && listing?.status !== RentalPostStatus.Rented ? (
             <button
               type="button"
               className="map-detail-action"
@@ -655,6 +660,28 @@ export function MapPlaceDetailPanel({
               </InfoRow>
               {listing ? (
                 <>
+                  {listing.type === RentalPostType.RoomTransfer ? (
+                    <div className="map-detail-transfer">
+                      <strong>
+                        {listing.transferKind === RoomTransferKind.TemporarySublet
+                          ? 'Cho thuê lại tạm thời'
+                          : 'Chuyển hợp đồng — rời hẳn'}
+                      </strong>
+                      <p>
+                        Hợp đồng gốc đến {listing.originalLeaseEndsOn || 'chưa cập nhật'}
+                        {(listing.passFee ?? 0) > 0
+                          ? ` · Phí pass ${formatPrice(listing.passFee ?? 0)}`
+                          : ' · Không thu phí pass'}
+                      </p>
+                      <span className={listing.ownerConsentVerifiedAt ? 'is-verified' : 'is-pending'}>
+                        {listing.ownerConsentVerifiedAt
+                          ? '✓ Homeji đã kiểm tra xác nhận chủ nhà'
+                          : 'Đang kiểm tra xác nhận chủ nhà'}
+                      </span>
+                      {listing.transferReason ? <p>Lý do: {listing.transferReason}</p> : null}
+                      <small>Không đặt cọc trước khi xem phòng và đọc văn bản chuyển giao.</small>
+                    </div>
+                  ) : null}
                   <InfoRow icon="👥">
                     <p>
                       Còn {listing.availableSlots ?? '—'}/{listing.maxOccupants ?? '—'} chỗ ·{' '}

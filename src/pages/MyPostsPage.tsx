@@ -14,6 +14,7 @@ import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/l
 function parseType(raw: string | null): RentalPostType | null {
   if (raw === 'vacant' || raw === String(RentalPostType.VacantRoom)) return RentalPostType.VacantRoom
   if (raw === 'roommate' || raw === String(RentalPostType.RoommateShare)) return RentalPostType.RoommateShare
+  if (raw === 'transfer' || raw === 'pass' || raw === String(RentalPostType.RoomTransfer)) return RentalPostType.RoomTransfer
   return null
 }
 
@@ -31,12 +32,19 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn)
 
   const isRoommate = typeFilter === RentalPostType.RoommateShare
+  const isRoomTransfer = typeFilter === RentalPostType.RoomTransfer
   const title = isRoommate
     ? 'Quản lý tin ở ghép'
+    : isRoomTransfer
+      ? 'Quản lý tin pass phòng'
     : typeFilter === RentalPostType.VacantRoom
       ? 'Quản lý danh sách phòng'
       : 'Quản lý tin đăng'
-  const createPath = isRoommate ? '/posts/new?type=roommate' : '/posts/new?type=vacant'
+  const createPath = isRoommate
+    ? '/posts/new?type=roommate'
+    : isRoomTransfer
+      ? '/posts/new?type=pass'
+      : '/posts/new?type=vacant'
 
   const posts = (stats?.posts ?? []).filter((p) =>
     typeFilter == null ? true : p.type === typeFilter,

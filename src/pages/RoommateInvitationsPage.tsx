@@ -11,7 +11,7 @@ import { RoommateInvitationStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
-import { mapPostUrl } from '../lib/mapDeepLinks'
+import { mapPostUrl, mapSectionUrl } from '../lib/mapDeepLinks'
 
 export function RoommateInvitationsPage({ embedded = false }: { embedded?: boolean }) {
   const { profile } = useAuth()
@@ -61,6 +61,11 @@ export function RoommateInvitationsPage({ embedded = false }: { embedded?: boole
                   <small>{formatDate(inv.createdAt)}</small>
                 </div>
                 <div className="invitation-actions">
+                  {inv.status === RoommateInvitationStatus.Accepted && (
+                    <Link to={mapSectionUrl('messages')} className="btn btn-primary btn-sm">
+                      Mở tin nhắn và chia sẻ ảnh
+                    </Link>
+                  )}
                   {isReceiver && inv.status === RoommateInvitationStatus.Pending && (
                     <>
                       <button type="button" className="btn btn-primary btn-sm" onClick={() => void acceptInvitation(inv.id).then(updateItem)}>
