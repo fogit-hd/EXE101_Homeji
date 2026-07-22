@@ -20,3 +20,10 @@ test('exact overlaps spiderfy at any zoom while normal clusters first zoom close
   assert.equal(shouldSpiderfyCluster([same, { lat: 10.843, lng: 106.81 }], 13), false)
   assert.equal(shouldSpiderfyCluster([same, { lat: 10.843, lng: 106.81 }], 16), true)
 })
+
+test('cluster configuration keeps exact overlaps together at deep zoom', async () => {
+  const source = await import('node:fs').then(({ readFileSync }) =>
+    readFileSync(new URL('../src/components/map/RentalMap.tsx', import.meta.url), 'utf8'))
+  assert.match(source, /radius:\s*96/)
+  assert.match(source, /maxZoom:\s*22/)
+})
