@@ -23,6 +23,7 @@ import {
 import { SERVICE_RETRY_MS } from '../components/HomejiLoader'
 import { isServiceDisruption } from '../lib/errors'
 import { useOnReconnect } from './NetworkStatusContext'
+import { shouldBlockProtectedRoutes } from './authLoadingState'
 
 type AuthContextValue = {
   isAuthenticated: boolean
@@ -166,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated: hasToken,
-      isLoading: isLoading || authDisrupted,
+      isLoading: shouldBlockProtectedRoutes(isLoading, authDisrupted),
       profile,
       needsProfileSetup,
       email: email ?? profile?.displayName ?? null,
