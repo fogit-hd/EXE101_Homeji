@@ -8,6 +8,7 @@ import {
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
+import { getNotificationPresentation } from '../lib/notificationPresentation'
 import { NotificationType } from '../api/types'
 import './MarketplacePage.css'
 
@@ -132,10 +133,22 @@ export function NotificationsPage({
         <div className="empty-state card">Không có thông báo.</div>
       ) : (
         <div className="notification-list">
-          {notifications.map((n) => (
-            <article key={n.id} className={`notification-item card ${n.isRead ? '' : 'unread'} map-motion-fade-up`}>
-              <div>
-                <span className="badge badge-gray">{notificationTypeLabel[n.type] ?? 'Thông báo'}</span>
+          {notifications.map((n) => {
+            const presentation = getNotificationPresentation(n)
+            return (
+            <article
+              key={n.id}
+              className={`notification-item notification-item--${presentation.importance} card ${n.isRead ? '' : 'unread'} map-motion-fade-up`}
+            >
+              <div className="notification-item__content">
+                <div className="notification-item__meta">
+                  <span className="notification-item__importance">
+                    <span className="notification-item__importance-icon" aria-hidden="true">{presentation.icon}</span>
+                    {presentation.importanceLabel}
+                  </span>
+                  <span className="badge notification-item__type">{notificationTypeLabel[n.type] ?? 'Thông báo'}</span>
+                  {!n.isRead ? <span className="notification-item__unread-label">Chưa đọc</span> : null}
+                </div>
                 <h3>{n.title}</h3>
                 <p>{n.message}</p>
                 <small>{formatDate(n.createdAt)}</small>
@@ -157,7 +170,8 @@ export function NotificationsPage({
                 )}
               </div>
             </article>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

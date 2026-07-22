@@ -41,8 +41,90 @@
   align-items: center;
 }
 
+.notification-item {
+  border-left: 4px solid var(--notification-accent);
+}
+
 .notification-item.unread {
-  border-left: 4px solid var(--grab-green);
+  background: linear-gradient(
+    105deg,
+    var(--notification-soft) 0%,
+    var(--surface-elevated) 42%
+  );
+}
+
+.notification-item--critical {
+  --notification-accent: #dc2626;
+  --notification-soft: color-mix(in srgb, #dc2626 10%, var(--surface-elevated));
+}
+
+.notification-item--attention {
+  --notification-accent: #d97706;
+  --notification-soft: color-mix(in srgb, #d97706 11%, var(--surface-elevated));
+}
+
+.notification-item--success {
+  --notification-accent: #16855b;
+  --notification-soft: color-mix(in srgb, #16855b 10%, var(--surface-elevated));
+}
+
+.notification-item--info {
+  --notification-accent: #2563eb;
+  --notification-soft: color-mix(in srgb, #2563eb 9%, var(--surface-elevated));
+}
+
+.notification-item__content {
+  position: relative;
+}
+
+.notification-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.notification-item__importance,
+.notification-item__type,
+.notification-item__unread-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.notification-item__importance {
+  gap: 5px;
+  padding: 4px 9px 4px 5px;
+  background: var(--notification-soft);
+  color: var(--notification-accent);
+}
+
+.notification-item__importance-icon {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--notification-accent);
+  color: #fff;
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
+.notification-item__type {
+  background: color-mix(in srgb, var(--notification-accent) 8%, var(--surface-input));
+  color: var(--text-secondary);
+}
+
+.notification-item__unread-label {
+  padding: 4px 8px;
+  background: var(--text-heading);
+  color: var(--surface-elevated);
 }
 
 .notification-item h3 {
