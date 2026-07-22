@@ -6,6 +6,7 @@ import {
   getAdminWalletWithdrawals,
   getAdminLandlordVerifications,
   getAdminActiveUsers,
+  terminateAdminUserSession,
   getAdminReports,
   getPendingRentalPosts,
   rejectRentalPost,
@@ -24,6 +25,7 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
+import { useAuth } from '../contexts/AuthContext'
 import {
   formatDate,
   formatPrice,
@@ -40,6 +42,7 @@ export function cleanAdminReportText(value: string | null | undefined) {
 }
 
 export function AdminModerationPage() {
+  const { profile } = useAuth()
   const [pendingPosts, setPendingPosts] = useState<RentalPostSummary[]>([])
   const [reports, setReports] = useState<Report[]>([])
   const [verifications, setVerifications] = useState<LandlordVerification[]>([])
@@ -53,6 +56,9 @@ export function AdminModerationPage() {
   const [consentVerificationNotes, setConsentVerificationNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [terminationTargetId, setTerminationTargetId] = useState<string | null>(null)
+  const [terminationReasons, setTerminationReasons] = useState<Record<string, string>>({})
+  const [terminatingUserId, setTerminatingUserId] = useState<string | null>(null)
 
   const loadFn = useCallback(async () => {
     const [posts, reportList, verificationList, withdrawalList, activeUserList] = await Promise.all([
@@ -76,12 +82,39 @@ export function AdminModerationPage() {
 
   const loadPosts = () => void reload()
   const loadReports = () => void reload()
+  const loadActiveUsers = useCallback(async () => {
+    try {
+      setActiveUsers(await getAdminActiveUsers())
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể cập nhật người đang hoạt động'))
+    }
+  }, [])
 
   useEffect(() => {
     if (tab !== 'active') return
-    const timer = window.setInterval(() => void reload(), 30_000)
+    const timer = window.setInterval(() => void loadActiveUsers(), 30_000)
     return () => window.clearInterval(timer)
-  }, [reload, tab])
+  }, [loadActiveUsers, tab])
+
+  const handleTerminateSession = async (user: AdminActiveUser) => {
+    const reason = terminationReasons[user.userId]?.trim()
+    if (!reason) {
+      setError('Vui lòng ghi lý do kết thúc phiên để người dùng hiểu và đối soát.')
+      return
+    }
+    setTerminatingUserId(user.userId)
+    try {
+      await terminateAdminUserSession(user.userId, reason)
+      setMessage(`Đã kết thúc phiên của ${user.displayName || 'người dùng'}.`)
+      setTerminationTargetId(null)
+      setTerminationReasons((current) => ({ ...current, [user.userId]: '' }))
+      await loadActiveUsers()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể kết thúc phiên đăng nhập'))
+    } finally {
+      setTerminatingUserId(null)
+    }
+  }
 
   const handleApprove = async (post: RentalPostSummary) => {
     const consentNote = consentVerificationNotes[post.id]?.trim()
@@ -197,7 +230,7 @@ export function AdminModerationPage() {
           Tin chờ duyệt ({pendingPosts.length})
         </button>
         <button type="button" className={`tab ${tab === 'reports' ? 'active' : ''}`} onClick={() => setTab('reports')}>
-          Báo cáo
+          Báo cáo <span className="admin-tab-badge">{reports.length}</span>
         </button>
         <button
           type="button"
@@ -239,9 +272,34 @@ export function AdminModerationPage() {
                     <small>Kết nối từ: {formatDate(user.lastSeenAt)}</small>
                   </div>
                 </div>
-                <span className={`badge ${user.isOnline ? 'badge-green' : 'badge-gray'}`}>
-                  Đang hoạt động
-                </span>
+                <div className="admin-presence-actions">
+                  <span className={`badge ${user.isOnline ? 'badge-green' : 'badge-gray'}`}>
+                    {user.isOnline ? 'Đang hoạt động' : 'Đã rời đi'}
+                  </span>
+                  {user.isOnline && user.userId !== profile?.id && (
+                    terminationTargetId === user.userId ? (
+                      <div className="admin-terminate-panel">
+                        <textarea
+                          className="form-textarea"
+                          maxLength={300}
+                          placeholder="Lý do kết thúc phiên…"
+                          value={terminationReasons[user.userId] ?? ''}
+                          onChange={(event) => setTerminationReasons((current) => ({ ...current, [user.userId]: event.target.value }))}
+                        />
+                        <div className="admin-actions">
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setTerminationTargetId(null)}>Hủy</button>
+                          <button type="button" className="btn btn-danger btn-sm" disabled={terminatingUserId === user.userId} onClick={() => void handleTerminateSession(user)}>
+                            {terminatingUserId === user.userId ? 'Đang kết thúc…' : 'Xác nhận kết thúc'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => setTerminationTargetId(user.userId)}>
+                        Kết thúc phiên
+                      </button>
+                    )
+                  )}
+                </div>
               </article>
             ))
           )}
@@ -328,7 +386,13 @@ export function AdminModerationPage() {
                       <span className="badge badge-gray">Báo cáo {reportTargetLabel[r.targetType].toLowerCase()}</span>
                       <span className="badge badge-blue">{reportStatusLabel[r.status]}</span>
                     </div>
-                    <h3>{r.targetDisplayName || reportTargetLabel[r.targetType]}</h3>
+                    <div className="admin-report-target">
+                      {r.targetImagePath ? <img src={r.targetImagePath} alt="" loading="lazy" /> : <span className="admin-report-target-placeholder" aria-hidden>⌂</span>}
+                      <div>
+                        <h3>{r.targetDisplayName || reportTargetLabel[r.targetType]}</h3>
+                        <span className="admin-report-target-caption">Nội dung được báo cáo</span>
+                      </div>
+                    </div>
                     <p className="admin-report-reporter">
                       <strong>Người gửi báo cáo:</strong> {r.reporterDisplayName || 'Không xác định'}
                     </p>

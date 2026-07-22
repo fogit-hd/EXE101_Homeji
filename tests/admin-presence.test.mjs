@@ -13,6 +13,8 @@ test('authenticated sessions do not poll a dedicated presence endpoint', () => {
 
 test('admin UI exposes users connected through realtime', () => {
   assert.match(api, /\/api\/admin\/moderation\/active-users/)
+  assert.match(api, /terminateAdminUserSession/)
+  assert.match(page, /Kết thúc phiên|Káº¿t thúc phiên/)
   assert.match(page, /Đang hoạt động/)
   assert.match(page, /kết nối realtime đang mở/)
   assert.doesNotMatch(page, /Hoạt động gần đây/)

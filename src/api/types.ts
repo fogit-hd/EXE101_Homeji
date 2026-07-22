@@ -352,6 +352,7 @@ export interface Report {
   targetType: ReportTargetType
   targetId: string
   targetDisplayName: string
+  targetImagePath: string | null
   relatedRentalPostId: string | null
   reason: string
   description: string | null
