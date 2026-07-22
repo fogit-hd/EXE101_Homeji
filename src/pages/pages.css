@@ -175,6 +175,52 @@
   gap: 24px;
 }
 
+.admin-presence-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 4px 2px;
+  color: var(--text-secondary);
+}
+
+.admin-presence-summary strong {
+  color: var(--text-heading);
+}
+
+.admin-presence-item {
+  align-items: center;
+}
+
+.admin-presence-item.is-online {
+  border-left: 4px solid #16855b;
+}
+
+.admin-presence-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-presence-user h3,
+.admin-presence-user p,
+.admin-presence-user small {
+  margin: 0 0 4px;
+}
+
+.admin-presence-avatar {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-input);
+  color: var(--text-heading);
+  font-weight: 800;
+}
+
 @media (max-width: 768px) {
   .payment-grid {
     grid-template-columns: 1fr;

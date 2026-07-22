@@ -246,6 +246,15 @@ export interface UserProfile {
   updatedAt: string
 }
 
+export interface AdminActiveUser {
+  userId: string
+  displayName: string
+  role: UserRole
+  avatarPath: string | null
+  lastSeenAt: string
+  isOnline: boolean
+}
+
 export interface RentalPostMedia {
   id: string
   mediaType: MediaType

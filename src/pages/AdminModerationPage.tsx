@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
   completeWalletWithdrawal,
   getAdminWalletWithdrawals,
   getAdminLandlordVerifications,
+  getAdminActiveUsers,
   getAdminReports,
   getPendingRentalPosts,
   rejectRentalPost,
@@ -13,6 +14,7 @@ import {
   resolveReport,
   reviewLandlordVerification,
   type LandlordVerification,
+  type AdminActiveUser,
   type RentalPostSummary,
   type Report,
   type WalletWithdrawal,
@@ -29,6 +31,7 @@ import {
   reportStatusLabel,
   reportTargetLabel,
   rentalPostTypeLabel,
+  userRoleLabel,
 } from '../lib/labels'
 
 export function AdminModerationPage() {
@@ -36,7 +39,8 @@ export function AdminModerationPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [verifications, setVerifications] = useState<LandlordVerification[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
-  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals'>('posts')
+  const [activeUsers, setActiveUsers] = useState<AdminActiveUser[]>([])
+  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active'>('posts')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
@@ -45,16 +49,18 @@ export function AdminModerationPage() {
   const [message, setMessage] = useState('')
 
   const loadFn = useCallback(async () => {
-    const [posts, reportList, verificationList, withdrawalList] = await Promise.all([
+    const [posts, reportList, verificationList, withdrawalList, activeUserList] = await Promise.all([
       getPendingRentalPosts(),
       getAdminReports(reportStatus),
       getAdminLandlordVerifications(LandlordVerificationStatus.Pending),
       getAdminWalletWithdrawals(WalletWithdrawalStatus.Pending),
+      getAdminActiveUsers(),
     ])
     setPendingPosts(posts)
     setReports(reportList)
     setVerifications(verificationList)
     setWithdrawals(withdrawalList)
+    setActiveUsers(activeUserList)
   }, [reportStatus])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted, reload } = usePersistentLoad(
@@ -64,6 +70,18 @@ export function AdminModerationPage() {
 
   const loadPosts = () => void reload()
   const loadReports = () => void reload()
+
+  useEffect(() => {
+    if (tab !== 'active') return
+    const timer = window.setInterval(() => void reload(), 30_000)
+    return () => window.clearInterval(timer)
+  }, [reload, tab])
+
+  useEffect(() => {
+    if (tab !== 'active') return
+    const timer = window.setInterval(() => void reload(), 30_000)
+    return () => window.clearInterval(timer)
+  }, [reload, tab])
 
   const handleApprove = async (post: RentalPostSummary) => {
     const consentNote = consentVerificationNotes[post.id]?.trim()
@@ -185,7 +203,40 @@ export function AdminModerationPage() {
         >
           Rút tiền ({withdrawals.length})
         </button>
+        <button type="button" className={`tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>
+          Đang hoạt động ({activeUsers.filter((user) => user.isOnline).length})
+        </button>
       </div>
+
+      {tab === 'active' && (
+        <div className="admin-list admin-presence-list">
+          <div className="admin-presence-summary">
+            <strong>{activeUsers.filter((user) => user.isOnline).length} người đang hoạt động</strong>
+            <span>Tự cập nhật mỗi 30 giây · online trong 5 phút gần nhất</span>
+          </div>
+          {activeUsers.length === 0 ? (
+            <div className="empty-state card">Chưa có người dùng hoạt động trong 30 phút gần đây.</div>
+          ) : (
+            activeUsers.map((user) => (
+              <article key={user.userId} className={`card admin-item admin-presence-item${user.isOnline ? ' is-online' : ''}`}>
+                <div className="admin-presence-user">
+                  <span className="admin-presence-avatar" aria-hidden>
+                    {(user.displayName || '?').slice(0, 1).toUpperCase()}
+                  </span>
+                  <div>
+                    <h3>{user.displayName || 'Người dùng'}</h3>
+                    <p>{userRoleLabel[user.role] ?? 'Người dùng'}</p>
+                    <small>Hoạt động gần nhất: {formatDate(user.lastSeenAt)}</small>
+                  </div>
+                </div>
+                <span className={`badge ${user.isOnline ? 'badge-green' : 'badge-gray'}`}>
+                  {user.isOnline ? 'Đang hoạt động' : 'Hoạt động gần đây'}
+                </span>
+              </article>
+            ))
+          )}
+        </div>
+      )}
 
       {tab === 'posts' && (
         <div className="admin-list">

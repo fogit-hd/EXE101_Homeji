@@ -16,6 +16,7 @@ import {
   getStoredSession,
   login as apiLogin,
   persistSession,
+  recordPresence,
   register as apiRegister,
   type AuthSession,
   type UserProfile,
@@ -136,6 +137,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const t = window.setInterval(() => void refreshProfile(), SERVICE_RETRY_MS)
     return () => window.clearInterval(t)
   }, [authDisrupted, hasToken, refreshProfile])
+
+  useEffect(() => {
+    if (!hasToken || !profile) return
+    const sendPresence = () => {
+      void recordPresence().catch(() => undefined)
+    }
+    sendPresence()
+    const timer = window.setInterval(sendPresence, 60_000)
+    return () => window.clearInterval(timer)
+  }, [hasToken, profile])
 
   const setSessionFromAuth = useCallback(async (session: AuthSession) => {
     applySession(session)
