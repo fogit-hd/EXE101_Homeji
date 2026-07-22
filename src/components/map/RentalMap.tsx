@@ -25,8 +25,10 @@ import {
   isValidCoord,
   loadMarkerLibrary,
   loadStreetViewLibrary,
+  readAdvancedMarkerLatLng,
   resolveMapsColorScheme,
 } from '../../lib/googleMaps'
+import { createSpiderfyPositions, shouldSpiderfyCluster } from '../../lib/mapSpiderfy'
 import {
   fetchMapPlaceDetails,
   isPlaceIconClick,
@@ -140,6 +142,15 @@ type MarkerEntry = {
   kind: MapClusterKind
 }
 
+type SpiderfyState = {
+  markers: Array<{
+    marker: google.maps.marker.AdvancedMarkerElement
+    originalPosition: google.maps.LatLngLiteral
+    originalZIndex: number | null
+  }>
+  lines: google.maps.Polyline[]
+}
+
 function mappablePosts(posts: RentalPostSummary[], layers: MapPinLayers) {
   return posts.filter((p) => {
     if (
@@ -205,6 +216,7 @@ function RentalMapComponent({
   const markersRef = useRef<Map<string, MarkerEntry>>(new Map())
   const marketplaceMarkersRef = useRef<Map<string, MarkerEntry>>(new Map())
   const markerClustererRef = useRef<MarkerClusterer | null>(null)
+  const spiderfyStateRef = useRef<SpiderfyState | null>(null)
   const markerKindsRef = useRef<WeakMap<google.maps.marker.AdvancedMarkerElement, MapClusterKind>>(
     new WeakMap(),
   )
@@ -276,9 +288,65 @@ function RentalMapComponent({
     [pins, selectedPostId],
   )
 
+  const collapseSpiderfiedMarkers = useCallback((renderClusters = true) => {
+    const state = spiderfyStateRef.current
+    if (!state) return
+
+    state.lines.forEach((line) => line.setMap(null))
+    state.markers.forEach(({ marker, originalPosition, originalZIndex }) => {
+      marker.position = originalPosition
+      marker.zIndex = originalZIndex
+    })
+    spiderfyStateRef.current = null
+
+    if (renderClusters) markerClustererRef.current?.render()
+  }, [])
+
+  const spiderfyMarkers = useCallback((
+    markers: google.maps.marker.AdvancedMarkerElement[],
+    center: google.maps.LatLngLiteral,
+    clusterMarker: google.maps.marker.AdvancedMarkerElement | null,
+    map: google.maps.Map,
+  ) => {
+    collapseSpiderfiedMarkers(false)
+    const zoom = map.getZoom() ?? MAP_FOCUS_ZOOM
+    const positions = createSpiderfyPositions(center, markers.length, zoom)
+    const lines: google.maps.Polyline[] = []
+    const expandedMarkers: SpiderfyState['markers'] = []
+
+    if (clusterMarker) clusterMarker.map = null
+
+    markers.forEach((marker, index) => {
+      const originalPosition = readAdvancedMarkerLatLng(marker)
+      const expandedPosition = positions[index]
+      if (!originalPosition || !expandedPosition) return
+
+      expandedMarkers.push({
+        marker,
+        originalPosition,
+        originalZIndex: marker.zIndex ?? null,
+      })
+      marker.position = expandedPosition
+      marker.zIndex = 5000 + index
+      marker.map = map
+      lines.push(new google.maps.Polyline({
+        map,
+        path: [center, expandedPosition],
+        clickable: false,
+        strokeColor: '#7cb342',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        zIndex: 4900,
+      }))
+    })
+
+    spiderfyStateRef.current = { markers: expandedMarkers, lines }
+  }, [collapseSpiderfiedMarkers])
+
   const refreshClusters = useCallback(() => {
     const clusterer = markerClustererRef.current
     if (!clusterer) return
+    collapseSpiderfiedMarkers(false)
     const markers = [
       ...Array.from(markersRef.current.values(), (entry) => entry.marker),
       ...Array.from(marketplaceMarkersRef.current.values(), (entry) => entry.marker),
@@ -288,7 +356,7 @@ function RentalMapComponent({
     clusterer.render()
     ;(window as Window & { __HOMEJI_CLUSTERED_MARKER_COUNT?: number })
       .__HOMEJI_CLUSTERED_MARKER_COUNT = markers.length
-  }, [])
+  }, [collapseSpiderfiedMarkers])
 
   const syncMarkers = useCallback(() => {
     const map = mapRef.current
@@ -329,6 +397,7 @@ function RentalMapComponent({
         })
         marker.addListener('gmp-click', () => {
           if (performance.now() < ignoreClickUntilRef.current) return
+          collapseSpiderfiedMarkers()
           onSelectPostRef.current(post.id)
         })
         markersRef.current.set(post.id, {
@@ -369,7 +438,7 @@ function RentalMapComponent({
     ;(window as Window & { __HOMEJI_MARKER_COUNT?: number }).__HOMEJI_MARKER_COUNT =
       markersRef.current.size
     refreshClusters()
-  }, [pins, selectedPostId, hoveredPostId, refreshClusters])
+  }, [pins, selectedPostId, hoveredPostId, refreshClusters, collapseSpiderfiedMarkers])
 
   useEffect(() => {
     syncMarkersRef.current = syncMarkers
@@ -419,6 +488,7 @@ function RentalMapComponent({
         content.element.addEventListener('mouseleave', restoreAfterHover)
         marker.addListener('gmp-click', () => {
           if (performance.now() < ignoreClickUntilRef.current) return
+          collapseSpiderfiedMarkers()
           onSelectMarketplaceRef.current?.(item.id)
         })
         marketplaceMarkersRef.current.set(item.id, {
@@ -464,7 +534,7 @@ function RentalMapComponent({
       }
     }
     refreshClusters()
-  }, [visibleMarketplacePins, selectedMarketplaceId, refreshClusters])
+  }, [visibleMarketplacePins, selectedMarketplaceId, refreshClusters, collapseSpiderfiedMarkers])
 
   useEffect(() => {
     syncMarketplaceMarkersRef.current = syncMarketplaceMarkers
@@ -535,6 +605,7 @@ function RentalMapComponent({
       // Click-guard only — never fetch listing data on drag / bounds_changed.
       listeners.push(
         map.addListener('dragstart', () => {
+          collapseSpiderfiedMarkers()
           userGestureRef.current = true
           ignoreClickUntilRef.current = performance.now() + DRAG_CLICK_GUARD_MS
         }),
@@ -546,7 +617,13 @@ function RentalMapComponent({
         }),
       )
       listeners.push(
+        map.addListener('zoom_changed', () => {
+          collapseSpiderfiedMarkers(false)
+        }),
+      )
+      listeners.push(
         map.addListener('click', (event: google.maps.MapMouseEvent) => {
+          collapseSpiderfiedMarkers()
           if (streetViewSelectRef.current) {
             event.stop()
             if (event.latLng) openStreetViewAtRef.current(event.latLng)
@@ -602,7 +679,7 @@ function RentalMapComponent({
           return new lib.AdvancedMarkerElement({
             position: cluster.position,
             content,
-            title: `${cluster.count} vị trí gần nhau. Nhấn để phóng to.`,
+            title: `${cluster.count} vị trí gần nhau. Nhấn để xem từng ghim.`,
             zIndex: 3000 + cluster.count,
             gmpClickable: true,
           })
@@ -633,6 +710,22 @@ function RentalMapComponent({
           evt.preventDefault?.()
           evt.domEvent?.stopPropagation?.()
           evt.domEvent?.preventDefault?.()
+          const advancedMarkers = cluster.markers
+            .map((marker) => marker as google.maps.marker.AdvancedMarkerElement)
+            .filter((marker) => readAdvancedMarkerLatLng(marker) != null)
+          const positions = advancedMarkers
+            .map(readAdvancedMarkerLatLng)
+            .filter((position): position is google.maps.LatLngLiteral => position != null)
+          const zoom = clusterMap.getZoom() ?? DEFAULT_MAP_ZOOM
+          if (shouldSpiderfyCluster(positions, zoom)) {
+            spiderfyMarkers(
+              advancedMarkers,
+              { lat: cluster.position.lat(), lng: cluster.position.lng() },
+              (cluster.marker as google.maps.marker.AdvancedMarkerElement | undefined) ?? null,
+              clusterMap,
+            )
+            return
+          }
           const bounds = cluster.bounds
           if (bounds) clusterMap.fitBounds(bounds, 72)
         },
@@ -643,6 +736,7 @@ function RentalMapComponent({
 
     return () => {
       cancelled = true
+      collapseSpiderfiedMarkers(false)
       listeners.forEach((l) => google.maps.event.removeListener(l))
       cameraRef.current?.dispose()
       cameraRef.current = null
@@ -709,7 +803,14 @@ function RentalMapComponent({
       setStreetViewError(null)
     }
     // Remount when OS/UI light↔dark changes — colorScheme is init-only.
-  }, [isLoaded, apiKey, mapId, mapColorScheme])
+  }, [
+    isLoaded,
+    apiKey,
+    mapId,
+    mapColorScheme,
+    collapseSpiderfiedMarkers,
+    spiderfyMarkers,
+  ])
 
   // Debounced host resize only — avoid resize storms during chrome layout anim.
   useEffect(() => {
