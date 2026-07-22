@@ -68,10 +68,15 @@ export const MapListingCard = memo(function MapListingCard({
     >
       <div className="map-listing-card-image">
         {post.thumbnailPath ? (
-          <img src={post.thumbnailPath} alt="" />
+          <img src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
         ) : (
           <div className="map-listing-card-placeholder">Chưa có ảnh</div>
         )}
+        {post.isOwnerPremium ? (
+          <span className="map-listing-card-corner-tag is-premium">Premium</span>
+        ) : post.ownerBadge ? (
+          <span className="map-listing-card-corner-tag is-badge">{post.ownerBadge}</span>
+        ) : null}
         <span className="map-listing-card-price">{formatPrice(post.price)}/th</span>
       </div>
       <div className="map-listing-card-body">
@@ -80,10 +85,6 @@ export const MapListingCard = memo(function MapListingCard({
           <span>{post.area} m²</span>
           {post.highlightTag ? (
             <span className="map-listing-tag is-highlight">{post.highlightTag}</span>
-          ) : null}
-          {post.isOwnerPremium ? <span className="map-listing-tag is-premium">Premium</span> : null}
-          {post.ownerBadge && !post.isOwnerPremium ? (
-            <span className="map-listing-tag is-badge">{post.ownerBadge}</span>
           ) : null}
         </div>
         <h3>{title}</h3>

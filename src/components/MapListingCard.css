@@ -1,6 +1,7 @@
 .map-listing-card {
   display: flex;
   gap: 10px;
+  min-height: 104px;
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -47,17 +48,19 @@
 
 .map-listing-card-image {
   position: relative;
-  width: 88px;
-  min-height: 88px;
+  width: 112px;
+  height: 104px;
   flex-shrink: 0;
-  background: var(--surface-input);
+  align-self: center;
+  background: color-mix(in srgb, var(--surface-input) 90%, #000);
   overflow: hidden;
 }
 
 .map-listing-card-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   transition: transform var(--dur-slow) var(--ease-out);
 }
 
@@ -71,7 +74,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 88px;
+  min-height: 104px;
   padding: 8px;
   font-size: 11px;
   color: var(--text-secondary);
@@ -81,7 +84,7 @@
 .map-listing-card-price {
   position: absolute;
   bottom: 6px;
-  left: 6px;
+  right: 6px;
   max-width: calc(100% - 12px);
   background: var(--grab-blue);
   color: #fff;
@@ -92,6 +95,37 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.map-listing-card-corner-tag {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  max-width: calc(100% - 12px);
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(5px);
+}
+
+.map-listing-card-corner-tag.is-premium {
+  color: #f6c84c;
+  background: rgba(35, 34, 27, 0.84);
+  border-color: rgba(246, 200, 76, 0.56);
+}
+
+.map-listing-card-corner-tag.is-badge {
+  color: #b8f5ce;
+  background: rgba(18, 69, 43, 0.84);
+  border-color: rgba(89, 221, 138, 0.58);
 }
 
 .map-listing-card-body {
@@ -116,16 +150,6 @@
   background: var(--error-soft);
   color: var(--error);
   animation: map-fade-up 0.3s ease both;
-}
-
-.map-listing-tag.is-premium {
-  background: color-mix(in srgb, #fbbc04 22%, transparent);
-  color: color-mix(in srgb, #fbbc04 55%, var(--text-heading));
-}
-
-.map-listing-tag.is-badge {
-  background: var(--success-soft);
-  color: var(--success);
 }
 
 .map-listing-card-body h3 {
@@ -155,8 +179,8 @@
   }
 
   .map-listing-card-image {
-    width: 88px;
-    min-height: 88px;
+    width: 112px;
+    height: 104px;
   }
 
   .map-listing-card-body {
