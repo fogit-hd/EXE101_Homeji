@@ -485,6 +485,17 @@
   font-weight: 700;
 }
 
+.map-detail-panel__review-overview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-detail-panel__review-overview strong {
+  color: var(--text-heading);
+}
+
 .map-detail__stars {
   color: #f4b400;
   letter-spacing: 1px;

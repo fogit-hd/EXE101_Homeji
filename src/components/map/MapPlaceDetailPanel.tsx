@@ -175,7 +175,8 @@ export function MapPlaceDetailPanel({
   const panelRef = useRef<HTMLElement | null>(null)
   const tabSwitchScrollTopRef = useRef<number | null>(null)
   const [reviews, setReviews] = useState<RentalReviewCollection | null>(null)
-  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewsPostId, setReviewsPostId] = useState<string | null>(null)
+  const reviewsLoading = Boolean(open && isListing && post?.id && reviewsPostId !== post.id)
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
   const [reviewBusy, setReviewBusy] = useState(false)
@@ -225,23 +226,26 @@ export function MapPlaceDetailPanel({
   }
 
   useEffect(() => {
-    if (!open || !isListing || !post?.id || tab !== 'reviews') return
+    if (!open || !isListing || !post?.id) return
+
     let cancelled = false
-    setReviewsLoading(true)
     void getRentalPostReviews(post.id)
       .then((data) => {
-        if (!cancelled) setReviews(data)
+        if (!cancelled) {
+          setReviews(data)
+          setReviewsPostId(post.id)
+        }
       })
       .catch(() => {
-        if (!cancelled) setReviews(null)
-      })
-      .finally(() => {
-        if (!cancelled) setReviewsLoading(false)
+        if (!cancelled) {
+          setReviews(null)
+          setReviewsPostId(post.id)
+        }
       })
     return () => {
       cancelled = true
     }
-  }, [open, isListing, post?.id, tab])
+  }, [open, isListing, post?.id])
 
   const heroUrl = useMemo(() => {
     if (isListing) {
@@ -392,6 +396,7 @@ export function MapPlaceDetailPanel({
       })
       const data = await getRentalPostReviews(post.id)
       setReviews(data)
+      setReviewsPostId(post.id)
       setReviewComment('')
       notify('Đã lưu đánh giá.')
     } catch (e) {
@@ -698,6 +703,19 @@ export function MapPlaceDetailPanel({
                   </InfoRow>
                   <InfoRow icon="👁">
                     <p>{listing.viewCount} lượt xem · {listing.saveCount} lượt lưu</p>
+                  </InfoRow>
+                  <InfoRow icon="⭐">
+                    <p className="map-detail-panel__review-overview" aria-live="polite">
+                      {reviewsLoading ? (
+                        <span>Đang tải đánh giá…</span>
+                      ) : (
+                        <>
+                          <strong>{Math.min(5, Math.max(0, reviews?.averageRating ?? 0)).toFixed(1)}/5.0</strong>
+                          <Stars rating={Math.min(5, Math.max(0, reviews?.averageRating ?? 0))} />
+                          <span>· {reviews?.reviewCount ?? 0} đánh giá</span>
+                        </>
+                      )}
+                    </p>
                   </InfoRow>
                   {listing.ownerDisplayName ? (
                     <InfoRow icon="👤">
