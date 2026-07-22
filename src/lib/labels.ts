@@ -29,6 +29,7 @@ export const formatDate = (value: string) =>
 export const rentalPostTypeLabel: Record<RentalPostType, string> = {
   [RentalPostType.VacantRoom]: 'Phòng trống',
   [RentalPostType.RoommateShare]: 'Tìm bạn ở ghép',
+  [RentalPostType.RoomTransfer]: 'Pass phòng',
 }
 
 export const rentalPostStatusLabel: Record<number, string> = {

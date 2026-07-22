@@ -39,6 +39,7 @@ export function AdminModerationPage() {
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
+  const [consentVerificationNotes, setConsentVerificationNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -63,10 +64,20 @@ export function AdminModerationPage() {
   const loadPosts = () => void reload()
   const loadReports = () => void reload()
 
-  const handleApprove = async (postId: string) => {
+  const handleApprove = async (post: RentalPostSummary) => {
+    const consentNote = consentVerificationNotes[post.id]?.trim()
+    if (post.ownerConsentContact && !consentNote) {
+      setError('Vui lòng ghi lại cách đã xác minh sự đồng ý của chủ nhà trước khi duyệt tin pass.')
+      return
+    }
     try {
-      await approveRentalPost(postId)
+      await approveRentalPost(post.id, post.ownerConsentContact ? consentNote : undefined)
       setMessage('Đã duyệt tin đăng.')
+      setConsentVerificationNotes((current) => {
+        const next = { ...current }
+        delete next[post.id]
+        return next
+      })
       void loadPosts()
     } catch (err) {
       setError(getErrorMessage(err, 'Duyệt thất bại'))
@@ -184,13 +195,35 @@ export function AdminModerationPage() {
             pendingPosts.map((post) => (
               <article key={post.id} className="card admin-item">
                 <div>
+                  {post.ownerConsentContact ? (
+                    <>
+                      <p className="alert alert-warning">
+                        <strong>Pass phòng — cần xác minh chủ nhà:</strong>{' '}
+                        {post.ownerConsentContact}
+                      </p>
+                      <label className="form-label" htmlFor={`consent-note-${post.id}`}>
+                        Nhật ký xác minh bắt buộc
+                      </label>
+                      <textarea
+                        id={`consent-note-${post.id}`}
+                        className="form-textarea"
+                        maxLength={500}
+                        placeholder="Ví dụ: Đã gọi số trên hợp đồng lúc 14:30; chủ nhà xác nhận cho chuyển hợp đồng đến 01/02/2027."
+                        value={consentVerificationNotes[post.id] ?? ''}
+                        onChange={(event) => setConsentVerificationNotes((current) => ({
+                          ...current,
+                          [post.id]: event.target.value,
+                        }))}
+                      />
+                    </>
+                  ) : null}
                   <span className="badge badge-green">{rentalPostTypeLabel[post.type]}</span>
                   <h3>{post.title || 'Tin nháp'}</h3>
                   <p>{formatPrice(post.price)}/tháng · {post.area} m² · {post.address}</p>
                   <Link to={mapPostUrl(post.id)}>Xem trên bản đồ</Link>
                 </div>
                 <div className="admin-actions">
-                  <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleApprove(post.id)}>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleApprove(post)}>
                     Duyệt
                   </button>
                   <input

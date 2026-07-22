@@ -1,21 +1,25 @@
 import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useNavigate } from 'react-router-dom'
 import {
   ChatMessageSender,
+  ChatbotNavigationActionKind,
   getChatbotPopupConfig,
   sendChatbotMessage,
   type AiHighlightResponse,
   type ChatbotMessage,
+  type ChatbotNavigationAction,
   type ChatbotPopupConfig,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import { ChatbotMessageContent } from './ChatbotMessageContent'
+import type { MapAppSection } from './MapAppPanel'
 import './MapChatbot.css'
 
 const HOMIE_TITLE = 'Homie'
 const HOMIE_GREETING =
-  'Chào bạn nha! mình là Homie, AI hỗ trợ của Homeji. Mình có thể giúp gì cho bạn hôm nay nào?'
+  'Chào bạn nha! Mình là Homie. Bạn có thể hỏi mình cách dùng bất kỳ tính năng nào trong Homeji.'
 /** Synced from video-src/AI Chat loading.lottie */
 const AI_CHAT_LOADING_SRC = '/lottie/ai-chat-loading.lottie'
 
@@ -25,6 +29,20 @@ const VIEW_MARGIN = 12
 const DRAG_THRESHOLD = 6
 const FAB_POS_KEY = 'homeji.homie.fabPos'
 const SHEET_MEDIA = '(max-width: 900px)'
+const ACTION_SECTIONS = new Set<MapAppSection>([
+  'listings',
+  'saved',
+  'invitations',
+  'notifications',
+  'messages',
+  'appointments',
+  'payments',
+  'profile',
+  'marketplace',
+  'wanted',
+  'activities',
+  'myPosts',
+])
 
 function isSheetViewport(): boolean {
   return typeof window !== 'undefined' && window.matchMedia(SHEET_MEDIA).matches
@@ -39,10 +57,13 @@ type Props = {
   hideFab?: boolean
   /** Tự né sang mép trái khi một panel rộng đang chiếm phần nội dung bên phải. */
   avoidRightContent?: boolean
+  /** Mở panel thật của ứng dụng khi assistant trả về action đã whitelist. */
+  onOpenSection?: (section: MapAppSection) => void
 }
 
 type DisplayMessage = ChatbotMessage & {
   pending?: boolean
+  actions?: ChatbotNavigationAction[]
 }
 
 type FabPos = { x: number; y: number }
@@ -213,7 +234,9 @@ export function MapChatbot({
   onOpenChange,
   hideFab = false,
   avoidRightContent = false,
+  onOpenSection,
 }: Props) {
+  const navigate = useNavigate()
   const { profile } = useAuth()
   const reactId = useId()
   const [open, setOpen] = useState(false)
@@ -259,7 +282,11 @@ export function MapChatbot({
             enabled: true,
             title: HOMIE_TITLE,
             greeting: HOMIE_GREETING,
-            suggestedPrompts: ['Phòng dưới 4 triệu gần FPT', 'Ở ghép Thủ Đức'],
+            suggestedPrompts: [
+              'Phòng dưới 4 triệu gần FPT',
+              'Mua đồ ăn trên Homeji như thế nào?',
+              'Ở ghép Thủ Đức',
+            ],
           })
         }
       })
@@ -441,7 +468,11 @@ export function MapChatbot({
       setConversationId(reply.conversationId)
       setMessages((prev) => {
         const withoutPending = prev.filter((m) => m.id !== pendingId)
-        return [...withoutPending, reply.userMessage, reply.assistantMessage]
+        return [
+          ...withoutPending,
+          reply.userMessage,
+          { ...reply.assistantMessage, actions: reply.actions },
+        ]
       })
       if (reply.searchUpdate) onSearchUpdate?.(reply.searchUpdate)
     } catch (e) {
@@ -451,6 +482,20 @@ export function MapChatbot({
     } finally {
       setBusy(false)
       setActivePrompt(null)
+    }
+  }
+
+  const handleNavigationAction = (action: ChatbotNavigationAction) => {
+    if (action.kind === ChatbotNavigationActionKind.OpenSection) {
+      if (!ACTION_SECTIONS.has(action.target as MapAppSection)) return
+      setOpen(false)
+      onOpenSection?.(action.target as MapAppSection)
+      return
+    }
+
+    if (action.kind === ChatbotNavigationActionKind.Navigate && action.target.startsWith('/')) {
+      setOpen(false)
+      navigate(action.target)
     }
   }
 
@@ -506,7 +551,25 @@ export function MapChatbot({
                 {isUser ? (
                   <span className="map-chatbot__bubble-text">{m.content}</span>
                 ) : (
-                  <ChatbotMessageContent content={m.content} />
+                  <>
+                    <ChatbotMessageContent content={m.content} />
+                    {m.actions && m.actions.length > 0 ? (
+                      <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">
+                        {m.actions.map((action) => (
+                          <button
+                            key={action.id}
+                            type="button"
+                            className="map-chatbot__action"
+                            title={action.description}
+                            onClick={() => handleNavigationAction(action)}
+                          >
+                            <span>{action.label}</span>
+                            <span aria-hidden>→</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </div>
             </div>

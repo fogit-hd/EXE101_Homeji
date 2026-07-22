@@ -1474,8 +1474,7 @@
 }
 
 .food-preset-section p,
-.wallet-section-head p,
-.seller-plan-grid p {
+.wallet-section-head p {
   margin: 4px 0 10px;
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -1613,37 +1612,6 @@
 
 .wallet-quick-amounts button {
   border-color: var(--border);
-}
-
-.seller-plan-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.seller-plan-grid article {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface-input);
-}
-
-.seller-plan-grid article.is-current {
-  border-color: var(--grab-green, #00b14f);
-}
-
-.seller-plan-grid article > strong {
-  color: var(--grab-green, #00b14f);
-  font-size: 1.05rem;
-}
-
-.seller-plan-grid .btn,
-.seller-plan-grid small {
-  margin-top: auto;
 }
 
 .wallet-history ul {
@@ -1799,8 +1767,7 @@
     min-width: 88px;
   }
 
-  .food-preset-grid,
-  .seller-plan-grid {
+  .food-preset-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

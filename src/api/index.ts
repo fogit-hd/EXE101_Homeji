@@ -1,4 +1,4 @@
-import { apiRequest, apiUpload } from './client'
+import { apiDownload, apiRequest, apiUpload } from './client'
 import {
   getDefaultNotifications,
   isDefaultNotificationId,
@@ -21,8 +21,7 @@ import type {
   MarketplaceListingType,
   MarketplaceOrder,
   MarketplacePost,
-  MarketplaceSellerPlan,
-  MarketplaceSellerSubscription,
+  MessageAttachmentContext,
   MomoPaymentResponse,
   MySubscription,
   Notification,
@@ -43,6 +42,7 @@ import type {
   RentalPostType,
   RoommateCandidate,
   RoommateInvitation,
+  RoomTransferKind,
   SleepHabit,
   SmokingPreference,
   SubscriptionPackage,
@@ -161,6 +161,12 @@ export const updateRentalPost = (
     availableSlots?: number
     houseRules?: string
     availableFrom?: string
+    transferKind?: RoomTransferKind
+    originalLeaseEndsOn?: string
+    passFee?: number
+    transferReason?: string
+    ownerConsentConfirmed?: boolean
+    ownerConsentContact?: string
   },
 ) => apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { method: 'PUT', body: data })
 
@@ -246,6 +252,30 @@ export const sendConversationMessage = (conversationId: string, body: string) =>
     method: 'POST',
     body: { body },
   })
+
+export const sendConversationImages = (
+  conversationId: string,
+  files: File[],
+  context: MessageAttachmentContext,
+  body?: string,
+) => {
+  const form = new FormData()
+  for (const file of files) form.append('files', file)
+  form.append('context', String(context))
+  if (body?.trim()) form.append('body', body.trim())
+  return apiUpload<PostMessage>(`/api/conversations/${conversationId}/messages/images`, form)
+}
+
+export const downloadConversationAttachment = (contentPath: string) => apiDownload(contentPath)
+
+export const deleteConversationAttachment = (
+  conversationId: string,
+  messageId: string,
+  attachmentId: string,
+) => apiRequest<void>(
+  `/api/conversations/${conversationId}/messages/${messageId}/attachments/${attachmentId}`,
+  { method: 'DELETE' },
+)
 
 // Viewing appointments
 export const getViewingAppointments = () =>
@@ -394,8 +424,11 @@ export const createPayOsPayment = (amount: number, description?: string) =>
 export const getPendingRentalPosts = () =>
   apiRequest<RentalPostSummary[]>('/api/admin/moderation/rental-posts/pending')
 
-export const approveRentalPost = (postId: string) =>
-  apiRequest<RentalPost>(`/api/admin/moderation/rental-posts/${postId}/approve`, { method: 'POST' })
+export const approveRentalPost = (postId: string, ownerConsentVerificationNote?: string) =>
+  apiRequest<RentalPost>(`/api/admin/moderation/rental-posts/${postId}/approve`, {
+    method: 'POST',
+    body: { ownerConsentVerificationNote },
+  })
 
 export const rejectRentalPost = (postId: string, reason?: string) =>
   apiRequest<RentalPost>(`/api/admin/moderation/rental-posts/${postId}/reject`, {
@@ -516,18 +549,6 @@ export const rejectWalletWithdrawal = (id: string, note?: string) =>
     method: 'POST',
     body: { note },
   })
-
-export const getMarketplaceSellerPlans = () =>
-  apiRequest<MarketplaceSellerPlan[]>('/api/marketplace-seller-plans')
-
-export const getMyMarketplaceSellerPlan = () =>
-  apiRequest<MarketplaceSellerSubscription>('/api/marketplace-seller-plans/mine')
-
-export const purchaseMarketplaceSellerPlan = (packageCode: string) =>
-  apiRequest<MarketplaceSellerSubscription>(
-    `/api/marketplace-seller-plans/${encodeURIComponent(packageCode)}/purchase`,
-    { method: 'POST' },
-  )
 
 // Wanted posts
 export const searchWantedPosts = (params?: {

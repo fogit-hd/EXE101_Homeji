@@ -225,3 +225,35 @@ export async function apiUpload<T>(
   return data as T
 }
 
+/** Authenticated binary download, used for private chat attachments. */
+export async function apiDownload(path: string): Promise<Blob> {
+  const tokenState = getTokenState()
+  if (!tokenState.token) {
+    throw new ApiRequestError(401, {
+      detail: tokenState.expired
+        ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+        : 'Bạn cần đăng nhập để xem nội dung này.',
+    })
+  }
+
+  let response: Response
+  try {
+    response = await fetch(buildUrl(path), {
+      headers: { Authorization: `Bearer ${tokenState.token}` },
+    })
+  } catch {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new NetworkError()
+    }
+    throw new ApiRequestError(0, { detail: 'Không kết nối được máy chủ.' })
+  }
+
+  if (!response.ok) {
+    if (response.status === 401) expireStoredAuth()
+    const text = await response.text()
+    throw new ApiRequestError(response.status, parseErrorBody(text, response.statusText))
+  }
+
+  return response.blob()
+}
+
