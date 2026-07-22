@@ -8,7 +8,6 @@ import {
   type RentalPostSummary,
 } from '../api'
 import { SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
-import { ContentSkeleton } from '../components/ContentSkeleton'
 import { AuthenticatedHomeMapShell } from '../components/map/AuthenticatedHomeMapShell'
 import type { HomeMapFocus } from '../components/map/HomeMapStage'
 import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
@@ -197,7 +196,6 @@ function HomePageComponent() {
     selectedAmenities,
     bbox: filtersRef.current.bbox,
   }
-  const authGate = useHomejiLoading(isLoading)
   const { showLoader: showPostsLoader, onIntroComplete: onPostsIntroComplete } = useHomejiLoading(
     loading,
     disrupted,
@@ -705,10 +703,6 @@ function HomePageComponent() {
       togglePinLayer,
     ],
   )
-
-  if (authGate.showLoader) {
-    return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang mở Homeji…" /></main>
-  }
 
   if (!isAuthenticated) {
     return (

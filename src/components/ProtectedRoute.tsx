@@ -1,15 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { UserRole } from '../api/types'
 import { useAuth } from '../contexts/AuthContext'
-import { useHomejiLoading } from './HomejiLoader'
 import { ContentSkeleton } from './ContentSkeleton'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
-  const { showLoader } = useHomejiLoading(isLoading)
 
-  if (showLoader) {
+  if (isLoading) {
     return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang mở Homeji…" /></main>
   }
 
@@ -28,9 +26,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { profile, isLoading } = useAuth()
-  const { showLoader } = useHomejiLoading(isLoading)
 
-  if (showLoader) {
+  if (isLoading) {
     return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang kiểm tra quyền quản trị…" /></main>
   }
 
