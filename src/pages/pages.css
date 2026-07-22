@@ -221,6 +221,70 @@
   font-weight: 800;
 }
 
+.admin-report-item {
+  border-left: 4px solid var(--grab-blue);
+}
+
+.admin-report-content h3 {
+  margin: 10px 0 6px;
+  color: var(--text-heading);
+  font-size: 18px;
+}
+
+.admin-report-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-report-reporter {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+}
+
+.admin-report-details {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.admin-report-details > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.admin-report-details dt {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.admin-report-details dd {
+  margin: 0;
+  color: var(--text-heading);
+  line-height: 1.5;
+}
+
+.admin-report-resolution {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--success-soft);
+  color: var(--text-heading);
+}
+
+.admin-report-actions {
+  width: min(380px, 36%);
+  flex: 0 0 auto;
+  align-items: stretch;
+}
+
+.admin-report-actions .form-textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+}
+
 @media (max-width: 768px) {
   .payment-grid {
     grid-template-columns: 1fr;
@@ -249,6 +313,15 @@
   .invitation-actions,
   .admin-actions {
     width: 100%;
+  }
+
+  .admin-report-item {
+    flex-wrap: wrap;
+  }
+
+  .admin-report-details > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .invitation-actions .btn,

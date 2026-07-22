@@ -348,8 +348,11 @@ export interface Notification {
 export interface Report {
   id: string
   reporterId: string
+  reporterDisplayName: string
   targetType: ReportTargetType
   targetId: string
+  targetDisplayName: string
+  relatedRentalPostId: string | null
   reason: string
   description: string | null
   status: ReportStatus

@@ -19,7 +19,7 @@ import {
   type Report,
   type WalletWithdrawal,
 } from '../api'
-import { LandlordVerificationStatus, ReportStatus, WalletWithdrawalStatus } from '../api/types'
+import { LandlordVerificationStatus, ReportStatus, ReportTargetType, WalletWithdrawalStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { getErrorMessage } from '../lib/errors'
@@ -34,6 +34,11 @@ import {
   userRoleLabel,
 } from '../lib/labels'
 
+export function cleanAdminReportText(value: string | null | undefined) {
+  const cleaned = value?.replace(/\s*\[[A-Z][A-Z0-9_:-]{4,}\]\s*$/u, '').trim()
+  return cleaned || ''
+}
+
 export function AdminModerationPage() {
   const [pendingPosts, setPendingPosts] = useState<RentalPostSummary[]>([])
   const [reports, setReports] = useState<Report[]>([])
@@ -44,6 +49,7 @@ export function AdminModerationPage() {
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
+  const [reportResolutionNotes, setReportResolutionNotes] = useState<Record<string, string>>({})
   const [consentVerificationNotes, setConsentVerificationNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -110,8 +116,13 @@ export function AdminModerationPage() {
 
   const handleResolveReport = async (reportId: string) => {
     try {
-      await resolveReport(reportId, resolutionNote)
-      setMessage('Đã xử lý báo cáo.')
+      await resolveReport(reportId, reportResolutionNotes[reportId]?.trim() || undefined)
+      setMessage('Đã xác nhận vi phạm và lưu kết quả xử lý.')
+      setReportResolutionNotes((current) => {
+        const next = { ...current }
+        delete next[reportId]
+        return next
+      })
       void loadReports()
     } catch (err) {
       setError(getErrorMessage(err, 'Xử lý thất bại'))
@@ -120,8 +131,13 @@ export function AdminModerationPage() {
 
   const handleRejectReport = async (reportId: string) => {
     try {
-      await rejectReport(reportId, resolutionNote)
-      setMessage('Đã từ chối báo cáo.')
+      await rejectReport(reportId, reportResolutionNotes[reportId]?.trim() || undefined)
+      setMessage('Đã kết luận nội dung không vi phạm.')
+      setReportResolutionNotes((current) => {
+        const next = { ...current }
+        delete next[reportId]
+        return next
+      })
       void loadReports()
     } catch (err) {
       setError(getErrorMessage(err, 'Thao tác thất bại'))
@@ -306,27 +322,55 @@ export function AdminModerationPage() {
               <div className="empty-state card">Không có báo cáo.</div>
             ) : (
               reports.map((r) => (
-                <article key={r.id} className="card admin-item">
-                  <div>
-                    <span className="badge badge-gray">{reportTargetLabel[r.targetType]}</span>
-                    <span className="badge badge-blue">{reportStatusLabel[r.status]}</span>
-                    <p><strong>{r.reason}</strong></p>
-                    <p>{r.description}</p>
-                    <small>{formatDate(r.createdAt)}</small>
+                <article key={r.id} className="card admin-item admin-report-item">
+                  <div className="admin-report-content">
+                    <div className="admin-report-badges">
+                      <span className="badge badge-gray">Báo cáo {reportTargetLabel[r.targetType].toLowerCase()}</span>
+                      <span className="badge badge-blue">{reportStatusLabel[r.status]}</span>
+                    </div>
+                    <h3>{r.targetDisplayName || reportTargetLabel[r.targetType]}</h3>
+                    <p className="admin-report-reporter">
+                      <strong>Người gửi báo cáo:</strong> {r.reporterDisplayName || 'Không xác định'}
+                    </p>
+                    <dl className="admin-report-details">
+                      <div>
+                        <dt>Lý do</dt>
+                        <dd>{cleanAdminReportText(r.reason) || 'Không ghi lý do'}</dd>
+                      </div>
+                      <div>
+                        <dt>Chi tiết</dt>
+                        <dd>{cleanAdminReportText(r.description) || 'Người báo cáo không nhập thêm chi tiết.'}</dd>
+                      </div>
+                    </dl>
+                    {r.relatedRentalPostId && (
+                      r.targetType === ReportTargetType.RentalPost
+                      || r.targetType === ReportTargetType.RoommateInvitation
+                      || r.targetType === ReportTargetType.RentalReview
+                    ) ? (
+                      <Link to={mapPostUrl(r.relatedRentalPostId)}>Mở nội dung bị báo cáo</Link>
+                    ) : null}
+                    {r.resolutionNote ? (
+                      <p className="admin-report-resolution"><strong>Kết quả xử lý:</strong> {r.resolutionNote}</p>
+                    ) : null}
+                    <small>Gửi lúc {formatDate(r.createdAt)}</small>
                   </div>
                   {r.status === ReportStatus.Pending && (
-                    <div className="admin-actions">
-                      <input
-                        className="form-input"
-                        placeholder="Ghi chú xử lý"
-                        value={resolutionNote}
-                        onChange={(e) => setResolutionNote(e.target.value)}
+                    <div className="admin-actions admin-report-actions">
+                      <textarea
+                        className="form-textarea"
+                        placeholder="Ghi rõ cách đã kiểm tra hoặc lý do kết luận"
+                        value={reportResolutionNotes[r.id] ?? ''}
+                        onChange={(e) => setReportResolutionNotes((current) => ({
+                          ...current,
+                          [r.id]: e.target.value,
+                        }))}
+                        maxLength={500}
                       />
                       <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleResolveReport(r.id)}>
-                        Xử lý
+                        Xác nhận vi phạm
                       </button>
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleRejectReport(r.id)}>
-                        Từ chối
+                        Không vi phạm
                       </button>
                     </div>
                   )}
