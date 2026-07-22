@@ -16,6 +16,11 @@
   border-right: 1px solid var(--border);
   box-shadow: 1px 0 2px rgba(var(--shadow-color), 0.08);
   pointer-events: auto;
+  overflow: visible;
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .gmaps-nav-rail__btn {
@@ -193,6 +198,20 @@
   max-width: none;
   /* Transparent hit-test shell — map receives all gestures underneath */
   pointer-events: none !important;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.home-map-page.is-ui-collapsed .gmaps-nav-rail {
+  transform: translateX(-100%);
+  border-right-color: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.home-map-page.is-ui-collapsed .gmaps-omnibox__card {
+  display: none;
 }
 
 /* Leave room for the right map section when it is open */
@@ -228,11 +247,12 @@
 }
 
 .gmaps-omnibox__card {
+  --map-omnibox-card-width: 432px;
   position: relative;
   flex: 0 1 auto;
-  width: 392px;
+  width: var(--map-omnibox-card-width);
   min-width: min(260px, 100%);
-  max-width: 392px;
+  max-width: var(--map-omnibox-card-width);
   background: var(--surface-elevated);
   border-radius: 8px;
   box-shadow:
@@ -825,6 +845,17 @@
   opacity: 1;
   transform: translate3d(0, 0, 0);
   pointer-events: auto;
+}
+
+.home-map-page.is-ui-collapsed .gmaps-nav-backdrop {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-map-page.is-ui-collapsed .gmaps-nav-drawer {
+  opacity: 0;
+  transform: translate3d(-100%, 0, 0);
+  pointer-events: none;
 }
 
 .gmaps-nav-drawer::-webkit-scrollbar {

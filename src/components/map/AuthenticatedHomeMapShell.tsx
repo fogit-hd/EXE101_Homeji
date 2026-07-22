@@ -22,6 +22,7 @@ import { MapAppPanel, isWideMapSection, type MapAppSection } from './MapAppPanel
 import { MapChatDock } from './MapChatDock'
 import { MapChatbot } from './MapChatbot'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
+import { MapEdgeToggle } from './MapEdgeToggle'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
@@ -157,6 +158,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [toast, setToast] = useState<string | null>(null)
   const [marketplacePins, setMarketplacePins] = useState<MarketplaceMapPin[]>([])
   const [selectedMarketplaceId, setSelectedMarketplaceId] = useState<string | null>(null)
+  const [uiCollapsed, setUiCollapsed] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const focusedPostIdRef = useRef(focusedPostId)
   focusedPostIdRef.current = focusedPostId
@@ -871,7 +873,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   return (
     <div
       className={`home-map-page${panelOpen ? '' : ' is-sidebar-collapsed'}${
-        detailOpen ? ' has-place-detail' : ''
+        detailOpen && !uiCollapsed ? ' has-place-detail' : ''
+      }${uiCollapsed ? ' is-ui-collapsed' : ''}${
+        detailOpen ? ' has-place-detail-mounted' : ''
       }${panelOpen && panelSection === 'listings' ? ' has-listings-panel' : ''}${
         panelOpen && isWideMapSection(panelSection) ? ' has-wide-panel' : ''
       }`}
@@ -905,7 +909,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
         <MapPlaceDetailPanel
           open={detailOpen}
-          onClose={handleClearMapSelection}
+          collapsed={uiCollapsed}
           place={selectedPostId ? null : selectedPlace}
           placeLoading={selectedPostId ? false : placeLoading}
           listing={selectedPostId ? listingDetail : null}
@@ -929,6 +933,16 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
         />
 
+        <MapEdgeToggle
+          className={`home-map-master-toggle${uiCollapsed ? ' is-collapsed' : ''}${
+            detailOpen && !uiCollapsed ? ' is-on-detail' : ''
+          }`}
+          expanded={!uiCollapsed}
+          collapseLabel="Thu gọn khu vực điều khiển bản đồ"
+          expandLabel="Mở lại khu vực điều khiển bản đồ"
+          onToggle={() => setUiCollapsed((v) => !v)}
+        />
+
         {/* Outside .home-map-frame so z-index can sit above MapPlaceDetailPanel
             (frame uses isolation:isolate and would trap omnibox underneath). */}
         {omnibox && isValidElement(omnibox)
@@ -940,13 +954,15 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
                 activeSection?: MapAppSection | null
                 onClosePlaceDetail?: () => void
                 placeDetailOpen?: boolean
+                uiCollapsed?: boolean
               }>,
               {
                 unreadMessageCount: unreadBadge,
                 unreadNotificationCount,
                 onOpenSection: handleOpenAppSection,
                 onClosePlaceDetail: handleClearMapSelection,
-                placeDetailOpen: detailOpen,
+                placeDetailOpen: detailOpen && !uiCollapsed,
+                uiCollapsed,
                 activeSection:
                   chatInboxOpen || openChatIds.length > 0
                     ? 'messages'
@@ -1038,7 +1054,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         onOpenChange={handleHomieOpenChange}
         avoidRightContent={panelOpen && panelSection === 'marketplace'}
         hideFab={
-          detailOpen ||
+          (detailOpen && !uiCollapsed) ||
           marketplaceCartOpen ||
           (isMobileSheetViewport() &&
             (panelOpen || chatInboxOpen || openChatIds.length > 0 || homieOpen))

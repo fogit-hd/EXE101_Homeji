@@ -355,11 +355,19 @@ export function MapChatbot({
     if (dismissSignal > 0) setOpen(false)
   }, [dismissSignal])
 
+  useEffect(() => {
+    // Keep UI consistent: when parent requests hiding Homie controls,
+    // close any currently open chat panel as well.
+    if (!hideFab) return
+    setOpen(false)
+  }, [hideFab])
+
   if (config && !config.enabled) return null
 
   const displayName = profile?.displayName?.trim() || 'bạn'
   const showGreeting = messages.length === 0
   const showTyping = busy && messages.some((m) => m.pending)
+  const panelVisible = open && !hideFab
 
   const openChatbot = () => {
     setWelcomeDismissed(true)
@@ -632,18 +640,18 @@ export function MapChatbot({
       style={{ pointerEvents: 'none' }}
     >
       <div
-        className={`map-chatbot__panel is-${panel.side}${open ? ' is-visible' : ''}${
+        className={`map-chatbot__panel is-${panel.side}${panelVisible ? ' is-visible' : ''}${
           sheetMode ? ' is-sheet' : ''
         }`}
         style={{
-          pointerEvents: open ? 'auto' : 'none',
+          pointerEvents: panelVisible ? 'auto' : 'none',
           left: panel.left,
           top: panel.top,
           width: panel.width,
           maxHeight: panel.maxHeight,
         }}
-        aria-hidden={!open}
-        inert={!open}
+        aria-hidden={!panelVisible}
+        inert={!panelVisible}
         role="dialog"
         aria-label={HOMIE_TITLE}
       >
