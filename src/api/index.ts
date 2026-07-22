@@ -438,6 +438,27 @@ export const terminateAdminUserSession = (userId: string, reason?: string) =>
     body: { reason },
   })
 
+export interface MaintenanceAnnouncementRequest {
+  title?: string
+  message?: string
+  scheduledStartAt?: string
+  scheduledEndAt?: string
+}
+
+export interface MaintenanceAnnouncementResult extends MaintenanceAnnouncementRequest {
+  title: string
+  message: string
+  recipientCount: number
+  onlineRecipientCount: number
+  sentAt: string
+}
+
+export const sendMaintenanceAnnouncement = (data: MaintenanceAnnouncementRequest) =>
+  apiRequest<MaintenanceAnnouncementResult>('/api/admin/moderation/maintenance-announcements', {
+    method: 'POST',
+    body: data,
+  })
+
 export const getPendingRentalPosts = () =>
   apiRequest<RentalPostSummary[]>('/api/admin/moderation/rental-posts/pending')
 

@@ -43,6 +43,7 @@ export function getNotificationPresentation(
   }
 
   if (
+    notification.type === NotificationType.MaintenanceAnnouncement ||
     notification.type === NotificationType.RoommateInvitationReceived ||
     notification.type === NotificationType.ViewingAppointmentRequested ||
     notification.type === NotificationType.ViewingAppointmentUpdated ||

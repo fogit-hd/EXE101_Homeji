@@ -203,6 +203,68 @@
   font-weight: 800;
 }
 
+.admin-maintenance-card {
+  max-width: 860px;
+  margin-top: 22px;
+  padding: 24px;
+  border: 1px solid #ead9a7;
+  background: linear-gradient(135deg, #fffdf5 0%, #f4fbf5 100%);
+}
+
+.admin-maintenance-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-maintenance-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  border-radius: 15px;
+  background: #f8cf69;
+  color: #694d0e;
+  font-size: 23px;
+}
+
+.admin-maintenance-intro h2 {
+  margin: 0 0 5px;
+  color: var(--text-heading);
+  font-size: 21px;
+}
+
+.admin-maintenance-intro p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.admin-maintenance-form {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-maintenance-schedule {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.admin-maintenance-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.admin-maintenance-footer small {
+  color: var(--text-secondary);
+}
+
 .admin-presence-item {
   align-items: center;
 }
@@ -395,5 +457,14 @@
   .invitation-actions .btn,
   .admin-actions .btn {
     flex: 1;
+  }
+
+  .admin-maintenance-schedule {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-maintenance-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

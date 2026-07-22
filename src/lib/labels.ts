@@ -92,6 +92,7 @@ export const notificationTypeLabel: Record<number, string> = {
   [NotificationType.SavedPostChanged]: 'Tin đã lưu thay đổi',
   [NotificationType.NewMatchingRentalPost]: 'Tin phù hợp mới',
   [NotificationType.MarketplaceOrderUpdated]: 'Đơn chợ đồ cập nhật',
+  [NotificationType.MaintenanceAnnouncement]: 'Bảo trì hệ thống',
   [NotificationType.SystemAnnouncement]: 'Homeji',
   [NotificationType.Promotion]: 'Ưu đãi',
   [NotificationType.MarketplaceTip]: 'Chợ đồ',
