@@ -98,9 +98,6 @@ export function isEmailTaken(result: EmailAvailabilityResult): boolean {
 // Profile
 export const getMyProfile = () => apiRequest<UserProfile>('/api/profile/me')
 
-export const recordPresence = () =>
-  apiRequest<void>('/api/activities/presence', { method: 'POST' })
-
 export const updateMyProfile = (data: {
   displayName?: string
   phone?: string
@@ -425,13 +422,8 @@ export const createPayOsPayment = (amount: number, description?: string) =>
   })
 
 // Admin Moderation
-export const getAdminActiveUsers = (options?: { onlineMinutes?: number; recentMinutes?: number }) =>
-  apiRequest<AdminActiveUser[]>('/api/admin/moderation/active-users', {
-    params: {
-      onlineMinutes: options?.onlineMinutes,
-      recentMinutes: options?.recentMinutes,
-    },
-  })
+export const getAdminActiveUsers = () =>
+  apiRequest<AdminActiveUser[]>('/api/admin/moderation/active-users')
 
 export const getPendingRentalPosts = () =>
   apiRequest<RentalPostSummary[]>('/api/admin/moderation/rental-posts/pending')

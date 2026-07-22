@@ -77,12 +77,6 @@ export function AdminModerationPage() {
     return () => window.clearInterval(timer)
   }, [reload, tab])
 
-  useEffect(() => {
-    if (tab !== 'active') return
-    const timer = window.setInterval(() => void reload(), 30_000)
-    return () => window.clearInterval(timer)
-  }, [reload, tab])
-
   const handleApprove = async (post: RentalPostSummary) => {
     const consentNote = consentVerificationNotes[post.id]?.trim()
     if (post.ownerConsentContact && !consentNote) {
@@ -212,10 +206,10 @@ export function AdminModerationPage() {
         <div className="admin-list admin-presence-list">
           <div className="admin-presence-summary">
             <strong>{activeUsers.filter((user) => user.isOnline).length} người đang hoạt động</strong>
-            <span>Tự cập nhật mỗi 30 giây · online trong 5 phút gần nhất</span>
+            <span>Tự cập nhật mỗi 30 giây · dựa trên kết nối realtime đang mở</span>
           </div>
           {activeUsers.length === 0 ? (
-            <div className="empty-state card">Chưa có người dùng hoạt động trong 30 phút gần đây.</div>
+            <div className="empty-state card">Hiện chưa có người dùng đang kết nối.</div>
           ) : (
             activeUsers.map((user) => (
               <article key={user.userId} className={`card admin-item admin-presence-item${user.isOnline ? ' is-online' : ''}`}>
@@ -226,11 +220,11 @@ export function AdminModerationPage() {
                   <div>
                     <h3>{user.displayName || 'Người dùng'}</h3>
                     <p>{userRoleLabel[user.role] ?? 'Người dùng'}</p>
-                    <small>Hoạt động gần nhất: {formatDate(user.lastSeenAt)}</small>
+                    <small>Kết nối từ: {formatDate(user.lastSeenAt)}</small>
                   </div>
                 </div>
                 <span className={`badge ${user.isOnline ? 'badge-green' : 'badge-gray'}`}>
-                  {user.isOnline ? 'Đang hoạt động' : 'Hoạt động gần đây'}
+                  Đang hoạt động
                 </span>
               </article>
             ))
