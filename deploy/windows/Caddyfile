@@ -1,10 +1,10 @@
 {
     # Keep Caddy's automatic HTTPS available when PublicHost is replaced with a DNS name.
-    # For a bare IP, use http://15.134.39.218 instead.
+    # Set HOMEJI_PUBLIC_HOST to the DNS name used by this Windows deployment.
     auto_https disable_redirects
 }
 
-http://15.134.39.218 {
+{$HOMEJI_PUBLIC_HOST} {
     encode gzip
 
     # SignalR and API go directly to ASP.NET Core; Caddy handles WebSocket upgrades.
