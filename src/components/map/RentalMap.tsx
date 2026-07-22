@@ -689,8 +689,11 @@ function RentalMapComponent({
         map,
         markers: [],
         algorithm: new SuperClusterAlgorithm({
-          radius: 80,
-          maxZoom: 17,
+          // Keep clustering active through the deepest useful map zoom. Without
+          // this, exact-overlap markers split back into the same screen pixel at
+          // zoom 18+ and one AdvancedMarker hides the other before spiderfy can run.
+          radius: 96,
+          maxZoom: 22,
         }),
         renderer: clusterRenderer,
         onClusterClick: (event, cluster, clusterMap) => {
