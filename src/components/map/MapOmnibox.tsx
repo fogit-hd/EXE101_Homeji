@@ -162,6 +162,8 @@ type Props = {
   onClosePlaceDetail?: () => void
   /** Whether place/listing detail panel is currently visible. */
   placeDetailOpen?: boolean
+  /** Collapse all chrome sections from parent shell. */
+  uiCollapsed?: boolean
 }
 
 function loadRecent(): MapOmniboxSuggestion[] {
@@ -337,6 +339,7 @@ export function MapOmnibox({
   onTogglePinLayer,
   onClosePlaceDetail,
   placeDetailOpen = false,
+  uiCollapsed = false,
 }: Props) {
   const { profile } = useAuth()
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
@@ -371,6 +374,14 @@ export function MapOmnibox({
     page.classList.toggle('is-mobile-searching', on)
     return () => page.classList.remove('is-mobile-searching')
   }, [open, isMobile])
+
+  useEffect(() => {
+    if (!uiCollapsed) return
+    setOpen(false)
+    setNavOpen(false)
+    setAdvancedOpen(false)
+    inputRef.current?.blur()
+  }, [uiCollapsed])
 
   useEffect(() => {
     if (!open) return
@@ -751,9 +762,12 @@ export function MapOmnibox({
                 aria-label="Đóng thông tin địa điểm"
                 title="Đóng thông tin địa điểm"
                 onClick={() => {
+                  onQueryChange('')
                   onClosePlaceDetail?.()
-                  setOpen(false)
-                  inputRef.current?.blur()
+                  setOpen(true)
+                  window.requestAnimationFrame(() => {
+                    inputRef.current?.focus()
+                  })
                 }}
               >
                 ×

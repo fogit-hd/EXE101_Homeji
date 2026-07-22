@@ -1,0 +1,37 @@
+.map-edge-toggle {
+  width: 32px;
+  height: 48px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.14));
+  border-radius: 12px;
+  background: var(--surface-elevated, #fff);
+  color: var(--text-heading, #202124);
+  box-shadow:
+    0 1px 2px rgba(var(--shadow-color, 9, 29, 46), 0.12),
+    0 2px 8px rgba(var(--shadow-color, 9, 29, 46), 0.16);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.map-edge-toggle:hover {
+  background: var(--surface-input, #f1f3f4);
+}
+
+.map-edge-toggle:active {
+  transform: scale(0.98);
+}
+
+.map-edge-toggle:focus-visible {
+  outline: 2px solid var(--maps-blue, #1a73e8);
+  outline-offset: 2px;
+}
+
+.map-edge-toggle__icon {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}

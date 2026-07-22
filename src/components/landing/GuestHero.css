@@ -118,10 +118,6 @@ html:has(.guest-landing) body::-webkit-scrollbar {
   line-height: 1;
 }
 
-.guest-hero__top .guest-poster-menu {
-  justify-self: end;
-}
-
 .guest-hero__center {
   display: flex;
   flex-direction: column;

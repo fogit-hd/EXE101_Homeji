@@ -6,6 +6,7 @@ import {
   startRentalPostConversation,
   upsertMyRentalReview,
   UserRole,
+  MediaType,
   RentalPostStatus,
   RentalPostType,
   RoomTransferKind,
@@ -26,10 +27,18 @@ import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
 
 type DetailTab = string
+type PlacePhotoTab = 'all' | 'latest' | 'video' | 'owner'
+
+const PLACE_PHOTO_TAB_OPTIONS: ReadonlyArray<{ id: PlacePhotoTab; label: string }> = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'latest', label: 'Mới nhất' },
+  { id: 'video', label: 'Video' },
+  { id: 'owner', label: 'Chủ sở hữu' },
+]
 
 type MapPlaceDetailPanelProps = {
   open: boolean
-  onClose: () => void
+  collapsed?: boolean
   place?: MapPlaceDetails | null
   placeLoading?: boolean
   listing?: RentalPost | null
@@ -121,9 +130,35 @@ function InfoRow({ icon, children }: { icon: string; children: ReactNode }) {
   )
 }
 
+const FOOD_PRIMARY_TYPES = new Set([
+  'restaurant',
+  'cafe',
+  'bakery',
+  'meal_delivery',
+  'meal_takeaway',
+  'food_court',
+  'bar',
+  'coffee_shop',
+  'ice_cream_shop',
+  'pizza_restaurant',
+  'sandwich_shop',
+  'hamburger_restaurant',
+  'seafood_restaurant',
+  'steak_house',
+  'sushi_restaurant',
+])
+
+function isLikelyFoodPlace(primaryType: string | null, typeLabel: string | null): boolean {
+  if (primaryType && FOOD_PRIMARY_TYPES.has(primaryType)) return true
+  const label = (typeLabel || '').toLowerCase()
+  return /(nhà hàng|quán ăn|quán|cà phê|cafe|tiệm bánh|trà sữa|đồ ăn|ẩm thực|restaurant|food)/.test(
+    label,
+  )
+}
+
 export function MapPlaceDetailPanel({
   open,
-  onClose,
+  collapsed = false,
   place = null,
   placeLoading = false,
   listing = null,
@@ -148,24 +183,29 @@ export function MapPlaceDetailPanel({
   const isLandlord = profile?.role === UserRole.Landlord
   const myId = getStoredSession()?.userId
   const isOwner = !!(listing && myId && listing.ownerId === myId)
+  const showPlaceMenuTab = !isListing && isLikelyFoodPlace(place?.primaryType ?? null, place?.typeLabel ?? null)
 
   const placeTabs = useMemo(
-    () =>
-      [
+    () => {
+      const tabs: Array<{ id: DetailTab; label: string }> = [
         { id: 'overview', label: 'Tổng quan' },
+      ]
+      if (showPlaceMenuTab) tabs.push({ id: 'menu', label: 'Thực đơn' })
+      tabs.push(
         { id: 'reviews', label: 'Đánh giá' },
         { id: 'about', label: 'Giới thiệu' },
-      ] as const,
-    [],
+      )
+      return tabs
+    },
+    [showPlaceMenuTab],
   )
   const listingTabs = useMemo(
-    () =>
-      [
-        { id: 'overview', label: 'Tổng quan' },
-        { id: 'amenities', label: 'Tiện ích' },
-        { id: 'reviews', label: 'Đánh giá' },
-        { id: 'about', label: 'Chi tiết' },
-      ] as const,
+    () => [
+      { id: 'overview', label: 'Tổng quan' },
+      { id: 'amenities', label: 'Tiện ích' },
+      { id: 'reviews', label: 'Đánh giá' },
+      { id: 'about', label: 'Chi tiết' },
+    ],
     [],
   )
 
@@ -188,6 +228,14 @@ export function MapPlaceDetailPanel({
   const [actionTone, setActionTone] = useState<'ok' | 'err'>('ok')
   const [streetViewFailed, setStreetViewFailed] = useState(false)
   const [heroImageFailed, setHeroImageFailed] = useState(false)
+  const [photoBrowserOpen, setPhotoBrowserOpen] = useState(false)
+  const [photoTab, setPhotoTab] = useState<PlacePhotoTab>('all')
+  const [photoIndex, setPhotoIndex] = useState(0)
+
+  useEffect(() => {
+    if (tabs.some((t) => t.id === tab)) return
+    setTab('overview')
+  }, [tabs, tab])
 
   useEffect(() => {
     if (open) {
@@ -197,6 +245,9 @@ export function MapPlaceDetailPanel({
       setActionMsg(null)
       setStreetViewFailed(false)
       setHeroImageFailed(false)
+      setPhotoBrowserOpen(false)
+      setPhotoTab('all')
+      setPhotoIndex(0)
     }
   }, [open, place?.placeId, post?.id])
 
@@ -294,6 +345,100 @@ export function MapPlaceDetailPanel({
       return
     }
     setStreetViewFailed(true)
+  }
+
+  const placePhotoUrls = useMemo(() => {
+    if (isListing) return [] as string[]
+    return place?.photoUrls ?? []
+  }, [isListing, place])
+
+  const listingPhotoUrls = useMemo(() => {
+    if (!isListing) return [] as string[]
+    const urls: string[] = []
+    if (listing?.media?.length) {
+      for (const item of listing.media) {
+        if (item.mediaType !== MediaType.Image) continue
+        if (item.path) urls.push(item.path)
+      }
+    }
+    if (urls.length === 0) {
+      const fallback = listingSummary?.thumbnailPath || listing?.thumbnailPath || null
+      if (fallback) urls.push(fallback)
+    }
+    return [...new Set(urls)]
+  }, [isListing, listing, listingSummary])
+
+  const photoSourceUrls = isListing ? listingPhotoUrls : placePhotoUrls
+
+  const photoItems = useMemo(() => {
+    if (photoTab === 'video') return [] as string[]
+    if (photoTab === 'latest') return [...photoSourceUrls].reverse()
+    // Places API details currently does not expose reliable owner/video facets here.
+    // Keep tabs visible and fall back to the same photo corpus for now.
+    return photoSourceUrls
+  }, [photoTab, photoSourceUrls])
+
+  const selectedPhotoUrl =
+    photoItems.length > 0
+      ? photoItems[Math.min(photoIndex, photoItems.length - 1)] ?? null
+      : null
+  const canGoPrevPhoto = photoItems.length > 1 && photoIndex > 0
+  const canGoNextPhoto = photoItems.length > 1 && photoIndex < photoItems.length - 1
+
+  const handlePrevPhoto = () => {
+    if (!canGoPrevPhoto) return
+    setPhotoIndex((idx) => Math.max(0, idx - 1))
+  }
+
+  const handleNextPhoto = () => {
+    if (!canGoNextPhoto) return
+    setPhotoIndex((idx) => Math.min(photoItems.length - 1, idx + 1))
+  }
+
+  useEffect(() => {
+    if (!photoBrowserOpen) return
+    setPhotoIndex(0)
+  }, [photoTab, photoBrowserOpen])
+
+  useEffect(() => {
+    if (!photoBrowserOpen) return
+    if (photoItems.length === 0) return
+    setPhotoIndex((idx) => Math.min(idx, photoItems.length - 1))
+  }, [photoItems, photoBrowserOpen])
+
+  useEffect(() => {
+    if (!photoBrowserOpen) return
+    const handleEscToClose = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPhotoBrowserOpen(false)
+    }
+    window.addEventListener('keydown', handleEscToClose)
+    return () => {
+      window.removeEventListener('keydown', handleEscToClose)
+    }
+  }, [photoBrowserOpen])
+
+  useEffect(() => {
+    if (open) return
+    setPhotoBrowserOpen(false)
+  }, [open])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const active = open && photoBrowserOpen
+    document.documentElement.classList.toggle('map-photo-browser-open', active)
+    document.body.classList.toggle('map-photo-browser-open', active)
+    return () => {
+      document.documentElement.classList.remove('map-photo-browser-open')
+      document.body.classList.remove('map-photo-browser-open')
+    }
+  }, [open, photoBrowserOpen])
+
+  const openPhotoBrowser = (startIndex = 0) => {
+    if (photoSourceUrls.length === 0) return
+    setPhotoBrowserOpen(true)
+    setPhotoTab('all')
+    setPhotoIndex(Math.min(Math.max(startIndex, 0), Math.max(photoSourceUrls.length - 1, 0)))
+    if (panelRef.current) panelRef.current.scrollTop = 0
   }
 
   const handleShare = async () => {
@@ -419,14 +564,50 @@ export function MapPlaceDetailPanel({
   const ownerBadgeIsPremium = /premium/i.test(ownerBadgeText)
   const showPremiumBadge = isPremium || ownerBadgeIsPremium
   const showOwnerBadge = ownerBadgeText.length > 0 && !ownerBadgeIsPremium
+  const showPhotoOverlayChrome = collapsed
+  const canOpenPhotoBrowser = tab === 'overview' && photoSourceUrls.length > 0
+  const tabsBar = (
+    <div className={`map-detail-panel__tabs${tab === 'overview' ? '' : ' is-sticky'}`} role="tablist">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          role="tab"
+          aria-selected={tab === t.id}
+          className={`map-detail-panel__tab${tab === t.id ? ' is-active' : ''}`}
+          onClick={() => switchTab(t.id)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+  const renderPhotoTabs = (extraClass?: string) => (
+    <div className={`map-detail-panel__tabs map-detail-photo-tabs${extraClass ? ` ${extraClass}` : ''}`} role="tablist">
+      {PLACE_PHOTO_TAB_OPTIONS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={photoTab === item.id}
+          className={`map-detail-panel__tab${photoTab === item.id ? ' is-active' : ''}`}
+          onClick={() => setPhotoTab(item.id)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
 
   return (
     <aside
       ref={panelRef}
-      className={`map-detail-panel${open ? ' is-visible' : ''}${isListing ? ' is-listing' : ' is-place'}`}
+      className={`map-detail-panel${open ? ' is-visible' : ''}${collapsed ? ' is-collapsed' : ''}${isListing ? ' is-listing' : ' is-place'}${
+        photoBrowserOpen ? ' is-photo-browser' : ''
+      }`}
       role="dialog"
       aria-modal="true"
-      aria-hidden={!open}
+      aria-hidden={!open || (collapsed && !photoBrowserOpen)}
       aria-label={title}
       onWheelCapture={handlePanelWheelCapture}
     >
@@ -434,10 +615,9 @@ export function MapPlaceDetailPanel({
         <span />
       </div>
 
-      <button type="button" className="map-detail-panel__close" aria-label="Đóng" onClick={onClose}>
-        ×
-      </button>
+      {!photoBrowserOpen && tab !== 'overview' ? tabsBar : null}
 
+      {!photoBrowserOpen && tab === 'overview' ? (
       <div className="map-detail-panel__intro">
         <div className="map-detail-panel__hero">
           {resolvedHeroUrl ? (
@@ -453,6 +633,15 @@ export function MapPlaceDetailPanel({
             </div>
           )}
           {highlight ? <span className="map-detail-panel__badge">{highlight}</span> : null}
+          {canOpenPhotoBrowser ? (
+            <button
+              type="button"
+              className="map-detail-panel__hero-media-btn map-motion-press"
+              onClick={() => openPhotoBrowser(0)}
+            >
+              Xem ảnh
+            </button>
+          ) : null}
         </div>
 
         <div className="map-detail-panel__header">
@@ -479,6 +668,8 @@ export function MapPlaceDetailPanel({
             </p>
           ) : null}
         </div>
+
+        {tabsBar}
 
         <div className="map-detail-panel__actions">
           <button
@@ -625,22 +816,85 @@ export function MapPlaceDetailPanel({
           </p>
         ) : null}
       </div>
+      ) : null}
 
-      <div className="map-detail-panel__tabs" role="tablist">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            className={`map-detail-panel__tab${tab === t.id ? ' is-active' : ''}`}
-            onClick={() => switchTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {photoBrowserOpen ? (
+        <div className="map-detail-photo-browser" role="tabpanel">
+          <div className="map-detail-photo-browser__rail">
+            {!collapsed ? renderPhotoTabs() : null}
+            {photoItems.length === 0 ? (
+              <p className="map-detail-panel__empty map-detail-photo-browser__empty">
+                {photoTab === 'video'
+                  ? 'Chưa có video công khai từ Google cho địa điểm này.'
+                  : 'Chưa có ảnh phù hợp trong mục này.'}
+              </p>
+            ) : (
+              <div className="map-detail-photo-browser__thumbs">
+                {photoItems.map((src, idx) => (
+                  <button
+                    key={`${photoTab}-${src}-${idx}`}
+                    type="button"
+                    className={`map-detail-photo-browser__thumb${
+                      selectedPhotoUrl === src ? ' is-active' : ''
+                    }`}
+                    onClick={() => setPhotoIndex(idx)}
+                  >
+                    <img src={src} alt={`${title} - ảnh ${idx + 1}`} loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
+          <div className="map-detail-photo-browser__stage">
+            {showPhotoOverlayChrome ? (
+              <button
+                type="button"
+                className="map-detail-photo-browser__close map-motion-press"
+                onClick={() => setPhotoBrowserOpen(false)}
+                aria-label="Đóng chế độ xem ảnh"
+              >
+                ×
+              </button>
+            ) : null}
+            {selectedPhotoUrl ? (
+              <>
+                {showPhotoOverlayChrome ? (
+                  <div className="map-detail-photo-browser__meta">
+                    <strong>{title}</strong>
+                    <span>{`${photoIndex + 1}/${photoItems.length}`}</span>
+                  </div>
+                ) : null}
+                {photoItems.length > 1 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="map-detail-photo-browser__nav map-detail-photo-browser__nav--prev"
+                      onClick={handlePrevPhoto}
+                      disabled={!canGoPrevPhoto}
+                      aria-label="Ảnh trước"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      className="map-detail-photo-browser__nav map-detail-photo-browser__nav--next"
+                      onClick={handleNextPhoto}
+                      disabled={!canGoNextPhoto}
+                      aria-label="Ảnh tiếp theo"
+                    >
+                      ›
+                    </button>
+                  </>
+                ) : null}
+                <img src={selectedPhotoUrl} alt={`${title} - ảnh đang xem`} />
+              </>
+            ) : (
+              <p className="map-detail-panel__empty">Chưa có ảnh hiển thị.</p>
+            )}
+          </div>
+        </div>
+      ) : (
       <div className={`map-detail-panel__content map-detail-panel__body--${tabPhase}`} role="tabpanel">
           {loading ? <ContentSkeleton compact variant="detail" label="Đang tải thông tin địa điểm…" /> : null}
 
@@ -749,7 +1003,45 @@ export function MapPlaceDetailPanel({
             </div>
           ) : null}
 
-          {!loading && tab === 'reviews' && isListing ? (
+          {!loading && (tab === 'menu' || tab === 'overview') && !isListing && showPlaceMenuTab && place ? (
+            <div className="map-detail-panel__section map-detail-menu">
+              {place.photoUrls.length === 0 ? (
+                <p className="map-detail-panel__empty">
+                  Google chưa trả ảnh thực đơn cho địa điểm này.
+                </p>
+              ) : (
+                <div className="map-detail-menu__grid">
+                  {place.photoUrls.map((src, idx) => (
+                    <button
+                      key={`${src}-${idx}`}
+                      type="button"
+                      className="map-detail-menu__photo-btn map-motion-press"
+                      onClick={() => openPhotoBrowser(idx)}
+                    >
+                      <img
+                        src={src}
+                        alt={`${title} - ảnh ${idx + 1}`}
+                        loading="lazy"
+                      />
+                      <span>Xem ảnh</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {place.googleMapsUri ? (
+                <a
+                  className="map-detail-panel__cta"
+                  href={place.googleMapsUri}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Xem thêm ảnh trên Google Maps
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!loading && (tab === 'reviews' || tab === 'overview') && isListing ? (
             <div className="map-detail-panel__section map-detail-reviews">
               {reviewsLoading ? (
                 <ContentSkeleton compact count={3} label="Đang tải đánh giá…" />
@@ -835,7 +1127,7 @@ export function MapPlaceDetailPanel({
             </div>
           ) : null}
 
-          {!loading && tab === 'reviews' && !isListing && place ? (
+          {!loading && (tab === 'reviews' || tab === 'overview') && !isListing && place ? (
             <div className="map-detail-panel__section map-detail-reviews">
               <div className="map-detail-reviews__summary">
                 <div className="map-detail-reviews__score-block">
@@ -871,10 +1163,20 @@ export function MapPlaceDetailPanel({
                   ))}
                 </ul>
               )}
+              {place.googleMapsUri ? (
+                <a
+                  className="map-detail-panel__cta"
+                  href={place.googleMapsUri}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Xem tất cả đánh giá trên Google Maps
+                </a>
+              ) : null}
             </div>
           ) : null}
 
-          {!loading && tab === 'amenities' && listing ? (
+          {!loading && (tab === 'amenities' || tab === 'overview') && listing ? (
             <div className="map-detail-panel__section map-detail-panel__amenities">
               {listing.amenities.length === 0 ? (
                 <p className="map-detail-panel__empty">Chưa cập nhật tiện ích.</p>
@@ -894,7 +1196,7 @@ export function MapPlaceDetailPanel({
             </div>
           ) : null}
 
-          {!loading && tab === 'about' && isListing ? (
+          {!loading && (tab === 'about' || tab === 'overview') && isListing ? (
             <div className="map-detail-panel__section map-detail-panel__about">
               {listing?.description?.trim() ? (
                 <p>{listing.description}</p>
@@ -904,7 +1206,7 @@ export function MapPlaceDetailPanel({
             </div>
           ) : null}
 
-          {!loading && tab === 'about' && !isListing && place ? (
+          {!loading && (tab === 'about' || tab === 'overview') && !isListing && place ? (
             <div className="map-detail-panel__section map-detail-panel__about">
               {place.editorialSummary ? (
                 <p>{place.editorialSummary}</p>
@@ -914,6 +1216,7 @@ export function MapPlaceDetailPanel({
             </div>
           ) : null}
       </div>
+      )}
     </aside>
   )
 }

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { navigateGuestLanding } from './guestLandingNav'
-import { GuestPosterMenu } from './GuestPosterMenu'
 import { SeamlessLoopVideo } from './SeamlessLoopVideo'
 import './GuestHero.css'
 
@@ -28,7 +27,6 @@ export function GuestHero() {
             height={48}
           />
           <p className="guest-hero__mark">Homeji</p>
-          <GuestPosterMenu />
         </div>
 
         <div className="guest-hero__center">

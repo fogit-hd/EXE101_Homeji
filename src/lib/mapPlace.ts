@@ -15,6 +15,7 @@ export type MapPlaceDetails = {
   rating: number | null
   ratingCount: number | null
   phone: string | null
+  primaryType: string | null
   typeLabel: string | null
   openNow: boolean | null
   weekdayHours: string[]
@@ -50,7 +51,7 @@ function displayText(value: unknown): string {
 function readPhotoUrls(photos: unknown): string[] {
   if (!Array.isArray(photos)) return []
   const urls: string[] = []
-  for (const photo of photos.slice(0, 6)) {
+  for (const photo of photos.slice(0, 24)) {
     if (!photo || typeof photo !== 'object') continue
     const getURI = (photo as { getURI?: (opts?: { maxWidth?: number; maxHeight?: number }) => string })
       .getURI
@@ -67,7 +68,7 @@ function readPhotoUrls(photos: unknown): string[] {
 
 function readReviews(raw: unknown): MapPlaceReview[] {
   if (!Array.isArray(raw)) return []
-  return raw.slice(0, 8).map((item) => {
+  return raw.map((item) => {
     const r = item as {
       authorAttribution?: { displayName?: string }
       rating?: number
@@ -105,6 +106,7 @@ export async function fetchMapPlaceDetails(
       'rating',
       'userRatingCount',
       'nationalPhoneNumber',
+      'primaryType',
       'primaryTypeDisplayName',
       'regularOpeningHours',
       'photos',
@@ -133,6 +135,7 @@ export async function fetchMapPlaceDetails(
     ratingCount:
       typeof place.userRatingCount === 'number' ? place.userRatingCount : null,
     phone: place.nationalPhoneNumber?.trim() || null,
+    primaryType: typeof place.primaryType === 'string' ? place.primaryType.trim() || null : null,
     typeLabel: displayText(place.primaryTypeDisplayName).trim() || null,
     openNow: typeof hours?.openNow === 'boolean' ? hours.openNow : null,
     weekdayHours: readWeekdayHours(hours),
@@ -186,6 +189,7 @@ export function buildSyntheticMapPlace(input: {
     rating: null,
     ratingCount: null,
     phone: null,
+    primaryType: null,
     typeLabel: input.typeLabel?.trim() || 'Địa điểm',
     openNow: null,
     weekdayHours: [],

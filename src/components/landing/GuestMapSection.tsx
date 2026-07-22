@@ -346,7 +346,6 @@ export function GuestMapSection() {
 
               <MapPlaceDetailPanel
                 open={detailOpen}
-                onClose={handleClearSelection}
                 place={selectedPost ? null : selectedPlace}
                 placeLoading={selectedPost ? false : placeLoading}
                 listing={selectedPost ? listingDetail : null}
