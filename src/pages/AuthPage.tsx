@@ -2,6 +2,7 @@ import gsap from 'gsap'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { checkEmail, getApiBaseUrl, isEmailTaken } from '../api'
+import { consumeSessionTerminationMessage } from '../api/authSession'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import {
@@ -303,7 +304,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   const [draftEmail, setDraftEmail] = useState('')
   const [draftPassword, setDraftPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => consumeSessionTerminationMessage() ?? '')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   /** Lỗi API khi bấm Kết nối — ở lại màn hình, hiện Sad + mây chat. */

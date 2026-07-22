@@ -425,6 +425,19 @@ export const createPayOsPayment = (amount: number, description?: string) =>
 export const getAdminActiveUsers = () =>
   apiRequest<AdminActiveUser[]>('/api/admin/moderation/active-users')
 
+export interface TerminateUserSessionResult {
+  userId: string
+  displayName: string
+  reason: string
+  terminatedAt: string
+}
+
+export const terminateAdminUserSession = (userId: string, reason?: string) =>
+  apiRequest<TerminateUserSessionResult>(`/api/admin/moderation/active-users/${userId}/terminate`, {
+    method: 'POST',
+    body: { reason },
+  })
+
 export const getPendingRentalPosts = () =>
   apiRequest<RentalPostSummary[]>('/api/admin/moderation/rental-posts/pending')
 

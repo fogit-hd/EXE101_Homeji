@@ -7,7 +7,7 @@ import {
 } from '@microsoft/signalr'
 import type { Notification } from '../api/types'
 import { getApiBaseUrl, getStoredSession } from '../api/client'
-import { AUTH_EXPIRED_EVENT, expireStoredAuth } from '../api/authSession'
+import { AUTH_EXPIRED_EVENT, expireStoredAuth, terminateStoredAuth } from '../api/authSession'
 import {
   createNotificationHubRetryPolicy,
   isUnauthorizedHubError,
@@ -75,6 +75,9 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
     connection.on('notificationReceived', (payload: Notification) => {
       handlerRef.current?.(payload)
     })
+    connection.on('sessionTerminated', (payload: { reason?: string }) => {
+      terminateStoredAuth(payload?.reason || 'Phiên đăng nhập đã được kết thúc bởi quản trị viên.')
+    })
 
     const stopForExpiredSession = () => {
       cancelled = true
@@ -97,6 +100,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
       cancelled = true
       window.removeEventListener(AUTH_EXPIRED_EVENT, stopForExpiredSession)
       connection.off('notificationReceived')
+      connection.off('sessionTerminated')
       connectionRef.current = null
       void (async () => {
         try {
