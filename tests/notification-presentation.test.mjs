@@ -18,6 +18,10 @@ test('status wording refines generic update notifications', () => {
     'critical',
   )
   assert.equal(
+    getNotificationPresentation(notification(NotificationType.MarketplaceOrderUpdated, 'Đơn Chợ Homeji đã hết hạn')).importance,
+    'critical',
+  )
+  assert.equal(
     getNotificationPresentation(notification(NotificationType.LandlordVerificationUpdated, 'Hồ sơ đã được duyệt')).importance,
     'success',
   )

@@ -8,7 +8,16 @@ export type NotificationPresentation = {
   icon: string
 }
 
-const CRITICAL_TEXT = ['bị từ chối', 'từ chối', 'thất bại', 'đã hủy', 'bị hủy', 'vi phạm']
+const CRITICAL_TEXT = [
+  'bị từ chối',
+  'từ chối',
+  'thất bại',
+  'đã hủy',
+  'bị hủy',
+  'được hủy',
+  'hết hạn',
+  'vi phạm',
+]
 const SUCCESS_TEXT = ['được duyệt', 'chấp nhận', 'hoàn tất', 'thành công', 'đã xử lý', 'đã giao']
 
 function includesAny(text: string, terms: string[]) {
