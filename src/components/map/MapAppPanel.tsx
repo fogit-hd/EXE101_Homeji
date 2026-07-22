@@ -106,6 +106,7 @@ type Props = {
   notificationRefreshKey?: number
   onNotificationOpen?: (notification: import('../../api').Notification) => void
   onNotificationReadStateChange?: (change: NotificationReadChange) => void
+  onOpenConversation?: (conversationId: string) => void
   onMarketplacePostsForMap?: (pins: import('./RentalMap').MarketplaceMapPin[]) => void
   onMarketplaceFocusMap?: (loc: { lat: number; lng: number; zoom?: number }) => void
   selectedMarketplaceId?: string | null
@@ -128,6 +129,7 @@ export function MapAppPanel({
   notificationRefreshKey = 0,
   onNotificationOpen,
   onNotificationReadStateChange,
+  onOpenConversation,
   onMarketplacePostsForMap,
   onMarketplaceFocusMap,
   selectedMarketplaceId = null,
@@ -247,7 +249,9 @@ export function MapAppPanel({
         >
           {displayed === 'listings' ? listingsContent : null}
           {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
-          {displayed === 'invitations' ? <RoommateInvitationsPage embedded /> : null}
+          {displayed === 'invitations' ? (
+            <RoommateInvitationsPage embedded onOpenConversation={onOpenConversation} />
+          ) : null}
           {displayed === 'notifications' ? (
             <NotificationsPage
               embedded

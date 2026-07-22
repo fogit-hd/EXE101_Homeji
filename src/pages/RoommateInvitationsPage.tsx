@@ -12,11 +12,17 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
-import { mapPostUrl, mapSectionUrl } from '../lib/mapDeepLinks'
+import { mapPostUrl } from '../lib/mapDeepLinks'
 
-export function RoommateInvitationsPage({ embedded = false }: { embedded?: boolean }) {
+type Props = {
+  embedded?: boolean
+  onOpenConversation?: (conversationId: string) => void
+}
+
+export function RoommateInvitationsPage({ embedded = false, onOpenConversation }: Props) {
   const { profile } = useAuth()
   const [invitations, setInvitations] = useState<RoommateInvitation[]>([])
+  const [actionError, setActionError] = useState('')
 
   const loadFn = useCallback(async () => {
     setInvitations(await getMyInvitations())
@@ -37,6 +43,7 @@ export function RoommateInvitationsPage({ embedded = false }: { embedded?: boole
         </>
       ) : null}
       {error && !disrupted && <div className="alert alert-error">{error}</div>}
+      {actionError ? <div className="alert alert-error">{actionError}</div> : null}
 
       {showLoader ? (
         disrupted
@@ -55,16 +62,27 @@ export function RoommateInvitationsPage({ embedded = false }: { embedded?: boole
                   <span className="badge badge-blue">{invitationStatusLabel[inv.status]}</span>
                   <p>
                     Tin đăng:{' '}
-                    <Link to={mapPostUrl(inv.rentalPostId)}>{inv.rentalPostId.slice(0, 8)}...</Link>
+                    <Link to={mapPostUrl(inv.rentalPostId)}>{inv.rentalPostTitle}</Link>
                   </p>
                   <p>{isReceiver ? 'Bạn được mời' : isSender ? 'Bạn đã gửi' : 'Lời mời'}</p>
                   <small>{formatDate(inv.createdAt)}</small>
                 </div>
                 <div className="invitation-actions">
                   {inv.status === RoommateInvitationStatus.Accepted && (
-                    <Link to={mapSectionUrl('messages')} className="btn btn-primary btn-sm">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        if (!inv.conversationId) {
+                          setActionError('Cuộc trò chuyện chưa sẵn sàng. Vui lòng tải lại và thử lại.')
+                          return
+                        }
+                        setActionError('')
+                        onOpenConversation?.(inv.conversationId)
+                      }}
+                    >
                       Mở tin nhắn và chia sẻ ảnh
-                    </Link>
+                    </button>
                   )}
                   {isReceiver && inv.status === RoommateInvitationStatus.Pending && (
                     <>

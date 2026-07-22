@@ -994,6 +994,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         locating={locating}
         onMarketplaceCartOpenChange={setMarketplaceCartOpen}
         onNotificationReadStateChange={handleNotificationReadStateChange}
+        onOpenConversation={openChatWindow}
         onNotificationOpen={(n) => {
           if (
             n.type === NotificationType.NewMessage ||

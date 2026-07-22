@@ -316,9 +316,11 @@ export interface RoommateCandidate {
 export interface RoommateInvitation {
   id: string
   rentalPostId: string
+  rentalPostTitle: string
   senderId: string
   receiverId: string
   status: RoommateInvitationStatus
+  conversationId: string | null
   createdAt: string
   updatedAt: string
 }
