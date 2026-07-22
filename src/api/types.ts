@@ -677,6 +677,7 @@ export const MarketplaceOrderStatus = {
   Cancelled: 4,
   Completed: 5,
   Expired: 6,
+  Delivered: 7,
 } as const
 export type MarketplaceOrderStatus =
   (typeof MarketplaceOrderStatus)[keyof typeof MarketplaceOrderStatus]
@@ -759,6 +760,8 @@ export interface MarketplaceOrder {
   platformFeeRate: number
   platformFeeAmount: number
   sellerNetAmount: number
+  deliveredAt: string | null
+  fundsReleaseDueAt: string | null
   fundsReleasedAt: string | null
   refundedAt: string | null
   postTitle: string | null

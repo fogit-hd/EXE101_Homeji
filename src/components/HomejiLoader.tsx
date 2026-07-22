@@ -7,6 +7,8 @@ import './HomejiLoader.css'
 export const HOMEJI_INTRO_MS = 2100
 /** Khi sự cố hệ thống/mạng — retry nền mỗi 5s */
 export const SERVICE_RETRY_MS = 5000
+/** Stop waiting forever when a request never settles; retry remains automatic. */
+const LOAD_TIMEOUT_MS = 20_000
 
 type HomejiLoaderProps = {
   label?: string
@@ -69,19 +71,31 @@ type PersistentLoadResult = {
 export function usePersistentLoad(
   loadFn: () => Promise<void>,
   deps: unknown[] = [],
-  options?: { enabled?: boolean; retryIntervalMs?: number; holdForIntro?: boolean },
+  options?: {
+    enabled?: boolean
+    retryIntervalMs?: number
+    holdForIntro?: boolean
+    timeoutMs?: number
+  },
 ): PersistentLoadResult {
   const enabled = options?.enabled ?? true
   const retryIntervalMs = options?.retryIntervalMs ?? SERVICE_RETRY_MS
   const holdForIntro = options?.holdForIntro ?? true
+  const timeoutMs = options?.timeoutMs ?? LOAD_TIMEOUT_MS
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [disrupted, setDisrupted] = useState(false)
   const loadFnRef = useRef(loadFn)
-  loadFnRef.current = loadFn
   const inFlight = useRef(false)
   const disruptedRef = useRef(false)
-  disruptedRef.current = disrupted
+
+  useEffect(() => {
+    loadFnRef.current = loadFn
+  }, [loadFn])
+
+  useEffect(() => {
+    disruptedRef.current = disrupted
+  }, [disrupted])
 
   const { showLoader, onIntroComplete } = useHomejiLoading(loading, disrupted)
 
@@ -91,17 +105,30 @@ export function usePersistentLoad(
     // Khi sự cố: giữ loop + message, không flip loading (tránh reset intro)
     if (!disruptedRef.current) setLoading(true)
     try {
-      await loadFnRef.current()
+      let timeoutId = 0
+      try {
+        await Promise.race([
+          loadFnRef.current(),
+          new Promise<never>((_, reject) => {
+            timeoutId = window.setTimeout(
+              () => reject(new Error('Yêu cầu mất quá nhiều thời gian. Homeji đang tự thử lại…')),
+              timeoutMs,
+            )
+          }),
+        ])
+      } finally {
+        window.clearTimeout(timeoutId)
+      }
       setError('')
       setDisrupted(false)
     } catch (err) {
       setError(getErrorMessage(err))
-      setDisrupted(isServiceDisruption(err))
+      setDisrupted(isServiceDisruption(err) || (err instanceof Error && err.message.includes('quá nhiều thời gian')))
     } finally {
       setLoading(false)
       inFlight.current = false
     }
-  }, [enabled])
+  }, [enabled, timeoutMs])
 
   useEffect(() => {
     if (!enabled) {

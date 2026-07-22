@@ -6,6 +6,7 @@ import {
   type RentalPostSummary,
 } from '../../api'
 import { RentalPostCard } from '../RentalPostCard'
+import { ContentSkeleton } from '../ContentSkeleton'
 import { RentalMap } from '../map/RentalMap'
 import { MapPlaceDetailPanel } from '../map/MapPlaceDetailPanel'
 import { useAuthModal } from '../../contexts/AuthModalContext'
@@ -362,7 +363,7 @@ export function GuestMapSection() {
             {error ? <div className="guest-map__alert">{error}</div> : null}
 
             {loading ? (
-              <p className="guest-map__status">Đang tải tin…</p>
+              <ContentSkeleton compact count={3} label="Đang tải tin phòng…" />
             ) : posts.length === 0 ? (
               <p className="guest-map__status">
                 Chưa có tin phù hợp khu vực này. Thử phường/trường khác hoặc đăng nhập để lọc

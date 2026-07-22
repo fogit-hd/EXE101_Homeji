@@ -3,6 +3,7 @@ import './MarketplaceLoadingSkeleton.css'
 
 type Props = {
   tab: MarketplaceTab
+  walletView?: 'topup' | 'withdraw' | 'history'
 }
 
 function SkeletonBlock({ className = '' }: { className?: string }) {
@@ -38,21 +39,86 @@ function ListingSkeleton() {
   )
 }
 
-function WalletSkeleton() {
+function WalletFormSkeleton({ view }: { view: 'topup' | 'withdraw' }) {
+  const fieldCount = view === 'withdraw' ? 4 : 1
+  const actionCount = view === 'topup' ? 2 : 1
+
   return (
-    <div className="marketplace-skeleton__wallet">
-      <SkeletonBlock className="marketplace-skeleton__wallet-balance" />
-      <div className="marketplace-skeleton__wallet-row">
-        <SkeletonBlock />
-        <SkeletonBlock />
-        <SkeletonBlock />
+    <div className="marketplace-skeleton__wallet-panel">
+      <div className="marketplace-skeleton__wallet-heading">
+        <SkeletonBlock className="marketplace-skeleton__line marketplace-skeleton__line--title" />
+        <SkeletonBlock className="marketplace-skeleton__line marketplace-skeleton__line--detail" />
+      </div>
+      {view === 'topup' ? (
+        <div className="marketplace-skeleton__wallet-quick-amounts">
+          <SkeletonBlock />
+          <SkeletonBlock />
+          <SkeletonBlock />
+        </div>
+      ) : null}
+      <div className="marketplace-skeleton__wallet-fields">
+        {Array.from({ length: fieldCount }, (_, index) => (
+          <SkeletonBlock key={index} className="marketplace-skeleton__wallet-field" />
+        ))}
+      </div>
+      <div className="marketplace-skeleton__wallet-actions">
+        {Array.from({ length: actionCount }, (_, index) => (
+          <SkeletonBlock key={index} className="marketplace-skeleton__wallet-action" />
+        ))}
+      </div>
+      {view === 'withdraw' ? (
+        <div className="marketplace-skeleton__wallet-recent">
+          <SkeletonBlock className="marketplace-skeleton__line marketplace-skeleton__line--name" />
+          <SkeletonBlock className="marketplace-skeleton__wallet-recent-row" />
+          <SkeletonBlock className="marketplace-skeleton__wallet-recent-row" />
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function WalletHistorySkeleton() {
+  return (
+    <div className="marketplace-skeleton__wallet-panel">
+      <SkeletonBlock className="marketplace-skeleton__line marketplace-skeleton__line--title" />
+      <div className="marketplace-skeleton__wallet-history">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div className="marketplace-skeleton__wallet-transaction" key={index}>
+            <div>
+              <SkeletonBlock className="marketplace-skeleton__line marketplace-skeleton__line--name" />
+              <SkeletonBlock className="marketplace-skeleton__line marketplace-skeleton__line--detail" />
+            </div>
+            <SkeletonBlock className="marketplace-skeleton__wallet-amount" />
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
+function WalletSkeleton({ view }: { view: NonNullable<Props['walletView']> }) {
+  return (
+    <div className="marketplace-skeleton__wallet">
+      <div className="marketplace-skeleton__wallet-summary">
+        <SkeletonBlock className="marketplace-skeleton__wallet-balance" />
+        <div className="marketplace-skeleton__wallet-stats">
+          <SkeletonBlock />
+          <SkeletonBlock />
+          <SkeletonBlock />
+        </div>
+      </div>
+      <div className="marketplace-skeleton__wallet-tabs">
+        <SkeletonBlock />
+        <SkeletonBlock />
+        <SkeletonBlock />
+      </div>
+      {view === 'history' ? <WalletHistorySkeleton /> : <WalletFormSkeleton view={view} />}
+    </div>
+  )
+}
+
 /** Keeps the marketplace layout stable while data for the active tab is loading. */
-export function MarketplaceLoadingSkeleton({ tab }: Props) {
+export function MarketplaceLoadingSkeleton({ tab, walletView = 'topup' }: Props) {
   const isSellerList = tab === 'food'
   const isWallet = tab === 'wallet'
   const count = tab === 'orders' ? 2 : 4
@@ -66,7 +132,7 @@ export function MarketplaceLoadingSkeleton({ tab }: Props) {
     >
       <span className="sr-only">Đang tải nội dung Chợ Homeji…</span>
       {isWallet ? (
-        <WalletSkeleton />
+        <WalletSkeleton view={walletView} />
       ) : isSellerList ? (
         Array.from({ length: 3 }, (_, index) => <SellerSkeleton key={index} />)
       ) : (

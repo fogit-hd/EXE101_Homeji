@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
+import { ContentSkeleton } from '../ContentSkeleton'
 import { formatDate, viewingAppointmentStatusLabel } from '../../lib/labels'
 import { isoToLocalInputValue } from '../../lib/scheduleDateTime'
 import './MapAppointmentsPanel.css'
@@ -81,7 +82,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
   return (
     <div className={`map-appointments${embedded ? ' is-embedded' : ''}`}>
       {error ? <p className="map-appointments__error map-motion-fade">{error}</p> : null}
-      {loading ? <p className="map-appointments__empty">Đang tải lịch hẹn…</p> : null}
+      {loading ? <ContentSkeleton compact count={3} label="Đang tải lịch hẹn…" /> : null}
       {!loading && items.length === 0 ? (
         <p className="map-appointments__empty">Chưa có lịch xem phòng.</p>
       ) : null}

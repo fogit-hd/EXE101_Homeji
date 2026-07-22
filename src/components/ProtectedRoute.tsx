@@ -1,15 +1,16 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { UserRole } from '../api/types'
 import { useAuth } from '../contexts/AuthContext'
-import { HomejiLoader, useHomejiLoading } from './HomejiLoader'
+import { useHomejiLoading } from './HomejiLoader'
+import { ContentSkeleton } from './ContentSkeleton'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
-  const { showLoader, onIntroComplete } = useHomejiLoading(isLoading)
+  const { showLoader } = useHomejiLoading(isLoading)
 
   if (showLoader) {
-    return <HomejiLoader fullPage onIntroComplete={onIntroComplete} />
+    return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang mở Homeji…" /></main>
   }
 
   if (!isAuthenticated) {
@@ -27,10 +28,10 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { profile, isLoading } = useAuth()
-  const { showLoader, onIntroComplete } = useHomejiLoading(isLoading)
+  const { showLoader } = useHomejiLoading(isLoading)
 
   if (showLoader) {
-    return <HomejiLoader fullPage onIntroComplete={onIntroComplete} />
+    return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang kiểm tra quyền quản trị…" /></main>
   }
 
   if (profile?.role !== UserRole.Admin) {

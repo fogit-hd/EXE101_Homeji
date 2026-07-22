@@ -8,6 +8,7 @@ import {
 } from '../api'
 import { UserRole, WantedPostStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import {
@@ -175,7 +176,9 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
       ) : null}
 
       {showLoader ? (
-        <HomejiLoader onIntroComplete={onIntroComplete} message={disrupted ? error : undefined} />
+        disrupted
+          ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
+          : <ContentSkeleton variant={tab === 'create' ? 'form' : 'list'} label="Đang tải nhu cầu tìm phòng…" />
       ) : tab === 'create' ? (
         !isRenter ? (
           <div className="empty-state card">Đăng nhập bằng tài khoản người thuê để đăng nhu cầu.</div>

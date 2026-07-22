@@ -23,6 +23,7 @@ import { getDeviceLocation } from '../../lib/geolocation'
 import { formatDate } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
 import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
+import { ContentSkeleton } from '../ContentSkeleton'
 import { staticMapUrl } from '../../lib/mapStaticMedia'
 import './MapMessagesPanel.css'
 
@@ -607,7 +608,7 @@ export function MapMessagesPanel({
           threadVisible && !isFloatingInbox ? '' : ' is-visible'
         }`}
       >
-        {loading ? <p className="map-messages__empty">Đang tải hộp thư…</p> : null}
+        {loading ? <ContentSkeleton compact count={3} label="Đang tải hộp thư…" /> : null}
         {!loading && conversations.length === 0 ? (
           <p className="map-messages__empty">
             Chưa có cuộc trò chuyện. Mở tin đăng và chọn “Nhắn tin”.

@@ -14,6 +14,7 @@ import {
 } from '../api'
 import { PaymentStatus, SubscriptionTier } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { MapToast } from '../components/map/MapToast'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -158,13 +159,17 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   if (showLoader) {
-    return (
+    return disrupted ? (
       <HomejiLoader
         fullPage={!embedded}
         label="Đang tải gói đăng ký..."
         onIntroComplete={onIntroComplete}
-        message={disrupted ? error : undefined}
+        message={error}
       />
+    ) : (
+      <main className={embedded ? 'map-embed' : 'container page'}>
+        <ContentSkeleton variant="dashboard" count={3} label="Đang tải gói đăng ký…" />
+      </main>
     )
   }
 

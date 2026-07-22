@@ -12,6 +12,7 @@ import {
 } from '../api'
 import { MediaType, RentalPostType, RoomTransferKind } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { useAuth } from '../contexts/AuthContext'
@@ -209,12 +210,16 @@ export function EditRentalPostPage() {
   const lngNum = Number(longitude)
 
   if (showLoader) {
-    return (
+    return disrupted ? (
       <HomejiLoader
         fullPage
         onIntroComplete={onIntroComplete}
-        message={disrupted ? loadError : undefined}
+        message={loadError}
       />
+    ) : (
+      <main className="container page">
+        <ContentSkeleton variant="form" count={6} label="Đang tải nội dung chỉnh sửa tin…" />
+      </main>
     )
   }
 

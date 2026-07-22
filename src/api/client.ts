@@ -20,6 +20,8 @@ function resolveApiBase(): string {
 }
 
 const API_BASE = resolveApiBase()
+const API_TIMEOUT_MS = 20_000
+const UPLOAD_TIMEOUT_MS = 90_000
 
 export class ApiRequestError extends Error {
   status: number
@@ -29,6 +31,27 @@ export class ApiRequestError extends Error {
     super(body.detail ?? body.title ?? `Request failed (${status})`)
     this.status = status
     this.body = body
+  }
+}
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new ApiRequestError(408, {
+        detail: 'Máy chủ phản hồi quá chậm. Vui lòng thử lại.',
+      })
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeoutId)
   }
 }
 
@@ -125,12 +148,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   let response: Response
   try {
-    response = await fetch(buildUrl(path, params), {
+    response = await fetchWithTimeout(buildUrl(path, params), {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
-    })
-  } catch {
+    }, API_TIMEOUT_MS)
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
     // Wi‑Fi vẫn bật nhưng API/proxy chết ≠ mất mạng của user
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       throw new NetworkError()
@@ -188,12 +212,13 @@ export async function apiUpload<T>(
 
   let response: Response
   try {
-    response = await fetch(buildUrl(path, options?.params), {
+    response = await fetchWithTimeout(buildUrl(path, options?.params), {
       method: 'POST',
       headers,
       body: formData,
-    })
-  } catch {
+    }, UPLOAD_TIMEOUT_MS)
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       throw new NetworkError()
     }
@@ -238,10 +263,11 @@ export async function apiDownload(path: string): Promise<Blob> {
 
   let response: Response
   try {
-    response = await fetch(buildUrl(path), {
+    response = await fetchWithTimeout(buildUrl(path), {
       headers: { Authorization: `Bearer ${tokenState.token}` },
-    })
-  } catch {
+    }, API_TIMEOUT_MS)
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       throw new NetworkError()
     }

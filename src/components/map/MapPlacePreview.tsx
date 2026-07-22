@@ -1,5 +1,6 @@
-import { useRef } from 'react'
+import { useEffect, useState } from 'react'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
+import { ContentSkeleton } from '../ContentSkeleton'
 import './MapPlacePreview.css'
 
 type MapPlacePreviewProps = {
@@ -16,10 +17,12 @@ export function MapPlacePreview({
   onClose,
 }: MapPlacePreviewProps) {
   const open = !leaving && !!(loading || place)
-  const cachedPlace = useRef(place)
-  if (place) cachedPlace.current = place
+  const [cachedPlace, setCachedPlace] = useState(place)
+  useEffect(() => {
+    if (place) setCachedPlace(place)
+  }, [place])
 
-  const shown = place ?? cachedPlace.current
+  const shown = place ?? cachedPlace
 
   return (
     <div
@@ -40,8 +43,7 @@ export function MapPlacePreview({
 
       {loading && !shown ? (
         <div className="map-place-preview__body">
-          <p className="map-place-preview__eyebrow">Google Maps</p>
-          <h2 className="map-place-preview__title">Đang tải thông tin…</h2>
+          <ContentSkeleton compact count={1} label="Đang tải thông tin địa điểm…" />
         </div>
       ) : shown ? (
         <div className="map-place-preview__body">

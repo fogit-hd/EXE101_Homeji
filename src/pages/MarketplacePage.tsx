@@ -16,6 +16,7 @@ import {
   getMyWalletWithdrawals,
   getStoredSession,
   markMarketplacePostSold,
+  markMarketplaceOrderDelivered,
   rejectMarketplaceOrder,
   searchMarketplacePosts,
   createWalletWithdrawal,
@@ -100,6 +101,7 @@ type MarketplaceCartItem = {
 }
 
 type OrderView = 'buying' | 'selling'
+type WalletView = 'topup' | 'withdraw' | 'history'
 
 type MarketplaceOrderGroup = {
   groupKey: string
@@ -118,9 +120,14 @@ type MarketplaceOrderGroup = {
 const TERMINAL_ORDER_STATUSES = new Set<number>([
   MarketplaceOrderStatus.Rejected,
   MarketplaceOrderStatus.Cancelled,
-  MarketplaceOrderStatus.Completed,
   MarketplaceOrderStatus.Expired,
 ])
+
+function isHistoricalOrderGroup(group: MarketplaceOrderGroup): boolean {
+  if (TERMINAL_ORDER_STATUSES.has(group.status)) return true
+  return group.status === MarketplaceOrderStatus.Completed
+    && group.orders.every((order) => Boolean(order.fundsReleasedAt))
+}
 
 function formatOrderEta(group: MarketplaceOrderGroup): string {
   if (group.status === MarketplaceOrderStatus.Requested) {
@@ -129,6 +136,15 @@ function formatOrderEta(group: MarketplaceOrderGroup): string {
     return remainingMinutes > 0
       ? `Người bán còn ${remainingMinutes} phút để xác nhận`
       : 'Đang kiểm tra thời hạn xác nhận'
+  }
+
+  if (group.status === MarketplaceOrderStatus.Delivered
+      || (group.status === MarketplaceOrderStatus.Completed
+        && group.orders.some((order) => !order.fundsReleasedAt))) {
+    const releaseDueAt = group.orders[0]?.fundsReleaseDueAt
+    return releaseDueAt
+      ? `Tự giải ngân lúc ${formatDate(releaseDueAt)}`
+      : 'Tiền đang được giữ trong 24 giờ'
   }
 
   const pickupAt = new Date(group.pickupAt)
@@ -141,7 +157,8 @@ function formatOrderEta(group: MarketplaceOrderGroup): string {
 }
 
 function orderProgressStep(status: MarketplaceOrder['status']): number {
-  if (status === MarketplaceOrderStatus.Completed) return 3
+  if (status === MarketplaceOrderStatus.Completed) return 4
+  if (status === MarketplaceOrderStatus.Delivered) return 3
   if (status === MarketplaceOrderStatus.Accepted) return 2
   return 1
 }
@@ -256,6 +273,7 @@ export function MarketplacePage({
   )
   const handledMarketplaceSelectionRef = useRef<string | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
+  const [walletView, setWalletView] = useState<WalletView>('topup')
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [withdrawalsUnavailable, setWithdrawalsUnavailable] = useState(false)
@@ -933,10 +951,10 @@ export function MarketplacePage({
     ? sellingOrderGroups
     : buyingOrderGroups
   const activeOrderGroups = selectedOrderGroups.filter(
-    (group) => !TERMINAL_ORDER_STATUSES.has(group.status),
+    (group) => !isHistoricalOrderGroup(group),
   )
   const historicalOrderGroups = selectedOrderGroups.filter(
-    (group) => TERMINAL_ORDER_STATUSES.has(group.status),
+    isHistoricalOrderGroup,
   )
 
   const handleOrderGroupAction = async (
@@ -1104,7 +1122,7 @@ export function MarketplacePage({
         disrupted ? (
           <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
         ) : (
-          <MarketplaceLoadingSkeleton tab={tab} />
+          <MarketplaceLoadingSkeleton tab={tab} walletView={walletView} />
         )
       ) : tab === 'sell' ? (
         <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
@@ -1354,7 +1372,52 @@ export function MarketplacePage({
             </div>
           </section>
 
-          <section className="wallet-topup card">
+          <div className="wallet-subtabs" role="tablist" aria-label="Quản lý số dư">
+            <button
+              type="button"
+              role="tab"
+              id="wallet-tab-topup"
+              aria-selected={walletView === 'topup'}
+              aria-controls="wallet-panel-topup"
+              className={walletView === 'topup' ? 'is-active' : ''}
+              onClick={() => setWalletView('topup')}
+            >
+              <strong>Nạp tiền</strong>
+              <small>MoMo hoặc PayOS</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="wallet-tab-withdraw"
+              aria-selected={walletView === 'withdraw'}
+              aria-controls="wallet-panel-withdraw"
+              className={walletView === 'withdraw' ? 'is-active' : ''}
+              onClick={() => setWalletView('withdraw')}
+            >
+              <strong>Rút tiền</strong>
+              <small>Về tài khoản ngân hàng</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="wallet-tab-history"
+              aria-selected={walletView === 'history'}
+              aria-controls="wallet-panel-history"
+              className={walletView === 'history' ? 'is-active' : ''}
+              onClick={() => setWalletView('history')}
+            >
+              <strong>Lịch sử giao dịch</strong>
+              <small>Theo dõi biến động số dư</small>
+            </button>
+          </div>
+
+          {walletView === 'topup' ? (
+          <section
+            className="wallet-topup card"
+            id="wallet-panel-topup"
+            role="tabpanel"
+            aria-labelledby="wallet-tab-topup"
+          >
             <div className="wallet-section-head">
               <div>
                 <h3>Nạp Số dư Homeji</h3>
@@ -1405,8 +1468,15 @@ export function MarketplacePage({
               </button>
             </div>
           </section>
+          ) : null}
 
-          <section className="wallet-withdraw card">
+          {walletView === 'withdraw' ? (
+          <section
+            className="wallet-withdraw card"
+            id="wallet-panel-withdraw"
+            role="tabpanel"
+            aria-labelledby="wallet-tab-withdraw"
+          >
             <div className="wallet-section-head">
               <div>
                 <h3>Rút tiền về tài khoản cá nhân</h3>
@@ -1493,8 +1563,15 @@ export function MarketplacePage({
               )}
             </div>
           </section>
+          ) : null}
 
-          <section className="wallet-history card">
+          {walletView === 'history' ? (
+          <section
+            className="wallet-history card"
+            id="wallet-panel-history"
+            role="tabpanel"
+            aria-labelledby="wallet-tab-history"
+          >
             <div className="wallet-section-head"><h3>Lịch sử số dư</h3></div>
             {displayedWalletTransactions.length === 0 ? (
               <p className="marketplace-tab-hint">Chưa có giao dịch số dư.</p>
@@ -1515,6 +1592,7 @@ export function MarketplacePage({
               </ul>
             )}
           </section>
+          ) : null}
         </div>
       ) : tab === 'orders' ? (
         <div className="marketplace-orders-dashboard">
@@ -1563,6 +1641,9 @@ export function MarketplacePage({
                 const firstOrder = group.orders[0]
                 const requested = group.status === MarketplaceOrderStatus.Requested
                 const accepted = group.status === MarketplaceOrderStatus.Accepted
+                const delivered = group.status === MarketplaceOrderStatus.Delivered
+                const completedAwaitingRelease = group.status === MarketplaceOrderStatus.Completed
+                  && group.orders.some((order) => !order.fundsReleasedAt)
                 const busy = orderGroupBusy === group.groupKey
                 const progressStep = orderProgressStep(group.status)
 
@@ -1583,8 +1664,8 @@ export function MarketplacePage({
                     </header>
 
                     {group.isBuyer ? (
-                      <div className="marketplace-order-progress" aria-label={`Tiến trình đơn hàng: bước ${progressStep} trên 3`}>
-                        {['Đã đặt', 'Bếp xác nhận', 'Đã nhận món'].map((label, index) => {
+                      <div className="marketplace-order-progress" aria-label={`Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
+                        {['Đã đặt', 'Bếp xác nhận', 'Đã giao', 'Hoàn tất'].map((label, index) => {
                           const step = index + 1
                           const state = step < progressStep ? 'is-done' : step === progressStep ? 'is-current' : ''
                           return (
@@ -1636,7 +1717,7 @@ export function MarketplacePage({
                       </div>
                     ) : null}
 
-                    {firstOrder && (requested || accepted) ? (
+                    {firstOrder && (requested || accepted || delivered || completedAwaitingRelease) ? (
                       <footer className="marketplace-order-group__actions">
                         {requested && group.isSeller ? (
                           <>
@@ -1684,6 +1765,23 @@ export function MarketplacePage({
                           </button>
                         ) : null}
                         {accepted && group.isBuyer ? (
+                          <p className="marketplace-card__info">Người bán đang chuẩn bị đơn. Bạn sẽ xác nhận sau khi người bán báo đã giao.</p>
+                        ) : null}
+                        {accepted && group.isSeller ? (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={busy}
+                            onClick={() => void handleOrderGroupAction(
+                              group.groupKey,
+                              () => markMarketplaceOrderDelivered(firstOrder.id),
+                              'Đã báo giao toàn bộ đơn. Tiền bắt đầu được giữ trong 24 giờ.',
+                            )}
+                          >
+                            {busy ? 'Đang xử lý…' : 'Đã giao đủ món'}
+                          </button>
+                        ) : null}
+                        {delivered && group.isBuyer ? (
                           <button
                             type="button"
                             className="btn btn-primary btn-sm"
@@ -1691,14 +1789,24 @@ export function MarketplacePage({
                             onClick={() => void handleOrderGroupAction(
                               group.groupKey,
                               () => completeMarketplaceOrder(firstOrder.id),
-                              'Đã hoàn tất toàn bộ đơn hàng.',
+                              'Đã xác nhận nhận hàng. Tiền vẫn được giữ đủ 24 giờ trước khi về ví người bán.',
                             )}
                           >
                             {busy ? 'Đang xử lý…' : 'Đã nhận đủ món'}
                           </button>
                         ) : null}
-                        {accepted && group.isSeller ? (
-                          <p className="marketplace-card__info">Đơn đã nhận. Chờ người mua xác nhận để tiền về ví.</p>
+                        {delivered && group.isSeller ? (
+                          <p className="marketplace-card__info">
+                            Tiền đang được giữ 24 giờ và sẽ tự về ví lúc{' '}
+                            <strong>{formatDate(firstOrder.fundsReleaseDueAt ?? firstOrder.updatedAt)}</strong>.
+                          </p>
+                        ) : null}
+                        {completedAwaitingRelease ? (
+                          <p className="marketplace-card__info">
+                            Người mua đã xác nhận. Tiền vẫn được giữ đến{' '}
+                            <strong>{formatDate(firstOrder.fundsReleaseDueAt ?? firstOrder.updatedAt)}</strong>{' '}
+                            rồi tự động về ví người bán.
+                          </p>
                         ) : null}
                       </footer>
                     ) : null}

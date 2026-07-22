@@ -19,6 +19,7 @@ import {
 } from '../api'
 import { LandlordVerificationStatus, ReportStatus, WalletWithdrawalStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import {
@@ -158,10 +159,9 @@ export function AdminModerationPage() {
       {message && <div className="alert alert-success">{message}</div>}
 
       {showLoader ? (
-        <HomejiLoader
-          onIntroComplete={onIntroComplete}
-          message={disrupted ? loadError : undefined}
-        />
+        disrupted
+          ? <HomejiLoader onIntroComplete={onIntroComplete} message={loadError} />
+          : <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu kiểm duyệt…" />
       ) : (
         <>
       <div className="tabs">

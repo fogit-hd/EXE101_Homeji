@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { formatActivityDisplay } from '../lib/activityDisplay'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
 
@@ -47,7 +48,9 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
       {error && !disrupted && <div className="alert alert-error">{error}</div>}
 
       {showLoader ? (
-        <HomejiLoader onIntroComplete={onIntroComplete} message={disrupted ? error : undefined} />
+        disrupted
+          ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
+          : <ContentSkeleton variant="list" label="Đang tải nhật ký hoạt động…" />
       ) : items.length === 0 ? (
         <div className="empty-state card">Chưa có nhật ký hoạt động.</div>
       ) : (

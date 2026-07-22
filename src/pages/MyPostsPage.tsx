@@ -8,6 +8,7 @@ import {
 } from '../api'
 import { RentalPostStatus, RentalPostType } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { getErrorMessage } from '../lib/errors'
 import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/labels'
 
@@ -83,7 +84,9 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       {showLoader ? (
-        <HomejiLoader onIntroComplete={onIntroComplete} message={disrupted ? error : undefined} />
+        disrupted
+          ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
+          : <ContentSkeleton variant="dashboard" label="Đang tải tin đã đăng…" />
       ) : (
         <>
           {stats ? (

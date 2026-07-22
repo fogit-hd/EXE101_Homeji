@@ -14,7 +14,8 @@ import {
   SmokingPreference,
   UserRole,
 } from '../api/types'
-import { HomejiLoader, useHomejiLoading } from '../components/HomejiLoader'
+import { useHomejiLoading } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { MapToast } from '../components/map/MapToast'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -79,7 +80,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const profileLoading = !profile && !needsProfileSetup
-  const { showLoader, onIntroComplete } = useHomejiLoading(profileLoading)
+  const { showLoader } = useHomejiLoading(profileLoading)
 
   const showVerifyTab = role === UserRole.Landlord || profile?.role === UserRole.Landlord
   const verifyStatus =
@@ -253,11 +254,9 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   if (showLoader) {
     return (
-      <HomejiLoader
-        fullPage={!embedded}
-        label="Đang tải hồ sơ..."
-        onIntroComplete={onIntroComplete}
-      />
+      <main className={embedded ? 'map-embed' : 'container page'}>
+        <ContentSkeleton variant="profile" label="Đang tải hồ sơ…" />
+      </main>
     )
   }
 

@@ -13,7 +13,7 @@ import {
 } from '@googlemaps/markerclusterer'
 import type { RentalPostSummary } from '../../api/types'
 import { RentalPostType } from '../../api/types'
-import { HomejiLoader } from '../HomejiLoader'
+import { ContentSkeleton } from '../ContentSkeleton'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
@@ -1235,7 +1235,7 @@ function RentalMapComponent({
 
       {!mapReady ? (
         <div className="rental-map__loader" aria-hidden>
-          <HomejiLoader label="Đang tải bản đồ..." />
+          <ContentSkeleton compact variant="detail" label="Đang tải bản đồ…" />
         </div>
       ) : null}
 

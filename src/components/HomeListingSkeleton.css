@@ -1,14 +1,28 @@
 .home-listing-skeleton {
+  position: relative;
   display: flex;
+  overflow: hidden;
   flex-direction: column;
   gap: 16px;
+  isolation: isolate;
+}
+
+.home-listing-skeleton::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 25%, color-mix(in srgb, var(--text-heading) 7%, transparent) 48%, transparent 70%);
+  transform: translateX(-110%);
+  animation: home-skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
 .home-listing-skeleton__card {
   display: flex;
   gap: 16px;
   background: var(--surface-elevated);
-  border: 1px solid #e6eaed;
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   min-height: 120px;
@@ -55,18 +69,11 @@
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #eef1f3 0%, #f7f8f9 45%, #eef1f3 100%);
-  background-size: 200% 100%;
-  animation: home-skeleton-shimmer 1.35s ease-in-out infinite;
+  background: color-mix(in srgb, var(--text-secondary) 13%, var(--surface-input));
 }
 
 @keyframes home-skeleton-shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+  to { transform: translateX(110%); }
 }
 
 @media (max-width: 768px) {
@@ -85,7 +92,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shimmer {
+  .home-listing-skeleton::after {
     animation: none;
   }
 }

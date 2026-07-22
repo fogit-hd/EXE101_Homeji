@@ -21,6 +21,7 @@ import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { type MapPlaceDetails } from '../../lib/mapPlace'
 import { streetViewStaticUrl } from '../../lib/mapStaticMedia'
 import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
+import { ContentSkeleton } from '../ContentSkeleton'
 import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
 
@@ -636,7 +637,7 @@ export function MapPlaceDetailPanel({
       </div>
 
       <div className={`map-detail-panel__content map-detail-panel__body--${tabPhase}`} role="tabpanel">
-          {loading ? <p className="map-detail-panel__loading">Đang tải thông tin…</p> : null}
+          {loading ? <ContentSkeleton compact variant="detail" label="Đang tải thông tin địa điểm…" /> : null}
 
           {!loading && tab === 'overview' && isListing && post ? (
             <div className="map-detail-panel__section">
@@ -733,7 +734,7 @@ export function MapPlaceDetailPanel({
           {!loading && tab === 'reviews' && isListing ? (
             <div className="map-detail-panel__section map-detail-reviews">
               {reviewsLoading ? (
-                <p className="map-detail-panel__loading">Đang tải đánh giá…</p>
+                <ContentSkeleton compact count={3} label="Đang tải đánh giá…" />
               ) : (
                 <>
                   <div className="map-detail-reviews__summary">

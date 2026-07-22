@@ -6,6 +6,7 @@ import {
   type Notification,
 } from '../api'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
 import { NotificationType } from '../api/types'
 import './MarketplacePage.css'
@@ -124,10 +125,9 @@ export function NotificationsPage({
       {error && !disrupted && <div className="alert alert-error">{error}</div>}
 
       {showLoader ? (
-        <HomejiLoader
-          onIntroComplete={onIntroComplete}
-          message={disrupted ? error : undefined}
-        />
+        disrupted
+          ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
+          : <ContentSkeleton variant="list" label="Đang tải thông báo…" />
       ) : notifications.length === 0 ? (
         <div className="empty-state card">Không có thông báo.</div>
       ) : (

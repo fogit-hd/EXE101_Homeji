@@ -7,7 +7,8 @@ import {
   type AiHighlightResponse,
   type RentalPostSummary,
 } from '../api'
-import { HomejiLoader, SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
+import { SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { AuthenticatedHomeMapShell } from '../components/map/AuthenticatedHomeMapShell'
 import type { HomeMapFocus } from '../components/map/HomeMapStage'
 import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
@@ -706,7 +707,7 @@ function HomePageComponent() {
   )
 
   if (authGate.showLoader) {
-    return <HomejiLoader fullPage onIntroComplete={authGate.onIntroComplete} />
+    return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang mở Homeji…" /></main>
   }
 
   if (!isAuthenticated) {

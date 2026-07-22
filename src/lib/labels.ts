@@ -158,6 +158,7 @@ export const marketplaceOrderStatusLabel: Record<number, string> = {
   [MarketplaceOrderStatus.Cancelled]: 'Đã hủy',
   [MarketplaceOrderStatus.Completed]: 'Hoàn tất',
   [MarketplaceOrderStatus.Expired]: 'Hết hạn',
+  [MarketplaceOrderStatus.Delivered]: 'Đã giao',
 }
 
 export const wantedPostStatusLabel: Record<number, string> = {

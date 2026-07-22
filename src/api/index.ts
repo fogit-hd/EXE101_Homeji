@@ -505,6 +505,9 @@ export const cancelMarketplaceOrder = (id: string) =>
 export const completeMarketplaceOrder = (id: string) =>
   apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/complete`, { method: 'POST' })
 
+export const markMarketplaceOrderDelivered = (id: string) =>
+  apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/delivered`, { method: 'POST' })
+
 export const startMarketplaceConversation = (postId: string) =>
   apiRequest<PostConversation>(`/api/conversations/marketplace-posts/${postId}`, { method: 'POST' })
 

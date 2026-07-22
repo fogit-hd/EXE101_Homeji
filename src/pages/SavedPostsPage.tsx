@@ -9,6 +9,7 @@ import {
 } from '../api'
 import { RentalPostType, UserRole } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -86,10 +87,9 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
       {actionMsg ? <div className="alert alert-success">{actionMsg}</div> : null}
 
       {showLoader ? (
-        <HomejiLoader
-          onIntroComplete={onIntroComplete}
-          message={disrupted ? error : undefined}
-        />
+        disrupted
+          ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
+          : <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
       ) : posts.length === 0 ? (
         <div className="empty-state card">Chưa có tin nào được lưu.</div>
       ) : (
@@ -113,7 +113,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
                   </button>
                   {candidatesFor === post.id ? (
                     candLoading ? (
-                      <p className="map-appointments__empty">Đang tải gợi ý…</p>
+                      <ContentSkeleton compact count={2} label="Đang tải gợi ý người ở ghép…" />
                     ) : candidates.length === 0 ? (
                       <p className="map-appointments__empty">Chưa có ứng viên phù hợp.</p>
                     ) : (

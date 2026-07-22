@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 
 /**
  * Map explore is now embedded on the guest landing (`/#map`).
@@ -8,7 +9,13 @@ import { useAuth } from '../contexts/AuthContext'
 export function ExplorePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
 
-  if (authLoading) return null
+  if (authLoading) {
+    return (
+      <main className="container page">
+        <ContentSkeleton variant="detail" label="Đang mở bản đồ Homeji…" />
+      </main>
+    )
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />
