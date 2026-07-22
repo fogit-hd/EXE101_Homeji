@@ -7,6 +7,7 @@ import {
   getAdminLandlordVerifications,
   getAdminActiveUsers,
   terminateAdminUserSession,
+  sendMaintenanceAnnouncement,
   getAdminReports,
   getPendingRentalPosts,
   rejectRentalPost,
@@ -48,7 +49,7 @@ export function AdminModerationPage() {
   const [verifications, setVerifications] = useState<LandlordVerification[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [activeUsers, setActiveUsers] = useState<AdminActiveUser[]>([])
-  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active'>('posts')
+  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('posts')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
@@ -59,6 +60,11 @@ export function AdminModerationPage() {
   const [terminationTargetId, setTerminationTargetId] = useState<string | null>(null)
   const [terminationReasons, setTerminationReasons] = useState<Record<string, string>>({})
   const [terminatingUserId, setTerminatingUserId] = useState<string | null>(null)
+  const [maintenanceTitle, setMaintenanceTitle] = useState('Bảo trì hệ thống Homeji')
+  const [maintenanceMessage, setMaintenanceMessage] = useState('')
+  const [maintenanceStart, setMaintenanceStart] = useState('')
+  const [maintenanceEnd, setMaintenanceEnd] = useState('')
+  const [sendingMaintenance, setSendingMaintenance] = useState(false)
 
   const loadFn = useCallback(async () => {
     const [posts, reportList, verificationList, withdrawalList, activeUserList] = await Promise.all([
@@ -113,6 +119,28 @@ export function AdminModerationPage() {
       setError(getErrorMessage(err, 'Không thể kết thúc phiên đăng nhập'))
     } finally {
       setTerminatingUserId(null)
+    }
+  }
+
+  const handleSendMaintenance = async () => {
+    if (!maintenanceMessage.trim()) {
+      setError('Vui lòng nhập nội dung bảo trì để người dùng biết cần chuẩn bị gì.')
+      return
+    }
+    setSendingMaintenance(true)
+    try {
+      const result = await sendMaintenanceAnnouncement({
+        title: maintenanceTitle.trim() || undefined,
+        message: maintenanceMessage.trim(),
+        scheduledStartAt: maintenanceStart ? new Date(maintenanceStart).toISOString() : undefined,
+        scheduledEndAt: maintenanceEnd ? new Date(maintenanceEnd).toISOString() : undefined,
+      })
+      setMessage(`Đã gửi thông báo bảo trì đến ${result.recipientCount.toLocaleString('vi-VN')} tài khoản (${result.onlineRecipientCount.toLocaleString('vi-VN')} đang online).`)
+      setMaintenanceMessage('')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể gửi thông báo bảo trì'))
+    } finally {
+      setSendingMaintenance(false)
     }
   }
 
@@ -249,7 +277,44 @@ export function AdminModerationPage() {
         <button type="button" className={`tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>
           Đang hoạt động ({activeUsers.filter((user) => user.isOnline).length})
         </button>
+        <button type="button" className={`tab ${tab === 'maintenance' ? 'active' : ''}`} onClick={() => setTab('maintenance')}>
+          Bảo trì
+        </button>
       </div>
+
+      {tab === 'maintenance' && (
+        <section className="admin-maintenance-card card" aria-labelledby="maintenance-heading">
+          <div className="admin-maintenance-intro">
+            <span className="admin-maintenance-icon" aria-hidden>⚡</span>
+            <div>
+              <h2 id="maintenance-heading">Thông báo bảo trì toàn hệ thống</h2>
+              <p>Gửi vào hộp thông báo của tất cả tài khoản và hiện ngay cho người đang online.</p>
+            </div>
+          </div>
+          <div className="admin-maintenance-form">
+            <label className="form-label" htmlFor="maintenance-title">Tiêu đề</label>
+            <input id="maintenance-title" className="form-input" maxLength={200} value={maintenanceTitle} onChange={(event) => setMaintenanceTitle(event.target.value)} />
+            <label className="form-label" htmlFor="maintenance-message">Nội dung thông báo</label>
+            <textarea id="maintenance-message" className="form-textarea" maxLength={1000} rows={5} placeholder="Ví dụ: Homeji bảo trì từ 23:00 đến 23:30. Bạn vẫn có thể xem tin đã tải trước đó." value={maintenanceMessage} onChange={(event) => setMaintenanceMessage(event.target.value)} />
+            <div className="admin-maintenance-schedule">
+              <div>
+                <label className="form-label" htmlFor="maintenance-start">Bắt đầu dự kiến</label>
+                <input id="maintenance-start" className="form-input" type="datetime-local" value={maintenanceStart} onChange={(event) => setMaintenanceStart(event.target.value)} />
+              </div>
+              <div>
+                <label className="form-label" htmlFor="maintenance-end">Kết thúc dự kiến</label>
+                <input id="maintenance-end" className="form-input" type="datetime-local" value={maintenanceEnd} onChange={(event) => setMaintenanceEnd(event.target.value)} />
+              </div>
+            </div>
+            <div className="admin-maintenance-footer">
+              <small>Thông báo được lưu lại để người offline đọc sau khi đăng nhập.</small>
+              <button type="button" className="btn btn-primary" disabled={sendingMaintenance} onClick={() => void handleSendMaintenance()}>
+                {sendingMaintenance ? 'Đang gửi…' : 'Gửi đến toàn bộ user'}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {tab === 'active' && (
         <div className="admin-list admin-presence-list">
