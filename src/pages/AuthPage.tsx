@@ -1,7 +1,8 @@
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import gsap from 'gsap'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { checkEmail, getApiBaseUrl, isEmailTaken } from '../api'
+import { checkEmail, isEmailTaken, googleLoginWithIdToken } from '../api'
 import { consumeSessionTerminationMessage } from '../api/authSession'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -280,7 +281,7 @@ function VoiceParkSlot({
 }
 
 export function AuthPage({ initialMode }: AuthPageProps) {
-  const { login, register, isAuthenticated, isLoading } = useAuth()
+  const { login, register, isAuthenticated, isLoading, setSessionFromAuth } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/'
@@ -977,10 +978,22 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     }
   }
 
-  const handleGoogleLogin = () => {
-    const redirectTo = `${window.location.origin}/auth/callback`
-    const base = getApiBaseUrl()
-    window.location.href = `${base}/api/account/google/redirect?redirectTo=${encodeURIComponent(redirectTo)}`
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setError('Không nhận được token từ Google.')
+      return
+    }
+    setError('')
+    setSubmitting(true)
+    try {
+      const session = await googleLoginWithIdToken({ idToken: credentialResponse.credential })
+      await setSessionFromAuth(session)
+      navigate(mode === 'signin' ? from : '/', { replace: true })
+    } catch (err) {
+      setError(getErrorMessage(err, 'Đăng nhập Google thất bại'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const onContext1Done = useCallback(() => {
@@ -1689,9 +1702,17 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                     </button>
                   </form>
                   <div className="auth-cinema__divider">hoặc</div>
-                  <button type="button" className="auth-cinema__google" onClick={handleGoogleLogin}>
-                    Đăng nhập với Google
-                  </button>
+                  <div className="auth-modal__google-wrap">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => setError('Đăng nhập Google thất bại')}
+                      shape="rectangular"
+                      theme="outline"
+                      size="large"
+                      text="signin_with"
+                      width="100%"
+                    />
+                  </div>
                   <p className="auth-cinema__footer">
                     Chưa có tài khoản?{' '}
                     <button type="button" disabled={toggleLocked} onClick={() => switchMode('signup')}>

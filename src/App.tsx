@@ -1,3 +1,4 @@
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { AppLayout } from './components/layout/AppLayout'
@@ -72,20 +73,22 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
-      <ThemeSync />
-      <NetworkStatusProvider>
-        <GoogleMapsProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <AuthModalProvider>
-                <ErrorBoundary reloadOnRetry>
-                  <AppRoutes />
-                </ErrorBoundary>
-              </AuthModalProvider>
-            </BrowserRouter>
-          </AuthProvider>
-        </GoogleMapsProvider>
-      </NetworkStatusProvider>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+        <ThemeSync />
+        <NetworkStatusProvider>
+          <GoogleMapsProvider>
+            <AuthProvider>
+              <BrowserRouter>
+                <AuthModalProvider>
+                  <ErrorBoundary reloadOnRetry>
+                    <AppRoutes />
+                  </ErrorBoundary>
+                </AuthModalProvider>
+              </BrowserRouter>
+            </AuthProvider>
+          </GoogleMapsProvider>
+        </NetworkStatusProvider>
+      </GoogleOAuthProvider>
     </ErrorBoundary>
   )
 }

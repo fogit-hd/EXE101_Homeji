@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getApiBaseUrl } from '../../api'
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
+import { googleLoginWithIdToken } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthModalIntent, AuthModalMode } from '../../contexts/AuthModalContext'
 import { getErrorMessage } from '../../lib/errors'
@@ -111,10 +112,24 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
     }
   }
 
-  const handleGoogleLogin = () => {
-    const redirectTo = `${window.location.origin}/auth/callback`
-    const base = getApiBaseUrl()
-    window.location.href = `${base}/api/account/google/redirect?redirectTo=${encodeURIComponent(redirectTo)}`
+  const { setSessionFromAuth } = useAuth()
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setError('Không nhận được token từ Google.')
+      return
+    }
+    setError('')
+    setSubmitting(true)
+    try {
+      const session = await googleLoginWithIdToken({ idToken: credentialResponse.credential })
+      await setSessionFromAuth(session)
+      onSuccess()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Đăng nhập Google thất bại'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -173,9 +188,17 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
               </button>
             </form>
             <div className="auth-modal__divider">hoặc</div>
-            <button type="button" className="btn btn-secondary auth-modal__google" onClick={handleGoogleLogin}>
-              Đăng nhập với Google
-            </button>
+            <div className="auth-modal__google-wrap">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Đăng nhập Google thất bại')}
+                shape="rectangular"
+                theme="outline"
+                size="large"
+                text="signin_with"
+                width="100%"
+              />
+            </div>
             <p className="auth-modal__footer">
               Chưa có tài khoản?{' '}
               <button type="button" onClick={() => onModeChange('register')}>

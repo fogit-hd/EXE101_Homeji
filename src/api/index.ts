@@ -82,6 +82,9 @@ export const resetPassword = (data: { accessToken: string; newPassword: string }
 export const getGoogleLoginUrl = (redirectTo?: string) =>
   apiRequest<AuthUrl>('/api/account/google/url', { auth: false, params: { redirectTo } })
 
+export const googleLoginWithIdToken = (data: { idToken: string }) =>
+  apiRequest<AuthSession>('/api/account/google/id-token', { method: 'POST', body: data, auth: false })
+
 export const checkEmail = (data: { email: string }) =>
   apiRequest<EmailAvailabilityResult>('/api/account/email-availability', {
     method: 'GET',
