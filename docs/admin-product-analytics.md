@@ -24,8 +24,9 @@ The API returns aggregate totals, dates, and area summaries, not customer identi
 - Area demand uses period views/saves/requests for currently Active rental IDs only.
 - Area prices are not adjusted for room quality or amenities. Signals do not establish causation.
 - Areas are inferred from address text; centroids are averages of valid listing coordinates.
-  Only the top 20 demand-ranked areas appear. Duplicate administrative names may require
-  structured geographic IDs in a future data model.
+  Only the top 20 demand-ranked areas appear. Ward labels retain their administrative suffix
+  to avoid merging identically named wards in different cities. Structured geographic IDs
+  remain preferable to parsing free-text addresses.
 
 ## Decision safeguards
 
@@ -42,14 +43,22 @@ All price actions are controlled-experiment suggestions; no write endpoint is in
 
 - Frontend TypeScript + production build pass.
 - Scoped ESLint on dashboard, Admin page, and API files passes.
-- Backend application unit suite: 98 pass, including price signals, zero period interaction,
+- Backend application unit suite: 99 pass, including price signals, zero period interaction,
   invalid coordinates, inactive request exclusion, timezone boundaries, role rejection,
   and invalid period rejection before analytics reads.
 - API integration suite: 47 pass, including unauthenticated analytics rejection and
   architectural boundaries.
 - Frontend source-contract checks: 4 pass; these are structural checks, not browser tests.
-- Pending: deployed endpoint against real data, authenticated Admin rendering and range
-  interactions, mobile layout, and customer's Admin permissions choice.
+- Production authenticated Admin overview verified: API data renders, 7/30/90-day controls
+  work, daily chart switches to views, selecting an area updates the decision card.
+  The default approximately 699px viewport and a temporary 1440px desktop viewport were inspected.
+- Production customer-map link works. Nearby food and cafe categories return Google Places
+  results in a separate amber right panel while preserving the selected rental on the left.
+- Production contains demo/seed listings and activity. Dashboard counts reflect stored data,
+  not a clean market research dataset; verify provenance before commercial decisions.
+- Evidence: `output/verification/admin_dashboard_90_days.jpg` and
+  `output/verification/nearby_food_right_panel.jpg` (local, not committed).
+- Pending: user's Admin permissions choice; final deployment of the area-context fix.
 
 ## Operational constraints
 

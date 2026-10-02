@@ -93,7 +93,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
         <div>
           <span className="admin-analytics__eyebrow">Bảng điều hành sản phẩm</span>
           <h2>Nhu cầu, nguồn cung và tín hiệu giá theo khu vực</h2>
-          <p>Dữ liệu thật từ hành vi tìm phòng, lượt lưu và lịch xem; không phải dự báo do AI tự sinh.</p>
+          <p>Dữ liệu từ hệ thống Homeji, không phải dự báo do AI tự sinh. Có thể bao gồm tin mẫu và hoạt động kiểm thử; cần đối soát trước quyết định kinh doanh.</p>
         </div>
         <div className="admin-analytics__range" role="group" aria-label="Khoảng thời gian phân tích">
           {[7, 30, 90].map((range) => (
