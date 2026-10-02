@@ -1,11 +1,13 @@
 import { useEffect, useId, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
+import type { CredentialResponse } from '@react-oauth/google'
+import { GoogleSignInButton } from './GoogleSignInButton'
 import { googleLoginWithIdToken } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthModalIntent, AuthModalMode } from '../../contexts/AuthModalContext'
 import { PageNotice } from '../toast/PageNotice'
 import { getErrorMessage } from '../../lib/errors'
+import { googleOAuthClientId } from '../../lib/googleOAuthClient'
 import {
   normalizeEmail,
   normalizeFullName,
@@ -44,7 +46,7 @@ function intentCopy(intent: AuthModalIntent | null): string | null {
 }
 
 export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess }: Props) {
-  const { login, register } = useAuth()
+  const { login, register, setSessionFromAuth } = useAuth()
   const titleId = useId()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -112,8 +114,6 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
       setSubmitting(false)
     }
   }
-
-  const { setSessionFromAuth } = useAuth()
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
@@ -188,18 +188,17 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
                 {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
             </form>
-            <div className="auth-modal__divider">hoặc</div>
-            <div className="auth-modal__google-wrap">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Đăng nhập Google thất bại')}
-                shape="rectangular"
-                theme="outline"
-                size="large"
-                text="signin_with"
-                width="100%"
-              />
-            </div>
+            {googleOAuthClientId ? (
+              <>
+                <div className="auth-modal__divider">hoặc</div>
+                <div className="auth-modal__google-wrap">
+                  <GoogleSignInButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError('Đăng nhập Google thất bại')}
+                  />
+                </div>
+              </>
+            ) : null}
             <p className="auth-modal__footer">
               Chưa có tài khoản?{' '}
               <button type="button" onClick={() => onModeChange('register')}>

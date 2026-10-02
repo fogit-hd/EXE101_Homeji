@@ -1475,6 +1475,55 @@
   border-color: color-mix(in srgb, var(--grab-green, #00b14f) 22%, var(--border));
 }
 
+.marketplace-order-group.is-purchase-focus {
+  border-color: var(--grab-green, #00b14f);
+  scroll-margin-top: 12px;
+}
+
+.marketplace-purchase-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--grab-green, #00b14f) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 8%, var(--surface-elevated));
+}
+
+.marketplace-purchase-receipt p {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 0.9rem;
+}
+
+.marketplace-purchase-sources {
+  display: grid;
+  gap: 18px;
+}
+
+.marketplace-purchase-source h3 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+  color: var(--text-heading);
+  font-size: 0.95rem;
+}
+
+.marketplace-purchase-source h3 span,
+.marketplace-purchase-source > p {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.marketplace-purchase-source > p {
+  margin: 0;
+}
+
 .marketplace-order-status-pill {
   flex: 0 0 auto;
   margin: 0 !important;
@@ -1489,15 +1538,20 @@
 }
 
 .marketplace-order-progress {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
   padding: 18px 16px 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
 
 .marketplace-order-progress > div {
   position: relative;
   display: grid;
+  flex: 1 0 7.75rem;
   justify-items: center;
+  min-width: 7.75rem;
   gap: 6px;
   color: var(--text-secondary);
   text-align: center;
@@ -1543,6 +1597,8 @@
 .marketplace-order-progress strong {
   font-size: 0.72rem;
   font-weight: 750;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .marketplace-order-progress .is-current strong,

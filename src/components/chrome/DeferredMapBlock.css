@@ -1,0 +1,6 @@
+.deferred-map-block {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  isolation: isolate;
+}

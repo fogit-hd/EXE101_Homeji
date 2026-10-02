@@ -1,0 +1,135 @@
+.map-explore-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 0 0 13px;
+  border: 0;
+  border-bottom: 1px solid var(--hj-border, #d8cdbb);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.map-explore-card:focus-visible {
+  outline: 2px solid var(--hj-accent, #e65c3a);
+  outline-offset: 3px;
+}
+
+.map-explore-card.is-active,
+.map-explore-card.is-highlighted {
+  background: color-mix(in srgb, var(--hj-accent, #e65c3a) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hj-accent, #e65c3a) 35%, transparent);
+  padding: 8px 8px 13px;
+  margin: 0 -8px;
+  width: calc(100% + 16px);
+}
+
+.map-explore-card__row {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  min-height: 94px;
+}
+
+.map-explore-card__thumb {
+  position: relative;
+  flex: 0 0 118px;
+  width: 118px;
+  height: 94px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--hj-border, #d8cdbb);
+}
+
+.map-explore-card__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map-explore-card__thumb-empty {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e8dcc8, #f3ebdd);
+}
+
+.map-explore-card__info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.map-explore-card__price-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.map-explore-card__price {
+  margin: 0;
+  font: 400 14px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  color: var(--hj-ink, #18231d);
+  white-space: nowrap;
+}
+
+.map-explore-card__save {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: -6px -4px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.map-explore-card__save:focus-visible {
+  outline: 2px solid var(--hj-accent, #e65c3a);
+  outline-offset: 2px;
+}
+
+.map-explore-card__save:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.map-explore-card__save img {
+  display: block;
+  width: 15px;
+  height: 15px;
+}
+
+.map-explore-card__title {
+  margin: 0;
+  font: 400 12px/1.3 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  color: var(--hj-ink, #18231d);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.map-explore-card__district {
+  margin: 0;
+  font: 400 10px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  color: var(--hj-accent, #e65c3a);
+  white-space: nowrap;
+}
+
+.map-explore-card__meta {
+  margin: 0;
+  font: 400 10px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  color: var(--hj-muted, #756f64);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

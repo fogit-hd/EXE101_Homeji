@@ -1,0 +1,594 @@
+.hub-home {
+  --hub-ink: #14271f;
+  --hub-body: #1c241f;
+  --hub-muted: #716a61;
+  --hub-line: #d9d2c5;
+  --hub-paper: #f5f0e6;
+  --hub-card: #fffdf8;
+  --hub-coral: #e8603c;
+  --hub-leaf: #008f46;
+  box-sizing: border-box;
+  width: min(1320px, 100%);
+  margin: 0 auto;
+  padding: 16px 32px 40px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  color: var(--hub-body);
+  font-family: Inter, Roboto, sans-serif;
+}
+
+.hub-home * {
+  box-sizing: border-box;
+}
+
+.hub-welcome,
+.hub-search,
+.hub-skel,
+.hub-error {
+  grid-column: 1 / -1;
+}
+
+.hub-welcome {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hub-welcome__date {
+  margin: 0 0 4px;
+  color: var(--hub-coral);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.hub-welcome h1 {
+  margin: 0;
+  color: var(--hub-ink);
+  font-family: Fraunces, Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 44px;
+}
+
+.hub-welcome__lead {
+  margin: 4px 0 0;
+  color: var(--hub-muted);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.hub-welcome__cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--hub-coral);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hub-welcome__cta:focus-visible,
+.hub-home a:focus-visible,
+.hub-error button:focus-visible {
+  outline: 2px solid var(--hub-ink);
+  outline-offset: 2px;
+}
+
+.hub-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--hub-line);
+  border-radius: 14px;
+  background: var(--hub-card);
+}
+
+.hub-search h2 {
+  margin: 0;
+  color: var(--hub-body);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hub-search p {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--hub-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hub-search a {
+  flex: none;
+  color: var(--hub-coral);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hub-search ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hub-search a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: var(--hub-paper);
+  color: var(--hub-body);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.hub-card,
+.hub-alert,
+.hub-safety,
+.hub-market,
+.hub-rooms li a {
+  border: 1px solid var(--hub-line);
+  border-radius: 16px;
+  background: var(--hub-card);
+}
+
+.hub-viewings { grid-column: span 7; order: 2; }
+.hub-messages { grid-column: span 5; order: 2; }
+.hub-messages header a { white-space: nowrap; }
+.hub-rooms { grid-column: 1 / -1; order: 3; }
+.hub-progress {
+  grid-column: 1 / -1;
+  order: 1;
+  justify-self: end;
+  width: min(318px, 100%);
+}
+.hub-area {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--hub-line);
+  border-radius: 14px;
+  background: var(--hub-card);
+  color: var(--hub-muted);
+  font-size: 13px;
+}
+
+.hub-area p { margin: 0; }
+
+.hub-progress__ratio {
+  margin: 0 0 8px;
+  color: var(--hub-coral);
+  font-size: 13px;
+}
+
+.hub-progress__track {
+  height: 5px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: var(--hub-line);
+  overflow: hidden;
+}
+
+.hub-progress__track span {
+  display: block;
+  height: 100%;
+  background: var(--hub-coral);
+}
+.hub-roommates { grid-column: span 4; order: 4; }
+.hub-market { grid-column: span 4; order: 4; }
+
+.hub-card,
+.hub-market {
+  padding: 16px;
+}
+
+.hub-card header,
+.hub-rooms header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hub-card h2,
+.hub-rooms h2,
+.hub-market h2 {
+  margin: 0;
+  color: var(--hub-ink);
+  font-family: Fraunces, Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+.hub-card header a,
+.hub-roommates > a,
+.hub-market > a {
+  color: var(--hub-coral);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hub-viewings ul,
+.hub-messages ul,
+.hub-rooms ul,
+.hub-progress ul,
+.hub-roommates ul,
+.hub-market ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hub-viewings li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 8px 0;
+}
+
+.hub-viewings time {
+  color: var(--hub-ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hub-viewings strong,
+.hub-messages strong,
+.hub-rooms b {
+  display: block;
+  color: var(--hub-body);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.hub-viewings span,
+.hub-quiet {
+  color: var(--hub-muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hub-viewings em {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e1f4e8;
+  color: var(--hub-leaf);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.hub-messages li + li { margin-top: 10px; }
+
+.hub-messages a {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hub-messages img,
+.hub-messages b {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #fff0e9;
+  object-fit: cover;
+}
+
+.hub-messages b {
+  display: grid;
+  place-items: center;
+  color: var(--hub-ink);
+  font-size: 11px;
+}
+
+.hub-messages em {
+  display: block;
+  overflow: hidden;
+  color: var(--hub-muted);
+  font-size: 13px;
+  font-style: normal;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hub-messages small {
+  color: var(--hub-muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.hub-messages i {
+  display: block;
+  margin-top: 4px;
+  color: var(--hub-coral);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.hub-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hub-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: var(--hub-coral);
+  color: #fff;
+  text-decoration: none;
+}
+
+.hub-alert small,
+.hub-alert time {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hub-alert strong {
+  font-family: Fraunces, Georgia, serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.hub-safety {
+  margin: 0;
+  padding: 16px;
+  background: var(--hub-ink);
+  color: #fff;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hub-rooms ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hub-rooms li a {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  column-gap: 10px;
+  align-content: center;
+  min-height: 154px;
+  padding: 8px;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  background: var(--hub-card);
+  border: 1px solid var(--hub-line);
+  border-radius: 16px;
+}
+
+.hub-rooms img,
+.hub-photo {
+  display: block;
+  width: 168px;
+  height: 138px;
+  object-fit: cover;
+  background: var(--hub-paper);
+  border-radius: 10px;
+}
+
+.hub-photo {
+  grid-row: 1 / -1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--hub-muted);
+  font-size: 13px;
+}
+
+.hub-rooms img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hub-rooms em {
+  align-self: flex-start;
+  margin: 0;
+  color: var(--hub-coral);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.hub-rooms strong,
+.hub-rooms b,
+.hub-rooms span,
+.hub-rooms small {
+  padding: 0;
+}
+
+.hub-rooms b {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin-top: 4px;
+  color: var(--hub-body);
+  font-size: 16px;
+  line-height: 22px;
+  word-break: normal;
+}
+
+.hub-rooms strong {
+  margin-top: 8px;
+  color: var(--hub-leaf);
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.hub-rooms span {
+  color: var(--hub-coral);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hub-rooms small {
+  color: var(--hub-muted);
+  font-size: 13px;
+  line-height: 18px;
+  margin-bottom: 0;
+}
+
+.hub-progress li,
+.hub-roommates li,
+.hub-market li {
+  padding: 6px 0;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.hub-progress li.is-done { color: var(--hub-leaf); }
+
+.hub-roommates li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hub-roommates em {
+  color: var(--hub-leaf);
+  font-style: normal;
+}
+
+.hub-market {
+  background: var(--hub-ink);
+  color: #e1f4e8;
+}
+
+.hub-market p {
+  margin: 0 0 8px;
+  color: var(--hub-coral);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hub-market h2,
+.hub-market li { color: #fff; }
+
+.hub-market--quiet {
+  background: var(--hub-card);
+  color: var(--hub-muted);
+}
+
+.hub-market--quiet h2 { color: var(--hub-ink); }
+
+.hub-market > a {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--hub-coral);
+  color: #fff;
+}
+
+.hub-skel {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.8fr;
+  gap: 16px;
+  min-height: 180px;
+}
+
+.hub-skel span {
+  border-radius: 16px;
+  background: linear-gradient(90deg, #efe8dc 0%, #fffdf8 50%, #efe8dc 100%);
+  background-size: 200% 100%;
+  animation: hub-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes hub-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.hub-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--hub-line);
+  border-radius: 16px;
+  background: var(--hub-card);
+}
+
+.hub-error button {
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--hub-ink);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .hub-viewings,
+  .hub-messages,
+  .hub-alerts,
+  .hub-progress,
+  .hub-roommates,
+  .hub-market {
+    grid-column: span 6;
+  }
+  .hub-rooms { grid-column: 1 / -1; }
+  .hub-rooms ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .hub-home { padding: 16px; }
+  .hub-welcome { flex-direction: column; align-items: flex-start; }
+  .hub-welcome h1 { font-size: 28px; line-height: 36px; }
+  .hub-viewings,
+  .hub-messages,
+  .hub-rooms,
+  .hub-alerts,
+  .hub-progress,
+  .hub-roommates,
+  .hub-market,
+  .hub-skel { grid-column: 1 / -1; }
+  .hub-skel { grid-template-columns: 1fr; }
+  .hub-rooms ul { grid-template-columns: 1fr; }
+  .hub-home { overflow-x: hidden; }
+}

@@ -1,0 +1,78 @@
+/* Map destination shares product main flow with FeatureWorkspace (nav above).
+   Split list|map height is owned by AuthenticatedHomeMapShell / home-map-page--dest. */
+.app-shell--product.app-shell--map-peer {
+  background-color: var(--hj-paper, #f3ebdd);
+  /* Lock shell to the viewport — do not let map/list content grow the page. */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--product .app-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell--product.app-shell--map-peer .app-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell--product .route-outlet {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.app-shell--product .route-outlet--map-peer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Messages only. Saved, home, and view=list keep document scroll. */
+.app-shell--product.app-shell--messages {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--product.app-shell--messages .app-main,
+.app-shell--product.app-shell--messages .route-outlet {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .app-shell--product .app-main {
+    padding-left: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.app-shell--product .route-outlet--map-peer > .home-map-page--dest {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}

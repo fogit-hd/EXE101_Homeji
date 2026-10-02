@@ -1,0 +1,77 @@
+/* Compact page intro — not a marketing hero band */
+.app-hero {
+  position: relative;
+  width: 100%;
+  background: transparent;
+  color: var(--text-heading);
+}
+
+.app-hero--sm,
+.app-hero--md,
+.app-hero--lg {
+  min-height: 0;
+}
+
+.app-hero__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: var(--app-container-max);
+  margin-inline: auto;
+  padding: 20px var(--app-container-pad-mobile) 8px;
+  box-sizing: border-box;
+}
+
+.app-hero__copy {
+  display: grid;
+  gap: 6px;
+  max-width: 40rem;
+}
+
+.app-hero__title {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.app-hero__title-line {
+  color: var(--text-heading);
+}
+
+.app-hero__title-accent {
+  color: var(--text-heading);
+}
+
+.app-hero__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  max-width: 48ch;
+}
+
+.app-hero__extra {
+  margin-top: 4px;
+}
+
+.app-hero__media {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .app-hero__inner {
+    padding-inline: var(--app-container-pad);
+    padding-block: 24px 8px;
+  }
+
+  .app-hero__title {
+    font-size: 1.35rem;
+  }
+}

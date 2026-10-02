@@ -1,0 +1,114 @@
+/* ══════════════════════════════════════════════════════════════
+   Đã lưu — Figma frame 12:16418
+   Cream card grid + distinctive header
+   ══════════════════════════════════════════════════════════════ */
+
+.saved-posts-page {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--hj-paper, #f3ebdd);
+  padding: 24px 20px 40px;
+}
+
+.saved-posts-embed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.saved-posts-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--hj-border, #d8cdbb);
+}
+
+.saved-posts-page__eyebrow {
+  font: 700 0.72rem/1 Inter, 'Be Vietnam Pro', sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hj-accent, #e65c3a);
+}
+
+.saved-posts-page__title {
+  margin: 0;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  font-weight: 400;
+  color: var(--hj-ink, #18231d);
+  line-height: 1.25;
+}
+
+.saved-posts-page__lead {
+  margin: 0;
+  font: 400 0.88rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
+  color: var(--hj-muted, #756f64);
+}
+
+/* Cream card grid for saved posts */
+.saved-posts-page .grid-posts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.saved-posts-page .grid-posts > div {
+  background: var(--hj-cream, #fff9ef);
+  border: 1px solid var(--hj-border, #d8cdbb);
+  border-radius: var(--hj-radius-lg, 22px);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.saved-posts-page .grid-posts > div:hover {
+  box-shadow: 0 4px 16px rgba(24, 35, 29, 0.1);
+  transform: translateY(-1px);
+}
+
+.feature-workspace.is-saved .page-frame {
+  gap: 12px;
+  padding-block: 16px 24px;
+}
+
+.feature-workspace.is-saved .page-frame__title {
+  font-size: 28px;
+  line-height: 34px;
+}
+
+.feature-workspace.is-saved .page-frame__lead {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.saved-posts-embed .grid-posts,
+.saved-posts-page .grid-posts {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.saved-posts-embed .post-card.card,
+.saved-posts-page .post-card.card {
+  padding: 0;
+  border-radius: 12px;
+}
+
+.saved-posts-embed .grid-posts .btn,
+.saved-posts-page .grid-posts .btn {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.saved-posts-page .page-frame-empty {
+  padding: 48px 24px;
+  background: var(--hj-cream, #fff9ef);
+  border: 1px dashed var(--hj-border, #d8cdbb);
+  border-radius: var(--hj-radius-xl, 30px);
+  text-align: center;
+}

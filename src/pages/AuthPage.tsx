@@ -1,4 +1,5 @@
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
+import type { CredentialResponse } from '@react-oauth/google'
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 import gsap from 'gsap'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -6,6 +7,7 @@ import { checkEmail, isEmailTaken, googleLoginWithIdToken } from '../api'
 import { consumeSessionTerminationMessage } from '../api/authSession'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
+import { googleOAuthClientId } from '../lib/googleOAuthClient'
 import {
   normalizeEmail,
   normalizeFullName,
@@ -1701,18 +1703,17 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                       {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                     </button>
                   </form>
-                  <div className="auth-cinema__divider">hoặc</div>
-                  <div className="auth-modal__google-wrap">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={() => setError('Đăng nhập Google thất bại')}
-                      shape="rectangular"
-                      theme="outline"
-                      size="large"
-                      text="signin_with"
-                      width="100%"
-                    />
-                  </div>
+                  {googleOAuthClientId ? (
+                    <>
+                      <div className="auth-cinema__divider">hoặc</div>
+                      <div className="auth-modal__google-wrap">
+                        <GoogleSignInButton
+                          onSuccess={handleGoogleSuccess}
+                          onError={() => setError('Đăng nhập Google thất bại')}
+                        />
+                      </div>
+                    </>
+                  ) : null}
                   <p className="auth-cinema__footer">
                     Chưa có tài khoản?{' '}
                     <button type="button" disabled={toggleLocked} onClick={() => switchMode('signup')}>

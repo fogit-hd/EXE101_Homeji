@@ -1,3 +1,5 @@
+import { GoogleOAuthProvider } from '@react-oauth/google'
+import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { AppLayout } from './components/layout/AppLayout'
@@ -8,6 +10,7 @@ import { ToastProvider } from './components/toast/ToastProvider'
 import { AuthModalProvider } from './contexts/AuthModalContext'
 import { GoogleMapsProvider } from './contexts/GoogleMapsProvider'
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
+import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import { AdminModerationPage } from './pages/AdminModerationPage'
@@ -71,12 +74,19 @@ function AppRoutes() {
   )
 }
 
+/** One provider for every route that mounts GoogleLogin. Skipped when the client id is unset. */
+function GoogleOAuthRoot({ children }: { children: ReactNode }) {
+  if (!googleOAuthClientId) return children
+  return <GoogleOAuthProvider clientId={googleOAuthClientId}>{children}</GoogleOAuthProvider>
+}
+
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
       <ThemeSync />
       <NetworkStatusProvider>
         <GoogleMapsProvider>
+          <GoogleOAuthRoot>
             <AuthProvider>
             <BrowserRouter>
               <SearchProvider>
@@ -90,6 +100,7 @@ function App() {
               </SearchProvider>
             </BrowserRouter>
           </AuthProvider>
+          </GoogleOAuthRoot>
         </GoogleMapsProvider>
       </NetworkStatusProvider>
     </ErrorBoundary>

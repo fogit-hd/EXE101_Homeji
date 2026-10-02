@@ -1,0 +1,105 @@
+.feature-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--hj-paper, #f3ebdd);
+}
+
+.feature-workspace__frame {
+  flex: 1;
+  width: 100%;
+}
+
+.feature-workspace.is-messages {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.feature-workspace.is-messages .feature-workspace__frame,
+.feature-workspace.is-messages .page-frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.feature-workspace.is-messages .page-frame__body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.feature-workspace.has-own-header .page-frame__header {
+  display: none;
+}
+
+.feature-workspace.has-own-header .page-frame--bleed {
+  padding: 12px 20px 28px;
+}
+
+.feature-workspace.is-messages.has-own-header .page-frame--bleed,
+.feature-workspace.is-marketplace.has-own-header .page-frame--bleed {
+  padding: 0;
+}
+
+.feature-workspace.is-marketplace {
+  background: #f5f0e6;
+}
+
+.feature-workspace.is-marketplace .feature-workspace__frame,
+.feature-workspace.is-marketplace .page-frame__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.feature-workspace__messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  background: transparent;
+  border-top: 0;
+}
+
+.feature-workspace__messages .map-messages,
+.feature-workspace__messages .map-embed {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+
+.feature-workspace .map-embed {
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+  background: transparent;
+}
+
+.feature-workspace .map-embed .card,
+.feature-workspace .map-embed .empty-state {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  box-shadow: none;
+  padding: 14px 16px;
+}
+
+.feature-workspace .map-embed .card:hover {
+  border-color: color-mix(in srgb, var(--grab-green) 24%, var(--border));
+}
+

@@ -1,0 +1,18 @@
+.app-container {
+  width: 100%;
+  max-width: var(--app-container-max);
+  margin-inline: auto;
+  padding-inline: var(--app-container-pad-mobile);
+  box-sizing: border-box;
+}
+
+.app-container--bleed {
+  max-width: none;
+  padding-inline: 0;
+}
+
+@media (min-width: 768px) {
+  .app-container:not(.app-container--bleed) {
+    padding-inline: var(--app-container-pad);
+  }
+}

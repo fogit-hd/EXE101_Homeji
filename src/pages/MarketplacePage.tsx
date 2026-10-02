@@ -54,6 +54,11 @@ import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
+import {
+  purchaseKindLabel,
+  resolvePurchaseKinds,
+  type PurchaseKind,
+} from '../lib/purchaseCatalog'
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
 import {
   resolveMarketplaceDestination,
@@ -183,6 +188,21 @@ function orderProgressStep(status: MarketplaceOrder['status']): number | null {
   return null
 }
 
+type ResolvedPurchaseKind = PurchaseKind | 'mixed' | 'unknown'
+
+function resolvedPurchaseKind(
+  group: MarketplaceOrderGroup,
+  kinds: Record<string, PurchaseKind>,
+  failed: ReadonlySet<string>,
+): ResolvedPurchaseKind | null {
+  const ids = [...new Set(group.orders.map((order) => order.marketplacePostId))]
+  if (ids.some((id) => !kinds[id] && !failed.has(id))) return null
+  if (ids.some((id) => failed.has(id) || !kinds[id])) return 'unknown'
+  const present = new Set(ids.map((id) => kinds[id]))
+  if (present.size > 1) return 'mixed'
+  return present.has('food') ? 'food' : 'goods'
+}
+
 type Props = {
   embedded?: boolean
   onPostsForMap?: (pins: MarketplaceMapPin[]) => void
@@ -272,6 +292,11 @@ export function MarketplacePage({
   const [category, setCategory] = useState('')
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
+  const [orderingPostId, setOrderingPostId] = useState<string | null>(null)
+  const [purchaseReceipt, setPurchaseReceipt] = useState<{ message: string; orderId: string } | null>(null)
+  const [purchaseKinds, setPurchaseKinds] = useState<Record<string, PurchaseKind>>({})
+  const [purchaseKindFailures, setPurchaseKindFailures] = useState<string[]>([])
+  const purchaseKindAttempts = useRef(new Set<string>())
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -337,15 +362,17 @@ export function MarketplacePage({
     setTab(destination.tab)
   }
 
-  const openLeaf = useCallback((next: MarketplaceTab, options?: { replace?: boolean }) => {
+  const openLeaf = useCallback((next: MarketplaceTab, options?: { replace?: boolean; purchaseId?: string }) => {
     if (next === 'food' || next === 'browse') onSelectMarketplaceId?.(null)
     setTab(next)
     const params = new URLSearchParams(searchParams)
     if (!params.get('section')) params.set('section', 'marketplace')
+    const nextPurchase = next === 'purchases' ? (options?.purchaseId ?? '') : ''
     const unchanged = params.get('market') === next
       && !params.get('order')
       && !params.get('side')
       && !params.get('role')
+      && (params.get('purchase') ?? '') === nextPurchase
       && (next === 'wallet'
         ? Boolean(parseWalletTab(params.get('wallet')))
         : !params.get('wallet'))
@@ -354,6 +381,8 @@ export function MarketplacePage({
     params.delete('order')
     params.delete('side')
     params.delete('role')
+    if (nextPurchase) params.set('purchase', nextPurchase)
+    else params.delete('purchase')
     if (next === 'wallet') params.set('wallet', parseWalletTab(params.get('wallet')) ?? 'deposit')
     else params.delete('wallet')
     setSearchParams(params, { replace: options?.replace ?? false })
@@ -400,6 +429,31 @@ export function MarketplacePage({
       window.clearInterval(intervalId)
     }
   }, [myUserId])
+
+  useEffect(() => {
+    if (tab !== 'purchases' || !myUserId) return
+    const ids = [...new Set(
+      orders.filter((order) => order.buyerId === myUserId).map((order) => order.marketplacePostId),
+    )]
+    const missing = ids.filter((id) => !purchaseKindAttempts.current.has(id))
+    if (missing.length === 0) return
+    let cancelled = false
+    void resolvePurchaseKinds(missing).then((result) => {
+      if (cancelled) return
+      for (const postId of missing) purchaseKindAttempts.current.add(postId)
+      setPurchaseKinds((current) => ({ ...current, ...result.kinds }))
+      if (result.failedIds.length > 0) {
+        setPurchaseKindFailures((current) => [...new Set([...current, ...result.failedIds])])
+      }
+    }).catch(() => {
+      if (cancelled) return
+      for (const postId of missing) purchaseKindAttempts.current.add(postId)
+      setPurchaseKindFailures((current) => [...new Set([...current, ...missing])])
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [tab, orders, myUserId])
 
   useEffect(() => {
     localStorage.setItem(cartStorageKey, JSON.stringify(cartItems))
@@ -698,21 +752,33 @@ export function MarketplacePage({
     }
   }
 
+  const rememberCreatedPurchase = async (orderId: string, message: string) => {
+    setPurchaseReceipt({ message, orderId })
+    try {
+      setOrders(await getMyMarketplaceOrders())
+    } catch {
+      setActionError('Đơn đã tạo, nhưng danh sách Đơn mua chưa tải lại. Mở Đơn mua để thử lại.')
+    }
+  }
+
   const handleOrder = async (post: MarketplacePost) => {
+    if (orderingPostId) return
+    setOrderingPostId(post.id)
     setActionError('')
     try {
       const pickupAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       const quantity = orderQuantities[post.id] ?? 1
-      await createMarketplaceOrder(post.id, {
+      const created = await createMarketplaceOrder(post.id, {
         pickupAt,
         pickupAddress: 'Thỏa thuận khi chat',
         note: 'Đặt từ Homeji map',
         quantity,
       })
-      setActionMsg('Đã gửi yêu cầu mua.')
-      openLeaf('purchases')
+      await rememberCreatedPurchase(created.id, 'Đã gửi yêu cầu mua.')
     } catch (err) {
       setActionError(getErrorMessage(err, 'Đặt mua thất bại'))
+    } finally {
+      setOrderingPostId(null)
     }
   }
 
@@ -812,18 +878,22 @@ export function MarketplacePage({
         10,
         ...cartItems.map((item) => item.preparationMinutes),
       )
-      await createMarketplaceCartOrder({
+      const created = await createMarketplaceCartOrder({
         items: cartItems.map((item) => ({ postId: item.postId, quantity: item.quantity })),
         pickupAt: new Date(Date.now() + estimatedPreparationMinutes * 60 * 1000).toISOString(),
         pickupAddress: cartItems[0]?.sellerAddress || 'Nhận tại bếp Homeji',
         note: cartNote.trim() || 'Đặt từ giỏ hàng Homeji',
       })
+      const createdOrder = created[0]
+      if (!createdOrder) {
+        setActionError('Máy chủ chưa trả về đơn vừa tạo.')
+        return
+      }
       const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
       setCartItems([])
       setCartNote('')
       setCartOpen(false)
-      setActionMsg(`Đã đặt ${itemCount} món. Chờ bếp xác nhận.`)
-      openLeaf('purchases')
+      await rememberCreatedPurchase(createdOrder.id, `Đã đặt ${itemCount} món. Chờ bếp xác nhận.`)
       await reload()
     } catch (err) {
       setActionError(getErrorMessage(err, 'Thanh toán giỏ hàng thất bại'))
@@ -983,9 +1053,10 @@ export function MarketplacePage({
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
+                disabled={orderingPostId != null}
                 onClick={() => void handleOrder(p)}
               >
-                Mua bằng số dư
+                {orderingPostId === p.id ? 'Đang đặt…' : 'Mua bằng số dư'}
               </button>
             </>
           ) : null}
@@ -1117,6 +1188,37 @@ export function MarketplacePage({
   const filteredOrderGroups = selectedOrderGroups.filter((group) =>
     matchesOrderStatusFilter(group, orderStatusFilter),
   )
+  const purchaseFocusId = searchParams.get('purchase')
+  const buyerPurchasePostIds = useMemo(() => {
+    if (!myUserId) return [] as string[]
+    return [...new Set(
+      orders.filter((order) => order.buyerId === myUserId).map((order) => order.marketplacePostId),
+    )]
+  }, [orders, myUserId])
+  const purchaseKindsReady = buyerPurchasePostIds.every((id) =>
+    Boolean(purchaseKinds[id]) || purchaseKindFailures.includes(id))
+  const failedPurchaseIdSet = useMemo(
+    () => new Set(purchaseKindFailures),
+    [purchaseKindFailures],
+  )
+  const purchaseBuckets = useMemo(() => {
+    const food: MarketplaceOrderGroup[] = []
+    const goods: MarketplaceOrderGroup[] = []
+    const other: MarketplaceOrderGroup[] = []
+    for (const group of filteredOrderGroups) {
+      const kind = resolvedPurchaseKind(group, purchaseKinds, failedPurchaseIdSet)
+      if (kind === 'food') food.push(group)
+      else if (kind === 'goods') goods.push(group)
+      else if (kind) other.push(group)
+    }
+    return { food, goods, other }
+  }, [filteredOrderGroups, purchaseKinds, failedPurchaseIdSet])
+
+  useEffect(() => {
+    if (tab !== 'purchases' || !purchaseFocusId || !purchaseKindsReady) return
+    document.querySelector('.marketplace-order-group.is-purchase-focus')
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [tab, purchaseFocusId, purchaseKindsReady, orders, orderStatusFilter])
 
   const handleOrderGroupAction = async (
     groupKey: string,
@@ -1272,6 +1374,19 @@ export function MarketplacePage({
         onTopUp={openWalletDeposit}
       />
 
+      {purchaseReceipt ? (
+        <div className="marketplace-purchase-receipt" role="status">
+          <p>{purchaseReceipt.message}</p>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => openLeaf('purchases', { purchaseId: purchaseReceipt.orderId })}
+          >
+            Xem đơn
+          </button>
+        </div>
+      ) : null}
+
       {tab === 'food' ? (
         <FoodMarketplaceView
           posts={listForTab}
@@ -1342,8 +1457,8 @@ export function MarketplacePage({
         ) : null}
         {tab === 'purchases' ? (
           <div className="marketplace-workspace__intro">
-            <h2>Đơn mua của bạn</h2>
-            <p>Theo dõi đơn đã mua và trao đổi với người bán ngay tại đây.</p>
+            <h2>Đơn mua</h2>
+            <p>Đơn đồ ăn và đồ dùng của bạn. Mỗi đơn giữ đúng trạng thái và thao tác của loại đó.</p>
           </div>
         ) : null}
         {tab === 'sales' ? (
@@ -1639,13 +1754,42 @@ export function MarketplacePage({
                 <p className="page-frame-empty__title">
                   {orderStatusFilter !== 'all'
                     ? 'Không có đơn khớp bộ lọc trạng thái'
-                    : 'Không có đơn mua'}
+                    : 'Chưa có đơn đồ ăn hoặc đồ dùng'}
                 </p>
               </div>
             )
+          ) : tab === 'purchases' && !purchaseKindsReady
+            && purchaseBuckets.food.length + purchaseBuckets.goods.length + purchaseBuckets.other.length === 0 ? (
+            <p className="marketplace-card__info">Đang phân loại đơn đồ ăn và đồ dùng…</p>
           ) : (
+            <>
+              {tab === 'purchases' && purchaseKindFailures.length > 0 ? (
+                <p className="marketplace-card__info" role="alert">
+                  Không tải được loại sản phẩm cho một số đơn. Những đơn đó không được gán vào Đồ ăn hay Đồ dùng.
+                </p>
+              ) : null}
+              {(tab === 'purchases'
+                ? [
+                    { id: 'food', title: 'Đồ ăn', groups: purchaseBuckets.food, empty: orderStatusFilter === 'all' ? 'Chưa có đơn đồ ăn.' : 'Không có đơn đồ ăn khớp bộ lọc.' },
+                    { id: 'goods', title: 'Đồ dùng', groups: purchaseBuckets.goods, empty: orderStatusFilter === 'all' ? 'Chưa có đơn đồ dùng.' : 'Không có đơn đồ dùng khớp bộ lọc.' },
+                    ...(purchaseBuckets.other.length > 0
+                      ? [{ id: 'other', title: 'Chưa xếp loại', groups: purchaseBuckets.other, empty: '' }]
+                      : []),
+                  ]
+                : [{ id: 'orders', title: '', groups: filteredOrderGroups, empty: '' }]
+              ).map((source) => (
+                <section key={source.id} className={source.title ? 'marketplace-purchase-source' : undefined}>
+                  {source.title ? (
+                    <h3>
+                      {source.title}
+                      <span>{source.groups.length} đơn</span>
+                    </h3>
+                  ) : null}
+                  {source.title && source.groups.length === 0 ? (
+                    <p>{source.empty}</p>
+                  ) : (
             <div className="marketplace-order-groups">
-              {filteredOrderGroups.map((group) => {
+              {source.groups.map((group) => {
                 const firstOrder = group.orders[0]
                 const requested = group.status === MarketplaceOrderStatus.Requested
                 const accepted = group.status === MarketplaceOrderStatus.Accepted
@@ -1654,15 +1798,26 @@ export function MarketplacePage({
                   && group.orders.some((order) => !order.fundsReleasedAt)
                 const busy = orderGroupBusy === group.groupKey
                 const progressStep = orderProgressStep(group.status)
+                const happyPathComplete = progressStep === ORDER_STEPS.length
+                const purchaseKind = tab === 'purchases'
+                  ? resolvedPurchaseKind(group, purchaseKinds, failedPurchaseIdSet)
+                  : null
+                const focused = purchaseFocusId != null && group.orders.some((order) => order.id === purchaseFocusId)
 
                 return (
-                  <section key={group.groupKey} className="marketplace-order-group is-active-order">
+                  <section
+                    key={group.groupKey}
+                    className={`marketplace-order-group is-active-order${focused ? ' is-purchase-focus' : ''}`}
+                  >
                     <header className="marketplace-order-group__header">
                       <div className="marketplace-store-avatar" aria-hidden="true">
                         {group.name.slice(0, 1).toUpperCase()}
                       </div>
                       <div>
-                        <span>{group.isSeller ? 'Đơn từ người mua' : 'Đơn từ người bán'}</span>
+                        <span>
+                          {group.isSeller ? 'Đơn từ người mua' : 'Đơn từ người bán'}
+                          {purchaseKind ? ` · ${purchaseKindLabel(purchaseKind)}` : ''}
+                        </span>
                         <h3>{group.name}</h3>
                         <p>{formatDate(group.createdAt)}</p>
                       </div>
@@ -1672,13 +1827,14 @@ export function MarketplacePage({
                     </header>
 
                     {progressStep != null ? (
-                      <div className="marketplace-order-progress" aria-label={`Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
+                      <div className="marketplace-order-progress" aria-label={happyPathComplete ? 'Tiến trình đơn hàng: hoàn tất' : `Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
                         {ORDER_STEPS.map((label, index) => {
                           const step = index + 1
-                          const state = step < progressStep ? 'is-done' : step === progressStep ? 'is-current' : ''
+                          const done = happyPathComplete || step < progressStep
+                          const state = done ? 'is-done' : step === progressStep ? 'is-current' : ''
                           return (
                             <div key={label} className={state}>
-                              <span aria-hidden="true">{step < progressStep ? '✓' : step}</span>
+                              <span aria-hidden="true">{done ? '✓' : step}</span>
                               <strong>{label}</strong>
                             </div>
                           )
@@ -1833,6 +1989,10 @@ export function MarketplacePage({
                 )
               })}
             </div>
+                  )}
+                </section>
+              ))}
+            </>
           )}
         </div>
       ) : listForTab.length === 0 ? (

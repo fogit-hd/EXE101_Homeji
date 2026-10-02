@@ -7,7 +7,7 @@ export type MarketplaceTab =
   | 'sales'
   | 'wallet'
 
-export type MarketplacePrimary = 'food' | 'goods' | 'shop' | 'wallet'
+export type MarketplacePrimary = 'shopping' | 'purchases' | 'shop' | 'wallet'
 
 const MARKETPLACE_TABS: readonly MarketplaceTab[] = [
   'food',
@@ -32,10 +32,10 @@ export function isMarketplaceTab(value: unknown): value is MarketplaceTab {
 }
 
 export function primaryOf(tab: MarketplaceTab): MarketplacePrimary {
-  if (tab === 'browse' || tab === 'purchases') return 'goods'
+  if (tab === 'food' || tab === 'browse') return 'shopping'
+  if (tab === 'purchases') return 'purchases'
   if (tab === 'mine' || tab === 'sell' || tab === 'sales') return 'shop'
-  if (tab === 'wallet') return 'wallet'
-  return 'food'
+  return 'wallet'
 }
 
 function orderSide(params: URLSearchParams): 'sales' | 'purchases' | null {

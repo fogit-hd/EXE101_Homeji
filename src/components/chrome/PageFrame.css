@@ -1,0 +1,121 @@
+.page-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-block: 20px 28px;
+  min-height: 100%;
+}
+
+/* Product shell pages sit on cream paper */
+.app-shell--product .page-frame:not(.page-frame--bleed) {
+  background: #f5f0e6;
+}
+
+.app-shell--product .page-frame__header {
+  background: #f5f0e6;
+}
+
+.page-frame--bleed {
+  max-width: none;
+  padding-inline: 0;
+  padding-block: 0;
+  gap: 0;
+}
+
+.page-frame__header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.page-frame__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.page-frame__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.page-frame__eyebrow {
+  margin: 0;
+  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #e8603c;
+}
+
+.page-frame__title {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 44px;
+  color: #14271f;
+}
+
+.page-frame__lead {
+  margin: 0;
+  font: 400 14px/22px Inter, 'Be Vietnam Pro', sans-serif;
+  color: #716a61;
+}
+
+.app-shell--product .page-frame__title {
+  color: var(--hj-ink, #18231d);
+}
+
+.page-frame__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-frame__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-frame__actions:empty,
+.page-frame__filters:empty {
+  display: none;
+}
+
+.page-frame__body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.page-frame--bleed .page-frame__header {
+  padding: 14px var(--app-container-pad-mobile) 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.page-frame--bleed .page-frame__body {
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .page-frame {
+    padding-block: 24px 36px;
+  }
+
+  .page-frame--bleed .page-frame__header {
+    padding-inline: var(--app-container-pad);
+    max-width: var(--app-container-max);
+    margin-inline: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
