@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
+  getAdminProductAnalytics,
   completeWalletWithdrawal,
   getAdminWalletWithdrawals,
   getAdminLandlordVerifications,
@@ -17,6 +18,7 @@ import {
   reviewLandlordVerification,
   type LandlordVerification,
   type AdminActiveUser,
+  type AdminProductAnalytics,
   type RentalPostSummary,
   type Report,
   type WalletWithdrawal,
@@ -24,6 +26,7 @@ import {
 import { LandlordVerificationStatus, ReportStatus, ReportTargetType, WalletWithdrawalStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { ContentSkeleton } from '../components/ContentSkeleton'
+import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashboard'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import { useAuth } from '../contexts/AuthContext'
@@ -37,7 +40,7 @@ import {
   userRoleLabel,
 } from '../lib/labels'
 
-export function cleanAdminReportText(value: string | null | undefined) {
+function cleanAdminReportText(value: string | null | undefined) {
   const cleaned = value?.replace(/\s*\[[A-Z][A-Z0-9_:-]{4,}\]\s*$/u, '').trim()
   return cleaned || ''
 }
@@ -49,7 +52,11 @@ export function AdminModerationPage() {
   const [verifications, setVerifications] = useState<LandlordVerification[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [activeUsers, setActiveUsers] = useState<AdminActiveUser[]>([])
-  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('posts')
+  const [analytics, setAnalytics] = useState<AdminProductAnalytics | null>(null)
+  const [analyticsDays, setAnalyticsDays] = useState(30)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [analyticsError, setAnalyticsError] = useState('')
+  const [tab, setTab] = useState<'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('overview')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
@@ -88,6 +95,42 @@ export function AdminModerationPage() {
 
   const loadPosts = () => void reload()
   const loadReports = () => void reload()
+  useEffect(() => {
+    let cancelled = false
+    void getAdminProductAnalytics(30)
+      .then((result) => {
+        if (cancelled) return
+        setAnalytics(result)
+        setAnalyticsError('')
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setAnalyticsError(getErrorMessage(err, 'Không thể tải dữ liệu điều hành sản phẩm'))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAnalyticsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleAnalyticsDaysChange = async (days: number) => {
+    if ((days === analyticsDays && !analyticsError) || analyticsLoading) return
+    setAnalyticsDays(days)
+    setAnalyticsLoading(true)
+    setError('')
+    try {
+      setAnalytics(await getAdminProductAnalytics(days))
+      setAnalyticsError('')
+    } catch (err) {
+      setAnalyticsDays(analytics?.periodDays ?? days)
+      setAnalyticsError(getErrorMessage(err, 'Không thể tải dữ liệu điều hành sản phẩm'))
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
   const loadActiveUsers = useCallback(async () => {
     try {
       setActiveUsers(await getAdminActiveUsers())
@@ -238,9 +281,14 @@ export function AdminModerationPage() {
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Quản trị</h1>
-      <p className="page-subtitle">Kiểm duyệt tin đăng và xử lý báo cáo</p>
+    <div className="container page admin-page">
+      <div className="page-header-row admin-page__header">
+        <div>
+          <h1 className="page-title">Điều hành Homeji</h1>
+          <p className="page-subtitle">Theo dõi sản phẩm, thị trường và vận hành trên cùng một màn hình.</p>
+        </div>
+        <Link className="btn btn-secondary" to="/">Mở trải nghiệm khách hàng</Link>
+      </div>
 
       {(error || (loadError && !disrupted)) && (
         <div className="alert alert-error">{error || loadError}</div>
@@ -254,6 +302,9 @@ export function AdminModerationPage() {
       ) : (
         <>
       <div className="tabs">
+        <button type="button" className={`tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
+          Tổng quan sản phẩm
+        </button>
         <button type="button" className={`tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => setTab('posts')}>
           Tin chờ duyệt ({pendingPosts.length})
         </button>
@@ -281,6 +332,23 @@ export function AdminModerationPage() {
           Bảo trì
         </button>
       </div>
+
+      {tab === 'overview' && analyticsError ? (
+        <div className="alert alert-error" role="alert">
+          {analyticsError} {analytics ? 'Đang hiển thị dữ liệu lần tải thành công gần nhất.' : ''}
+          <button type="button" disabled={analyticsLoading} onClick={() => void handleAnalyticsDaysChange(analyticsDays)}>Thử lại</button>
+        </div>
+      ) : null}
+      {tab === 'overview' && analytics ? (
+        <AdminAnalyticsDashboard
+          data={analytics}
+          days={analytics.periodDays}
+          loading={analyticsLoading}
+          onDaysChange={(days) => void handleAnalyticsDaysChange(days)}
+        />
+      ) : tab === 'overview' && analyticsLoading ? (
+        <ContentSkeleton variant="dashboard" label="Đang tổng hợp dữ liệu sản phẩm…" />
+      ) : null}
 
       {tab === 'maintenance' && (
         <section className="admin-maintenance-card card" aria-labelledby="maintenance-heading">

@@ -256,6 +256,63 @@ export interface AdminActiveUser {
   isOnline: boolean
 }
 
+export type AdminPriceSignal =
+  | 'test_increase'
+  | 'review_decrease'
+  | 'add_supply'
+  | 'hold'
+  | 'insufficient_data'
+
+export interface AdminProductKpis {
+  totalUsers: number
+  newUsers: number
+  activeListings: number
+  newListings: number
+  medianMonthlyPrice: number
+  averagePricePerSquareMeter: number
+  searches: number
+  listingViews: number
+  saves: number
+  viewingRequests: number
+  saveToViewRate: number
+  viewingRequestToSaveRate: number
+}
+
+export interface AdminAnalyticsTrendPoint {
+  date: string
+  newUsers: number
+  newListings: number
+  searches: number
+  listingViews: number
+  saves: number
+  viewingRequests: number
+}
+
+export interface AdminAreaInsight {
+  areaName: string
+  latitude: number
+  longitude: number
+  activeListings: number
+  medianMonthlyPrice: number
+  averagePricePerSquareMeter: number
+  totalViews: number
+  totalSaves: number
+  viewingRequests: number
+  saveRate: number
+  demandIndex: number
+  priceSignal: AdminPriceSignal
+  recommendation: string
+  confidence: 'low' | 'medium' | 'high'
+}
+
+export interface AdminProductAnalytics {
+  generatedAt: string
+  periodDays: number
+  kpis: AdminProductKpis
+  trend: AdminAnalyticsTrendPoint[]
+  areas: AdminAreaInsight[]
+}
+
 export interface RentalPostMedia {
   id: string
   mediaType: MediaType

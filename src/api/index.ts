@@ -10,6 +10,7 @@ import type {
   AiHighlightResponse,
   AiParsedSearchCriteria,
   AdminActiveUser,
+  AdminProductAnalytics,
   AuthSession,
   AuthUrl,
   ChatbotConversation,
@@ -427,6 +428,9 @@ export const createPayOsPayment = (amount: number, description?: string) =>
 // Admin Moderation
 export const getAdminActiveUsers = () =>
   apiRequest<AdminActiveUser[]>('/api/admin/moderation/active-users')
+
+export const getAdminProductAnalytics = (days = 30) =>
+  apiRequest<AdminProductAnalytics>('/api/admin/analytics/product', { params: { days } })
 
 export interface TerminateUserSessionResult {
   userId: string
