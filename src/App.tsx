@@ -1,6 +1,7 @@
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { WebsiteTrafficTracker } from './components/WebsiteTrafficTracker'
 import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
@@ -91,6 +92,7 @@ function App() {
           <GoogleMapsProvider>
             <AuthProvider>
               <BrowserRouter>
+                <WebsiteTrafficTracker />
                 <AuthModalProvider>
                   <ErrorBoundary reloadOnRetry>
                     <AppRoutes />

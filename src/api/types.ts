@@ -313,6 +313,17 @@ export interface AdminProductAnalytics {
   areas: AdminAreaInsight[]
 }
 
+export interface WebsiteTrafficReport {
+  generatedAt: string
+  periodDays: number
+  trackingStartedAt: string | null
+  pageViews: number
+  sessions: number
+  activeSessions: number
+  trend: Array<{ date: string; pageViews: number; sessions: number }>
+  topPages: Array<{ page: string; pageViews: number; sessions: number }>
+}
+
 export interface RentalPostMedia {
   id: string
   mediaType: MediaType

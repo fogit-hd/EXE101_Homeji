@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "test:contracts": "node --test tests/chatbot-safety-contract.test.mjs",
     "test:nearby": "node --test tests/nearby-lifestyle-search.test.mjs",
+    "test:traffic": "node --test tests/website-traffic.test.mjs",
     "test:admin-analytics": "node --test tests/admin-product-analytics.test.mjs",
     "start": "node scripts/serve-prod.mjs",
     "lint": "eslint .",

@@ -15,6 +15,7 @@ import {
 import { importMapsLibrary } from '../../lib/loadGoogleMaps'
 import { formatPrice } from '../../lib/labels'
 import './AdminAnalyticsDashboard.css'
+import { AdminTrafficPanel } from './AdminTrafficPanel'
 
 type TrendMetric = 'searches' | 'listingViews' | 'saves' | 'viewingRequests'
 
@@ -120,6 +121,8 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
           </article>
         ))}
       </div>
+
+      <AdminTrafficPanel days={days} />
 
       <div className="admin-analytics__primary-grid">
         <section className="admin-analytics__panel admin-analytics__map-panel">

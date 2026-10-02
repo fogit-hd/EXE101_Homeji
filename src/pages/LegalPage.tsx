@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import './LegalPage.css'
 
-const UPDATED_AT = '02/10/2026'
+const UPDATED_AT = '03/10/2026'
 
 function LegalLayout({
   title,
@@ -51,6 +51,7 @@ export function PrivacyPolicyPage() {
 
       <section>
         <h2>Mục đích sử dụng</h2>
+        <p>Homeji đo số lượt xem trang và phiên ghé website bằng mã ngẫu nhiên lưu trong phiên trình duyệt. Thống kê chỉ gửi nhóm trang và thời điểm đến máy chủ Homeji, không gửi email, IP, nội dung tìm kiếm hoặc mã tin phòng vào dữ liệu thống kê. Phiên mới bắt đầu sau 30 phút không chuyển trang. Homeji tôn trọng tín hiệu Do Not Track và Global Privacy Control của trình duyệt.</p>
         <p>
           Dữ liệu được dùng để xác thực tài khoản, duy trì phiên đăng nhập, cung cấp tính năng
           tìm phòng và kết nối người dùng, phòng chống gian lận, xử lý yêu cầu hỗ trợ và cải thiện
