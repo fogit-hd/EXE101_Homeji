@@ -63,4 +63,7 @@ navigation did not add a session. All 7/30/90-day controls returned the same cor
 bounded totals, with Vietnam date buckets. Admin navigation remained excluded.
 
 The chart leaves dates before the first recorded event blank rather than presenting
-unmeasured history as zero traffic. Final frontend rendering QA is pending this update.
+unmeasured history as zero traffic. Final production rendering verified: exactly one
+measured day appears (2026-10-03: five views, three sessions), Admin reload does not
+increase totals, and recent sessions naturally fall out of the five-minute window.
+Evidence: `output/verification/admin_website_traffic.jpg` (local, not committed).
