@@ -58,7 +58,11 @@ All price actions are controlled-experiment suggestions; no write endpoint is in
   not a clean market research dataset; verify provenance before commercial decisions.
 - Evidence: `output/verification/admin_dashboard_90_days.jpg` and
   `output/verification/nearby_food_right_panel.jpg` (local, not committed).
-- Pending: user's Admin permissions choice; final deployment of the area-context fix.
+- Final production deployment verified: the Admin overview displays the demo-data caveat
+  and area labels include administrative suffixes from the backend area-context fix.
+- Pending: clarify whether "Admin is also a customer" means the manager-facing dashboard
+  alone or also granting rental-customer write operations (saving/appointments/reviews).
+  Existing role restrictions remain unchanged until that scope is confirmed.
 
 ## Operational constraints
 
