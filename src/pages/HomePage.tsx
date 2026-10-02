@@ -182,6 +182,13 @@ function HomePageComponent() {
   const userLocationRef = useRef(userLocation)
   userLocationRef.current = userLocation
   disruptedRef.current = disrupted
+  const cancelLocationFocus = useCallback(() => {
+    // A newer map selection owns the camera, even if device geolocation resolves later.
+    locateRequestRef.current += 1
+    setLocating(false)
+    mapFocusRef.current = null
+    setMapFocusToken((n) => n + 1)
+  }, [])
   const filtersRef = useRef<{
     keyword: string
     minPrice: string
@@ -439,9 +446,9 @@ function HomePageComponent() {
   )
 
   const handleSelectPost = useCallback((postId: string) => {
+    cancelLocationFocus()
     setSelectedPostId(postId)
-    setMapFocusToken((n) => n + 1)
-  }, [])
+  }, [cancelLocationFocus])
 
   const handleOmniboxPick = useCallback(
     (item: MapOmniboxSuggestion) => {
@@ -571,8 +578,9 @@ function HomePageComponent() {
   )
 
   const handleClearSelection = useCallback(() => {
+    cancelLocationFocus()
     setSelectedPostId((prev) => (prev == null ? prev : null))
-  }, [])
+  }, [cancelLocationFocus])
 
   const handleDetailLabelChange = useCallback((label: string | null) => {
     // Open detail → sync title into omnibox; close (map click / X) → empty ready-to-type.
