@@ -26,6 +26,15 @@ import './pages/detail.css'
 import './pages/post-form.css'
 import './pages/pages.css'
 
+// Google OAuth client IDs are public identifiers. Keep a production fallback so
+// the legacy Render service can authenticate even when its build environment
+// does not expose VITE_GOOGLE_CLIENT_ID.
+const DEFAULT_GOOGLE_CLIENT_ID =
+  '675096303664-kv4mvsd8rqldf2dicodtb7to8gpk1ipp.apps.googleusercontent.com'
+
+const googleClientId =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || DEFAULT_GOOGLE_CLIENT_ID
+
 function AppRoutes() {
   return (
     <Routes>
@@ -76,7 +85,7 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+      <GoogleOAuthProvider clientId={googleClientId}>
         <ThemeSync />
         <NetworkStatusProvider>
           <GoogleMapsProvider>
