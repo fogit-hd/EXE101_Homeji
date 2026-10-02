@@ -5,6 +5,7 @@ import {
   resolvePlaceCoordinates,
   type PlacePredictionItem,
 } from '../../lib/placeAutocomplete'
+import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import './AddressAutocomplete.css'
 
 export type PlaceResult = {
@@ -37,6 +38,7 @@ export function AddressAutocomplete({
   const { apiKey, isLoaded } = useGoogleMaps()
   const listId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const onChangeRef = useRef(onChange)
   const onPlaceSelectRef = useRef(onPlaceSelect)
   onChangeRef.current = onChange
@@ -47,6 +49,10 @@ export function AddressAutocomplete({
   const [items, setItems] = useState<PlacePredictionItem[]>([])
   const [activeIndex, setActiveIndex] = useState(-1)
   const [resolving, setResolving] = useState(false)
+  useDismissOnOutside(open, [rootRef], () => {
+    setOpen(false)
+    inputRef.current?.blur()
+  })
 
   useEffect(() => {
     if (!isLoaded || !apiKey) {
@@ -79,15 +85,6 @@ export function AddressAutocomplete({
     }
   }, [value, isLoaded, apiKey])
 
-  useEffect(() => {
-    if (!open) return
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [open])
-
   const pick = async (item: PlacePredictionItem) => {
     setOpen(false)
     setResolving(true)
@@ -114,6 +111,7 @@ export function AddressAutocomplete({
   return (
     <div ref={rootRef} className="address-autocomplete">
       <input
+        ref={inputRef}
         className={className}
         value={value}
         onChange={(e) => {

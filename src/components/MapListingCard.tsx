@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import type { RentalPostSummary } from '../api/types'
+import { type RentalPostSummary } from '../api/types'
 import { formatPrice, rentalPostTypeLabel } from '../lib/labels'
 import './MapListingCard.css'
 
@@ -14,7 +14,7 @@ type Props = {
 }
 
 /** Keep the lead phrase before marketing fluff (dash / pipe). */
-export function shortListingTitle(title: string, max = 36) {
+export function shortListingTitle(title: string, max = 48) {
   const lead = title.split(/\s*[-–—|·]\s*/)[0]?.trim() || title.trim()
   if (lead.length <= max) return lead
   return `${lead.slice(0, max - 1).trimEnd()}…`
@@ -70,22 +70,15 @@ export const MapListingCard = memo(function MapListingCard({
         {post.thumbnailPath ? (
           <img src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
         ) : (
-          <div className="map-listing-card-placeholder">Chưa có ảnh</div>
+          <div className="map-listing-card-placeholder" aria-hidden>
+            —
+          </div>
         )}
-        {post.isOwnerPremium ? (
-          <span className="map-listing-card-corner-tag is-premium">Premium</span>
-        ) : post.ownerBadge ? (
-          <span className="map-listing-card-corner-tag is-badge">{post.ownerBadge}</span>
-        ) : null}
-        <span className="map-listing-card-price">{formatPrice(post.price)}/th</span>
       </div>
       <div className="map-listing-card-body">
-        <div className="map-listing-card-tags">
-          <span className="map-listing-tag">{rentalPostTypeLabel[post.type]}</span>
-          <span>{post.area} m²</span>
-          {post.highlightTag ? (
-            <span className="map-listing-tag is-highlight">{post.highlightTag}</span>
-          ) : null}
+        <div className="map-listing-card-meta">
+          <span className="map-listing-card-price">{formatPrice(post.price)}/tháng</span>
+          <span className="map-listing-card-type">{rentalPostTypeLabel[post.type]}</span>
         </div>
         <h3>{title}</h3>
         <p className="map-listing-address">{address}</p>

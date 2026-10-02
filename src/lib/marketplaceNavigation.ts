@@ -1,19 +1,75 @@
-export type MarketplaceTab = 'food' | 'browse' | 'mine' | 'sell' | 'orders' | 'wallet'
+export type MarketplaceTab =
+  | 'food'
+  | 'browse'
+  | 'purchases'
+  | 'mine'
+  | 'sell'
+  | 'sales'
+  | 'wallet'
+
+export type MarketplacePrimary = 'food' | 'goods' | 'shop' | 'wallet'
+
+const MARKETPLACE_TABS: readonly MarketplaceTab[] = [
+  'food',
+  'browse',
+  'purchases',
+  'mine',
+  'sell',
+  'sales',
+  'wallet',
+]
+
+const SELL_SIDE = new Set(['sell', 'selling', 'sales', 'seller', 'ban'])
+const BUY_SIDE = new Set(['buy', 'buying', 'buyer', 'purchases', 'mua'])
 
 const MARKETPLACE_TAB_STORAGE_KEY = 'homeji:marketplace-tab-request'
 const MARKETPLACE_TAB_EVENT = 'homeji:marketplace-tab-request'
 const MARKETPLACE_CART_STORAGE_KEY = 'homeji:marketplace-cart-request'
 const MARKETPLACE_CART_EVENT = 'homeji:marketplace-cart-request'
 
-function isMarketplaceTab(value: unknown): value is MarketplaceTab {
-  return (
-    value === 'food' ||
-    value === 'browse' ||
-    value === 'mine' ||
-    value === 'sell' ||
-    value === 'orders' ||
-    value === 'wallet'
-  )
+export function isMarketplaceTab(value: unknown): value is MarketplaceTab {
+  return typeof value === 'string' && (MARKETPLACE_TABS as readonly string[]).includes(value)
+}
+
+export function primaryOf(tab: MarketplaceTab): MarketplacePrimary {
+  if (tab === 'browse' || tab === 'purchases') return 'goods'
+  if (tab === 'mine' || tab === 'sell' || tab === 'sales') return 'shop'
+  if (tab === 'wallet') return 'wallet'
+  return 'food'
+}
+
+function orderSide(params: URLSearchParams): 'sales' | 'purchases' | null {
+  const raw = `${params.get('order') ?? params.get('side') ?? params.get('role') ?? ''}`
+    .trim()
+    .toLowerCase()
+  if (!raw) return null
+  if (SELL_SIDE.has(raw)) return 'sales'
+  if (BUY_SIDE.has(raw)) return 'purchases'
+  return null
+}
+
+/**
+ * Leaf tab encoded by the marketplace query.
+ * `tab` is null when the URL does not name a market screen.
+ * `legacy` is true when `market=orders` or a buy/sell side param still needs a canonical rewrite.
+ */
+export function resolveMarketplaceDestination(params: URLSearchParams): {
+  tab: MarketplaceTab | null
+  legacy: boolean
+} {
+  const market = params.get('market')
+  const side = orderSide(params)
+  if (market === 'orders') {
+    return { tab: side === 'sales' ? 'sales' : 'purchases', legacy: true }
+  }
+  if (market === 'purchases' || market === 'sales') {
+    return { tab: market, legacy: side != null }
+  }
+  if (isMarketplaceTab(market)) {
+    return { tab: market, legacy: side != null }
+  }
+  if (!market && params.get('wallet')) return { tab: 'wallet', legacy: false }
+  return { tab: null, legacy: false }
 }
 
 export function requestMarketplaceTab(tab: MarketplaceTab) {

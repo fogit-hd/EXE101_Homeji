@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { createRentalPostDraft } from '../api'
 import { RentalPostType, UserRole } from '../api/types'
+import { PageFrame } from '../components/chrome'
+import { PageNotice } from '../components/toast/PageNotice'
 import { useAuth } from '../contexts/AuthContext'
 import { rentalPostTypeLabel } from '../lib/labels'
 import { getErrorMessage } from '../lib/errors'
@@ -49,11 +51,24 @@ export function CreateRentalPostPage() {
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Đăng tin mới</h1>
-      <p className="page-subtitle">Chọn loại tin đăng để bắt đầu</p>
+    <PageFrame
+      title="Đăng tin mới"
+      actions={
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          disabled={loading}
+          onClick={() => void handleCreate()}
+        >
+          {loading ? 'Đang tạo…' : 'Tiếp tục'}
+        </button>
+      }
+    >
+      <p className="page-subtitle" style={{ marginTop: 0 }}>
+        Chọn loại tin đăng để bắt đầu
+      </p>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      <PageNotice message={error} tone="error" />
 
       <div className="type-selector">
         {availableTypes.map((t) => (
@@ -67,19 +82,19 @@ export function CreateRentalPostPage() {
             {t === RentalPostType.RoomTransfer ? (
               <p>Chuyển hợp đồng hoặc cho thuê lại có xác nhận của chủ nhà</p>
             ) : (
-            <p>
-              {t === RentalPostType.VacantRoom
-                ? 'Cho thuê phòng trống'
-                : 'Tìm bạn ở ghép cùng phòng'}
-            </p>
+              <p>
+                {t === RentalPostType.VacantRoom
+                  ? 'Cho thuê phòng trống'
+                  : 'Tìm bạn ở ghép cùng phòng'}
+              </p>
             )}
           </button>
         ))}
       </div>
 
       <button type="button" className="btn btn-primary" disabled={loading} onClick={() => void handleCreate()}>
-        {loading ? 'Đang tạo...' : 'Tiếp tục'}
+        {loading ? 'Đang tạo…' : 'Tiếp tục'}
       </button>
-    </div>
+    </PageFrame>
   )
 }

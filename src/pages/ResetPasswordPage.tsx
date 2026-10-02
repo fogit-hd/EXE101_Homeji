@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { resetPassword } from '../api'
 import { useAuth } from '../contexts/AuthContext'
+import { PageNotice } from '../components/toast/PageNotice'
 import { getErrorMessage } from '../lib/errors'
 
 function parseHashParams(): Record<string, string> {
@@ -48,14 +49,17 @@ export function ResetPasswordPage() {
       <div className="auth-card card">
         <h1 className="page-title">Đặt lại mật khẩu</h1>
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {message && <div className="alert alert-success">{message}</div>}
+        <PageNotice message={error} tone="error" />
+        <PageNotice message={message} tone="success" />
+        <PageNotice
+          message={accessToken ? '' : 'Liên kết không hợp lệ hoặc đã hết hạn.'}
+          tone="info"
+        />
 
         {!accessToken ? (
-          <div className="alert alert-info">
-            Liên kết không hợp lệ hoặc đã hết hạn.{' '}
+          <p className="page-subtitle">
             <Link to="/forgot-password">Yêu cầu liên kết mới</Link>
-          </div>
+          </p>
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="form-group">

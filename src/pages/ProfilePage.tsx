@@ -254,7 +254,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   if (showLoader) {
     return (
-      <main className={embedded ? 'map-embed' : 'container page'}>
+      <main className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
         <ContentSkeleton variant="profile" label="Đang tải hồ sơ…" />
       </main>
     )
@@ -264,12 +264,15 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
-      {!embedded ? (
-        <>
-          <h1 className="page-title">Hồ sơ của tôi</h1>
-          <p className="page-subtitle">Quản lý thông tin tài khoản và lối sống trên Homeji</p>
-        </>
-      ) : null}
+      <header className="profile-page-header">
+        <span className="profile-page-eyebrow">Tài khoản cá nhân</span>
+        <h1 className="profile-page-title">
+          Hồ sơ của {profile?.displayName?.trim() || 'bạn'}
+        </h1>
+        <p className="profile-page-lead">
+          Một hồ sơ rõ ràng giúp Homeji tìm đúng phòng và đúng người ở ghép hơn.
+        </p>
+      </header>
 
       <section className="profile-hero map-motion-fade-up">
         <div className="profile-hero__avatar-wrap" aria-busy={avatarBusy}>

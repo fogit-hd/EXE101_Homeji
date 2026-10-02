@@ -53,6 +53,14 @@ type HomeMapStageProps = {
   userLocation: { lat: number; lng: number } | null
   onLocate: () => void
   locating: boolean
+  markerVariant?: 'pin' | 'price-pill'
+  hideViewSwitcher?: boolean
+  onViewportIdle?: (bounds: {
+    minLatitude: number
+    maxLatitude: number
+    minLongitude: number
+    maxLongitude: number
+  }) => void
 }
 
 /**
@@ -81,6 +89,9 @@ export const HomeMapStage = memo(function HomeMapStage({
   userLocation,
   onLocate,
   locating,
+  markerVariant = 'pin',
+  hideViewSwitcher = false,
+  onViewportIdle,
 }: HomeMapStageProps) {
   return (
     <RentalMap
@@ -106,6 +117,9 @@ export const HomeMapStage = memo(function HomeMapStage({
       navigationRequest={navigationRequest}
       onNavigationResult={onNavigationResult}
       selectionPad={HOME_SELECTION_PAD}
+      markerVariant={markerVariant}
+      hideViewSwitcher={hideViewSwitcher}
+      onViewportIdle={onViewportIdle}
     />
   )
 })

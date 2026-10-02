@@ -4,6 +4,7 @@ import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import { googleLoginWithIdToken } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthModalIntent, AuthModalMode } from '../../contexts/AuthModalContext'
+import { PageNotice } from '../toast/PageNotice'
 import { getErrorMessage } from '../../lib/errors'
 import {
   normalizeEmail,
@@ -151,7 +152,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
               Đăng nhập
             </h2>
             <p className="auth-modal__subtitle">{subtitle ?? 'Chào mừng trở lại Homeji'}</p>
-            {error ? <div className="alert alert-error">{error}</div> : null}
+            <PageNotice message={error} tone="error" />
             <form onSubmit={(e) => void handleLogin(e)}>
               <div className="form-group">
                 <label className="form-label" htmlFor="auth-modal-email">
@@ -217,8 +218,8 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
               Đăng ký
             </h2>
             <p className="auth-modal__subtitle">{subtitle ?? 'Tạo tài khoản Homeji miễn phí'}</p>
-            {error ? <div className="alert alert-error">{error}</div> : null}
-            {message ? <div className="alert alert-success">{message}</div> : null}
+            <PageNotice message={error} tone="error" />
+            <PageNotice message={message} tone="success" />
             <form onSubmit={(e) => void handleRegister(e)}>
               <div className="form-group">
                 <label className="form-label" htmlFor="auth-modal-name">

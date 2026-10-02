@@ -13,7 +13,6 @@ import {
 } from '@googlemaps/markerclusterer'
 import type { RentalPostSummary } from '../../api/types'
 import { RentalPostType } from '../../api/types'
-import { ContentSkeleton } from '../ContentSkeleton'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
@@ -45,10 +44,12 @@ import {
   createUserLocationDotContent,
   createMapClusterContent,
   createMarketplacePinContent,
+  createPricePillPinContent,
   createRentalPinContent,
   type MapClusterKind,
   type MapPinContentHandle,
 } from './mapLocationPins'
+import { formatCompactPriceTr } from './explore/mapExploreFormat'
 import {
   createSharedLocationPinContent,
   type LocationLottieContentHandle,
@@ -104,6 +105,10 @@ type RentalMapProps = {
   locating?: boolean
   selectionPad?: MapViewportPad
   focusToken?: number
+  /** Figma explore: price pills instead of teardrop pins. */
+  markerVariant?: 'pin' | 'price-pill'
+  /** Hide Bản đồ / Vệ tinh / Xem phố chrome (Figma explore). */
+  hideViewSwitcher?: boolean
   /** After filter search — force-fit camera to all matching rental pins. */
   listingsFitToken?: number
   /** In-map driving directions (Routes API) — drawn as polylines on this map. */
@@ -126,6 +131,13 @@ type RentalMapProps = {
     } | null,
     error?: string | null,
   ) => void
+  /** Fired when the camera settles. Used for search-as-map-moves bounds queries. */
+  onViewportIdle?: (bounds: {
+    minLatitude: number
+    maxLatitude: number
+    minLongitude: number
+    maxLongitude: number
+  }) => void
 }
 
 const DEFAULT_PAD: MapViewportPad = { top: 100, bottom: 230 }
@@ -192,9 +204,12 @@ function RentalMapComponent({
   locating = false,
   selectionPad = DEFAULT_PAD,
   focusToken = 0,
+  markerVariant = 'pin',
+  hideViewSwitcher = false,
   listingsFitToken = 0,
   navigationRequest = null,
   onNavigationResult,
+  onViewportIdle,
 }: RentalMapProps) {
   const { apiKey, mapId, isLoaded, loadError } = useGoogleMaps()
   const diagnostics = useGoogleMapsDiagnostics(apiKey, loadError, Boolean(loadError))
@@ -217,6 +232,8 @@ function RentalMapComponent({
   const routeMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const onNavigationResultRef = useRef(onNavigationResult)
   onNavigationResultRef.current = onNavigationResult
+  const onViewportIdleRef = useRef(onViewportIdle)
+  onViewportIdleRef.current = onViewportIdle
   const libRef = useRef<google.maps.MarkerLibrary | null>(null)
   const onSelectMarketplaceRef = useRef(onSelectMarketplace)
   onSelectMarketplaceRef.current = onSelectMarketplace
@@ -310,16 +327,30 @@ function RentalMapComponent({
       const hot = !selected && post.id === hoveredPostId
       const s = styleFor(post, selected, Boolean(hot))
       const pos = { lat: post.latitude, lng: post.longitude }
-      const styleKey = `${s.key}|${post.title}`
+      const priceLabel = formatCompactPriceTr(post.price)
+      const styleKey =
+        markerVariant === 'price-pill'
+          ? `pill|${s.key}|${priceLabel}|${post.title}`
+          : `${s.key}|${post.title}`
+
+      const buildContent = () =>
+        markerVariant === 'price-pill'
+          ? createPricePillPinContent({
+              label: priceLabel,
+              title: post.title || 'Tin đăng Homeji',
+              selected,
+              hot: Boolean(hot),
+            })
+          : createRentalPinContent({
+              kind: s.kind,
+              title: post.title || 'Tin đăng Homeji',
+              selected,
+              hot: Boolean(hot),
+            })
 
       const entry = markersRef.current.get(post.id)
       if (!entry) {
-        const content = createRentalPinContent({
-          kind: s.kind,
-          title: post.title || 'Tin đăng Homeji',
-          selected,
-          hot: Boolean(hot),
-        })
+        const content = buildContent()
         const marker = new AdvancedMarkerElement({
           position: pos,
           content: content.element,
@@ -351,12 +382,7 @@ function RentalMapComponent({
         }
         if (entry.styleKey !== styleKey) {
           entry.dispose?.()
-          const content = createRentalPinContent({
-            kind: s.kind,
-            title: post.title || 'Tin đăng Homeji',
-            selected,
-            hot: Boolean(hot),
-          })
+          const content = buildContent()
           entry.marker.content = content.element
           entry.el = content.element
           entry.dispose = content.dispose
@@ -369,7 +395,7 @@ function RentalMapComponent({
     ;(window as Window & { __HOMEJI_MARKER_COUNT?: number }).__HOMEJI_MARKER_COUNT =
       markersRef.current.size
     refreshClusters()
-  }, [pins, selectedPostId, hoveredPostId, refreshClusters])
+  }, [pins, selectedPostId, hoveredPostId, markerVariant, refreshClusters])
 
   useEffect(() => {
     syncMarkersRef.current = syncMarkers
@@ -533,6 +559,24 @@ function RentalMapComponent({
       )
 
       // Click-guard only — never fetch listing data on drag / bounds_changed.
+      // idle reports the settled viewport; the parent decides whether to query.
+      listeners.push(
+        map.addListener('idle', () => {
+          const report = onViewportIdleRef.current
+          if (!report) return
+          const bounds = map.getBounds()
+          if (!bounds) return
+          const ne = bounds.getNorthEast()
+          const sw = bounds.getSouthWest()
+          report({
+            minLatitude: sw.lat(),
+            maxLatitude: ne.lat(),
+            minLongitude: sw.lng(),
+            maxLongitude: ne.lng(),
+          })
+        }),
+      )
+
       listeners.push(
         map.addListener('dragstart', () => {
           userGestureRef.current = true
@@ -1207,17 +1251,22 @@ function RentalMapComponent({
 
   if (!apiKey) {
     return (
-      <div className="rental-map rental-map--placeholder">
-        <p>
-          Bản đồ chưa được cấu hình trên hệ thống. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.
-        </p>
+      <div className="rental-map rental-map--stage" role="status">
+        <div className="rental-map__stage-card">
+          <span className="rental-map__stage-mark" aria-hidden />
+          <p className="rental-map__stage-title">Bản đồ chưa sẵn sàng</p>
+          <p className="rental-map__stage-copy">
+            Hệ thống đang thiếu cấu hình bản đồ. Bạn vẫn xem được danh sách phòng bên cạnh — thử lại
+            sau hoặc liên hệ hỗ trợ.
+          </p>
+        </div>
       </div>
     )
   }
 
   if (diagnostics.failed) {
     return (
-      <div className="rental-map">
+      <div className="rental-map rental-map--stage">
         <MapErrorPanel
           diagnosis={diagnostics.diagnosis}
           report={diagnostics.report}
@@ -1234,12 +1283,18 @@ function RentalMapComponent({
       <div ref={hostRef} className="rental-map__host" />
 
       {!mapReady ? (
-        <div className="rental-map__loader" aria-hidden>
-          <ContentSkeleton compact variant="detail" label="Đang tải bản đồ…" />
+        <div className="rental-map__loader" role="status" aria-live="polite">
+          <div className="rental-map__stage-card rental-map__stage-card--loading">
+            <span className="rental-map__stage-pulse" aria-hidden />
+            <p className="rental-map__stage-title">Đang mở bản đồ khu vực</p>
+            <p className="rental-map__stage-copy">
+              Homeji đang tải Thủ Đức &amp; Q.9 — danh sách phòng bên phải vẫn dùng được ngay.
+            </p>
+          </div>
         </div>
       ) : null}
 
-      {mapReady ? (
+      {mapReady && !hideViewSwitcher ? (
         <div className="rental-map__view-switcher-wrap">
           {displayMode === 'streetview-select' ? (
             <div className="rental-map__view-guide" role="status">
@@ -1287,6 +1342,16 @@ function RentalMapComponent({
 
       {displayMode !== 'streetview' ? (
         <div className="rental-map__controls" aria-label="Điều khiển bản đồ">
+          <button
+            type="button"
+            className="rental-map__btn"
+            onClick={() => selectBaseMap(displayMode === 'satellite' ? 'roadmap' : 'satellite')}
+            title="Lớp bản đồ"
+            aria-label="Lớp bản đồ"
+            aria-pressed={displayMode === 'satellite'}
+          >
+            <img src="/figma/map/layers.svg" alt="" width={17} height={17} />
+          </button>
           {onLocate ? (
             <button
               type="button"
@@ -1296,7 +1361,7 @@ function RentalMapComponent({
               title="Vị trí của tôi"
               aria-label="Vị trí của tôi"
             >
-              ⌖
+              <img src="/figma/map/locate.svg" alt="" width={17} height={17} />
             </button>
           ) : null}
           <div className="rental-map__zoom" role="group" aria-label="Thu phóng">
@@ -1306,7 +1371,7 @@ function RentalMapComponent({
               onClick={() => zoomBy(1)}
               aria-label="Phóng to"
             >
-              +
+              <img src="/figma/map/plus.svg" alt="" width={17} height={17} />
             </button>
             <button
               type="button"
@@ -1314,7 +1379,7 @@ function RentalMapComponent({
               onClick={() => zoomBy(-1)}
               aria-label="Thu nhỏ"
             >
-              −
+              <img src="/figma/map/minus.svg" alt="" width={17} height={17} />
             </button>
           </div>
         </div>
@@ -1372,6 +1437,8 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.onLocate === next.onLocate &&
     prev.locating === next.locating &&
     prev.focusToken === next.focusToken &&
+    prev.markerVariant === next.markerVariant &&
+    prev.hideViewSwitcher === next.hideViewSwitcher &&
     prev.listingsFitToken === next.listingsFitToken &&
     prev.navigationRequest?.token === next.navigationRequest?.token &&
     prev.navigationRequest?.origin.lat === next.navigationRequest?.origin.lat &&
@@ -1383,6 +1450,7 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.navigationRequest?.trafficAware === next.navigationRequest?.trafficAware &&
     prev.navigationRequest?.mode === next.navigationRequest?.mode &&
     prev.onNavigationResult === next.onNavigationResult &&
+    prev.onViewportIdle === next.onViewportIdle &&
     prev.selectionPad?.top === next.selectionPad?.top &&
     prev.selectionPad?.bottom === next.selectionPad?.bottom
   )

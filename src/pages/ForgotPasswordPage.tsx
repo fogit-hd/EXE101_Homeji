@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { forgotPassword } from '../api'
+import { PageNotice } from '../components/toast/PageNotice'
 import { getErrorMessage } from '../lib/errors'
 
 export function ForgotPasswordPage() {
@@ -33,8 +34,8 @@ export function ForgotPasswordPage() {
         <h1 className="page-title">Quên mật khẩu</h1>
         <p className="page-subtitle">Nhập email để nhận liên kết đặt lại mật khẩu</p>
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {message && <div className="alert alert-success">{message}</div>}
+        <PageNotice message={error} tone="error" />
+        <PageNotice message={message} tone="success" />
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

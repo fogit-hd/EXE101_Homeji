@@ -14,6 +14,7 @@ import {
 } from '../api'
 import { PaymentStatus, SubscriptionTier } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { MapToast } from '../components/map/MapToast'
 import { useAuth } from '../contexts/AuthContext'
@@ -167,7 +168,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         message={error}
       />
     ) : (
-      <main className={embedded ? 'map-embed' : 'container page'}>
+      <main className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
         <ContentSkeleton variant="dashboard" count={3} label="Đang tải gói đăng ký…" />
       </main>
     )
@@ -180,42 +181,57 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     ...premiumPlans,
   ])
 
-  return (
-    <div className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
-      {!embedded ? (
-        <>
-          <h1 className="page-title">Bảng giá các gói dịch vụ</h1>
-          <p className="page-subtitle">Chọn gói phù hợp và thanh toán qua MoMo hoặc PayOS</p>
-        </>
-      ) : null}
+  const currentLabel = mine?.isPremium
+    ? mine.packageName || subscriptionTierLabel[mine.tier] || 'Pro'
+    : 'Homeji Free'
 
-      {error && !disrupted ? <div className="alert alert-error">{error}</div> : null}
+  return (
+    <div className={`payment-page${embedded ? ' payment-embed map-embed' : ' container page'}`}>
+      <header className="payment-page-header">
+        <span className="payment-page-eyebrow">HOMEJI MEMBERSHIP</span>
+        <h1 className="payment-page-title">Tìm nhanh hơn. Chọn tự tin hơn.</h1>
+        <p className="payment-page-lead">
+          Nâng cấp khi bạn cần thêm lợi thế trong hành trình tìm nhà — không ràng buộc dài hạn.
+        </p>
+      </header>
+
+      <PageNotice message={error && !disrupted ? error : ''} tone="error" />
 
       <section className="payment-current map-motion-fade-up">
-        <div>
-          <p className="payment-current__label">Gói hiện tại</p>
-          <strong className="payment-current__badge">
-            {mine ? subscriptionTierLabel[mine.tier] ?? mine.badge : 'Standard'}
-          </strong>
-          {mine?.isPremium && mine.packageName ? (
-            <p className="payment-current__meta">{mine.packageName}</p>
-          ) : (
-            <p className="payment-current__meta">Đang dùng gói miễn phí</p>
-          )}
-        </div>
-        <div className="payment-current__side">
+        <div className="payment-current__left">
+          <p className="payment-current__label">GÓI HIỆN TẠI</p>
+          <div className="payment-current__name-row">
+            <strong className="payment-current__badge">{currentLabel}</strong>
+            <span className="payment-current__live">ĐANG DÙNG</span>
+          </div>
           {mine?.premiumExpiresAt ? (
             <p className="payment-current__meta">Hết hạn {formatDate(mine.premiumExpiresAt)}</p>
           ) : null}
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void reload()}>
-            Làm mới
-          </button>
         </div>
+        <div className="payment-current__meters" aria-hidden={!mine}>
+          <div className="payment-current__meter">
+            <span>Phòng đã lưu</span>
+            <strong>9 / 12</strong>
+            <i style={{ width: '75%' }} />
+          </div>
+          <div className="payment-current__meter">
+            <span>Thông báo khu vực</span>
+            <strong>1 / 1</strong>
+            <i className="is-full" style={{ width: '100%' }} />
+          </div>
+          <div className="payment-current__meter">
+            <span>Lượt so sánh</span>
+            <strong>2 / 3</strong>
+            <i style={{ width: '66%' }} />
+          </div>
+        </div>
+        <button type="button" className="payment-current__refresh" onClick={() => void reload()}>
+          Làm mới
+        </button>
       </section>
 
       <div
-        className="tabs map-section-tabs"
-        style={{ ['--map-tab-cols' as string]: 2 }}
+        className="payment-tabs"
         role="tablist"
         aria-label="Gói và giao dịch"
       >
@@ -223,7 +239,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
           type="button"
           role="tab"
           aria-selected={tab === 'plans'}
-          className={`tab ${tab === 'plans' ? 'active' : ''}`}
+          className={tab === 'plans' ? 'is-active' : ''}
           onClick={() => setTab('plans')}
         >
           Đăng ký gói
@@ -232,7 +248,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
           type="button"
           role="tab"
           aria-selected={tab === 'history'}
-          className={`tab ${tab === 'history' ? 'active' : ''}`}
+          className={tab === 'history' ? 'is-active' : ''}
           onClick={() => setTab('history')}
         >
           Giao dịch
@@ -241,8 +257,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       {tab === 'plans' ? (
         <div className="payment-plans map-motion-fade-up">
-          <p className="payment-plans__heading">Bảng giá các gói dịch vụ</p>
-
+          <div className="payment-plan-grid">
           {displayPlans.map((plan) => {
             const view = getPlanDisplay(plan)
             const isPremium = plan.tier === SubscriptionTier.Premium && plan.price > 0
@@ -252,6 +267,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               : !mine?.isPremium
             const busy = busyCode === plan.code
             const pickingPay = payPickerCode === plan.code
+            const featured = view.highlight === 'popular' || (isPremium && !view.highlight)
 
             return (
               <article
@@ -259,6 +275,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 className={[
                   'payment-plan-card',
                   isPremium ? 'is-premium' : 'is-basic',
+                  featured ? 'is-featured' : '',
                   selected ? 'is-selected' : '',
                   isCurrent ? 'is-current' : '',
                   view.highlight === 'popular' ? 'is-popular' : '',
@@ -268,128 +285,126 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   .filter(Boolean)
                   .join(' ')}
               >
-                <div className="payment-plan-card__grid">
-                  <div className="payment-plan-card__main">
+                {featured || view.highlightLabel ? (
+                  <span className="payment-plan-card__ribbon">
+                    {view.highlightLabel || 'ĐƯỢC CHỌN NHIỀU'}
+                  </span>
+                ) : null}
+
+                <h3>{isPremium ? (view.title.includes('Pro') ? view.title : 'Pro') : 'Free'}</h3>
+                <p className="payment-plan-card__price">
+                  {isPremium ? (
+                    <>
+                      {view.headlinePrice}
+                      <small>{view.headlineSuffix || '/ tháng'}</small>
+                    </>
+                  ) : (
+                    <>0đ <small>/ mãi mãi</small></>
+                  )}
+                </p>
+                {view.savingsLabel ? (
+                  <p className="payment-plan-card__savings">{view.savingsLabel}</p>
+                ) : view.totalLine ? (
+                  <p className="payment-plan-card__total">{view.totalLine}</p>
+                ) : isPremium ? (
+                  <p className="payment-plan-card__total">Tiết kiệm khi trả theo năm</p>
+                ) : null}
+
+                <ul>
+                  {view.benefits.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+
+                <div className="payment-plan-card__actions">
+                  {!isPremium ? (
+                    <span className="payment-plan-card__current is-free">✓ Gói hiện tại</span>
+                  ) : isCurrent ? (
+                    <span className="payment-plan-card__current">Đang dùng</span>
+                  ) : pickingPay ? (
+                    <div
+                      className="payment-plan-card__pay-options"
+                      role="group"
+                      aria-label="Chọn hình thức thanh toán"
+                    >
+                      <button
+                        type="button"
+                        className="btn btn-sm payment-plan-card__momo"
+                        disabled={busy}
+                        onClick={() => void startCheckout(plan.code, 'momo')}
+                      >
+                        {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={busy}
+                        onClick={() => void startCheckout(plan.code, 'payos')}
+                      >
+                        {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={busy}
+                        onClick={() => setPayPickerCode(null)}
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  ) : (
                     <button
                       type="button"
-                      className="payment-plan-card__select-head"
+                      className="payment-plan-card__buy"
+                      disabled={busy}
                       onClick={() => {
                         setSelectedCode(plan.code)
-                        if (pickingPay) setPayPickerCode(null)
+                        setPayPickerCode(plan.code)
                       }}
                     >
-                      <div className="payment-plan-card__title-row">
-                        <h3>{view.title}</h3>
-                        <span
-                          className={`payment-plan-card__badge is-${view.tierTagTone}`}
-                        >
-                          {view.tierTag}
-                        </span>
-                        {view.highlightLabel ? (
-                          <span
-                            className={`payment-plan-card__highlight is-${view.highlight ?? 'popular'}`}
-                          >
-                            {view.highlightLabel}
-                          </span>
-                        ) : null}
-                      </div>
+                      Nâng cấp lên Pro
                     </button>
-
-                    <div className="payment-plan-card__body">
-                      <ul>
-                        {view.benefits.map((b) => (
-                          <li key={b}>{b}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {view.note ? (
-                      <p className="payment-plan-card__note">{view.note}</p>
-                    ) : null}
-                  </div>
-
-                  <div className="payment-plan-card__aside">
-                    <button
-                      type="button"
-                      className="payment-plan-card__price-block"
-                      onClick={() => {
-                        setSelectedCode(plan.code)
-                        if (pickingPay) setPayPickerCode(null)
-                      }}
-                    >
-                      <p className="payment-plan-card__price">
-                        {view.headlinePrice}
-                        {view.headlineSuffix ? (
-                          <small>{view.headlineSuffix}</small>
-                        ) : null}
-                      </p>
-                      {view.totalLine ? (
-                        <p className="payment-plan-card__total">{view.totalLine}</p>
-                      ) : null}
-                      {view.savingsLabel ? (
-                        <p className="payment-plan-card__savings">{view.savingsLabel}</p>
-                      ) : null}
-                    </button>
-
-                    <div className="payment-plan-card__actions">
-                      {!isPremium ? (
-                        <span className="payment-plan-card__current is-free">Đang áp dụng</span>
-                      ) : isCurrent ? (
-                        <span className="payment-plan-card__current">Đang dùng</span>
-                      ) : pickingPay ? (
-                        <div
-                          className="payment-plan-card__pay-options"
-                          role="group"
-                          aria-label="Chọn hình thức thanh toán"
-                        >
-                          <button
-                            type="button"
-                            className="btn btn-sm payment-plan-card__momo"
-                            disabled={busy}
-                            onClick={() => void startCheckout(plan.code, 'momo')}
-                          >
-                            {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            disabled={busy}
-                            onClick={() => void startCheckout(plan.code, 'payos')}
-                          >
-                            {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            disabled={busy}
-                            onClick={() => setPayPickerCode(null)}
-                          >
-                            Hủy
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm payment-plan-card__buy"
-                          disabled={busy}
-                          onClick={() => {
-                            setSelectedCode(plan.code)
-                            setPayPickerCode(plan.code)
-                          }}
-                        >
-                          Mua ngay
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </article>
             )
           })}
 
+          <aside className="payment-insight-card" aria-label="Pro Insight">
+            <span className="payment-insight-card__tag">PRO INSIGHT</span>
+            <h3>Biết phòng tốt ngay khi vừa xuất hiện</h3>
+            <div className="payment-insight-card__mock">
+              <strong>96% match</strong>
+              <p>Phòng mới tại Bình Thạnh · 6,5 triệu</p>
+            </div>
+            <p className="payment-insight-card__foot">Hủy bất kỳ lúc nào · Thanh toán an toàn</p>
+          </aside>
+          </div>
+
           {premiumPlans.length === 0 ? (
             <div className="empty-state card">Chưa có gói Premium để đăng ký.</div>
           ) : null}
+
+          <section className="payment-compare" aria-label="So sánh quyền lợi">
+            <h2>So sánh quyền lợi</h2>
+            <div className="payment-compare__table" role="table">
+              <div className="payment-compare__row" role="row">
+                <span role="cell">Tìm kiếm &amp; lưu phòng</span>
+                <span role="cell">Không giới hạn</span>
+                <span role="cell">Không giới hạn</span>
+              </div>
+              <div className="payment-compare__row" role="row">
+                <span role="cell">Thông báo phòng mới</span>
+                <span role="cell">1 khu vực</span>
+                <span role="cell" className="is-accent">10 khu vực</span>
+              </div>
+              <div className="payment-compare__row" role="row">
+                <span role="cell">So sánh phòng</span>
+                <span role="cell">3 phòng</span>
+                <span role="cell" className="is-accent">Không giới hạn</span>
+              </div>
+            </div>
+          </section>
 
           {(payUrl || activePayment) && tab === 'plans' ? (
             <aside className="payment-checkout card">

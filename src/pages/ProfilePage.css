@@ -4,18 +4,62 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  width: 100%;
+  max-width: none;
+}
+
+/* Shared WS-D account surfaces (Ở ghép / Thông báo / Nhật ký) */
+.account-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.account-surface__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.account-surface .card,
+.account-surface .empty-state {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  background: var(--surface);
+  box-shadow: none;
+  padding: 16px;
+}
+
+.account-surface .notification-item {
+  border-left: 0;
+}
+
+.account-surface .notification-item.unread {
+  background: var(--surface-muted, #f6f8fa);
+}
+
+.account-surface .invitation-item,
+.account-surface .activity-item {
+  align-items: flex-start;
+}
+
+.account-surface .form-group {
+  max-width: 320px;
 }
 
 .profile-hero {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    linear-gradient(145deg, rgba(26, 115, 232, 0.12), transparent 55%),
-    var(--surface-elevated, var(--surface));
+  border-radius: var(--radius-card, 12px);
+  background: var(--surface-muted, #f6f8fa);
 }
 
 .profile-hero__avatar-wrap {
@@ -321,4 +365,63 @@
   .profile-hero {
     align-items: flex-start;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Hồ sơ — Figma frame 12:17009
+   Portrait header + form panels
+   ══════════════════════════════════════════════════════════════ */
+.profile-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--hj-border, #d8cdbb);
+  margin-bottom: 4px;
+}
+
+.profile-page-eyebrow {
+  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #e8603c;
+}
+
+.profile-page-title {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 600;
+  color: var(--hj-ink, #18231d);
+  line-height: 1.2;
+}
+
+.profile-page-lead {
+  margin: 0;
+  font: 400 0.88rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
+  color: var(--hj-muted, #756f64);
+}
+
+/* Profile page canvas */
+.profile-page.page {
+  background: var(--hj-paper, #f3ebdd);
+}
+
+/* Portrait hero panel: cream background */
+.profile-page .profile-hero,
+.profile-embed .profile-hero {
+  background: var(--hj-cream, #fff9ef);
+  border-color: var(--hj-border, #d8cdbb);
+  border-radius: var(--hj-radius-lg, 22px);
+  padding: 20px;
+}
+
+/* Form panels */
+.profile-page .profile-section,
+.profile-embed .profile-section {
+  background: var(--hj-cream, #fff9ef);
+  border: 1px solid var(--hj-border, #d8cdbb);
+  border-radius: var(--hj-radius-lg, 22px);
+  padding: 20px;
 }

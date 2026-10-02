@@ -1,13 +1,20 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   getRentalPost,
   highlightRentalPosts,
+  searchMarketplacePosts,
   searchRentalPosts,
   type AiHighlightResponse,
+  type MarketplacePost,
   type RentalPostSummary,
 } from '../api'
 import { SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
+import {
+  isExploreSurface,
+  parseExploreView,
+  type ExploreView,
+} from '../components/chrome'
 import { AuthenticatedHomeMapShell } from '../components/map/AuthenticatedHomeMapShell'
 import type { HomeMapFocus } from '../components/map/HomeMapStage'
 import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
@@ -26,17 +33,26 @@ import {
 } from '../lib/mapPinLayers'
 import { AMENITY_OPTIONS } from '../lib/labels'
 import {
+  listingQueryToMarketplaceParams,
+  listingQueryToSearchParams,
+  nonBoundsSignature,
+  parseFiltersFromURL,
+  serializeFiltersToQuery,
+} from '../components/map/listings/listingAdapters'
+import {
   bboxAround,
   resolvePlaceCoordinates,
   resolveSearchLocation,
   type MapSearchBBox,
   type ResolvedPlaceLocation,
 } from '../lib/placeAutocomplete'
+import { AuthenticatedHub } from '../components/hub/AuthenticatedHub'
 import { GuestChrome } from '../components/landing/GuestChrome'
 import { GuestHero } from '../components/landing/GuestHero'
 import { GuestMapSection } from '../components/landing/GuestMapSection'
 import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
 import { MissionConfetti } from '../components/landing/MissionConfetti'
+import { FeatureWorkspace } from '../components/layout/FeatureWorkspace'
 import {
   GUEST_DEFAULT_FOCUS,
   GUEST_DISTRICTS,
@@ -50,6 +66,21 @@ import './HomePage.css'
 
 const AMENITY_OPTIONS_LIST = [...AMENITY_OPTIONS]
 
+const HOME_SECTIONS: MapAppSection[] = [
+  'listings',
+  'saved',
+  'invitations',
+  'notifications',
+  'messages',
+  'appointments',
+  'payments',
+  'profile',
+  'marketplace',
+  'wanted',
+  'activities',
+  'myPosts',
+]
+
 /**
  * Camera focus lives in a ref — updating .current does not re-render HomePage.
  * Only bumping mapFocusToken (intentional fly-to) notifies the memoized map.
@@ -59,9 +90,28 @@ function HomePageComponent() {
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
   const mapsReady = Boolean(apiKey && mapsLoaded)
   const { schools, loading: schoolsLoading } = useNearbyGuestSchools(mapsReady && isAuthenticated)
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const urlSectionRaw = searchParams.get('section')
+  const urlPostId = searchParams.get('post')
+  // Notifications open from the header bell. Old `section=notifications` links
+  // must not mount the full-page workspace underneath the popup.
+  const activeSection =
+    urlSectionRaw &&
+    urlSectionRaw !== 'notifications' &&
+    (HOME_SECTIONS as string[]).includes(urlSectionRaw)
+      ? (urlSectionRaw as MapAppSection)
+      : null
+  const exploreView: ExploreView | null = isAuthenticated
+    ? parseExploreView(location.pathname, location.search)
+    : null
+  const isExploreView = isAuthenticated && isExploreSurface(location.pathname, location.search)
+  const isHubView = isAuthenticated && !isExploreView && !activeSection
+  const isFeatureView =
+    isAuthenticated && Boolean(activeSection && activeSection !== 'listings')
 
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
+  const [marketPosts, setMarketPosts] = useState<MarketplacePost[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [disrupted, setDisrupted] = useState(false)
@@ -75,16 +125,32 @@ function HomePageComponent() {
   const [maxPrice, setMaxPrice] = useState('')
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
-  const [panelSection, setPanelSection] = useState<MapAppSection | null>(null)
+  const [listingsPanelOpen, setListingsPanelOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState(GUEST_DISTRICTS[0].label)
   const [aiSearching, setAiSearching] = useState(false)
   const [pinLayers, setPinLayers] = useState<MapPinLayers>(() => loadMapPinLayers())
-  const panelOpen = panelSection !== null
-  const openListingsPanel = useCallback(() => setPanelSection('listings'), [])
-  const closePanel = useCallback(() => setPanelSection(null), [])
-  const openAppSection = useCallback((section: MapAppSection) => {
-    setPanelSection(section)
+  const panelSection: MapAppSection | null = isExploreView ? 'listings' : null
+  const panelOpen = isExploreView && listingsPanelOpen
+  /** Local panel flag only — never rewrite `section` (would yank tabs back to map). */
+  const openListingsPanel = useCallback(() => {
+    setListingsPanelOpen(true)
   }, [])
+  const closePanel = useCallback(() => setListingsPanelOpen(false), [])
+  const openAppSection = useCallback(
+    (section: MapAppSection) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.set('section', section)
+        if (section !== 'listings') {
+          next.delete('post')
+          next.delete('view')
+        }
+        return next
+      })
+      if (section === 'listings') setListingsPanelOpen(true)
+    },
+    [setSearchParams],
+  )
   const togglePinLayer = useCallback((layer: MapPinLayer) => {
     setPinLayers((prev) => {
       const next = { ...prev, [layer]: !prev[layer] }
@@ -101,56 +167,37 @@ function HomePageComponent() {
     [mapFocusToken],
   )
 
-  // Deep links from retired standalone pages: /?section=… /?post=…
-  // Keep gateway return params (paymentId, orderCode, …) for PaymentPage.
+  // Deep links: /?section=… /?post=… stay in the URL (strategy A).
+  // Gateway return params (paymentId, orderCode, …) are preserved for PaymentPage.
   useEffect(() => {
     if (!isAuthenticated || isLoading) return
-    const section = searchParams.get('section')
-    const postId = searchParams.get('post')
-    if (!section && !postId) return
+    if (!urlPostId) return
+    setSelectedPostId(urlPostId)
+    setListingsPanelOpen(true)
+    void getRentalPost(urlPostId, { auth: true })
+      .then((post) => {
+        setPosts((prev) => (prev.some((p) => p.id === post.id) ? prev : [post, ...prev]))
+        mapFocusRef.current = {
+          lat: post.latitude,
+          lng: post.longitude,
+          zoom: MAP_FOCUS_ZOOM,
+        }
+        setMapFocusToken((n) => n + 1)
+      })
+      .catch(() => {
+        /* keep selection; detail panel will show load error state */
+      })
+  }, [isAuthenticated, isLoading, urlPostId])
 
-    const allowed: MapAppSection[] = [
-      'listings',
-      'saved',
-      'invitations',
-      'notifications',
-      'appointments',
-      'payments',
-      'profile',
-      'marketplace',
-      'wanted',
-      'activities',
-      'myPosts',
-    ]
-    if (section && (allowed as string[]).includes(section)) {
-      setPanelSection(section as MapAppSection)
-    }
-    if (postId) {
-      setSelectedPostId(postId)
-      void getRentalPost(postId, { auth: true })
-        .then((post) => {
-          setPosts((prev) => (prev.some((p) => p.id === post.id) ? prev : [post, ...prev]))
-          mapFocusRef.current = {
-            lat: post.latitude,
-            lng: post.longitude,
-            zoom: MAP_FOCUS_ZOOM,
-          }
-          setMapFocusToken((n) => n + 1)
-        })
-        .catch(() => {
-          /* keep selection; detail panel will show load error state */
-        })
-    }
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev)
-        next.delete('section')
-        next.delete('post')
-        return next
-      },
-      { replace: true },
-    )
-  }, [isAuthenticated, isLoading, searchParams, setSearchParams])
+  useEffect(() => {
+    if (!isHubView) return
+    setSelectedPostId(null)
+  }, [isHubView])
+
+  useEffect(() => {
+    if (!isExploreView) return
+    setListingsPanelOpen(true)
+  }, [isExploreView, activeSection])
 
   const commitMapFocus = useCallback((focus: HomeMapFocus) => {
     mapFocusRef.current = { ...focus }
@@ -182,13 +229,6 @@ function HomePageComponent() {
   const userLocationRef = useRef(userLocation)
   userLocationRef.current = userLocation
   disruptedRef.current = disrupted
-  const cancelLocationFocus = useCallback(() => {
-    // A newer map selection owns the camera, even if device geolocation resolves later.
-    locateRequestRef.current += 1
-    setLocating(false)
-    mapFocusRef.current = null
-    setMapFocusToken((n) => n + 1)
-  }, [])
   const filtersRef = useRef<{
     keyword: string
     minPrice: string
@@ -308,9 +348,9 @@ function HomePageComponent() {
           zoom: MAP_FOCUS_ZOOM,
         })
       }
-      setPanelSection('listings')
+      openListingsPanel()
     },
-    [commitMapFocus, loadPosts, pinFilterResults],
+    [commitMapFocus, loadPosts, openListingsPanel, pinFilterResults],
   )
 
   const handleAiSearch = useCallback(
@@ -333,29 +373,110 @@ function HomePageComponent() {
 
   useEffect(() => {
     if (isLoading) return
+    if (isExploreView) return
     if (isAuthenticated) {
       void loadPosts()
     } else {
       setLoading(false)
       setDisrupted(false)
     }
-  }, [isAuthenticated, isLoading, loadPosts])
+  }, [isAuthenticated, isLoading, isExploreView, loadPosts])
+
+  const [exploreReload, setExploreReload] = useState(0)
+  const exploreFitKey = useRef('')
+
+  useEffect(() => {
+    if (!isExploreView) return
+    const next = serializeFiltersToQuery(parseFiltersFromURL(searchParams), searchParams)
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true })
+    }
+  }, [isExploreView, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!isAuthenticated || isLoading || !isExploreView) return
+    const query = parseFiltersFromURL(searchParams)
+    const controller = new AbortController()
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    const fitKey = nonBoundsSignature(query)
+    const marketMode = query.catalog === 'market'
+    const finish = (ids: string[]) => {
+      setSelectedPostId((prev) => (prev && ids.includes(prev) ? prev : null))
+      setDisrupted(false)
+      if (exploreFitKey.current !== fitKey) {
+        exploreFitKey.current = fitKey
+        pinFilterResults()
+      }
+    }
+    const request = marketMode
+      ? searchMarketplacePosts(listingQueryToMarketplaceParams(query), { signal: controller.signal }).then(
+          (data) => {
+            if (cancelled) return
+            setPosts([])
+            setMarketPosts(data)
+            finish(data.map((post) => post.id))
+          },
+        )
+      : searchRentalPosts(listingQueryToSearchParams(query), { signal: controller.signal }).then((data) => {
+          if (cancelled) return
+          setMarketPosts([])
+          setPosts(data)
+          finish(data.map((post) => post.id))
+        })
+    void request
+      .catch((err: unknown) => {
+        if (cancelled || controller.signal.aborted) return
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        setError(
+          getErrorMessage(err, marketMode ? 'Không thể tải chợ đồ' : 'Không thể tải danh sách phòng'),
+        )
+        setDisrupted(isServiceDisruption(err))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [
+    isAuthenticated,
+    isLoading,
+    isExploreView,
+    searchParams,
+    exploreReload,
+    pinFilterResults,
+  ])
 
   useOnReconnect(() => {
-    if (isAuthenticated) void loadPosts()
+    if (!isAuthenticated) return
+    if (isExploreView) {
+      setExploreReload((n) => n + 1)
+      return
+    }
+    void loadPosts()
   })
 
   useEffect(() => {
-    if (!isAuthenticated || !disrupted) return
+    if (!isAuthenticated || !disrupted || isExploreView) return
     const t = window.setInterval(() => void loadPosts(), SERVICE_RETRY_MS)
     return () => window.clearInterval(t)
-  }, [isAuthenticated, disrupted, loadPosts])
+  }, [isAuthenticated, disrupted, isExploreView, loadPosts])
 
-  // Chip amenity → auto search (debounce ~350ms) + open list + pin on map
+  // Chip amenity → auto search (debounce ~350ms) + pin on map.
+  // Filters only exist on the map destination — leave map clears any pending timer
+  // so tab switches (Chợ đồ / Tin nhắn) are not yanked back to listings.
   const amenitiesKey = selectedAmenities.slice().sort().join('|')
   const skipAmenitySearch = useRef(true)
+  const isMapDestination = exploreView === 'map'
   useEffect(() => {
     if (!isAuthenticated || isLoading) return
+    if (!isMapDestination) {
+      skipAmenitySearch.current = true
+      return
+    }
     if (skipAmenitySearch.current) {
       skipAmenitySearch.current = false
       return
@@ -366,7 +487,7 @@ function HomePageComponent() {
       void loadPosts()
     }, 350)
     return () => window.clearTimeout(t)
-  }, [amenitiesKey, isAuthenticated, isLoading, loadPosts, openListingsPanel])
+  }, [amenitiesKey, isAuthenticated, isLoading, isMapDestination, loadPosts, openListingsPanel])
 
   useEffect(() => {
     if (!selectedPostId) return
@@ -381,28 +502,6 @@ function HomePageComponent() {
     () => posts.find((p) => p.id === selectedPostId) ?? null,
     [posts, selectedPostId],
   )
-
-  const nearbyAnchor = useMemo(() => {
-    if (
-      selectedPost &&
-      Number.isFinite(selectedPost.latitude) &&
-      Number.isFinite(selectedPost.longitude)
-    ) {
-      return {
-        lat: selectedPost.latitude,
-        lng: selectedPost.longitude,
-        label: selectedPost.address || selectedPost.title || 'Phòng đang xem',
-      }
-    }
-    if (mapPlaceFocus) {
-      return {
-        lat: mapPlaceFocus.lat,
-        lng: mapPlaceFocus.lng,
-        label: mapPlaceFocus.address || mapPlaceFocus.name,
-      }
-    }
-    return null
-  }, [selectedPost, mapPlaceFocus])
 
   const toggleAmenity = useCallback((amenity: string) => {
     setSelectedAmenities((prev) =>
@@ -445,10 +544,39 @@ function HomePageComponent() {
     [districtId, wardId, schoolId, schools, loadPosts, openListingsPanel, commitMapFocus],
   )
 
+  // Deep-link area filters on Khám phá: apply district/ward/school query once per key.
+  const hubAreaQueryKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!isExploreView) {
+      hubAreaQueryKeyRef.current = null
+      return
+    }
+    const district = searchParams.get('district')
+    const ward = searchParams.get('ward') ?? ''
+    const school = searchParams.get('school') ?? ''
+    if (!district && !ward && !school) return
+    const key = `${district ?? ''}|${ward}|${school}`
+    if (hubAreaQueryKeyRef.current === key) return
+    hubAreaQueryKeyRef.current = key
+
+    const nextDistrictId =
+      district && GUEST_DISTRICTS.some((d) => d.id === district)
+        ? district
+        : GUEST_DISTRICTS[0].id
+    setDistrictId(nextDistrictId)
+    setWardId(ward)
+    setSchoolId(school)
+    applyAreaFilters({
+      districtId: nextDistrictId,
+      wardId: ward,
+      schoolId: school,
+    })
+  }, [isExploreView, searchParams, applyAreaFilters])
+
   const handleSelectPost = useCallback((postId: string) => {
-    cancelLocationFocus()
     setSelectedPostId(postId)
-  }, [cancelLocationFocus])
+    setMapFocusToken((n) => n + 1)
+  }, [])
 
   const handleOmniboxPick = useCallback(
     (item: MapOmniboxSuggestion) => {
@@ -459,7 +587,7 @@ function HomePageComponent() {
         handleSelectPost(item.postId)
         return
       }
-      if ((item.kind === 'place' || item.kind === 'nearby') && item.placeId) {
+      if (item.kind === 'place' && item.placeId) {
         void (async () => {
           const resolved = await resolvePlaceCoordinates(item.placeId!)
           if (!resolved) {
@@ -578,9 +706,19 @@ function HomePageComponent() {
   )
 
   const handleClearSelection = useCallback(() => {
-    cancelLocationFocus()
     setSelectedPostId((prev) => (prev == null ? prev : null))
-  }, [cancelLocationFocus])
+    if (urlPostId) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('post')
+          if (!next.get('section')) next.set('section', 'listings')
+          return next
+        },
+        { replace: true },
+      )
+    }
+  }, [setSearchParams, urlPostId])
 
   const handleDetailLabelChange = useCallback((label: string | null) => {
     // Open detail → sync title into omnibox; close (map click / X) → empty ready-to-type.
@@ -646,6 +784,22 @@ function HomePageComponent() {
   }, [locateMe])
 
   const resetFilters = useCallback(() => {
+    if (isExploreView) {
+      setSearchParams((prev) => {
+        const cleared = parseFiltersFromURL(prev)
+        cleared.keyword = ''
+        cleared.minPrice = undefined
+        cleared.maxPrice = undefined
+        cleared.minArea = undefined
+        cleared.maxArea = undefined
+        cleared.amenities = []
+        cleared.page = 1
+        cleared.bounds = null
+        return serializeFiltersToQuery(cleared, prev)
+      }, { replace: true })
+      setSelectedPostId(null)
+      return
+    }
     const nextKeyword = buildGuestSearchKeyword({
       districtKeyword: GUEST_DISTRICTS[0].keyword,
     })
@@ -667,16 +821,9 @@ function HomePageComponent() {
       bbox: null,
     }
     void loadPosts()
-  }, [loadPosts, commitMapFocus])
+  }, [loadPosts, commitMapFocus, isExploreView, setSearchParams])
 
-  useEffect(() => {
-    if (!panelOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closePanel()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [panelOpen, closePanel])
+  // Destination map keeps the list open; Escape clears selection via shell / map click.
 
   const omnibox = useMemo(
     () => (
@@ -688,7 +835,6 @@ function HomePageComponent() {
         posts={posts}
         schools={schools}
         schoolsLoading={schoolsLoading}
-        nearbyAnchor={nearbyAnchor}
         districtId={districtId}
         wardId={wardId}
         schoolId={schoolId}
@@ -707,6 +853,7 @@ function HomePageComponent() {
         aiSearching={aiSearching}
         pinLayers={pinLayers}
         onTogglePinLayer={togglePinLayer}
+        hideAppNav
       />
     ),
     [
@@ -717,7 +864,6 @@ function HomePageComponent() {
       posts,
       schools,
       schoolsLoading,
-      nearbyAnchor,
       districtId,
       wardId,
       schoolId,
@@ -858,9 +1004,26 @@ function HomePageComponent() {
     )
   }
 
+  if (isHubView) {
+    return <AuthenticatedHub />
+  }
+
+  if (isFeatureView && activeSection && activeSection !== 'listings') {
+    return <FeatureWorkspace section={activeSection} />
+  }
+
+  if (!isExploreView || !exploreView) {
+    return <AuthenticatedHub />
+  }
+
+  void omnibox
+
   return (
     <AuthenticatedHomeMapShell
+      destinationMode
+      exploreView={exploreView}
       posts={posts}
+      marketPosts={marketPosts}
       selectedPostId={selectedPostId}
       selectedPost={selectedPost}
       onSelectPost={handleSelectPost}
@@ -884,7 +1047,7 @@ function HomePageComponent() {
       error={error}
       onResetFilters={resetFilters}
       needsProfileSetup={needsProfileSetup}
-      omnibox={omnibox}
+      omnibox={null}
       pinLayers={pinLayers}
       onDetailLabelChange={handleDetailLabelChange}
       onAiSearchUpdate={applyAiSearchUpdate}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   acceptMarketplaceOrder,
   archiveMarketplacePost,
@@ -19,6 +19,8 @@ import {
   markMarketplaceOrderDelivered,
   rejectMarketplaceOrder,
   searchMarketplacePosts,
+  startMarketplaceConversation,
+  updateMarketplacePost,
   createWalletWithdrawal,
   uploadImages,
   type MarketplaceOrder,
@@ -31,9 +33,13 @@ import {
   MarketplaceListingType,
   MarketplaceOrderStatus,
   MarketplacePostStatus,
-  WalletTransactionKind,
-  WalletWithdrawalStatus,
 } from '../api/types'
+import {
+  DeferredMapBlock,
+  PageFrame,
+  exploreMapUrl,
+  usePageFrameChromePortals,
+} from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { MarketplaceLoadingSkeleton } from '../components/MarketplaceLoadingSkeleton'
 import { AddressAutocomplete, type PlaceResult } from '../components/map/AddressAutocomplete'
@@ -46,12 +52,12 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
+import { mapSectionUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
 import {
-  subscribeToMarketplaceCartRequests,
+  resolveMarketplaceDestination,
   subscribeToMarketplaceTabRequests,
-  takeMarketplaceCartRequest,
   takeMarketplaceTabRequest,
   type MarketplaceTab,
 } from '../lib/marketplaceNavigation'
@@ -63,6 +69,14 @@ import {
   marketplaceOrderStatusLabel,
   marketplacePostStatusLabel,
 } from '../lib/labels'
+import { FoodMarketplaceView } from '../components/marketplace/food/FoodMarketplaceView'
+import { MarketplaceHeader, type WalletHeaderStatus } from '../components/marketplace/MarketplaceHeader'
+import {
+  WalletPage,
+  type DepositMethod,
+} from '../components/marketplace/wallet/WalletPage'
+import { formatWalletAmount, parseWalletTab, readDepositReturn } from '../lib/walletMoney'
+import '../components/marketplace/food/FoodMarketplaceView.css'
 import './MarketplacePage.css'
 
 const DEFAULT_LAT = 10.8706
@@ -71,16 +85,6 @@ const DEFAULT_LNG = 106.7974
 const DEFAULT_MEDIA = '/brand/homeji-logo.png'
 const MAX_MEDIA = 10
 const MINIMUM_FOOD_CART_TOTAL = 25_000
-const WALLET_TRANSACTION_LABELS: Record<number, string> = {
-  [WalletTransactionKind.TopUp]: 'Nạp số dư',
-  [WalletTransactionKind.Purchase]: 'Thanh toán đơn',
-  [WalletTransactionKind.Refund]: 'Hoàn tiền',
-  [WalletTransactionKind.SaleProceeds]: 'Doanh thu bán hàng',
-  [WalletTransactionKind.PlatformFee]: 'Phí nền tảng',
-  [WalletTransactionKind.LegacyServicePurchase]: 'Dịch vụ trước đây',
-  [WalletTransactionKind.Withdrawal]: 'Rút tiền',
-  [WalletTransactionKind.WithdrawalRefund]: 'Hoàn tiền rút',
-}
 
 type MediaDraft = {
   id: string
@@ -102,8 +106,25 @@ type MarketplaceCartItem = {
   preparationMinutes: number
 }
 
-type OrderView = 'buying' | 'selling'
-type WalletView = 'topup' | 'withdraw' | 'history'
+type OrderStatusFilter = 'all' | MarketplaceOrderStatus
+
+const ORDER_STATUS_FILTERS: { id: OrderStatusFilter; label: string }[] = [
+  { id: 'all', label: 'Tất cả' },
+  { id: MarketplaceOrderStatus.Requested, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Requested] ?? 'Chờ xác nhận' },
+  { id: MarketplaceOrderStatus.Accepted, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Accepted] ?? 'Đã nhận' },
+  { id: MarketplaceOrderStatus.Delivered, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Delivered] ?? 'Đã giao' },
+  { id: MarketplaceOrderStatus.Completed, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Completed] ?? 'Hoàn tất' },
+  { id: MarketplaceOrderStatus.Cancelled, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Cancelled] ?? 'Đã hủy' },
+  { id: MarketplaceOrderStatus.Rejected, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Rejected] ?? 'Từ chối' },
+  { id: MarketplaceOrderStatus.Expired, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Expired] ?? 'Hết hạn' },
+]
+
+const ORDER_STEPS = [
+  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Requested] ?? 'Chờ xác nhận',
+  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Accepted] ?? 'Đã nhận',
+  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Delivered] ?? 'Đã giao',
+  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Completed] ?? 'Hoàn tất',
+] as const
 
 type MarketplaceOrderGroup = {
   groupKey: string
@@ -119,16 +140,12 @@ type MarketplaceOrderGroup = {
   isSeller: boolean
 }
 
-const TERMINAL_ORDER_STATUSES = new Set<number>([
-  MarketplaceOrderStatus.Rejected,
-  MarketplaceOrderStatus.Cancelled,
-  MarketplaceOrderStatus.Expired,
-])
-
-function isHistoricalOrderGroup(group: MarketplaceOrderGroup): boolean {
-  if (TERMINAL_ORDER_STATUSES.has(group.status)) return true
-  return group.status === MarketplaceOrderStatus.Completed
-    && group.orders.every((order) => Boolean(order.fundsReleasedAt))
+function matchesOrderStatusFilter(
+  group: MarketplaceOrderGroup,
+  filter: OrderStatusFilter,
+): boolean {
+  if (filter === 'all') return true
+  return group.status === filter
 }
 
 function formatOrderEta(group: MarketplaceOrderGroup): string {
@@ -158,11 +175,12 @@ function formatOrderEta(group: MarketplaceOrderGroup): string {
   return `Dự kiến sẵn sàng sau ${hours} giờ${minutes ? ` ${minutes} phút` : ''}`
 }
 
-function orderProgressStep(status: MarketplaceOrder['status']): number {
+function orderProgressStep(status: MarketplaceOrder['status']): number | null {
   if (status === MarketplaceOrderStatus.Completed) return 4
   if (status === MarketplaceOrderStatus.Delivered) return 3
   if (status === MarketplaceOrderStatus.Accepted) return 2
-  return 1
+  if (status === MarketplaceOrderStatus.Requested) return 1
+  return null
 }
 
 type Props = {
@@ -238,13 +256,19 @@ export function MarketplacePage({
   onCartOpenChange,
 }: Props) {
   const { profile } = useAuth()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
   const cartStorageKey = `homeji:marketplace-cart:v1:${myUserId ?? 'guest'}`
 
-  const [tab, setTab] = useState<MarketplaceTab>(() => takeMarketplaceTabRequest('food'))
+  const [tab, setTab] = useState<MarketplaceTab>(() => {
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = resolveMarketplaceDestination(params).tab
+    if (fromUrl) return fromUrl
+    return takeMarketplaceTabRequest('food')
+  })
   const [posts, setPosts] = useState<MarketplacePost[]>([])
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
-  const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
@@ -257,6 +281,7 @@ export function MarketplacePage({
   const [address, setAddress] = useState('Thủ Đức, TP.HCM')
   const [latitude, setLatitude] = useState(String(DEFAULT_LAT))
   const [longitude, setLongitude] = useState(String(DEFAULT_LNG))
+  const [mapPickerOpen, setMapPickerOpen] = useState(false)
   const [mediaFiles, setMediaFiles] = useState<MediaDraft[]>([])
   const [uploading, setUploading] = useState(false)
   const [listingType, setListingType] = useState<MarketplaceListingType>(MarketplaceListingType.Food)
@@ -266,33 +291,97 @@ export function MarketplacePage({
   const [presetImageUrl, setPresetImageUrl] = useState('')
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
-  const [cartOpen, setCartOpen] = useState(takeMarketplaceCartRequest)
-  const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
+  const [cartNote, setCartNote] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
-  const [orderView, setOrderView] = useState<OrderView | null>(null)
+  const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
+  const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const handledMarketplaceSelectionRef = useRef<string | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
-  const [walletView, setWalletView] = useState<WalletView>('topup')
+  const [walletHeaderStatus, setWalletHeaderStatus] = useState<WalletHeaderStatus>('loading')
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [withdrawalsUnavailable, setWithdrawalsUnavailable] = useState(false)
-  const [topUpAmount, setTopUpAmount] = useState('100000')
   const [walletBusy, setWalletBusy] = useState('')
-  const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [withdrawBankName, setWithdrawBankName] = useState('')
-  const [withdrawAccountNumber, setWithdrawAccountNumber] = useState('')
-  const [withdrawAccountHolder, setWithdrawAccountHolder] = useState('')
+  const walletTab = parseWalletTab(searchParams.get('wallet')) ?? 'deposit'
 
-  useEffect(() => subscribeToMarketplaceTabRequests(setTab), [])
+  const setWalletTab = useCallback((next: 'deposit' | 'withdraw' | 'history') => {
+    const params = new URLSearchParams(searchParams)
+    if (!params.get('section')) params.set('section', 'marketplace')
+    params.set('wallet', next)
+    setSearchParams(params, { replace: true })
+  }, [searchParams, setSearchParams])
 
-  useEffect(
-    () => subscribeToMarketplaceCartRequests(() => {
-      setTab('food')
-      setCartOpen(true)
-    }),
-    [],
-  )
+  useEffect(() => {
+    if (!myUserId) return
+    let active = true
+    void getMyWallet()
+      .then((next) => {
+        if (!active) return
+        setWallet(next)
+        setWalletHeaderStatus('ready')
+      })
+      .catch(() => {
+        if (!active) return
+        setWalletHeaderStatus((current) => (current === 'ready' ? 'ready' : 'error'))
+      })
+    return () => {
+      active = false
+    }
+  }, [myUserId])
+
+  const keyword = searchParams.get('q') ?? ''
+  const destination = resolveMarketplaceDestination(searchParams)
+  if (destination.tab && destination.tab !== tab) {
+    setTab(destination.tab)
+  }
+
+  const openLeaf = useCallback((next: MarketplaceTab, options?: { replace?: boolean }) => {
+    if (next === 'food' || next === 'browse') onSelectMarketplaceId?.(null)
+    setTab(next)
+    const params = new URLSearchParams(searchParams)
+    if (!params.get('section')) params.set('section', 'marketplace')
+    const unchanged = params.get('market') === next
+      && !params.get('order')
+      && !params.get('side')
+      && !params.get('role')
+      && (next === 'wallet'
+        ? Boolean(parseWalletTab(params.get('wallet')))
+        : !params.get('wallet'))
+    if (unchanged) return
+    params.set('market', next)
+    params.delete('order')
+    params.delete('side')
+    params.delete('role')
+    if (next === 'wallet') params.set('wallet', parseWalletTab(params.get('wallet')) ?? 'deposit')
+    else params.delete('wallet')
+    setSearchParams(params, { replace: options?.replace ?? false })
+  }, [onSelectMarketplaceId, searchParams, setSearchParams])
+
+  useEffect(() => subscribeToMarketplaceTabRequests((next) => openLeaf(next)), [openLeaf])
+
+  useEffect(() => {
+    if (!destination.legacy || !destination.tab) return
+    const params = new URLSearchParams(searchParams)
+    if (!params.get('section')) params.set('section', 'marketplace')
+    params.set('market', destination.tab)
+    params.delete('order')
+    params.delete('side')
+    params.delete('role')
+    setSearchParams(params, { replace: true })
+  }, [destination.legacy, destination.tab, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (tab !== 'wallet') return
+    const current = searchParams.get('wallet')
+    const parsed = parseWalletTab(current)
+    if (parsed && current === parsed) return
+    const params = new URLSearchParams(searchParams)
+    if (!params.get('section')) params.set('section', 'marketplace')
+    params.set('wallet', parsed ?? 'deposit')
+    setSearchParams(params, { replace: true })
+  }, [tab, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!myUserId) return
@@ -319,16 +408,11 @@ export function MarketplacePage({
   useEffect(() => {
     if (!cartOpen) return
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || cartBusy) return
-      if (checkoutConfirmationOpen) {
-        setCheckoutConfirmationOpen(false)
-        return
-      }
-      setCartOpen(false)
+      if (event.key === 'Escape' && !cartBusy) setCartOpen(false)
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [cartBusy, cartOpen, checkoutConfirmationOpen])
+  }, [cartBusy, cartOpen])
 
   useEffect(() => {
     onCartOpenChange?.(cartOpen)
@@ -377,7 +461,16 @@ export function MarketplacePage({
       : 'browse'
     setTab((current) => (current === nextTab ? current : nextTab))
     handledMarketplaceSelectionRef.current = selectedMarketplaceId
-  }, [posts, selectedMarketplaceId])
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('market') === nextTab) return
+    params.set('section', 'marketplace')
+    params.set('market', nextTab)
+    params.delete('wallet')
+    params.delete('order')
+    params.delete('side')
+    params.delete('role')
+    setSearchParams(params, { replace: true })
+  }, [posts, selectedMarketplaceId, setSearchParams])
 
   useEffect(() => {
     return () => {
@@ -425,13 +518,14 @@ export function MarketplacePage({
           .catch(() => ({ items: [] as WalletWithdrawal[], unavailable: true })),
       ])
       setWallet(nextWallet)
+      setWalletHeaderStatus('ready')
       setWalletTransactions(transactions)
       setOrders(marketplaceOrders)
       setWithdrawals(withdrawalResult.items)
       setWithdrawalsUnavailable(withdrawalResult.unavailable)
       return
     }
-    if (tab === 'orders') {
+    if (tab === 'purchases' || tab === 'sales') {
       setOrders(await getMyMarketplaceOrders())
       return
     }
@@ -470,6 +564,14 @@ export function MarketplacePage({
     [tab, keyword, category, myUserId],
     { holdForIntro: false },
   )
+
+  const depositReturn = readDepositReturn(searchParams)
+  const refreshedGatewayReturn = useRef(false)
+  useEffect(() => {
+    if (tab !== 'wallet' || depositReturn !== 'processing' || refreshedGatewayReturn.current) return
+    refreshedGatewayReturn.current = true
+    void reload()
+  }, [tab, depositReturn, reload])
 
   const [hiddenLoadError, setHiddenLoadError] = useState('')
 
@@ -526,23 +628,53 @@ export function MarketplacePage({
         setActionError('Chọn ảnh món thật hoặc một ảnh mẫu có giấy phép trước khi đăng.')
         return
       }
-      const createdPost = await createMarketplacePost({
-        title,
-        description,
-        price: Number(price) || 0,
-        condition,
-        category: sellCategory,
-        address: address.trim(),
-        latitude: latNum,
-        longitude: lngNum,
-        mediaUrls: urls,
-        listingType,
-        availableQuantity: Number(availableQuantity) || 1,
-        unit: unit.trim() || 'phần',
-        preparationMinutes:
-          listingType === MarketplaceListingType.Food ? Number(preparationMinutes) || 0 : null,
-      })
-      const destinationTab = createdPost.listingType === MarketplaceListingType.Food
+      const createdOrUpdated = editingPostId
+        ? await updateMarketplacePost(editingPostId, {
+          title,
+          description,
+          price: Number(price) || 0,
+          condition,
+          category: sellCategory,
+          address: address.trim(),
+          latitude: latNum,
+          longitude: lngNum,
+          mediaUrls: urls,
+          listingType,
+          availableQuantity: Number(availableQuantity) || 1,
+          unit: unit.trim() || 'phần',
+          preparationMinutes:
+            listingType === MarketplaceListingType.Food ? Number(preparationMinutes) || 0 : null,
+        })
+        : await createMarketplacePost({
+          title,
+          description,
+          price: Number(price) || 0,
+          condition,
+          category: sellCategory,
+          address: address.trim(),
+          latitude: latNum,
+          longitude: lngNum,
+          mediaUrls: urls,
+          listingType,
+          availableQuantity: Number(availableQuantity) || 1,
+          unit: unit.trim() || 'phần',
+          preparationMinutes:
+            listingType === MarketplaceListingType.Food ? Number(preparationMinutes) || 0 : null,
+        })
+      if (editingPostId) {
+        setEditingPostId(null)
+        setActionMsg('Đã cập nhật tin.')
+        setTitle('')
+        setDescription('')
+        setPrice('')
+        setPresetImageUrl('')
+        for (const m of mediaFiles) URL.revokeObjectURL(m.previewUrl)
+        setMediaFiles([])
+        openLeaf('mine')
+        void reload()
+        return
+      }
+      const destinationTab = createdOrUpdated.listingType === MarketplaceListingType.Food
         ? 'food'
         : 'browse'
       setActionMsg(
@@ -556,7 +688,7 @@ export function MarketplacePage({
       setPresetImageUrl('')
       for (const m of mediaFiles) URL.revokeObjectURL(m.previewUrl)
       setMediaFiles([])
-      setTab(destinationTab)
+      openLeaf(destinationTab)
       void reload()
       onFocusMap?.({ lat: latNum, lng: lngNum, zoom: MAP_FOCUS_ZOOM })
     } catch (err) {
@@ -578,7 +710,7 @@ export function MarketplacePage({
         quantity,
       })
       setActionMsg('Đã gửi yêu cầu mua.')
-      setTab('orders')
+      openLeaf('purchases')
     } catch (err) {
       setActionError(getErrorMessage(err, 'Đặt mua thất bại'))
     }
@@ -597,10 +729,8 @@ export function MarketplacePage({
     setPresetImageUrl(preset.imageUrl)
   }
 
-  const startWalletTopUp = async (method: 'momo' | 'payos') => {
-    const amount = Number(topUpAmount)
+  const startWalletTopUp = async (amount: number, method: DepositMethod) => {
     setWalletBusy(method)
-    setActionError('')
     try {
       let url: string | null | undefined
       if (method === 'momo') {
@@ -612,9 +742,9 @@ export function MarketplacePage({
       }
       if (!url) throw new Error('Cổng thanh toán chưa trả về đường dẫn thanh toán.')
       window.open(url, '_blank', 'noopener,noreferrer')
-      setActionMsg('Đã mở cổng thanh toán. Số dư chỉ được cộng sau callback xác thực từ nhà cung cấp.')
+      return { ok: true as const }
     } catch (err) {
-      setActionError(getErrorMessage(err, 'Không tạo được giao dịch nạp số dư'))
+      return { ok: false as const, message: getErrorMessage(err, 'Không tạo được giao dịch nạp số dư') }
     } finally {
       setWalletBusy('')
     }
@@ -674,8 +804,7 @@ export function MarketplacePage({
   }
 
   const checkoutCart = async () => {
-    if (!checkoutConfirmationOpen || cartItems.length === 0 || cartBusy) return
-    setCheckoutConfirmationOpen(false)
+    if (cartItems.length === 0 || cartBusy) return
     setCartBusy(true)
     setActionError('')
     try {
@@ -687,13 +816,14 @@ export function MarketplacePage({
         items: cartItems.map((item) => ({ postId: item.postId, quantity: item.quantity })),
         pickupAt: new Date(Date.now() + estimatedPreparationMinutes * 60 * 1000).toISOString(),
         pickupAddress: cartItems[0]?.sellerAddress || 'Nhận tại bếp Homeji',
-        note: 'Đặt từ giỏ hàng Homeji',
+        note: cartNote.trim() || 'Đặt từ giỏ hàng Homeji',
       })
       const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
       setCartItems([])
+      setCartNote('')
       setCartOpen(false)
       setActionMsg(`Đã đặt ${itemCount} món. Chờ bếp xác nhận.`)
-      setTab('orders')
+      openLeaf('purchases')
       await reload()
     } catch (err) {
       setActionError(getErrorMessage(err, 'Thanh toán giỏ hàng thất bại'))
@@ -702,38 +832,26 @@ export function MarketplacePage({
     }
   }
 
-  const submitWithdrawal = async () => {
-    const amount = Number(withdrawAmount)
+  const submitWithdrawal = async (input: {
+    amount: number
+    bankName: string
+    accountNumber: string
+    accountHolder: string
+  }) => {
     const reserve = wallet?.minimumWithdrawalReserve ?? 20_000
-    if (!Number.isInteger(amount) || amount <= 0) {
-      setActionError('Số tiền rút phải là số nguyên dương.')
-      return
+    if (!wallet || wallet.balance - input.amount < reserve) {
+      return {
+        ok: false as const,
+        message: `Ví phải còn tối thiểu ${formatWalletAmount(reserve)} sau khi rút.`,
+      }
     }
-    if (!wallet || wallet.balance - amount < reserve) {
-      setActionError(`Ví phải còn tối thiểu ${formatPrice(reserve)} sau khi rút.`)
-      return
-    }
-    if (!withdrawBankName.trim() || !withdrawAccountNumber.trim() || !withdrawAccountHolder.trim()) {
-      setActionError('Vui lòng nhập đầy đủ thông tin tài khoản nhận tiền.')
-      return
-    }
-    if (!window.confirm(`Xác nhận gửi yêu cầu rút ${formatPrice(amount)}? Số tiền sẽ được trừ khỏi ví ngay.`)) return
-
     setWalletBusy('withdraw')
-    setActionError('')
-    setActionMsg('')
     try {
-      await createWalletWithdrawal({
-        amount,
-        bankName: withdrawBankName.trim(),
-        accountNumber: withdrawAccountNumber.trim(),
-        accountHolder: withdrawAccountHolder.trim(),
-      })
-      setWithdrawAmount('')
-      setActionMsg('Đã tạo yêu cầu rút tiền. Số dư đã được giữ lại để admin xử lý.')
+      await createWalletWithdrawal(input)
       await reload()
+      return { ok: true as const }
     } catch (err) {
-      setActionError(getErrorMessage(err, 'Không thể tạo yêu cầu rút tiền.'))
+      return { ok: false as const, message: getErrorMessage(err, 'Không thể tạo yêu cầu rút tiền.') }
     } finally {
       setWalletBusy('')
     }
@@ -742,7 +860,11 @@ export function MarketplacePage({
   const showOnMap = (p: MarketplacePost) => {
     if (!isValidCoord(p.latitude, p.longitude)) return
     onSelectMarketplaceId?.(p.sellerId)
-    onFocusMap?.({ lat: p.latitude, lng: p.longitude, zoom: MAP_FOCUS_ZOOM })
+    if (onFocusMap) {
+      onFocusMap({ lat: p.latitude, lng: p.longitude, zoom: MAP_FOCUS_ZOOM })
+      return
+    }
+    navigate(exploreMapUrl())
   }
 
   const renderPostCard = (p: MarketplacePost, mode: 'browse' | 'mine') => {
@@ -751,7 +873,7 @@ export function MarketplacePage({
     return (
       <article
         key={p.id}
-        className={`marketplace-card map-motion-fade-up${
+        className={`marketplace-card marketplace-card--${mine ? 'mine' : 'browse'} map-motion-fade-up${
           selectedMarketplaceId === p.sellerId ? ' is-selected' : ''
         }`}
       >
@@ -809,19 +931,26 @@ export function MarketplacePage({
         </div>
         <div className="marketplace-card__actions">
           {isValidCoord(p.latitude, p.longitude) ? (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => showOnMap(p)}>
-              Xem map
+            <button type="button" className="btn btn-ghost btn-sm btn-map-cta" onClick={() => showOnMap(p)}>
+              Xem trên bản đồ
             </button>
           ) : null}
           {mine && p.status === MarketplacePostStatus.Active ? (
             <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => beginEdit(p)}
+              >
+                Chỉnh sửa
+              </button>
               {p.listingType !== MarketplaceListingType.Food ? (
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-primary btn-sm"
                   onClick={() => void markMarketplacePostSold(p.id).then(() => reload())}
                 >
-                  Đã bán
+                  Đánh dấu đã bán
                 </button>
               ) : null}
               <button
@@ -902,8 +1031,31 @@ export function MarketplacePage({
         return fastest == null ? minutes : Math.min(fastest, minutes)
       }, null),
       posts: sellerPosts,
+      categoryHint: sellerPosts[0]?.category || 'Cơm nhà',
     }))
   }, [tab, listForTab])
+
+  const foodKitchens = useMemo(
+    () => foodSellerGroups.map((group) => ({
+      sellerId: group.sellerId,
+      sellerName: group.sellerName,
+      address: group.address,
+      distanceKm: group.distanceKm,
+      preparationMinutes: group.preparationMinutes,
+      postsCount: group.posts.length,
+      categoryHint: group.categoryHint,
+    })),
+    [foodSellerGroups],
+  )
+
+  const locationPrimary = userLocation
+    ? 'Vị trí hiện tại của bạn'
+    : 'Chưa chọn điểm giao'
+  const locationSecondary = userLocation
+    ? 'Đang xếp bếp theo khoảng cách gần nhất'
+    : locating
+      ? 'Đang lấy vị trí…'
+      : 'Bật định vị để xếp gần nhất'
   const cartItemCount = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
     [cartItems],
@@ -961,16 +1113,9 @@ export function MarketplacePage({
     ).length,
     [sellingOrderGroups],
   )
-  const selectedOrderView: OrderView = orderView
-    ?? (sellerActionCount > 0 ? 'selling' : 'buying')
-  const selectedOrderGroups = selectedOrderView === 'selling'
-    ? sellingOrderGroups
-    : buyingOrderGroups
-  const activeOrderGroups = selectedOrderGroups.filter(
-    (group) => !isHistoricalOrderGroup(group),
-  )
-  const historicalOrderGroups = selectedOrderGroups.filter(
-    isHistoricalOrderGroup,
+  const selectedOrderGroups = tab === 'sales' ? sellingOrderGroups : buyingOrderGroups
+  const filteredOrderGroups = selectedOrderGroups.filter((group) =>
+    matchesOrderStatusFilter(group, orderStatusFilter),
   )
 
   const handleOrderGroupAction = async (
@@ -995,182 +1140,261 @@ export function MarketplacePage({
   const sellerLocationPost = myPosts[0] ?? null
   const selectedFoodPreset = FOOD_PRESETS.find((preset) => preset.imageUrl === presetImageUrl)
 
-  return (
-    <div className={embedded ? 'map-embed marketplace-embed' : 'container page marketplace-page'}>
-      {!embedded ? (
-        <>
-          <h1 className="page-title">Chợ Homeji</h1>
-          <p className="page-subtitle">Đồ ăn sinh viên và đồ dùng gần nơi ở — thanh toán an toàn bằng Số dư Homeji</p>
-        </>
-      ) : null}
+  const beginEdit = (post: MarketplacePost) => {
+    setEditingPostId(post.id)
+    setListingType(post.listingType)
+    setTitle(post.title)
+    setDescription(post.description)
+    setPrice(String(post.price))
+    setCondition(post.condition)
+    setSellCategory(post.category)
+    setAddress(post.address)
+    setLatitude(String(post.latitude))
+    setLongitude(String(post.longitude))
+    setAvailableQuantity(String(post.availableQuantity))
+    setUnit(post.unit || 'phần')
+    setPreparationMinutes(String(post.preparationMinutes ?? 0))
+    setPresetImageUrl('')
+    openLeaf('sell')
+  }
 
-      <div className="tabs marketplace-tabs" role="tablist" aria-label="Chợ Homeji" style={{ ['--map-tab-cols' as string]: 6 }}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'food'}
-          className={`tab ${tab === 'food' ? 'active' : ''}`}
-          onClick={() => {
-            onSelectMarketplaceId?.(null)
-            setTab('food')
-          }}
-        >
-          Đồ ăn
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'browse'}
-          className={`tab ${tab === 'browse' ? 'active' : ''}`}
-          onClick={() => {
-            onSelectMarketplaceId?.(null)
-            setTab('browse')
-          }}
-        >
-          Chợ đồ
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'mine'}
-          className={`tab ${tab === 'mine' ? 'active' : ''}`}
-          onClick={() => setTab('mine')}
-        >
-          Tin của tôi
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'sell'}
-          className={`tab ${tab === 'sell' ? 'active' : ''}`}
-          onClick={() => setTab('sell')}
-        >
-          Đăng bán
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'orders'}
-          className={`tab ${tab === 'orders' ? 'active' : ''}`}
-          onClick={() => setTab('orders')}
-        >
-          Đơn hàng
-          {sellerActionCount > 0 ? (
-            <span className="marketplace-tab-alert" aria-label={`${sellerActionCount} đơn bán cần xử lý`}>
-              {sellerActionCount}
-            </span>
-          ) : null}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'wallet'}
-          className={`tab ${tab === 'wallet' ? 'active' : ''}`}
-          onClick={() => setTab('wallet')}
-        >
-          Số dư
-        </button>
-      </div>
+  const contactAboutPost = async (postId: string) => {
+    setActionError('')
+    try {
+      await startMarketplaceConversation(postId)
+      navigate(mapSectionUrl('messages'))
+    } catch (err) {
+      setActionError(getErrorMessage(err, 'Không mở được cuộc trò chuyện'))
+    }
+  }
 
-      {tab === 'browse' || tab === 'food' || tab === 'mine' ? (
-        <div className="marketplace-filters">
-          <input
-            className="form-input"
-            placeholder={tab === 'mine' ? 'Tìm tin của bạn…' : 'Từ khóa…'}
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            aria-label="Từ khóa"
-          />
-          <select
-            className="form-select"
-            aria-label="Lọc danh mục"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option value="">Tất cả danh mục</option>
-            {MARKETPLACE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          {tab !== 'mine' ? (
-            <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
-              {userLocation ? (
-                <>
-                  <span aria-hidden="true">⌖</span>
-                  <span>Gần tôi · xếp từ gần đến xa</span>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  disabled={locating || !onRequestLocation}
-                  onClick={onRequestLocation}
-                >
-                  <span aria-hidden="true">⌖</span>
-                  {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
-                </button>
-              )}
-            </div>
-          ) : null}
-          {tab === 'food' ? (
+  const sellAction = (
+    <button
+      type="button"
+      className="btn btn-primary btn-sm"
+      onClick={() => {
+        setEditingPostId(null)
+        openLeaf('sell')
+      }}
+    >
+      Đăng bán
+    </button>
+  )
+
+  const catalogToolbar = (
+    <div className="marketplace-toolbar" aria-label="Bộ lọc">
+      <label className="marketplace-toolbar__field">
+        <span>Danh mục</span>
+        <select
+          className="form-select"
+          aria-label="Lọc danh mục"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">Tất cả danh mục</option>
+          {MARKETPLACE_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </label>
+      {tab === 'browse' ? (
+        <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
+          {userLocation ? (
+            <span>Gần tôi · xếp từ gần đến xa</span>
+          ) : (
             <button
               type="button"
-              className="btn btn-secondary btn-sm marketplace-cart-trigger"
-              onClick={() => setCartOpen(true)}
-              aria-label={`Mở giỏ hàng có ${cartItemCount} món`}
+              className="btn btn-secondary btn-sm"
+              disabled={locating || !onRequestLocation}
+              onClick={onRequestLocation}
             >
-              <span aria-hidden="true">🛒</span>
-              Giỏ hàng
-              <strong>{cartItemCount}</strong>
+              {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
             </button>
-          ) : null}
+          )}
         </div>
       ) : null}
+    </div>
+  )
 
-      {tab === 'mine' ? (
-        <p className="marketplace-tab-hint">Quản lý tin bạn đã đăng — đánh dấu đã bán hoặc ẩn tin.</p>
-      ) : null}
+  const orderToolbar = (
+    <div className="marketplace-toolbar" aria-label="Lọc trạng thái đơn">
+      <span className="marketplace-toolbar__label">Trạng thái</span>
+      <div className="marketplace-status-filter" role="group">
+        {ORDER_STATUS_FILTERS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={orderStatusFilter === item.id ? 'is-active' : ''}
+            aria-pressed={orderStatusFilter === item.id}
+            onClick={() => setOrderStatusFilter(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 
+  const mapCta = (
+    <Link to={exploreMapUrl()} className="btn btn-secondary btn-sm btn-map-cta">
+      Xem trên bản đồ
+    </Link>
+  )
+  const frameActions =
+    tab !== 'sell' ? (
+      <>
+        {mapCta}
+        {sellAction}
+      </>
+    ) : (
+      mapCta
+    )
+  const chromePortals = usePageFrameChromePortals({
+    actions: frameActions,
+  })
+
+  const openWalletDeposit = () => openLeaf('wallet')
+
+  const body = (
+    <>
+      {chromePortals}
+
+      <MarketplaceHeader
+        tab={tab}
+        availableBalance={wallet?.balance ?? null}
+        walletStatus={!myUserId ? 'error' : wallet ? 'ready' : walletHeaderStatus}
+        sellerActionCount={sellerActionCount}
+        onTabChange={openLeaf}
+        onOpenSell={() => {
+          setEditingPostId(null)
+          openLeaf('sell')
+        }}
+        onTopUp={openWalletDeposit}
+      />
+
+      {tab === 'food' ? (
+        <FoodMarketplaceView
+          posts={listForTab}
+          kitchens={foodKitchens}
+          quantities={orderQuantities}
+          cartItems={cartItems.map((item) => ({
+            postId: item.postId,
+            sellerName: item.sellerName,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            availableQuantity: item.availableQuantity,
+            imageUrl: item.imageUrl,
+          }))}
+          cartItemCount={cartItemCount}
+          cartTotal={cartTotal}
+          cartBusy={cartBusy}
+          cartNote={cartNote}
+          cartOpen={cartOpen}
+          loading={Boolean(showLoader)}
+          error={error && !disrupted ? error : null}
+          locating={Boolean(locating)}
+          hasUserLocation={Boolean(userLocation)}
+          locationLabel={locationPrimary}
+          locationSecondary={locationSecondary}
+          minimumCartTotal={MINIMUM_FOOD_CART_TOTAL}
+          onQuantityChange={(postId, quantity) => {
+            setOrderQuantities((current) => ({ ...current, [postId]: quantity }))
+          }}
+          onAddToCart={(post) => {
+            const cartItem = cartItems.find((item) => item.postId === post.id)
+            if (cartItem) removeFromCart(post)
+            else addToCart(post)
+          }}
+          onShowOnMap={showOnMap}
+          onRequestLocation={onRequestLocation}
+          onUpdateCartQuantity={updateCartQuantity}
+          onRemoveCartItem={(postId) => {
+            setCartItems((current) => current.filter((item) => item.postId !== postId))
+          }}
+          onClearCart={() => setCartItems([])}
+          onCheckout={() => void checkoutCart()}
+          onCartNoteChange={setCartNote}
+          onCartOpenChange={setCartOpen}
+          onSelectKitchen={(sellerId) => onSelectMarketplaceId?.(sellerId)}
+        />
+      ) : tab === 'wallet' ? (
+        <WalletPage
+          tab={walletTab}
+          wallet={wallet}
+          transactions={displayedWalletTransactions}
+          withdrawals={withdrawals}
+          withdrawalsUnavailable={withdrawalsUnavailable}
+          loading={Boolean(showLoader)}
+          busy={Boolean(walletBusy)}
+          depositReturn={depositReturn}
+          onTabChange={setWalletTab}
+          onDeposit={startWalletTopUp}
+          onWithdraw={submitWithdrawal}
+        />
+      ) : (
+      <div className="marketplace-workspace">
+        {tab === 'mine' ? (
+          <div className="marketplace-workspace__intro">
+            <h2>Tin của tôi</h2>
+            <p>Quản lý tin bạn đã đăng — đánh dấu đã bán hoặc ẩn tin.</p>
+          </div>
+        ) : null}
+        {tab === 'purchases' ? (
+          <div className="marketplace-workspace__intro">
+            <h2>Đơn mua của bạn</h2>
+            <p>Theo dõi đơn đã mua và trao đổi với người bán ngay tại đây.</p>
+          </div>
+        ) : null}
+        {tab === 'sales' ? (
+          <div className="marketplace-workspace__intro">
+            <h2>Đơn bán của bạn</h2>
+          </div>
+        ) : null}
+        {tab === 'sell' ? (
+          <div className="marketplace-type-choice">
+            <p>Bạn muốn đăng gì?</p>
+            <div role="group" aria-label="Loại tin đăng">
+              <button
+                type="button"
+                className={listingType === MarketplaceListingType.Food ? 'is-active' : ''}
+                onClick={() => {
+                  setListingType(MarketplaceListingType.Food)
+                  setCondition('Mới làm trong ngày')
+                  setSellCategory('Cơm nhà')
+                  setUnit('phần')
+                  setAvailableQuantity('10')
+                }}
+              >
+                Đồ ăn
+              </button>
+              <button
+                type="button"
+                className={listingType === MarketplaceListingType.SecondHand ? 'is-active' : ''}
+                onClick={() => {
+                  setListingType(MarketplaceListingType.SecondHand)
+                  setCondition(MARKETPLACE_CONDITIONS[2])
+                  setSellCategory('Nội thất')
+                  setUnit('sản phẩm')
+                  setAvailableQuantity('1')
+                  setPresetImageUrl('')
+                }}
+              >
+                Đồ dùng
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {tab === 'browse' || tab === 'mine' ? catalogToolbar : null}
+        {tab === 'purchases' || tab === 'sales' ? orderToolbar : null}
       {showLoader ? (
         disrupted ? (
           <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
         ) : (
-          <MarketplaceLoadingSkeleton tab={tab} walletView={walletView} />
+          <MarketplaceLoadingSkeleton tab={tab}  />
         )
       ) : tab === 'sell' ? (
         <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
-          <div className="marketplace-listing-type" role="group" aria-label="Loại mặt hàng">
-            <button
-              type="button"
-              className={listingType === MarketplaceListingType.Food ? 'is-active' : ''}
-              onClick={() => {
-                setListingType(MarketplaceListingType.Food)
-                setCondition('Mới làm trong ngày')
-                setSellCategory('Cơm nhà')
-                setUnit('phần')
-                setAvailableQuantity('10')
-              }}
-            >
-              🍱 Đồ ăn
-            </button>
-            <button
-              type="button"
-              className={listingType === MarketplaceListingType.SecondHand ? 'is-active' : ''}
-              onClick={() => {
-                setListingType(MarketplaceListingType.SecondHand)
-                setCondition(MARKETPLACE_CONDITIONS[2])
-                setSellCategory('Nội thất')
-                setUnit('sản phẩm')
-                setAvailableQuantity('1')
-                setPresetImageUrl('')
-              }}
-            >
-              🪑 Đồ dùng
-            </button>
-          </div>
-
           {listingType === MarketplaceListingType.Food ? (
             <section className="food-preset-section" aria-labelledby="food-preset-heading">
               <div>
@@ -1294,23 +1518,44 @@ export function MarketplacePage({
               />
             )}
           </div>
-          <div className="form-group">
-            <label className="form-label">Vị trí trên bản đồ</label>
-            {sellerLocationPost ? (
-              <p className="form-hint">Vị trí được khóa theo điểm bán đầu tiên của tài khoản.</p>
-            ) : (
-              <>
-                <p className="form-hint">Chọn gợi ý địa chỉ hoặc kéo pin để gắn tin chợ đồ lên map.</p>
-                <LocationPickerMap
-                  latitude={latNum}
-                  longitude={lngNum}
-                  onLocationChange={(lat, lng) => {
-                    setLatitude(String(lat))
-                    setLongitude(String(lng))
-                  }}
-                />
-              </>
-            )}
+          <div className="form-group post-form-map-block">
+            <div className="post-form-map-block__head">
+              <div>
+                <span className="form-label" id="marketplace-map-label">
+                  Vị trí trên bản đồ
+                </span>
+                {sellerLocationPost ? (
+                  <p className="form-hint">Vị trí được khóa theo điểm bán đầu tiên của tài khoản.</p>
+                ) : (
+                  <p className="form-hint">Khối phụ — mở khi cần chỉnh pin. Địa chỉ phía trên là chính.</p>
+                )}
+              </div>
+              {!sellerLocationPost ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  aria-expanded={mapPickerOpen}
+                  aria-controls="marketplace-map-picker"
+                  onClick={() => setMapPickerOpen((open) => !open)}
+                >
+                  {mapPickerOpen ? 'Ẩn bản đồ' : 'Chỉnh trên bản đồ'}
+                </button>
+              ) : null}
+            </div>
+            {!sellerLocationPost ? (
+              <div id="marketplace-map-picker">
+                <DeferredMapBlock visible={mapPickerOpen} label="Chọn vị trí trên bản đồ">
+                  <LocationPickerMap
+                    latitude={latNum}
+                    longitude={lngNum}
+                    onLocationChange={(lat, lng) => {
+                      setLatitude(String(lat))
+                      setLongitude(String(lng))
+                    }}
+                  />
+                </DeferredMapBlock>
+              </div>
+            ) : null}
           </div>
           <div className="form-group">
             <label className="form-label">Ảnh sản phẩm</label>
@@ -1365,276 +1610,12 @@ export function MarketplacePage({
             )}
           </div>
           <button type="submit" className="btn btn-primary" disabled={uploading}>
-            {uploading ? 'Đang tải ảnh / đăng tin…' : 'Đăng tin'}
+            {uploading ? 'Đang tải ảnh / đăng tin…' : editingPostId ? 'Lưu chỉnh sửa' : 'Đăng tin'}
           </button>
         </form>
-      ) : tab === 'wallet' ? (
-        <div className="marketplace-wallet">
-          <section className="wallet-balance-card card">
-            <div>
-              <span>Số dư khả dụng</span>
-              <strong>{formatPrice(wallet?.balance ?? 0)}</strong>
-              <small>
-                {wallet?.isActivated
-                  ? 'Đã kích hoạt mua bán qua Số dư Homeji'
-                  : `Nạp tối thiểu ${formatPrice(wallet?.minimumTopUp ?? 100_000)} để kích hoạt`}
-              </small>
-            </div>
-            <div className="wallet-stats">
-              <span>Đã nạp <b>{formatPrice(wallet?.totalDeposited ?? 0)}</b></span>
-              <span>Đã mua <b>{formatPrice(wallet?.totalSpent ?? 0)}</b></span>
-              <span>Đã kiếm <b>{formatPrice(wallet?.totalEarned ?? 0)}</b></span>
-            </div>
-          </section>
-
-          <div className="wallet-subtabs" role="tablist" aria-label="Quản lý số dư">
-            <button
-              type="button"
-              role="tab"
-              id="wallet-tab-topup"
-              aria-selected={walletView === 'topup'}
-              aria-controls="wallet-panel-topup"
-              className={walletView === 'topup' ? 'is-active' : ''}
-              onClick={() => setWalletView('topup')}
-            >
-              <strong>Nạp tiền</strong>
-              <small>MoMo hoặc PayOS</small>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id="wallet-tab-withdraw"
-              aria-selected={walletView === 'withdraw'}
-              aria-controls="wallet-panel-withdraw"
-              className={walletView === 'withdraw' ? 'is-active' : ''}
-              onClick={() => setWalletView('withdraw')}
-            >
-              <strong>Rút tiền</strong>
-              <small>Về tài khoản ngân hàng</small>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id="wallet-tab-history"
-              aria-selected={walletView === 'history'}
-              aria-controls="wallet-panel-history"
-              className={walletView === 'history' ? 'is-active' : ''}
-              onClick={() => setWalletView('history')}
-            >
-              <strong>Lịch sử giao dịch</strong>
-              <small>Theo dõi biến động số dư</small>
-            </button>
-          </div>
-
-          {walletView === 'topup' ? (
-          <section
-            className="wallet-topup card"
-            id="wallet-panel-topup"
-            role="tabpanel"
-            aria-labelledby="wallet-tab-topup"
-          >
-            <div className="wallet-section-head">
-              <div>
-                <h3>Nạp Số dư Homeji</h3>
-                <p>Tiền chỉ được cộng sau webhook có chữ ký từ MoMo/PayOS, không cộng theo trang chuyển hướng.</p>
-              </div>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void reload()}>
-                Làm mới
-              </button>
-            </div>
-            <div className="wallet-quick-amounts">
-              {[100_000, 200_000, 500_000].map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  className={Number(topUpAmount) === amount ? 'is-active' : ''}
-                  onClick={() => setTopUpAmount(String(amount))}
-                >
-                  {formatPrice(amount)}
-                </button>
-              ))}
-            </div>
-            <div className="wallet-topup-actions">
-              <input
-                className="form-input"
-                type="number"
-                min={wallet?.minimumTopUp ?? 100_000}
-                max={wallet?.maximumTopUp ?? 5_000_000}
-                step={10_000}
-                value={topUpAmount}
-                onChange={(event) => setTopUpAmount(event.target.value)}
-                aria-label="Số tiền nạp"
-              />
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={Boolean(walletBusy)}
-                onClick={() => void startWalletTopUp('momo')}
-              >
-                {walletBusy === 'momo' ? 'Đang tạo…' : 'Nạp qua MoMo'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={Boolean(walletBusy)}
-                onClick={() => void startWalletTopUp('payos')}
-              >
-                {walletBusy === 'payos' ? 'Đang tạo…' : 'Nạp qua PayOS'}
-              </button>
-            </div>
-          </section>
-          ) : null}
-
-          {walletView === 'withdraw' ? (
-          <section
-            className="wallet-withdraw card"
-            id="wallet-panel-withdraw"
-            role="tabpanel"
-            aria-labelledby="wallet-tab-withdraw"
-          >
-            <div className="wallet-section-head">
-              <div>
-                <h3>Rút tiền về tài khoản cá nhân</h3>
-                <p>
-                  Admin sẽ kiểm tra và chuyển khoản thủ công. Ví phải còn tối thiểu{' '}
-                  <strong>{formatPrice(wallet?.minimumWithdrawalReserve ?? 20_000)}</strong>.
-                </p>
-              </div>
-            </div>
-            {withdrawalsUnavailable ? (
-              <p className="wallet-withdraw-unavailable" role="status">
-                Rút tiền đang tạm khóa vì database chưa được cập nhật. Các chức năng số dư khác vẫn hoạt động bình thường.
-              </p>
-            ) : null}
-            <div className="wallet-withdraw-grid">
-              <input
-                className="form-input"
-                value={withdrawBankName}
-                onChange={(event) => setWithdrawBankName(event.target.value)}
-                placeholder="Tên ngân hàng"
-                aria-label="Tên ngân hàng nhận tiền"
-                maxLength={120}
-              />
-              <input
-                className="form-input"
-                value={withdrawAccountNumber}
-                onChange={(event) => setWithdrawAccountNumber(event.target.value)}
-                placeholder="Số tài khoản"
-                aria-label="Số tài khoản nhận tiền"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={40}
-              />
-              <input
-                className="form-input"
-                value={withdrawAccountHolder}
-                onChange={(event) => setWithdrawAccountHolder(event.target.value.toUpperCase())}
-                placeholder="Tên chủ tài khoản"
-                aria-label="Tên chủ tài khoản nhận tiền"
-                maxLength={120}
-              />
-              <input
-                className="form-input"
-                type="number"
-                min={1}
-                max={Math.max(0, (wallet?.balance ?? 0) - (wallet?.minimumWithdrawalReserve ?? 20_000))}
-                step={1_000}
-                value={withdrawAmount}
-                onChange={(event) => setWithdrawAmount(event.target.value)}
-                placeholder="Số tiền muốn rút"
-                aria-label="Số tiền muốn rút"
-              />
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={withdrawalsUnavailable || Boolean(walletBusy) || !wallet || wallet.balance <= (wallet.minimumWithdrawalReserve ?? 20_000)}
-                onClick={() => void submitWithdrawal()}
-              >
-                {walletBusy === 'withdraw' ? 'Đang gửi yêu cầu…' : 'Gửi yêu cầu rút tiền'}
-              </button>
-            </div>
-            <div className="wallet-withdraw-history">
-              <h4>Yêu cầu gần đây</h4>
-              {withdrawals.length === 0 ? (
-                <p className="marketplace-tab-hint">Chưa có yêu cầu rút tiền.</p>
-              ) : (
-                <ul>
-                  {withdrawals.map((request) => (
-                    <li key={request.id}>
-                      <div>
-                        <strong>{formatPrice(request.amount)}</strong>
-                        <small>{request.bankName} · ••••{request.accountNumber.slice(-4)} · {formatDate(request.createdAt)}</small>
-                      </div>
-                      <span className={`withdrawal-status is-${request.status}`}>
-                        {request.status === WalletWithdrawalStatus.Pending
-                          ? 'Chờ xử lý'
-                          : request.status === WalletWithdrawalStatus.Completed
-                            ? 'Đã chuyển'
-                            : 'Đã từ chối'}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
-          ) : null}
-
-          {walletView === 'history' ? (
-          <section
-            className="wallet-history card"
-            id="wallet-panel-history"
-            role="tabpanel"
-            aria-labelledby="wallet-tab-history"
-          >
-            <div className="wallet-section-head"><h3>Lịch sử số dư</h3></div>
-            {displayedWalletTransactions.length === 0 ? (
-              <p className="marketplace-tab-hint">Chưa có giao dịch số dư.</p>
-            ) : (
-              <ul>
-                {displayedWalletTransactions.map((transaction) => (
-                  <li key={transaction.id}>
-                    <div>
-                      <strong>{WALLET_TRANSACTION_LABELS[transaction.kind] ?? transaction.description}</strong>
-                      <small>{transaction.description} · {formatDate(transaction.createdAt)}</small>
-                    </div>
-                    <div className={transaction.amount >= 0 ? 'is-credit' : 'is-debit'}>
-                      <b>{transaction.amount >= 0 ? '+' : ''}{formatPrice(transaction.amount)}</b>
-                      <small>Còn {formatPrice(transaction.balanceAfter)}</small>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-          ) : null}
-        </div>
-      ) : tab === 'orders' ? (
+      ) : tab === 'purchases' || tab === 'sales' ? (
         <div className="marketplace-orders-dashboard">
-          <div className="marketplace-order-view" role="tablist" aria-label="Loại đơn hàng">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedOrderView === 'selling'}
-              className={selectedOrderView === 'selling' ? 'is-active' : ''}
-              onClick={() => setOrderView('selling')}
-            >
-              Đơn bán
-              {sellerActionCount > 0 ? <strong>{sellerActionCount} mới</strong> : null}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedOrderView === 'buying'}
-              className={selectedOrderView === 'buying' ? 'is-active' : ''}
-              onClick={() => setOrderView('buying')}
-            >
-              Đơn mua
-              {buyingOrderGroups.length > 0 ? <span>{buyingOrderGroups.length}</span> : null}
-            </button>
-          </div>
-
-          {selectedOrderView === 'selling' && sellerActionCount > 0 ? (
+          {tab === 'sales' && sellerActionCount > 0 && orderStatusFilter === 'all' ? (
             <div className="marketplace-order-alert" role="status">
               <span aria-hidden="true">!</span>
               <div>
@@ -1644,15 +1625,27 @@ export function MarketplacePage({
             </div>
           ) : null}
 
-          {activeOrderGroups.length === 0 ? (
-            <div className="empty-state card">
-              {selectedOrderView === 'selling'
-                ? 'Hiện không có đơn bán nào cần xử lý.'
-                : 'Hiện không có đơn mua nào đang xử lý.'}
-            </div>
+          {filteredOrderGroups.length === 0 ? (
+            tab === 'sales' && orderStatusFilter === 'all' ? (
+              <div className="marketplace-empty">
+                <h3>Chưa có đơn bán</h3>
+                <p>Đơn hàng từ khách mua sẽ xuất hiện tại đây.</p>
+                <button type="button" className="btn btn-primary" onClick={() => openLeaf('mine')}>
+                  Xem tin đã đăng
+                </button>
+              </div>
+            ) : (
+              <div className="page-frame-empty">
+                <p className="page-frame-empty__title">
+                  {orderStatusFilter !== 'all'
+                    ? 'Không có đơn khớp bộ lọc trạng thái'
+                    : 'Không có đơn mua'}
+                </p>
+              </div>
+            )
           ) : (
             <div className="marketplace-order-groups">
-              {activeOrderGroups.map((group) => {
+              {filteredOrderGroups.map((group) => {
                 const firstOrder = group.orders[0]
                 const requested = group.status === MarketplaceOrderStatus.Requested
                 const accepted = group.status === MarketplaceOrderStatus.Accepted
@@ -1669,7 +1662,7 @@ export function MarketplacePage({
                         {group.name.slice(0, 1).toUpperCase()}
                       </div>
                       <div>
-                        <span>{selectedOrderView === 'selling' ? 'Đơn từ người mua' : 'Đơn từ người bán'}</span>
+                        <span>{group.isSeller ? 'Đơn từ người mua' : 'Đơn từ người bán'}</span>
                         <h3>{group.name}</h3>
                         <p>{formatDate(group.createdAt)}</p>
                       </div>
@@ -1678,9 +1671,9 @@ export function MarketplacePage({
                       </span>
                     </header>
 
-                    {group.isBuyer ? (
+                    {progressStep != null ? (
                       <div className="marketplace-order-progress" aria-label={`Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
-                        {['Đã đặt', 'Bếp xác nhận', 'Đã giao', 'Hoàn tất'].map((label, index) => {
+                        {ORDER_STEPS.map((label, index) => {
                           const step = index + 1
                           const state = step < progressStep ? 'is-done' : step === progressStep ? 'is-current' : ''
                           return (
@@ -1691,11 +1684,15 @@ export function MarketplacePage({
                           )
                         })}
                       </div>
-                    ) : null}
+                    ) : (
+                      <p className="marketplace-card__info">
+                        Trạng thái ghi nhận: {marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'}.
+                      </p>
+                    )}
 
                     <div className="marketplace-order-summary">
                       <div>
-                        <span>{group.orders.length} món · Tổng thanh toán</span>
+                        <span>Tổng thanh toán · Số dư Homeji</span>
                         <strong>{formatPrice(group.total)}</strong>
                       </div>
                       <div className="marketplace-order-eta">
@@ -1732,8 +1729,15 @@ export function MarketplacePage({
                       </div>
                     ) : null}
 
-                    {firstOrder && (requested || accepted || delivered || completedAwaitingRelease) ? (
+                    {firstOrder ? (
                       <footer className="marketplace-order-group__actions">
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => void contactAboutPost(firstOrder.marketplacePostId)}
+                        >
+                          {group.isSeller ? 'Liên hệ người mua' : 'Liên hệ người bán'}
+                        </button>
                         {requested && group.isSeller ? (
                           <>
                             <button
@@ -1830,308 +1834,22 @@ export function MarketplacePage({
               })}
             </div>
           )}
-
-          {historicalOrderGroups.length > 0 ? (
-            <details className="marketplace-order-history">
-              <summary>
-                <span>Lịch sử đơn hàng</span>
-                <strong>{historicalOrderGroups.length} đơn</strong>
-              </summary>
-              <div>
-                {historicalOrderGroups.map((group) => (
-                  <article key={group.groupKey} className="marketplace-order-history__row">
-                    <span className="marketplace-order-history__status">
-                      {marketplaceOrderStatusLabel[group.status] ?? 'Đã đóng'}
-                    </span>
-                    <div>
-                      <strong>{group.name}</strong>
-                      <small>{group.orders.length} món · {formatDate(group.createdAt)}</small>
-                    </div>
-                    <b>{formatPrice(group.total)}</b>
-                  </article>
-                ))}
-              </div>
-            </details>
-          ) : null}
         </div>
       ) : listForTab.length === 0 ? (
-        <div className="empty-state card">
-          {tab === 'mine'
-            ? 'Bạn chưa có tin đăng nào.'
-            : tab === 'food'
-              ? 'Chưa có món ăn đang bán quanh đây.'
-              : 'Chưa có đồ dùng đang bán quanh đây.'}
-        </div>
-      ) : tab === 'food' ? (
-        <div className="food-discovery">
-          <section className="food-discovery__intro" aria-label="Tổng quan món ăn gần bạn">
-            <span className="food-discovery__icon" aria-hidden="true">🍜</span>
-            <div>
-              <h2>Món ngon gần bạn</h2>
-              <p>{listForTab.length} món từ {foodSellerGroups.length} bếp · Chọn món và thêm nhanh vào giỏ</p>
-            </div>
-          </section>
-          <div className="food-store-list">
-            {foodSellerGroups.map((group) => (
-              <section key={group.sellerId} className="food-store map-motion-fade-up">
-                <header className="food-store__header">
-                  <div className="food-store__heading">
-                    <span className="marketplace-store-avatar" aria-hidden="true">
-                      {group.sellerName.slice(0, 1).toUpperCase()}
-                    </span>
-                    <span className="food-store__identity">
-                      <span className="food-store__eyebrow">Bếp Homeji · {group.posts.length} món</span>
-                      <span className="food-store__name">{group.sellerName}</span>
-                      <span className="food-store__address">{group.address}</span>
-                    </span>
-                    <span className="food-store__meta">
-                      {group.preparationMinutes ? <span>⚡ Từ {group.preparationMinutes} phút</span> : null}
-                      <strong>{formatNearbyDistance(group.distanceKm, locating, Boolean(userLocation))}</strong>
-                    </span>
-                  </div>
-                </header>
-                <div className="food-menu-grid">
-                  {group.posts.map((post) => {
-                    const thumb = postThumb(post)
-                    const cartItem = cartItems.find((item) => item.postId === post.id)
-                    const quantity = orderQuantities[post.id] ?? 1
-                    return (
-                      <article key={post.id} className="food-menu-item">
-                      <button type="button" className="food-menu-item__visual" onClick={() => showOnMap(post)}>
-                        {thumb ? <img src={thumb} alt={post.title} loading="lazy" /> : <span>Homeji Food</span>}
-                        <span className="food-menu-item__distance">
-                          {formatNearbyDistance(post.distanceKm, locating, Boolean(userLocation))}
-                        </span>
-                      </button>
-                      <div className="food-menu-item__body">
-                        <div>
-                          <h3>{post.title}</h3>
-                          <p>
-                            {post.category} · {post.preparationMinutes || 0} phút · Còn {post.availableQuantity} {post.unit}
-                          </p>
-                        </div>
-                        <strong>{formatPrice(post.price)}</strong>
-                        <div className="food-menu-item__buy">
-                          <div className="food-menu-item__quantity" role="group" aria-label={`Số lượng ${post.title}`}>
-                            <button
-                              type="button"
-                              aria-label={`Giảm số lượng ${post.title}`}
-                              disabled={quantity <= 1}
-                              onClick={() => setOrderQuantities((current) => ({
-                                ...current,
-                                [post.id]: Math.max(1, quantity - 1),
-                              }))}
-                            >
-                              −
-                            </button>
-                            <output aria-label={`${quantity} phần`}>{quantity}</output>
-                            <button
-                              type="button"
-                              aria-label={`Tăng số lượng ${post.title}`}
-                              disabled={quantity >= post.availableQuantity}
-                              onClick={() => setOrderQuantities((current) => ({
-                                ...current,
-                                [post.id]: Math.min(post.availableQuantity, quantity + 1),
-                              }))}
-                            >
-                              +
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            className={`food-menu-item__add${cartItem ? ' is-added' : ''}`}
-                            aria-pressed={Boolean(cartItem)}
-                            onClick={() => cartItem ? removeFromCart(post) : addToCart(post)}
-                          >
-                            {cartItem ? 'Đã thêm · Xóa' : 'Thêm vào giỏ'}
-                          </button>
-                        </div>
-                      </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
+        <div className="page-frame-empty">
+          <p className="page-frame-empty__title">
+            {tab === 'mine'
+              ? 'Bạn chưa có tin đăng nào'
+              : 'Chưa có đồ dùng đang bán quanh đây'}
+          </p>
         </div>
       ) : (
-        <div className="marketplace-list">
+        <div className={`marketplace-list${tab === 'browse' ? ' marketplace-list--grid' : ''}${tab === 'mine' ? ' marketplace-list--rows' : ''}`}>
           {listForTab.map((p) => renderPostCard(p, tab === 'mine' ? 'mine' : 'browse'))}
         </div>
       )}
-
-      {tab === 'food' && cartItems.length > 0 && !cartOpen ? (
-        <button type="button" className="food-cart-sticky" onClick={() => setCartOpen(true)}>
-          <span className="food-cart-sticky__count" aria-hidden="true">{cartItemCount}</span>
-          <span>
-            <small>{cartItems[0]?.sellerName}</small>
-            <strong>Xem giỏ hàng</strong>
-          </span>
-          <b>{formatPrice(cartTotal)}</b>
-        </button>
-      ) : null}
-
-      {cartOpen ? createPortal((
-        <div
-          className="food-cart-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !cartBusy) setCartOpen(false)
-          }}
-        >
-          <section
-            className="food-cart-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="food-cart-title"
-          >
-            <header className="food-cart-drawer__header">
-              <div>
-                <span>Giỏ hàng · {cartItems[0]?.sellerName || 'Bếp Homeji'}</span>
-                <h2 id="food-cart-title">Món bạn đã chọn</h2>
-              </div>
-              <button
-                type="button"
-                className="food-cart-drawer__close"
-                onClick={() => setCartOpen(false)}
-                disabled={cartBusy}
-                aria-label="Đóng giỏ hàng"
-              >
-                ×
-              </button>
-            </header>
-
-            {cartItems.length === 0 ? (
-              <div className="food-cart-empty">
-                <span aria-hidden="true">🛒</span>
-                <strong>Giỏ hàng đang trống</strong>
-                <p>Chọn món từ một bếp để bắt đầu đặt hàng.</p>
-              </div>
-            ) : (
-              <ul className="food-cart-list">
-                {cartItems.map((item) => (
-                  <li key={item.postId}>
-                    {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <span className="food-cart-list__placeholder">H</span>}
-                    <div className="food-cart-list__info">
-                      <strong>{item.title}</strong>
-                      <span>{formatPrice(item.price)} / {item.unit}</span>
-                      <button
-                        type="button"
-                        onClick={() => setCartItems((current) => current.filter((entry) => entry.postId !== item.postId))}
-                        disabled={cartBusy}
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                    <div className="food-cart-list__quantity" aria-label={`Số lượng ${item.title}`}>
-                      <button
-                        type="button"
-                        onClick={() => updateCartQuantity(item.postId, item.quantity - 1)}
-                        disabled={cartBusy || item.quantity <= 1}
-                        aria-label={`Giảm ${item.title}`}
-                      >−</button>
-                      <span>{item.quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => updateCartQuantity(item.postId, item.quantity + 1)}
-                        disabled={cartBusy || item.quantity >= item.availableQuantity}
-                        aria-label={`Tăng ${item.title}`}
-                      >+</button>
-                    </div>
-                    <b>{formatPrice(item.price * item.quantity)}</b>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <footer className="food-cart-drawer__footer">
-              <div>
-                <span>Tạm tính · {cartItemCount} món</span>
-                <strong>{formatPrice(cartTotal)}</strong>
-              </div>
-              {cartItems.length > 0 && cartTotal < MINIMUM_FOOD_CART_TOTAL ? (
-                <p>
-                  Thêm {formatPrice(MINIMUM_FOOD_CART_TOTAL - cartTotal)} để đạt đơn tối thiểu{' '}
-                  {formatPrice(MINIMUM_FOOD_CART_TOTAL)}.
-                </p>
-              ) : null}
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={cartBusy || cartItems.length === 0 || cartTotal < MINIMUM_FOOD_CART_TOTAL}
-                onClick={() => setCheckoutConfirmationOpen(true)}
-              >
-                {cartBusy ? 'Đang đặt món…' : `Kiểm tra và đặt món · ${formatPrice(cartTotal)}`}
-              </button>
-              {cartItems.length > 0 ? (
-                <button
-                  type="button"
-                  className="food-cart-clear"
-                  onClick={() => setCartItems([])}
-                  disabled={cartBusy}
-                >
-                  Xóa toàn bộ giỏ
-                </button>
-              ) : null}
-            </footer>
-          </section>
         </div>
-      ), document.body) : null}
-
-      {checkoutConfirmationOpen ? createPortal((
-        <div
-          className="food-checkout-confirmation-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !cartBusy) {
-              setCheckoutConfirmationOpen(false)
-            }
-          }}
-        >
-          <section
-            className="food-checkout-confirmation"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="food-checkout-confirmation-title"
-            aria-describedby="food-checkout-confirmation-description"
-          >
-            <img src="/brand/homeji-logo.png" alt="" aria-hidden="true" />
-            <div>
-              <span>Xác nhận giao dịch</span>
-              <h2 id="food-checkout-confirmation-title">Bạn có chắc muốn đặt món?</h2>
-            </div>
-            <p id="food-checkout-confirmation-description">
-              Homeji sẽ tạo đơn gồm <strong>{cartItemCount} món</strong> từ{' '}
-              <strong>{cartItems[0]?.sellerName || 'Bếp Homeji'}</strong> với tổng tiền{' '}
-              <strong>{formatPrice(cartTotal)}</strong>. Vui lòng kiểm tra kỹ món và số lượng trước
-              khi xác nhận.
-            </p>
-            <div className="food-checkout-confirmation__summary">
-              <span>Tổng thanh toán</span>
-              <strong>{formatPrice(cartTotal)}</strong>
-            </div>
-            <div className="food-checkout-confirmation__actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={cartBusy}
-                onClick={() => setCheckoutConfirmationOpen(false)}
-              >
-                Quay lại kiểm tra
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={cartBusy}
-                onClick={() => void checkoutCart()}
-              >
-                {cartBusy ? 'Đang tạo đơn…' : `Xác nhận đặt món · ${formatPrice(cartTotal)}`}
-              </button>
-            </div>
-          </section>
-        </div>
-      ), document.body) : null}
+      )}
 
       <MapToast
         message={toastMessage}
@@ -2142,6 +1860,20 @@ export function MarketplacePage({
           if (error && !disrupted) setHiddenLoadError(error)
         }}
       />
-    </div>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <div className={`feature-page marketplace-page marketplace-page--food`}>
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <PageFrame title="Chợ đồ" actions={frameActions}>
+      <div className="marketplace-page marketplace-page--food">{body}</div>
+    </PageFrame>
   )
 }

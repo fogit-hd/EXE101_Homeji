@@ -32,10 +32,86 @@
   place-items: center;
   padding: 24px;
   text-align: center;
-  color: #69727d;
+  color: var(--text-secondary);
   font-size: 14px;
   touch-action: auto;
-  background-color: var(--map-canvas-bg, #e8eef2);
+  background-color: var(--map-canvas-bg, #e4ebe6);
+}
+
+/* Intentional map stage — warm paper when tiles are loading or unavailable */
+.rental-map--stage {
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 4vw, 40px);
+  touch-action: auto;
+  background: var(--map-canvas-bg, #e4ebe6);
+}
+
+.rental-map__stage-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(420px, 100%);
+  padding: 28px 24px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--radius-xl, 24px);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  box-shadow:
+    0 2px 6px rgba(var(--shadow-color), 0.04),
+    0 18px 40px rgba(var(--shadow-color), 0.08);
+  text-align: center;
+}
+
+.rental-map__stage-card--loading {
+  background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
+}
+
+.rental-map__stage-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: var(--grab-green);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--grab-green) 28%, transparent);
+}
+
+.rental-map__stage-pulse {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--grab-green) 22%, transparent);
+  border-top-color: var(--grab-green);
+  animation: rental-map-stage-spin 0.9s linear infinite;
+}
+
+.rental-map__stage-title {
+  margin: 4px 0 0;
+  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-heading);
+}
+
+.rental-map__stage-copy {
+  margin: 0;
+  max-width: 34ch;
+  font-family: 'Be Vietnam Pro', Manrope, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+@keyframes rental-map-stage-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rental-map__stage-pulse {
+    animation: none;
+    border-color: color-mix(in srgb, var(--grab-green) 35%, transparent);
+  }
 }
 
 .rental-map__host {
@@ -71,8 +147,8 @@
   z-index: 2;
   display: grid;
   place-items: center;
-  /* Neutral — avoid green-tinted gradient flash behind the map */
-  background: var(--map-canvas-bg, #e8eef2);
+  padding: clamp(20px, 4vw, 40px);
+  background: var(--map-canvas-bg, #e4ebe6);
   pointer-events: none;
   transition: none !important;
 }
@@ -90,10 +166,10 @@
   margin-inline: auto;
   padding: 10px 36px 10px 12px;
   border-radius: 10px;
-  background: #fff8e6;
-  border: 1px solid #f0d78c;
-  box-shadow: 0 8px 24px rgba(9, 29, 46, 0.12);
-  color: #5c4a12;
+  background: var(--pastel-sand);
+  border: 1px solid color-mix(in srgb, var(--pastel-sand) 55%, var(--border));
+  box-shadow: var(--shadow-sm);
+  color: var(--text-heading);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -157,20 +233,19 @@
   display: flex;
   padding: 4px;
   border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-  border-radius: 13px;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
   box-shadow:
-    0 2px 5px rgba(var(--shadow-color), 0.18),
-    0 8px 24px rgba(var(--shadow-color), 0.12);
-  backdrop-filter: blur(10px);
+    0 2px 5px rgba(var(--shadow-color), 0.12),
+    0 8px 24px rgba(var(--shadow-color), 0.08);
   pointer-events: auto;
 }
 
 .rental-map__view-switcher button {
   min-height: 38px;
-  padding: 0 13px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
@@ -186,14 +261,14 @@
 }
 
 .rental-map__view-switcher button:hover:not(:disabled) {
-  background: var(--maps-hover);
+  background: color-mix(in srgb, var(--grab-green) 8%, transparent);
   color: var(--text-heading);
 }
 
 .rental-map__view-switcher button.is-active {
-  background: var(--maps-blue, #1a73e8);
+  background: var(--grab-green);
   color: #fff;
-  box-shadow: 0 3px 10px rgba(26, 115, 232, 0.28);
+  box-shadow: 0 3px 10px rgba(0, 177, 79, 0.28);
 }
 
 .rental-map__view-switcher button:focus-visible {
@@ -222,14 +297,14 @@
 .rental-map__view-error {
   max-width: 360px;
   padding: 8px 11px;
-  border: 1px solid #f1c27d;
+  border: 1px solid color-mix(in srgb, var(--pastel-peach) 55%, var(--border));
   border-radius: 10px;
-  background: #fff8e8;
-  color: #7a4a00;
+  background: var(--pastel-sand);
+  color: var(--text-heading);
   font-size: 0.78rem;
   font-weight: 550;
   line-height: 1.35;
-  box-shadow: 0 5px 16px rgba(var(--shadow-color), 0.14);
+  box-shadow: var(--shadow-sm);
   pointer-events: auto;
 }
 
@@ -276,6 +351,12 @@
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+.rental-map__btn img {
+  display: block;
+  width: 17px;
+  height: 17px;
 }
 
 .rental-map__btn {
@@ -397,16 +478,19 @@
   justify-content: center;
   height: 100%;
   min-height: 200px;
-  padding: 24px;
+  padding: clamp(20px, 4vw, 36px);
   text-align: center;
-  color: #69727d;
+  color: var(--text-secondary);
   font-size: 14px;
-  background: var(--map-canvas-bg, #e8eef2);
+  font-family: 'Be Vietnam Pro', Manrope, sans-serif;
+  background: var(--map-canvas-bg, #e4ebe6);
 }
 
 .map-placeholder-hint {
   margin-top: 8px;
   font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .map-picker-hint {
@@ -425,9 +509,23 @@
 
 .map-error-panel__title {
   margin: 0;
-  font-weight: 700;
-  color: #091d2e;
+  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-heading);
   text-align: center;
+}
+
+.rental-map--stage .map-error-panel {
+  width: min(480px, 100%);
+  padding: 28px 24px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--radius-xl, 24px);
+  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  box-shadow:
+    0 2px 6px rgba(var(--shadow-color), 0.04),
+    0 18px 40px rgba(var(--shadow-color), 0.08);
+  background-image: none;
 }
 
 .map-error-panel__dev {
@@ -526,28 +624,33 @@
   filter: brightness(0.95);
 }
 
-.home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
+.home-map-page:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
   right: 336px;
 }
 
-.home-map-page.has-wide-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+.home-map-page.has-wide-panel:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
   right: calc(min(800px, 72vw) + 16px);
 }
 
-.home-map-page.has-listings-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+.home-map-page.has-listings-panel:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
   right: calc(clamp(380px, 40vw, 560px) + 16px);
 }
 
+.home-map-page--dest .rental-map__controls {
+  right: 12px;
+  bottom: 12px;
+}
+
 @media (min-width: 1024px) {
-  .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
+  .home-map-page:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
     right: 356px;
   }
 
-  .home-map-page.has-wide-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+  .home-map-page.has-wide-panel:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
     right: calc(min(850px, 70%) + 16px);
   }
 
-  .home-map-page.has-listings-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+  .home-map-page.has-listings-panel:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
     right: calc(clamp(380px, 40vw, 560px) + 16px);
   }
 }
@@ -563,8 +666,12 @@
     max-width: calc(100% - 24px);
   }
 
-  .home-map-page:not(.is-sidebar-collapsed) .rental-map__view-switcher-wrap {
+  .home-map-page:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__view-switcher-wrap {
     bottom: calc(46dvh + 12px);
+  }
+
+  .home-map-page--dest .rental-map__view-switcher-wrap {
+    bottom: 12px;
   }
 
   .rental-map__view-switcher button {
@@ -578,20 +685,25 @@
     display: none !important;
   }
 
-  .home-map-page:not(.is-sidebar-collapsed) .rental-map__controls {
+  .home-map-page:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
     right: 12px;
     bottom: calc(52dvh + 12px);
   }
 
-  .home-map-page.has-listings-panel:not(.is-sidebar-collapsed) .rental-map__controls {
+  .home-map-page.has-listings-panel:not(.is-sidebar-collapsed):not(.home-map-page--dest) .rental-map__controls {
     right: 12px;
+  }
+
+  .home-map-page--dest .rental-map__controls {
+    right: 12px;
+    bottom: 12px;
   }
 
   .home-map-panel.has-pin-preview .rental-map__controls {
     bottom: 140px;
   }
 
-  .home-map-page:not(.is-sidebar-collapsed) .home-map-panel.has-pin-preview .rental-map__controls {
+  .home-map-page:not(.is-sidebar-collapsed):not(.home-map-page--dest) .home-map-panel.has-pin-preview .rental-map__controls {
     bottom: calc(52dvh + 12px);
   }
 }

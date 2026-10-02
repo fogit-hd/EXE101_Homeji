@@ -28,6 +28,10 @@ type Props = {
   onLocationChange?: (lat: number, lng: number) => void
 }
 
+/**
+ * Interactive pin picker. Mount only while the form location block is open —
+ * wrap with `<DeferredMapBlock visible={…}>` from chrome (do not leave mounted in background tabs).
+ */
 function LocationPickerMapComponent({
   latitude,
   longitude,

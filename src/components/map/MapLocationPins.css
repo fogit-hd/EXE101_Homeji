@@ -14,6 +14,40 @@
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
 }
 
+.map-price-pill__lift {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.map-price-pill__bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #18231d;
+  color: #fff;
+  font: 400 11px/1 Inter, 'Be Vietnam Pro', sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(24, 35, 29, 0.2);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.map-price-pill.is-selected .map-price-pill__bubble {
+  background: #e65c3a;
+  transform: scale(1.06);
+}
+
+.map-price-pill.is-hot:not(.is-selected) .map-price-pill__bubble {
+  transform: scale(1.04);
+  box-shadow: 0 6px 14px rgba(24, 35, 29, 0.28);
+}
+
 .map-user-location-dot__lift {
   position: absolute;
   left: 0;

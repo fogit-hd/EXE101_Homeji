@@ -251,6 +251,37 @@ const RENTAL_PIN_THEME: Record<
 }
 
 /**
+ * Figma map explore price pill — one idle style (#18231d) + one selected (#e65c3a).
+ * Center-anchored on the coordinate.
+ */
+export function createPricePillPinContent(options: {
+  label: string
+  title: string
+  selected?: boolean
+  hot?: boolean
+}): MapPinContentHandle {
+  const selected = Boolean(options.selected)
+  const hot = Boolean(options.hot)
+  const { root, mount } = coordinateAnchorRoot(options.title, 'map-price-pill', {
+    interactive: true,
+  })
+  if (selected) root.classList.add('is-selected')
+  if (hot) root.classList.add('is-hot')
+
+  const bubble = document.createElement('div')
+  bubble.className = 'map-price-pill__bubble'
+  bubble.textContent = options.label
+  mount.appendChild(bubble)
+
+  return {
+    element: root,
+    dispose: () => {
+      root.remove()
+    },
+  }
+}
+
+/**
  * Tip-anchored teardrop for phòng trọ (green) / tìm bạn ở ghép (indigo).
  */
 export function createRentalPinContent(options: {

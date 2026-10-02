@@ -7,10 +7,18 @@ import {
   type RentalPostOwnerStats,
 } from '../api'
 import { RentalPostStatus, RentalPostType } from '../api/types'
+import {
+  PageFrame,
+  exploreMapUrl,
+  usePageFrameChromeActive,
+  usePageFrameChromePortals,
+} from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { getErrorMessage } from '../lib/errors'
 import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/labels'
+import { mapPostUrl, mapSectionUrl } from '../lib/mapDeepLinks'
 
 function parseType(raw: string | null): RentalPostType | null {
   if (raw === 'vacant' || raw === String(RentalPostType.VacantRoom)) return RentalPostType.VacantRoom
@@ -51,37 +59,41 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
     typeFilter == null ? true : p.type === typeFilter,
   )
 
-  return (
-    <div className={embedded ? 'map-embed' : 'container page'}>
-      {!embedded ? (
-        <>
-          <h1 className="page-title">{title}</h1>
-          <p className="page-subtitle">
-            {typeFilter ? (
-              <>
-                Nhóm <strong>{rentalPostTypeLabel[typeFilter]}</strong>
-                {stats?.isPremium ? ' · Premium' : ''}
-              </>
-            ) : (
-              'Thống kê và thao tác nhanh tin của bạn'
-            )}
-          </p>
-        </>
+  const actions = (
+    <>
+      <Link to={exploreMapUrl()} className="btn btn-secondary btn-sm btn-map-cta">
+        Xem trên bản đồ
+      </Link>
+      <Link to={createPath} className="btn btn-primary btn-sm">
+        Đăng tin mới
+      </Link>
+      <Link to={mapSectionUrl('invitations')} className="btn btn-secondary btn-sm">
+        Lời mời ở ghép
+      </Link>
+    </>
+  )
+
+  const liftChrome = usePageFrameChromeActive()
+  const chromePortals = usePageFrameChromePortals({ actions })
+
+  const body = (
+    <>
+      {chromePortals}
+      {embedded && !liftChrome ? (
+        <div className="page-frame__actions" style={{ marginBottom: 12 }}>
+          {actions}
+        </div>
       ) : null}
 
-      {(actionError || (error && !disrupted)) && (
-        <div className="alert alert-error">{actionError || error}</div>
-      )}
-      {actionMsg ? <div className="alert alert-success">{actionMsg}</div> : null}
+      {typeFilter ? (
+        <p className="page-subtitle" style={{ marginTop: 0 }}>
+          Nhóm <strong>{rentalPostTypeLabel[typeFilter]}</strong>
+          {stats?.isPremium ? ' · Premium' : ''}
+        </p>
+      ) : null}
 
-      <div className="page-header-row" style={{ marginBottom: 12 }}>
-        <Link to={createPath} className="btn btn-primary btn-sm">
-          Đăng tin mới
-        </Link>
-        <Link to="/invitations" className="btn btn-secondary btn-sm">
-          Lời mời ở ghép
-        </Link>
-      </div>
+      <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      <PageNotice message={actionMsg} tone="success" />
 
       {showLoader ? (
         disrupted
@@ -99,7 +111,10 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
           ) : null}
 
           {posts.length === 0 ? (
-            <div className="empty-state card">Chưa có tin đăng. Hãy tạo tin mới.</div>
+            <div className="page-frame-empty">
+              <p className="page-frame-empty__title">Chưa có tin đăng</p>
+              <p>Hãy tạo tin mới để bắt đầu quản lý tại đây.</p>
+            </div>
           ) : (
             <div className="notification-list">
               {posts.map((p) => (
@@ -118,6 +133,9 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
                     <small>Cập nhật {formatDate(p.updatedAt)}</small>
                   </div>
                   <div className="notification-item__actions">
+                    <Link to={mapPostUrl(p.id)} className="btn btn-ghost btn-sm">
+                      Xem trên bản đồ
+                    </Link>
                     <Link to={`/posts/${p.id}/edit`} className="btn btn-secondary btn-sm">
                       Sửa
                     </Link>
@@ -162,6 +180,16 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
           )}
         </>
       )}
-    </div>
+    </>
+  )
+
+  if (embedded) {
+    return <div className="feature-page">{body}</div>
+  }
+
+  return (
+    <PageFrame title={title} actions={actions}>
+      {body}
+    </PageFrame>
   )
 }

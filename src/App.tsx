@@ -1,10 +1,10 @@
-import { GoogleOAuthProvider } from '@react-oauth/google'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { WebsiteTrafficTracker } from './components/WebsiteTrafficTracker'
 import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
+import { SearchProvider } from './contexts/SearchContext'
+import { ToastProvider } from './components/toast/ToastProvider'
 import { AuthModalProvider } from './contexts/AuthModalContext'
 import { GoogleMapsProvider } from './contexts/GoogleMapsProvider'
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
@@ -17,7 +17,6 @@ import { ExplorePage } from './pages/ExplorePage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
-import { PrivacyPolicyPage, TermsOfServicePage } from './pages/LegalPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { AuthCallbackPage, ResetPasswordPage } from './pages/ResetPasswordPage'
 import './components/layout/footer.css'
@@ -26,15 +25,6 @@ import './pages/auth.css'
 import './pages/detail.css'
 import './pages/post-form.css'
 import './pages/pages.css'
-
-// Google OAuth client IDs are public identifiers. Keep a production fallback so
-// the legacy Render service can authenticate even when its build environment
-// does not expose VITE_GOOGLE_CLIENT_ID.
-const DEFAULT_GOOGLE_CLIENT_ID =
-  '675096303664-kv4mvsd8rqldf2dicodtb7to8gpk1ipp.apps.googleusercontent.com'
-
-const googleClientId =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || DEFAULT_GOOGLE_CLIENT_ID
 
 function AppRoutes() {
   return (
@@ -47,8 +37,6 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-        <Route path="/terms" element={<TermsOfServicePage />} />
 
         {/* Listing detail lives in the map place-info panel — no standalone page. */}
         <Route path="/posts/:postId" element={<MapHomePostRedirect />} />
@@ -86,23 +74,24 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
-      <GoogleOAuthProvider clientId={googleClientId}>
-        <ThemeSync />
-        <NetworkStatusProvider>
-          <GoogleMapsProvider>
+      <ThemeSync />
+      <NetworkStatusProvider>
+        <GoogleMapsProvider>
             <AuthProvider>
-              <BrowserRouter>
-                <WebsiteTrafficTracker />
-                <AuthModalProvider>
-                  <ErrorBoundary reloadOnRetry>
-                    <AppRoutes />
-                  </ErrorBoundary>
-                </AuthModalProvider>
-              </BrowserRouter>
-            </AuthProvider>
-          </GoogleMapsProvider>
-        </NetworkStatusProvider>
-      </GoogleOAuthProvider>
+            <BrowserRouter>
+              <SearchProvider>
+              <ToastProvider>
+              <AuthModalProvider>
+                <ErrorBoundary reloadOnRetry>
+                  <AppRoutes />
+                </ErrorBoundary>
+              </AuthModalProvider>
+              </ToastProvider>
+              </SearchProvider>
+            </BrowserRouter>
+          </AuthProvider>
+        </GoogleMapsProvider>
+      </NetworkStatusProvider>
     </ErrorBoundary>
   )
 }

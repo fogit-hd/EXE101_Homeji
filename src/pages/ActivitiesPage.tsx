@@ -2,9 +2,11 @@ import { useCallback, useState } from 'react'
 import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { formatActivityDisplay } from '../lib/activityDisplay'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
+import './ProfilePage.css'
 
 export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
   const [items, setItems] = useState<UserActivity[]>([])
@@ -22,7 +24,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
   const { showLoader, onIntroComplete, error, disrupted } = usePersistentLoad(loadFn, [type])
 
   return (
-    <div className={embedded ? 'map-embed' : 'container page'}>
+    <div className={embedded ? 'map-embed profile-embed account-surface' : 'container page account-surface'}>
       {!embedded ? (
         <>
           <h1 className="page-title">Nhật ký hoạt động</h1>
@@ -30,8 +32,11 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
       ) : null}
 
       <div className="form-group">
-        <label className="form-label">Lọc loại</label>
+        <label className="form-label" htmlFor="activities-type-filter">
+          Lọc loại
+        </label>
         <select
+          id="activities-type-filter"
           className="form-select"
           value={type === '' ? '' : String(type)}
           onChange={(e) => setType(e.target.value === '' ? '' : (Number(e.target.value) as UserActivityType))}
@@ -45,7 +50,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
         </select>
       </div>
 
-      {error && !disrupted && <div className="alert alert-error">{error}</div>}
+      <PageNotice message={error && !disrupted ? error : ''} tone="error" />
 
       {showLoader ? (
         disrupted

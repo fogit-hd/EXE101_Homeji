@@ -13,17 +13,18 @@
 .schedule-dt__trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
-  height: 32px;
-  padding: 0 8px;
+  min-height: 40px;
+  height: auto;
+  padding: 8px 12px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface-input, #f1f3f4);
+  border-radius: var(--radius-control, 10px);
+  background: var(--surface);
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   text-align: left;
   cursor: pointer;
   transition:
@@ -71,15 +72,15 @@
   z-index: 40;
   top: calc(100% + 4px);
   left: 0;
-  width: 212px;
+  width: 260px;
   max-width: 100%;
-  padding: 6px;
+  padding: 10px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-elevated);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-card, 12px);
+  background: var(--surface-elevated, var(--surface));
+  box-shadow: 0 8px 20px rgba(var(--shadow-color), 0.08);
   animation: schedule-dt-in 0.15s var(--ease-out, ease) both;
 }
 

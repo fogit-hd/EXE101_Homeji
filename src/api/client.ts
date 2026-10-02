@@ -40,11 +40,25 @@ async function fetchWithTimeout(
   timeoutMs: number,
 ): Promise<Response> {
   const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+  let timedOut = false
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeoutMs)
+  const external = init.signal
+  const onExternalAbort = () => controller.abort()
+  if (external) {
+    if (external.aborted) controller.abort()
+    else external.addEventListener('abort', onExternalAbort, { once: true })
+  }
   try {
-    return await fetch(input, { ...init, signal: controller.signal })
+    const { signal: _externalSignal, ...rest } = init
+    return await fetch(input, { ...rest, signal: controller.signal })
   } catch (error) {
-    if (controller.signal.aborted) {
+    if (external?.aborted) {
+      throw error instanceof DOMException ? error : new DOMException('Aborted', 'AbortError')
+    }
+    if (timedOut || controller.signal.aborted) {
       throw new ApiRequestError(408, {
         detail: 'Máy chủ phản hồi quá chậm. Vui lòng thử lại.',
       })
@@ -52,6 +66,7 @@ async function fetchWithTimeout(
     throw error
   } finally {
     window.clearTimeout(timeoutId)
+    external?.removeEventListener('abort', onExternalAbort)
   }
 }
 
@@ -96,6 +111,7 @@ type RequestOptions = {
   body?: unknown
   auth?: boolean
   params?: Record<string, string | number | boolean | string[] | undefined>
+  signal?: AbortSignal
 }
 
 function buildUrl(path: string, params?: RequestOptions['params']): string {
@@ -126,7 +142,7 @@ function parseErrorBody(text: string, statusText: string): ApiError {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, auth = true, params } = options
+  const { method = 'GET', body, auth = true, params, signal } = options
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
@@ -152,9 +168,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal,
     }, API_TIMEOUT_MS)
   } catch (error) {
     if (error instanceof ApiRequestError) throw error
+    if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+      throw error
+    }
     // Wi‑Fi vẫn bật nhưng API/proxy chết ≠ mất mạng của user
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       throw new NetworkError()

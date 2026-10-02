@@ -11,12 +11,8 @@ import {
   type MapPinLayer,
   type MapPinLayers,
 } from '../../lib/mapPinLayers'
-import {
-  NEARBY_PLACE_CATEGORY_OPTIONS,
-  fetchPlacePredictions,
-  searchNearbyPlaces,
-  type NearbyPlaceCategory,
-} from '../../lib/placeAutocomplete'
+import { fetchPlacePredictions } from '../../lib/placeAutocomplete'
+import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import type { GuestAreaOption } from '../landing/guestMapAreas'
 import { GUEST_DISTRICTS, GUEST_WARDS } from '../landing/guestMapAreas'
 import type { MapAppSection } from './MapAppPanel'
@@ -117,7 +113,7 @@ export type MapOmniboxSchool = {
 
 export type MapOmniboxSuggestion = {
   id: string
-  kind: 'district' | 'ward' | 'school' | 'post' | 'recent' | 'query' | 'place' | 'nearby'
+  kind: 'district' | 'ward' | 'school' | 'post' | 'recent' | 'query' | 'place'
   title: string
   subtitle?: string
   meta?: string
@@ -132,12 +128,6 @@ export type MapOmniboxSuggestion = {
   placeId?: string
 }
 
-export type MapNearbyAnchor = {
-  lat: number
-  lng: number
-  label: string
-}
-
 type Props = {
   query: string
   onQueryChange: (value: string) => void
@@ -146,8 +136,6 @@ type Props = {
   posts?: RentalPostSummary[]
   schools: MapOmniboxSchool[]
   schoolsLoading?: boolean
-  /** Rental or searched map location used for nearby lifestyle discovery. */
-  nearbyAnchor?: MapNearbyAnchor | null
   districtId: string
   wardId: string
   schoolId: string
@@ -177,6 +165,8 @@ type Props = {
   placeDetailOpen?: boolean
   /** Collapse all chrome sections from parent shell. */
   uiCollapsed?: boolean
+  /** Hide map-shell app nav — product chrome lives in AppChrome. */
+  hideAppNav?: boolean
 }
 
 function loadRecent(): MapOmniboxSuggestion[] {
@@ -261,11 +251,6 @@ function matchesQuery(item: MapOmniboxSuggestion, q: string) {
   )
 }
 
-function formatNearbyDistance(distanceMeters: number): string {
-  if (distanceMeters < 1000) return `${Math.max(10, Math.round(distanceMeters / 10) * 10)} m`
-  return `${(distanceMeters / 1000).toFixed(1).replace('.0', '')} km`
-}
-
 function SuggestionRow({
   item,
   active,
@@ -303,13 +288,6 @@ function SuggestionRow({
               d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
             />
           </svg>
-        ) : item.kind === 'nearby' ? (
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <path
-              fill="currentColor"
-              d="M8.1 13.34 5.5 20H3l3.2-7.57A4.5 4.5 0 0 1 4 8.5V3h2v5h1V3h2v5h1V3h2v5.5a4.5 4.5 0 0 1-2.2 3.87L13 20h-2.5l-2.4-6.66ZM17 3h1c1.66 0 3 1.34 3 3v7h-2v7h-2V3Z"
-            />
-          </svg>
         ) : item.kind === 'recent' ? (
           <svg viewBox="0 0 24 24" width="18" height="18">
             <path
@@ -344,7 +322,6 @@ export function MapOmnibox({
   posts = [],
   schools,
   schoolsLoading,
-  nearbyAnchor,
   districtId,
   wardId,
   schoolId,
@@ -366,6 +343,7 @@ export function MapOmnibox({
   onClosePlaceDetail,
   placeDetailOpen = false,
   uiCollapsed = false,
+  hideAppNav = false,
 }: Props) {
   const { profile } = useAuth()
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
@@ -377,9 +355,6 @@ export function MapOmnibox({
   const [recent, setRecent] = useState<MapOmniboxSuggestion[]>(loadRecent)
   const [placeSuggestions, setPlaceSuggestions] = useState<MapOmniboxSuggestion[]>([])
   const [placesLoading, setPlacesLoading] = useState(false)
-  const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
-  const [nearbySuggestions, setNearbySuggestions] = useState<MapOmniboxSuggestion[]>([])
-  const [nearbyLoading, setNearbyLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 900px)').matches : false,
   )
@@ -412,23 +387,10 @@ export function MapOmnibox({
     inputRef.current?.blur()
   }, [uiCollapsed])
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open])
-
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (isMobile && open) return // backdrop handles dismiss on mobile
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [isMobile, open])
+  useDismissOnOutside(open, [rootRef], () => {
+    setOpen(false)
+    inputRef.current?.blur()
+  })
 
   useEffect(() => {
     if (!navOpen) return
@@ -481,49 +443,6 @@ export function MapOmnibox({
     }
   }, [query, apiKey, mapsLoaded])
 
-  useEffect(() => {
-    if (!open || !apiKey || !mapsLoaded || !nearbyAnchor) {
-      const clearTimer = window.setTimeout(() => {
-        setNearbySuggestions([])
-        setNearbyLoading(false)
-      }, 0)
-      return () => window.clearTimeout(clearTimer)
-    }
-
-    let cancelled = false
-    const timer = window.setTimeout(() => {
-      setNearbyLoading(true)
-      void searchNearbyPlaces(nearbyAnchor, nearbyCategory, { limit: 5 })
-        .then((items) => {
-          if (cancelled) return
-          setNearbySuggestions(
-            items.map((item) => ({
-                id: `nearby-${nearbyCategory}-${item.placeId}`,
-                kind: 'nearby' as const,
-                title: item.title,
-                subtitle: item.address,
-                meta: `${formatNearbyDistance(item.distanceMeters)} · ${item.typeLabel}`,
-                badge: item.typeLabel,
-                keyword: item.title,
-                focus: { lat: item.lat, lng: item.lng, zoom: MAP_FOCUS_ZOOM },
-                placeId: item.placeId,
-              })),
-          )
-        })
-        .catch(() => {
-          if (!cancelled) setNearbySuggestions([])
-        })
-        .finally(() => {
-          if (!cancelled) setNearbyLoading(false)
-        })
-    }, 120)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timer)
-    }
-  }, [open, apiKey, mapsLoaded, nearbyAnchor, nearbyCategory])
-
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
     const districts = GUEST_DISTRICTS.map((d) => areaToSuggestion(d, 'district')).filter((i) =>
@@ -543,7 +462,6 @@ export function MapOmnibox({
     if (!q) {
       return {
         recent: recentItems.slice(0, 5),
-        nearby: nearbySuggestions,
         places: [] as MapOmniboxSuggestion[],
         districts: districts.slice(0, 2),
         wards: wards.slice(0, 5),
@@ -554,18 +472,16 @@ export function MapOmnibox({
 
     return {
       recent: recentItems.slice(0, 4),
-      nearby: nearbySuggestions,
       places: placeSuggestions.slice(0, 6),
       districts: districts.slice(0, 4),
       wards: wards.slice(0, 8),
       schools: schoolItems.slice(0, 10),
       posts: postItems.slice(0, 8),
     }
-  }, [query, schools, recent, posts, placeSuggestions, nearbySuggestions])
+  }, [query, schools, recent, posts, placeSuggestions])
 
   const totalHits =
     suggestions.recent.length +
-    suggestions.nearby.length +
     suggestions.places.length +
     suggestions.districts.length +
     suggestions.wards.length +
@@ -575,7 +491,7 @@ export function MapOmnibox({
   const pick = (item: MapOmniboxSuggestion) => {
     saveRecent(item)
     setRecent(loadRecent())
-    onQueryChange(item.title)
+    onQueryChange(item.kind === 'place' && item.subtitle ? `${item.title}` : item.title)
     onPickSuggestion(item)
     setOpen(false)
   }
@@ -632,6 +548,7 @@ export function MapOmnibox({
 
   return (
     <>
+      {!hideAppNav ? (
       <aside className="gmaps-nav-rail" aria-label="Điều hướng Homeji">
         <button
           type="button"
@@ -728,9 +645,12 @@ export function MapOmnibox({
           <span className="gmaps-nav-rail__label">Ở ghép</span>
         </button>
       </aside>
+      ) : null}
 
       <div
-        className={`gmaps-omnibox${open && isMobile ? ' is-mobile-search' : ''}`}
+        className={`gmaps-omnibox${open && isMobile ? ' is-mobile-search' : ''}${
+          hideAppNav ? ' gmaps-omnibox--no-app-nav' : ''
+        }`}
         ref={rootRef}
       >
         <button
@@ -764,7 +684,7 @@ export function MapOmnibox({
                   />
                 </svg>
               </button>
-            ) : (
+            ) : !hideAppNav ? (
               <button
                 type="button"
                 className="gmaps-omnibox__icon-btn gmaps-omnibox__menu-btn map-motion-press"
@@ -781,7 +701,7 @@ export function MapOmnibox({
                   <span />
                 </span>
               </button>
-            )}
+            ) : null}
 
             <input
               ref={inputRef}
@@ -855,7 +775,7 @@ export function MapOmnibox({
             role="listbox"
             aria-hidden={!open}
           >
-              {totalHits === 0 && !placesLoading && !nearbyLoading ? (
+              {totalHits === 0 && !placesLoading ? (
                 <p className="gmaps-omnibox__empty">
                   {schoolsLoading
                     ? 'Đang tải gợi ý khu vực & trường…'
@@ -869,49 +789,6 @@ export function MapOmnibox({
                   {suggestions.recent.map((item) => (
                     <SuggestionRow key={item.id} item={item} onPick={pick} />
                   ))}
-                </div>
-              ) : null}
-
-              {nearbyAnchor ? (
-                <div className="gmaps-omnibox__section gmaps-omnibox__nearby">
-                  <div className="gmaps-omnibox__nearby-heading">
-                    <div>
-                      <p className="gmaps-omnibox__section-title">Gần khu vực đang tìm</p>
-                      <p className="gmaps-omnibox__nearby-anchor" title={nearbyAnchor.label}>
-                        {nearbyAnchor.label}
-                      </p>
-                    </div>
-                    <span className="gmaps-omnibox__nearby-radius">≤ 1,8 km</span>
-                  </div>
-                  <div
-                    className="gmaps-omnibox__nearby-categories"
-                    role="group"
-                    aria-label="Loại tiện ích gần khu vực"
-                  >
-                    {NEARBY_PLACE_CATEGORY_OPTIONS.map((category) => (
-                      <button
-                        key={category.id}
-                        type="button"
-                        className={`gmaps-omnibox__nearby-category map-motion-press${
-                          nearbyCategory === category.id ? ' is-active' : ''
-                        }`}
-                        aria-pressed={nearbyCategory === category.id}
-                        onClick={() => setNearbyCategory(category.id)}
-                      >
-                        {category.label}
-                      </button>
-                    ))}
-                  </div>
-                  {nearbyLoading ? (
-                    <p className="gmaps-omnibox__empty">Đang tìm tiện ích gần đây…</p>
-                  ) : suggestions.nearby.length > 0 ? (
-                    suggestions.nearby.map((item) => (
-                      <SuggestionRow key={item.id} item={item} onPick={pick} />
-                    ))
-                  ) : (
-                    <p className="gmaps-omnibox__empty">Chưa tìm thấy địa điểm trong bán kính này.</p>
-                  )}
-                  <p className="gmaps-omnibox__nearby-source">Dữ liệu Google Places</p>
                 </div>
               ) : null}
 
@@ -1079,6 +956,7 @@ export function MapOmnibox({
           </div>
         ) : null}
 
+        {!hideAppNav ? (
         <div className="gmaps-omnibox__top-actions">
           <button
             type="button"
@@ -1141,8 +1019,10 @@ export function MapOmnibox({
           </button>
           <MapAccountMenu onOpenProfile={() => openSection('profile')} />
         </div>
+        ) : null}
       </div>
 
+      {!hideAppNav ? (
       <button
         type="button"
         className={`gmaps-nav-backdrop${navOpen ? ' is-visible' : ''}`}
@@ -1151,6 +1031,8 @@ export function MapOmnibox({
         tabIndex={navOpen ? 0 : -1}
         onClick={closeNav}
       />
+      ) : null}
+      {!hideAppNav ? (
       <aside
         className={`gmaps-nav-drawer${navOpen ? ' is-visible' : ''}`}
         role="dialog"
@@ -1266,8 +1148,9 @@ export function MapOmnibox({
               ) : null}
             </nav>
       </aside>
+      ) : null}
 
-      {tourVisible && !navOpen && !tourSection ? (
+      {!hideAppNav && tourVisible && !navOpen && !tourSection ? (
         <aside className="gmaps-tour gmaps-tour--menu" aria-label="Hướng dẫn bắt đầu">
           <span className="gmaps-tour__eyebrow">Bắt đầu với Homeji</span>
           <strong>Mở menu ba gạch ở góc trái</strong>
@@ -1288,7 +1171,7 @@ export function MapOmnibox({
         </aside>
       ) : null}
 
-      {tourVisible && tourSection && SECTION_GUIDE[tourSection] ? (
+      {!hideAppNav && tourVisible && tourSection && SECTION_GUIDE[tourSection] ? (
         <aside className="gmaps-tour gmaps-tour--section" role="dialog" aria-modal="false" aria-label={`Hướng dẫn ${SECTION_GUIDE[tourSection]!.title}`}>
           <span className="gmaps-tour__eyebrow">Bạn vừa mở</span>
           <strong>{SECTION_GUIDE[tourSection]!.title}</strong>

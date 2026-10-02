@@ -1,5 +1,5 @@
 import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   getNotifications,
   getRentalPost,
@@ -7,32 +7,40 @@ import {
   savePost,
   searchMarketplacePosts,
   unsavePost,
+  type MarketplacePost,
   type RentalPost,
   type RentalPostSummary,
 } from '../../api'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace'
-import { chatLocationKindLabel, type ChatLocationKind } from '../../lib/chatLocation'
-import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM, isValidCoord } from '../../lib/googleMaps'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
 import { useAuth } from '../../contexts/AuthContext'
+import {
+  DeferredMapBlock,
+  type ExploreView,
+} from '../chrome'
 import { HomeListingSkeleton } from '../HomeListingSkeleton'
+import { PageNotice } from '../toast/PageNotice'
 import { MapListingCard } from '../MapListingCard'
 import { MapAppPanel, isWideMapSection, type MapAppSection } from './MapAppPanel'
-import { MapChatDock } from './MapChatDock'
 import { MapChatbot } from './MapChatbot'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapEdgeToggle } from './MapEdgeToggle'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
-import { MapNearbyPanel } from './MapNearbyPanel'
-import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
-import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
 import { marketplacePostsToSellerPins } from '../../lib/marketplaceSellerPins'
 import { useNotificationHub } from '../../hooks/useNotificationHub'
 import { NotificationType, type Notification } from '../../api'
 import type { NotificationReadChange } from '../../pages/NotificationsPage'
+import { MapListingsWorkspace } from './listings/MapListingsWorkspace'
+import { RoomDetailModal } from './listings/RoomDetailModal'
+import {
+  marketplacePostsToListingPins,
+  parseFiltersFromURL,
+  serializeFiltersToQuery,
+} from './listings/listingAdapters'
 import './MapPlaceDetailPanel.css'
 
 const MOBILE_SHEET_MEDIA = '(max-width: 900px)'
@@ -43,6 +51,7 @@ function isMobileSheetViewport(): boolean {
 
 type AuthenticatedHomeMapShellProps = {
   posts: RentalPostSummary[]
+  marketPosts?: MarketplacePost[]
   selectedPostId: string | null
   selectedPost: RentalPostSummary | null
   onSelectPost: (postId: string) => void
@@ -78,6 +87,10 @@ type AuthenticatedHomeMapShellProps = {
   pinLayers?: MapPinLayers
   onDetailLabelChange?: (label: string | null) => void
   onAiSearchUpdate?: (update: import('../../api').AiHighlightResponse) => void
+  /** Map as a product destination inside AppChrome (not the old app shell). */
+  destinationMode?: boolean
+  /** Khám phá mode from URL (`view=list` → list-first, no map mount). */
+  exploreView?: ExploreView
 }
 
 /**
@@ -86,6 +99,7 @@ type AuthenticatedHomeMapShellProps = {
  */
 export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell({
   posts,
+  marketPosts = [],
   selectedPostId,
   selectedPost,
   onSelectPost,
@@ -113,20 +127,28 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   pinLayers,
   onDetailLabelChange,
   onAiSearchUpdate,
+  destinationMode = false,
+  exploreView = 'map',
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const listingCatalog = useMemo(() => parseFiltersFromURL(searchParams).catalog, [searchParams])
+  const marketMode = listingCatalog === 'market'
+  const marketListingPins = useMemo(() => marketplacePostsToListingPins(marketPosts), [marketPosts])
+  const isListMode = exploreView === 'list'
+  const isMapMode = exploreView === 'map'
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null)
   const [focusedPostId, setFocusedPostId] = useState<string | null>(selectedPostId)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceDetails | null>(null)
   const [placeLoading, setPlaceLoading] = useState(false)
   const [listingDetail, setListingDetail] = useState<RentalPost | null>(null)
   const [listingLoading, setListingLoading] = useState(false)
-  const [listingSaved, setListingSaved] = useState(false)
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set())
+  const [roomDetailId, setRoomDetailId] = useState<string | null>(null)
+  const listingSaved = Boolean(selectedPostId && savedIds.has(selectedPostId))
   const [saveBusy, setSaveBusy] = useState(false)
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
   const [nearbyToken, setNearbyToken] = useState(0)
-  const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
-  const [nearbyPinned, setNearbyPinned] = useState<{ lat: number; lng: number; title: string; kindLabel: string; token: number } | null>(null)
   /** Pin for chat "Mở trên bản đồ" — independent of selected place red pin. */
   const [sharedLocationPin, setSharedLocationPin] = useState<{
     lat: number
@@ -152,8 +174,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     mode: 'preview' | 'navigate'
   } | null>(null)
   const [routeError, setRouteError] = useState<string | null>(null)
-  const [chatInboxOpen, setChatInboxOpen] = useState(false)
-  const [openChatIds, setOpenChatIds] = useState<string[]>([])
   const [homieDismiss, setHomieDismiss] = useState(0)
   const [homieOpen, setHomieOpen] = useState(false)
   const [marketplaceCartOpen, setMarketplaceCartOpen] = useState(false)
@@ -172,14 +192,12 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const placeFocusRef = useRef(placeFocus)
   placeFocusRef.current = placeFocus
   const listingFetchSeq = useRef(0)
+  const savedFetchSeq = useRef(0)
 
   const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
-  const nearbyContextKey = selectedPostId ?? selectedPlace?.placeId ?? ''
-  const nearbyAnchor = useMemo(() => nearbyPanelAnchor(
-    selectedPostId, selectedPost ?? listingDetail, selectedPlace,
-  ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
-  const nearbyVisible = !!nearbyAnchor && nearbyAnchor.contextKey === nearbyContextKey
-    && nearbyDismissedKey !== nearbyContextKey && detailOpen && !uiCollapsed && !panelOpen
+
+  /** Map destination always mounts the map; list mode never does. */
+  const mapBlockVisible = isMapMode
 
   useNotificationHub({
     enabled: isAuthenticated,
@@ -229,26 +247,12 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     setHomieDismiss((n) => n + 1)
   }, [])
 
-  const closeChatAll = useCallback(() => {
-    setChatInboxOpen(false)
-    setOpenChatIds([])
-  }, [])
-
-  const prepareMobileChatOpen = useCallback(() => {
-    if (!isMobileSheetViewport()) return
-    dismissHomie()
-    closePanel()
-  }, [closePanel, dismissHomie])
-
   const openAppSectionMobileSafe = useCallback(
     (section: MapAppSection) => {
-      if (isMobileSheetViewport()) {
-        dismissHomie()
-        closeChatAll()
-      }
+      if (isMobileSheetViewport()) dismissHomie()
       openAppSection?.(section)
     },
-    [openAppSection, dismissHomie, closeChatAll],
+    [openAppSection, dismissHomie],
   )
 
   const handleHomieOpenChange = useCallback(
@@ -256,23 +260,14 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       setHomieOpen(open)
       if (!open || !isMobileSheetViewport()) return
       closePanel()
-      closeChatAll()
     },
-    [closePanel, closeChatAll],
+    [closePanel],
   )
 
   useEffect(() => {
     if (!isMobileSheetViewport() || !panelOpen) return
     dismissHomie()
-    closeChatAll()
-  }, [panelOpen, panelSection, dismissHomie, closeChatAll])
-
-  useEffect(() => {
-    if (!isMobileSheetViewport()) return
-    if (!chatInboxOpen && openChatIds.length === 0) return
-    dismissHomie()
-    closePanel()
-  }, [chatInboxOpen, openChatIds, closePanel, dismissHomie])
+  }, [panelOpen, panelSection, dismissHomie])
 
   const handleNotificationReadStateChange = useCallback((change: NotificationReadChange) => {
     if (change.kind === 'all') {
@@ -287,49 +282,28 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     if (isMessage) setUnreadBadge((c) => Math.max(0, c - 1))
   }, [])
 
-  useEffect(() => {
-    if (chatInboxOpen || openChatIds.length > 0) setUnreadBadge(0)
-  }, [chatInboxOpen, openChatIds])
-
-  const openChatWindow = useCallback((conversationId: string) => {
-    prepareMobileChatOpen()
-    setOpenChatIds((prev) => {
-      if (prev.includes(conversationId)) {
-        // Move to front (most recent)
-        return [...prev.filter((id) => id !== conversationId), conversationId]
-      }
-      return [...prev, conversationId].slice(-3)
-    })
+  const openMessagesThread = useCallback((conversationId?: string | null) => {
     setUnreadBadge(0)
-  }, [prepareMobileChatOpen])
-
-  const closeChatWindow = useCallback((conversationId: string) => {
-    setOpenChatIds((prev) => prev.filter((id) => id !== conversationId))
-    // Drop map pins that came from “Mở trên bản đồ” in this chat thread.
-    setSharedLocationPin((pin) => {
-      if (!pin) return null
-      if (!pin.conversationId || pin.conversationId === conversationId) return null
-      return pin
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('section', 'messages')
+      next.delete('post')
+      next.delete('view')
+      if (conversationId) next.set('conversation', conversationId)
+      else next.delete('conversation')
+      return next
     })
-  }, [])
-
-  const toggleChatInbox = useCallback(() => {
-    setChatInboxOpen((v) => {
-      if (!v) prepareMobileChatOpen()
-      return !v
-    })
-    setUnreadBadge(0)
-  }, [prepareMobileChatOpen])
+  }, [setSearchParams])
 
   const handleOpenAppSection = useCallback(
     (section: MapAppSection) => {
       if (section === 'messages') {
-        toggleChatInbox()
+        openMessagesThread()
         return
       }
       openAppSectionMobileSafe(section)
     },
-    [openAppSectionMobileSafe, toggleChatInbox],
+    [openAppSectionMobileSafe, openMessagesThread],
   )
   useEffect(() => {
     if (!error) return
@@ -363,106 +337,22 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const mapFocus = nearbyFocus ?? focus
   const mapFocusToken = nearbyFocus ? nearbyToken : focusToken
 
-  const selectedPlaceShare = useMemo(() => {
-    if (!selectedPlace) return null
-    return {
-      name: selectedPlace.name,
-      address: selectedPlace.address || undefined,
-      lat: selectedPlace.location?.lat,
-      lng: selectedPlace.location?.lng,
-    }
-  }, [selectedPlace])
-
-  const selectedListingShare = useMemo(() => {
-    const listing = selectedPost
-    if (!listing) return null
-    return {
-      name: listing.title,
-      address: listing.address,
-      lat: listing.latitude,
-      lng: listing.longitude,
-    }
-  }, [selectedPost])
-
-  const mapAreaShare = useMemo(() => {
-    if (mapFocus && Number.isFinite(mapFocus.lat) && Number.isFinite(mapFocus.lng)) {
-      return {
-        name: 'Khu vực đang xem trên bản đồ',
-        lat: mapFocus.lat,
-        lng: mapFocus.lng,
-      }
-    }
-    return {
-      name: 'Thủ Đức & Quận 9',
-      lat: 10.8494,
-      lng: 106.7537,
-    }
-  }, [mapFocus])
-
   const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
-    closePanel()
-    setNearbyDismissedKey(null)
-    setNearbyPinned(null)
     setSelectedPlace(place)
     setPlaceLoading(false)
     setNearbyFocus(null)
-  }, [closePanel])
-
-  const handleFocusMapFromChat = useCallback(
-    (loc: {
-      lat: number
-      lng: number
-      title?: string
-      address?: string
-      kind?: ChatLocationKind
-      conversationId?: string
-    }) => {
-      if (isMobileSheetViewport()) {
-        dismissHomie()
-        closePanel()
-      }
-
-      const title = loc.title?.trim() || 'Vị trí từ tin nhắn'
-      const kindLabel = loc.kind
-        ? `Tin nhắn · ${chatLocationKindLabel(loc.kind)}`
-        : 'Từ tin nhắn'
-
-      // Open place detail only when no app tab / detail panel is already open.
-      const detailAlreadyOpen = !!(selectedPostId || selectedPlace || placeLoading)
-      if (!panelOpen && !detailAlreadyOpen) {
-        handleSelectPlace(
-          buildSyntheticMapPlace({
-            name: title,
-            address: loc.address,
-            lat: loc.lat,
-            lng: loc.lng,
-            typeLabel: kindLabel,
-          }),
-        )
-      }
-
-      // Always fly camera + show chat shared pin (after select — select clears nearbyFocus).
-      setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
-      setNearbyToken((t) => t + 1)
-      setSharedLocationPin((prev) => ({
-        lat: loc.lat,
-        lng: loc.lng,
-        title,
-        kindLabel,
-        token: (prev?.token ?? 0) + 1,
-        conversationId: loc.conversationId,
-      }))
-      setToast('Đang xem vị trí đối phương gửi trên bản đồ')
-    },
-    [panelOpen, selectedPostId, selectedPlace, placeLoading, handleSelectPlace, closePanel, dismissHomie],
-  )
+  }, [])
 
   const handleMarketplacePostsForMap = useCallback((pins: MarketplaceMapPin[]) => {
     setMarketplacePins(pins)
   }, [])
 
-  /** Load marketplace pins with the home map so all layers show on first paint. */
+  /** Marketplace pins only when the map is mounted (Khám phá bản đồ). */
   useEffect(() => {
+    if (!isMapMode) {
+      setMarketplacePins([])
+      return
+    }
     let cancelled = false
     void searchMarketplacePosts({
       latitude: DEFAULT_MAP_CENTER.lat,
@@ -481,7 +371,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isMapMode])
 
   const handleMarketplaceFocusMap = useCallback(
     (loc: { lat: number; lng: number; zoom?: number }) => {
@@ -574,13 +464,16 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     } else {
       setListingDetail(null)
       setListingLoading(false)
-      setListingSaved(false)
     }
   }, [selectedPostId])
 
   // Fetch full listing when a pin/card is selected.
   useEffect(() => {
-    if (!selectedPostId) return
+    if (!selectedPostId || marketMode) {
+      setListingDetail(null)
+      setListingLoading(false)
+      return
+    }
     const seq = ++listingFetchSeq.current
     setListingLoading(true)
     void getRentalPost(selectedPostId, { auth: isAuthenticated })
@@ -595,19 +488,25 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         setListingLoading(false)
       })
 
-    if (isAuthenticated) {
-      void getSavedPosts()
-        .then((saved) => {
-          if (seq !== listingFetchSeq.current) return
-          setListingSaved(saved.some((s) => s.id === selectedPostId))
-        })
-        .catch(() => {
-          /* ignore */
-        })
-    } else {
-      setListingSaved(false)
+  }, [selectedPostId, isAuthenticated, marketMode])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSavedIds(new Set())
+      return
     }
-  }, [selectedPostId, isAuthenticated])
+    const seq = ++savedFetchSeq.current
+    let cancelled = false
+    void getSavedPosts()
+      .then((saved) => {
+        if (cancelled || seq !== savedFetchSeq.current) return
+        setSavedIds(new Set(saved.map((item) => item.id)))
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated])
 
   const handleClearMapSelection = useCallback(() => {
     focusedPostIdRef.current = null
@@ -729,27 +628,64 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleSelectPost = useCallback(
     (postId: string) => {
-      closePanel()
-      setNearbyDismissedKey(null)
-      setNearbyPinned(null)
+      const openDetail = focusedPostId === postId
       setHoveredPostId(null)
       setSelectedPlace(null)
       setPlaceLoading(false)
       setNearbyFocus(null)
       focusedPostIdRef.current = postId
       setFocusedPostId(postId)
-      onSelectPost(postId)
+
+      // Map explore (Figma): one click selects marker + card + preview + URL.
+      if (destinationMode && isMapMode) {
+        onSelectPost(postId)
+        const post = posts.find((p) => p.id === postId) ?? marketPosts.find((p) => p.id === postId)
+        if (post && isValidCoord(post.latitude, post.longitude)) {
+          setNearbyFocus({
+            lat: post.latitude,
+            lng: post.longitude,
+            zoom: MAP_FOCUS_ZOOM,
+          })
+          setNearbyToken((t) => t + 1)
+        }
+        requestAnimationFrame(() => {
+          const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        })
+        return
+      }
+
+      if (openDetail) {
+        onSelectPost(postId)
+      } else if (selectedPostId) {
+        onClearSelection()
+      }
       if (panelSection !== 'listings') return
       const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     },
-    [closePanel, onSelectPost, panelSection],
+    [
+      focusedPostId,
+      selectedPostId,
+      onSelectPost,
+      onClearSelection,
+      panelSection,
+      destinationMode,
+      isMapMode,
+      posts,
+      marketPosts,
+    ],
   )
 
   useEffect(() => {
-    if (!panelOpen || panelSection !== 'listings' || posts.length === 0) return
+    // Scroll-sync focus only while Khám phá list is showing cards.
+    if (!destinationMode || !isListMode) return
+    if (posts.length === 0) return
     const list = listRef.current
-    const scroller = list?.closest('.map-app-panel__body')
+    const scroller =
+      list?.closest('.explore-list__rows') ??
+      list?.closest('.home-map-dest__list-body') ??
+      list?.closest('.map-app-panel__body')
     if (!(scroller instanceof HTMLElement) || !list) return
 
     const syncFocusedCard = () => {
@@ -788,39 +724,49 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         listScrollTimerRef.current = null
       }
     }
-  }, [panelOpen, panelSection, posts, selectedPostId, onClearSelection])
+  }, [destinationMode, isListMode, posts, selectedPostId, onClearSelection])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
-    closePanel()
-    setNearbyPinned(null)
-    setNearbyDismissedKey(null)
     setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setNearbyToken((n) => n + 1)
-  }, [closePanel])
+  }, [])
 
-  const handleNearbyPick = (place: NearbyPlaceItem) => {
-    setNearbyPinned({ lat: place.lat, lng: place.lng, title: place.title, kindLabel: place.typeLabel, token: Date.now() })
-    setNearbyFocus({ lat: place.lat, lng: place.lng, zoom: MAP_FOCUS_ZOOM })
-    setNearbyToken((value) => value + 1)
-  }
+  const toggleSavedPost = useCallback(
+    async (postId: string) => {
+      if (!isAuthenticated || saveBusy) return
+      savedFetchSeq.current += 1
+      const currentlySaved = savedIds.has(postId)
+      setSaveBusy(true)
+      try {
+        if (currentlySaved) await unsavePost(postId)
+        else await savePost(postId)
+        setSavedIds((prev) => {
+          const next = new Set(prev)
+          if (currentlySaved) next.delete(postId)
+          else next.add(postId)
+          return next
+        })
+      } catch {
+        /* keep prior save state */
+      } finally {
+        setSaveBusy(false)
+      }
+    },
+    [isAuthenticated, saveBusy, savedIds],
+  )
 
   const handleSaveListing = useCallback(async () => {
-    if (!selectedPostId || !isAuthenticated || saveBusy) return
-    setSaveBusy(true)
-    try {
-      if (listingSaved) {
-        await unsavePost(selectedPostId)
-        setListingSaved(false)
-      } else {
-        await savePost(selectedPostId)
-        setListingSaved(true)
-      }
-    } catch {
-      /* ignore */
-    } finally {
-      setSaveBusy(false)
-    }
-  }, [selectedPostId, isAuthenticated, saveBusy, listingSaved])
+    if (!selectedPostId) return
+    await toggleSavedPost(selectedPostId)
+  }, [selectedPostId, toggleSavedPost])
+
+  const openRoomDetail = useCallback((id: string) => {
+    setRoomDetailId(id)
+  }, [])
+
+  const closeRoomDetail = useCallback(() => {
+    setRoomDetailId(null)
+  }, [])
 
   const handleCardHover = useCallback((postId: string) => {
     if (!window.matchMedia('(hover: hover)').matches) return
@@ -841,28 +787,27 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     }, 60)
   }, [])
 
+  const displayPosts = posts
+
   const listingsContent = useMemo(
     () => (
       <div ref={listRef} className="map-app-panel__listings">
-        {error ? <div className="alert alert-error">{error}</div> : null}
+        <PageNotice message={error} tone="error" />
 
         {showPostsLoader ? (
           <HomeListingSkeleton count={4} />
-        ) : posts.length === 0 ? (
+        ) : displayPosts.length === 0 ? (
           <div className="home-list-empty">
-            <div className="home-list-empty__icon" aria-hidden>
-              ⌕
-            </div>
             <h2 className="home-list-empty__title">Không tìm thấy phòng phù hợp</h2>
             <p className="home-list-empty__copy">
-              Thử đổi khu vực, khoảng giá hoặc bỏ bớt tiện ích để xem thêm kết quả.
+              Thử đổi khu vực, khoảng giá hoặc bỏ bớt tiện ích.
             </p>
             <button type="button" className="btn btn-primary btn-sm" onClick={onResetFilters}>
               Đặt lại bộ lọc
             </button>
           </div>
         ) : (
-          posts.map((post, index) => (
+          displayPosts.map((post, index) => (
             <div key={post.id} data-post-id={post.id}>
               <MapListingCard
                 post={post}
@@ -881,7 +826,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     [
       error,
       showPostsLoader,
-      posts,
+      displayPosts,
       focusedPostId,
       hoveredPostId,
       onResetFilters,
@@ -891,78 +836,231 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     ],
   )
 
+  const omniboxNode =
+    omnibox && isValidElement(omnibox)
+      ? cloneElement(
+          omnibox as React.ReactElement<{
+            unreadMessageCount?: number
+            unreadNotificationCount?: number
+            onOpenSection?: (section: MapAppSection) => void
+            activeSection?: MapAppSection | null
+            onClosePlaceDetail?: () => void
+            placeDetailOpen?: boolean
+            uiCollapsed?: boolean
+          }>,
+          {
+            unreadMessageCount: unreadBadge,
+            unreadNotificationCount,
+            onOpenSection: handleOpenAppSection,
+            onClosePlaceDetail: handleClearMapSelection,
+            placeDetailOpen: detailOpen && !uiCollapsed,
+            uiCollapsed,
+            activeSection: panelSection,
+          },
+        )
+      : omnibox
+
+  const handleViewportIdle = useCallback(
+    (bounds: {
+      minLatitude: number
+      maxLatitude: number
+      minLongitude: number
+      maxLongitude: number
+    }) => {
+      if (!destinationMode || !isMapMode) return
+      const current = parseFiltersFromURL(searchParams)
+      if (!current.searchOnMove) return
+      const round = (value: number) => Math.round(value * 1e4) / 1e4
+      const prev = current.bounds
+      if (
+        prev &&
+        round(prev.minLatitude) === round(bounds.minLatitude) &&
+        round(prev.maxLatitude) === round(bounds.maxLatitude) &&
+        round(prev.minLongitude) === round(bounds.minLongitude) &&
+        round(prev.maxLongitude) === round(bounds.maxLongitude)
+      ) {
+        return
+      }
+      const next = serializeFiltersToQuery({ ...current, bounds, page: 1 }, searchParams)
+      if (next.toString() !== searchParams.toString()) {
+        setSearchParams(next, { replace: true })
+      }
+    },
+    [destinationMode, isMapMode, searchParams, setSearchParams],
+  )
+
+  const mapStage = (
+    <HomeMapStage
+      posts={destinationMode && marketMode ? [] : posts}
+      selectedPostId={focusedPostId}
+      hoveredPostId={hoveredPostId}
+      onSelectPost={handleSelectPost}
+      onClearSelection={handleClearMapSelection}
+      onSelectPlace={destinationMode && isMapMode ? undefined : handleSelectPlace}
+      onPlaceLoading={setPlaceLoading}
+      selectedPlacePin={destinationMode && isMapMode ? null : selectedPlacePin}
+      sharedLocationPin={sharedLocationPin}
+      marketplacePins={
+        destinationMode && marketMode
+          ? marketListingPins
+          : destinationMode && isMapMode
+            ? []
+            : marketplacePins
+      }
+      selectedMarketplaceId={destinationMode && marketMode ? focusedPostId : selectedMarketplaceId}
+      onSelectMarketplace={destinationMode && marketMode ? handleSelectPost : handleSelectMarketplace}
+      pinLayers={
+        destinationMode
+          ? marketMode
+            ? { vacant: false, roommate: false, marketplace: true }
+            : { vacant: true, roommate: true, marketplace: false }
+          : pinLayers
+      }
+      focus={mapFocus}
+      focusToken={mapFocusToken}
+      listingsFitToken={listingsFitToken}
+      navigationRequest={navigationRequest}
+      onNavigationResult={handleNavigationResult}
+      userLocation={userLocation}
+      onLocate={onLocate}
+      locating={locating}
+      markerVariant={destinationMode && isMapMode ? 'price-pill' : 'pin'}
+      hideViewSwitcher={destinationMode && isMapMode}
+      onViewportIdle={destinationMode && isMapMode ? handleViewportIdle : undefined}
+    />
+  )
+
+  const placeDetail = (
+    <MapPlaceDetailPanel
+      open={detailOpen}
+      collapsed={uiCollapsed}
+      place={selectedPostId ? null : selectedPlace}
+      placeLoading={selectedPostId ? false : placeLoading}
+      listing={selectedPostId ? listingDetail : null}
+      listingSummary={selectedPost ?? listingDetail}
+      listingLoading={!!selectedPostId && listingLoading}
+      userLocation={userLocation}
+      onNearby={handleNearby}
+      onDirections={startInMapDirections}
+      onClearNavigation={handleClearNavigation}
+      routeSummary={routeSummary}
+      routeError={routeError}
+      onSaveListing={
+        selectedPostId && isAuthenticated ? () => void handleSaveListing() : undefined
+      }
+      listingSaved={listingSaved}
+      saveBusy={saveBusy}
+      onOpenMessages={(conversationId) => {
+        if (conversationId) openMessagesThread(conversationId)
+      }}
+      onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
+    />
+  )
+
+  const hideHomieFab = destinationMode && isMapMode
+
+  const chatAndOverlays = (
+    <>
+      <RoomDetailModal
+        listingId={roomDetailId}
+        saved={roomDetailId ? savedIds.has(roomDetailId) : false}
+        saveBusy={saveBusy}
+        onClose={closeRoomDetail}
+        onToggleSave={isAuthenticated ? (id) => void toggleSavedPost(id) : undefined}
+        onOpenMessages={(conversationId) => {
+          if (conversationId) openMessagesThread(conversationId)
+        }}
+        onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
+      />
+
+      {!hideHomieFab ? (
+        <MapChatbot
+          onSearchUpdate={onAiSearchUpdate}
+          onOpenSection={handleOpenAppSection}
+          dismissSignal={homieDismiss}
+          onOpenChange={handleHomieOpenChange}
+          avoidRightContent={panelOpen && panelSection === 'marketplace'}
+          hideFab={
+            (detailOpen && !uiCollapsed) ||
+            marketplaceCartOpen ||
+            (isMobileSheetViewport() && (panelOpen || homieOpen))
+          }
+        />
+      ) : null}
+
+      <MapToast
+        message={locationError || toast}
+        tone={locationError || error ? 'error' : 'info'}
+        onDismiss={() => {
+          if (locationError) onClearLocationError?.()
+          else setToast(null)
+        }}
+      />
+    </>
+  )
+
+  const handleMapExploreToggleSave = useCallback(
+    async (postId: string) => {
+      if (!isAuthenticated || saveBusy) return
+      if (selectedPostId !== postId) {
+        onSelectPost(postId)
+        focusedPostIdRef.current = postId
+        setFocusedPostId(postId)
+      }
+      await toggleSavedPost(postId)
+    },
+    [isAuthenticated, saveBusy, selectedPostId, onSelectPost, toggleSavedPost],
+  )
+
+  if (destinationMode) {
+    const listingsSaved = isAuthenticated ? savedIds : undefined
+    return (
+      <div className={`home-map-page home-map-page--dest${isMapMode ? ' is-map-destination is-explore-map' : ' is-explore-list'}`}>
+        <MapListingsWorkspace
+          posts={posts}
+          marketPosts={marketPosts}
+          selectedListingId={focusedPostId}
+          hoveredListingId={hoveredPostId}
+          loading={showPostsLoader || loading}
+          error={error}
+          savedIds={listingsSaved}
+          saveBusy={saveBusy}
+          unreadNotifications={unreadNotificationCount}
+          mapNode={
+            isMapMode ? (
+              <DeferredMapBlock visible={mapBlockVisible} className="map-listings__deferred">
+                <div className="home-map-frame">{mapStage}</div>
+              </DeferredMapBlock>
+            ) : null
+          }
+          onHoverListing={handleCardHover}
+          onLeaveListing={handleCardLeave}
+          onSelectListing={handleSelectPost}
+          onOpenRoomDetail={openRoomDetail}
+          onToggleSave={isAuthenticated ? handleMapExploreToggleSave : undefined}
+          onResetFilters={onResetFilters}
+        />
+        {needsProfileSetup ? (
+          <div className="home-map-banner home-map-banner--dest">
+            Chào mừng! <Link to="/?section=profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
+          </div>
+        ) : null}
+        {chatAndOverlays}
+      </div>
+    )
+  }
+
   return (
     <div
       className={`home-map-page${panelOpen ? '' : ' is-sidebar-collapsed'}${
         detailOpen && !uiCollapsed ? ' has-place-detail' : ''
-      }${uiCollapsed ? ' is-ui-collapsed' : ''}${
-        detailOpen ? ' has-place-detail-mounted' : ''
-      }${panelOpen && panelSection === 'listings' ? ' has-listings-panel' : ''}${
-        panelOpen && isWideMapSection(panelSection) ? ' has-wide-panel' : ''
-      }`}
+      }${uiCollapsed ? ' is-ui-collapsed' : ''}${detailOpen ? ' has-place-detail-mounted' : ''}${
+        panelOpen && panelSection === 'listings' ? ' has-listings-panel' : ''
+      }${panelOpen && isWideMapSection(panelSection) ? ' has-wide-panel' : ''}`}
     >
       <section className="home-map-panel">
-        <div className="home-map-frame">
-          <HomeMapStage
-            posts={posts}
-            selectedPostId={focusedPostId}
-            hoveredPostId={hoveredPostId}
-            onSelectPost={handleSelectPost}
-            onClearSelection={handleClearMapSelection}
-            onSelectPlace={handleSelectPlace}
-            onPlaceLoading={setPlaceLoading}
-            selectedPlacePin={selectedPlacePin}
-            sharedLocationPin={(nearbyVisible ? nearbyPinned : null) ?? sharedLocationPin}
-            marketplacePins={marketplacePins}
-            selectedMarketplaceId={selectedMarketplaceId}
-            onSelectMarketplace={handleSelectMarketplace}
-            pinLayers={pinLayers}
-            focus={mapFocus}
-            focusToken={mapFocusToken}
-            listingsFitToken={listingsFitToken}
-            navigationRequest={navigationRequest}
-            onNavigationResult={handleNavigationResult}
-            userLocation={userLocation}
-            onLocate={onLocate}
-            locating={locating}
-          />
-        </div>
-
-        <MapPlaceDetailPanel
-          open={detailOpen}
-          collapsed={uiCollapsed}
-          place={selectedPostId ? null : selectedPlace}
-          placeLoading={selectedPostId ? false : placeLoading}
-          listing={selectedPostId ? listingDetail : null}
-          listingSummary={selectedPost ?? listingDetail}
-          listingLoading={!!selectedPostId && listingLoading}
-          userLocation={userLocation}
-          onNearby={handleNearby}
-          onDirections={startInMapDirections}
-          onClearNavigation={handleClearNavigation}
-          routeSummary={routeSummary}
-          routeError={routeError}
-          onSaveListing={
-            selectedPostId && isAuthenticated ? () => void handleSaveListing() : undefined
-          }
-          listingSaved={listingSaved}
-          saveBusy={saveBusy}
-          onOpenMessages={(conversationId) => {
-            if (conversationId) openChatWindow(conversationId)
-            else toggleChatInbox()
-          }}
-          onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
-        />
-
-        {nearbyAnchor && nearbyVisible ? (
-          <MapNearbyPanel
-            key={nearbyAnchor.contextKey}
-            anchor={nearbyAnchor}
-            onPick={handleNearbyPick}
-            onClose={() => { setNearbyDismissedKey(nearbyContextKey); setNearbyPinned(null) }}
-          />
-        ) : null}
-
+        <div className="home-map-frame">{mapStage}</div>
+        {placeDetail}
         <MapEdgeToggle
           className={`home-map-master-toggle${uiCollapsed ? ' is-collapsed' : ''}${
             detailOpen && !uiCollapsed ? ' is-on-detail' : ''
@@ -972,35 +1070,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           expandLabel="Mở lại khu vực điều khiển bản đồ"
           onToggle={() => setUiCollapsed((v) => !v)}
         />
-
-        {/* Outside .home-map-frame so z-index can sit above MapPlaceDetailPanel
-            (frame uses isolation:isolate and would trap omnibox underneath). */}
-        {omnibox && isValidElement(omnibox)
-          ? cloneElement(
-              omnibox as React.ReactElement<{
-                unreadMessageCount?: number
-                unreadNotificationCount?: number
-                onOpenSection?: (section: MapAppSection) => void
-                activeSection?: MapAppSection | null
-                onClosePlaceDetail?: () => void
-                placeDetailOpen?: boolean
-                uiCollapsed?: boolean
-              }>,
-              {
-                unreadMessageCount: unreadBadge,
-                unreadNotificationCount,
-                onOpenSection: handleOpenAppSection,
-                onClosePlaceDetail: handleClearMapSelection,
-                placeDetailOpen: detailOpen && !uiCollapsed,
-                uiCollapsed,
-                activeSection:
-                  chatInboxOpen || openChatIds.length > 0
-                    ? 'messages'
-                    : panelSection,
-              },
-            )
-          : omnibox}
-
+        {omniboxNode}
         {needsProfileSetup && (
           <div className="home-map-banner">
             Chào mừng! <Link to="/?section=profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
@@ -1008,19 +1078,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         )}
       </section>
 
-      <MapChatDock
-        inboxOpen={chatInboxOpen}
-        openChatIds={openChatIds}
-        onCloseInbox={() => setChatInboxOpen(false)}
-        onCloseChat={closeChatWindow}
-        onOpenChat={openChatWindow}
-        userLocation={userLocation}
-        selectedPlace={selectedPlaceShare}
-        selectedListing={selectedListingShare}
-        mapArea={mapAreaShare}
-        onFocusMap={handleFocusMapFromChat}
-        refreshKey={notificationRefreshKey}
-      />
+      {chatAndOverlays}
 
       <MapAppPanel
         section={panelSection ?? 'listings'}
@@ -1040,14 +1098,13 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         locating={locating}
         onMarketplaceCartOpenChange={setMarketplaceCartOpen}
         onNotificationReadStateChange={handleNotificationReadStateChange}
-        onOpenConversation={openChatWindow}
+        onOpenConversation={openMessagesThread}
         onNotificationOpen={(n) => {
           if (
             n.type === NotificationType.NewMessage ||
             n.type === NotificationType.DirectMessage
           ) {
-            if (n.relatedEntityId) openChatWindow(n.relatedEntityId)
-            else toggleChatInbox()
+            openMessagesThread(n.relatedEntityId)
             return
           }
           if (
@@ -1073,30 +1130,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             return
           }
           openAppSectionMobileSafe('listings')
-        }}
-      />
-
-      {/* After list panel so Homie stays above the right section */}
-      <MapChatbot
-        onSearchUpdate={onAiSearchUpdate}
-        onOpenSection={handleOpenAppSection}
-        dismissSignal={homieDismiss}
-        onOpenChange={handleHomieOpenChange}
-        avoidRightContent={nearbyVisible || (panelOpen && panelSection === 'marketplace')}
-        hideFab={
-          (detailOpen && !uiCollapsed) ||
-          marketplaceCartOpen ||
-          (isMobileSheetViewport() &&
-            (panelOpen || chatInboxOpen || openChatIds.length > 0 || homieOpen))
-        }
-      />
-
-      <MapToast
-        message={locationError || toast}
-        tone={locationError || error ? 'error' : 'info'}
-        onDismiss={() => {
-          if (locationError) onClearLocationError?.()
-          else setToast(null)
         }}
       />
     </div>

@@ -39,6 +39,41 @@
   margin: 0 0 8px;
 }
 
+.post-form-address-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.post-form-map-block {
+  padding-top: 4px;
+}
+
+.post-form-map-block__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.post-form-map-block__head .form-label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.post-form-map-block__head .form-hint {
+  margin-bottom: 0;
+  max-width: 42ch;
+}
+
+.post-form-map-block .deferred-map-block {
+  min-height: 280px;
+}
+
 .map-coord-hint {
   font-size: 13px;
   color: var(--text-secondary);

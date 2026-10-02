@@ -118,7 +118,7 @@ type Props = {
 }
 
 const OUTSIDE_CLOSE_IGNORE =
-  '.home-list-panel, .food-cart-backdrop, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .gmaps-omnibox__top-actions, .gmaps-omnibox__notify, .mobile-tabbar, .map-chat-dock, .map-chatbot'
+  '.home-list-panel, .food-cart-backdrop, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .gmaps-omnibox__top-actions, .gmaps-omnibox__notify, .mobile-tabbar, .map-chatbot'
 
 export function MapAppPanel({
   section,

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   closeWantedPost,
   createWantedPost,
@@ -7,10 +8,18 @@ import {
   type RentalWantedPost,
 } from '../api'
 import { UserRole, WantedPostStatus } from '../api/types'
+import {
+  PageFrame,
+  exploreMapUrl,
+  usePageFrameChromeActive,
+  usePageFrameChromePortals,
+} from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
+import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import {
   AMENITY_OPTIONS,
   amenityLabel,
@@ -19,6 +28,7 @@ import {
 } from '../lib/labels'
 
 export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
+  const navigate = useNavigate()
   const { profile } = useAuth()
   const myId = profile?.id ?? null
   const isRenter = profile?.role === UserRole.Renter
@@ -113,8 +123,8 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
     setChatBusyId(postId)
     setActionError('')
     try {
-      await startWantedPostConversation(postId)
-      setActionMsg('Đã mở hội thoại — kiểm tra mục Tin nhắn.')
+      const convo = await startWantedPostConversation(postId)
+      navigate(mapMessagesUrl(convo.id))
     } catch (err) {
       setActionError(getErrorMessage(err, 'Không mở được chat'))
     } finally {
@@ -122,16 +132,55 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
-  return (
-    <div className={embedded ? 'map-embed' : 'container page'}>
-      {!embedded ? (
-        <>
-          <h1 className="page-title">Tin tìm phòng</h1>
-          <p className="page-subtitle">Người thuê đăng nhu cầu — chủ nhà có thể liên hệ</p>
-        </>
-      ) : null}
+  const actions = (
+    <>
+      <Link to={exploreMapUrl()} className="btn btn-secondary btn-sm btn-map-cta">
+        Xem trên bản đồ
+      </Link>
+      <button
+        type="button"
+        className="btn btn-primary btn-sm"
+        onClick={() => setTab('create')}
+        disabled={!isRenter}
+        title={!isRenter ? 'Chỉ người thuê mới đăng nhu cầu' : undefined}
+      >
+        Đăng nhu cầu
+      </button>
+    </>
+  )
 
-      <div className="tabs">
+  const filters =
+    tab === 'browse' ? (
+      <>
+        <input
+          className="form-input"
+          placeholder="Khu vực…"
+          value={area}
+          onChange={(e) => setArea(e.target.value)}
+          aria-label="Lọc khu vực"
+        />
+        <input
+          className="form-input"
+          type="number"
+          placeholder="Ngân sách tối đa…"
+          value={maxBudgetFilter}
+          onChange={(e) => setMaxBudgetFilter(e.target.value)}
+          aria-label="Lọc ngân sách"
+        />
+      </>
+    ) : null
+
+  const frameActions = tab === 'browse' ? actions : undefined
+  const liftChrome = usePageFrameChromeActive()
+  const chromePortals = usePageFrameChromePortals({
+    actions: frameActions,
+    filters,
+  })
+
+  const body = (
+    <>
+      {chromePortals}
+      <div className="tabs" role="tablist" aria-label="Tin tìm phòng">
         <button
           type="button"
           className={`tab ${tab === 'browse' ? 'active' : ''}`}
@@ -150,30 +199,15 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
         </button>
       </div>
 
-      {(actionError || (error && !disrupted)) && (
-        <div className="alert alert-error">{actionError || error}</div>
-      )}
-      {actionMsg ? <div className="alert alert-success">{actionMsg}</div> : null}
-
-      {tab === 'browse' ? (
-        <div className="page-header-row" style={{ marginBottom: 12 }}>
-          <input
-            className="form-input"
-            placeholder="Khu vực…"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            aria-label="Lọc khu vực"
-          />
-          <input
-            className="form-input"
-            type="number"
-            placeholder="Ngân sách tối đa…"
-            value={maxBudgetFilter}
-            onChange={(e) => setMaxBudgetFilter(e.target.value)}
-            aria-label="Lọc ngân sách"
-          />
-        </div>
+      {embedded && !liftChrome && tab === 'browse' ? (
+        <div className="page-frame__actions">{actions}</div>
       ) : null}
+      {embedded && !liftChrome && filters ? (
+        <div className="page-frame__filters">{filters}</div>
+      ) : null}
+
+      <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      <PageNotice message={actionMsg} tone="success" />
 
       {showLoader ? (
         disrupted
@@ -181,7 +215,10 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
           : <ContentSkeleton variant={tab === 'create' ? 'form' : 'list'} label="Đang tải nhu cầu tìm phòng…" />
       ) : tab === 'create' ? (
         !isRenter ? (
-          <div className="empty-state card">Đăng nhập bằng tài khoản người thuê để đăng nhu cầu.</div>
+          <div className="page-frame-empty">
+            <p className="page-frame-empty__title">Chỉ người thuê được đăng</p>
+            <p>Đăng nhập bằng tài khoản người thuê để đăng nhu cầu tìm phòng.</p>
+          </div>
         ) : (
           <form className="card" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-group">
@@ -268,7 +305,10 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
           </form>
         )
       ) : posts.length === 0 ? (
-        <div className="empty-state card">Chưa có tin tìm phòng.</div>
+        <div className="page-frame-empty">
+          <p className="page-frame-empty__title">Chưa có tin tìm phòng</p>
+          <p>Thử đổi bộ lọc hoặc đăng nhu cầu mới nếu bạn là người thuê.</p>
+        </div>
       ) : (
         <div className="notification-list">
           {posts.map((p) => {
@@ -320,6 +360,16 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
           })}
         </div>
       )}
-    </div>
+    </>
+  )
+
+  if (embedded) {
+    return <div className="feature-page">{body}</div>
+  }
+
+  return (
+    <PageFrame title="Tin tìm phòng" actions={actions} filters={filters}>
+      {body}
+    </PageFrame>
   )
 }

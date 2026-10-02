@@ -76,3 +76,11 @@ export function mapPostUrl(postId: string): string {
 export function mapSectionUrl(section: string): string {
   return `/?section=${encodeURIComponent(section)}`
 }
+
+/** Messages workspace, optionally already focused on one thread. */
+export function mapMessagesUrl(conversationId?: string | null): string {
+  const params = new URLSearchParams()
+  params.set('section', 'messages')
+  if (conversationId) params.set('conversation', conversationId)
+  return `/?${params.toString()}`
+}

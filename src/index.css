@@ -1,21 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 
 :root {
+  /* ── Homeji product tokens (logged-in, desktop #18231d sidebar) ── */
+  --hj-paper: #f3ebdd;
+  --hj-ink: #18231d;
+  --hj-accent: #e65c3a;
+  --hj-cream: #fff9ef;
+  --hj-border: #d8cdbb;
+  --hj-muted: #756f64;
+  --hj-soft: #a49b8e;
+  --hj-nav-idle: #dce2de;
+  --hj-nav-line: #334039;
+  --hj-accent-soft: #fce8df;
+  --hj-radius-sm: 8px;
+  --hj-radius-md: 14px;
+  --hj-radius-lg: 22px;
+  --hj-radius-xl: 30px;
+  --hj-sidebar: 228px;
+  --hj-grab-green: #00b14f;
+  /* ──────────────────────────────────────────────────────────────── */
   --grab-green: #00b14f;
   --grab-green-hover: #009241;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #242a2e;
-  --text-secondary: #69727d;
-  --text-heading: #363a45;
-  --border: #d5d8dc;
-  --surface: #ffffff;
-  --surface-muted: #f6f8fa;
-  --surface-input: #f1f4f6;
+  --text-primary: #2a312c;
+  --text-secondary: #66706a;
+  --text-heading: #1f2923;
+  --border: #dde4de;
+  --surface: #fcfdfb;
+  --surface-muted: #f2f6f3;
+  --surface-input: #eaf0ec;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(255, 255, 255, 0.96);
-  --overlay-scrim: rgba(32, 33, 36, 0.42);
-  --shadow-color: 9, 29, 46;
+  --surface-glass: rgba(252, 253, 251, 0.94);
+  --overlay-scrim: rgba(28, 36, 31, 0.4);
+  --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
   --maps-blue-hover: #1557b0;
   --maps-blue-soft: #e8f0fe;
@@ -25,14 +43,52 @@
   --success: #39b54a;
   --error-soft: rgba(234, 67, 53, 0.1);
   --success-soft: rgba(57, 181, 74, 0.12);
-  --shadow-sm: rgba(0, 0, 0, 0.15) 0px 5px 12px 0px;
-  --shadow-md: rgba(87, 85, 85, 0.176) 0px 3px 4px 0px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-pill: 20px;
+  /* One elevation tier (Airbnb-style): hairline + soft lift — no glow stack */
+  --shadow-sm: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
+    rgba(28, 42, 34, 0.08) 0 4px 10px;
+  --shadow-md: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.05) 0 4px 10px,
+    rgba(28, 42, 34, 0.1) 0 8px 18px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
   --container: 1200px;
   --nav-height: 69px;
   --mobile-tabbar-height: 64px;
+  /* Legacy rail tokens kept for any residual map chrome refs */
+  --app-rail-width: 0px;
+  --app-rail-compact-width: 0px;
+  --app-top-nav-height: 56px;
+  --app-bottom-nav-height: 56px;
+  --app-container-max: 1160px;
+  --app-container-pad: 24px;
+  --app-container-pad-mobile: 16px;
+  --radius-card: var(--radius-lg);
+  --radius-control: var(--radius-md);
+  --type-title: 1.25rem;
+  --type-section: 1.05rem;
+  --type-body: 0.94rem;
+  --type-caption: 0.75rem;
+  --pastel-mint: #e7f6ec;
+  --pastel-peach: #fceee6;
+  --pastel-sky: #e6f1fb;
+  --pastel-lilac: #efeaf8;
+  --pastel-sand: #f5f0e6;
+  --pastel-rose: #f8e9ee;
+  /* Logged-in product canvas — neutral paper, not decorative mint wash */
+  --app-chrome-tint: var(--surface);
+  --app-hub-paper: var(--surface);
+  --app-explore-paper: var(--surface);
+  --app-market-paper: var(--surface);
+  --app-invite-paper: var(--surface);
+  --app-messages-paper: var(--surface);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
@@ -43,9 +99,9 @@
   --dur-med: 280ms;
   --dur-slow: 420ms;
   /* Map chrome fill — never brand green (prevents GPU clear flash). */
-  --map-canvas-bg: #e8eef2;
+  --map-canvas-bg: #e4ebe6;
   color-scheme: light;
-  font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Be Vietnam Pro', Manrope, Inter, system-ui, sans-serif;
   line-height: 1.5;
   color: var(--text-primary);
   background: var(--surface-muted);
@@ -53,7 +109,7 @@
   text-size-adjust: 100%;
 }
 
-/* Shared dark tokens — OS preference and html[data-theme] stay in sync. */
+/* Soft warm dark — not a stiff charcoal admin console. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -61,29 +117,29 @@
     --grab-green-hover: #14b85a;
     --grab-blue: #4b9fff;
     --grab-blue-hover: #2f86f0;
-    --text-primary: #e8eaed;
-    --text-secondary: #9aa0a6;
-    --text-heading: #f1f3f4;
-    --border: #3c4043;
-    --surface: #1a1d21;
-    --surface-muted: #121417;
-    --surface-input: #2a2e33;
-    --surface-elevated: #23272c;
-    --surface-glass: rgba(26, 29, 33, 0.94);
-    --overlay-scrim: rgba(0, 0, 0, 0.55);
+    --text-primary: #e8eee9;
+    --text-secondary: #a3aea7;
+    --text-heading: #f4f7f5;
+    --border: #3a433d;
+    --surface: #1c221e;
+    --surface-muted: #141916;
+    --surface-input: #2a312c;
+    --surface-elevated: #242b26;
+    --surface-glass: rgba(28, 34, 30, 0.94);
+    --overlay-scrim: rgba(0, 0, 0, 0.5);
     --shadow-color: 0, 0, 0;
     --maps-blue: #8ab4f8;
     --maps-blue-hover: #aecbfa;
     --maps-blue-soft: rgba(138, 180, 248, 0.16);
     --maps-blue-text: #8ab4f8;
     --maps-hover: rgba(255, 255, 255, 0.08);
-    --shadow-sm: rgba(0, 0, 0, 0.35) 0px 5px 16px 0px;
-    --shadow-md: rgba(0, 0, 0, 0.4) 0px 4px 12px 0px;
+    --shadow-sm: rgba(0, 0, 0, 0.3) 0px 6px 18px 0px;
+    --shadow-md: rgba(0, 0, 0, 0.36) 0px 12px 28px 0px;
     --error: #f28b82;
     --success: #81c995;
     --error-soft: rgba(242, 139, 130, 0.14);
     --success-soft: rgba(129, 201, 149, 0.14);
-    --map-canvas-bg: #1a1d21;
+    --map-canvas-bg: #1f2622;
   }
 }
 
@@ -93,29 +149,68 @@ html[data-theme='dark'] {
   --grab-green-hover: #14b85a;
   --grab-blue: #4b9fff;
   --grab-blue-hover: #2f86f0;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --text-heading: #f1f3f4;
-  --border: #3c4043;
-  --surface: #1a1d21;
-  --surface-muted: #121417;
-  --surface-input: #2a2e33;
-  --surface-elevated: #23272c;
-  --surface-glass: rgba(26, 29, 33, 0.94);
-  --overlay-scrim: rgba(0, 0, 0, 0.55);
+  --text-primary: #e8eee9;
+  --text-secondary: #a3aea7;
+  --text-heading: #f4f7f5;
+  --border: #3a433d;
+  --surface: #1c221e;
+  --surface-muted: #141916;
+  --surface-input: #2a312c;
+  --surface-elevated: #242b26;
+  --surface-glass: rgba(28, 34, 30, 0.94);
+  --overlay-scrim: rgba(0, 0, 0, 0.5);
   --shadow-color: 0, 0, 0;
   --maps-blue: #8ab4f8;
   --maps-blue-hover: #aecbfa;
   --maps-blue-soft: rgba(138, 180, 248, 0.16);
   --maps-blue-text: #8ab4f8;
   --maps-hover: rgba(255, 255, 255, 0.08);
-  --shadow-sm: rgba(0, 0, 0, 0.35) 0px 5px 16px 0px;
-  --shadow-md: rgba(0, 0, 0, 0.4) 0px 4px 12px 0px;
+  --shadow-sm: rgba(0, 0, 0, 0.3) 0px 6px 18px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.36) 0px 12px 28px 0px;
   --error: #f28b82;
   --success: #81c995;
   --error-soft: rgba(242, 139, 130, 0.14);
   --success-soft: rgba(129, 201, 149, 0.14);
-  --map-canvas-bg: #1a1d21;
+  --map-canvas-bg: #1f2622;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --grab-green: #00b14f;
+  --grab-green-hover: #009241;
+  --grab-blue: #136fd8;
+  --grab-blue-hover: #0e52a3;
+  --text-primary: #2a312c;
+  --text-secondary: #66706a;
+  --text-heading: #1f2923;
+  --border: #dde4de;
+  --surface: #fcfdfb;
+  --surface-muted: #f2f6f3;
+  --surface-input: #eaf0ec;
+  --surface-elevated: #ffffff;
+  --surface-glass: rgba(252, 253, 251, 0.94);
+  --overlay-scrim: rgba(28, 36, 31, 0.4);
+  --shadow-color: 28, 42, 34;
+  --maps-blue: #1a73e8;
+  --maps-blue-hover: #1557b0;
+  --maps-blue-soft: #e8f0fe;
+  --maps-blue-text: #1967d2;
+  --maps-hover: rgba(60, 64, 67, 0.08);
+  --shadow-sm: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
+    rgba(28, 42, 34, 0.08) 0 4px 10px;
+  --shadow-md: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.05) 0 4px 10px,
+    rgba(28, 42, 34, 0.1) 0 8px 18px;
+  --error: #ea4335;
+  --success: #39b54a;
+  --error-soft: rgba(234, 67, 53, 0.1);
+  --success-soft: rgba(57, 181, 74, 0.12);
+  --map-canvas-bg: #e4ebe6;
+  --app-chrome-tint: var(--surface);
+  --app-hub-paper: var(--surface);
+  --app-explore-paper: var(--surface);
+  --app-market-paper: var(--surface);
+  --app-invite-paper: var(--surface);
+  --app-messages-paper: var(--surface);
 }
 
 *,
@@ -192,16 +287,95 @@ body {
   padding-bottom: 0;
 }
 
+.app-shell--product {
+  /* Horizontal shell sits in document flow — no sidebar offset, no bottom tab bar. */
+  --app-top-nav-height: 0px;
+  --app-bottom-nav-height: 0px;
+  --nav-height: 0px;
+  /* Vietnamese-capable stack (Be Vietnam Pro already imported in this file). */
+  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  /* Logged-in product stays warm light — not OS dark admin chrome */
+  color-scheme: light;
+  --grab-green: #00b14f;
+  --grab-green-hover: #009241;
+  --grab-blue: #136fd8;
+  --grab-blue-hover: #0e52a3;
+  --text-primary: #2a312c;
+  --text-secondary: #66706a;
+  --text-heading: #1f2923;
+  --border: #dde4de;
+  --surface: #fcfdfb;
+  --surface-muted: #f2f6f3;
+  --surface-input: #eaf0ec;
+  --surface-elevated: #ffffff;
+  --surface-glass: rgba(252, 253, 251, 0.94);
+  --overlay-scrim: rgba(28, 36, 31, 0.4);
+  --shadow-color: 28, 42, 34;
+  --maps-blue: #1a73e8;
+  --maps-blue-hover: #1557b0;
+  --maps-blue-soft: #e8f0fe;
+  --maps-blue-text: #1967d2;
+  --maps-hover: rgba(60, 64, 67, 0.08);
+  --shadow-sm: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
+    rgba(28, 42, 34, 0.08) 0 4px 10px;
+  --shadow-md: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.05) 0 4px 10px,
+    rgba(28, 42, 34, 0.1) 0 8px 18px;
+  --error: #ea4335;
+  --success: #39b54a;
+  --error-soft: rgba(234, 67, 53, 0.1);
+  --success-soft: rgba(57, 181, 74, 0.12);
+  --map-canvas-bg: #e4ebe6;
+  --app-chrome-tint: var(--surface);
+  --app-hub-paper: var(--surface);
+  --app-explore-paper: var(--surface);
+  --app-market-paper: var(--surface);
+  --app-invite-paper: var(--surface);
+  --app-messages-paper: var(--surface);
+  background: var(--hj-paper);
+  color: var(--text-primary);
+}
+
+.app-shell--product:not(.app-shell--map) .app-main {
+  background: var(--hj-paper, #f3ebdd);
+}
+
+.app-shell--product .app-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding-top: calc(var(--app-top-nav-height) + var(--safe-top));
+  padding-bottom: calc(var(--app-bottom-nav-height) + var(--safe-bottom));
+}
+
+.app-shell--product .btn {
+  border-radius: var(--radius-control);
+}
+
+.app-shell--product .btn-sm {
+  border-radius: var(--radius-control);
+}
+
+.app-shell--product.app-shell--map {
+  background-color: var(--map-canvas-bg);
+}
+
 .app-shell--map {
   /* Prefer stable 100vh — 100dvh changes when mobile URL bar shows/hides → map resize jank */
   height: 100%;
   height: 100vh;
   max-height: 100%;
   overflow: hidden;
-  --nav-height: 0px;
+  --nav-height: var(--app-top-nav-height);
   background-color: var(--map-canvas-bg);
   /* Disable View Transition snapshots on map chrome */
   view-transition-name: none;
+}
+
+@media (min-width: 768px) {
+  .app-shell--product .app-main {
+    padding-left: 0;
+    padding-bottom: 0;
+  }
 }
 
 @supports (height: 100svh) {
@@ -321,13 +495,25 @@ p {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--grab-green-hover);
-  box-shadow: 0 0 15px 1px color-mix(in srgb, var(--grab-green) 35%, transparent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--grab-green) 28%, transparent);
 }
 
 .btn-secondary {
   background: transparent;
   color: var(--text-heading);
   border: 1px solid var(--border);
+}
+
+.btn-map-cta {
+  background: var(--pastel-peach);
+  border-color: color-mix(in srgb, var(--grab-green) 22%, var(--border));
+  color: var(--grab-green-hover);
+}
+
+.btn-map-cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pastel-rose) 45%, var(--pastel-peach));
+  border-color: color-mix(in srgb, var(--grab-green) 35%, var(--border));
+  color: var(--grab-green-hover);
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -353,15 +539,19 @@ p {
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 18px rgba(var(--shadow-color), 0.05);
 }
 
 .card:hover {
-  box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 16px 0px;
+  box-shadow: 0 10px 24px rgba(var(--shadow-color), 0.08);
+}
+
+.app-shell--product .card {
+  border-radius: var(--radius-lg);
 }
 
 .form-group {
@@ -465,8 +655,8 @@ p {
 
 .grid-posts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
 }
 
 .empty-state {

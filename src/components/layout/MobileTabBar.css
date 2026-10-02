@@ -27,9 +27,7 @@
     z-index: 120;
     height: calc(var(--mobile-tabbar-height) + env(safe-area-inset-bottom, 0px));
     padding: 6px 4px env(safe-area-inset-bottom, 0px);
-    background: var(--surface-glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--surface-elevated);
     border-top: 1px solid var(--border);
     justify-content: space-around;
     align-items: flex-start;
@@ -43,6 +41,7 @@
     position: relative;
     flex: 1;
     min-width: 0;
+    min-height: 44px;
     display: flex;
     flex-direction: column;
     align-items: center;

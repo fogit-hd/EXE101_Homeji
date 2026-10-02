@@ -13,6 +13,7 @@ import {
   type PostMessageAttachment,
 } from '../../api'
 import { getStoredSession } from '../../api/client'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   chatLocationKindLabel,
   encodeChatLocation,
@@ -22,10 +23,13 @@ import {
 import { getDeviceLocation } from '../../lib/geolocation'
 import { formatDate } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
+import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
 import { ContentSkeleton } from '../ContentSkeleton'
 import { staticMapUrl } from '../../lib/mapStaticMedia'
 import './MapMessagesPanel.css'
+
+type InboxFilter = 'all' | 'unread' | 'rental'
 
 export type ChatShareTarget = {
   name: string
@@ -39,6 +43,8 @@ type Props = {
   /** panel = right sidebar (legacy); floating-* = Messenger dock windows */
   layout?: 'panel' | 'floating-inbox' | 'floating-thread'
   initialConversationId?: string | null
+  /** Workspace thread selection — parent persists this on the messages URL. */
+  onActiveConversationChange?: (conversationId: string | null) => void
   userLocation?: { lat: number; lng: number } | null
   selectedPlace?: ChatShareTarget | null
   selectedListing?: ChatShareTarget | null
@@ -276,6 +282,7 @@ export function MapMessagesPanel({
   embedded = false,
   layout = 'panel',
   initialConversationId = null,
+  onActiveConversationChange,
   userLocation = null,
   selectedPlace = null,
   selectedListing = null,
@@ -288,22 +295,29 @@ export function MapMessagesPanel({
   const isFloatingInbox = layout === 'floating-inbox'
   const isFloatingThread = layout === 'floating-thread'
   const isFloating = isFloatingInbox || isFloatingThread
+  /** FeatureWorkspace page (not map dock): split inbox | thread. */
+  const isWorkspace = embedded && !isFloating
+  const { profile } = useAuth()
+  const displayName = profile?.displayName?.trim()?.split(/\s+/).pop() || 'bạn'
 
   const [conversations, setConversations] = useState<PostConversation[]>([])
-  const [activeId, setActiveId] = useState<string | null>(
-    isFloatingThread ? initialConversationId : initialConversationId,
-  )
+  const [activeId, setActiveId] = useState<string | null>(initialConversationId)
+  const [appliedInitialId, setAppliedInitialId] = useState(initialConversationId)
   const [messages, setMessages] = useState<PostMessage[]>([])
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [threadVisible, setThreadVisible] = useState(isFloatingThread)
+  const [threadVisible, setThreadVisible] = useState(
+    isFloatingThread || Boolean(initialConversationId),
+  )
   const [attachMode, setAttachMode] = useState<AttachMode>(null)
   const [addressDraft, setAddressDraft] = useState('')
   const [addressPlace, setAddressPlace] = useState<PlaceResult | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [inboxQuery, setInboxQuery] = useState('')
+  const [inboxFilter, setInboxFilter] = useState<InboxFilter>('all')
   const [matchIndex, setMatchIndex] = useState(0)
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imageContext, setImageContext] = useState<MessageAttachmentContext>(
@@ -313,8 +327,31 @@ export function MapMessagesPanel({
   const bottomRef = useRef<HTMLDivElement>(null)
   const attachRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchBarRef = useRef<HTMLDivElement>(null)
+  const searchToggleRef = useRef<HTMLButtonElement>(null)
+  const inboxSearchRef = useRef<HTMLLabelElement>(null)
+  const [inboxFocused, setInboxFocused] = useState(false)
+  useDismissOnOutside(inboxFocused, [inboxSearchRef], () => {
+    setInboxFocused(false)
+    inboxSearchRef.current?.querySelector('input')?.blur()
+  })
+  useDismissOnOutside(searchOpen, [searchBarRef, searchToggleRef], () => {
+    setSearchOpen(false)
+    searchInputRef.current?.blur()
+  })
   const imageInputRef = useRef<HTMLInputElement>(null)
   const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  if (initialConversationId !== appliedInitialId) {
+    setAppliedInitialId(initialConversationId)
+    if (initialConversationId) {
+      setActiveId(initialConversationId)
+      setThreadVisible(true)
+    } else {
+      setActiveId(null)
+      setThreadVisible(isFloatingThread)
+    }
+  }
 
   const loadConversations = useCallback(async (opts?: { soft?: boolean }) => {
     if (!opts?.soft) setLoading(true)
@@ -322,16 +359,12 @@ export function MapMessagesPanel({
     try {
       const list = await getConversations()
       setConversations(list)
-      if (initialConversationId && list.some((c) => c.id === initialConversationId)) {
-        setActiveId(initialConversationId)
-        setThreadVisible(true)
-      }
     } catch (e) {
       setError(getErrorMessage(e, 'Không tải được tin nhắn'))
     } finally {
       if (!opts?.soft) setLoading(false)
     }
-  }, [initialConversationId])
+  }, [])
 
   useEffect(() => {
     void loadConversations()
@@ -428,6 +461,7 @@ export function MapMessagesPanel({
     setSearchOpen(false)
     setSearchQuery('')
     setImageFiles([])
+    onActiveConversationChange?.(id)
   }
 
   const closeThread = () => {
@@ -436,6 +470,10 @@ export function MapMessagesPanel({
       return
     }
     setThreadVisible(false)
+    if (isWorkspace) {
+      setActiveId(null)
+      onActiveConversationChange?.(null)
+    }
     setAttachMode(null)
     resetAddressDraft()
     setSearchOpen(false)
@@ -572,14 +610,49 @@ export function MapMessagesPanel({
     })
   }
 
+  const unreadTotal = conversations.reduce((n, c) => n + (c.unreadCount ?? 0), 0)
+  const filteredConversations = useMemo(() => {
+    const q = inboxQuery.trim().toLowerCase()
+    return conversations.filter((c) => {
+      if (inboxFilter === 'unread' && !(c.unreadCount > 0)) return false
+      if (inboxFilter === 'rental' && c.subjectType !== 1) return false
+      if (!q) return true
+      const hay = `${c.otherParticipantName ?? ''} ${c.lastMessage ?? ''}`.toLowerCase()
+      return hay.includes(q)
+    })
+  }, [conversations, inboxFilter, inboxQuery])
+
+  const initials = (name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    }
+    return (name.slice(0, 2) || '?').toUpperCase()
+  }
+
   return (
     <div
       className={`map-messages${embedded ? ' is-embedded' : ''}${
-        isFloating ? ' is-floating' : ''
-      }${isFloatingInbox ? ' is-floating-inbox' : ''}${
+        isWorkspace ? ' is-workspace' : ''
+      }${isFloating ? ' is-floating' : ''}${isFloatingInbox ? ' is-floating-inbox' : ''}${
         isFloatingThread || threadVisible ? ' is-thread' : ' is-inbox'
       }`}
     >
+      {isWorkspace ? (
+        <header className="map-messages__page-head">
+          <div className="map-messages__page-copy">
+            <span className="map-messages__eyebrow">Trao đổi</span>
+            <h1 className="map-messages__page-title">Tin nhắn của {displayName}</h1>
+            <p className="map-messages__page-lead">
+              Chủ nhà, người ở ghép và người bán quanh khu phố — tất cả trong một hộp thư.
+            </p>
+          </div>
+          <a href="/?section=listings" className="map-messages__new-btn">
+            Tin nhắn mới
+          </a>
+        </header>
+      ) : null}
+
       {isFloatingInbox ? (
         <header className="map-messages__float-head">
           <strong>Tin nhắn</strong>
@@ -594,7 +667,7 @@ export function MapMessagesPanel({
         </header>
       ) : null}
 
-      {!threadVisible && !isFloatingInbox && !isFloatingThread ? (
+      {!isWorkspace && !threadVisible && !isFloatingInbox && !isFloatingThread ? (
         <header className="map-messages__panel-head">
           <h2 className="map-messages__panel-title">Tin nhắn</h2>
         </header>
@@ -602,20 +675,66 @@ export function MapMessagesPanel({
 
       {error ? <p className="map-messages__error map-motion-fade">{error}</p> : null}
 
+      <div className={isWorkspace ? 'map-messages__split' : undefined}>
       {!isFloatingThread ? (
       <div
         className={`map-messages__inbox${
-          threadVisible && !isFloatingInbox ? '' : ' is-visible'
+          isWorkspace || isFloatingInbox || !threadVisible ? ' is-visible' : ''
         }`}
       >
+        {isWorkspace ? (
+          <>
+            <label className="map-messages__inbox-search" ref={inboxSearchRef}>
+              <input
+                type="search"
+                placeholder="Tìm cuộc trò chuyện"
+                aria-label="Tìm cuộc trò chuyện"
+                value={inboxQuery}
+                onChange={(e) => setInboxQuery(e.target.value)}
+                onFocus={() => setInboxFocused(true)}
+              />
+            </label>
+            <div className="map-messages__inbox-filters" role="tablist" aria-label="Lọc hộp thư">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inboxFilter === 'all'}
+                className={inboxFilter === 'all' ? 'is-active' : ''}
+                onClick={() => setInboxFilter('all')}
+              >
+                Tất cả {conversations.length}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inboxFilter === 'unread'}
+                className={inboxFilter === 'unread' ? 'is-active' : ''}
+                onClick={() => setInboxFilter('unread')}
+              >
+                Chưa đọc {unreadTotal}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inboxFilter === 'rental'}
+                className={inboxFilter === 'rental' ? 'is-active' : ''}
+                onClick={() => setInboxFilter('rental')}
+              >
+                Phòng thuê
+              </button>
+            </div>
+          </>
+        ) : null}
         {loading ? <ContentSkeleton compact count={3} label="Đang tải hộp thư…" /> : null}
-        {!loading && conversations.length === 0 ? (
+        {!loading && filteredConversations.length === 0 ? (
           <p className="map-messages__empty">
-            Chưa có cuộc trò chuyện. Mở tin đăng và chọn “Nhắn tin”.
+            {conversations.length === 0
+              ? 'Chưa có cuộc trò chuyện. Mở tin đăng và chọn “Nhắn tin”.'
+              : 'Không có cuộc trò chuyện khớp bộ lọc.'}
           </p>
         ) : null}
         <ul className="map-messages__conv-list">
-          {conversations.map((c, i) => (
+          {filteredConversations.map((c, i) => (
             <li key={c.id} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
               <button
                 type="button"
@@ -625,7 +744,7 @@ export function MapMessagesPanel({
                 onClick={() => openThread(c.id)}
               >
                 <span className="map-messages__avatar" aria-hidden>
-                  {(c.otherParticipantName || '?').slice(0, 1).toUpperCase()}
+                  {initials(c.otherParticipantName || '?')}
                 </span>
                 <span className="map-messages__meta">
                   <span className="map-messages__meta-top">
@@ -639,9 +758,7 @@ export function MapMessagesPanel({
                       {conversationPreview(c.lastMessage, c.lastMessageSenderId, me)}
                     </small>
                     {(c.unreadCount ?? 0) > 0 ? (
-                      <span className="map-messages__unread-badge" aria-label={`${c.unreadCount} tin chưa đọc`}>
-                        {c.unreadCount > 99 ? '99+' : c.unreadCount}
-                      </span>
+                      <span className="map-messages__unread-dot" aria-hidden />
                     ) : null}
                   </span>
                 </span>
@@ -655,10 +772,16 @@ export function MapMessagesPanel({
       {!isFloatingInbox ? (
       <div
         className={`map-messages__thread${
-          isFloatingThread || threadVisible ? ' is-visible' : ''
+          isWorkspace || isFloatingThread || threadVisible ? ' is-visible' : ''
         }`}
-        aria-hidden={!(isFloatingThread || threadVisible)}
+        aria-hidden={!(isWorkspace || isFloatingThread || threadVisible)}
       >
+        {isWorkspace && !activeId ? (
+          <div className="map-messages__thread-empty">
+            <p className="map-messages__empty">Chọn một cuộc trò chuyện để bắt đầu nhắn tin.</p>
+          </div>
+        ) : (
+          <>
         <header className="map-messages__thread-head">
           {isFloatingThread ? null : (
             <button type="button" className="map-messages__back map-motion-press" onClick={closeThread}>
@@ -673,6 +796,7 @@ export function MapMessagesPanel({
 
           <div className="map-messages__thread-actions">
             <button
+              ref={searchToggleRef}
               type="button"
               className={`map-messages__icon-btn map-motion-press${searchOpen ? ' is-active' : ''}`}
               aria-label="Tìm kiếm tin nhắn"
@@ -700,7 +824,7 @@ export function MapMessagesPanel({
         </header>
 
         {searchOpen ? (
-          <div className="map-messages__search-bar">
+          <div className="map-messages__search-bar" ref={searchBarRef}>
             <input
               ref={searchInputRef}
               className="map-messages__search-input"
@@ -1004,8 +1128,11 @@ export function MapMessagesPanel({
             </button>
           </form>
         </div>
+          </>
+        )}
       </div>
       ) : null}
+      </div>
     </div>
   )
 }

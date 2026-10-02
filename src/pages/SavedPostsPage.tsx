@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   createInvitation,
   getRoommateCandidates,
@@ -9,10 +10,13 @@ import {
 } from '../api'
 import { RentalPostType, UserRole } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
+import { mapPostUrl } from '../lib/mapDeepLinks'
+import './SavedPostsPage.css'
 
 export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const { profile } = useAuth()
@@ -73,25 +77,20 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
-  return (
-    <div className={embedded ? 'map-embed' : 'container page'}>
-      {!embedded ? (
-        <>
-          <h1 className="page-title">Tin đã lưu</h1>
-          <p className="page-subtitle">Danh sách phòng bạn quan tâm</p>
-        </>
-      ) : null}
-      {(actionError || (error && !disrupted)) && (
-        <div className="alert alert-error">{actionError || error}</div>
-      )}
-      {actionMsg ? <div className="alert alert-success">{actionMsg}</div> : null}
+  const body = (
+    <>
+      <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      <PageNotice message={actionMsg} tone="success" />
 
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
           : <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
       ) : posts.length === 0 ? (
-        <div className="empty-state card">Chưa có tin nào được lưu.</div>
+        <div className="page-frame-empty">
+          <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
+          <p>Lưu tin phòng từ Khám phá để xem lại tại đây.</p>
+        </div>
       ) : (
         <div className="grid-posts">
           {posts.map((post) => (
@@ -102,6 +101,11 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
                 isSaved
                 onUnsave={() => void handleUnsave(post.id)}
               />
+              <div style={{ marginTop: 8 }}>
+                <Link to={mapPostUrl(post.id)} className="btn btn-ghost btn-sm">
+                  Xem trên bản đồ
+                </Link>
+              </div>
               {isRenter && post.type === RentalPostType.RoommateShare ? (
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <button
@@ -144,6 +148,23 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
           ))}
         </div>
       )}
+    </>
+  )
+
+  if (embedded) {
+    return <div className="feature-page saved-posts-embed">{body}</div>
+  }
+
+  return (
+    <div className="saved-posts-page">
+      <header className="saved-posts-page__header">
+        <span className="saved-posts-page__eyebrow">ĐÃ LƯU</span>
+        <h1 className="saved-posts-page__title">Phòng bạn đã đánh dấu</h1>
+        <p className="saved-posts-page__lead">
+          {posts.length > 0 ? `${posts.length} tin đã lưu` : 'Lưu phòng yêu thích để xem lại bất cứ lúc nào.'}
+        </p>
+      </header>
+      {body}
     </div>
   )
 }

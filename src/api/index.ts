@@ -124,15 +124,16 @@ export const updateMyLifestyle = (data: {
 // Rental Posts
 export const searchRentalPosts = (
   params: RentalPostSearchParams = {},
-  options?: { auth?: boolean },
+  options?: { auth?: boolean; signal?: AbortSignal },
 ) =>
   apiRequest<RentalPostSummary[]>('/api/rental-posts', {
     params: params as RentalPostSearchParams & Record<string, string | number | boolean | string[] | undefined>,
     auth: options?.auth,
+    signal: options?.signal,
   })
 
-export const getRentalPost = (postId: string, options?: { auth?: boolean }) =>
-  apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { auth: options?.auth })
+export const getRentalPost = (postId: string, options?: { auth?: boolean; signal?: AbortSignal }) =>
+  apiRequest<RentalPost>(`/api/rental-posts/${postId}`, { auth: options?.auth, signal: options?.signal })
 
 export const compareRentalPosts = (postIds: string[]) =>
   apiRequest<CompareRentalPostsResult>('/api/rental-posts/compare', {
@@ -497,19 +498,22 @@ export const rejectReport = (reportId: string, resolutionNote?: string) =>
   })
 
 // Marketplace
-export const searchMarketplacePosts = (params?: {
-  keyword?: string
-  category?: string
-  listingType?: MarketplaceListingType
-  minPrice?: number
-  maxPrice?: number
-  latitude?: number
-  longitude?: number
-  radiusKm?: number
-  nearRentalPostId?: string
-  page?: number
-  pageSize?: number
-}) => apiRequest<MarketplacePost[]>('/api/marketplace-posts', { params, auth: false })
+export const searchMarketplacePosts = (
+  params?: {
+    keyword?: string
+    category?: string
+    listingType?: MarketplaceListingType
+    minPrice?: number
+    maxPrice?: number
+    latitude?: number
+    longitude?: number
+    radiusKm?: number
+    nearRentalPostId?: string
+    page?: number
+    pageSize?: number
+  },
+  options?: { signal?: AbortSignal },
+) => apiRequest<MarketplacePost[]>('/api/marketplace-posts', { params, auth: false, signal: options?.signal })
 
 export const getMarketplacePost = (id: string) =>
   apiRequest<MarketplacePost>(`/api/marketplace-posts/${id}`, { auth: false })

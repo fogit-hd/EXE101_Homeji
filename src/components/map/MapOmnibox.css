@@ -10,9 +10,7 @@
   align-items: center;
   gap: 3px;
   padding: 10px 0 12px;
-  background:
-    radial-gradient(circle at 50% 0, rgba(66, 133, 244, 0.1), transparent 180px),
-    var(--surface-muted);
+  background: var(--surface-muted);
   border-right: 1px solid var(--border);
   box-shadow: 1px 0 2px rgba(var(--shadow-color), 0.08);
   pointer-events: auto;
@@ -201,6 +199,133 @@
   transition:
     opacity 200ms ease,
     transform 200ms ease;
+}
+
+.gmaps-omnibox.gmaps-omnibox--no-app-nav {
+  left: 12px;
+}
+
+/* Legacy dest toolbar (list-only pages without map overlay) — keep relative if ever reused */
+.home-map-page--dest:not(.is-map-destination) .gmaps-omnibox,
+.home-map-page--dest:not(.is-map-destination) .gmaps-omnibox.gmaps-omnibox--no-app-nav {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: 2;
+  width: 100%;
+  max-width: none;
+  pointer-events: auto !important;
+}
+
+/* Map destination — search/chips float over the full map stage */
+.home-map-page--dest.is-map-destination .gmaps-omnibox,
+.home-map-page--dest.is-map-destination .gmaps-omnibox.gmaps-omnibox--no-app-nav {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 1100;
+  width: auto;
+  max-width: min(560px, calc(100% - 24px));
+  pointer-events: none !important;
+}
+
+.home-map-page--dest:not(.is-map-destination) .gmaps-omnibox__card {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  border-radius: var(--radius-control, 999px);
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: 0 1px 2px rgba(var(--shadow-color), 0.06);
+}
+
+.home-map-page--dest:not(.is-map-destination) .gmaps-omnibox__card.is-open {
+  border-radius: var(--radius-card, 16px) var(--radius-card, 16px) 0 0;
+}
+
+.home-map-page--dest:not(.is-map-destination).has-listings-panel:not(.is-sidebar-collapsed) .gmaps-omnibox,
+.home-map-page--dest:not(.is-map-destination):not(.is-sidebar-collapsed) .gmaps-omnibox {
+  right: auto;
+}
+
+/* Soft destination omnibox — warm product chrome, not old Maps admin shell */
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__card {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: var(--surface-elevated);
+  box-shadow:
+    0 8px 24px rgba(var(--shadow-color), 0.1),
+    0 1px 2px rgba(var(--shadow-color), 0.04);
+}
+
+.home-map-page--dest:not(.is-map-destination) .gmaps-omnibox--no-app-nav .gmaps-omnibox__card {
+  border-radius: var(--radius-control, 999px);
+  box-shadow: 0 1px 2px rgba(var(--shadow-color), 0.06);
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__card.is-open {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__bar {
+  min-height: 52px;
+  padding: 0 8px 0 16px;
+  border-radius: inherit;
+  background: transparent;
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__input {
+  font-family: 'Be Vietnam Pro', Manrope, sans-serif;
+  font-size: 0.98rem;
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__dropdown {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  border-top-color: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: 0 16px 36px rgba(var(--shadow-color), 0.14);
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__chip {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--border) 85%, transparent);
+  background: var(--surface-elevated);
+  box-shadow: 0 4px 14px rgba(var(--shadow-color), 0.06);
+  font-weight: 600;
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__chip:hover {
+  background: color-mix(in srgb, var(--grab-green) 8%, var(--surface-elevated));
+  border-color: color-mix(in srgb, var(--grab-green) 28%, var(--border));
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__chip.is-on {
+  border-color: color-mix(in srgb, var(--grab-green) 45%, var(--border));
+  background: color-mix(in srgb, var(--grab-green) 12%, var(--surface-elevated));
+  color: var(--grab-green-hover);
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__apply {
+  border-radius: 999px;
+  background: var(--grab-green);
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__apply:hover {
+  background: var(--grab-green-hover);
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__amenity.is-on {
+  border-color: color-mix(in srgb, var(--grab-green) 40%, var(--border));
+  background: color-mix(in srgb, var(--grab-green) 12%, var(--surface-elevated));
+  color: var(--grab-green-hover);
+}
+
+.gmaps-omnibox--no-app-nav .gmaps-omnibox__chips-arrow {
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.08);
 }
 
 .home-map-page.is-ui-collapsed .gmaps-nav-rail {

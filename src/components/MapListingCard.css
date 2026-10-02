@@ -1,200 +1,119 @@
+/* Compact horizontal listing row — small thumb, price + title + address */
 .map-listing-card {
-  display: flex;
-  gap: 10px;
-  min-height: 104px;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+  padding: 10px;
   background: var(--surface-elevated);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  /* No translateY — moving the card under the cursor causes hover enter/leave loops. */
   transition:
-    box-shadow 200ms ease-in-out,
-    border-color 200ms ease-in-out,
-    background 200ms ease-in-out,
-    transform var(--map-dur-fast, 160ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1));
-  animation: listing-enter var(--dur-med) var(--ease-out) both;
-  animation-delay: calc(var(--stagger, 0) * 40ms);
-}
-
-@keyframes listing-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 
 .map-listing-card:hover,
 .map-listing-card.is-highlighted {
-  border-color: var(--grab-blue);
-  box-shadow: 0 8px 16px rgba(var(--shadow-color), 0.12);
-  background: var(--surface-input);
+  border-color: color-mix(in srgb, var(--grab-green) 30%, var(--border));
+  background: var(--surface-elevated);
 }
 
 .map-listing-card.is-active {
-  border-color: var(--grab-green);
-  box-shadow: 0 10px 20px rgba(0, 177, 79, 0.14);
-  background: color-mix(in srgb, var(--grab-green) 10%, var(--surface-elevated));
+  border-color: color-mix(in srgb, var(--grab-green) 45%, var(--border));
+  background: color-mix(in srgb, var(--grab-green) 4%, var(--surface-elevated));
 }
 
-.map-listing-card:active {
-  transform: scale(0.985);
-  box-shadow: 0 2px 8px rgba(var(--shadow-color), 0.1);
+.map-listing-card:focus-visible {
+  outline: 2px solid var(--maps-blue);
+  outline-offset: 1px;
 }
 
 .map-listing-card-image {
   position: relative;
-  width: 112px;
-  height: 104px;
-  flex-shrink: 0;
-  align-self: center;
-  background: color-mix(in srgb, var(--surface-input) 90%, #000);
+  width: 88px;
+  height: 72px;
+  border-radius: 6px;
+  background: var(--surface-input);
   overflow: hidden;
 }
 
 .map-listing-card-image img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
-  transition: transform var(--dur-slow) var(--ease-out);
-}
-
-.map-listing-card:hover .map-listing-card-image img,
-.map-listing-card.is-highlighted .map-listing-card-image img {
-  transform: scale(1.04);
 }
 
 .map-listing-card-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   height: 100%;
-  min-height: 104px;
-  padding: 8px;
-  font-size: 11px;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  text-align: center;
-}
-
-.map-listing-card-price {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  max-width: calc(100% - 12px);
-  background: var(--grab-blue);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 6px;
-  border-radius: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.map-listing-card-corner-tag {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 1;
-  max-width: calc(100% - 12px);
-  padding: 3px 8px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(5px);
-}
-
-.map-listing-card-corner-tag.is-premium {
-  color: #f6c84c;
-  background: rgba(35, 34, 27, 0.84);
-  border-color: rgba(246, 200, 76, 0.56);
-}
-
-.map-listing-card-corner-tag.is-badge {
-  color: #b8f5ce;
-  background: rgba(18, 69, 43, 0.84);
-  border-color: rgba(89, 221, 138, 0.58);
 }
 
 .map-listing-card-body {
-  padding: 8px 10px 8px 0;
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
+  min-width: 0;
+  padding: 0;
 }
 
-.map-listing-card-tags {
+.map-listing-card-meta {
   display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 11px;
-  color: var(--text-secondary);
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
 }
 
-.map-listing-tag.is-highlight {
-  background: var(--error-soft);
-  color: var(--error);
-  animation: map-fade-up 0.3s ease both;
+.map-listing-card-price {
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--grab-green-hover);
+  letter-spacing: -0.01em;
+}
+
+.map-listing-card-type {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .map-listing-card-body h3 {
-  font-size: 13px;
-  font-weight: 600;
   margin: 0;
-  color: var(--text-heading);
+  font-size: 0.92rem;
+  font-weight: 600;
   line-height: 1.3;
-  white-space: nowrap;
+  color: var(--text-heading);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .map-listing-address {
-  font-size: 11px;
-  color: var(--text-secondary);
   margin: 0;
+  font-size: 0.8rem;
   line-height: 1.35;
-  white-space: nowrap;
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 640px) {
   .map-listing-card {
-    flex-direction: row;
+    grid-template-columns: 96px minmax(0, 1fr);
+    padding: 12px;
+    gap: 14px;
   }
 
   .map-listing-card-image {
-    width: 112px;
-    height: 104px;
-  }
-
-  .map-listing-card-body {
-    padding: 8px 10px 8px 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-listing-card {
-    animation: none;
-  }
-
-  .map-listing-card:hover .map-listing-card-image img,
-  .map-listing-card.is-highlighted .map-listing-card-image img {
-    transform: none;
+    width: 96px;
+    height: 76px;
   }
 }

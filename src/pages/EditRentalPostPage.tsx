@@ -11,7 +11,9 @@ import {
   type RentalPost,
 } from '../api'
 import { MediaType, RentalPostType, RoomTransferKind } from '../api/types'
+import { DeferredMapBlock, PageFrame } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
@@ -47,6 +49,7 @@ export function EditRentalPostPage() {
   const [originalLeaseEndsOn, setOriginalLeaseEndsOn] = useState('')
   const [transferKind, setTransferKind] = useState<RoomTransferKind>(RoomTransferKind.LeaseAssignment)
   const [passFee, setPassFee] = useState('0')
+  const [mapPickerOpen, setMapPickerOpen] = useState(false)
   const [transferReason, setTransferReason] = useState('')
   const [ownerConsentConfirmed, setOwnerConsentConfirmed] = useState(false)
   const [ownerConsentContact, setOwnerConsentContact] = useState('')
@@ -203,6 +206,7 @@ export function EditRentalPostPage() {
     setAddress(result.formattedAddress)
     setLatitude(String(result.lat))
     setLongitude(String(result.lng))
+    setMapPickerOpen(true)
     setMessage('Đã cập nhật tọa độ từ địa chỉ.')
   }
 
@@ -217,21 +221,30 @@ export function EditRentalPostPage() {
         message={loadError}
       />
     ) : (
-      <main className="container page">
+      <PageFrame title="Chỉnh sửa tin đăng">
         <ContentSkeleton variant="form" count={6} label="Đang tải nội dung chỉnh sửa tin…" />
-      </main>
+      </PageFrame>
     )
   }
 
   return (
-    <div className="container page">
-      <h1 className="page-title">Chỉnh sửa tin đăng</h1>
-      <p className="page-subtitle">{rentalPostTypeLabel[type]}</p>
+    <PageFrame
+      title="Chỉnh sửa tin đăng"
+      actions={
+        <>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleSubmit()}>
+            Gửi duyệt
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleArchive()}>
+            Lưu trữ
+          </button>
+        </>
+      }
+    >
+      <p className="page-subtitle" style={{ marginTop: 0 }}>{rentalPostTypeLabel[type]}</p>
 
-      {(error || loadError) && !disrupted && (
-        <div className="alert alert-error">{error || loadError}</div>
-      )}
-      {message && <div className="alert alert-success">{message}</div>}
+      <PageNotice message={!disrupted ? (error || loadError) : ''} tone="error" />
+      <PageNotice message={message} tone="success" />
 
       <form className="card" onSubmit={handleSave}>
         {type === RentalPostType.RoomTransfer ? (
@@ -314,29 +327,48 @@ export function EditRentalPostPage() {
             onPlaceSelect={handlePlaceSelect}
             placeholder="Nhập địa chỉ — gợi ý tự động (Places API)"
           />
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <div className="post-form-address-actions">
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleGeocodeAddress()}>
               Lấy tọa độ từ địa chỉ
             </button>
-            {isValidCoord(latNum, lngNum) && (
+            {isValidCoord(latNum, lngNum) ? (
               <span className="map-coord-hint">
                 {latNum.toFixed(5)}, {lngNum.toFixed(5)}
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Vị trí trên bản đồ</label>
-          <p className="form-hint">Chọn từ gợi ý địa chỉ, bấm &quot;Lấy tọa độ&quot;, hoặc click/kéo pin trên bản đồ.</p>
-          <LocationPickerMap
-            latitude={latNum}
-            longitude={lngNum}
-            onLocationChange={(lat, lng) => {
-              setLatitude(String(lat))
-              setLongitude(String(lng))
-            }}
-          />
+        <div className="form-group post-form-map-block">
+          <div className="post-form-map-block__head">
+            <div>
+              <span className="form-label" id="edit-post-map-label">
+                Vị trí trên bản đồ
+              </span>
+              <p className="form-hint">Khối phụ — chỉ mở khi cần chỉnh pin. Địa chỉ phía trên là chính.</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              aria-expanded={mapPickerOpen}
+              aria-controls="edit-post-map-picker"
+              onClick={() => setMapPickerOpen((open) => !open)}
+            >
+              {mapPickerOpen ? 'Ẩn bản đồ' : 'Chỉnh trên bản đồ'}
+            </button>
+          </div>
+          <div id="edit-post-map-picker">
+            <DeferredMapBlock visible={mapPickerOpen} label="Chọn vị trí trên bản đồ">
+              <LocationPickerMap
+                latitude={latNum}
+                longitude={lngNum}
+                onLocationChange={(lat, lng) => {
+                  setLatitude(String(lat))
+                  setLongitude(String(lng))
+                }}
+              />
+            </DeferredMapBlock>
+          </div>
         </div>
 
         <div className="form-group">
@@ -389,6 +421,6 @@ export function EditRentalPostPage() {
         <button type="button" className="btn btn-primary" onClick={() => void handleSubmit()}>Gửi duyệt</button>
         <button type="button" className="btn btn-secondary" onClick={() => void handleArchive()}>Lưu trữ</button>
       </div>
-    </div>
+    </PageFrame>
   )
 }

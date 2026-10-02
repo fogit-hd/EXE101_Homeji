@@ -7,6 +7,35 @@
   margin-bottom: 8px;
 }
 
+/* Shared page-frame helpers for Pha 2 (alongside chrome/PageFrame) */
+.page-frame-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.page-frame-empty {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.page-frame-empty__title {
+  margin: 0;
+  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-size: var(--type-section);
+  font-weight: 650;
+  color: var(--text-heading);
+}
+
 .notification-list,
 .invitation-list,
 .admin-list {
@@ -46,11 +75,7 @@
 }
 
 .notification-item.unread {
-  background: linear-gradient(
-    105deg,
-    var(--notification-soft) 0%,
-    var(--surface-elevated) 42%
-  );
+  background: var(--notification-soft);
 }
 
 .notification-item--critical {
@@ -197,8 +222,8 @@
   padding: 0 6px;
   place-items: center;
   border-radius: 999px;
-  background: #f5c65d;
-  color: #5c3b08;
+  background: color-mix(in srgb, var(--error) 48%, var(--pastel-sand));
+  color: color-mix(in srgb, var(--text-heading) 72%, var(--error));
   font-size: 12px;
   font-weight: 800;
 }
@@ -208,7 +233,7 @@
   margin-top: 22px;
   padding: 24px;
   border: 1px solid #ead9a7;
-  background: linear-gradient(135deg, #fffdf5 0%, #f4fbf5 100%);
+  background: color-mix(in srgb, #f5c65d 8%, var(--surface-elevated));
 }
 
 .admin-maintenance-intro {
@@ -225,8 +250,8 @@
   flex: 0 0 46px;
   place-items: center;
   border-radius: 15px;
-  background: #f8cf69;
-  color: #694d0e;
+  background: color-mix(in srgb, var(--error) 36%, var(--pastel-sand));
+  color: color-mix(in srgb, var(--text-heading) 72%, var(--error));
   font-size: 23px;
 }
 
@@ -271,7 +296,7 @@
 
 .admin-presence-item.is-online {
   border-left: 4px solid #16855b;
-  background: linear-gradient(110deg, #fffdf8 0%, #f1fbf4 100%);
+  background: color-mix(in srgb, #16855b 8%, var(--surface-elevated));
 }
 
 .admin-presence-user {
@@ -293,8 +318,8 @@
   height: 42px;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f6c85f, #fff2bb);
-  color: #684608;
+  background: color-mix(in srgb, var(--error) 36%, var(--pastel-sand));
+  color: color-mix(in srgb, var(--text-heading) 72%, var(--error));
   font-weight: 800;
 }
 
@@ -341,7 +366,7 @@
   flex: 0 0 68px;
   border-radius: 12px;
   object-fit: cover;
-  background: linear-gradient(135deg, #fff0b9, #eaf8ee);
+  background: color-mix(in srgb, #f5c65d 14%, var(--surface-elevated));
 }
 
 .admin-report-target-placeholder {

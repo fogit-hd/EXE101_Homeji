@@ -121,7 +121,7 @@ function WalletSkeleton({ view }: { view: NonNullable<Props['walletView']> }) {
 export function MarketplaceLoadingSkeleton({ tab, walletView = 'topup' }: Props) {
   const isSellerList = tab === 'food'
   const isWallet = tab === 'wallet'
-  const count = tab === 'orders' ? 2 : 4
+  const count = tab === 'purchases' || tab === 'sales' ? 2 : 4
 
   return (
     <div
