@@ -375,6 +375,28 @@ function HomePageComponent() {
     [posts, selectedPostId],
   )
 
+  const nearbyAnchor = useMemo(() => {
+    if (
+      selectedPost &&
+      Number.isFinite(selectedPost.latitude) &&
+      Number.isFinite(selectedPost.longitude)
+    ) {
+      return {
+        lat: selectedPost.latitude,
+        lng: selectedPost.longitude,
+        label: selectedPost.address || selectedPost.title || 'Phòng đang xem',
+      }
+    }
+    if (mapPlaceFocus) {
+      return {
+        lat: mapPlaceFocus.lat,
+        lng: mapPlaceFocus.lng,
+        label: mapPlaceFocus.address || mapPlaceFocus.name,
+      }
+    }
+    return null
+  }, [selectedPost, mapPlaceFocus])
+
   const toggleAmenity = useCallback((amenity: string) => {
     setSelectedAmenities((prev) =>
       prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity],
@@ -430,7 +452,7 @@ function HomePageComponent() {
         handleSelectPost(item.postId)
         return
       }
-      if (item.kind === 'place' && item.placeId) {
+      if ((item.kind === 'place' || item.kind === 'nearby') && item.placeId) {
         void (async () => {
           const resolved = await resolvePlaceCoordinates(item.placeId!)
           if (!resolved) {
@@ -658,6 +680,7 @@ function HomePageComponent() {
         posts={posts}
         schools={schools}
         schoolsLoading={schoolsLoading}
+        nearbyAnchor={nearbyAnchor}
         districtId={districtId}
         wardId={wardId}
         schoolId={schoolId}
@@ -686,6 +709,7 @@ function HomePageComponent() {
       posts,
       schools,
       schoolsLoading,
+      nearbyAnchor,
       districtId,
       wardId,
       schoolId,

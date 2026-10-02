@@ -8,6 +8,7 @@
     "dev:clean": "node -e \"try{require('node:fs').rmSync('node_modules/.vite',{recursive:true,force:true})}catch(e){}\" && vite --force",
     "build": "tsc -b && vite build",
     "test:contracts": "node --test tests/chatbot-safety-contract.test.mjs",
+    "test:nearby": "node --test tests/nearby-lifestyle-search.test.mjs",
     "start": "node scripts/serve-prod.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
