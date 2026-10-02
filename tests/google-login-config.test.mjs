@@ -15,6 +15,8 @@ test('Google ID tokens are exchanged through the backend', () => {
 })
 
 test('Render builds the frontend with the configured Google OAuth client id', () => {
+  assert.match(renderBlueprint, /plan:\s*free/)
+  assert.doesNotMatch(renderBlueprint, /key:\s*VITE_API_BASE_URL/)
   assert.match(renderBlueprint, /key:\s*VITE_GOOGLE_CLIENT_ID/)
   assert.match(
     renderBlueprint,
