@@ -11,3 +11,8 @@ services:
         value: https://homeji-be.onrender.com
       - key: VITE_API_BASE_URL
         value: https://homeji-be.onrender.com
+      # Public OAuth client id used by Google Identity Services in the browser.
+      # The matching origin is configured in Google Cloud and the same client is
+      # registered in Supabase Auth's Google provider.
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 675096303664-kv4mvsd8rqldf2dicodtb7to8gpk1ipp.apps.googleusercontent.com
