@@ -32,4 +32,6 @@ Reference: https://developers.google.com/maps/documentation/javascript/nearby-se
   Google details and updates the nearby panel automatically. Close remains effective.
 - Local evidence (not committed): output/verification/nearby_auto_pin.jpg and
   output/verification/nearby_auto_google_place.jpg.
-- Final self-POI exclusion needs deployment confirmation.
+- Final deployment verified: Neko - Bake & Brew opens its nearby panel without the
+  Nearby shortcut. Cafe results return seven other Google places, excluding Neko's
+  own place ID. Temporary viewport override was reset after desktop verification.
