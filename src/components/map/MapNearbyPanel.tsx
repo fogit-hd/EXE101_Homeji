@@ -8,7 +8,7 @@ import {
 } from '../../lib/placeAutocomplete'
 import './MapNearbyPanel.css'
 
-export type NearbyAnchor = { lat: number; lng: number; label: string }
+export type NearbyAnchor = { lat: number; lng: number; label: string; placeId?: string }
 
 export function MapNearbyPanel({ anchor, onClose, onPick }: {
   anchor: NearbyAnchor
@@ -21,7 +21,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick }: {
   const [result, setResult] = useState<{
     key: string; items: NearbyPlaceItem[]; error?: string
   } | null>(null)
-  const requestKey = `${anchor.lat}:${anchor.lng}:${category}:${attempt}`
+  const requestKey = `${anchor.lat}:${anchor.lng}:${anchor.placeId ?? ''}:${category}:${attempt}`
   const current = result?.key === requestKey ? result : null
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick }: {
     let cancelled = false
     void searchNearbyPlaces(anchor, category, { limit: 8, throwOnError: true })
       .then((items) => {
-        if (!cancelled) setResult({ key: requestKey, items })
+        if (!cancelled) setResult({ key: requestKey, items: items.filter(place => place.placeId !== anchor.placeId) })
       })
       .catch(() => {
         if (!cancelled) setResult({ key: requestKey, items: [], error: 'Không thể tải tiện ích từ Google Places. Vui lòng thử lại.' })

@@ -59,7 +59,7 @@ test('a rental pin immediately supplies its own location, never stale detail dat
 test('native Google place pins need no Homeji rental to suggest nearby places', () => {
   assert.deepEqual(nearbyPanelAnchor(null, null, {
     placeId: 'google-place', name: 'Quán trên Google', location: { lat: 10.86, lng: 106.76 },
-  }), { contextKey: 'google-place', label: 'Quán trên Google', lat: 10.86, lng: 106.76 })
+  }), { contextKey: 'google-place', placeId: 'google-place', label: 'Quán trên Google', lat: 10.86, lng: 106.76 })
 })
 
 test('missing and out-of-range locations cannot start a nearby request', () => {
