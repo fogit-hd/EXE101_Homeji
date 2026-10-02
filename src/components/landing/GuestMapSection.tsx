@@ -9,6 +9,9 @@ import { RentalPostCard } from '../RentalPostCard'
 import { ContentSkeleton } from '../ContentSkeleton'
 import { RentalMap } from '../map/RentalMap'
 import { MapPlaceDetailPanel } from '../map/MapPlaceDetailPanel'
+import { MapNearbyPanel } from '../map/MapNearbyPanel'
+import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
+import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
 import { useAuthModal } from '../../contexts/AuthModalContext'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { getErrorMessage } from '../../lib/errors'
@@ -54,6 +57,8 @@ export function GuestMapSection() {
   )
   const [mapFocus, setMapFocus] = useState<MapFocusPoint | null>(GUEST_DEFAULT_FOCUS)
   const [mapFocusToken, setMapFocusToken] = useState(0)
+  const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
+  const [nearbyPinned, setNearbyPinned] = useState<{ lat: number; lng: number; title: string; kindLabel: string; token: number } | null>(null)
 
   const wards = useMemo(() => wardsForDistrict(districtId), [districtId])
   const schoolsInWard = useMemo(
@@ -130,6 +135,8 @@ export function GuestMapSection() {
   }
 
   const handleSelectPost = useCallback((postId: string) => {
+    setNearbyDismissedKey(null)
+    setNearbyPinned(null)
     setSelectedPostId(postId)
     setSelectedPlace(null)
     setPlaceLoading(false)
@@ -138,6 +145,7 @@ export function GuestMapSection() {
   }, [])
 
   const handleClearSelection = useCallback(() => {
+    setNearbyPinned(null)
     setSelectedPostId(null)
     setSelectedPlace(null)
     setPlaceLoading(false)
@@ -146,6 +154,8 @@ export function GuestMapSection() {
   }, [])
 
   const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
+    setNearbyDismissedKey(null)
+    setNearbyPinned(null)
     setSelectedPostId(null)
     setListingDetail(null)
     setListingLoading(false)
@@ -188,6 +198,10 @@ export function GuestMapSection() {
   }, [selectedPostId])
 
   const detailOpen = !!(selectedPost || selectedPlace || placeLoading)
+  const nearbyAnchor = useMemo(() => nearbyPanelAnchor(
+    selectedPostId, selectedPost ?? listingDetail, selectedPlace,
+  ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
+  const nearbyVisible = !!nearbyAnchor && nearbyDismissedKey !== nearbyAnchor.contextKey && detailOpen
 
   const selectedPlacePin = useMemo(() => {
     if (selectedPost) return null
@@ -200,9 +214,16 @@ export function GuestMapSection() {
   }, [selectedPost, selectedPlace])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
+    setNearbyDismissedKey(null)
     setMapFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setMapFocusToken((n) => n + 1)
   }, [])
+
+  const handleNearbyPick = (place: NearbyPlaceItem) => {
+    setNearbyPinned({ lat: place.lat, lng: place.lng, title: place.title, kindLabel: place.typeLabel, token: Date.now() })
+    setMapFocus({ lat: place.lat, lng: place.lng, zoom: MAP_FOCUS_ZOOM })
+    setMapFocusToken(value => value + 1)
+  }
 
   return (
     <section className="guest-map" id="map" aria-label="Bản đồ khu vực Thủ Đức và Quận 9">
@@ -330,6 +351,7 @@ export function GuestMapSection() {
                   onSelectPlace={handleSelectPlace}
                   onPlaceLoading={setPlaceLoading}
                   selectedPlacePin={selectedPlacePin}
+                  sharedLocationPin={nearbyVisible ? nearbyPinned : null}
                   focus={mapFocus}
                   focusToken={mapFocusToken}
                   selectionPad={GUEST_SELECTION_PAD}
@@ -355,6 +377,12 @@ export function GuestMapSection() {
                 onSaveListing={() => openGate('save')}
                 listingSaved={false}
               />
+              {nearbyAnchor && nearbyVisible ? <MapNearbyPanel
+                key={nearbyAnchor.contextKey}
+                anchor={nearbyAnchor}
+                onPick={handleNearbyPick}
+                onClose={() => { setNearbyDismissedKey(nearbyAnchor.contextKey); setNearbyPinned(null) }}
+              /> : null}
             </div>
           </div>
 

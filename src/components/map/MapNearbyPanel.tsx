@@ -45,7 +45,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick }: {
         <div><span>Khám phá quanh phòng</span><h2 id="nearby-panel-title">Ăn uống & tiện ích gần đây</h2></div>
         <button type="button" className="map-nearby-panel__close" onClick={onClose} aria-label="Đóng tiện ích gần đây">×</button>
       </header>
-      <p className="map-nearby-panel__anchor">Quanh {anchor.label}</p>
+      <p className="map-nearby-panel__anchor">Quanh {anchor.label}<br />Địa điểm từ Google Maps, không cần có tin trên Homeji.</p>
       <div className="map-nearby-panel__categories" role="group" aria-label="Loại tiện ích">
         {NEARBY_PLACE_CATEGORY_OPTIONS.map((option) => (
           <button type="button" key={option.id} aria-pressed={category === option.id}

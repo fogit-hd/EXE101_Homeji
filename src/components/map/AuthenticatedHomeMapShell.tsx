@@ -24,7 +24,8 @@ import { MapChatbot } from './MapChatbot'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapEdgeToggle } from './MapEdgeToggle'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
-import { MapNearbyPanel, type NearbyAnchor } from './MapNearbyPanel'
+import { MapNearbyPanel } from './MapNearbyPanel'
+import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
 import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
@@ -124,7 +125,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [saveBusy, setSaveBusy] = useState(false)
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
   const [nearbyToken, setNearbyToken] = useState(0)
-  const [nearbyAnchor, setNearbyAnchor] = useState<(NearbyAnchor & { contextKey: string }) | null>(null)
+  const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
   const [nearbyPinned, setNearbyPinned] = useState<{ lat: number; lng: number; title: string; kindLabel: string; token: number } | null>(null)
   /** Pin for chat "Mở trên bản đồ" — independent of selected place red pin. */
   const [sharedLocationPin, setSharedLocationPin] = useState<{
@@ -174,8 +175,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
   const nearbyContextKey = selectedPostId ?? selectedPlace?.placeId ?? ''
+  const nearbyAnchor = useMemo(() => nearbyPanelAnchor(
+    selectedPostId, selectedPost ?? listingDetail, selectedPlace,
+  ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
   const nearbyVisible = !!nearbyAnchor && nearbyAnchor.contextKey === nearbyContextKey
-    && detailOpen && !uiCollapsed && !panelOpen
+    && nearbyDismissedKey !== nearbyContextKey && detailOpen && !uiCollapsed && !panelOpen
 
   useNotificationHub({
     enabled: isAuthenticated,
@@ -396,10 +400,13 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [mapFocus])
 
   const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
+    closePanel()
+    setNearbyDismissedKey(null)
+    setNearbyPinned(null)
     setSelectedPlace(place)
     setPlaceLoading(false)
     setNearbyFocus(null)
-  }, [])
+  }, [closePanel])
 
   const handleFocusMapFromChat = useCallback(
     (loc: {
@@ -722,23 +729,21 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleSelectPost = useCallback(
     (postId: string) => {
-      const openDetail = focusedPostId === postId
+      closePanel()
+      setNearbyDismissedKey(null)
+      setNearbyPinned(null)
       setHoveredPostId(null)
       setSelectedPlace(null)
       setPlaceLoading(false)
       setNearbyFocus(null)
       focusedPostIdRef.current = postId
       setFocusedPostId(postId)
-      if (openDetail) {
-        onSelectPost(postId)
-      } else if (selectedPostId) {
-        onClearSelection()
-      }
+      onSelectPost(postId)
       if (panelSection !== 'listings') return
       const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     },
-    [focusedPostId, selectedPostId, onSelectPost, onClearSelection, panelSection],
+    [closePanel, onSelectPost, panelSection],
   )
 
   useEffect(() => {
@@ -788,10 +793,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
     closePanel()
     setNearbyPinned(null)
-    setNearbyAnchor({ ...loc, contextKey: nearbyContextKey, label: selectedPost?.title || listingDetail?.title || selectedPlace?.name || 'địa điểm đang xem' })
+    setNearbyDismissedKey(null)
     setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setNearbyToken((n) => n + 1)
-  }, [closePanel, selectedPost, listingDetail, selectedPlace, nearbyContextKey])
+  }, [closePanel])
 
   const handleNearbyPick = (place: NearbyPlaceItem) => {
     setNearbyPinned({ lat: place.lat, lng: place.lng, title: place.title, kindLabel: place.typeLabel, token: Date.now() })
@@ -951,9 +956,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
         {nearbyAnchor && nearbyVisible ? (
           <MapNearbyPanel
+            key={nearbyAnchor.contextKey}
             anchor={nearbyAnchor}
             onPick={handleNearbyPick}
-            onClose={() => { setNearbyAnchor(null); setNearbyPinned(null) }}
+            onClose={() => { setNearbyDismissedKey(nearbyContextKey); setNearbyPinned(null) }}
           />
         ) : null}
 
