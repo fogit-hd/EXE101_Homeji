@@ -33,10 +33,11 @@ focus it. Nearby discovery and its selected anchor are unchanged.
 - Device geolocation itself was not exercised in the browser; the pending-request
   cancellation and stored-focus behavior are covered by the callback tests.
 
-## Remaining overall-goal audit
+## Overall-goal audit
 
 The Admin product overview is live with supply/demand map, daily line chart, 7/30/90
 periods, advisory pricing, traffic panel and data-provenance caveats. These were
 re-observed during this continuation. Completion of the overall manager-facing UX
-goal has not yet been declared: continue auditing plain-language interpretation and
-full dashboard interactions rather than treating this camera fix as the entire goal.
+goal was not declared by this camera fix alone. The subsequent requirement-by-requirement
+manager-facing audit is recorded in `admin-product-analytics.md`, including live map
+selection, all chart metrics, period reconciliation and advisory-price safeguards.

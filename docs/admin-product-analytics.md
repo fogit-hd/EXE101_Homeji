@@ -71,3 +71,37 @@ N+1 queries but event rows are materialized for at most 90 days; high-volume dep
 should move daily and rental-level aggregation to the database. A series of queries is not
 a transactionally consistent snapshot: concurrent writes may create small reconciliation
 differences. No generic cache is added before measuring load/freshness requirements.
+
+## Final manager-facing acceptance audit — 2026-10-03
+
+The manager is a nontechnical product customer, not a rental-customer role. The
+existing Homeji `/admin` is the delivery surface; no separate analytics application
+or role expansion was introduced.
+
+| Requirement | Current authoritative evidence |
+| --- | --- |
+| Understand operations without reading code | Live Vietnamese KPI labels, median-price explanation, pin-count explanation, five-color price legend, raw evidence and sample label in the decision card; existing moderation tabs remain visible. |
+| Prioritize map and daily line chart | `AdminAnalyticsDashboard` places both in the primary grid before website traffic and the area table. Live map renders Google tiles and area markers; daily SVG renders selectable metrics. |
+| Explore areas and decide where to focus | Clicking the actual Dĩ An map pin displayed its decision card with 10 views, 7 saves and 3 viewing requests in 90 days. Clicking TP. Thủ Đức displayed 80 views, 1 save and 1 request, with a review-decrease advisory. |
+| Help consider increasing/decreasing prices | Calculator tests exercise both increase and decrease against demand and price position, and suppress recommendations without period views. Live decrease advisory says 3–5% or improve content; live Dĩ An says more data is needed. No price mutation is wired to the dashboard. |
+| Product-development signals based on stored data | Repository reads user, rental, search/view, saved-item and viewing-request sources; authenticated production renders their aggregates. Supply, price and sample limitations are documented in the UI. |
+| Consistent period and trend controls | Live 90-day line totals: 1,237 searches, 293 views, 50 saves, 25 viewing requests. View/save/request circle sums match KPI counts. Seven-day request chart has 7 points and total 0; 30-day view chart has 30 points and total 48, matching its KPI. Traffic labels follow 7/30/90 days. |
+| Website-interest metrics for the manager | Live traffic reports 6 page views and 4 browser sessions, with per-page breakdown and first-record date. These include QA activity; they are not six real customers or a historical growth claim. Earlier end-to-end ingestion QA is in `website-traffic.md`. |
+| Protect access and preserve business roles | Controller requires authentication; service tests reject a non-Admin before repository reads. Existing rental-save, appointment and review role rules are unchanged. |
+
+Build and regression verification at current HEAD: production TypeScript/Vite build
+passes; 16 targeted frontend checks pass (structural checks plus executable camera,
+nearby-anchor and traffic-helper tests); backend 105 application tests and 49 API
+integration tests pass. The opt-in real-database test is skipped in this default run,
+not counted as a pass. Browser error-log inspection returned no errors during this
+dashboard verification. Default approximately 699px responsive layout was inspected;
+earlier desktop inspection remains recorded above.
+
+Evidence: `output/verification/admin_manager_overview_final.jpg` (local, not committed).
+The build-dashboard skill guided source reconciliation and plain-language evidence;
+the dashboard remains a live in-product view, not an exported data snapshot.
+
+Acceptance covers the manager-facing operating dashboard and advisory decision support.
+It does not claim statistically validated market prices, completed-rental conversion,
+clean demo-free data, or automatic price changes. Those limitations are explicit in
+the delivered interface rather than hidden behind predictive claims.
