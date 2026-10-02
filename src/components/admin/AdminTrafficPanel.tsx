@@ -16,7 +16,12 @@ export function AdminTrafficPanel({ days }: { days: number }) {
   const current = state?.days === days ? state : null
   const data = current?.data
   const max = Math.max(1, ...(data?.trend.map(point => point.pageViews) ?? []))
-  const line = data?.trend.map((point, index) => `${index ? 'L' : 'M'}${40 + index / Math.max(1, data.trend.length - 1) * 600},${170 - point.pageViews / max * 140}`).join(' ')
+  const trackingStartDate = data?.trackingStartedAt
+    ? new Date(new Date(data.trackingStartedAt).getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10) : null
+  // Leave unmeasured history blank instead of suggesting zero visitors before launch.
+  const measuredTrend = data?.trend.map((point, index) => ({ point, index }))
+    .filter(({ point }) => trackingStartDate !== null && point.date >= trackingStartDate) ?? []
+  const line = measuredTrend.map(({ point, index }, measuredIndex) => `${measuredIndex ? 'L' : 'M'}${40 + index / Math.max(1, (data?.trend.length ?? 1) - 1) * 600},${170 - point.pageViews / max * 140}`).join(' ')
 
   return <section className="admin-analytics__panel" aria-labelledby="traffic-title">
     <div className="admin-analytics__panel-heading"><div><span className="admin-analytics__eyebrow">Website có được quan tâm không?</span><h3 id="traffic-title">Lượt ghé website</h3></div><span>{days} ngày gần nhất</span></div>
@@ -33,7 +38,7 @@ export function AdminTrafficPanel({ days }: { days: number }) {
               <line x1="40" y1="170" x2="640" y2="170" />
               <text x="30" y="34" textAnchor="end">{max}</text><text x="30" y="174" textAnchor="end">0</text>
               <path className="admin-trend-chart__line" d={line} style={{ stroke: '#7c3aed' }} />
-              {data.trend.map((point, index) => <circle key={point.date} cx={40 + index / Math.max(1, data.trend.length - 1) * 600} cy={170 - point.pageViews / max * 140} r="3" fill="#7c3aed"><title>{point.date}: {point.pageViews} lượt xem, {point.sessions} phiên</title></circle>)}
+              {measuredTrend.map(({ point, index }) => <circle key={point.date} cx={40 + index / Math.max(1, data.trend.length - 1) * 600} cy={170 - point.pageViews / max * 140} r="3" fill="#7c3aed"><title>{point.date}: {point.pageViews} lượt xem, {point.sessions} phiên</title></circle>)}
               <text x="40" y="200">{shortDate(data.trend[0]?.date)}</text><text x="640" y="200" textAnchor="end">{shortDate(data.trend.at(-1)?.date)}</text>
             </svg></div>
             <h4>Trang được xem nhiều</h4>

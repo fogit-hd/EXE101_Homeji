@@ -60,9 +60,9 @@ All price actions are controlled-experiment suggestions; no write endpoint is in
   `output/verification/nearby_food_right_panel.jpg` (local, not committed).
 - Final production deployment verified: the Admin overview displays the demo-data caveat
   and area labels include administrative suffixes from the backend area-context fix.
-- Pending: clarify whether "Admin is also a customer" means the manager-facing dashboard
-  alone or also granting rental-customer write operations (saving/appointments/reviews).
-  Existing role restrictions remain unchanged until that scope is confirmed.
+- User clarified that Admin is a nontechnical manager/customer of the product, not a
+  rental customer role. Manager-facing summaries are in scope; existing role restrictions
+  for saving/appointments/reviews remain unchanged.
 
 ## Operational constraints
 

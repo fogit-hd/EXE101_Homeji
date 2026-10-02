@@ -40,5 +40,27 @@ high-volume use. No cleanup of existing business/user data is performed.
 
 Frontend build and scoped lint pass. Behavior tests cover page sanitization and session
 renewal. Backend tests cover anonymous recording, server timestamps, invalid categories,
-role protection, Vietnam date boundaries and anonymous HTTP validation. Production
-recording, PostgreSQL aggregation and dashboard rendering still require deployment QA.
+role protection, Vietnam date boundaries and anonymous HTTP validation. A PostgreSQL
+regression check reads the actual repository and validates daily totals and bounded
+rankings. Run explicitly from the backend root with
+`HOMEJI_TEST_TRAFFIC_DATABASE=1 dotnet test --filter FullyQualifiedName~WebsiteTrafficDatabaseTests`
+(set the environment variable using the current shell's syntax). Otherwise this test
+is skipped to avoid silently depending on a remote database.
+
+Deployment QA caught two provider translation issues: converting a DateTimeOffset
+group key to DateTime, and sorting a constructor-projected record. Daily buckets now
+use parameterized PostgreSQL timezone conversion; ranking stays server-side before
+mapping the bounded result to DTOs. All 155 backend tests pass with the database check enabled.
+
+Production recording returned HTTP 204 both directly and through the frontend proxy.
+QA deliberately submitted three unique test page views across two sessions (two
+`other`, one `home`), including a duplicate delivery of one event. These are test
+traffic, not evidence of genuine customer interest. An actual guest browser visiting
+the local production build against the production API added two further test views
+(`home`, `login`) in one session. Production Admin showed five views, three sessions,
+and category counts 2/2/1: duplicate delivery did not add a view, and same-session
+navigation did not add a session. All 7/30/90-day controls returned the same correctly
+bounded totals, with Vietnam date buckets. Admin navigation remained excluded.
+
+The chart leaves dates before the first recorded event blank rather than presenting
+unmeasured history as zero traffic. Final frontend rendering QA is pending this update.
