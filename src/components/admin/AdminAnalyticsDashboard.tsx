@@ -69,7 +69,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
     {
       label: 'Giá thuê trung vị',
       value: formatPrice(kpis.medianMonthlyPrice),
-      detail: `${formatPrice(kpis.averagePricePerSquareMeter)}/m²`,
+      detail: `Mức giá ở giữa các tin · Bình quân ${formatPrice(kpis.averagePricePerSquareMeter)}/m²`,
     },
     {
       label: 'Nhu cầu tìm phòng',
@@ -122,8 +122,6 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
         ))}
       </div>
 
-      <AdminTrafficPanel days={days} />
-
       <div className="admin-analytics__primary-grid">
         <section className="admin-analytics__panel admin-analytics__map-panel">
           <div className="admin-analytics__panel-heading">
@@ -138,6 +136,10 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
             selectedAreaName={selectedArea?.areaName ?? null}
             onSelectArea={setSelectedAreaName}
           />
+          <p className="admin-analytics__legend">Nhấn ghim để xem khu vực. Số trên ghim là số tin đang hoạt động, không phải số khách.</p>
+          <div className="admin-trend-metrics" aria-label="Chú giải tín hiệu giá">
+            {Object.entries(signalLabels).map(([signal, label]) => <span key={signal} className={`admin-price-signal is-${signal}`}>{label}</span>)}
+          </div>
           {selectedArea ? <AreaDecisionCard area={selectedArea} /> : (
             <div className="admin-analytics__empty">Chưa có tin đang hoạt động để phân tích theo khu vực.</div>
           )}
@@ -165,6 +167,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
             ))}
           </div>
           <AdminTrendChart points={data.trend} metric={trendMetric} />
+          <p className="admin-analytics__legend">Đường cao hơn nghĩa là nhiều hoạt động hơn trong ngày, chưa có nghĩa là nhiều người thuê thành công. Ngày hôm nay vẫn đang tích lũy.</p>
           <div className="admin-analytics__funnel" aria-label="Số hoạt động trong kỳ, không phải phễu chuyển đổi">
             <FunnelStep label="Xem tin" value={kpis.listingViews} />
             <FunnelStep label="Lưu phòng" value={kpis.saves} />
@@ -172,6 +175,8 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
           </div>
         </section>
       </div>
+
+      <AdminTrafficPanel days={days} />
 
       <section className="admin-analytics__panel">
         <div className="admin-analytics__panel-heading">
@@ -236,6 +241,8 @@ function AreaDecisionCard({ area }: { area: AdminAreaInsight }) {
         <span className={`admin-price-signal is-${area.priceSignal}`}>{signalLabels[area.priceSignal]}</span>
         <h4>{area.areaName}</h4>
         <p>{area.recommendation}</p>
+        <p>{confidenceLabels[area.confidence]} · Dựa trên {area.totalViews.toLocaleString('vi-VN')} lượt xem tin, {area.totalSaves.toLocaleString('vi-VN')} lượt lưu và {area.viewingRequests.toLocaleString('vi-VN')} yêu cầu xem trong kỳ.</p>
+        <p className="admin-analytics__legend">Chỉ số cầu so mức quan tâm với toàn hệ thống: 100 là mốc tham chiếu. Không phải số khách hay xác suất thuê được. Gợi ý giá cần chủ nhà xem xét, không tự áp dụng.</p>
       </div>
       <dl>
         <div><dt>Chỉ số cầu</dt><dd>{area.demandIndex}</dd></div>

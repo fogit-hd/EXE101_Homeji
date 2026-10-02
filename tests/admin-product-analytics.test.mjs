@@ -38,3 +38,13 @@ test('price recommendations remain advisory and never call a price mutation API'
   assert.doesNotMatch(dashboardSource, /update.*price|patch.*price|set.*price/i)
   assert.match(dashboardSource, /Tín hiệu giá chỉ dùng để thử nghiệm có kiểm soát/)
 })
+
+test('map and daily trend remain before traffic details, with plain-language evidence', () => {
+  assert.ok(dashboardSource.indexOf('<AdminDemandMap') < dashboardSource.indexOf('<AdminTrafficPanel'))
+  assert.ok(dashboardSource.indexOf('<AdminTrendChart') < dashboardSource.indexOf('<AdminTrafficPanel'))
+  assert.match(dashboardSource, /Số trên ghim là số tin đang hoạt động, không phải số khách/)
+  assert.match(dashboardSource, /area\.totalViews/)
+  assert.match(dashboardSource, /area\.totalSaves/)
+  assert.match(dashboardSource, /100 là mốc tham chiếu/)
+  assert.match(dashboardSource, /aria-label="Chú giải tín hiệu giá"/)
+})
