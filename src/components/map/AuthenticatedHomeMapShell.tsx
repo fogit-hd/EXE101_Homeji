@@ -24,6 +24,8 @@ import { MapChatbot } from './MapChatbot'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapEdgeToggle } from './MapEdgeToggle'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
+import { MapNearbyPanel, type NearbyAnchor } from './MapNearbyPanel'
+import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
 import { marketplacePostsToSellerPins } from '../../lib/marketplaceSellerPins'
@@ -122,6 +124,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [saveBusy, setSaveBusy] = useState(false)
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
   const [nearbyToken, setNearbyToken] = useState(0)
+  const [nearbyAnchor, setNearbyAnchor] = useState<(NearbyAnchor & { contextKey: string }) | null>(null)
+  const [nearbyPinned, setNearbyPinned] = useState<{ lat: number; lng: number; title: string; kindLabel: string; token: number } | null>(null)
   /** Pin for chat "Mở trên bản đồ" — independent of selected place red pin. */
   const [sharedLocationPin, setSharedLocationPin] = useState<{
     lat: number
@@ -169,6 +173,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const listingFetchSeq = useRef(0)
 
   const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
+  const nearbyContextKey = selectedPostId ?? selectedPlace?.placeId ?? ''
+  const nearbyVisible = !!nearbyAnchor && nearbyAnchor.contextKey === nearbyContextKey
+    && detailOpen && !uiCollapsed && !panelOpen
 
   useNotificationHub({
     enabled: isAuthenticated,
@@ -779,9 +786,18 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [panelOpen, panelSection, posts, selectedPostId, onClearSelection])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
+    closePanel()
+    setNearbyPinned(null)
+    setNearbyAnchor({ ...loc, contextKey: nearbyContextKey, label: selectedPost?.title || listingDetail?.title || selectedPlace?.name || 'địa điểm đang xem' })
     setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setNearbyToken((n) => n + 1)
-  }, [])
+  }, [closePanel, selectedPost, listingDetail, selectedPlace, nearbyContextKey])
+
+  const handleNearbyPick = (place: NearbyPlaceItem) => {
+    setNearbyPinned({ lat: place.lat, lng: place.lng, title: place.title, kindLabel: place.typeLabel, token: Date.now() })
+    setNearbyFocus({ lat: place.lat, lng: place.lng, zoom: MAP_FOCUS_ZOOM })
+    setNearbyToken((value) => value + 1)
+  }
 
   const handleSaveListing = useCallback(async () => {
     if (!selectedPostId || !isAuthenticated || saveBusy) return
@@ -891,7 +907,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             onSelectPlace={handleSelectPlace}
             onPlaceLoading={setPlaceLoading}
             selectedPlacePin={selectedPlacePin}
-            sharedLocationPin={sharedLocationPin}
+            sharedLocationPin={(nearbyVisible ? nearbyPinned : null) ?? sharedLocationPin}
             marketplacePins={marketplacePins}
             selectedMarketplaceId={selectedMarketplaceId}
             onSelectMarketplace={handleSelectMarketplace}
@@ -932,6 +948,14 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           }}
           onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
         />
+
+        {nearbyAnchor && nearbyVisible ? (
+          <MapNearbyPanel
+            anchor={nearbyAnchor}
+            onPick={handleNearbyPick}
+            onClose={() => { setNearbyAnchor(null); setNearbyPinned(null) }}
+          />
+        ) : null}
 
         <MapEdgeToggle
           className={`home-map-master-toggle${uiCollapsed ? ' is-collapsed' : ''}${
@@ -1052,7 +1076,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         onOpenSection={handleOpenAppSection}
         dismissSignal={homieDismiss}
         onOpenChange={handleHomieOpenChange}
-        avoidRightContent={panelOpen && panelSection === 'marketplace'}
+        avoidRightContent={nearbyVisible || (panelOpen && panelSection === 'marketplace')}
         hideFab={
           (detailOpen && !uiCollapsed) ||
           marketplaceCartOpen ||

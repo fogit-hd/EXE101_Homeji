@@ -1,0 +1,37 @@
+.map-nearby-panel {
+  position: absolute;
+  right: 14px;
+  top: 82px;
+  bottom: 20px;
+  z-index: 10004;
+  width: min(360px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #f4bc72;
+  border-radius: 18px;
+  background: #fffaf2;
+  color: #583716;
+  box-shadow: 0 12px 40px #713f1229;
+}
+.map-nearby-panel header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px; background: #ffedd5; }
+.map-nearby-panel header span { font-size: 12px; color: #9a3412; }
+.map-nearby-panel h2 { margin: 6px 0 0; font-size: 18px; line-height: 1.4; }
+.map-nearby-panel button { cursor: pointer; font: inherit; }
+.map-nearby-panel__close { border: 0; background: transparent; color: #9a3412; font-size: 28px !important; min-width: 32px; }
+.map-nearby-panel__anchor { margin: 0; padding: 14px 20px; font-size: 13px; line-height: 1.5; }
+.map-nearby-panel__categories { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 14px; }
+.map-nearby-panel__categories button { padding: 8px 10px; border: 1px solid #fed7aa; border-radius: 20px; color: #9a3412; background: white; font-size: 12px; }
+.map-nearby-panel__categories button[aria-pressed=true] { color: white; background: #c2410c; border-color: #c2410c; }
+.map-nearby-panel__results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 16px; }
+.map-nearby-panel__results article { padding: 16px; margin-bottom: 10px; border: 1px solid #fed7aa; background: white; border-radius: 14px; }
+.map-nearby-panel h3 { margin: 0 0 8px; font-size: 15px; padding-right: 56px; }
+.map-nearby-panel__distance { float: right; color: #9a3412; font-size: 12px; font-weight: 650; }
+.map-nearby-panel__results p { font-size: 13px; line-height: 1.6; }
+.map-nearby-panel__results article > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.map-nearby-panel__results button { border: 1px solid #fed7aa; border-radius: 8px; color: #9a3412; padding: 8px; background: #fff7ed; font-size: 12px; }
+.map-nearby-panel a { color: #9a3412; font-size: 12px; }
+.map-nearby-panel footer { padding: 12px 18px; border-top: 1px solid #fed7aa; background: #ffedd5; font-size: 11px; line-height: 1.6; }
+@media (max-width: 900px) {
+  .map-nearby-panel { position: fixed; top: auto; right: 8px; left: 8px; bottom: 8px; width: auto; max-height: 70dvh; }
+}

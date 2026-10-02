@@ -120,9 +120,10 @@ function distanceMeters(
 export async function searchNearbyPlaces(
   anchor: google.maps.LatLngLiteral,
   category: NearbyPlaceCategory,
-  options?: { limit?: number },
+  options?: { limit?: number; throwOnError?: boolean },
 ): Promise<NearbyPlaceItem[]> {
-  if (!Number.isFinite(anchor.lat) || !Number.isFinite(anchor.lng)) return []
+  if (!Number.isFinite(anchor.lat) || !Number.isFinite(anchor.lng)
+    || Math.abs(anchor.lat) > 90 || Math.abs(anchor.lng) > 180) return []
 
   const categoryOption = NEARBY_PLACE_CATEGORY_OPTIONS.find((item) => item.id === category)
   if (!categoryOption) return []
@@ -139,7 +140,10 @@ export async function searchNearbyPlaces(
     }>
   }
 
-  if (typeof Place.searchNearby !== 'function') return []
+  if (typeof Place.searchNearby !== 'function') {
+    if (options?.throwOnError) throw new Error('Google Places nearby search is unavailable')
+    return []
+  }
 
   try {
     const { places } = await Place.searchNearby({
@@ -191,7 +195,8 @@ export async function searchNearbyPlaces(
       items,
     })
     return [...items]
-  } catch {
+  } catch (error) {
+    if (options?.throwOnError) throw error
     return []
   }
 }
