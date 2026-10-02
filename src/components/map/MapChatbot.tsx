@@ -13,13 +13,14 @@ import {
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
+import { requestMarketplaceCart, requestMarketplaceTab } from '../../lib/marketplaceNavigation'
 import { ChatbotMessageContent } from './ChatbotMessageContent'
 import type { MapAppSection } from './MapAppPanel'
 import './MapChatbot.css'
 
-const HOMIE_TITLE = 'Homie'
-const HOMIE_GREETING =
-  'Chào bạn nha! Mình là Homie. Bạn có thể hỏi mình cách dùng bất kỳ tính năng nào trong Homeji.'
+const HOMEJI_TITLE = 'Homeji'
+const HOMEJI_GREETING =
+  'Chào bạn! Mình là trợ lý Homeji. Mình có thể tìm phòng, mở đúng tính năng và hỗ trợ bạn chọn đồ ăn an toàn.'
 /** Synced from video-src/AI Chat loading.lottie */
 const AI_CHAT_LOADING_SRC = '/lottie/ai-chat-loading.lottie'
 
@@ -27,7 +28,7 @@ const FAB_SIZE = 58
 const FAB_GAP = 12
 const VIEW_MARGIN = 12
 const DRAG_THRESHOLD = 6
-const FAB_POS_KEY = 'homeji.homie.fabPos'
+const FAB_POS_KEY = 'homeji.chatbot.fabPos'
 const SHEET_MEDIA = '(max-width: 900px)'
 const ACTION_SECTIONS = new Set<MapAppSection>([
   'listings',
@@ -50,10 +51,10 @@ function isSheetViewport(): boolean {
 
 type Props = {
   onSearchUpdate?: (update: AiHighlightResponse) => void
-  /** Tăng giá trị để đóng Homie từ bên ngoài (mobile overlay exclusivity). */
+  /** Tăng giá trị để đóng Homeji từ bên ngoài (mobile overlay exclusivity). */
   dismissSignal?: number
   onOpenChange?: (open: boolean) => void
-  /** Ẩn nút Homie khi overlay mobile đang mở (chat, tab, v.v.). */
+  /** Ẩn nút Homeji khi overlay mobile đang mở (chat, tab, v.v.). */
   hideFab?: boolean
   /** Tự né sang mép trái khi một panel rộng đang chiếm phần nội dung bên phải. */
   avoidRightContent?: boolean
@@ -76,6 +77,17 @@ type PanelLayout = {
   width: number
   maxHeight: number
   side: PanelSide
+}
+
+function HomejiAvatar({ inline = false }: { inline?: boolean }) {
+  return (
+    <span
+      className={`map-chatbot__avatar${inline ? ' map-chatbot__avatar--inline' : ''}`}
+      aria-hidden
+    >
+      <img src="/brand/homeji-logo.png" alt="" draggable={false} />
+    </span>
+  )
 }
 
 function defaultFabPos(): FabPos {
@@ -280,8 +292,8 @@ export function MapChatbot({
         if (!cancelled) {
           setConfig({
             enabled: true,
-            title: HOMIE_TITLE,
-            greeting: HOMIE_GREETING,
+            title: HOMEJI_TITLE,
+            greeting: HOMEJI_GREETING,
             suggestedPrompts: [
               'Phòng dưới 4 triệu gần FPT',
               'Mua đồ ăn trên Homeji như thế nào?',
@@ -356,7 +368,7 @@ export function MapChatbot({
   }, [dismissSignal])
 
   useEffect(() => {
-    // Keep UI consistent: when parent requests hiding Homie controls,
+    // Keep UI consistent: when parent requests hiding Homeji controls,
     // close any currently open chat panel as well.
     if (!hideFab) return
     setOpen(false)
@@ -485,7 +497,7 @@ export function MapChatbot({
       if (reply.searchUpdate) onSearchUpdate?.(reply.searchUpdate)
     } catch (e) {
       setMessages((prev) => prev.filter((m) => m.id !== pendingId))
-      setError(getErrorMessage(e, 'Homie tạm thời không phản hồi'))
+      setError(getErrorMessage(e, 'Homeji tạm thời không phản hồi'))
       setSuggestionsLeaving(false)
     } finally {
       setBusy(false)
@@ -495,9 +507,16 @@ export function MapChatbot({
 
   const handleNavigationAction = (action: ChatbotNavigationAction) => {
     if (action.kind === ChatbotNavigationActionKind.OpenSection) {
-      if (!ACTION_SECTIONS.has(action.target as MapAppSection)) return
+      const [section, view] = action.target.split(':', 2)
+      if (!ACTION_SECTIONS.has(section as MapAppSection)) return
+
+      if (section === 'marketplace') {
+        if (view === 'food' || view === 'cart') requestMarketplaceTab('food')
+        if (view === 'cart') requestMarketplaceCart()
+      }
+
       setOpen(false)
-      onOpenSection?.(action.target as MapAppSection)
+      onOpenSection?.(section as MapAppSection)
       return
     }
 
@@ -513,10 +532,8 @@ export function MapChatbot({
         {showGreeting ? (
           <div className="map-chatbot__greeting map-motion-fade-up">
             <div className="map-chatbot__greeting-bubble" role="status">
-              <span className="map-chatbot__avatar" aria-hidden>
-                H
-              </span>
-              <p>{HOMIE_GREETING}</p>
+              <HomejiAvatar />
+              <p>{config?.greeting ?? HOMEJI_GREETING}</p>
             </div>
             <div
               className={`map-chatbot__suggestions${suggestionsLeaving ? ' is-leaving' : ''}`}
@@ -551,9 +568,7 @@ export function MapChatbot({
                 .join(' ')}
             >
               {!isUser ? (
-                <span className="map-chatbot__avatar map-chatbot__avatar--inline" aria-hidden>
-                  H
-                </span>
+                <HomejiAvatar inline />
               ) : null}
               <div className="map-chatbot__bubble">
                 {isUser ? (
@@ -586,11 +601,9 @@ export function MapChatbot({
 
         {showTyping ? (
           <div className="map-chatbot__msg is-assistant is-typing" aria-live="polite">
-            <span className="map-chatbot__avatar map-chatbot__avatar--inline" aria-hidden>
-              H
-            </span>
+            <HomejiAvatar inline />
             <div className="map-chatbot__bubble map-chatbot__bubble--typing">
-              <span className="map-chatbot__typing" aria-label="Homie đang trả lời">
+              <span className="map-chatbot__typing" aria-label="Homeji đang trả lời">
                 <DotLottieReact
                   src={AI_CHAT_LOADING_SRC}
                   loop
@@ -618,9 +631,9 @@ export function MapChatbot({
           ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Đặt câu hỏi cho homie ngay"
+          placeholder="Hỏi Homeji ngay"
           disabled={busy}
-          aria-label="Nhập tin nhắn cho Homie"
+          aria-label="Nhập tin nhắn cho Homeji"
         />
         <button
           type="submit"
@@ -653,23 +666,21 @@ export function MapChatbot({
         aria-hidden={!panelVisible}
         inert={!panelVisible}
         role="dialog"
-        aria-label={HOMIE_TITLE}
+        aria-label={HOMEJI_TITLE}
       >
         <header className="map-chatbot__head">
           <div className="map-chatbot__brand">
-            <span className="map-chatbot__avatar" aria-hidden>
-              H
-            </span>
+            <HomejiAvatar />
             <div>
-              <strong>{HOMIE_TITLE}</strong>
-              <p>Đồng bộ tìm kiếm trên bản đồ</p>
+              <strong>{HOMEJI_TITLE}</strong>
+              <p>Trợ lý thông minh trong ứng dụng</p>
             </div>
           </div>
           <button
             type="button"
             className="map-chatbot__close"
             onClick={() => setOpen(false)}
-            aria-label="Đóng Homie"
+            aria-label="Đóng Homeji"
           >
             ×
           </button>
@@ -721,8 +732,8 @@ export function MapChatbot({
           top: fabPos.y,
         }}
         aria-expanded={open}
-        aria-label={open ? 'Đóng Homie' : 'Mở Homie — kéo để di chuyển'}
-        title={open ? 'Đóng Homie' : 'Homie — kéo để di chuyển'}
+        aria-label={open ? 'Đóng Homeji' : 'Mở Homeji — kéo để di chuyển'}
+        title={open ? 'Đóng Homeji' : 'Homeji — kéo để di chuyển'}
         onPointerDown={onFabPointerDown}
         onPointerMove={onFabPointerMove}
         onPointerUp={endFabPointer}

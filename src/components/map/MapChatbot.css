@@ -300,6 +300,13 @@
   font-weight: 800;
   letter-spacing: 0.02em;
   box-shadow: 0 2px 8px rgba(217, 166, 46, 0.28);
+  overflow: hidden;
+}
+
+.map-chatbot__avatar img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
 }
 
 .map-chatbot__avatar--inline {

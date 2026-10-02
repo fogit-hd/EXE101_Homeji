@@ -809,6 +809,103 @@
   margin: 12px auto 0;
 }
 
+.food-checkout-confirmation-backdrop {
+  position: fixed;
+  z-index: 13000;
+  inset: 0;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgba(13, 31, 24, 0.58);
+  backdrop-filter: blur(5px);
+  animation: food-cart-backdrop-in 180ms ease-out;
+}
+
+.food-checkout-confirmation {
+  display: grid;
+  width: min(460px, 100%);
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--grab-green, #00b14f) 28%, var(--border));
+  border-radius: 20px;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+  animation: food-checkout-confirmation-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.food-checkout-confirmation > img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.food-checkout-confirmation > div:nth-child(2) span {
+  color: var(--grab-green, #00b14f);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.food-checkout-confirmation h2 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+}
+
+.food-checkout-confirmation > p,
+.food-checkout-confirmation__summary,
+.food-checkout-confirmation__actions {
+  grid-column: 1 / -1;
+}
+
+.food-checkout-confirmation > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.food-checkout-confirmation > p strong {
+  color: var(--text-heading);
+}
+
+.food-checkout-confirmation__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--grab-green, #00b14f) 9%, var(--surface-input));
+}
+
+.food-checkout-confirmation__summary span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.food-checkout-confirmation__summary strong {
+  color: var(--grab-green, #00b14f);
+  font-size: 1.2rem;
+}
+
+.food-checkout-confirmation__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.food-checkout-confirmation__actions .btn {
+  min-height: 44px;
+}
+
+@keyframes food-checkout-confirmation-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @keyframes food-cart-enter {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -827,7 +924,9 @@
 @media (prefers-reduced-motion: reduce) {
   .food-cart-sticky,
   .food-cart-backdrop,
-  .food-cart-drawer {
+  .food-cart-drawer,
+  .food-checkout-confirmation-backdrop,
+  .food-checkout-confirmation {
     animation: none;
   }
 }

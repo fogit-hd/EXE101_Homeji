@@ -49,7 +49,9 @@ import { getErrorMessage } from '../lib/errors'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
 import {
+  subscribeToMarketplaceCartRequests,
   subscribeToMarketplaceTabRequests,
+  takeMarketplaceCartRequest,
   takeMarketplaceTabRequest,
   type MarketplaceTab,
 } from '../lib/marketplaceNavigation'
@@ -264,7 +266,8 @@ export function MarketplacePage({
   const [presetImageUrl, setPresetImageUrl] = useState('')
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
-  const [cartOpen, setCartOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(takeMarketplaceCartRequest)
+  const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [orderView, setOrderView] = useState<OrderView | null>(null)
@@ -282,6 +285,14 @@ export function MarketplacePage({
   const [withdrawAccountHolder, setWithdrawAccountHolder] = useState('')
 
   useEffect(() => subscribeToMarketplaceTabRequests(setTab), [])
+
+  useEffect(
+    () => subscribeToMarketplaceCartRequests(() => {
+      setTab('food')
+      setCartOpen(true)
+    }),
+    [],
+  )
 
   useEffect(() => {
     if (!myUserId) return
@@ -308,11 +319,16 @@ export function MarketplacePage({
   useEffect(() => {
     if (!cartOpen) return
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !cartBusy) setCartOpen(false)
+      if (event.key !== 'Escape' || cartBusy) return
+      if (checkoutConfirmationOpen) {
+        setCheckoutConfirmationOpen(false)
+        return
+      }
+      setCartOpen(false)
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [cartBusy, cartOpen])
+  }, [cartBusy, cartOpen, checkoutConfirmationOpen])
 
   useEffect(() => {
     onCartOpenChange?.(cartOpen)
@@ -658,7 +674,8 @@ export function MarketplacePage({
   }
 
   const checkoutCart = async () => {
-    if (cartItems.length === 0 || cartBusy) return
+    if (!checkoutConfirmationOpen || cartItems.length === 0 || cartBusy) return
+    setCheckoutConfirmationOpen(false)
     setCartBusy(true)
     setActionError('')
     try {
@@ -2043,9 +2060,9 @@ export function MarketplacePage({
                 type="button"
                 className="btn btn-primary"
                 disabled={cartBusy || cartItems.length === 0 || cartTotal < MINIMUM_FOOD_CART_TOTAL}
-                onClick={() => void checkoutCart()}
+                onClick={() => setCheckoutConfirmationOpen(true)}
               >
-                {cartBusy ? 'Đang đặt món…' : `Đặt món · ${formatPrice(cartTotal)}`}
+                {cartBusy ? 'Đang đặt món…' : `Kiểm tra và đặt món · ${formatPrice(cartTotal)}`}
               </button>
               {cartItems.length > 0 ? (
                 <button
@@ -2058,6 +2075,60 @@ export function MarketplacePage({
                 </button>
               ) : null}
             </footer>
+          </section>
+        </div>
+      ), document.body) : null}
+
+      {checkoutConfirmationOpen ? createPortal((
+        <div
+          className="food-checkout-confirmation-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !cartBusy) {
+              setCheckoutConfirmationOpen(false)
+            }
+          }}
+        >
+          <section
+            className="food-checkout-confirmation"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="food-checkout-confirmation-title"
+            aria-describedby="food-checkout-confirmation-description"
+          >
+            <img src="/brand/homeji-logo.png" alt="" aria-hidden="true" />
+            <div>
+              <span>Xác nhận giao dịch</span>
+              <h2 id="food-checkout-confirmation-title">Bạn có chắc muốn đặt món?</h2>
+            </div>
+            <p id="food-checkout-confirmation-description">
+              Homeji sẽ tạo đơn gồm <strong>{cartItemCount} món</strong> từ{' '}
+              <strong>{cartItems[0]?.sellerName || 'Bếp Homeji'}</strong> với tổng tiền{' '}
+              <strong>{formatPrice(cartTotal)}</strong>. Vui lòng kiểm tra kỹ món và số lượng trước
+              khi xác nhận.
+            </p>
+            <div className="food-checkout-confirmation__summary">
+              <span>Tổng thanh toán</span>
+              <strong>{formatPrice(cartTotal)}</strong>
+            </div>
+            <div className="food-checkout-confirmation__actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={cartBusy}
+                onClick={() => setCheckoutConfirmationOpen(false)}
+              >
+                Quay lại kiểm tra
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={cartBusy}
+                onClick={() => void checkoutCart()}
+              >
+                {cartBusy ? 'Đang tạo đơn…' : `Xác nhận đặt món · ${formatPrice(cartTotal)}`}
+              </button>
+            </div>
           </section>
         </div>
       ), document.body) : null}
