@@ -2,6 +2,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { WebsiteTrafficTracker } from './components/WebsiteTrafficTracker'
 import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
@@ -20,6 +21,7 @@ import { ExplorePage } from './pages/ExplorePage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
+import { PrivacyPolicyPage, TermsOfServicePage } from './pages/LegalPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { AuthCallbackPage, ResetPasswordPage } from './pages/ResetPasswordPage'
 import './components/layout/footer.css'
@@ -40,6 +42,8 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
 
         {/* Listing detail lives in the map place-info panel — no standalone page. */}
         <Route path="/posts/:postId" element={<MapHomePostRedirect />} />
@@ -89,6 +93,7 @@ function App() {
           <GoogleOAuthRoot>
             <AuthProvider>
             <BrowserRouter>
+              <WebsiteTrafficTracker />
               <SearchProvider>
               <ToastProvider>
               <AuthModalProvider>

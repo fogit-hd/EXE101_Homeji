@@ -3,14 +3,15 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const appSource = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8')
+const clientSource = readFileSync(new URL('../src/lib/googleOAuthClient.ts', import.meta.url), 'utf8')
 const apiSource = readFileSync(new URL('../src/api/index.ts', import.meta.url), 'utf8')
 const renderBlueprint = readFileSync(new URL('../render.yaml', import.meta.url), 'utf8')
 
 test('Google Identity Services receives an environment value with a production fallback', () => {
-  assert.match(appSource, /import\.meta\.env\.VITE_GOOGLE_CLIENT_ID\?\.trim\(\)/)
-  assert.match(appSource, /GoogleOAuthProvider clientId=\{googleClientId\}/)
+  assert.match(clientSource, /import\.meta\.env\.VITE_GOOGLE_CLIENT_ID\?\.trim\(\)/)
+  assert.match(appSource, /GoogleOAuthProvider clientId=\{googleOAuthClientId\}/)
   assert.match(
-    appSource,
+    clientSource,
     /675096303664-kv4mvsd8rqldf2dicodtb7to8gpk1ipp\.apps\.googleusercontent\.com/,
   )
 })

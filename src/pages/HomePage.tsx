@@ -212,6 +212,24 @@ function HomePageComponent() {
     address: string
   } | null>(null)
   const [mapPlaceFocusToken, setMapPlaceFocusToken] = useState(0)
+  const searchPlaceId = searchParams.get('placeId')
+  const searchPlaceName = searchParams.get('placeName') ?? ''
+  useEffect(() => {
+    if (!searchPlaceId || !isExploreView) return
+    let cancelled = false
+    void resolvePlaceCoordinates(searchPlaceId).then((resolved) => {
+      if (cancelled) return
+      if (!resolved) { setError('Không thể xác định vị trí địa điểm. Vui lòng thử lại.'); return }
+      locateRequestRef.current += 1
+      setLocating(false)
+      setSelectedPostId(null)
+      commitMapFocus({ lat: resolved.lat, lng: resolved.lng, zoom: MAP_FOCUS_ZOOM })
+      setMapPlaceFocus({ placeId: searchPlaceId, name: searchPlaceName || resolved.name,
+        address: resolved.address, lat: resolved.lat, lng: resolved.lng })
+      setMapPlaceFocusToken((n) => n + 1)
+    }).catch(() => { if (!cancelled) setError('Không thể tải địa điểm từ Google Maps.') })
+    return () => { cancelled = true }
+  }, [searchPlaceId, searchPlaceName, isExploreView, commitMapFocus])
 
   const pinFilterResults = useCallback(() => {
     // Prefer fitting pins over a prior area focus / user pan.
@@ -229,6 +247,13 @@ function HomePageComponent() {
   const userLocationRef = useRef(userLocation)
   userLocationRef.current = userLocation
   disruptedRef.current = disrupted
+  const cancelLocationFocus = useCallback(() => {
+    // A newer selection supersedes stored focus and late geolocation responses.
+    locateRequestRef.current += 1
+    setLocating(false)
+    mapFocusRef.current = null
+    setMapFocusToken((n) => n + 1)
+  }, [])
   const filtersRef = useRef<{
     keyword: string
     minPrice: string
@@ -405,7 +430,7 @@ function HomePageComponent() {
     const finish = (ids: string[]) => {
       setSelectedPostId((prev) => (prev && ids.includes(prev) ? prev : null))
       setDisrupted(false)
-      if (exploreFitKey.current !== fitKey) {
+      if (!searchParams.get('placeId') && exploreFitKey.current !== fitKey) {
         exploreFitKey.current = fitKey
         pinFilterResults()
       }
@@ -574,9 +599,9 @@ function HomePageComponent() {
   }, [isExploreView, searchParams, applyAreaFilters])
 
   const handleSelectPost = useCallback((postId: string) => {
+    cancelLocationFocus()
     setSelectedPostId(postId)
-    setMapFocusToken((n) => n + 1)
-  }, [])
+  }, [cancelLocationFocus])
 
   const handleOmniboxPick = useCallback(
     (item: MapOmniboxSuggestion) => {
@@ -706,6 +731,7 @@ function HomePageComponent() {
   )
 
   const handleClearSelection = useCallback(() => {
+    cancelLocationFocus()
     setSelectedPostId((prev) => (prev == null ? prev : null))
     if (urlPostId) {
       setSearchParams(
@@ -718,7 +744,7 @@ function HomePageComponent() {
         { replace: true },
       )
     }
-  }, [setSearchParams, urlPostId])
+  }, [cancelLocationFocus, setSearchParams, urlPostId])
 
   const handleDetailLabelChange = useCallback((label: string | null) => {
     // Open detail → sync title into omnibox; close (map click / X) → empty ready-to-type.

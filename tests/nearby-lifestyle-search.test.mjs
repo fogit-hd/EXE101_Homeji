@@ -12,11 +12,11 @@ const placeSearchSource = await readFile(
   'utf8',
 )
 const omniboxSource = await readFile(
-  new URL('../src/components/map/MapOmnibox.tsx', import.meta.url),
+  new URL('../src/components/shell/ContextualSearch.tsx', import.meta.url),
   'utf8',
 )
 const homePageSource = await readFile(
-  new URL('../src/pages/HomePage.tsx', import.meta.url),
+  new URL('../src/components/map/AuthenticatedHomeMapShell.tsx', import.meta.url),
   'utf8',
 )
 
@@ -43,8 +43,9 @@ test('omnibox offers useful nearby categories around the rental search anchor', 
 test('nearby search anchor follows selected rentals and searched map places', () => {
   assert.match(homePageSource, /const nearbyAnchor = useMemo/)
   assert.match(homePageSource, /selectedPost/)
-  assert.match(homePageSource, /mapPlaceFocus/)
-  assert.match(homePageSource, /nearbyAnchor=\{nearbyAnchor\}/)
+  assert.match(homePageSource, /selectedPlace/)
+  assert.match(homePageSource, /anchor=\{nearbyAnchor\}/)
+  assert.match(homePageSource, /setNearbyAnchor\(!marketMode && isMapMode \? nearbyAnchor : null\)/)
 })
 
 test('a rental pin immediately supplies its own location, never stale detail data', () => {

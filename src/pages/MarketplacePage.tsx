@@ -318,6 +318,7 @@ export function MarketplacePage({
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
   const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
+  const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
   const [cartNote, setCartNote] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
@@ -870,6 +871,7 @@ export function MarketplacePage({
   }
 
   const checkoutCart = async () => {
+    if (!checkoutConfirmationOpen || tab !== 'food') return
     if (cartItems.length === 0 || cartBusy) return
     setCartBusy(true)
     setActionError('')
@@ -893,6 +895,7 @@ export function MarketplacePage({
       setCartItems([])
       setCartNote('')
       setCartOpen(false)
+      setCheckoutConfirmationOpen(false)
       await rememberCreatedPurchase(createdOrder.id, `Đã đặt ${itemCount} món. Chờ bếp xác nhận.`)
       await reload()
     } catch (err) {
@@ -1387,6 +1390,26 @@ export function MarketplacePage({
         </div>
       ) : null}
 
+      {tab === 'food' && checkoutConfirmationOpen ? (
+        <div className="food-checkout-confirmation-backdrop">
+        <div className="food-checkout-confirmation" role="alertdialog" aria-modal="true" aria-labelledby="checkout-confirmation-title" onKeyDown={(event) => {
+          if (event.key === 'Escape' && !cartBusy) setCheckoutConfirmationOpen(false)
+          if (event.key === 'Tab') {
+            const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
+            const first = buttons[0], last = buttons.at(-1)
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+            if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+          }
+        }}>
+          <h2 id="checkout-confirmation-title">Xác nhận đặt món</h2>
+          <p>{cartItemCount} món · Tổng cộng {formatPrice(cartTotal)}</p>
+          <p>Nhận tại {cartItems[0]?.sellerAddress || 'bếp Homeji'}. Chỉ xác nhận khi đã kiểm tra món và tổng tiền.</p>
+          <button type="button" className="btn btn-secondary" autoFocus disabled={cartBusy} onClick={() => setCheckoutConfirmationOpen(false)}>Quay lại giỏ</button>
+          <button type="button" className="btn btn-primary" disabled={cartBusy || cartItems.length === 0} onClick={() => void checkoutCart()}>{cartBusy ? 'Đang đặt…' : 'Xác nhận đặt món'}</button>
+        </div>
+        </div>
+      ) : null}
+
       {tab === 'food' ? (
         <FoodMarketplaceView
           posts={listForTab}
@@ -1428,7 +1451,7 @@ export function MarketplacePage({
             setCartItems((current) => current.filter((item) => item.postId !== postId))
           }}
           onClearCart={() => setCartItems([])}
-          onCheckout={() => void checkoutCart()}
+          onCheckout={() => setCheckoutConfirmationOpen(true)}
           onCartNoteChange={setCartNote}
           onCartOpenChange={setCartOpen}
           onSelectKitchen={(sellerId) => onSelectMarketplaceId?.(sellerId)}

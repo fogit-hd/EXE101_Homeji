@@ -9,7 +9,9 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { fetchPlacePredictions } from '../lib/placeAutocomplete'
+import { fetchPlacePredictions, searchNearbyPlaces, type NearbyPlaceCategory } from '../lib/placeAutocomplete'
+import { useGoogleMaps } from './GoogleMapsProvider'
+import type { NearbyAnchor } from '../components/map/MapNearbyPanel'
 import { isUsefulSearchQuery } from '../lib/searchQuery'
 
 export type SearchContextName =
@@ -53,6 +55,12 @@ const RECENT_KEY = 'homeji:map-search-recent'
 type QueryMap = Partial<Record<SearchContextName, string>>
 
 type SearchState = {
+  nearbyAnchor: NearbyAnchor | null
+  setNearbyAnchor: (anchor: NearbyAnchor | null) => void
+  nearbyCategory: NearbyPlaceCategory
+  setNearbyCategory: (category: NearbyPlaceCategory) => void
+  nearbySuggestions: SearchSuggestion[]
+  nearbyLoading: boolean
   context: SearchContextName
   query: string
   queryByContext: QueryMap
@@ -114,6 +122,8 @@ function destinationFor(context: SearchContextName, raw: string, currentSearch: 
   if (context === 'housing' || context === 'map') {
     params.set('section', 'listings')
     params.delete('post')
+    params.delete('placeId')
+    params.delete('placeName')
     if (context === 'housing') params.set('view', 'list')
     else if (params.get('view') === 'list') params.delete('view')
     if (query) params.set('keyword', query)
@@ -159,13 +169,17 @@ function remember(keyword: string) {
 type SuggestionPack = { key: string; items: SearchSuggestion[]; loading: boolean }
 
 export function SearchProvider({ children }: { children: ReactNode }) {
+  const { isLoaded: mapsLoaded } = useGoogleMaps()
+  const [nearbyAnchor, setNearbyAnchor] = useState<NearbyAnchor | null>(null)
+  const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
+  const [nearbyPack, setNearbyPack] = useState<SuggestionPack>({ key: '', items: [], loading: false })
   const location = useLocation()
   const navigate = useNavigate()
   const context = resolveSearchContext(location.pathname, location.search)
   const url = readUrlQuery(context, location.search)
   const urlStamp = `${context}\0${url.explicit ? '1' : '0'}\0${url.explicit ? url.value : ''}`
   const [appliedStamp, setAppliedStamp] = useState(urlStamp)
-  const [queryByContext, setQueryByContext] = useState<QueryMap>({})
+  const [queryByContext, setQueryByContext] = useState<QueryMap>(() => url.explicit ? { [context]: url.value } : {})
   const [suggestionPack, setSuggestionPack] = useState<SuggestionPack>({ key: '', items: [], loading: false })
   const [recentSearches, setRecentSearches] = useState<string[]>(loadRecent)
   const suggestAbort = useRef<AbortController | null>(null)
@@ -182,6 +196,23 @@ export function SearchProvider({ children }: { children: ReactNode }) {
 
   const query = queryByContext[context] ?? ''
   const placeSearch = context === 'global' || context === 'housing' || context === 'map'
+  const nearbyKey = placeSearch && nearbyAnchor ? `${nearbyAnchor.lat}:${nearbyAnchor.lng}:${nearbyAnchor.placeId ?? ''}:${nearbyCategory}` : ''
+  const nearbySuggestions = nearbyKey && nearbyPack.key === nearbyKey ? nearbyPack.items : EMPTY_SUGGESTIONS
+  const nearbyLoading = Boolean(nearbyKey && mapsLoaded && (nearbyPack.key !== nearbyKey || nearbyPack.loading))
+  useEffect(() => {
+    if (!nearbyKey || !nearbyAnchor || !mapsLoaded) return
+    let cancelled = false
+    void searchNearbyPlaces(nearbyAnchor, nearbyCategory, { limit: 5 })
+      .then((items) => {
+        if (!cancelled) setNearbyPack({ key: nearbyKey, loading: false, items: items
+          .filter((item) => item.placeId !== nearbyAnchor.placeId)
+          .map((item) => ({ id: item.placeId, title: item.title, subtitle: `${item.distanceMeters} m · ${item.typeLabel} · ${item.address}` })) })
+      })
+      .catch(() => {
+        if (!cancelled) setNearbyPack({ key: nearbyKey, loading: false, items: [] })
+      })
+    return () => { cancelled = true }
+  }, [nearbyAnchor, nearbyCategory, nearbyKey, mapsLoaded])
   const suggestText = query.trim()
   const canSuggest = placeSearch && suggestText.length >= 2 && isUsefulSearchQuery(suggestText)
   const suggestions = canSuggest && suggestionPack.key === suggestText ? suggestionPack.items : EMPTY_SUGGESTIONS
@@ -246,10 +277,20 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   }, [context, location.pathname, location.search, navigate])
 
   const pickSuggestion = useCallback((item: SearchSuggestion) => {
-    submit(item.title)
-  }, [submit])
+    const params = new URLSearchParams(location.search)
+    params.set('section', 'listings')
+    params.set('view', 'map')
+    params.set('placeId', item.id)
+    params.set('placeName', item.title)
+    params.delete('post')
+    params.delete('keyword')
+    params.delete('page')
+    navigate(`/?${params.toString()}`)
+    setQueryByContext((prev) => ({ ...prev, map: item.title }))
+  }, [location.search, navigate])
 
   const value = useMemo<SearchState>(() => ({
+    nearbyAnchor, setNearbyAnchor, nearbyCategory, setNearbyCategory, nearbySuggestions, nearbyLoading,
     context,
     query,
     queryByContext,
@@ -263,7 +304,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     submit,
     clear,
     pickSuggestion,
-  }), [clear, context, isLoading, pickSuggestion, query, queryByContext, recentSearches, setQuery, submit, suggestions])
+  }), [clear, context, isLoading, pickSuggestion, query, queryByContext, recentSearches, setQuery, submit, suggestions, nearbyAnchor, nearbyCategory, nearbySuggestions, nearbyLoading])
 
   return <SearchReactContext.Provider value={value}>{children}</SearchReactContext.Provider>
 }

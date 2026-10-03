@@ -74,10 +74,11 @@ export const MapListingCard = memo(function MapListingCard({
             —
           </div>
         )}
+        {post.isOwnerPremium ? <span className="map-listing-card-corner-tag is-premium">Nổi bật</span> : null}
+        <span className="map-listing-card-price">{formatPrice(post.price)}/tháng</span>
       </div>
       <div className="map-listing-card-body">
         <div className="map-listing-card-meta">
-          <span className="map-listing-card-price">{formatPrice(post.price)}/tháng</span>
           <span className="map-listing-card-type">{rentalPostTypeLabel[post.type]}</span>
         </div>
         <h3>{title}</h3>

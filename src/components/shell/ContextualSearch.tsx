@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { useSearch } from '../../contexts/SearchContext'
+import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
 
 function useNarrowBar() {
   const [narrow, setNarrow] = useState(false)
@@ -49,6 +50,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
     submit,
     clear,
     pickSuggestion,
+    nearbyAnchor, nearbyCategory, setNearbyCategory, nearbySuggestions, nearbyLoading, context,
   } = useSearch()
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(autoFocus)
@@ -114,8 +116,18 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
             <span className="hj-search__submit-short">Tìm</span>
           </button>
         </div>
-        {open && (suggestions.length > 0 || recentSearches.length > 0 || isLoading) ? (
+        {open && (suggestions.length > 0 || recentSearches.length > 0 || isLoading || (nearbyAnchor && (context === 'map' || context === 'housing'))) ? (
           <ul className="hj-search__suggest" role="listbox">
+            {nearbyAnchor && (context === 'map' || context === 'housing') ? (
+              <li>
+                <strong>Gần khu vực đang tìm</strong><p>{nearbyAnchor.label}</p>
+                <div role="group" aria-label="Loại tiện ích gần khu vực">
+                  {NEARBY_PLACE_CATEGORY_OPTIONS.map((category) => <button key={category.id} type="button" aria-pressed={nearbyCategory === category.id} onClick={() => setNearbyCategory(category.id)}>{category.label}</button>)}
+                </div>
+                {nearbyLoading ? <p>Đang tìm tiện ích…</p> : nearbySuggestions.length ? nearbySuggestions.map((item) => <button key={item.id} type="button" onClick={() => { pickSuggestion(item); setOpen(false); onClose?.() }}><strong>{item.title}</strong><span>{item.subtitle}</span></button>) : <p>Chưa tìm thấy tiện ích trong bán kính 1,8 km.</p>}
+                <small>Dữ liệu Google Places · Khoảng cách đường thẳng</small>
+              </li>
+            ) : null}
             {isLoading ? <li className="hj-search__suggest-note">Đang gợi ý…</li> : null}
             {suggestions.map((item) => (
               <li key={item.id}>

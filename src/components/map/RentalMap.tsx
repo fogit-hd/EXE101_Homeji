@@ -656,8 +656,8 @@ function RentalMapComponent({
         map,
         markers: [],
         algorithm: new SuperClusterAlgorithm({
-          radius: 80,
-          maxZoom: 17,
+          radius: 96,
+          maxZoom: 22,
         }),
         renderer: clusterRenderer,
         onClusterClick: (event, cluster, clusterMap) => {

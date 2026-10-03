@@ -16,6 +16,7 @@ import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace
 import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM, isValidCoord } from '../../lib/googleMaps'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
 import { useAuth } from '../../contexts/AuthContext'
+import { useSearch } from '../../contexts/SearchContext'
 import {
   DeferredMapBlock,
   type ExploreView,
@@ -28,6 +29,9 @@ import { MapChatbot } from './MapChatbot'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapEdgeToggle } from './MapEdgeToggle'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
+import { MapNearbyPanel } from './MapNearbyPanel'
+import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
+import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
 import { marketplacePostsToSellerPins } from '../../lib/marketplaceSellerPins'
@@ -131,6 +135,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   exploreView = 'map',
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated } = useAuth()
+  const { setNearbyAnchor } = useSearch()
   const [searchParams, setSearchParams] = useSearchParams()
   const listingCatalog = useMemo(() => parseFiltersFromURL(searchParams).catalog, [searchParams])
   const marketMode = listingCatalog === 'market'
@@ -149,6 +154,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [saveBusy, setSaveBusy] = useState(false)
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
   const [nearbyToken, setNearbyToken] = useState(0)
+  const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
   /** Pin for chat "Mở trên bản đồ" — independent of selected place red pin. */
   const [sharedLocationPin, setSharedLocationPin] = useState<{
     lat: number
@@ -195,6 +201,17 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const savedFetchSeq = useRef(0)
 
   const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
+  const nearbyContextKey = selectedPostId ?? selectedPlace?.placeId ?? ''
+  const nearbyAnchor = useMemo(() => nearbyPanelAnchor(
+    selectedPostId, selectedPost ?? listingDetail, selectedPlace,
+  ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
+  const nearbyVisible = !!nearbyAnchor && nearbyAnchor.contextKey === nearbyContextKey
+    && nearbyDismissedKey !== nearbyContextKey && detailOpen && !uiCollapsed
+    && (!destinationMode || isMapMode) && !marketMode
+  useEffect(() => {
+    setNearbyAnchor(!marketMode && isMapMode ? nearbyAnchor : null)
+    return () => { setNearbyAnchor(null) }
+  }, [nearbyAnchor, marketMode, isMapMode, setNearbyAnchor])
 
   /** Map destination always mounts the map; list mode never does. */
   const mapBlockVisible = isMapMode
@@ -338,6 +355,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const mapFocusToken = nearbyFocus ? nearbyToken : focusToken
 
   const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
+    setNearbyDismissedKey(null)
+    setSharedLocationPin(null)
     setSelectedPlace(place)
     setPlaceLoading(false)
     setNearbyFocus(null)
@@ -509,6 +528,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [isAuthenticated])
 
   const handleClearMapSelection = useCallback(() => {
+    setNearbyDismissedKey(null)
     focusedPostIdRef.current = null
     setFocusedPostId(null)
     setSelectedPlace(null)
@@ -628,7 +648,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleSelectPost = useCallback(
     (postId: string) => {
-      const openDetail = focusedPostId === postId
+      setNearbyDismissedKey(null)
+      setSharedLocationPin(null)
       setHoveredPostId(null)
       setSelectedPlace(null)
       setPlaceLoading(false)
@@ -655,11 +676,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         return
       }
 
-      if (openDetail) {
-        onSelectPost(postId)
-      } else if (selectedPostId) {
-        onClearSelection()
-      }
+      onSelectPost(postId)
       if (panelSection !== 'listings') return
       const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -727,8 +744,16 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [destinationMode, isListMode, posts, selectedPostId, onClearSelection])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
+    setNearbyDismissedKey(null)
     setNearbyFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setNearbyToken((n) => n + 1)
+  }, [])
+
+  const handlePickNearby = useCallback((place: NearbyPlaceItem) => {
+    setNearbyFocus({ lat: place.lat, lng: place.lng, zoom: MAP_FOCUS_ZOOM })
+    setNearbyToken((n) => n + 1)
+    setSharedLocationPin((prev) => ({ lat: place.lat, lng: place.lng,
+      title: place.title, kindLabel: place.typeLabel, token: (prev?.token ?? 0) + 1 }))
   }, [])
 
   const toggleSavedPost = useCallback(
@@ -896,9 +921,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       hoveredPostId={hoveredPostId}
       onSelectPost={handleSelectPost}
       onClearSelection={handleClearMapSelection}
-      onSelectPlace={destinationMode && isMapMode ? undefined : handleSelectPlace}
+      onSelectPlace={handleSelectPlace}
       onPlaceLoading={setPlaceLoading}
-      selectedPlacePin={destinationMode && isMapMode ? null : selectedPlacePin}
+      selectedPlacePin={selectedPlacePin}
       sharedLocationPin={sharedLocationPin}
       marketplacePins={
         destinationMode && marketMode
@@ -958,6 +983,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   )
 
   const hideHomieFab = destinationMode && isMapMode
+  const nearbyPanel = nearbyVisible && nearbyAnchor ? (
+    <MapNearbyPanel key={nearbyAnchor.contextKey} anchor={nearbyAnchor}
+      onClose={() => setNearbyDismissedKey(nearbyContextKey)} onPick={handlePickNearby} />
+  ) : null
 
   const chatAndOverlays = (
     <>
@@ -1029,7 +1058,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           mapNode={
             isMapMode ? (
               <DeferredMapBlock visible={mapBlockVisible} className="map-listings__deferred">
-                <div className="home-map-frame">{mapStage}</div>
+                <div className="home-map-frame">
+                  {mapStage}
+                  {selectedPlace || placeLoading ? placeDetail : null}
+                  {nearbyPanel}
+                </div>
               </DeferredMapBlock>
             ) : null
           }
@@ -1061,6 +1094,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       <section className="home-map-panel">
         <div className="home-map-frame">{mapStage}</div>
         {placeDetail}
+        {nearbyPanel}
         <MapEdgeToggle
           className={`home-map-master-toggle${uiCollapsed ? ' is-collapsed' : ''}${
             detailOpen && !uiCollapsed ? ' is-on-detail' : ''

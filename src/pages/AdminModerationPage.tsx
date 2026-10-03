@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
+  getAdminProductAnalytics,
   completeWalletWithdrawal,
   getAdminWalletWithdrawals,
   getAdminLandlordVerifications,
@@ -17,6 +18,7 @@ import {
   reviewLandlordVerification,
   type LandlordVerification,
   type AdminActiveUser,
+  type AdminProductAnalytics,
   type RentalPostSummary,
   type Report,
   type WalletWithdrawal,
@@ -25,6 +27,7 @@ import { LandlordVerificationStatus, ReportStatus, ReportTargetType, WalletWithd
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
+import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashboard'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import { useAuth } from '../contexts/AuthContext'
@@ -52,7 +55,12 @@ export function AdminModerationPage() {
   const [verifications, setVerifications] = useState<LandlordVerification[]>([])
   const [withdrawals, setWithdrawals] = useState<WalletWithdrawal[]>([])
   const [activeUsers, setActiveUsers] = useState<AdminActiveUser[]>([])
-  const [tab, setTab] = useState<'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('posts')
+  const [analytics, setAnalytics] = useState<AdminProductAnalytics | null>(null)
+  const [analyticsDays, setAnalyticsDays] = useState(30)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [analyticsError, setAnalyticsError] = useState('')
+  const [analyticsAttempt, setAnalyticsAttempt] = useState(0)
+  const [tab, setTab] = useState<'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('overview')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReason, setRejectReason] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
@@ -91,6 +99,29 @@ export function AdminModerationPage() {
 
   const loadPosts = () => void reload()
   const loadReports = () => void reload()
+  useEffect(() => {
+    let cancelled = false
+    void getAdminProductAnalytics(analyticsDays)
+      .then((result) => {
+        if (!cancelled) {
+          setAnalytics(result)
+          setAnalyticsError('')
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setAnalyticsError(getErrorMessage(err, 'Không thể tải dữ liệu điều hành sản phẩm'))
+      })
+      .finally(() => {
+        if (!cancelled) setAnalyticsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [analyticsDays, analyticsAttempt])
+
+  const handleAnalyticsDaysChange = (days: number) => {
+    if (analyticsLoading || days === analyticsDays) return
+    setAnalyticsLoading(true)
+    setAnalyticsDays(days)
+  }
   const loadActiveUsers = useCallback(async () => {
     try {
       setActiveUsers(await getAdminActiveUsers())
@@ -242,6 +273,9 @@ export function AdminModerationPage() {
 
   const adminTabs = (
     <div className="tabs" role="tablist" aria-label="Mục quản trị">
+      <button type="button" role="tab" aria-selected={tab === 'overview'} className={`tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
+        Tổng quan sản phẩm
+      </button>
       <button type="button" role="tab" aria-selected={tab === 'posts'} className={`tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => setTab('posts')}>
         Tin chờ duyệt ({pendingPosts.length})
       </button>
@@ -276,11 +310,20 @@ export function AdminModerationPage() {
   )
 
   return (
-    <PageFrame title="Quản trị" filters={adminTabs} className="account-surface">
+    <PageFrame title="Điều hành Homeji" lead="Theo dõi sản phẩm, thị trường và vận hành trên cùng một màn hình." filters={adminTabs} className="account-surface">
+      <Link to="/?section=listings&view=map">Mở trải nghiệm khách hàng</Link>
       <PageNotice message={error || (loadError && !disrupted ? loadError : '')} tone="error" />
       <PageNotice message={message} tone="success" />
 
-      {showLoader ? (
+      {tab === 'overview' ? (
+        <>
+          <PageNotice message={analyticsError} tone="error" />
+          {analyticsError && !analyticsLoading ? <button type="button" className="btn btn-secondary" onClick={() => { setAnalyticsLoading(true); setAnalyticsAttempt((n) => n + 1) }}>Thử lại</button> : null}
+          {analytics && (!analyticsError || analytics.periodDays === analyticsDays) ? <AdminAnalyticsDashboard data={analytics} days={analytics.periodDays} loading={analyticsLoading} onDaysChange={handleAnalyticsDaysChange} /> : analyticsLoading ? <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu điều hành…" /> : null}
+        </>
+      ) : null}
+
+      {tab !== 'overview' && (showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={loadError} />
           : <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu kiểm duyệt…" />
@@ -618,7 +661,7 @@ export function AdminModerationPage() {
         </div>
       )}
         </>
-      )}
+      ))}
     </PageFrame>
   )
 }
