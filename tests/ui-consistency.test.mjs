@@ -45,6 +45,22 @@ test('home viewing and message panels have equal desktop columns', () => {
   assert.match(css, /\.hub-messages\s*\{[^}]*grid-column:\s*span 6/)
 })
 
+test('wallet captions and marketplace accent remain readable on their actual surfaces', () => {
+  const wallet = read('components/marketplace/wallet/WalletPage.css')
+  const header = read('components/marketplace/MarketplaceHeader.css')
+  assert.ok(!wallet.includes('#708079'), 'old muted text failed on warm and mint cards')
+  assert.match(header, /--mh-accent: #a43c22;/)
+  assert.match(wallet, /\.wallet-card__eyebrow\s*\{[^}]*color: #a43c22;/)
+  assert.match(wallet, /\.wallet-submit button\s*\{[^}]*background: #a43c22;[^}]*color: #fff;/)
+  for (const background of ['ffffff', 'fff7ed', 'ffe6db', 'ddefe4', 'eef2ea']) {
+    assert.ok(contrast('526358', background) >= 4.5, `wallet caption on ${background}`)
+  }
+  for (const background of ['fffdf8', 'fff0e9', 'ffe6db', 'ffffff']) {
+    assert.ok(contrast('a43c22', background) >= 4.5, `accent on ${background}`)
+  }
+  assert.ok(contrast('fff', 'a43c22') >= 4.5)
+})
+
 test('review cards reserve content space and stack controls on small screens', () => {
   const css = read('pages/pages.css')
   assert.match(css, /\.admin-item > \.admin-actions\s*\{[^}]*max-width: 40%/)

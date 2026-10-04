@@ -50,6 +50,9 @@ User changes in the payment workflow and backend import notes remain intact. The
 
 ## Evidence
 
+- Additional read-only production checks: the two home panels measure exactly 592.4 px wide and 107.6 px high at a 1280 px viewport; the inbox action ends 16.8 px inside its panel. Appointment timeline/list empty states fit at 320 px with a footer (document width 314 px). Wallet deposit loads the real zero balance, white on green, and fits at 305 px plus scrollbar gutter. No transaction was submitted.
+- Rendered wallet contrast inspection exposed additional low-contrast gray captions (`#708079`, 3.48–4.16:1 on light/tinted surfaces) and orange accent/submit text (about 3.35–3.38:1). The wallet component now uses `#526358` for muted text and `#a43c22` for text/filled-button accents; the marketplace header shares the latter accent. Decorative radio/focus colors remain unchanged. Numeric tests cover actual white, warm, mint and paper surfaces at >=4.5:1. Frontend build and all 80 tests pass. Production confirmation of this latest correction is still pending.
+
 - `output/verification/messages-colors.jpg`
 - `output/verification/google-modal-mobile.jpg`
 - `output/verification/subscription-history-failure.jpg` (mocked history error)

@@ -113,7 +113,7 @@
 .wallet-card__eyebrow,
 .wallet-summary__metrics dt,
 .wallet-rail h3 {
-  color: #708079;
+  color: #526358;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -140,7 +140,7 @@
 }
 
 .is-out {
-  color: #d94726;
+  color: #a43c22;
 }
 
 .wallet-tabs {
@@ -161,7 +161,7 @@
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #708079;
+  color: #526358;
   font: 600 14px/1 Inter, system-ui, sans-serif;
   cursor: pointer;
 }
@@ -217,14 +217,14 @@
 .wallet-ledger-note,
 .wallet-aside-note {
   margin: 8px 0 0;
-  color: #708079;
+  color: #526358;
   font-size: 13px;
   line-height: 1.45;
 }
 
 .wallet-card__eyebrow {
   margin: 0;
-  color: #f05a36;
+  color: #a43c22;
 }
 
 .wallet-field,
@@ -241,7 +241,7 @@
 .wallet-field small {
   display: block;
   margin-top: 6px;
-  color: #708079;
+  color: #526358;
   font-size: 12px;
   font-weight: 500;
 }
@@ -357,7 +357,7 @@
 .wallet-tx small {
   display: block;
   margin-top: 3px;
-  color: #708079;
+  color: #526358;
   font-size: 12px;
 }
 
@@ -418,7 +418,7 @@
 .wallet-submit span,
 .wallet-recent header b,
 .wallet-flow span {
-  color: #708079;
+  color: #526358;
   font-size: 12px;
   font-weight: 700;
 }
@@ -440,7 +440,7 @@
   padding: 0 18px;
   border: 0;
   border-radius: 999px;
-  background: #f05a36;
+  background: #a43c22;
   color: #fff;
   font: 700 15px/1 Inter, system-ui, sans-serif;
   cursor: pointer;
@@ -509,7 +509,7 @@
 }
 
 .wallet-recent dt,
-.wallet-lines dt { color: #708079; }
+.wallet-lines dt { color: #526358; }
 .wallet-recent dd,
 .wallet-lines dd { margin: 0; font-weight: 700; }
 
@@ -571,7 +571,7 @@
   height: 24px;
   border-radius: 999px;
   background: #ffe6db;
-  color: #d94726;
+  color: #a43c22;
   font-size: 12px;
   font-weight: 800;
 }
@@ -605,7 +605,7 @@
 }
 
 .wallet-filter span { display: flex; flex: 1; flex-direction: column; min-width: 0; }
-.wallet-filter small { color: #708079; font-size: 11px; font-weight: 700; }
+.wallet-filter small { color: #526358; font-size: 11px; font-weight: 700; }
 .wallet-filter select { padding: 0; font-size: 13px; }
 
 .wallet-table-wrap { margin-top: 12px; overflow-x: auto; }
@@ -618,7 +618,7 @@
 
 .wallet-table th {
   padding: 10px 8px;
-  color: #708079;
+  color: #526358;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -690,7 +690,7 @@
   border-top: 1px solid #eef2ea;
 }
 
-.wallet-empty p { margin: 4px 0 0; color: #708079; font-size: 13px; }
+.wallet-empty p { margin: 4px 0 0; color: #526358; font-size: 13px; }
 
 .sr-only {
   position: absolute;
