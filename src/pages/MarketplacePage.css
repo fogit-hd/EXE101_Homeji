@@ -2672,8 +2672,26 @@
 .marketplace-card--mine .marketplace-card__status,
 .marketplace-card--mine .marketplace-card__badge {
   background: #e1f4e8;
-  color: #008f46;
+  color: #24543e;
   border-radius: 999px;
+}
+
+@media (max-width: 720px) {
+  .marketplace-card--mine .marketplace-card__main {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .marketplace-card--mine .marketplace-card__thumb,
+  .marketplace-card--mine .marketplace-card__thumb--empty {
+    width: 72px;
+    height: 72px;
+  }
+
+  .marketplace-toolbar__field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
 }
 
 .marketplace-sell-form,
