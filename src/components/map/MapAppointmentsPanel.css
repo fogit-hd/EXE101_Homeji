@@ -468,6 +468,7 @@
 .map-appointments__tl-note,
 .map-appointments__tl-meta {
   margin: 0;
+  overflow-wrap: anywhere;
   font: 400 0.8rem/1.4 Inter, sans-serif;
   color: var(--hj-muted, #756f64);
 }

@@ -19,3 +19,7 @@ test('calendar tracks may shrink below their intrinsic day widths on mobile', ()
   assert.match(block('.map-appointments__cal-day'), /width:\s*100%;/)
   assert.match(block('.map-appointments__cal-day'), /min-width:\s*0;/)
 })
+
+test('appointment notes can wrap long unbroken user content', () => {
+  assert.match(block('.map-appointments__tl-meta'), /overflow-wrap:\s*anywhere;/)
+})
