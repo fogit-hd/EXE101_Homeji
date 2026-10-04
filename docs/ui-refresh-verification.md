@@ -167,3 +167,20 @@ SUBMIT with the same title and six images, then navigated to My Posts. These are
 synthetic image responses and RAM persistence, not Cloudinary, PostgreSQL or actual
 JWT verification. No production image, post or financial mutation occurred.
 Concurrent user auth-scene and chatbot edits remain excluded from this release.
+
+## Populated production payment palette follow-up
+
+Read-only inspection of actual plans/history found remaining contrast failures:
+payment eyebrow 2.88:1 on the warm page, lead 4.21:1, current-package muted labels
+4.30:1, gray plan duration text 1.46:1 on orange, white feature text 3.53:1 on orange,
+and transaction captions/statuses around 3.76–4.37:1. The audit walks rendered DOM
+text against its nearest opaque solid background; gradients, partial opacity and
+image backgrounds are excluded and are not automatically certified.
+
+Payment CSS now has scoped accent `#a43c22`, muted `#526358` and inverse-muted
+`#d7e3da` tokens for plans/history/waiting surfaces. Featured/popular plan price text
+is explicitly white, preventing generic paragraph styling from turning duration
+text gray. The dark green current-package card is preserved. No package prices,
+benefits, entitlement or payment behavior changes. Numeric regression tests cover
+the actual light/warm/tinted/dark surfaces; full build and 93 frontend tests pass.
+Live rendered verification of this new palette is pending deployment.

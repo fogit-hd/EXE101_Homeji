@@ -107,6 +107,25 @@ test('payment plans and waiting screen share the Vietnamese-safe typeface', () =
   assert.match(css, /\.payment-page, \.payment-embed, \.payment-wait-page \{ font-family: 'Be Vietnam Pro', sans-serif; \}/)
   assert.match(css, /:is\(\.payment-page, \.payment-embed, \.payment-wait-page\) :is\(h1, h2, h3, strong/)
 })
+
+test('payment plan and transaction captions use readable semantic colors', () => {
+  const css = read('pages/PaymentPage.css')
+  assert.match(css, /--payment-accent: #a43c22;/)
+  assert.match(css, /--payment-muted: #526358;/)
+  assert.match(css, /--payment-inverse-muted: #d7e3da;/)
+  assert.ok(!css.includes('color: #e8603c'), 'old payment eyebrow failed on the warm page')
+  assert.ok(!css.includes('var(--hj-accent'), 'payment text and orange cards use the accessible scoped accent')
+  for (const oldMuted of ['#777a71', '#7b7f75', '#828579', '#707568', '#9da794']) {
+    assert.ok(!css.includes(`color: ${oldMuted}`), `replace low-contrast payment caption ${oldMuted}`)
+  }
+  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) \.payment-plan-card__price\s*\{[^}]*color: #fff;/)
+  for (const background of ['f3ebdd', 'fffdf9', 'f6f7ef', 'f8f7f2', 'f0efeb']) {
+    assert.ok(contrast('526358', background) >= 4.5)
+  }
+  assert.ok(contrast('fff', 'a43c22') >= 4.5)
+  assert.ok(contrast('a43c22', 'f3ebdd') >= 4.5)
+  assert.ok(contrast('d7e3da', '24543e') >= 4.5)
+})
 test('own listings use authenticated inventory instead of public active search', () => {
   assert.ok(/tab === 'sell' \|\| tab === 'mine'[^}]*getMyMarketplacePosts/s.test(read('pages/MarketplacePage.tsx')))
 })
