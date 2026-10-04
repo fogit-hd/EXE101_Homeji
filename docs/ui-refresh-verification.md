@@ -114,6 +114,29 @@ test commands and an existing local PostgreSQL option without installing a serve
   actions 320 px, document width 1280. No rental status action was submitted.
   Screenshot: `output/verification/rental-owner-card-mobile-fixed.jpg`.
 
-The new rental-card layout still needs live deployment verification. Full completion
+The rental-card layout is now verified live in merged release
+`ae4a94d32109913facd018f366170553147241ab`, Render deploy
+`dep-db15ghbtqb8s738vlhhg` (Live, 46.3 seconds). It preserves the user's newer
+`7dcc36c` changes. Both real rental-owner cards at 320 px have content/actions 240 px,
+document 305 px plus gutter, and the shared footer. Screenshot:
+`output/verification/production-rental-owner-card-mobile-fixed.jpg`.
+Full completion
 is not asserted; remaining rendered states and controlled upload/submit evidence stay
 in scope, with optional database verification clearly separated from Docker availability.
+
+## Rental editing: preserve existing terms
+
+The edit form's PUT payload omitted electricity/water/internet prices, max occupants,
+available slots and house rules. The backend DTO assigns defaults to omitted fields
+and `RentalPostService.UpdateAsync` passes every field to `UpdateDetails`, so editing
+only a title could overwrite existing rental terms. These fields are now copied from
+the loaded post; legacy payloads lacking them retain backend-compatible defaults.
+No new business rule or database migration is introduced.
+
+`node --test tests/rental-edit-preservation.test.mjs` executes the actual
+`persistDraft` function body with a captured API boundary. Before the fix both cases
+failed (electricityPrice undefined instead of 3500 / 0); after the fix both pass.
+It checks preservation of all six fields, zero charges, null house rules, legacy
+defaults and changed title/price. This proves the request payload, not PostgreSQL
+persistence or actual browser upload. Current worktree build and all 88 frontend
+tests pass. Concurrent user chatbot edits remain unstaged and preserved.

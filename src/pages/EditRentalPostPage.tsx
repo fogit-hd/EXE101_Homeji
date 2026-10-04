@@ -99,6 +99,13 @@ export function EditRentalPostPage() {
         latitude: isValidCoord(latNum, lngNum) ? latNum : Number(latitude),
         longitude: isValidCoord(latNum, lngNum) ? lngNum : Number(longitude),
         amenities: amenities.map((a) => normalizeAmenityCode(a)),
+        // PUT replaces these terms even though this form does not edit them.
+        electricityPrice: post?.electricityPrice ?? 0,
+        waterPrice: post?.waterPrice ?? 0,
+        internetPrice: post?.internetPrice ?? 0,
+        maxOccupants: post?.maxOccupants ?? 1,
+        availableSlots: post?.availableSlots ?? 1,
+        houseRules: post?.houseRules ?? undefined,
         availableFrom: availableFrom || undefined,
         transferKind: type === RentalPostType.RoomTransfer ? transferKind : undefined,
         originalLeaseEndsOn: type === RentalPostType.RoomTransfer ? originalLeaseEndsOn : undefined,
