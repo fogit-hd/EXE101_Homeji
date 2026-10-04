@@ -1,6 +1,12 @@
 /* Semantic surface corrections: do not blanket recolor badges, icons or imagery. */
 .btn-primary { background: #24543e; color: #fff; }
 .btn-primary:hover:not(:disabled) { background: #193e2d; color: #fff; }
+.badge-green { background: #24543e; color: #fff; }
+.badge-gray { color: #526358; }
+.badge-blue { color: #0e52a3; }
+.page-frame__eyebrow { color: #9c5836; }
+.btn-map-cta { color: #24543e; }
+.btn-map-cta:hover:not(:disabled) { color: #193e2d; }
 .wallet-summary__balance { color: #fff; line-height: 1.25; }
 .wallet-summary__available { background: #24543e; }
 .payment-current { background: #24543e; }
