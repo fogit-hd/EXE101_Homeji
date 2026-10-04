@@ -49,6 +49,11 @@ test('product prices, statuses and food actions have readable small-text colors'
   const css = read('ui-consistency.css')
   assert.match(css, /\.marketplace-card__badge, \.marketplace-card__badge.is-mine \{ color: #24543e; \}/)
   assert.match(css, /\.marketplace-card__price \{ color: #24543e; \}/)
+  const marketplace = read('pages/MarketplacePage.css')
+  for (const variant of ['browse', 'mine']) {
+    const rule = marketplace.slice(marketplace.indexOf(`.marketplace-card--${variant} .marketplace-card__price {`)).split('}')[0]
+    assert.match(rule, /color: #24543e;/)
+  }
   const food = read('components/marketplace/food/FoodMarketplaceView.css')
   assert.match(food, /--food-leaf-deep: #24543e;/)
   assert.match(food, /--food-accent: #a43c22;/)
