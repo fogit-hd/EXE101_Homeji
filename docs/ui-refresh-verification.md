@@ -140,3 +140,30 @@ It checks preservation of all six fields, zero charges, null house rules, legacy
 defaults and changed title/price. This proves the request payload, not PostgreSQL
 persistence or actual browser upload. Current worktree build and all 88 frontend
 tests pass. Concurrent user chatbot edits remain unstaged and preserved.
+
+## Rental images: partial-failure progress
+
+The image handler previously updated the visible post only after every metadata
+attachment succeeded. If a later request failed, confirmed images disappeared from
+the local display and remained selected for retry. It also cleared files that were
+not processed because of the ten-image limit. The handler now updates the visible
+post and removes each acknowledged file from the selection after each successful
+attachment. Failed/unprocessed files remain selected. File selection/upload controls
+are disabled while saving/uploading; upload is disabled at ten images. Previous
+success text is cleared at the start of an attempt.
+
+Four actual-handler tests cover partial metadata failure, ordered successful
+attachments/thumbnail, ten-image bounds and storage failure. The two failing cases
+were observed before the fix and all four pass after it; full worktree build and all
+92 frontend tests pass. This does not guarantee idempotency when a server commits
+an attachment but its response is lost; that requires server reconciliation.
+
+A local-only RAM API/browser check uploaded three public project PNGs using the
+real file chooser/multipart client, with an injected second-attachment failure.
+Three seeded images became four visible images; the retry button read “Tải 2 ảnh”.
+Retry uploaded only two files and produced six visible attachments. Changing the
+title and choosing “Lưu & gửi duyệt” recorded PUT with the new title followed by
+SUBMIT with the same title and six images, then navigated to My Posts. These are
+synthetic image responses and RAM persistence, not Cloudinary, PostgreSQL or actual
+JWT verification. No production image, post or financial mutation occurred.
+Concurrent user auth-scene and chatbot edits remain excluded from this release.

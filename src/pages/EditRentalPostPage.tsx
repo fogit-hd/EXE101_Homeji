@@ -136,6 +136,7 @@ export function EditRentalPostPage() {
   const handleAddMedia = async () => {
     if (!postId || !profile || saving || uploadingMedia || mediaFiles.length === 0) return
     setError('')
+    setMessage('')
     setUploadingMedia(true)
     try {
       const remainingSlots = Math.max(0, 10 - (post?.media.length ?? 0))
@@ -158,9 +159,10 @@ export function EditRentalPostPage() {
           isThumbnail: (updated?.media.length ?? 0) === 0,
           sortOrder: updated?.media.length ?? 0,
         })
+        // Keep acknowledged attachments visible even if a later request fails.
+        setPost(updated)
+        setMediaFiles((remaining) => remaining.slice(1))
       }
-      setPost(updated)
-      setMediaFiles([])
       setMessage(`Đã tải lên ${uploaded.length} ảnh.`)
     } catch (err) {
       setError(getErrorMessage(err, 'Thêm ảnh thất bại'))
@@ -434,9 +436,10 @@ export function EditRentalPostPage() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
+              disabled={saving || uploadingMedia}
               onChange={(event) => setMediaFiles(Array.from(event.target.files ?? []))}
             />
-            <button type="button" className="btn btn-secondary" disabled={uploadingMedia || mediaFiles.length === 0} onClick={() => void handleAddMedia()}>
+            <button type="button" className="btn btn-secondary" disabled={saving || uploadingMedia || mediaFiles.length === 0 || (post?.media.length ?? 0) >= 10} onClick={() => void handleAddMedia()}>
               {uploadingMedia ? 'Đang tải...' : `Tải ${mediaFiles.length || ''} ảnh`}
             </button>
           </div>
