@@ -17,3 +17,7 @@ test('seller inventory reserves room for text on narrow screens', () => {
 test('mobile catalog filter labels stay above their controls', () => {
   assert.ok(/\.marketplace-toolbar__field\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/.test(lastMobile))
 })
+
+test('very narrow filters use full-width controls to keep selected values readable', () => {
+  assert.ok(/@media \(max-width: 480px\)\s*\{\s*\.marketplace-toolbar \.marketplace-toolbar__field\s*\{[^}]*flex-basis: 100%;/.test(css))
+})

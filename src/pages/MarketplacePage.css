@@ -2709,6 +2709,12 @@
   color: #14271f;
 }
 
+@media (max-width: 480px) {
+  .marketplace-toolbar .marketplace-toolbar__field {
+    flex-basis: 100%;
+  }
+}
+
 .food-preset-grid button {
   background: #fffdf8;
   border: 1px solid #d9d2c5;
