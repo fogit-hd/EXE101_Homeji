@@ -89,6 +89,16 @@ test('review cards reserve content space and stack controls on small screens', (
   assert.match(mobile, /\.admin-item\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/)
   assert.match(mobile, /\.admin-item > \.admin-actions\s*\{[^}]*flex: none;[^}]*max-width: 100%;/)
 })
+test('rental owner cards preserve content width and wrap mobile actions without changing notifications', () => {
+  assert.match(read('pages/MyPostsPage.tsx'), /className="card notification-item rental-owner-card map-motion-fade-up"/)
+  const css = read('pages/pages.css')
+  assert.match(css, /\.rental-owner-card > \.notification-item__actions\s*\{[^}]*flex: 0 1 320px;[^}]*max-width: 40%;/)
+  assert.match(css, /\.rental-owner-card > div:first-child\s*\{[^}]*overflow-wrap: anywhere;/)
+  const mobile = css.slice(css.indexOf('@media (max-width: 768px)'))
+  assert.match(mobile, /\.rental-owner-card\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/)
+  assert.match(mobile, /\.rental-owner-card > \.notification-item__actions\s*\{[^}]*flex: none;[^}]*max-width: 100%;[^}]*justify-content: flex-start;/)
+})
+
 test('shared footer is present without route exclusions', () => {
   assert.match(read('components/layout/AppLayout.tsx'), /<SiteFooter compact=/)
 })

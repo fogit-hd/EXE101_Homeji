@@ -70,6 +70,16 @@
   align-items: center;
 }
 
+.rental-owner-card > div:first-child {
+  overflow-wrap: anywhere;
+}
+
+.rental-owner-card > .notification-item__actions {
+  flex: 0 1 320px;
+  min-width: 0;
+  max-width: 40%;
+}
+
 .notification-item {
   border-left: 4px solid var(--notification-accent);
 }
@@ -469,6 +479,17 @@
 
   .notification-item__actions {
     align-self: flex-start;
+  }
+
+  .rental-owner-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rental-owner-card > .notification-item__actions {
+    flex: none;
+    max-width: 100%;
+    justify-content: flex-start;
   }
 
   .invitation-actions,

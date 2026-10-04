@@ -118,7 +118,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
           ) : (
             <div className="notification-list">
               {posts.map((p) => (
-                <article key={p.id} className="card notification-item map-motion-fade-up">
+                <article key={p.id} className="card notification-item rental-owner-card map-motion-fade-up">
                   <div>
                     <span className="badge badge-gray">
                       {rentalPostStatusLabel[p.status] ?? 'Tin'}

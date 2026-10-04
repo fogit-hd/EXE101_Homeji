@@ -76,9 +76,44 @@ User changes in the payment workflow and backend import notes remain intact. The
 - Complete HTTP/browser rental create/edit/upload/submit with controlled non-production persistence. Actual backend service/repository persistence and validation are now covered; file upload/transport/authentication and migrations are not.
 - Responsive checks of remaining feature panels/content-loaded administrative tabs. Admin overview/maintenance and payment-waiting routes have now been checked at 320 px, in addition to messages, sale forms and inventory controls; both Profile tabs at 390 px.
 - Review remaining hard-coded dark card surfaces and text in administrative/less-used screens against rendered contrast.
-- Actual authenticated production subscription display comparison for the affected account (aggregate SQL alone cannot prove that account's UI is fixed).
+- The current authenticated account's subscription comparison is now verified as described below; historical behavior for an unidentified Pro Max account is not established.
 - Broader production smoke checks beyond the observed home/profile/subscription pages; coordinated frontend/backend deployment is now live.
 
 ## Read-only production subscription findings
 
 At the checked database time, six active Premium records had package `PREMIUM_90` / “Homeji Premium 90 ngày”; no record was named Pro Max. Ten completed Premium payments all had linked subscription rows. These are aggregate findings, not a diagnosis of an unidentified individual account. No rights were granted or payment states changed.
+
+## Current follow-up: no Docker required
+
+The user explicitly requested continuing without Docker. Docker is not required for
+the application or deployment and is not a gate for UI/build/unit/API verification.
+The optional isolated PostgreSQL HTTP cases remain unverified; no production writes
+are used to substitute for them. Backend integration README now records independent
+test commands and an existing local PostgreSQL option without installing a server.
+
+- Re-run on current sources: frontend build succeeds; all 84 frontend tests pass;
+  backend application 133 pass; API integration 71 pass and 8 database-dependent cases
+  skip. Skips do not prove persistence, JWT authentication, file upload or migrations.
+- Latest deployed color checkpoint before this follow-up: frontend
+  `0c24765dde9ffd1e406843ea0fc6e7bb8c8c68d8`, Render
+  `dep-db0ump0jo6nc73a19s3g` Live. Populated production food at 320 px has 21 cards,
+  corrected peach featured caption, dark green prices and white-on-burnt-orange actions.
+  Production wallet captions/actions and persisted goods category filters were also
+  verified, superseding the pending-live notes above.
+- Current authenticated production account displays Homeji Premium 90 ngày, expiry
+  00:51 12 October 2026 (UTC+7). Read-only SQL finds exactly one matching displayed-name
+  profile with active `PREMIUM_90` and expiry `2026-10-11 17:51:04.940231+00`.
+  Package and localized expiry match. No entitlement/payment mutation was performed.
+  This establishes the observed account, not an invented Pro Max package.
+- Additional actual production inspection finds two rental-owner cards at 320 px:
+  action groups consume the flex row, content width is 0 px, document width 440 px.
+  The rental card now has a dedicated class: desktop actions are bounded to 40% and
+  stack below content at <=768 px. Notification popup styling is unchanged.
+  Local fixture after correction: content/actions each 240 px at viewport 320,
+  document width 305 plus scrollbar gutter; desktop 1280 has content 727.2 px and
+  actions 320 px, document width 1280. No rental status action was submitted.
+  Screenshot: `output/verification/rental-owner-card-mobile-fixed.jpg`.
+
+The new rental-card layout still needs live deployment verification. Full completion
+is not asserted; remaining rendered states and controlled upload/submit evidence stay
+in scope, with optional database verification clearly separated from Docker availability.
