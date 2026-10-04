@@ -66,6 +66,8 @@ export const navigationGroups: NavigationGroup[] = [
       { id: 'map', label: 'Bản đồ', href: exploreMapUrl(), icon: 'map', group: 'housing' },
       { id: 'saved', label: 'Đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark', group: 'housing', requiredAuth: true },
       { id: 'appointments', label: 'Lịch xem phòng', href: mapSectionUrl('appointments'), icon: 'calendar', group: 'housing', requiredAuth: true },
+      { id: 'myPosts', label: 'Quản lý tin', href: mapSectionUrl('myPosts'), icon: 'list', group: 'housing', requiredAuth: true },
+      { id: 'createPost', label: 'Đăng tin phòng', href: '/posts/new', icon: 'plus', group: 'housing', requiredAuth: true },
     ],
   },
   {

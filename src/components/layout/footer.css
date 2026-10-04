@@ -4,11 +4,24 @@
 }
 
 .site-footer {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 24px 0;
-  text-align: center;
+  flex: 0 0 auto;
+  background: #fff9ef;
+  color: #24382d;
+  border-top: 1px solid #d8cdbb;
+  padding: 24px;
+  font-family: 'Be Vietnam Pro', sans-serif;
 }
+
+.site-footer__inner { max-width: 1256px; margin: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.site-footer__brand { color: #24382d; font-size: 20px; font-weight: 800; }
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 16px; margin-left: auto; }
+.site-footer a { color: #24382d; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.site-footer small, .site-footer p { color: #5c665d; }
+.site-footer--compact { padding: 6px 16px; }
+.site-footer--compact .site-footer__brand { font-size: 13px; }
+.site-footer--compact p { display: none; }
+.site-footer--compact a, .site-footer--compact small { font-size: 11px; line-height: 1.5; }
 
 .site-footer p {
   margin: 0;
@@ -17,8 +30,10 @@
 
 @media (max-width: 768px) {
   .site-footer {
-    padding: 16px 0 8px;
+    padding: 16px;
   }
+  .site-footer--compact { padding: 5px 12px; }
+  .site-footer nav { margin-left: 0; }
 
   .site-footer p {
     font-size: 12px;

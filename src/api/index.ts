@@ -409,10 +409,10 @@ export const getPayments = (params?: { status?: number; take?: number }) =>
   apiRequest<Payment[]>('/api/payments', { params })
 
 export const getPayment = (paymentId: string) =>
-  apiRequest<Payment>(`/api/payments/${paymentId}`)
+  apiRequest<Payment>(`/api/payments/${encodeURIComponent(paymentId)}`)
 
 export const getPaymentByOrderCode = (orderCode: string) =>
-  apiRequest<Payment>(`/api/payments/orders/${orderCode}`)
+  apiRequest<Payment>(`/api/payments/orders/${encodeURIComponent(orderCode)}`)
 
 export const createMomoPayment = (amount: number, description?: string) =>
   apiRequest<MomoPaymentResponse>('/api/payments/momo/create', {
@@ -500,6 +500,7 @@ export const rejectReport = (reportId: string, resolutionNote?: string) =>
 // Marketplace
 export const searchMarketplacePosts = (
   params?: {
+    sellerId?: string
     keyword?: string
     category?: string
     listingType?: MarketplaceListingType
@@ -514,6 +515,9 @@ export const searchMarketplacePosts = (
   },
   options?: { signal?: AbortSignal },
 ) => apiRequest<MarketplacePost[]>('/api/marketplace-posts', { params, auth: false, signal: options?.signal })
+
+export const getMyMarketplacePosts = () =>
+  apiRequest<MarketplacePost[]>('/api/marketplace-posts/mine')
 
 export const getMarketplacePost = (id: string) =>
   apiRequest<MarketplacePost>(`/api/marketplace-posts/${id}`, { auth: false })

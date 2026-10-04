@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   addRentalPostMedia,
@@ -22,7 +22,7 @@ import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabel } from '../lib/labels'
-import { mapPostUrl } from '../lib/mapDeepLinks'
+import { mapSectionUrl } from '../lib/mapDeepLinks'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -45,6 +45,8 @@ export function EditRentalPostPage() {
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const [availableFrom, setAvailableFrom] = useState('')
   const [originalLeaseEndsOn, setOriginalLeaseEndsOn] = useState('')
   const [transferKind, setTransferKind] = useState<RoomTransferKind>(RoomTransferKind.LeaseAssignment)
@@ -83,12 +85,10 @@ export function EditRentalPostPage() {
     { enabled: !!postId },
   )
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!postId) return
-    setError('')
-    try {
-      const updated = await updateRentalPost(postId, {
+  const persistDraft = async () => {
+    if (!postId) throw new Error('Không tìm thấy tin đăng.')
+    if (!isValidCoord(latNum, lngNum)) throw new Error('Chọn địa chỉ hoặc vị trí hợp lệ trước khi lưu.')
+    const updated = await updateRentalPost(postId, {
         type,
         title,
         description,
@@ -107,15 +107,27 @@ export function EditRentalPostPage() {
         ownerConsentConfirmed: type === RentalPostType.RoomTransfer ? ownerConsentConfirmed : undefined,
         ownerConsentContact: type === RentalPostType.RoomTransfer ? ownerConsentContact : undefined,
       })
-      setPost(updated)
+    setPost(updated)
+    return updated
+  }
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (saving || uploadingMedia) return
+    setError('')
+    setSaving(true)
+    try {
+      await persistDraft()
       setMessage('Đã lưu tin đăng.')
     } catch (err) {
       setError(getErrorMessage(err, 'Lưu thất bại'))
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleAddMedia = async () => {
-    if (!postId || !profile || mediaFiles.length === 0) return
+    if (!postId || !profile || saving || uploadingMedia || mediaFiles.length === 0) return
     setError('')
     setUploadingMedia(true)
     try {
@@ -151,7 +163,7 @@ export function EditRentalPostPage() {
   }
 
   const handleDeleteMedia = async (mediaId: string) => {
-    if (!postId) return
+    if (!postId || saving || uploadingMedia) return
     try {
       await deleteRentalPostMedia(postId, mediaId)
       const updated = await getRentalPost(postId)
@@ -162,18 +174,24 @@ export function EditRentalPostPage() {
   }
 
   const handleSubmit = async () => {
-    if (!postId) return
+    if (!postId || saving || uploadingMedia || !formRef.current?.reportValidity()) return
+    setError('')
+    setSaving(true)
     try {
+      const saved = await persistDraft()
+      if (saved.media.length < 3) throw new Error('Thêm ít nhất 3 ảnh thật trước khi gửi duyệt.')
       await submitRentalPost(postId)
       setMessage('Tin đăng đã gửi duyệt.')
-      navigate(mapPostUrl(postId))
+      navigate(mapSectionUrl('myPosts'))
     } catch (err) {
       setError(getErrorMessage(err, 'Gửi duyệt thất bại'))
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleArchive = async () => {
-    if (!postId || !confirm('Lưu trữ tin đăng này?')) return
+    if (!postId || saving || uploadingMedia || !confirm('Lưu trữ tin đăng này?')) return
     try {
       await archiveRentalPost(postId)
       navigate('/')
@@ -210,8 +228,8 @@ export function EditRentalPostPage() {
     setMessage('Đã cập nhật tọa độ từ địa chỉ.')
   }
 
-  const latNum = Number(latitude)
-  const lngNum = Number(longitude)
+  const latNum = latitude.trim() ? Number(latitude) : Number.NaN
+  const lngNum = longitude.trim() ? Number(longitude) : Number.NaN
 
   if (showLoader) {
     return disrupted ? (
@@ -232,7 +250,7 @@ export function EditRentalPostPage() {
       title="Chỉnh sửa tin đăng"
       actions={
         <>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleSubmit()}>
+          <button type="button" className="btn btn-primary btn-sm" disabled={saving || uploadingMedia} onClick={() => void handleSubmit()}>
             Gửi duyệt
           </button>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleArchive()}>
@@ -246,7 +264,8 @@ export function EditRentalPostPage() {
       <PageNotice message={!disrupted ? (error || loadError) : ''} tone="error" />
       <PageNotice message={message} tone="success" />
 
-      <form className="card" onSubmit={handleSave}>
+      <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
+      <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">
             <div className="room-transfer-form__notice">
@@ -298,32 +317,38 @@ export function EditRentalPostPage() {
           </section>
         ) : null}
         <div className="form-group">
-          <label className="form-label">Tiêu đề</label>
-          <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <label className="form-label" htmlFor="rental-title">Tiêu đề</label>
+          <input id="rental-title" className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Mô tả</label>
-          <textarea className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <label className="form-label" htmlFor="rental-description">Mô tả</label>
+          <textarea id="rental-description" className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={4000} required />
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Giá thuê (VND)</label>
-            <input className="form-input" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            <label className="form-label" htmlFor="rental-price">Giá thuê (VND / tháng)</label>
+            <input id="rental-price" className="form-input" type="number" min="1" step="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Tiền cọc</label>
-            <input className="form-input" type="number" value={deposit} onChange={(e) => setDeposit(e.target.value)} required />
+            <label className="form-label" htmlFor="rental-deposit">Tiền cọc (VND)</label>
+            <input id="rental-deposit" className="form-input" type="number" min="0" step="1" value={deposit} onChange={(e) => setDeposit(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Diện tích (m²)</label>
-            <input className="form-input" type="number" value={area} onChange={(e) => setArea(e.target.value)} required />
+            <label className="form-label" htmlFor="rental-area">Diện tích (m²)</label>
+            <input id="rental-area" className="form-input" type="number" min="0.1" step="0.1" value={area} onChange={(e) => setArea(e.target.value)} required />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Địa chỉ</label>
+          <label className="form-label" htmlFor="rental-address">Địa chỉ</label>
           <AddressAutocomplete
+            id="rental-address"
             value={address}
-            onChange={setAddress}
+            onChange={(value) => {
+              setAddress(value)
+              setLatitude('')
+              setLongitude('')
+            }}
+            required
             onPlaceSelect={handlePlaceSelect}
             placeholder="Nhập địa chỉ — gợi ý tự động (Places API)"
           />
@@ -360,8 +385,8 @@ export function EditRentalPostPage() {
           <div id="edit-post-map-picker">
             <DeferredMapBlock visible={mapPickerOpen} label="Chọn vị trí trên bản đồ">
               <LocationPickerMap
-                latitude={latNum}
-                longitude={lngNum}
+                latitude={isValidCoord(latNum, lngNum) ? latNum : 10.7769}
+                longitude={isValidCoord(latNum, lngNum) ? lngNum : 106.7009}
                 onLocationChange={(lat, lng) => {
                   setLatitude(String(lat))
                   setLongitude(String(lng))
@@ -387,15 +412,15 @@ export function EditRentalPostPage() {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary">Lưu nháp</button>
+        <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu nháp'}</button>
       </form>
 
-      <section className="card" style={{ marginTop: 24 }}>
+      <section className="card rental-media-card">
         <h2>Hình ảnh</h2>
         <div className="form-group">
           <label className="form-label" htmlFor="rental-media">Chọn ảnh phòng</label>
           <p className="form-hint">Tối thiểu 3 ảnh thật, tối đa 10 ảnh. Chấp nhận JPEG, PNG hoặc WebP.</p>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="rental-media-upload">
             <input
               id="rental-media"
               className="form-input"
@@ -417,8 +442,8 @@ export function EditRentalPostPage() {
         ))}
       </section>
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-        <button type="button" className="btn btn-primary" onClick={() => void handleSubmit()}>Gửi duyệt</button>
+      <div className="rental-form-actions">
+        <button type="button" className="btn btn-primary" disabled={saving || uploadingMedia} onClick={() => void handleSubmit()}>{saving ? 'Đang lưu và gửi…' : 'Lưu & gửi duyệt'}</button>
         <button type="button" className="btn btn-secondary" onClick={() => void handleArchive()}>Lưu trữ</button>
       </div>
     </PageFrame>

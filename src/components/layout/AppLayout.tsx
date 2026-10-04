@@ -5,6 +5,7 @@ import { isExploreMapMode } from '../chrome/exploreMode'
 import { isMapSectionRedirectPath } from '../../lib/mapDeepLinks'
 import { AppShell } from '../shell/AppShell'
 import { Navbar } from './Navbar'
+import { SiteFooter } from './SiteFooter'
 import './footer.css'
 import './AppLayout.css'
 
@@ -53,6 +54,7 @@ export function AppLayout() {
     !isAuthCinema &&
     (location.pathname === '/' ||
       isMapSectionRedirectPath(location.pathname) ||
+      location.pathname === '/payments/wait' ||
       location.pathname.startsWith('/posts') ||
       location.pathname === '/admin')
   /** Peer height for the map destination (not Khám phá list / view=list). */
@@ -94,13 +96,7 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
-      {!isAuthedApp && !isGuestLanding && !isAuthCinema && (
-        <footer className="site-footer">
-          <div className="container">
-            <p>Homeji — Nền tảng tìm phòng trọ & bạn ở ghép</p>
-          </div>
-        </footer>
-      )}
+      <SiteFooter compact={isMapPeer || isMessagesWorkspace} />
     </div>
   )
 }

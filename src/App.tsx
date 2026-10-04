@@ -20,6 +20,7 @@ import { EditRentalPostPage } from './pages/EditRentalPostPage'
 import { ExplorePage } from './pages/ExplorePage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
+import { PaymentWaitingPage } from './pages/PaymentWaitingPage'
 import { LoginPage } from './pages/LoginPage'
 import { PrivacyPolicyPage, TermsOfServicePage } from './pages/LegalPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -60,6 +61,7 @@ function AppRoutes() {
         <Route path="/notifications" element={<ProtectedRoute><MapHomeSectionRedirect section="notifications" /></ProtectedRoute>} />
         <Route path="/invitations" element={<ProtectedRoute><MapHomeSectionRedirect section="invitations" /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><MapHomeSectionRedirect section="payments" /></ProtectedRoute>} />
+        <Route path="/payments/wait" element={<ProtectedRoute><PaymentWaitingPage /></ProtectedRoute>} />
 
         <Route
           path="/admin"

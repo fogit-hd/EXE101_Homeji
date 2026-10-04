@@ -1,7 +1,10 @@
-import { useSyncDocumentTheme } from '../hooks/usePrefersColorScheme'
+import { useEffect } from 'react'
 
-/** Side-effect only — syncs OS light/dark onto <html>. */
+/** Product surfaces and body-level portals share the same warm-light palette. */
 export function ThemeSync() {
-  useSyncDocumentTheme()
+  useEffect(() => {
+    document.documentElement.dataset.theme = 'light'
+    document.documentElement.style.colorScheme = 'light'
+  }, [])
   return null
 }

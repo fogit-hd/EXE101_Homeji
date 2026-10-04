@@ -128,10 +128,11 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
 }
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {
-  [PaymentStatus.Pending]: 'Đang chờ',
+  [PaymentStatus.Pending]: 'Chờ thanh toán',
   [PaymentStatus.Completed]: 'Hoàn tất',
   [PaymentStatus.Failed]: 'Thất bại',
   [PaymentStatus.Cancelled]: 'Đã hủy',
+  [PaymentStatus.Expired]: 'Hết hạn',
 }
 
 export const mediaTypeLabel: Record<MediaType, string> = {
@@ -318,13 +319,15 @@ export const MARKETPLACE_CONDITIONS = [
   'Cần sửa chữa',
 ] as const
 
-/** Marketplace category — free string on BE; search filters by exact match. */
-export const MARKETPLACE_CATEGORIES = [
+/** Keep persisted category values stable: the API filters by exact match. */
+export const FOOD_CATEGORIES = [
   'Ăn sáng',
   'Cơm nhà',
   'Mì / bún',
   'Đồ uống',
   'Ăn vặt',
+] as const
+export const GOODS_CATEGORIES = [
   'Nội thất',
   'Điện tử',
   'Đồ bếp',
@@ -333,3 +336,4 @@ export const MARKETPLACE_CATEGORIES = [
   'Đồ gia dụng',
   'Khác',
 ] as const
+export const MARKETPLACE_CATEGORIES = [...FOOD_CATEGORIES, ...GOODS_CATEGORIES] as const

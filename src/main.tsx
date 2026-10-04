@@ -2,6 +2,7 @@ import './bootstrap/preventDefaultGuard'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import './ui-consistency.css'
 
 /**
  * Do NOT wrap the app in React.StrictMode while Google Maps Vector/WebGL is in use.

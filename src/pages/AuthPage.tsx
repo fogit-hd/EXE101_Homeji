@@ -1,5 +1,6 @@
 import type { CredentialResponse } from '@react-oauth/google'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
+import { AuthCityScene } from '../components/auth/AuthCityScene'
 import gsap from 'gsap'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -21,12 +22,6 @@ import { AiVoiceFloat, PasswordEyeToggle, voiceTravelDuration } from './AuthPage
 import { layoutWelcomeStrokes, WELCOME_PHRASE } from './authWelcomeHandwrite'
 import './AuthPage.css'
 
-const VIDEO = {
-  desktop: '/video/auth-desktop-16x9.mp4',
-  mobile: '/video/auth-mobile-9x16.mp4',
-} as const
-
-const MOBILE_MQ = '(max-width: 900px), (orientation: portrait) and (max-width: 1024px)'
 const TOGGLE_COOLDOWN_MS = 1000
 
 const TYPE_MS = 46
@@ -68,19 +63,6 @@ type AuthPageProps = {
   initialMode?: AuthMode
 }
 
-function useIsMobileVideo() {
-  const [mobile, setMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(MOBILE_MQ).matches : false,
-  )
-  useEffect(() => {
-    const mq = window.matchMedia(MOBILE_MQ)
-    const sync = () => setMobile(mq.matches)
-    sync()
-    mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
-  }, [])
-  return mobile
-}
 
 /**
  * Typewriter: gọi Voice tới slot → chờ ĐỦ thời gian trượt (khớp GSAP) → gõ.
@@ -293,12 +275,11 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   const [mode, setMode] = useState<AuthMode>(modeFromPath)
   /** Skip Intro → hiện form card đầy đủ */
-  const [skipped, setSkipped] = useState(modeFromPath === 'signin')
+  const [skipped, setSkipped] = useState(true)
   const [storyStep, setStoryStep] = useState<StoryStep>(
     modeFromPath === 'signup' ? 'welcome' : 'done',
   )
   const [toggleLocked, setToggleLocked] = useState(false)
-  const [videoReady, setVideoReady] = useState(false)
 
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -487,8 +468,6 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     }
   }, [storyStep, helloPhase, connectReady])
 
-  const isMobileVideo = useIsMobileVideo()
-  const videoRef = useRef<HTMLVideoElement>(null)
   const welcomeRef = useRef<HTMLDivElement>(null)
   const formWrapRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<gsap.core.Timeline | null>(null)
@@ -526,7 +505,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       setSkipped(true)
       setStoryStep('done')
     } else {
-      setSkipped(false)
+      setSkipped(true)
       setStoryStep('welcome')
       setError('')
       setMessage('')
@@ -547,7 +526,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   useEffect(() => {
     const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    document.body.style.overflow = 'auto'
     return () => {
       document.body.style.overflow = prev
     }
@@ -561,28 +540,6 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     if (connectReady) warmConnectLottie()
   }, [connectReady])
 
-  useEffect(() => {
-    const el = videoRef.current
-    if (!el) return
-    const src = isMobileVideo ? VIDEO.mobile : VIDEO.desktop
-    setVideoReady(false)
-    el.dataset.src = src
-    el.setAttribute('playsinline', 'true')
-    el.setAttribute('webkit-playsinline', 'true')
-    el.src = src
-    el.load()
-    const onReady = () => {
-      setVideoReady(true)
-      void el.play().catch(() => {})
-    }
-    const onFail = () => setVideoReady(false)
-    el.addEventListener('loadeddata', onReady)
-    el.addEventListener('error', onFail)
-    return () => {
-      el.removeEventListener('loadeddata', onReady)
-      el.removeEventListener('error', onFail)
-    }
-  }, [isMobileVideo])
 
   const killIntro = () => {
     timelineRef.current?.kill()
@@ -1147,17 +1104,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
           <span className="auth-cinema__orb auth-cinema__orb--c" />
           <div className="auth-cinema__grain" />
         </div>
-        <video
-          ref={videoRef}
-          className={`auth-cinema__video${videoReady ? ' is-ready' : ''}`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-        />
         <div className="auth-cinema__overlay" />
       </div>
+      <AuthCityScene mode={mode} />
 
       {/* Chỉ Skip — không logo */}
       <div className="auth-cinema__top auth-cinema__top--skip-only">

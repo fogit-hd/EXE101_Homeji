@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   createPremiumMomoPayment,
   createPremiumPayOsPayment,
   getMySubscription,
   getPayment,
-  getPaymentByOrderCode,
   getPayments,
   getSubscriptionPackages,
   type MySubscription,
@@ -17,16 +16,18 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { MapToast } from '../components/map/MapToast'
+import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
+import { ShellIcon } from '../components/shell/ShellIcons'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import {
   formatDate,
   formatPrice,
   paymentMethodLabel,
-  paymentStatusLabel,
-  subscriptionTierLabel,
 } from '../lib/labels'
 import { getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
+import { paymentWaitingUrl } from '../lib/paymentLifecycle'
+import { currentSubscription } from '../lib/currentSubscription'
 import './MarketplacePage.css'
 import './PaymentPage.css'
 
@@ -34,17 +35,26 @@ type PayTab = 'plans' | 'history'
 
 export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const { refreshProfile } = useAuth()
-  const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState<PayTab>('plans')
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab: PayTab = searchParams.get('tab') === 'history' ? 'history' : 'plans'
+  const setTab = (value: PayTab) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous)
+    next.set('tab', value)
+    return next
+  }, { replace: true })
   const [packages, setPackages] = useState<SubscriptionPackage[]>([])
   const [mine, setMine] = useState<MySubscription | null>(null)
+  const [subscriptionError, setSubscriptionError] = useState('')
   const [payments, setPayments] = useState<Payment[]>([])
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [payPickerCode, setPayPickerCode] = useState<string | null>(null)
   const [busyCode, setBusyCode] = useState<string | null>(null)
   const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | null>(null)
-  const [payUrl, setPayUrl] = useState<string | null>(null)
-  const [activePayment, setActivePayment] = useState<Payment | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [checking, setChecking] = useState(false)
+  const [historyError, setHistoryError] = useState('')
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'error' | 'info' } | null>(
     null,
   )
@@ -54,17 +64,52 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     searchParams.get('orderCode') ?? searchParams.get('orderId')
 
   const loadFn = useCallback(async () => {
-    const [pkgList, current, history] = await Promise.all([
+    const [catalog, current, history] = await Promise.allSettled([
       getSubscriptionPackages(),
       getMySubscription(),
-      getPayments({ take: 30 }).catch(() => [] as Payment[]),
+      getPayments({ take: 30 }),
     ])
-    setPackages(pkgList)
-    setMine(current)
-    setPayments(history)
-    const firstPremium = pkgList.find((p) => p.tier === SubscriptionTier.Premium)
-    setSelectedCode((prev) => prev ?? firstPremium?.code ?? pkgList[0]?.code ?? null)
+    if (catalog.status === 'fulfilled') {
+      setPackages(catalog.value)
+      const firstPremium = catalog.value.find((p) => p.tier === SubscriptionTier.Premium)
+      setSelectedCode((prev) => prev ?? firstPremium?.code ?? catalog.value[0]?.code ?? null)
+    }
+    if (current.status === 'fulfilled') {
+      setMine(current.value)
+      setSubscriptionError('')
+    } else {
+      setMine(null)
+      setSubscriptionError('Chưa kiểm tra được gói hiện tại. Vui lòng làm mới; hệ thống không tự coi tài khoản là Free.')
+    }
+    if (history.status === 'fulfilled') {
+      setPayments(history.value)
+      setHistoryError('')
+    }
+    else setHistoryError('Chưa tải được lịch sử thanh toán. Gói hiện tại vẫn được kiểm tra riêng.')
+    if (catalog.status === 'rejected') throw catalog.reason
   }, [])
+
+  useEffect(() => {
+    let disposed = false
+    let checkingSubscription = false
+    const check = async () => {
+      if (checkingSubscription || document.hidden) return
+      checkingSubscription = true
+      try {
+        const snapshot = await getMySubscription()
+        if (!disposed) {
+          setMine(snapshot)
+          setSubscriptionError('')
+          await refreshProfile()
+        }
+      } catch {
+        if (!disposed) setSubscriptionError('Không thể cập nhật gói. Thông tin bên dưới là lần kiểm tra gần nhất.')
+      } finally { checkingSubscription = false }
+    }
+    window.addEventListener('focus', check)
+    document.addEventListener('visibilitychange', check)
+    return () => { disposed = true; window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check) }
+  }, [refreshProfile])
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn, [])
 
@@ -75,64 +120,59 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }, [toast])
 
   useEffect(() => {
-    let cancelled = false
-    const loadLookup = async () => {
+    if (lookupId || lookupOrder) {
+      const params = new URLSearchParams()
+      if (lookupId) params.set('paymentId', lookupId)
+      else if (lookupOrder) params.set('orderCode', lookupOrder)
+      navigate(`/payments/wait?${params.toString()}`, { replace: true })
+    }
+  }, [lookupId, lookupOrder, navigate])
+
+  const hasPending = payments.some((payment) => payment.status === PaymentStatus.Pending)
+  useEffect(() => {
+    if (tab !== 'history' || !hasPending) return
+    let disposed = false
+    let inFlight = false
+    const update = async () => {
+      if (inFlight || document.visibilityState !== 'visible') return
+      inFlight = true
       try {
-        const detail = lookupId
-          ? await getPayment(lookupId)
-          : lookupOrder
-            ? await getPaymentByOrderCode(lookupOrder)
-            : null
-        if (cancelled || !detail) return
-        setActivePayment(detail)
-        setTab('history')
-        if (detail.status === PaymentStatus.Completed) {
-          await refreshProfile()
-          const current = await getMySubscription()
-          if (!cancelled) setMine(current)
+        const history = await getPayments({ take: 30 })
+        if (!disposed) {
+          setPayments(history)
+          setHistoryError('')
         }
-      } catch {
-        /* ignore return-url lookup failures */
+      } catch (err) {
+        if (!disposed) setHistoryError(getErrorMessage(err, 'Chưa thể cập nhật giao dịch.'))
+      } finally {
+        inFlight = false
       }
     }
-    void loadLookup()
+    const timer = window.setInterval(() => void update(), 10000)
+    document.addEventListener('visibilitychange', update)
+    window.addEventListener('online', update)
     return () => {
-      cancelled = true
+      disposed = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', update)
+      window.removeEventListener('online', update)
     }
-  }, [lookupId, lookupOrder, refreshProfile])
+  }, [tab, hasPending])
 
   const showToast = (message: string, tone: 'success' | 'error' | 'info' = 'info') => {
     setToast({ message, tone })
   }
 
   const startCheckout = async (packageCode: string, method: 'momo' | 'payos') => {
+    if (busyCode) return
     setBusyCode(packageCode)
     setBusyMethod(method)
-    setPayUrl(null)
     try {
-      let url: string | null
-      let paymentId: string
-
-      if (method === 'momo') {
-        const res = await createPremiumMomoPayment(packageCode)
-        url = res.payUrl ?? res.deeplink ?? res.qrCodeUrl ?? null
-        paymentId = res.paymentId
-      } else {
-        const res = await createPremiumPayOsPayment(packageCode)
-        url = res.checkoutUrl ?? null
-        paymentId = res.paymentId
-      }
-
-      setPayUrl(url)
+      const res = method === 'momo'
+        ? await createPremiumMomoPayment(packageCode)
+        : await createPremiumPayOsPayment(packageCode)
       setPayPickerCode(null)
-      const detail = await getPayment(paymentId)
-      setActivePayment(detail)
-      setPayments((prev) => [detail, ...prev.filter((p) => p.id !== detail.id)])
-      showToast(
-        method === 'momo' ? 'Đã tạo thanh toán MoMo. Mở trang để hoàn tất.' : 'Đã tạo thanh toán PayOS.',
-        'success',
-      )
-      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+      navigate(paymentWaitingUrl(res.paymentId))
     } catch (err) {
       showToast(getErrorMessage(err, 'Không tạo được thanh toán gói'), 'error')
     } finally {
@@ -142,20 +182,21 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const refreshActivePayment = async () => {
-    if (!activePayment) return
+    if (!activePayment || checking) return
+    setChecking(true)
     try {
       const detail = await getPayment(activePayment.id)
-      setActivePayment(detail)
       setPayments((prev) => prev.map((p) => (p.id === detail.id ? detail : p)))
+      setHistoryError('')
       if (detail.status === PaymentStatus.Completed) {
         await refreshProfile()
         setMine(await getMySubscription())
         showToast('Thanh toán thành công. Gói Premium đã được kích hoạt.', 'success')
-      } else {
-        showToast(`Trạng thái: ${paymentStatusLabel[detail.status] ?? 'Đang xử lý'}`, 'info')
       }
     } catch (err) {
       showToast(getErrorMessage(err, 'Không kiểm tra được giao dịch'), 'error')
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -181,50 +222,40 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     ...premiumPlans,
   ])
 
-  const currentLabel = mine?.isPremium
-    ? mine.packageName || subscriptionTierLabel[mine.tier] || 'Pro'
-    : 'Homeji Free'
+  const current = currentSubscription(mine)
+  const currentLabel = current.label
+
+  const filteredPayments = payments.filter((payment) => statusFilter === 'all' || String(payment.status) === statusFilter)
+  const activePayment = filteredPayments.find((payment) => payment.id === activeId) ?? filteredPayments[0] ?? null
+  const pendingCount = payments.filter((payment) => payment.status === PaymentStatus.Pending).length
+  const paidPayments = payments.filter((payment) => payment.status === PaymentStatus.Completed)
+  const paidTotal = paidPayments.reduce((sum, payment) => sum + payment.amount, 0)
 
   return (
     <div className={`payment-page${embedded ? ' payment-embed map-embed' : ' container page'}`}>
       <header className="payment-page-header">
         <span className="payment-page-eyebrow">HOMEJI MEMBERSHIP</span>
-        <h1 className="payment-page-title">Tìm nhanh hơn. Chọn tự tin hơn.</h1>
+        <h1 className="payment-page-title">{tab === 'history' ? 'Giao dịch của bạn' : 'Tìm nhanh hơn. Chọn tự tin hơn.'}</h1>
         <p className="payment-page-lead">
-          Nâng cấp khi bạn cần thêm lợi thế trong hành trình tìm nhà — không ràng buộc dài hạn.
+          {tab === 'history' ? 'Theo dõi thanh toán và quản lý gói thành viên ở cùng một nơi.' : 'Nâng cấp khi bạn cần thêm lợi thế trong hành trình tìm nhà — không ràng buộc dài hạn.'}
         </p>
       </header>
 
       <PageNotice message={error && !disrupted ? error : ''} tone="error" />
+      <PageNotice message={subscriptionError} tone="error" />
 
       <section className="payment-current map-motion-fade-up">
         <div className="payment-current__left">
           <p className="payment-current__label">GÓI HIỆN TẠI</p>
           <div className="payment-current__name-row">
             <strong className="payment-current__badge">{currentLabel}</strong>
-            <span className="payment-current__live">ĐANG DÙNG</span>
+            <span className="payment-current__live">{current.premium === null ? 'CHƯA TẢI ĐƯỢC' : 'ĐANG DÙNG'}</span>
           </div>
           {mine?.premiumExpiresAt ? (
             <p className="payment-current__meta">Hết hạn {formatDate(mine.premiumExpiresAt)}</p>
           ) : null}
         </div>
-        <div className="payment-current__meters" aria-hidden={!mine}>
-          <div className="payment-current__meter">
-            <span>Phòng đã lưu</span>
-            <strong>9 / 12</strong>
-            <i style={{ width: '75%' }} />
-          </div>
-          <div className="payment-current__meter">
-            <span>Thông báo khu vực</span>
-            <strong>1 / 1</strong>
-            <i className="is-full" style={{ width: '100%' }} />
-          </div>
-          <div className="payment-current__meter">
-            <span>Lượt so sánh</span>
-            <strong>2 / 3</strong>
-            <i style={{ width: '66%' }} />
-          </div>
-        </div>
+        <div className="payment-current__benefit"><ShellIcon name="shield" /><p>{mine?.isPremium ? 'Quyền lợi Premium đang được kích hoạt cho tài khoản của bạn.' : 'Chọn gói phù hợp để có thêm lợi thế khi tìm nhà.'}</p></div>
         <button type="button" className="payment-current__refresh" onClick={() => void reload()}>
           Làm mới
         </button>
@@ -263,9 +294,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             const isPremium = plan.tier === SubscriptionTier.Premium && plan.price > 0
             const selected = selectedCode === plan.code
             const isCurrent = isPremium
-              ? !!(mine?.isPremium && mine.packageCode === plan.code)
-              : !mine?.isPremium
-            const busy = busyCode === plan.code
+              ? !!(current.premium && current.code === plan.code.trim().toUpperCase())
+              : current.premium === false
+            const busy = busyCode !== null
             const pickingPay = payPickerCode === plan.code
             const featured = view.highlight === 'popular' || (isPremium && !view.highlight)
 
@@ -291,7 +322,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   </span>
                 ) : null}
 
-                <h3>{isPremium ? (view.title.includes('Pro') ? view.title : 'Pro') : 'Free'}</h3>
+                <h3>{plan.name}</h3>
                 <p className="payment-plan-card__price">
                   {isPremium ? (
                     <>
@@ -318,7 +349,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
                 <div className="payment-plan-card__actions">
                   {!isPremium ? (
-                    <span className="payment-plan-card__current is-free">✓ Gói hiện tại</span>
+                    <span className="payment-plan-card__current is-free">{isCurrent ? '✓ Gói hiện tại' : 'Gói miễn phí'}</span>
                   ) : isCurrent ? (
                     <span className="payment-plan-card__current">Đang dùng</span>
                   ) : pickingPay ? (
@@ -406,106 +437,54 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          {(payUrl || activePayment) && tab === 'plans' ? (
-            <aside className="payment-checkout card">
-              <h3>Thanh toán đang mở</h3>
-              {payUrl ? (
-                <a href={payUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm">
-                  Mở lại trang thanh toán
-                </a>
-              ) : null}
-              {activePayment ? (
-                <dl className="detail-facts">
-                  <div>
-                    <dt>Mã đơn</dt>
-                    <dd>{activePayment.orderCode}</dd>
-                  </div>
-                  <div>
-                    <dt>Phương thức</dt>
-                    <dd>{paymentMethodLabel[activePayment.method]}</dd>
-                  </div>
-                  <div>
-                    <dt>Trạng thái</dt>
-                    <dd>{paymentStatusLabel[activePayment.status]}</dd>
-                  </div>
-                  <div>
-                    <dt>Số tiền</dt>
-                    <dd>{formatPrice(activePayment.amount)}</dd>
-                  </div>
-                </dl>
-              ) : null}
-              {activePayment ? (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => void refreshActivePayment()}>
-                  Kiểm tra trạng thái
-                </button>
-              ) : null}
-            </aside>
-          ) : null}
         </div>
       ) : null}
 
       {tab === 'history' ? (
-        <div className="payment-history map-motion-fade-up">
-          {activePayment ? (
-            <aside className="payment-checkout card">
-              <h3>Chi tiết giao dịch</h3>
-              <dl className="detail-facts">
-                <div>
-                  <dt>Mã đơn</dt>
-                  <dd>{activePayment.orderCode}</dd>
-                </div>
-                <div>
-                  <dt>Phương thức</dt>
-                  <dd>{paymentMethodLabel[activePayment.method]}</dd>
-                </div>
-                <div>
-                  <dt>Trạng thái</dt>
-                  <dd>{paymentStatusLabel[activePayment.status]}</dd>
-                </div>
-                <div>
-                  <dt>Số tiền</dt>
-                  <dd>{formatPrice(activePayment.amount)}</dd>
-                </div>
-                <div>
-                  <dt>Tạo lúc</dt>
-                  <dd>{formatDate(activePayment.createdAt)}</dd>
-                </div>
-              </dl>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void refreshActivePayment()}>
-                Kiểm tra trạng thái
-              </button>
-            </aside>
-          ) : null}
-
-          {payments.length === 0 ? (
-            <div className="empty-state card">Chưa có giao dịch nào.</div>
-          ) : (
-            <ul className="payment-history__list">
-              {payments.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className={`payment-history__row${activePayment?.id === p.id ? ' is-active' : ''}`}
-                    onClick={() => setActivePayment(p)}
-                  >
-                    <div>
-                      <strong>{formatPrice(p.amount)}</strong>
-                      <small>
-                        {paymentMethodLabel[p.method]} · {p.orderCode}
-                      </small>
-                    </div>
-                    <div className="payment-history__right">
-                      <span className={`payment-status is-${p.status}`}>
-                        {paymentStatusLabel[p.status]}
-                      </span>
-                      <small>{formatDate(p.createdAt)}</small>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <section className="payment-history map-motion-fade-up" aria-label="Lịch sử giao dịch">
+          <div className="payment-summary">
+            <div><span className="payment-summary__icon"><ShellIcon name="wallet" /></span><span>Đã thanh toán<strong>{historyError ? '—' : formatPrice(paidTotal)}</strong><small>{historyError ? 'Chưa cập nhật được dữ liệu' : `${paidPayments.length} giao dịch hoàn tất`}</small></span></div>
+            <div><span className="payment-summary__icon is-pending"><ShellIcon name="card" /></span><span>Chờ thanh toán<strong>{historyError ? '—' : String(pendingCount)}</strong><small>Tự hủy sau 15 phút</small></span></div>
+            <div><span className="payment-summary__icon"><ShellIcon name="receipt" /></span><span>Giao dịch gần đây<strong>{historyError ? '—' : String(payments.length)}</strong><small>Tối đa 30 giao dịch mới nhất</small></span></div>
+          </div>
+          <div className="payment-history-layout">
+            <div className="payment-history-card">
+              <div className="payment-history-toolbar">
+                <div><h2>Lịch sử giao dịch</h2><p>Chọn giao dịch để xem chi tiết.</p></div>
+                <label className="payment-filter"><span className="sr-only">Lọc trạng thái giao dịch</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="all">Tất cả trạng thái</option><option value={PaymentStatus.Pending}>Chờ thanh toán</option><option value={PaymentStatus.Completed}>Hoàn tất</option><option value={PaymentStatus.Cancelled}>Đã hủy</option><option value={PaymentStatus.Failed}>Thất bại</option><option value={PaymentStatus.Expired}>Hết hạn</option>
+                </select></label>
+              </div>
+              {historyError && <p className="payment-inline-error" role="alert">{historyError}</p>}
+              {historyError && payments.length === 0 ? (
+                <div className="payment-empty"><ShellIcon name="receipt" /><h3>Chưa thể tải giao dịch</h3><p>Không thể xác định lịch sử trong lần kiểm tra này.</p><button type="button" className="payment-button" onClick={() => void reload()}>Thử lại</button></div>
+              ) : filteredPayments.length === 0 ? (
+                <div className="payment-empty"><ShellIcon name="receipt" /><h3>{payments.length === 0 ? 'Chưa có giao dịch' : 'Không có giao dịch phù hợp'}</h3><p>{payments.length === 0 ? 'Giao dịch sẽ xuất hiện tại đây khi bạn đăng ký gói.' : 'Thử chọn một trạng thái khác để xem giao dịch.'}</p>{payments.length === 0 && <button className="payment-button" onClick={() => setTab('plans')}>Khám phá các gói</button>}</div>
+              ) : (
+                <ul className="payment-history__list">
+                  {filteredPayments.map((p) => (
+                    <li key={p.id}>
+                      <button type="button" className={`payment-history__row${activePayment?.id === p.id ? ' is-active' : ''}`} onClick={() => setActiveId(p.id)} aria-pressed={activePayment?.id === p.id}>
+                        <span className={`payment-provider is-${p.method}`} aria-hidden="true">{p.method === 1 ? 'M' : 'P'}</span>
+                        <span className="payment-history__identity"><strong>{p.packageCode ? packages.find((plan) => plan.code === p.packageCode)?.name ?? p.description : p.description}</strong><small>{paymentMethodLabel[p.method]} · {p.orderCode}</small><small>{formatDate(p.createdAt)}</small></span>
+                        <span className="payment-history__right"><strong>{formatPrice(p.amount)}</strong><PaymentStatusBadge status={p.status} /></span>
+                        <span className="payment-history__arrow" aria-hidden="true">›</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="payment-history-caption"><ShellIcon name="shield" />Trạng thái thanh toán được xác nhận bởi hệ thống.</p>
+            </div>
+            {activePayment && <aside className="payment-detail-card"><PaymentDetails payment={activePayment} />
+              {activePayment.status === PaymentStatus.Pending ? <>
+                <div className="payment-detail-note is-pending"><p>Đơn tự hủy nếu chưa thanh toán trong 15 phút kể từ lúc tạo.</p></div>
+                <Link className="payment-button" to={paymentWaitingUrl(activePayment.id)}>Tiếp tục thanh toán →</Link>
+              </> : activePayment.status === PaymentStatus.Cancelled || activePayment.status === PaymentStatus.Expired ? <div className="payment-detail-note"><p>{activePayment.providerMessage || 'Đơn đã hủy. Bạn có thể tạo một giao dịch mới.'}</p></div> : null}
+              <button type="button" className="payment-button is-secondary" disabled={checking} onClick={() => void refreshActivePayment()}>{checking ? 'Đang kiểm tra…' : 'Cập nhật trạng thái'}</button>
+            </aside>}
+          </div>
+        </section>
       ) : null}
 
       <MapToast

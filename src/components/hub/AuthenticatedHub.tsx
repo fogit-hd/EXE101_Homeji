@@ -244,6 +244,15 @@ export function AuthenticatedHub() {
         <Link className="hub-welcome__cta" to="/posts/new">Đăng tin phòng</Link>
       </header>
 
+      <section className="hub-banner" aria-labelledby="hub-banner-title">
+        <div>
+          <span>Một nơi ở · Nhiều kết nối</span>
+          <h2 id="hub-banner-title">Ở đúng nơi, sống đúng gu.</h2>
+          <p>Tìm phòng vừa túi tiền, khám phá tiện ích quanh nhà và kết nối với bạn ở ghép.</p>
+        </div>
+        <Link to={exploreListUrl()}>Khám phá phòng <span aria-hidden="true">→</span></Link>
+      </section>
+
       <section className="hub-search" aria-label="Tìm kiếm gần đây">
         <h2>Tiếp tục tìm kiếm</h2>
         {recentSearches.length > 0 ? (

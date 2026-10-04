@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
 import { shouldShowPersistentLoader } from './persistentLoadingState'
+import { createCoalescedLoad } from '../lib/coalescedLoad'
 import './HomejiLoader.css'
 
 /** Độ dài intro Blender: 63 frames @ 30fps */
@@ -89,8 +90,10 @@ export function usePersistentLoad(
   const [error, setError] = useState('')
   const [disrupted, setDisrupted] = useState(false)
   const loadFnRef = useRef(loadFn)
-  const inFlight = useRef(false)
   const disruptedRef = useRef(false)
+  const enabledRef = useRef(enabled)
+  const performLoadRef = useRef<() => Promise<void>>(async () => {})
+  const queuedLoadRef = useRef<ReturnType<typeof createCoalescedLoad> | null>(null)
 
   useEffect(() => {
     loadFnRef.current = loadFn
@@ -102,36 +105,44 @@ export function usePersistentLoad(
 
   const { showLoader, onIntroComplete } = useHomejiLoading(loading, disrupted)
 
-  const reload = useCallback(async () => {
-    if (!enabled || inFlight.current) return
-    inFlight.current = true
-    // Khi sự cố: giữ loop + message, không flip loading (tránh reset intro)
-    if (!disruptedRef.current) setLoading(true)
-    try {
-      let timeoutId = 0
+  useEffect(() => {
+    enabledRef.current = enabled
+    if (!queuedLoadRef.current) {
+      queuedLoadRef.current = createCoalescedLoad(() => performLoadRef.current())
+    }
+    performLoadRef.current = async () => {
+      if (!enabledRef.current) return
+      // Khi sự cố: giữ loop + message, không flip loading (tránh reset intro)
+      if (!disruptedRef.current) setLoading(true)
       try {
-        await Promise.race([
-          loadFnRef.current(),
-          new Promise<never>((_, reject) => {
-            timeoutId = window.setTimeout(
-              () => reject(new Error('Yêu cầu mất quá nhiều thời gian. Homeji đang tự thử lại…')),
-              timeoutMs,
-            )
-          }),
-        ])
+        let timeoutId = 0
+        try {
+          await Promise.race([
+            loadFnRef.current(),
+            new Promise<never>((_, reject) => {
+              timeoutId = window.setTimeout(
+                () => reject(new Error('Yêu cầu mất quá nhiều thời gian. Homeji đang tự thử lại…')),
+                timeoutMs,
+              )
+            }),
+          ])
+        } finally {
+          window.clearTimeout(timeoutId)
+        }
+        setError('')
+        setDisrupted(false)
+      } catch (err) {
+        setError(getErrorMessage(err))
+        setDisrupted(isServiceDisruption(err) || (err instanceof Error && err.message.includes('quá nhiều thời gian')))
       } finally {
-        window.clearTimeout(timeoutId)
+        setLoading(false)
       }
-      setError('')
-      setDisrupted(false)
-    } catch (err) {
-      setError(getErrorMessage(err))
-      setDisrupted(isServiceDisruption(err) || (err instanceof Error && err.message.includes('quá nhiều thời gian')))
-    } finally {
-      setLoading(false)
-      inFlight.current = false
     }
   }, [enabled, timeoutMs])
+
+  const reload = useCallback(async () => {
+    if (enabledRef.current) await queuedLoadRef.current?.()
+  }, [])
 
   useEffect(() => {
     if (!enabled) {

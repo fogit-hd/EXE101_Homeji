@@ -11,6 +11,7 @@ import {
   createMomoPayment,
   createPayOsPayment,
   getMyMarketplaceOrders,
+  getMyMarketplacePosts,
   getMyWallet,
   getMyWalletTransactions,
   getMyWalletWithdrawals,
@@ -54,6 +55,7 @@ import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
+import { filterCatalog } from '../lib/marketplaceFilters'
 import {
   purchaseKindLabel,
   resolvePurchaseKinds,
@@ -70,6 +72,8 @@ import {
   formatDate,
   formatPrice,
   MARKETPLACE_CATEGORIES,
+  FOOD_CATEGORIES,
+  GOODS_CATEGORIES,
   MARKETPLACE_CONDITIONS,
   marketplaceOrderStatusLabel,
   marketplacePostStatusLabel,
@@ -289,7 +293,13 @@ export function MarketplacePage({
   })
   const [posts, setPosts] = useState<MarketplacePost[]>([])
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
-  const [category, setCategory] = useState('')
+  const [categorySelection, setCategorySelection] = useState({ tab, value: '' })
+  const category = categorySelection.tab === tab ? categorySelection.value : ''
+  const setCategory = (value: string) => setCategorySelection({ tab, value })
+  const [kindFilter, setKindFilter] = useState('')
+  const [postStatusFilter, setPostStatusFilter] = useState('')
+  const [priceFilter, setPriceFilter] = useState('')
+  const [catalogSort, setCatalogSort] = useState('default')
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
   const [orderingPostId, setOrderingPostId] = useState<string | null>(null)
@@ -302,10 +312,10 @@ export function MarketplacePage({
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [condition, setCondition] = useState<string>(MARKETPLACE_CONDITIONS[2])
-  const [sellCategory, setSellCategory] = useState<string>(MARKETPLACE_CATEGORIES[0])
-  const [address, setAddress] = useState('Thủ Đức, TP.HCM')
-  const [latitude, setLatitude] = useState(String(DEFAULT_LAT))
-  const [longitude, setLongitude] = useState(String(DEFAULT_LNG))
+  const [sellCategory, setSellCategory] = useState<string>('Cơm nhà')
+  const [address, setAddress] = useState('')
+  const [latitude, setLatitude] = useState('')
+  const [longitude, setLongitude] = useState('')
   const [mapPickerOpen, setMapPickerOpen] = useState(false)
   const [mediaFiles, setMediaFiles] = useState<MediaDraft[]>([])
   const [uploading, setUploading] = useState(false)
@@ -314,6 +324,7 @@ export function MarketplacePage({
   const [unit, setUnit] = useState('phần')
   const [preparationMinutes, setPreparationMinutes] = useState('20')
   const [presetImageUrl, setPresetImageUrl] = useState('')
+  const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([])
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
   const [cartOpen, setCartOpen] = useState(false)
@@ -475,8 +486,6 @@ export function MarketplacePage({
 
   useEffect(() => () => onCartOpenChange?.(false), [onCartOpenChange])
 
-  const latNum = Number(latitude)
-  const lngNum = Number(longitude)
 
   const isMine = useCallback(
     (p: MarketplacePost) => Boolean(myUserId && p.sellerId === myUserId),
@@ -494,6 +503,10 @@ export function MarketplacePage({
   )
 
   const myPosts = useMemo(() => posts.filter((p) => isMine(p)), [posts, isMine])
+  const sellerLocationPost = useMemo(() => [...myPosts].filter(post => post.id !== editingPostId).sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))[0] ?? null, [myPosts, editingPostId])
+  const sellingAddress = sellerLocationPost?.address ?? address
+  const latNum = sellerLocationPost?.latitude ?? (latitude.trim() ? Number(latitude) : Number.NaN)
+  const lngNum = sellerLocationPost?.longitude ?? (longitude.trim() ? Number(longitude) : Number.NaN)
 
   useEffect(() => {
     if (!selectedMarketplaceId) {
@@ -562,7 +575,9 @@ export function MarketplacePage({
     })
   }
 
+  const inventoryRequest = useRef(0)
   const loadFn = useCallback(async () => {
+    const requestId = ++inventoryRequest.current
     if (tab === 'wallet') {
       const [nextWallet, transactions, marketplaceOrders, withdrawalResult] = await Promise.all([
         getMyWallet(),
@@ -584,13 +599,16 @@ export function MarketplacePage({
       setOrders(await getMyMarketplaceOrders())
       return
     }
-    if (tab === 'sell') {
-      setPosts(await searchMarketplacePosts({ pageSize: 50 }))
+    if (tab === 'sell' || tab === 'mine') {
+      const ownPosts = await getMyMarketplacePosts()
+      if (requestId === inventoryRequest.current) setPosts(ownPosts)
       return
     }
     const list = await searchMarketplacePosts({
       keyword: keyword.trim() || undefined,
       category: category.trim() || undefined,
+      minPrice: priceFilter === '100to500' ? 100_000 : priceFilter === 'over500' ? 500_001 : undefined,
+      maxPrice: priceFilter === 'under100' ? 99_999 : priceFilter === '100to500' ? 500_000 : undefined,
       listingType:
         tab === 'food'
           ? MarketplaceListingType.Food
@@ -602,6 +620,7 @@ export function MarketplacePage({
       radiusKm: userLocation ? 50 : undefined,
       pageSize: 50,
     })
+    if (requestId !== inventoryRequest.current) return
     setPosts(list)
 
     if (tab === 'browse' || tab === 'food') {
@@ -612,11 +631,11 @@ export function MarketplacePage({
       )
       onPostsForMap?.(marketplacePostsToSellerPins(forMap))
     }
-  }, [tab, keyword, category, onPostsForMap, userLocation])
+  }, [tab, keyword, category, priceFilter, onPostsForMap, userLocation])
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(
     loadFn,
-    [tab, keyword, category, myUserId],
+    [tab, keyword, category, priceFilter, myUserId],
     { holdForIntro: false },
   )
 
@@ -657,7 +676,7 @@ export function MarketplacePage({
     e.preventDefault()
     setActionError('')
     setActionMsg('')
-    if (!address.trim()) {
+    if (!sellingAddress.trim()) {
       setActionError('Nhập địa chỉ bán đồ.')
       return
     }
@@ -667,7 +686,7 @@ export function MarketplacePage({
     }
     try {
       setUploading(true)
-      let urls: string[] = presetImageUrl ? [presetImageUrl] : [DEFAULT_MEDIA]
+      let urls: string[] = presetImageUrl ? [presetImageUrl] : existingMediaUrls.length ? existingMediaUrls : [DEFAULT_MEDIA]
       if (mediaFiles.length > 0) {
         const uploaded = await uploadImages(
           mediaFiles.map((m) => m.file),
@@ -690,7 +709,7 @@ export function MarketplacePage({
           price: Number(price) || 0,
           condition,
           category: sellCategory,
-          address: address.trim(),
+          address: sellingAddress.trim(),
           latitude: latNum,
           longitude: lngNum,
           mediaUrls: urls,
@@ -706,7 +725,7 @@ export function MarketplacePage({
           price: Number(price) || 0,
           condition,
           category: sellCategory,
-          address: address.trim(),
+          address: sellingAddress.trim(),
           latitude: latNum,
           longitude: lngNum,
           mediaUrls: urls,
@@ -1074,15 +1093,12 @@ export function MarketplacePage({
       : tab === 'food'
         ? browsePosts.filter((post) => post.listingType === MarketplaceListingType.Food)
         : browsePosts.filter((post) => post.listingType !== MarketplaceListingType.Food)
-    const list = selectedMarketplaceId && tab !== 'mine'
+    const selectedList = selectedMarketplaceId && tab !== 'mine'
       ? unfiltered.filter((post) => post.sellerId === selectedMarketplaceId)
       : unfiltered
-    if (tab === 'mine' || !userLocation) return list
-    return [...list].sort((left, right) =>
-      (left.distanceKm ?? Number.POSITIVE_INFINITY) -
-      (right.distanceKm ?? Number.POSITIVE_INFINITY),
-    )
-  }, [tab, myPosts, browsePosts, userLocation, selectedMarketplaceId])
+    const list = filterCatalog(selectedList, { keyword, category, kind: tab === 'mine' ? kindFilter : '', status: tab === 'mine' ? postStatusFilter : '', price: priceFilter, sort: catalogSort })
+    return list
+  }, [tab, myPosts, browsePosts, selectedMarketplaceId, keyword, category, kindFilter, postStatusFilter, priceFilter, catalogSort])
   const foodSellerGroups = useMemo(() => {
     if (tab !== 'food') return []
     const grouped = new Map<string, MarketplacePost[]>()
@@ -1242,7 +1258,6 @@ export function MarketplacePage({
       setOrderGroupBusy('')
     }
   }
-  const sellerLocationPost = myPosts[0] ?? null
   const selectedFoodPreset = FOOD_PRESETS.find((preset) => preset.imageUrl === presetImageUrl)
 
   const beginEdit = (post: MarketplacePost) => {
@@ -1260,6 +1275,7 @@ export function MarketplacePage({
     setUnit(post.unit || 'phần')
     setPreparationMinutes(String(post.preparationMinutes ?? 0))
     setPresetImageUrl('')
+    setExistingMediaUrls(post.mediaUrls ?? [])
     openLeaf('sell')
   }
 
@@ -1273,14 +1289,23 @@ export function MarketplacePage({
     }
   }
 
+  const beginNewSale = () => {
+    setEditingPostId(null)
+    setExistingMediaUrls([])
+    setTitle('')
+    setDescription('')
+    setPrice('')
+    setPresetImageUrl('')
+    mediaFiles.forEach(media => URL.revokeObjectURL(media.previewUrl))
+    setMediaFiles([])
+    openLeaf('sell')
+  }
+
   const sellAction = (
     <button
       type="button"
       className="btn btn-primary btn-sm"
-      onClick={() => {
-        setEditingPostId(null)
-        openLeaf('sell')
-      }}
+      onClick={beginNewSale}
     >
       Đăng bán
     </button>
@@ -1297,15 +1322,22 @@ export function MarketplacePage({
           onChange={(e) => setCategory(e.target.value)}
         >
           <option value="">Tất cả danh mục</option>
-          {MARKETPLACE_CATEGORIES.map((c) => (
+          {(tab === 'food' || (tab === 'mine' && kindFilter === String(MarketplaceListingType.Food)) ? FOOD_CATEGORIES : tab === 'browse' || (tab === 'mine' && kindFilter === String(MarketplaceListingType.SecondHand)) ? GOODS_CATEGORIES : MARKETPLACE_CATEGORIES).map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
       </label>
+      {tab === 'mine' && <>
+        <label className="marketplace-toolbar__field"><span>Loại tin</span><select className="form-select" value={kindFilter} onChange={(event) => { setKindFilter(event.target.value); setCategory('') }}><option value="">Tất cả loại tin</option><option value={MarketplaceListingType.Food}>Đồ ăn</option><option value={MarketplaceListingType.SecondHand}>Đồ dùng</option></select></label>
+        <label className="marketplace-toolbar__field"><span>Trạng thái</span><select className="form-select" value={postStatusFilter} onChange={(event) => setPostStatusFilter(event.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(marketplacePostStatusLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      </>}
+      <label className="marketplace-toolbar__field"><span>Khoảng giá</span><select className="form-select" value={priceFilter} onChange={(event) => setPriceFilter(event.target.value)}><option value="">Tất cả mức giá</option><option value="under100">Dưới 100.000 đ</option><option value="100to500">100.000–500.000 đ</option><option value="over500">Trên 500.000 đ</option></select></label>
+      <label className="marketplace-toolbar__field"><span>Sắp xếp</span><select className="form-select" value={catalogSort} onChange={(event) => setCatalogSort(event.target.value)}><option value="default">Mới nhất</option><option value="priceAsc">Giá tăng dần</option><option value="priceDesc">Giá giảm dần</option>{userLocation && <option value="nearby">Gần nhất</option>}</select></label>
+      <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setCategory(''); setKindFilter(''); setPostStatusFilter(''); setPriceFilter(''); setCatalogSort('default') }}>Xóa bộ lọc</button>
       {tab === 'browse' ? (
         <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
           {userLocation ? (
-            <span>Gần tôi · xếp từ gần đến xa</span>
+            <span>{catalogSort === 'nearby' ? 'Xếp từ gần đến xa' : 'Trong phạm vi 50 km quanh bạn'}</span>
           ) : (
             <button
               type="button"
@@ -1370,10 +1402,7 @@ export function MarketplacePage({
         walletStatus={!myUserId ? 'error' : wallet ? 'ready' : walletHeaderStatus}
         sellerActionCount={sellerActionCount}
         onTabChange={openLeaf}
-        onOpenSell={() => {
-          setEditingPostId(null)
-          openLeaf('sell')
-        }}
+        onOpenSell={beginNewSale}
         onTopUp={openWalletDeposit}
       />
 
@@ -1411,6 +1440,8 @@ export function MarketplacePage({
       ) : null}
 
       {tab === 'food' ? (
+        <>
+        {catalogToolbar}
         <FoodMarketplaceView
           posts={listForTab}
           kitchens={foodKitchens}
@@ -1456,6 +1487,7 @@ export function MarketplacePage({
           onCartOpenChange={setCartOpen}
           onSelectKitchen={(sellerId) => onSelectMarketplaceId?.(sellerId)}
         />
+        </>
       ) : tab === 'wallet' ? (
         <WalletPage
           tab={walletTab}
@@ -1533,6 +1565,7 @@ export function MarketplacePage({
         )
       ) : tab === 'sell' ? (
         <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
+          <header className="sell-form-heading"><span>{editingPostId ? 'Chỉnh sửa tin bán' : 'Tạo tin bán mới'}</span><h2>{listingType === MarketplaceListingType.Food ? 'Chia sẻ món ngon quanh nhà' : 'Trao đồ cũ, đón giá trị mới'}</h2><p>Điền thông tin, thêm ảnh và kiểm tra điểm bán trước khi đăng.</p></header>
           {listingType === MarketplaceListingType.Food ? (
             <section className="food-preset-section" aria-labelledby="food-preset-heading">
               <div>
@@ -1557,22 +1590,24 @@ export function MarketplacePage({
           ) : null}
 
           <div className="form-group">
-            <label className="form-label">Tiêu đề</label>
-            <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <label className="form-label" htmlFor="sale-title">Tiêu đề</label>
+            <input id="sale-title" className="form-input" aria-label="Tiêu đề tin bán" maxLength={200} placeholder={listingType === MarketplaceListingType.Food ? 'Ví dụ: Cơm gà nhà làm' : 'Ví dụ: Bàn học gỗ còn tốt'} value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Mô tả</label>
-            <textarea className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="form-label" htmlFor="sale-description">Mô tả</label>
+            <textarea id="sale-description" className="form-textarea" maxLength={3000} value={description} onChange={(e) => setDescription(e.target.value)} required />
           </div>
           <div className="marketplace-sell-grid">
             <div className="form-group">
-              <label className="form-label">Giá (VND)</label>
-              <input className="form-input" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <label className="form-label" htmlFor="sale-price">Giá (VND)</label>
+              <input id="sale-price" className="form-input" aria-label="Giá bán" type="number" min={1} step={1} value={price} onChange={(e) => setPrice(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label className="form-label">Tình trạng</label>
+              <label className="form-label" htmlFor="sale-condition">Tình trạng</label>
               <select
+                id="sale-condition"
                 className="form-select"
+                aria-label="Tình trạng sản phẩm"
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
                 required
@@ -1580,7 +1615,7 @@ export function MarketplacePage({
                 {listingType === MarketplaceListingType.Food ? (
                   <option value="Mới làm trong ngày">Mới làm trong ngày</option>
                 ) : null}
-                {MARKETPLACE_CONDITIONS.map((c) => (
+                {(listingType === MarketplaceListingType.Food ? [] : MARKETPLACE_CONDITIONS).map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -1588,14 +1623,16 @@ export function MarketplacePage({
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Danh mục</label>
+              <label className="form-label" htmlFor="sale-category">Danh mục</label>
               <select
+                id="sale-category"
                 className="form-select"
+                aria-label="Danh mục tin bán"
                 value={sellCategory}
                 onChange={(e) => setSellCategory(e.target.value)}
                 required
               >
-                {MARKETPLACE_CATEGORIES.map((c) => (
+                {[...new Set([...(listingType === MarketplaceListingType.Food ? FOOD_CATEGORIES : GOODS_CATEGORIES), ...(editingPostId ? [sellCategory] : [])])].map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -1603,10 +1640,12 @@ export function MarketplacePage({
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Số lượng sẵn bán</label>
+              <label className="form-label" htmlFor="sale-quantity">Số lượng sẵn bán</label>
               <input
+                id="sale-quantity"
                 className="form-input"
                 type="number"
+                aria-label="Số lượng sẵn bán"
                 min={1}
                 max={listingType === MarketplaceListingType.Food ? 100 : 1}
                 value={availableQuantity}
@@ -1615,9 +1654,11 @@ export function MarketplacePage({
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Đơn vị</label>
+              <label className="form-label" htmlFor="sale-unit">Đơn vị</label>
               <input
+                id="sale-unit"
                 className="form-input"
+                aria-label="Đơn vị bán"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
                 maxLength={30}
@@ -1627,10 +1668,12 @@ export function MarketplacePage({
             </div>
             {listingType === MarketplaceListingType.Food ? (
               <div className="form-group">
-                <label className="form-label">Thời gian chuẩn bị (phút)</label>
+                <label className="form-label" htmlFor="sale-preparation">Thời gian chuẩn bị (phút)</label>
                 <input
+                  id="sale-preparation"
                   className="form-input"
                   type="number"
+                  aria-label="Thời gian chuẩn bị (phút)"
                   min={0}
                   max={240}
                   value={preparationMinutes}
@@ -1640,16 +1683,17 @@ export function MarketplacePage({
             ) : null}
           </div>
           <div className="form-group">
-            <label className="form-label">Địa chỉ / điểm giao cố định</label>
+            <label className="form-label" htmlFor={sellerLocationPost ? undefined : 'sale-address'}>Địa chỉ / điểm giao cố định</label>
             {sellerLocationPost ? (
               <div className="seller-location-lock">
                 <strong>{sellerLocationPost.address}</strong>
-                <span>Mọi món của bạn dùng chung điểm bán này để người mua dễ gom đơn.</span>
+                <span>Mọi tin bán của bạn dùng chung điểm này để người mua dễ nhận hàng.</span>
               </div>
             ) : (
               <AddressAutocomplete
+                id="sale-address"
                 value={address}
-                onChange={setAddress}
+                onChange={(value) => { setAddress(value); setLatitude(''); setLongitude('') }}
                 onPlaceSelect={handlePlaceSelect}
                 placeholder="Nhập địa chỉ — gợi ý Places API"
                 required
@@ -1665,7 +1709,7 @@ export function MarketplacePage({
                 {sellerLocationPost ? (
                   <p className="form-hint">Vị trí được khóa theo điểm bán đầu tiên của tài khoản.</p>
                 ) : (
-                  <p className="form-hint">Khối phụ — mở khi cần chỉnh pin. Địa chỉ phía trên là chính.</p>
+                  <p className="form-hint">Chọn một gợi ý địa chỉ để xác định tọa độ, hoặc đặt ghim trên bản đồ.</p>
                 )}
               </div>
               {!sellerLocationPost ? (
@@ -1684,8 +1728,8 @@ export function MarketplacePage({
               <div id="marketplace-map-picker">
                 <DeferredMapBlock visible={mapPickerOpen} label="Chọn vị trí trên bản đồ">
                   <LocationPickerMap
-                    latitude={latNum}
-                    longitude={lngNum}
+                    latitude={Number.isFinite(latNum) ? latNum : DEFAULT_LAT}
+                    longitude={Number.isFinite(lngNum) ? lngNum : DEFAULT_LNG}
                     onLocationChange={(lat, lng) => {
                       setLatitude(String(lat))
                       setLongitude(String(lng))
@@ -1696,9 +1740,10 @@ export function MarketplacePage({
             ) : null}
           </div>
           <div className="form-group">
-            <label className="form-label">Ảnh sản phẩm</label>
+            <label className="form-label" htmlFor="sale-images">Ảnh sản phẩm</label>
             <p className="form-hint">Chọn tối đa {MAX_MEDIA} ảnh (có thể chọn nhiều file cùng lúc).</p>
             <input
+              id="sale-images"
               className="form-input marketplace-file-input"
               type="file"
               accept="image/*"
@@ -1738,6 +1783,11 @@ export function MarketplacePage({
                     <> Nguồn ảnh: <a href={selectedFoodPreset.imageSource} target="_blank" rel="noreferrer">{selectedFoodPreset.imageAuthor}</a>.</>
                   ) : null}
                 </p>
+              </div>
+            ) : existingMediaUrls.length > 0 ? (
+              <div className="food-preset-selected">
+                <img src={existingMediaUrls[0]} alt="Ảnh hiện tại của tin bán" />
+                <p>Giữ {existingMediaUrls.length} ảnh hiện tại. Chọn ảnh mới để thay thế.</p>
               </div>
             ) : (
               <p className="form-hint">
@@ -2022,7 +2072,9 @@ export function MarketplacePage({
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">
             {tab === 'mine'
-              ? 'Bạn chưa có tin đăng nào'
+              ? myPosts.length > 0
+                ? 'Không có tin nào phù hợp với bộ lọc'
+                : 'Bạn chưa có tin đăng nào'
               : 'Chưa có đồ dùng đang bán quanh đây'}
           </p>
         </div>

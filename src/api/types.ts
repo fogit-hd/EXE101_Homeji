@@ -147,6 +147,7 @@ export const PaymentStatus = {
   Completed: 2,
   Failed: 3,
   Cancelled: 4,
+  Expired: 5,
 } as const
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
@@ -452,6 +453,7 @@ export interface Payment {
   createdAt: string
   updatedAt: string
   paidAt: string | null
+  expiresAt?: string | null
 }
 
 export interface MomoPaymentResponse {

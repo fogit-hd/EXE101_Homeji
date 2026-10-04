@@ -15,6 +15,7 @@ export type PlaceResult = {
 }
 
 type Props = {
+  id?: string
   value: string
   onChange: (address: string) => void
   onPlaceSelect: (place: PlaceResult) => void
@@ -28,6 +29,7 @@ type Props = {
  * Does not use legacy google.maps.places.Autocomplete / PlacesService.
  */
 export function AddressAutocomplete({
+  id,
   value,
   onChange,
   onPlaceSelect,
@@ -111,6 +113,7 @@ export function AddressAutocomplete({
   return (
     <div ref={rootRef} className="address-autocomplete">
       <input
+        id={id}
         ref={inputRef}
         className={className}
         value={value}
