@@ -52,6 +52,8 @@ test('product prices, statuses and food actions have readable small-text colors'
   const food = read('components/marketplace/food/FoodMarketplaceView.css')
   assert.match(food, /--food-leaf-deep: #24543e;/)
   assert.match(food, /--food-accent: #a43c22;/)
+  assert.ok(!food.includes('#e8603c'), 'food actions and captions must use the corrected accent token')
+  assert.ok(!food.includes('#008f46'), 'food prices must use the corrected leaf token')
   for (const surface of ['e7f6ec','ffffff','fffdf8']) assert.ok(contrast('24543e', surface) >= 4.5)
   assert.ok(contrast('a43c22', 'f5f0e6') >= 4.5)
   assert.ok(contrast('fff', 'a43c22') >= 4.5)

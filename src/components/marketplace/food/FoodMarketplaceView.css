@@ -169,7 +169,7 @@
 }
 
 .food-featured__eyebrow {
-  color: #e8603c;
+  color: var(--food-accent);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -205,7 +205,7 @@
   padding: 0 16px;
   border: 0;
   border-radius: 12px;
-  background: #e8603c;
+  background: var(--food-accent);
   color: #fff;
   font: 600 14px/20px Inter, system-ui, sans-serif;
   cursor: pointer;
@@ -274,7 +274,7 @@
 
 .food-nearby-head__count {
   margin: 0;
-  color: #e8603c;
+  color: var(--food-accent);
   font: 600 14px/20px Inter, system-ui, sans-serif;
 }
 
@@ -311,7 +311,7 @@
 }
 
 .food-card.is-in-cart {
-  border-color: #e8603c;
+  border-color: var(--food-accent);
 }
 
 .food-card__media {
@@ -438,7 +438,7 @@
 
 .food-card__price {
   margin: 0;
-  color: #008f46;
+  color: var(--food-leaf-deep);
   font: 600 14px/20px Inter, system-ui, sans-serif;
 }
 
@@ -494,7 +494,7 @@
   padding: 0 10px;
   border: 0;
   border-radius: 10px;
-  background: #e8603c;
+  background: var(--food-accent);
   color: #fff;
   font: 600 13px/1 Inter, system-ui, sans-serif;
   cursor: pointer;
@@ -829,7 +829,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 14px;
-  border: 1px solid #e8603c;
+  border: 1px solid var(--food-accent);
   border-radius: 16px;
   background: #fff0e9;
 }
