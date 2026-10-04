@@ -9,6 +9,18 @@ export type CatalogFilters = {
 
 type CatalogPost = { title: string; description: string; category: string; listingType: number; status: number; price: number; distanceKm?: number | null; createdAt?: string }
 
+/** Keep persisted category names selectable without rewriting existing listings. */
+export function catalogCategories(
+  posts: readonly Pick<CatalogPost, 'category' | 'listingType'>[],
+  defaults: readonly string[],
+  kind: number | null,
+  selected: string,
+): string[] {
+  const observed = posts.filter(post => kind === null || post.listingType === kind)
+    .map(post => post.category).filter(value => value.trim().length > 0)
+  return [...new Set([...defaults, ...observed, ...(selected ? [selected] : [])])]
+}
+
 function creationTime(post: CatalogPost): number {
   const time = post.createdAt ? Date.parse(post.createdAt) : 0
   return Number.isFinite(time) ? time : 0

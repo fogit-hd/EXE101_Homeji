@@ -45,6 +45,18 @@ test('home viewing and message panels have equal desktop columns', () => {
   assert.match(css, /\.hub-messages\s*\{[^}]*grid-column:\s*span 6/)
 })
 
+test('product prices, statuses and food actions have readable small-text colors', () => {
+  const css = read('ui-consistency.css')
+  assert.match(css, /\.marketplace-card__badge, \.marketplace-card__badge.is-mine \{ color: #24543e; \}/)
+  assert.match(css, /\.marketplace-card__price \{ color: #24543e; \}/)
+  const food = read('components/marketplace/food/FoodMarketplaceView.css')
+  assert.match(food, /--food-leaf-deep: #24543e;/)
+  assert.match(food, /--food-accent: #a43c22;/)
+  for (const surface of ['e7f6ec','ffffff','fffdf8']) assert.ok(contrast('24543e', surface) >= 4.5)
+  assert.ok(contrast('a43c22', 'f5f0e6') >= 4.5)
+  assert.ok(contrast('fff', 'a43c22') >= 4.5)
+})
+
 test('wallet captions and marketplace accent remain readable on their actual surfaces', () => {
   const wallet = read('components/marketplace/wallet/WalletPage.css')
   const header = read('components/marketplace/MarketplaceHeader.css')

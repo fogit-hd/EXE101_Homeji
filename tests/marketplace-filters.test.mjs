@@ -1,12 +1,26 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { filterCatalog } from '../src/lib/marketplaceFilters.ts'
+import { catalogCategories, filterCatalog } from '../src/lib/marketplaceFilters.ts'
 const posts = [
   { title: 'Cơm nhà', description: 'Gà', category: 'Cơm nhà', listingType: 2, status: 1, price: 35000 },
   { title: 'Bàn học', description: 'Gỗ', category: 'Nội thất', listingType: 1, status: 2, price: 200000 },
   { title: 'Tủ lạnh', description: '', category: 'Điện tử', listingType: 1, status: 1, price: 900000 },
 ]
 const empty = { keyword: '', category: '', kind: '', status: '', price: '', sort: 'default' }
+
+test('legacy categories remain selectable, exact and restricted to listing kind', () => {
+  const legacy = [
+    {...posts[1], category: 'Bàn ghế'},
+    {...posts[2], category: 'Điện gia dụng'},
+    {...posts[0], category: 'Bữa trưa'},
+  ]
+  const choices = catalogCategories(legacy, ['Nội thất'], 1, '')
+  assert.deepEqual(choices, ['Nội thất', 'Bàn ghế', 'Điện gia dụng'])
+  assert.equal(filterCatalog(legacy, {...empty,category:'Bàn ghế'})[0].title, 'Bàn học')
+  assert.deepEqual(catalogCategories([], ['Nội thất'], 1, 'Sách'), ['Nội thất', 'Sách'])
+  assert.equal(catalogCategories([...legacy,legacy[0]], ['Bàn ghế'], null, '').filter(c=>c==='Bàn ghế').length, 1)
+  assert.equal(legacy[0].category, 'Bàn ghế')
+})
 test('own inventory filters combine kind, state and category without hiding sold posts', () => {
   assert.deepEqual(filterCatalog(posts, {...empty, kind:'1', status:'2', category:'Nội thất'}).map(p=>p.title), ['Bàn học'])
   assert.equal(filterCatalog(posts, {...empty, kind:'2', category:'Điện tử'}).length, 0)

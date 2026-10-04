@@ -55,7 +55,7 @@ import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
-import { filterCatalog } from '../lib/marketplaceFilters'
+import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
   purchaseKindLabel,
   resolvePurchaseKinds,
@@ -1087,6 +1087,15 @@ export function MarketplacePage({
     )
   }
 
+  const filterCategories = useMemo(() => {
+    const kind = tab === 'food' ? MarketplaceListingType.Food
+      : tab === 'browse' ? MarketplaceListingType.SecondHand
+        : kindFilter ? Number(kindFilter) : null
+    const defaults = kind === MarketplaceListingType.Food ? FOOD_CATEGORIES
+      : kind === MarketplaceListingType.SecondHand ? GOODS_CATEGORIES : MARKETPLACE_CATEGORIES
+    return catalogCategories(tab === 'mine' ? myPosts : browsePosts, defaults, kind, category)
+  }, [tab, myPosts, browsePosts, kindFilter, category])
+
   const listForTab = useMemo(() => {
     const unfiltered = tab === 'mine'
       ? myPosts
@@ -1322,7 +1331,7 @@ export function MarketplacePage({
           onChange={(e) => setCategory(e.target.value)}
         >
           <option value="">Tất cả danh mục</option>
-          {(tab === 'food' || (tab === 'mine' && kindFilter === String(MarketplaceListingType.Food)) ? FOOD_CATEGORIES : tab === 'browse' || (tab === 'mine' && kindFilter === String(MarketplaceListingType.SecondHand)) ? GOODS_CATEGORIES : MARKETPLACE_CATEGORIES).map((c) => (
+          {filterCategories.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
