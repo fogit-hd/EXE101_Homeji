@@ -907,12 +907,12 @@
 }
 
 .hj-notify .notification-item--critical {
-  --notification-accent: #e8603c;
+  --notification-accent: #a43c22;
   --notification-soft: #fde8e1;
 }
 
 .hj-notify .notification-item--attention {
-  --notification-accent: #c46a2f;
+  --notification-accent: #8a4b20;
   --notification-soft: #f8efe4;
 }
 
@@ -1009,8 +1009,8 @@
     top: calc(var(--hj-header-h) + 8px);
     right: 12px;
     left: auto;
-    width: min(420px, calc(100vw - 24px));
-    max-width: calc(100vw - 24px);
+    width: min(420px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
     max-height: calc(100dvh - var(--hj-header-h) - 16px);
   }
 }
