@@ -477,7 +477,7 @@
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: var(--grab-green, #00b14f);
+  background: #24543e;
   color: var(--surface-elevated);
   font-size: 1.05rem;
   font-weight: 800;
@@ -494,7 +494,7 @@
 .marketplace-order-group__header span {
   display: block;
   margin-bottom: 2px;
-  color: var(--grab-green, #00b14f);
+  color: #24543e;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1377,6 +1377,7 @@
 
 .marketplace-orders-dashboard {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   width: 100%;
   max-width: none;
@@ -1500,7 +1501,12 @@
 
 .marketplace-purchase-sources {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+}
+
+.marketplace-purchase-source {
+  min-width: 0;
 }
 
 .marketplace-purchase-source h3 {
@@ -1530,7 +1536,7 @@
   padding: 6px 9px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--grab-green, #00b14f) 14%, transparent);
-  color: var(--grab-green, #00b14f) !important;
+  color: #24543e !important;
   font-size: 0.68rem !important;
   font-weight: 800;
   letter-spacing: 0 !important;
@@ -1590,7 +1596,7 @@
 .marketplace-order-progress .is-current span,
 .marketplace-order-progress .is-done span {
   border-color: var(--grab-green, #00b14f);
-  background: var(--grab-green, #00b14f);
+  background: #24543e;
   color: var(--surface-elevated);
 }
 
@@ -1643,7 +1649,7 @@
 }
 
 .marketplace-order-eta > span {
-  color: var(--grab-green, #00b14f);
+  color: #24543e;
   font-size: 1.2rem;
 }
 
@@ -1728,7 +1734,7 @@
 }
 
 .marketplace-order-seller-total strong {
-  color: var(--grab-green, #00b14f);
+  color: #24543e;
   font-size: 0.9rem;
 }
 
@@ -2559,7 +2565,7 @@
 .marketplace-workspace .marketplace-status-filter > button.is-active {
   border-color: #e8603c;
   background: #fff0e9;
-  color: #e8603c;
+  color: #a43c22;
 }
 
 .marketplace-type-choice {
