@@ -23,6 +23,14 @@ test('home viewing and message panels have equal desktop columns', () => {
   assert.match(css, /\.hub-viewings\s*\{[^}]*grid-column:\s*span 6/)
   assert.match(css, /\.hub-messages\s*\{[^}]*grid-column:\s*span 6/)
 })
+
+test('review cards reserve content space and stack controls on small screens', () => {
+  const css = read('pages/pages.css')
+  assert.match(css, /\.admin-item > \.admin-actions\s*\{[^}]*max-width: 40%/)
+  const mobile = css.slice(css.indexOf('@media (max-width: 768px)'))
+  assert.match(mobile, /\.admin-item\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/)
+  assert.match(mobile, /\.admin-item > \.admin-actions\s*\{[^}]*flex: none;[^}]*max-width: 100%;/)
+})
 test('shared footer is present without route exclusions', () => {
   assert.match(read('components/layout/AppLayout.tsx'), /<SiteFooter compact=/)
 })

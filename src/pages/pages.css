@@ -194,6 +194,17 @@
   align-items: center;
 }
 
+/* Keep review controls from consuming the listing's entire flex row. */
+.admin-item > .admin-actions {
+  flex: 0 1 320px;
+  min-width: 0;
+  max-width: 40%;
+}
+
+.admin-item > div:first-child {
+  overflow-wrap: anywhere;
+}
+
 .payment-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -467,6 +478,16 @@
 
   .admin-report-item {
     flex-wrap: wrap;
+  }
+
+  .admin-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-item > .admin-actions {
+    flex: none;
+    max-width: 100%;
   }
 
   .admin-presence-actions {
