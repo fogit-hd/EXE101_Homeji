@@ -4,6 +4,8 @@
    ══════════════════════════════════════════════════════════════ */
 
 .map-appointments {
+  --hj-muted: #526358;
+  --hj-accent: #a43c22;
   width: 100%;
   max-width: none;
   min-width: 0;
@@ -38,7 +40,7 @@
   font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #e8603c;
+  color: var(--hj-accent);
 }
 
 .map-appointments__page-title {
@@ -116,7 +118,7 @@
 
 @media (max-width: 900px) {
   .map-appointments__layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -176,12 +178,14 @@
 
 .map-appointments__cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px 4px;
 }
 
 .map-appointments__cal-day {
   position: relative;
+  width: 100%;
+  min-width: 0;
   aspect-ratio: 1;
   min-height: 34px;
   border: 0;
@@ -193,7 +197,7 @@
 }
 
 .map-appointments__cal-day.is-out {
-  color: #5c6a61;
+  color: #aeb9b2;
 }
 
 .map-appointments__cal-day.is-selected {
@@ -292,6 +296,7 @@
 
 .map-appointments__prep-head h2 {
   margin: 0;
+  color: #fff;
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: 1.15rem;
   font-weight: 400;
