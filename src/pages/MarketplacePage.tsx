@@ -2084,7 +2084,9 @@ export function MarketplacePage({
               ? myPosts.length > 0
                 ? 'Không có tin nào phù hợp với bộ lọc'
                 : 'Bạn chưa có tin đăng nào'
-              : 'Chưa có đồ dùng đang bán quanh đây'}
+              : keyword.trim() || category || priceFilter
+                ? 'Không có đồ dùng phù hợp với bộ lọc'
+                : 'Chưa có đồ dùng đang bán quanh đây'}
           </p>
         </div>
       ) : (

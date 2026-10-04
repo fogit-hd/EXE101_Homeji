@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFileSync } from 'node:fs'
 import { catalogCategories, filterCatalog } from '../src/lib/marketplaceFilters.ts'
 const posts = [
   { title: 'Cơm nhà', description: 'Gà', category: 'Cơm nhà', listingType: 2, status: 1, price: 35000 },
@@ -7,6 +8,11 @@ const posts = [
   { title: 'Tủ lạnh', description: '', category: 'Điện tử', listingType: 1, status: 1, price: 900000 },
 ]
 const empty = { keyword: '', category: '', kind: '', status: '', price: '', sort: 'default' }
+
+test('empty filtered goods catalog does not claim there are no local listings', () => {
+  const source = readFileSync(new URL('../src/pages/MarketplacePage.tsx', import.meta.url), 'utf8')
+  assert.match(source, /keyword\.trim\(\) \|\| category \|\| priceFilter\s*\? 'Không có đồ dùng phù hợp với bộ lọc'/)
+})
 
 test('legacy categories remain selectable, exact and restricted to listing kind', () => {
   const legacy = [

@@ -62,6 +62,8 @@ test('product prices, statuses and food actions have readable small-text colors'
   for (const surface of ['e7f6ec','ffffff','fffdf8']) assert.ok(contrast('24543e', surface) >= 4.5)
   assert.ok(contrast('a43c22', 'f5f0e6') >= 4.5)
   assert.ok(contrast('fff', 'a43c22') >= 4.5)
+  assert.match(food, /\.food-featured__eyebrow\s*\{[^}]*color: #ffd0c2;/)
+  assert.ok(contrast('ffd0c2', '14271f') >= 4.5)
 })
 
 test('wallet captions and marketplace accent remain readable on their actual surfaces', () => {
