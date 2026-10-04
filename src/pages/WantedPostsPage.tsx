@@ -40,6 +40,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
   const [chatBusyId, setChatBusyId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -76,6 +77,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (creating) return
     setActionError('')
     setActionMsg('')
     if (!isRenter) {
@@ -86,13 +88,20 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
       setActionError('Nhập đủ tiêu đề, mô tả và khu vực mong muốn.')
       return
     }
+    const budget = Number(maxBudget)
+    const occupants = Number(occupantCount)
+    if (!Number.isFinite(budget) || budget <= 0 || !Number.isInteger(occupants) || occupants <= 0) {
+      setActionError('Ngân sách phải lớn hơn 0 và số người phải là số nguyên dương.')
+      return
+    }
+    setCreating(true)
     try {
       await createWantedPost({
         title: title.trim(),
         description: description.trim(),
         preferredArea: preferredArea.trim(),
-        maxBudget: Number(maxBudget) || 0,
-        occupantCount: Number(occupantCount) || 1,
+        maxBudget: budget,
+        occupantCount: occupants,
         amenityCodes,
         desiredMoveInDate,
       })
@@ -104,6 +113,8 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
       void reload()
     } catch (err) {
       setActionError(getErrorMessage(err, 'Đăng tin thất bại'))
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -220,59 +231,70 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
             <p>Đăng nhập bằng tài khoản người thuê để đăng nhu cầu tìm phòng.</p>
           </div>
         ) : (
-          <form className="card" onSubmit={(e) => void handleCreate(e)}>
+          <form className="card wanted-post-form" aria-busy={creating} onSubmit={(e) => void handleCreate(e)}>
             <div className="form-group">
-              <label className="form-label">Tiêu đề</label>
+              <label className="form-label" htmlFor="wanted-title">Tiêu đề</label>
               <input
+                id="wanted-title"
                 className="form-input"
+                maxLength={200}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Mô tả</label>
+              <label className="form-label" htmlFor="wanted-description">Mô tả</label>
               <textarea
+                id="wanted-description"
                 className="form-textarea"
+                maxLength={2000}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Khu vực mong muốn</label>
+              <label className="form-label" htmlFor="wanted-area">Khu vực mong muốn</label>
               <input
+                id="wanted-area"
                 className="form-input"
+                maxLength={300}
                 value={preferredArea}
                 onChange={(e) => setPreferredArea(e.target.value)}
                 required
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Ngân sách tối đa</label>
+              <label className="form-label" htmlFor="wanted-budget">Ngân sách tối đa (đ/tháng)</label>
               <input
+                id="wanted-budget"
                 className="form-input"
                 type="number"
                 value={maxBudget}
                 onChange={(e) => setMaxBudget(e.target.value)}
                 required
-                min={0}
+                min={1}
+                step={1}
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Số người</label>
+              <label className="form-label" htmlFor="wanted-occupants">Số người</label>
               <input
+                id="wanted-occupants"
                 className="form-input"
                 type="number"
                 value={occupantCount}
                 onChange={(e) => setOccupantCount(e.target.value)}
                 required
                 min={1}
+                step={1}
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Ngày muốn chuyển vào</label>
+              <label className="form-label" htmlFor="wanted-move-in">Ngày muốn chuyển vào</label>
               <input
+                id="wanted-move-in"
                 className="form-input"
                 type="date"
                 value={desiredMoveInDate}
@@ -299,9 +321,12 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
                 })}
               </div>
             </div>
-            <button type="submit" className="btn btn-primary">
-              Đăng tin
-            </button>
+            <div className="wanted-post-form__actions">
+              <button type="button" className="btn btn-secondary" disabled={creating} onClick={() => setTab('browse')}>Quay lại danh sách</button>
+              <button type="submit" className="btn btn-primary" disabled={creating}>
+                {creating ? 'Đang đăng…' : 'Đăng tin'}
+              </button>
+            </div>
           </form>
         )
       ) : posts.length === 0 ? (

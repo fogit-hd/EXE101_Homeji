@@ -85,3 +85,18 @@ test('sale price accepts normal VND amounts without a step mismatch', () => {
     assert.equal((price - min) % step, 0)
   }
 })
+
+test('wanted-post inputs have associated labels and backend-compatible boundaries', () => {
+  const source = read('pages/WantedPostsPage.tsx')
+  for (const id of ['wanted-title', 'wanted-description', 'wanted-area', 'wanted-budget', 'wanted-occupants', 'wanted-move-in']) {
+    assert.ok(source.includes(`htmlFor="${id}"`))
+    assert.ok(source.includes(`id="${id}"`))
+  }
+  assert.match(source, /id="wanted-title"[\s\S]*?maxLength=\{200\}/)
+  assert.match(source, /id="wanted-description"[\s\S]*?maxLength=\{2000\}/)
+  assert.match(source, /id="wanted-area"[\s\S]*?maxLength=\{300\}/)
+  assert.match(source, /id="wanted-budget"[\s\S]*?min=\{1\}/)
+  assert.match(source, /if \(creating\) return/)
+  assert.match(source, /finally \{\s*setCreating\(false\)/)
+  assert.match(source, /type="submit"[^>]*disabled=\{creating\}/)
+})

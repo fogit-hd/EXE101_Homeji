@@ -31,6 +31,9 @@
 .hub-banner > a { flex-shrink: 0; padding: 12px 20px; border-radius: 12px; background: #24543e; color: #fff; font-weight: 600; text-decoration: none; }
 .marketplace-sell-form { max-width: 960px; margin-inline: auto; padding: clamp(16px, 3vw, 32px); border-radius: 22px; }
 .marketplace-sell-form .form-group { min-width: 0; }
+.wanted-post-form { max-width: 880px; margin-inline: auto; padding: clamp(18px, 3vw, 30px); border-radius: 20px; }
+.wanted-post-form :is(input, textarea) { min-height: 46px; border-radius: 10px; background: #fff; color: #24382d; }
+.wanted-post-form__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
 .marketplace-sell-form :is(input, select, textarea) { min-height: 46px; border-radius: 10px; background: #fff; color: #24382d; }
 .marketplace-toolbar { flex-wrap: wrap; gap: 12px; }
 .marketplace-toolbar__field { min-width: 140px; flex: 1 1 140px; }
