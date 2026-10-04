@@ -879,7 +879,19 @@
 .map-listings--list .map-listings__cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
+  grid-auto-rows: 1fr;
+  gap: 12px;
+}
+
+.map-listings--list .map-listings__cards > li {
+  display: flex;
+  min-width: 0;
+}
+
+.map-listings--list .map-listings__card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .map-listings__card {
@@ -887,15 +899,28 @@
   border-radius: 18px;
   background: var(--ml-card);
   border: 1px solid transparent;
+  transition: transform 180ms ease, filter 180ms ease;
 }
 
 .map-listings__card.is-selected {
   border-color: var(--ml-coral);
-  box-shadow: inset 4px 0 0 var(--ml-ink);
+  background: #fff8f2;
+  box-shadow: 0 3px 12px rgb(233 94 67 / 12%);
 }
 
-.map-listings__card.is-hot:not(.is-selected) {
-  border-color: var(--ml-ink);
+.map-listings__card.is-hot {
+  transform: translateY(-3px);
+  filter: brightness(1.035);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-listings__card {
+    transition: none;
+  }
+
+  .map-listings__card.is-hot {
+    transform: none;
+  }
 }
 
 .map-listings__card-hit {
@@ -1109,16 +1134,44 @@
 }
 
 .map-listings--list .map-listings__card-hit {
-  grid-template-columns: 1fr;
-  padding: 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0;
+  padding: 0;
 }
 
 .map-listings--list .map-listings__card-copy {
-  padding: 0 8px 4px;
-  gap: 4px;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px 12px;
+  gap: 8px;
+}
+
+.map-listings--list .map-listings__name {
+  min-height: 2.6em;
+}
+
+.map-listings--list .map-listings__address {
+  min-height: 2.8em;
+  line-height: 1.4;
+}
+
+.map-listings--list .map-listings__address-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.map-listings--list .map-listings__meta {
+  margin-top: auto;
+  align-content: flex-start;
 }
 
 .map-listings--list .map-listings__card-photo {
+  flex-shrink: 0;
   width: 100%;
   height: 116px;
   max-height: 116px;
@@ -1136,6 +1189,10 @@
 }
 
 .map-listings__card-photo {
+  position: relative;
+}
+
+.map-listings__card-photo > img {
   position: relative;
 }
 

@@ -1,3 +1,12 @@
+.guest-side-nav[data-hero="true"],
+.guest-progress[data-hero="true"] {
+  opacity: 0 !important;
+  pointer-events: none;
+  visibility: hidden;
+  transform: translateY(-50%) scale(0.94);
+  transition: opacity 350ms ease, transform 350ms ease, visibility 350ms ease;
+}
+
 .guest-side-nav {
   position: fixed;
   top: 50%;

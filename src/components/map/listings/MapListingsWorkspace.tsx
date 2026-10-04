@@ -416,12 +416,10 @@ export function MapListingsWorkspace({
                             <span className="map-listings__card-copy">
                               <span className="map-listings__price">{view.priceLabel}</span>
                               <span className="map-listings__name">{view.title}</span>
-                              {view.address ? (
                                 <span className="map-listings__address">
                                   <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
-                                  {view.address}
+                                  <span className="map-listings__address-text">{view.address || 'Chưa có địa chỉ'}</span>
                                 </span>
-                              ) : null}
                               <span className="map-listings__meta">
                                 {view.areaLabel ? <span>{view.areaLabel}</span> : null}
                                 {view.typeLabel ? <span>{view.typeLabel}</span> : null}
