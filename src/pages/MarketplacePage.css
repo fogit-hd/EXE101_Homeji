@@ -1963,7 +1963,7 @@
 }
 
 .food-preset-grid strong {
-  color: var(--grab-green, #00b14f);
+  color: #24543e;
 }
 
 .food-preset-selected {
@@ -2348,6 +2348,8 @@
 
 .seller-location-lock {
   display: flex;
+  min-width: 0;
+  overflow-wrap: anywhere;
   flex-direction: column;
   gap: 4px;
   padding: 12px 14px;
@@ -2362,7 +2364,7 @@
 }
 
 .seller-location-lock span {
-  color: var(--text-secondary);
+  color: #526358;
   font-size: 0.75rem;
   line-height: 1.4;
 }
@@ -2593,7 +2595,7 @@
 .marketplace-type-choice button.is-active {
   border-color: #e8603c;
   background: #fff0e9;
-  color: #e8603c;
+  color: #a43c22;
 }
 
 .marketplace-empty {
