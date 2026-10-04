@@ -120,6 +120,8 @@ test('payment plan and transaction captions use readable semantic colors', () =>
   }
   assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) \.payment-plan-card__price\s*\{[^}]*color: #fff;/)
   assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) :is\(\.payment-plan-card__total, \.payment-plan-card__savings\)\s*\{[^}]*color: #fff;[^}]*opacity: 1;/)
+  assert.match(css, /\.payment-plan-card__price small\s*\{[^}]*opacity: 1;/)
+  assert.match(css, /\.payment-plan-card__total,\s*\.payment-plan-card__savings\s*\{[^}]*opacity: 1;/)
   for (const background of ['f3ebdd', 'fffdf9', 'f6f7ef', 'f8f7f2', 'f0efeb']) {
     assert.ok(contrast('526358', background) >= 4.5)
   }

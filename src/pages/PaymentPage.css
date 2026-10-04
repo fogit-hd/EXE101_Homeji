@@ -207,14 +207,14 @@
   margin-left: 4px;
   font-size: 0.78rem;
   font-weight: 500;
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .payment-plan-card__total,
 .payment-plan-card__savings {
   margin: 0;
   font: 400 0.78rem/1.35 Inter, sans-serif;
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .payment-plan-card:is(.is-featured, .is-popular) :is(.payment-plan-card__total, .payment-plan-card__savings) {
