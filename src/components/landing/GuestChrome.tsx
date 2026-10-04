@@ -538,7 +538,7 @@ export function GuestChrome() {
 
   return (
     <>
-      <nav className="guest-side-nav" ref={navRef} aria-label="Điều hướng landing">
+      <nav className="guest-side-nav" ref={navRef} data-hero={active === 'hero'} aria-label="Điều hướng landing">
         <div className="guest-side-nav__layer guest-side-nav__layer--light">
           <NavLinks active={active} onNavigate={onNavigate} />
         </div>
@@ -551,7 +551,7 @@ export function GuestChrome() {
         </div>
       </nav>
 
-      <div className="guest-progress" ref={progressElRef} aria-hidden="true">
+      <div className="guest-progress" ref={progressElRef} data-hero={active === 'hero'} aria-hidden="true">
         <span className="guest-progress__hint">
           <span className="guest-progress__hint-text">Scroll</span>
           <svg className="guest-progress__hint-arrow" viewBox="0 0 12 16" fill="none" aria-hidden="true">

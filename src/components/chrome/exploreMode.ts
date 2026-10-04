@@ -53,12 +53,14 @@ export function isExploreSurface(pathname: string, search: string): boolean {
 
 /**
  * Map mode = peer shell / mount map.
+ * Explicit `view=list` takes precedence over a selected `post`.
  * `listings` without `view=list` (and `?post=`) stay map for back-compat.
  * `section=explore` defaults to list unless `view=map`.
  */
 export function isExploreMapMode(pathname: string, search: string): boolean {
   if (pathname !== '/') return false
   const params = new URLSearchParams(search)
+  if (params.get(EXPLORE_VIEW_PARAM) === 'list') return false
   if (params.get('post')) return true
 
   const section = params.get('section')

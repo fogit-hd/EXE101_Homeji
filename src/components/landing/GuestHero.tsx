@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom'
 import { navigateGuestLanding } from './guestLandingNav'
-import { SeamlessLoopVideo } from './SeamlessLoopVideo'
 import './GuestHero.css'
+
+const NAV_ITEMS = [
+  { id: 'mission', label: 'Sứ mệnh', hasArrow: true },
+  { id: 'journey', label: 'Hành trình', hasArrow: true },
+  { id: 'how', label: 'Cơ chế', hasArrow: true },
+  { id: 'start', label: 'Cam kết', hasArrow: false },
+  { id: 'map', label: 'Bản đồ', hasArrow: false },
+] as const
 
 export function GuestHero() {
   const goToMap = (e: React.MouseEvent) => {
@@ -9,26 +16,64 @@ export function GuestHero() {
     navigateGuestLanding('map')
   }
 
+  const onNav = (id: string) => {
+    navigateGuestLanding(id)
+  }
+
   return (
     <section className="guest-hero" id="hero" aria-label="Homeji — trang chủ">
       <div className="guest-hero__media" aria-hidden="true">
-        <SeamlessLoopVideo className="guest-hero__video" />
+        <img
+          src="/landing/bloom-hero-bg.jpg"
+          alt=""
+          className="guest-hero__bg-img"
+        />
         <div className="guest-hero__veil" />
         <div className="guest-hero__grain" />
       </div>
 
       <div className="guest-hero__frame">
-        <div className="guest-hero__top">
-          <img
-            src="/brand/homeji-logo.png"
-            alt=""
-            className="guest-hero__corner-logo"
-            width={48}
-            height={48}
-          />
-          <p className="guest-hero__mark">Homeji</p>
-        </div>
+        {/* Top horizontal navbar matching Bloom */}
+        <header className="guest-hero__top">
+          <div className="guest-hero__brand">
+            <img
+              src="/brand/homeji-logo.png"
+              alt=""
+              className="guest-hero__corner-logo"
+              width={38}
+              height={38}
+            />
+            <span className="guest-hero__brand-name">Homeji</span>
+          </div>
 
+          <nav className="guest-hero__nav" aria-label="Điều hướng trang chủ">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="guest-hero__nav-link"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNav(item.id)
+                }}
+              >
+                <span>{item.label}</span>
+                {item.hasArrow && <span className="guest-hero__nav-caret">▾</span>}
+              </a>
+            ))}
+          </nav>
+
+          <div className="guest-hero__top-actions">
+            <Link to="/login" className="guest-hero__top-login-link">
+              Đăng nhập
+            </Link>
+            <Link to="/register" className="guest-hero__top-consult-btn">
+              Bắt đầu ngay
+            </Link>
+          </div>
+        </header>
+
+        {/* Center hero content */}
         <div className="guest-hero__center">
           <div className="guest-hero__slogan-wrap">
             <h1 className="guest-hero__hello">
@@ -41,8 +86,25 @@ export function GuestHero() {
             Nền tảng tìm phòng trọ &amp; bạn ở ghép an toàn
           </p>
 
-          <div className="guest-hero__rule" aria-hidden="true" />
+          {/* Signature Bloom Pill CTA Button */}
+          <div className="guest-hero__bloom-cta-wrap" id="hero-start-cta">
+            <Link to="/register" className="guest-hero__bloom-cta">
+              <span className="guest-hero__bloom-badge" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M4.5 10h11m-4.5-4.5 4.5 4.5-4.5 4.5"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="guest-hero__bloom-text">Bắt đầu ngay</span>
+            </Link>
+          </div>
 
+          {/* Refined Glassmorphism Meta Cards */}
           <div className="guest-hero__meta">
             <a
               href="#map"
@@ -100,18 +162,14 @@ export function GuestHero() {
           </div>
         </div>
 
+        {/* Bottom subtle link */}
         <div className="guest-hero__bottom">
-          <div className="guest-hero__spine" aria-hidden="true" />
-          <div className="guest-hero__reserve-wrap" id="hero-start-cta">
-            <Link to="/register" className="guest-hero__reserve">
-              Bắt đầu ngay
-            </Link>
-          </div>
           <Link to="/login" className="guest-hero__login-link">
-            Đã có tài khoản? Đăng nhập
+            Đã có tài khoản? <strong>Đăng nhập</strong>
           </Link>
         </div>
       </div>
     </section>
   )
 }
+

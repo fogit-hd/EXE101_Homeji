@@ -367,14 +367,16 @@ export function AuthenticatedHub() {
                       ) : null}
                       Chưa có ảnh
                     </span>
-                    {savedIds.has(post.id) ? <em>Đã lưu</em> : null}
-                    <strong>{formatPrice(post.price)}</strong>
-                    <b>{post.title}</b>
-                    <span>{post.address}</span>
-                    <small>
-                      {post.area > 0 ? `${post.area} m² · ` : ''}
-                      {rentalPostTypeLabel[post.type]}
-                    </small>
+                    <div className="hub-room-copy">
+                      {savedIds.has(post.id) ? <em>Đã lưu</em> : null}
+                      <strong>{formatPrice(post.price)}</strong>
+                      <b>{post.title}</b>
+                      <span>{post.address}</span>
+                      <small>
+                        {post.area > 0 ? `${post.area} m² · ` : ''}
+                        {rentalPostTypeLabel[post.type]}
+                      </small>
+                    </div>
                   </Link>
                 </li>
               ))}
