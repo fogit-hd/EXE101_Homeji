@@ -5,8 +5,8 @@
   --hub-line: #d9d2c5;
   --hub-paper: #f5f0e6;
   --hub-card: #fffdf8;
-  --hub-coral: #e8603c;
-  --hub-leaf: #008f46;
+  --hub-coral: #a43c22;
+  --hub-leaf: #24543e;
   box-sizing: border-box;
   width: min(1320px, 100%);
   margin: 0 auto;
@@ -230,6 +230,18 @@
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+}
+
+.hub-rooms header p {
+  color: var(--hub-muted);
+}
+
+.hub-rooms header > a {
+  color: var(--hub-coral);
+}
+
+.hub-rooms .hub-photo {
+  color: var(--hub-muted);
 }
 
 .hub-viewings ul,
