@@ -183,4 +183,18 @@ is explicitly white, preventing generic paragraph styling from turning duration
 text gray. The dark green current-package card is preserved. No package prices,
 benefits, entitlement or payment behavior changes. Numeric regression tests cover
 the actual light/warm/tinted/dark surfaces; full build and 93 frontend tests pass.
-Live rendered verification of this new palette is pending deployment.
+Commit `eda8331`, Render `dep-db15o83tqb8s738vsrd0` is Live (65 seconds).
+Read-only actual production measurement after reload finds no failures among 53
+eligible plan text elements and 124 eligible history text elements. The same audit
+exclusions above still apply; no checkout or payment-update action was performed.
+
+## Profile caption palette follow-up
+
+Both loaded production Profile tabs showed four solid-background failures: eyebrow
+2.88:1, lead 4.21:1, role badge 4.44:1, inactive tab 4.34:1. Profile CSS now darkens
+these semantic captions. Premium/verification badge variants retain their gold,
+green and red meanings using explicit light backgrounds and readable dark text,
+rather than bright yellow/green/red on tinted light surfaces. A numerical regression
+test covers those pairs. This changes visual presentation only, not account role,
+subscription or profile fields. Current worktree build and all 94 tests pass.
+Live rendered verification for this latest profile adjustment is pending.

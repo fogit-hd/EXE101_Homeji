@@ -133,6 +133,20 @@ test('profile skeleton depends on data, not an animation callback it never emits
   assert.ok(!read('pages/ProfilePage.tsx').includes('useHomejiLoading(profileLoading)'))
 })
 
+test('profile captions, inactive tabs and account badges retain readable colors', () => {
+  const css = read('pages/ProfilePage.css')
+  for (const selector of ['.profile-page-eyebrow', '.profile-page-lead', '.profile-badge']) {
+    const rule = css.slice(css.indexOf(`${selector} {`)).split('}')[0]
+    const color = rule.match(/color: #([\da-f]{6});/)?.[1]
+    assert.ok(color, `${selector} defines its semantic foreground`)
+    assert.ok(contrast(color, selector === '.profile-badge' ? 'eaf0ec' : 'f3ebdd') >= 4.5)
+  }
+  assert.match(css, /:is\(\.profile-page, \.profile-embed\) \.tab:not\(\.active\)\s*\{[^}]*color: #526358;/)
+  for (const [foreground, background] of [['7b530c', 'fff0cd'], ['24543e', 'e4f0e8'], ['9a3b2c', 'fcebe8']]) {
+    assert.ok(contrast(foreground, background) >= 4.5)
+  }
+})
+
 test('editing the rental address invalidates the previous coordinates', () => {
   assert.match(read('pages/EditRentalPostPage.tsx'), /onChange=\{\(value\) => \{\s*setAddress\(value\)\s*setLatitude\(''\)\s*setLongitude\(''\)/)
 })
