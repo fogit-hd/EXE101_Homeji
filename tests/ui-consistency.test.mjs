@@ -150,6 +150,21 @@ test('profile captions, inactive tabs and account badges retain readable colors'
   }
 })
 
+test('roommate cards use readable state colors and remain within narrow grids', () => {
+  const css = read('pages/RoommateInvitationsPage.css')
+  assert.match(css, /--roommate-accent: #a43c22;/)
+  assert.match(css, /--roommate-muted: #526358;/)
+  assert.match(css, /minmax\(min\(100%, 280px\), 1fr\)/)
+  assert.match(css, /\.roommate-card__top\s*\{[^}]*flex-wrap: wrap;/)
+  assert.match(css, /\.roommate-card__date\s*\{[^}]*color: var\(--roommate-muted\);/)
+  assert.match(css, /\.roommate-card\.is-accepted \.roommate-card__avatar\s*\{[^}]*background: var\(--roommate-accent\);[^}]*color: #fff;/)
+  assert.ok(contrast('fff', 'a43c22') >= 4.5)
+  assert.ok(contrast('526358', 'fff9ef') >= 4.5)
+  assert.ok(contrast('24382d', 'd8cdbb') >= 4.5)
+  assert.ok(contrast('a43c22', 'fce8df') >= 4.5)
+  assert.ok(contrast('24543e', 'e4f0e8') >= 4.5)
+})
+
 test('editing the rental address invalidates the previous coordinates', () => {
   assert.match(read('pages/EditRentalPostPage.tsx'), /onChange=\{\(value\) => \{\s*setAddress\(value\)\s*setLatitude\(''\)\s*setLongitude\(''\)/)
 })

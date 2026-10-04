@@ -3,6 +3,11 @@
    Profile-card grid layout
    ══════════════════════════════════════════════════════════════ */
 
+.roommate-page, .roommate-embed {
+  --roommate-accent: #a43c22;
+  --roommate-muted: #526358;
+}
+
 .roommate-page {
   width: 100%;
   max-width: none;
@@ -34,7 +39,7 @@
   font: 700 0.72rem/1 Inter, 'Be Vietnam Pro', sans-serif;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--hj-accent, #e65c3a);
+  color: var(--roommate-accent);
 }
 
 .roommate-page__title {
@@ -49,7 +54,7 @@
 .roommate-page__lead {
   margin: 0;
   font: 400 0.88rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
-  color: var(--hj-muted, #756f64);
+  color: var(--roommate-muted);
 }
 
 /* Empty state */
@@ -79,14 +84,14 @@
 .roommate-empty__copy {
   margin: 0;
   font: 400 0.86rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
-  color: var(--hj-muted, #756f64);
+  color: var(--roommate-muted);
   max-width: 32rem;
 }
 
 /* Profile card grid */
 .roommate-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 16px;
 }
 
@@ -126,7 +131,8 @@
 }
 
 .roommate-card.is-accepted .roommate-card__avatar {
-  background: var(--hj-accent, #e65c3a);
+  background: var(--roommate-accent);
+  color: #fff;
 }
 
 .roommate-card__body {
@@ -138,6 +144,7 @@
 
 .roommate-card__top {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
@@ -155,17 +162,17 @@
   border-radius: var(--hj-radius-xl, 30px);
   font: 600 0.7rem/1.3 Inter, 'Be Vietnam Pro', sans-serif;
   background: var(--hj-border, #d8cdbb);
-  color: var(--hj-muted, #756f64);
+  color: #24382d;
 }
 
 .roommate-card__status.is-pending {
   background: var(--hj-accent-soft, #fce8df);
-  color: var(--hj-accent, #e65c3a);
+  color: var(--roommate-accent);
 }
 
 .roommate-card__status.is-accepted {
-  background: color-mix(in srgb, #00b14f 15%, transparent);
-  color: #007a36;
+  background: #e4f0e8;
+  color: #24543e;
 }
 
 .roommate-card__post {
@@ -180,13 +187,13 @@
 .roommate-card__role {
   margin: 0;
   font: 400 0.78rem/1.3 Inter, 'Be Vietnam Pro', sans-serif;
-  color: var(--hj-muted, #756f64);
+  color: var(--roommate-muted);
 }
 
 .roommate-card__date {
   margin: 0;
   font: 400 0.72rem/1.3 Inter, 'Be Vietnam Pro', sans-serif;
-  color: var(--hj-soft, #a49b8e);
+  color: var(--roommate-muted);
 }
 
 .roommate-card__actions {
