@@ -217,6 +217,11 @@
   opacity: 0.85;
 }
 
+.payment-plan-card:is(.is-featured, .is-popular) :is(.payment-plan-card__total, .payment-plan-card__savings) {
+  color: #fff;
+  opacity: 1;
+}
+
 .payment-plan-card ul {
   margin: 4px 0 0;
   padding: 0;
