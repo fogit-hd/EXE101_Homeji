@@ -139,7 +139,9 @@
 .app-shell--auth-cinema .site-footer { display: block !important; position: relative; z-index: 201; }
 .app-shell--auth-cinema .main-content, .app-shell--auth-cinema .route-outlet { min-height: 0; }
 @media (max-width: 900px) {
-  .auth-cinema { display: flex; flex-direction: column; gap: 20px; padding: 28px 16px; }
+  .auth-cinema { display: flex; flex-direction: column; gap: 20px; padding: 28px 16px 100px; }
+  /* Keep the global launcher; only suppress its unsolicited invitation over auth fields. */
+  body:has(.auth-cinema) .map-chatbot__welcome { display: none; }
   .auth-city { width: 100%; margin: 0; max-width: 560px; }
   .auth-city__copy { padding: 0; text-align: center; }
   .auth-city p { margin-inline: auto; font-size: 13px; }
