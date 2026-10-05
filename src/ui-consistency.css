@@ -126,7 +126,8 @@
 .auth-city__static span { font-size: 14px; }
 .auth-city.is-ready .auth-city__static { visibility: hidden; }
 .auth-city__caption { display: block; text-align: center; font-size: 12px; color: #67705c; }
-.auth-cinema__stage { position: absolute; right: max(32px, calc((100vw - 1160px) / 2)); width: min(400px, calc(100% - 32px)); min-height: 0; }
+.auth-cinema__stage { position: absolute; right: max(32px, calc((100vw - 1160px) / 2)); width: min(400px, calc(100% - 32px)); min-height: 0; grid-template-columns: minmax(0, 1fr); }
+.auth-cinema__form-wrap { min-width: 0; }
 .auth-cinema__card { box-sizing: border-box; background: #fffdf8; color: #24382d; border: 1px solid #dfd9c9; box-shadow: 0 20px 70px #42513b1c; backdrop-filter: none; }
 .auth-cinema__title { color: #24382d; }
 .auth-cinema__submit { color: #fff; background: #24543e; }
