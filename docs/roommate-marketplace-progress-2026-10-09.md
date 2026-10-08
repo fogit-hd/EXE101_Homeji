@@ -22,8 +22,31 @@ Frontend `221ff38`, `59990e7`; backend `9db999a`.
 
 ## Chưa đạt để kết luận mục tiêu hoàn tất
 
-- Hai tab tìm bạn/tìm phòng chưa có trong khu ở ghép. Hiện người dùng tìm ứng viên qua tin đã lưu; lời mời backend bắt buộc cả hai cùng lưu một phòng. Đã hỏi người dùng chọn tìm theo lối sống trước khi có phòng hay tìm người cùng quan tâm phòng đã lưu; chưa có câu trả lời.
-- Chưa kiểm chứng trọn luồng hai người gửi/nhận/chấp nhận lời mời mới theo thiết kế tab mới.
-- Chợ đồ đã có tìm/lọc, đăng/quản lý tin, đơn, ví và xử lý tồn kho trong mã; chưa kiểm chứng đầy đủ luồng mua–người bán xác nhận–giao–hoàn tất/hoàn tiền với cơ sở dữ liệu. Không thực hiện giao dịch tài chính thật để QA, không chạy test database phá hủy trên dữ liệu thật.
+- Lời mời backend vẫn bắt buộc cả hai cùng lưu một phòng. Tab Tìm bạn đã có, dùng mô hình này. Đã hỏi người dùng chọn tìm theo lối sống trước khi có phòng hay tìm người cùng quan tâm phòng đã lưu; chưa có câu trả lời cho phương án tìm người độc lập với phòng.
+- Kiểm thử hai người đã đạt ở cấp service/repository với PostgreSQL, kết hợp browser local của tab mới. Chưa kiểm thử hai phiên đăng nhập Supabase thực đồng thời và thông báo realtime qua mạng.
+- Luồng mua đồ–người bán xác nhận–giao–hoàn tất/giải ngân và từ chối–hoàn tiền đã đạt với PostgreSQL tách biệt. Không thực hiện giao dịch tài chính thật để QA; chưa tuyên bố kiểm chứng gateway hoặc giao dịch production.
+
+## Cập nhật tiếp theo — đã phát hành
+
+Frontend `a355ff1`, `b3e33af`; backend chạy `d597ff5`, tests bổ sung `da74b77` và commit test luồng hai người.
+
+- Ba tab Tìm bạn / Tìm phòng / Lời mời; URL giữ tab khi reload; hỗ trợ bàn phím trái/phải/Home/End.
+- Form lối sống mở ngay trong màn hình ở ghép, tái sử dụng form lưu thật. Ngân sách hồ sơ làm mặc định khi tìm phòng, kể cả khi hồ sơ tải sau component.
+- Tìm phòng dùng API `type=2&minAvailableSlots=1`; SQL lọc loại và chỗ trống trước LIMIT/OFFSET. Có từ khóa đường/trường/tên phòng, ngân sách và phân trang; hủy request cũ khi đổi bộ lọc.
+- Thanh tìm kiếm chung trước đây không thực hiện tìm kiếm trong khu ở ghép. Nay mở tab Tìm phòng với `roommateQuery`; đã kiểm tra UEL trên production.
+- Tìm bạn chỉ hiển thị tin ở ghép đã lưu, ứng viên và điểm tương đồng lối sống của người cùng lưu phòng. Không mở danh bạ hồ sơ công khai mới.
+- Request ứng viên trả về trễ không ghi đè phòng đang chọn; khóa gửi lời mời lặp khi đang chạy. Bỏ lưu có thông báo lỗi và thử lại.
+
+### Kiểm chứng mới
+
+- Build / diff-check đạt; lint các components mới, SavedPostsPage và SearchContext đạt. Cảnh báo bundle >1500 KB và hai lỗi lint baseline ở ProfilePage vẫn còn.
+- 11 tests frontend về tìm/lọc, tích hợp header, lời mời đạt. Browser local dùng dữ liệu giả riêng: lọc 2.600.000 chỉ còn phòng 2.500.000; lưu phòng; gửi lời mời; đổi khu vực/ngân sách tại chỗ; reload giữ tab; chuyển phòng nhanh hiện đúng ứng viên phòng cuối; bỏ lưu gặp 503 giữ thẻ và thử lại thành công. Màn hình 390 × 844 không tràn ngang.
+- Script `C:\Homeji\scripts\quality\Test-LocalBackend.ps1 -SkipLoadTest` tạo database PostgreSQL riêng `homeji_quality` trên loopback, chạy toàn bộ migrations rồi tests. Kết quả cuối **312 unit / 96 API integration đạt, 0 skipped**; script dừng PostgreSQL sau khi xong. Không đọc/ghi database production và không dùng Docker.
+- Hai tests giao dịch mới dùng service, validators và repositories thật: mua đồ trừ ví/giữ tồn; người bán nhận/giao và người mua nhận; giữ tiền trước thời hạn; giải ngân sau 25 giờ, chạy lại không trả thêm. Từ chối đơn hoàn tiền đúng một lần và trả tồn kho. EF tracking được xóa giữa các bước để đọc lại persistence.
+- Test luồng hai người dùng transaction rollback: chưa cùng lưu bị từ chối; cùng lưu thấy ứng viên với điểm 100; gửi/nhận; chặn lời mời pending lặp và chặn người gửi tự chấp nhận; người nhận chấp nhận, cả hai đọc lại đúng conversation đã persist.
+- Bằng chứng database mới nhất: `C:\Homeji\output\quality\local-9aa8b891d8ab4d5e9875af9ea96ab364\tests\local_net9.0_20261009053411.trx`.
+- Render xác nhận backend `d597ff5` Live. `/health/live`, `/health/ready` HTTP 200; query type 999 HTTP 400; query type 2 trả toàn type 2.
+- Frontend production `/assets/index-Ciqi_tji.js` có tabs, form lối sống và header search mới. Browser production tìm UEL trả đúng hai phòng có UEL trong tên/địa chỉ; không tạo lời mời hoặc giao dịch thật.
+- Ảnh: `output/verification/roommate-tabs-production-20261009.png`, `roommate-search-uel-production-20261009.png`, `roommate-tabs-mobile-fixture-20261009.png` (ảnh cuối dùng dữ liệu giả).
 
 Routes nâng cao và lịch sử AI dài hạn tiếp tục tắt. Không sửa các thay đổi Infrastructure integration/import-progress thuộc công việc khác ở backend.
