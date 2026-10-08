@@ -335,6 +335,8 @@ export function MarketplacePage({
   const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
   const [cartNote, setCartNote] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
+  const [inventoryBusy, setInventoryBusy] = useState(false)
+  const inventoryActionLock = useRef(false)
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const handledMarketplaceSelectionRef = useRef<string | null>(null)
@@ -775,6 +777,24 @@ export function MarketplacePage({
     }
   }
 
+  const updateInventoryStatus = async (postId: string, action: 'sold' | 'archive') => {
+    if (inventoryActionLock.current) return
+    inventoryActionLock.current = true
+    setInventoryBusy(true)
+    setActionError('')
+    setActionMsg('')
+    try {
+      await (action === 'sold' ? markMarketplacePostSold(postId) : archiveMarketplacePost(postId))
+      await reload()
+      setActionMsg(action === 'sold' ? 'Đã đánh dấu tin đã bán.' : 'Đã ẩn tin.')
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'Không cập nhật được trạng thái tin. Vui lòng thử lại.'))
+    } finally {
+      inventoryActionLock.current = false
+      setInventoryBusy(false)
+    }
+  }
+
   const rememberCreatedPurchase = async (orderId: string, message: string) => {
     setPurchaseReceipt({ message, orderId })
     try {
@@ -1035,6 +1055,7 @@ export function MarketplacePage({
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
+                disabled={inventoryBusy}
                 onClick={() => beginEdit(p)}
               >
                 Chỉnh sửa
@@ -1043,7 +1064,8 @@ export function MarketplacePage({
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  onClick={() => void markMarketplacePostSold(p.id).then(() => reload())}
+                  disabled={inventoryBusy}
+                  onClick={() => void updateInventoryStatus(p.id, 'sold')}
                 >
                   Đánh dấu đã bán
                 </button>
@@ -1051,7 +1073,8 @@ export function MarketplacePage({
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => void archiveMarketplacePost(p.id).then(() => reload())}
+                disabled={inventoryBusy}
+                onClick={() => void updateInventoryStatus(p.id, 'archive')}
               >
                 Ẩn tin
               </button>
