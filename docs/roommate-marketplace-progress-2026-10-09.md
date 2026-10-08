@@ -65,3 +65,4 @@ Backend `b5cdc44`, frontend `aa825fa`:
 - Render xác nhận backend b5cdc44 Live; health live/ready HTTP 200; gọi endpoint order-chat không đăng nhập trả 401.
 - Frontend aa825fa đã được xác nhận ở bundle public `/assets/index-DgMTnjZv.js`: API liên hệ theo đơn và nội dung nhận món tại bếp đã có.
 - Frontend `61729eb` bổ sung khóa thao tác / bắt lỗi / khôi phục nút cho Đánh dấu đã bán và Ẩn tin. Browser fixture cho Đánh dấu đã bán gặp 503: nút vẫn dùng lại được; retry thành công, danh sách tải lại có badge Đã bán và bỏ nút chỉnh trạng thái. Ảnh `output/verification/marketplace-inventory-retry-fixture-20261009.png`. Build, lint và 8 tests frontend vẫn đạt.
+- Bundle public cuối đã kiểm tra `/assets/index-cslymMxB.js`, có order-chat và xử lý lỗi inventory mới. Luồng Tìm bạn độc lập với phòng vẫn chờ người dùng chọn mô hình; không đánh dấu toàn mục tiêu hoàn tất.
