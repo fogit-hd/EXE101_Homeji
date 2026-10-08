@@ -50,3 +50,16 @@ Frontend `a355ff1`, `b3e33af`; backend chạy `d597ff5`, tests bổ sung `da74b7
 - Ảnh: `output/verification/roommate-tabs-production-20261009.png`, `roommate-search-uel-production-20261009.png`, `roommate-tabs-mobile-fixture-20261009.png` (ảnh cuối dùng dữ liệu giả).
 
 Routes nâng cao và lịch sử AI dài hạn tiếp tục tắt. Không sửa các thay đổi Infrastructure integration/import-progress thuộc công việc khác ở backend.
+
+## Rà soát chợ đồ tiếp theo
+
+Backend `b5cdc44`, frontend `aa825fa`:
+
+- Gộp thẻ đơn và hoàn tiền theo `checkoutId` thay vì buyer/seller/thời điểm. Hai checkout tạo cùng lúc không bị gộp nhầm; nhiều dòng của một checkout vẫn gộp dù timestamp khác nhau. Giữ fallback theo timestamp cho API cũ chưa trả mã checkout.
+- Nút liên hệ trong đơn mua/đơn bán gọi `/api/conversations/marketplace-orders/{orderId}`. Service chỉ cho buyer/seller của đơn mở cuộc trò chuyện với bên còn lại, kể cả khi sản phẩm đã bán; không cho người ngoài và không cho người chưa đăng nhập.
+- Giỏ đồ ăn hiện nhận tại bếp, đúng request API hiện có. Bỏ phí giao dự kiến khỏi tổng vì backend không thu khoản này; bỏ lời hứa gom nhiều bếp/giao tận nơi chưa được triển khai trong luồng này.
+- PostgreSQL tách biệt: 312 unit + 96 integration tests đạt, 0 skipped. Test mua–giao–giải ngân nay kiểm tra thêm hai bên mở cùng conversation sau khi hàng đã Sold, người ngoài bị Forbidden, user rỗng bị Unauthorized, không tạo conversation thứ hai.
+- 8 tests frontend về lọc catalog/nhóm checkout/hoàn tiền đạt; build và lint các file sửa đạt. Cảnh báo bundle lớn vẫn còn.
+- Browser local với fixture riêng: hai checkout cùng createdAt hiển thị hai thẻ, một Chờ xác nhận và một Đã nhận. Người bán bấm Liên hệ người mua gửi POST đúng order aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3 và mở đúng Người mua kiểm thử trong conversation 77777777-7777-4777-8777-777777777777. Không gửi tin nhắn hoặc mua thật.
+- Bằng chứng: `C:\Homeji\output\quality\local-727745147bad4b25ba36c24d809ae918\tests\local_net9.0_20261009054012.trx`; ảnh `output/verification/marketplace-checkout-groups-fixture-20261009.png` dùng dữ liệu giả.
+- Render xác nhận backend b5cdc44 Live; health live/ready HTTP 200; gọi endpoint order-chat không đăng nhập trả 401.
