@@ -15,7 +15,7 @@
 
 .section-header__title {
   margin: 0;
-  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--type-section);
   font-weight: 650;
   letter-spacing: -0.02em;

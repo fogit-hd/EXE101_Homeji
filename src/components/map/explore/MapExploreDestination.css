@@ -44,7 +44,7 @@
 .map-explore__title {
   margin: 0;
   /* Instrument Serif lacks Vietnamese diacritics — use Be Vietnam Pro (already loaded). */
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.6rem, 2.6vw, 2.375rem);
   font-weight: 600;
   line-height: 1.15;
@@ -307,7 +307,7 @@
 
 .map-explore__panel-title {
   margin: 0;
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 1.2;

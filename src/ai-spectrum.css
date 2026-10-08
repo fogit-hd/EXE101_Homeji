@@ -7,7 +7,7 @@
 
 :root {
   --ai-spectrum-colors: #f45b78, #ff9b45, #f3d348, #55c995, #38bce8, #7376f0, #c969e5, #f45b78;
-  --ai-spectrum-surface: #fffdf8;
+  --ai-spectrum-surface: #ffffff;
 }
 
 :is(.hj-search__field.hj-search__field--ai, .natural-rental-search__panel,

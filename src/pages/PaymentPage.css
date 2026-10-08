@@ -35,7 +35,7 @@
 
 .payment-page-title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 600;
   color: #14271f;
@@ -76,7 +76,7 @@
 }
 
 .payment-current__badge {
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.35rem;
   font-weight: 400;
   color: #fff;
@@ -172,7 +172,7 @@
 
 .payment-plan-card h3 {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.7rem;
   font-weight: 400;
   color: inherit;
@@ -332,7 +332,7 @@
 
 .payment-insight-card h3 {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.35rem;
   font-weight: 400;
   line-height: 1.25;
@@ -374,7 +374,7 @@
 
 .payment-compare h2 {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.35rem;
   font-weight: 400;
 }
@@ -478,7 +478,7 @@
 .payment-back:hover { color: #213b2d; }
 .payment-wait-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
 .payment-wait-card { padding: 42px; display: flex; flex-direction: column; align-items: center; gap: 20px; background: #fffdf9; border: 1px solid #e4dfd5; border-radius: 24px; text-align: center; }
-.payment-wait-card h1 { margin: 0; font-family: Fraunces, Georgia, serif; font-size: clamp(26px, 2.5vw, 34px); font-weight: 600; line-height: 1.25; }
+.payment-wait-card h1 { margin: 0; font-family: var(--font-ui); font-size: clamp(26px, 2.5vw, 34px); font-weight: 600; line-height: 1.25; }
 .payment-wait-symbol { display: flex; justify-content: center; align-items: center; width: 80px; height: 80px; border-radius: 50%; border: 8px solid #fff7e9; background: #fbeacc; color: #a57024; font-size: 38px; margin-top: 8px; }
 .payment-wait-symbol svg { width: 30px; height: 30px; }
 .payment-wait-symbol.is-success { background: #e4f0e3; border-color: #f2f7ec; color: #3b733c; }

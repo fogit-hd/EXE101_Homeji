@@ -72,7 +72,7 @@
   min-width: 0;
   min-height: 0;
   flex: 1;
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
 }
 
 /* Fill viewport under product chrome; scroll inside content pane */
@@ -2419,7 +2419,7 @@
 
 .market-hero__title {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.4rem, 2.5vw, 1.8rem);
   font-weight: 400;
   font-style: normal;
@@ -2440,7 +2440,7 @@
 }
 
 .marketplace-shell__filters {
-  background: #fffdf8;
+  background: var(--surface-elevated);
   border: 1px solid #d9d2c5;
   border-radius: 16px;
 }
@@ -2460,7 +2460,7 @@
 .marketplace-card--browse {
   padding: 0;
   overflow: hidden;
-  background: #fffdf8;
+  background: var(--surface-elevated);
   border: 1px solid #d9d2c5;
   border-radius: 16px;
 }
@@ -2508,7 +2508,7 @@
 
 .marketplace-workspace__intro h2 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
@@ -2557,7 +2557,7 @@
   padding: 0 16px;
   border-radius: 8px;
   text-align: center;
-  background: #fffdf8;
+  background: var(--surface-elevated);
   border-color: #d9d2c5;
   color: #716a61;
 }
@@ -2592,7 +2592,7 @@
   padding: 0 16px;
   border-radius: 8px;
   border: 1px solid #d9d2c5;
-  background: #fffdf8;
+  background: var(--surface-elevated);
   color: #716a61;
   font: 600 14px/20px Inter, system-ui, sans-serif;
   cursor: pointer;
@@ -2614,7 +2614,7 @@
   padding: 40px 24px;
   border: 1px solid #d9d2c5;
   border-radius: 12px;
-  background: #fffdf8;
+  background: var(--surface-elevated);
   text-align: center;
 }
 
@@ -2654,7 +2654,7 @@
 }
 
 .marketplace-card--mine {
-  background: #fffdf8;
+  background: var(--surface-elevated);
   border: 1px solid #d9d2c5;
   border-radius: 16px;
 }
@@ -2702,13 +2702,13 @@
 
 .marketplace-sell-form,
 .marketplace-order-group {
-  background: #fffdf8;
+  background: var(--surface-elevated);
   border: 1px solid #d9d2c5;
   border-radius: 16px;
 }
 
 .food-preset-section h3 {
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
@@ -2722,7 +2722,7 @@
 }
 
 .food-preset-grid button {
-  background: #fffdf8;
+  background: var(--surface-elevated);
   border: 1px solid #d9d2c5;
   border-radius: 16px;
 }

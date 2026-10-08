@@ -53,7 +53,7 @@
 
 .page-frame__title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 600;
   letter-spacing: 0;

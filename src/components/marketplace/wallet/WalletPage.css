@@ -75,7 +75,7 @@
 
 .wallet-summary__balance {
   margin: 8px 0 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 42px;
   font-weight: 600;
   line-height: 1;
@@ -100,7 +100,7 @@
 .wallet-card__head h2,
 .wallet-rail h2 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-weight: 400;
   color: #14271f;
 }
@@ -129,7 +129,7 @@
 
 .wallet-summary__metrics dd {
   margin: 7px 0 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 600;
 }
@@ -426,7 +426,7 @@
 .wallet-submit strong,
 .wallet-flow strong {
   display: block;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 600;
 }
@@ -491,7 +491,7 @@
 .wallet-recent p,
 .wallet-flow strong {
   margin: 8px 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 32px;
   font-weight: 600;
   line-height: 1;

@@ -17,7 +17,7 @@
   padding: 10px 10px 10px 12px;
   border-radius: 10px;
   border: 1px solid #d9d2c5;
-  background: #fffdf8;
+  background: var(--surface-elevated);
   color: #14271f;
   box-shadow: 0 8px 24px rgba(20, 39, 31, 0.12);
   pointer-events: auto;
@@ -50,7 +50,7 @@
 
 .app-toast--info {
   border-color: #d9d2c5;
-  background: #fffdf8;
+  background: var(--surface-elevated);
   color: #14271f;
 }
 

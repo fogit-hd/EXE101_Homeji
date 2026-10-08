@@ -7,7 +7,7 @@
 .auth-city__label--city { right: 6%; top: 19%; }
 .auth-city__label--home { left: 3%; bottom: 21%; }
 .auth-city__controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: -8px 0 20px; position: relative; z-index: 2; }
-.auth-city__controls button { border: 1px solid #49634430; border-radius: 50px; padding: 9px 13px; font: 500 11px/1.5 'Be Vietnam Pro', sans-serif; background: #fffdf7; color: #315543; cursor: pointer; transition: background .2s, transform .2s; }
+.auth-city__controls button { border: 1px solid #49634430; border-radius: 50px; padding: 9px 13px; font: 500 11px/1.5 'Be Vietnam Pro', sans-serif; background: var(--surface-elevated); color: #315543; cursor: pointer; transition: background .2s, transform .2s; }
 .auth-city__controls button:hover { background: #e6ecd9; transform: translateY(-2px); }
 .auth-city__controls button:focus-visible { outline: 3px solid #ba6846; outline-offset: 3px; }
 .auth-city__controls button[aria-pressed="true"] { background: #315543; color: #fffdf7; }

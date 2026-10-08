@@ -44,7 +44,7 @@
 
 .roommate-page__title {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   font-weight: 400;
   color: var(--hj-ink, #18231d);
@@ -121,7 +121,7 @@
   border-radius: 50%;
   background: var(--hj-ink, #18231d);
   color: var(--hj-nav-idle, #dce2de);
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.4rem;
   font-style: italic;
   display: grid;

@@ -5,19 +5,19 @@
 
 .site-footer {
   flex: 0 0 auto;
-  background: #fff9ef;
-  color: #24382d;
-  border-top: 1px solid #d8cdbb;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  border-top: 1px solid var(--border);
   padding: 24px;
   font-family: 'Be Vietnam Pro', sans-serif;
 }
 
 .site-footer__inner { max-width: 1256px; margin: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
-.site-footer__brand { color: #24382d; font-size: 20px; font-weight: 800; }
+.site-footer__brand { color: var(--text-heading); font-size: 20px; font-weight: 800; }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 16px; margin-left: auto; }
-.site-footer a { color: #24382d; text-decoration: none; }
+.site-footer a { color: var(--text-heading); text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
-.site-footer small, .site-footer p { color: #5c665d; }
+.site-footer small, .site-footer p { color: var(--text-secondary); }
 .site-footer--compact { padding: 6px 16px; }
 .site-footer--compact .site-footer__brand { font-size: 13px; }
 .site-footer--compact p { display: none; }

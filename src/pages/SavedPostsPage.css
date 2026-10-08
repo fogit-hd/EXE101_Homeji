@@ -36,7 +36,7 @@
 
 .saved-posts-page__title {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   font-weight: 400;
   color: var(--hj-ink, #18231d);

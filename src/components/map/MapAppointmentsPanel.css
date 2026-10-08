@@ -45,7 +45,7 @@
 
 .map-appointments__page-title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 600;
   line-height: 44px;
@@ -249,7 +249,7 @@
 }
 
 .map-appointments__month-sum-head em {
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-style: normal;
   font-size: 1.35rem;
   color: #fff;
@@ -297,7 +297,7 @@
 .map-appointments__prep-head h2 {
   margin: 0;
   color: #fff;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.15rem;
   font-weight: 400;
 }
@@ -458,7 +458,7 @@
 
 .map-appointments__tl-title {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.15rem;
   font-weight: 400;
   line-height: 1.25;

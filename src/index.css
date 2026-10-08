@@ -1,37 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 
 :root {
-  /* ── Homeji product tokens (logged-in, desktop #18231d sidebar) ── */
-  --hj-paper: #f3ebdd;
-  --hj-ink: #18231d;
-  --hj-accent: #e65c3a;
-  --hj-cream: #fff9ef;
-  --hj-border: #d8cdbb;
-  --hj-muted: #756f64;
-  --hj-soft: #a49b8e;
+  --font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  /* ── Homeji product tokens (logged-in, desktop #19323b sidebar) ── */
+  --hj-paper: #f3f7fa;
+  --hj-ink: #19323b;
+  --hj-accent: #087f8c;
+  --hj-cream: #ffffff;
+  --hj-border: #dce5eb;
+  --hj-muted: #5b6b76;
+  --hj-soft: #82929c;
   --hj-nav-idle: #dce2de;
   --hj-nav-line: #334039;
-  --hj-accent-soft: #fce8df;
+  --hj-accent-soft: #e4f4f5;
   --hj-radius-sm: 8px;
   --hj-radius-md: 14px;
   --hj-radius-lg: 22px;
   --hj-radius-xl: 30px;
   --hj-sidebar: 228px;
-  --hj-grab-green: #00b14f;
+  --hj-grab-green: #087f8c;
   /* ──────────────────────────────────────────────────────────────── */
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #2a312c;
-  --text-secondary: #66706a;
-  --text-heading: #1f2923;
-  --border: #dde4de;
-  --surface: #fcfdfb;
-  --surface-muted: #f2f6f3;
-  --surface-input: #eaf0ec;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(252, 253, 251, 0.94);
+  --surface-glass: rgba(255, 255, 255, 0.94);
   --overlay-scrim: rgba(28, 36, 31, 0.4);
   --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
@@ -99,9 +100,9 @@
   --dur-med: 280ms;
   --dur-slow: 420ms;
   /* Map chrome fill — never brand green (prevents GPU clear flash). */
-  --map-canvas-bg: #e4ebe6;
+  --map-canvas-bg: #e7eef3;
   color-scheme: light;
-  font-family: 'Be Vietnam Pro', Manrope, Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
   line-height: 1.5;
   color: var(--text-primary);
   background: var(--surface-muted);
@@ -176,19 +177,19 @@ html[data-theme='dark'] {
 
 html[data-theme='light'] {
   color-scheme: light;
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #2a312c;
-  --text-secondary: #66706a;
-  --text-heading: #1f2923;
-  --border: #dde4de;
-  --surface: #fcfdfb;
-  --surface-muted: #f2f6f3;
-  --surface-input: #eaf0ec;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(252, 253, 251, 0.94);
+  --surface-glass: rgba(255, 255, 255, 0.94);
   --overlay-scrim: rgba(28, 36, 31, 0.4);
   --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
@@ -204,7 +205,7 @@ html[data-theme='light'] {
   --success: #39b54a;
   --error-soft: rgba(234, 67, 53, 0.1);
   --success-soft: rgba(57, 181, 74, 0.12);
-  --map-canvas-bg: #e4ebe6;
+  --map-canvas-bg: #e7eef3;
   --app-chrome-tint: var(--surface);
   --app-hub-paper: var(--surface);
   --app-explore-paper: var(--surface);
@@ -293,22 +294,22 @@ body {
   --app-bottom-nav-height: 0px;
   --nav-height: 0px;
   /* Vietnamese-capable stack (Be Vietnam Pro already imported in this file). */
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
-  /* Logged-in product stays warm light — not OS dark admin chrome */
+  font-family: var(--font-ui);
+  /* Logged-in product stays cool light — not OS dark admin chrome */
   color-scheme: light;
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #2a312c;
-  --text-secondary: #66706a;
-  --text-heading: #1f2923;
-  --border: #dde4de;
-  --surface: #fcfdfb;
-  --surface-muted: #f2f6f3;
-  --surface-input: #eaf0ec;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(252, 253, 251, 0.94);
+  --surface-glass: rgba(255, 255, 255, 0.94);
   --overlay-scrim: rgba(28, 36, 31, 0.4);
   --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
@@ -324,7 +325,7 @@ body {
   --success: #39b54a;
   --error-soft: rgba(234, 67, 53, 0.1);
   --success-soft: rgba(57, 181, 74, 0.12);
-  --map-canvas-bg: #e4ebe6;
+  --map-canvas-bg: #e7eef3;
   --app-chrome-tint: var(--surface);
   --app-hub-paper: var(--surface);
   --app-explore-paper: var(--surface);
@@ -336,7 +337,7 @@ body {
 }
 
 .app-shell--product:not(.app-shell--map) .app-main {
-  background: var(--hj-paper, #f3ebdd);
+  background: var(--hj-paper, #f3f7fa);
 }
 
 .app-shell--product .app-main {
@@ -424,6 +425,7 @@ a:hover {
 }
 
 h1, h2, h3, h4 {
+  font-family: var(--font-ui);
   color: var(--text-heading);
   margin: 0 0 12px;
 }

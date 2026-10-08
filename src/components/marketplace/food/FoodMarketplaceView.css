@@ -15,7 +15,7 @@
   --food-card-shadow: none;
   background: #f5f0e6;
   color: var(--food-ink);
-  font-family: Inter, 'Be Vietnam Pro', system-ui, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .marketplace-page--food .sr-only {
@@ -74,7 +74,7 @@
   padding: 0 16px;
   border: 1px solid #d9d2c5;
   border-radius: 12px;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .food-search input {
@@ -178,7 +178,7 @@
 
 .food-featured__title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.5rem, 2.4vw, 2.25rem);
   font-weight: 400;
   line-height: 1.08;
@@ -259,7 +259,7 @@
 
 .food-nearby-head h2 {
   margin: 0 0 3px;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
@@ -307,7 +307,7 @@
   border: 1px solid #d9d2c5;
   border-radius: 12px;
   overflow: hidden;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .food-card.is-in-cart {
@@ -377,7 +377,7 @@
 
 .food-card__title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 21px;
   font-weight: 400;
   line-height: 1.15;
@@ -635,7 +635,7 @@
   padding: 14px;
   border: 1px solid #d9d2c5;
   border-radius: 16px;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .food-rail__location-head {
@@ -647,7 +647,7 @@
 
 .food-rail__location-head h2 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 20px;
   font-weight: 400;
   color: var(--food-ink);
@@ -849,7 +849,7 @@
 
 .food-rail__cart-title h2 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 21px;
   font-weight: 400;
   color: var(--food-ink);
@@ -1066,7 +1066,7 @@
 }
 
 .food-rail__total b {
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 700;
 }
