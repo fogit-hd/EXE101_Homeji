@@ -71,7 +71,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
       <form onSubmit={event => { event.preventDefault(); void submit() }}>
         <label htmlFor="natural-rental-query">Mô tả và sửa nhu cầu của bạn</label>
         <textarea id="natural-rental-query" autoFocus maxLength={1000} value={text} disabled={loading} onChange={event => { setText(event.target.value); setResult(null) }} placeholder="2 người, dưới 4 triệu tiền thuê, có bếp, không ở ghép" rows={3} />
-        <button type="submit" className="btn btn-primary btn-sm" disabled={loading || !text.trim()}>{loading ? 'Đang tìm…' : 'Hiểu nhu cầu và tìm tin'}</button>
+        <button type="submit" className="btn btn-primary btn-sm ai-spectrum-button" disabled={loading || !text.trim()}>{loading ? 'Đang tìm…' : 'Hiểu nhu cầu và tìm tin'}</button>
         <button type="button" className="btn btn-ghost btn-sm" disabled={loading} onClick={() => { previous.current = undefined; setResult(null); setText(''); setError('') }}>Bắt đầu nhu cầu mới</button>
       </form>
       {error ? <p role="alert">{error}</p> : null}

@@ -705,7 +705,7 @@ export function MapChatbot({
       <div
         className={`map-chatbot__panel is-${panel.side}${panelVisible ? ' is-visible' : ''}${
           sheetMode ? ' is-sheet' : ''
-        }`}
+        }${busy ? ' is-thinking' : ''}`}
         style={{
           pointerEvents: panelVisible ? 'auto' : 'none',
           left: panel.left,

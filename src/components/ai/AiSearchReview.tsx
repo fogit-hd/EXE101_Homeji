@@ -56,7 +56,7 @@ function AiSearchReviewSession({ result, onApply, onRefine }: {
       ? <button type="button" key={chip.text} onClick={() => onRefine(chip.edit)} title="Sửa tiêu chí">{chip.text} ✎</button>
       : <span key={chip.text}>{chip.text}</span>)}</div>
     {unresolved ? <p role="status">Cần xác nhận thông tin còn thiếu trước khi áp dụng. Bạn có thể sửa yêu cầu hoặc dùng công cụ bên dưới.</p> : <>
-      <button type="button" className="ai-search-review__apply" onClick={() => onApply({ ...result, criteria: c, posts: visiblePosts })}>Xác nhận · áp dụng lên bản đồ</button>
+      <button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={() => onApply({ ...result, criteria: c, posts: visiblePosts })}>Xác nhận · áp dụng lên bản đồ</button>
       {visiblePosts.length === 0 ? <p>Chưa có tin phù hợp. Các điều kiện được giữ nguyên.</p> : null}
       {pendingCosts ? <p>Chỉ áp dụng những phòng trong ngân sách theo kịch bản chi phí bạn đã xác nhận. Các khoản này do bạn nhập, chưa phải báo giá của chủ phòng.</p> : null}
     </>}

@@ -1,0 +1,58 @@
+/* Shared visual language for AI surfaces. Text stays on an opaque surface. */
+@property --ai-border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+:root {
+  --ai-spectrum-colors: #f45b78, #ff9b45, #f3d348, #55c995, #38bce8, #7376f0, #c969e5, #f45b78;
+  --ai-spectrum-surface: #fffdf8;
+}
+
+:is(.hj-search__field.hj-search__field--ai, .natural-rental-search__panel,
+  .map-chatbot__panel.is-visible, .map-chatbot .map-chatbot__fab,
+  .map-chatbot .map-chatbot__form, .ai-search-review, .rental-draft-assistant,
+  .rental-comparison, .ai-spectrum-button.ai-spectrum-button,
+  .natural-rental-search__trigger, .map-chatbot .map-chatbot__chip,
+  .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) {
+  --ai-border-angle: 0deg;
+  border: 4px solid transparent;
+  background: linear-gradient(var(--ai-spectrum-surface), var(--ai-spectrum-surface)) padding-box,
+    conic-gradient(from var(--ai-border-angle), var(--ai-spectrum-colors)) border-box;
+  animation: ai-spectrum-orbit 6s linear infinite;
+  box-shadow: -3px 0 14px #f45b7826, 3px 0 14px #7376f026, 0 3px 12px #38bce820;
+}
+
+:is(.natural-rental-search__trigger, .ai-spectrum-button.ai-spectrum-button,
+  .map-chatbot .map-chatbot__chip, .map-chatbot .map-chatbot__action,
+  .map-chatbot .map-chatbot__send) {
+  border-width: 3px;
+  color: #263a4b;
+}
+
+:is(.natural-rental-search__panel, .map-chatbot__panel.is-visible) {
+  border-width: 5px;
+  box-shadow: 0 20px 70px #152a2933, -5px 0 20px #f45b7833, 5px 0 20px #7376f033;
+}
+
+:is(.hj-search__field.hj-search__field--ai:focus-within,
+  .natural-rental-search__trigger:hover, .ai-spectrum-button.ai-spectrum-button:hover,
+  .map-chatbot .map-chatbot__fab:hover) {
+  box-shadow: -4px 0 18px #f45b7845, 4px 0 18px #7376f045, 0 3px 16px #38bce830;
+}
+
+:is(.natural-rental-search__panel.is-thinking, .map-chatbot__panel.is-visible.is-thinking) {
+  animation-duration: 2s;
+  box-shadow: 0 20px 70px #152a2933, -6px 0 24px #f45b7855, 6px 0 24px #7376f055;
+}
+.ai-spectrum-button:disabled { color: #626b73; box-shadow: none; }
+@keyframes ai-spectrum-orbit { to { --ai-border-angle: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+  :is(.hj-search__field.hj-search__field--ai, .natural-rental-search__panel,
+    .map-chatbot__panel.is-visible, .map-chatbot .map-chatbot__fab,
+    .map-chatbot .map-chatbot__form, .ai-search-review, .rental-draft-assistant,
+    .rental-comparison, .ai-spectrum-button.ai-spectrum-button,
+    .natural-rental-search__trigger, .map-chatbot .map-chatbot__chip,
+    .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) { animation: none; }
+}
