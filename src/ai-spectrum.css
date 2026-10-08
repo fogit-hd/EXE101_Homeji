@@ -17,40 +17,40 @@
   .natural-rental-search__trigger, .map-chatbot .map-chatbot__chip,
   .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) {
   --ai-border-angle: 0deg;
-  --ai-glow-depth: 12px;
-  border: 4px solid transparent;
+  --ai-glow-depth: 9px;
+  border: 2px solid transparent;
   --ai-spectrum-fill: linear-gradient(to right, #f45b782e, transparent var(--ai-glow-depth), transparent calc(100% - var(--ai-glow-depth)), #7376f02e) padding-box,
     linear-gradient(to bottom, #38bce826, transparent var(--ai-glow-depth), transparent calc(100% - var(--ai-glow-depth)), #ff9b4526) padding-box,
     linear-gradient(var(--ai-spectrum-surface), var(--ai-spectrum-surface)) padding-box,
     conic-gradient(from var(--ai-border-angle), var(--ai-spectrum-colors)) border-box;
   background: var(--ai-spectrum-fill);
   animation: ai-spectrum-orbit 6s linear infinite;
-  box-shadow: -3px 0 14px #f45b7826, 3px 0 14px #7376f026, 0 3px 12px #38bce820;
+  box-shadow: -1px 0 6px #f45b7826, 1px 0 6px #7376f026, 0 1px 5px #38bce820;
 }
 
 :is(.natural-rental-search__trigger, .ai-spectrum-button.ai-spectrum-button,
   .map-chatbot .map-chatbot__chip, .map-chatbot .map-chatbot__action,
   .map-chatbot .map-chatbot__send) {
-  border-width: 3px;
-  --ai-glow-depth: 8px;
+  border-width: 1.5px;
+  --ai-glow-depth: 6px;
   color: #263a4b;
 }
 
 :is(.natural-rental-search__panel, .map-chatbot__panel.is-visible) {
-  border-width: 5px;
-  --ai-glow-depth: 30px;
-  box-shadow: 0 20px 70px #152a2933, -5px 0 20px #f45b7833, 5px 0 20px #7376f033;
+  border-width: 2px;
+  --ai-glow-depth: 18px;
+  box-shadow: 0 16px 48px #152a2929, -1px 0 8px #f45b7833, 1px 0 8px #7376f033;
 }
 
 :is(.hj-search__field.hj-search__field--ai:focus-within,
   .natural-rental-search__trigger:hover, .ai-spectrum-button.ai-spectrum-button:hover,
   .map-chatbot .map-chatbot__fab:hover) {
-  box-shadow: -4px 0 18px #f45b7845, 4px 0 18px #7376f045, 0 3px 16px #38bce830;
+  box-shadow: -1px 0 9px #f45b7838, 1px 0 9px #7376f038, 0 1px 7px #38bce826;
 }
 
 :is(.natural-rental-search__panel.is-thinking, .map-chatbot__panel.is-visible.is-thinking) {
   animation-duration: 2s;
-  box-shadow: 0 20px 70px #152a2933, -6px 0 24px #f45b7855, 6px 0 24px #7376f055;
+  box-shadow: 0 16px 48px #152a2929, -2px 0 12px #f45b7845, 2px 0 12px #7376f045;
 }
 .ai-spectrum-button:disabled { color: #626b73; box-shadow: none; }
 .ai-spectrum-button.ai-spectrum-button:hover:not(:disabled) {
