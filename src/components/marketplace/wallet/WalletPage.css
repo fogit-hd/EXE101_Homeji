@@ -162,7 +162,7 @@
   border-radius: 12px;
   background: transparent;
   color: #526358;
-  font: 600 14px/1 Inter, system-ui, sans-serif;
+  font: 600 14px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -276,7 +276,7 @@
 .wallet-amounts button {
   height: 52px;
   color: #14271f;
-  font: 700 15px/1 Inter, system-ui, sans-serif;
+  font: 700 15px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -301,7 +301,7 @@
   border: 0;
   background: transparent;
   color: #14271f;
-  font: 600 15px/1 Inter, system-ui, sans-serif;
+  font: 600 15px/1 var(--font-ui);
 }
 
 .wallet-input input:focus,
@@ -442,7 +442,7 @@
   border-radius: 999px;
   background: #a43c22;
   color: #fff;
-  font: 700 15px/1 Inter, system-ui, sans-serif;
+  font: 700 15px/1 var(--font-ui);
   cursor: pointer;
 }
 

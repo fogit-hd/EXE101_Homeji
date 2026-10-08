@@ -45,7 +45,7 @@
 
 .page-frame__eyebrow {
   margin: 0;
-  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 10px/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: #e8603c;
@@ -63,7 +63,7 @@
 
 .page-frame__lead {
   margin: 0;
-  font: 400 14px/22px Inter, 'Be Vietnam Pro', sans-serif;
+  font: 400 14px/22px var(--font-ui);
   color: #716a61;
 }
 

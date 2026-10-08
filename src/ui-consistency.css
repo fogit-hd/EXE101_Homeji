@@ -28,7 +28,7 @@
 .hub-market :is(h2, li) { color: var(--text-heading); }
 .hub-safety { background: #e4f0e8; color: var(--text-heading); }
 .hub-banner { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 28px; border: 1px solid #c8dacb; border-radius: 22px; background: radial-gradient(circle at 90% 10%, #bfe8ed, transparent 38%), linear-gradient(110deg, #e4f4f5, #f3f7fa); color: var(--text-heading); }
-.hub-banner h2 { margin: 6px 0; font: 700 clamp(22px, 3vw, 32px)/1.5 'Be Vietnam Pro', sans-serif; color: var(--text-heading); }
+.hub-banner h2 { margin: 6px 0; font: 700 clamp(22px, 3vw, 32px)/1.5 var(--font-ui); color: var(--text-heading); }
 .hub-banner p { max-width: 620px; margin: 0; color: #45594a; font-size: 14px; line-height: 1.7; }
 .hub-banner > div > span { font-size: 12px; font-weight: 700; color: #915427; }
 .hub-banner > a { flex-shrink: 0; padding: 12px 20px; border-radius: 12px; background: var(--hj-accent); color: #fff; font-weight: 600; text-decoration: none; }
@@ -105,7 +105,7 @@
 @media (max-width: 359px) {
   .hj-logo__word { display: none; }
 }
-.google-signin small { color: #526358; font: 400 11px/1.6 'Be Vietnam Pro', sans-serif; text-align: center; }
+.google-signin small { color: #526358; font: 400 11px/1.6 var(--font-ui); text-align: center; }
 @media (max-width: 600px) {
   .hub-banner { padding: 20px; }
   .profile-grid { grid-template-columns: 1fr; }
@@ -118,7 +118,7 @@
 .auth-city { position: relative; width: min(620px, 50vw); margin-right: 440px; align-self: center; color: var(--text-heading); }
 .auth-city__copy { position: relative; z-index: 1; padding: 0 32px; }
 .auth-city__copy > span { font-size: 11px; font-weight: 700; letter-spacing: 0.13em; color: #9c5836; }
-.auth-city h2 { font: 700 clamp(26px, 3.5vw, 46px)/1.4 'Be Vietnam Pro', sans-serif; color: var(--text-heading); margin: 14px 0; }
+.auth-city h2 { font: 700 clamp(26px, 3.5vw, 46px)/1.4 var(--font-ui); color: var(--text-heading); margin: 14px 0; }
 .auth-city p { max-width: 410px; color: #596657; line-height: 1.7; }
 .auth-city__canvas { position: relative; height: 390px; width: 100%; }
 .auth-city__canvas canvas { position: absolute; inset: 0; width: 100%; height: 100%; }

@@ -381,7 +381,7 @@
 }
 
 .profile-page-eyebrow {
-  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 10px/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: #a43c22;
@@ -399,7 +399,7 @@
 
 .profile-page-lead {
   margin: 0;
-  font: 400 0.88rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 400 0.88rem/1.5 var(--font-ui);
   color: #526358;
 }
 

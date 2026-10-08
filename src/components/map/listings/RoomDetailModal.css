@@ -75,7 +75,7 @@
   background: var(--rd-surface);
   color: var(--rd-forest);
   border-radius: 8px;
-  font: 600 14px/20px Inter, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
 }
 
@@ -518,7 +518,7 @@
   height: 48px;
   padding: 0 16px;
   border-radius: 8px;
-  font: 600 14px/20px Inter, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
 }
 
@@ -558,7 +558,7 @@
   border-radius: 8px;
   background: #fff;
   color: var(--rd-text);
-  font: 400 14px/20px Inter, sans-serif;
+  font: 400 14px/20px var(--font-ui);
 }
 
 .room-detail__schedule button {

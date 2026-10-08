@@ -84,7 +84,7 @@
   border: 1px solid var(--mh-accent);
   background: var(--mh-accent);
   color: #fff;
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -144,7 +144,7 @@
   border: 0;
   background: transparent;
   color: var(--mh-accent);
-  font: 700 13px/1 Inter, system-ui, sans-serif;
+  font: 700 13px/1 var(--font-ui);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -229,7 +229,7 @@
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--mh-ink);
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
   flex: none;
   white-space: nowrap;
@@ -274,7 +274,7 @@
   border-radius: 8px;
   background: var(--mh-paper);
   color: var(--mh-ink);
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -293,7 +293,7 @@
 .marketplace-header__subhint {
   margin: 0;
   color: var(--mh-muted);
-  font: 400 13px/18px Inter, system-ui, sans-serif;
+  font: 400 13px/18px var(--font-ui);
   white-space: nowrap;
 }
 
@@ -306,7 +306,7 @@
   border-radius: 999px;
   background: var(--mh-accent);
   color: #fff;
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
 }
 
 @media (max-width: 1100px) {

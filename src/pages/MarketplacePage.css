@@ -2411,7 +2411,7 @@
 }
 
 .market-hero__eyebrow {
-  font: 700 0.72rem/1 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 0.72rem/1 var(--font-ui);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hj-accent, #e65c3a);
@@ -2429,7 +2429,7 @@
 
 .market-hero__lead {
   margin: 0;
-  font: 400 0.86rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 400 0.86rem/1.5 var(--font-ui);
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -2447,7 +2447,7 @@
 
 .marketplace-shell__filters-title {
   color: #14271f;
-  font: 600 16px/24px Inter, system-ui, sans-serif;
+  font: 600 16px/24px var(--font-ui);
   letter-spacing: 0;
 }
 
@@ -2518,7 +2518,7 @@
 .marketplace-workspace__intro p {
   margin: 6px 0 0;
   color: #716a61;
-  font: 400 14px/22px Inter, system-ui, sans-serif;
+  font: 400 14px/22px var(--font-ui);
 }
 
 .marketplace-toolbar {
@@ -2534,7 +2534,7 @@
   align-items: center;
   gap: 12px;
   color: #716a61;
-  font: 400 13px/18px Inter, system-ui, sans-serif;
+  font: 400 13px/18px var(--font-ui);
 }
 
 .marketplace-toolbar__field .form-select {
@@ -2578,7 +2578,7 @@
 .marketplace-type-choice p {
   margin: 0;
   color: #14271f;
-  font: 600 16px/24px Inter, system-ui, sans-serif;
+  font: 600 16px/24px var(--font-ui);
 }
 
 .marketplace-type-choice div {
@@ -2594,7 +2594,7 @@
   border: 1px solid #d9d2c5;
   background: var(--surface-elevated);
   color: #716a61;
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
 }
 
@@ -2621,14 +2621,14 @@
 .marketplace-empty h3 {
   margin: 8px 0 0;
   color: #14271f;
-  font: 600 16px/24px Inter, system-ui, sans-serif;
+  font: 600 16px/24px var(--font-ui);
 }
 
 .marketplace-empty p {
   margin: 0 0 8px;
   max-width: 420px;
   color: #716a61;
-  font: 400 14px/22px Inter, system-ui, sans-serif;
+  font: 400 14px/22px var(--font-ui);
 }
 
 .marketplace-card--browse .marketplace-card__thumb,

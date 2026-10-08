@@ -28,7 +28,7 @@
 }
 
 .saved-posts-page__eyebrow {
-  font: 700 0.72rem/1 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 0.72rem/1 var(--font-ui);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hj-accent, #e65c3a);
@@ -45,7 +45,7 @@
 
 .saved-posts-page__lead {
   margin: 0;
-  font: 400 0.88rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 400 0.88rem/1.5 var(--font-ui);
   color: var(--hj-muted, #756f64);
 }
 

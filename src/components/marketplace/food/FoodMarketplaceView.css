@@ -83,7 +83,7 @@
   border: 0;
   background: transparent;
   color: var(--food-ink);
-  font: 400 14px/1.2 Inter, system-ui, sans-serif;
+  font: 400 14px/1.2 var(--font-ui);
 }
 
 .food-search input::placeholder {
@@ -106,7 +106,7 @@
   border-radius: 8px;
   background: var(--food-mint);
   color: var(--food-muted);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
 }
 
 .food-catalog__chips {
@@ -122,7 +122,7 @@
   border-radius: 999px;
   background: #fff;
   color: var(--food-ink-soft);
-  font: 600 12px/1 Inter, system-ui, sans-serif;
+  font: 600 12px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -207,7 +207,7 @@
   border-radius: 12px;
   background: var(--food-accent);
   color: #fff;
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
 }
 
@@ -222,7 +222,7 @@
 
 .food-featured__price {
   color: #fff;
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-featured__media {
@@ -246,7 +246,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.91);
   color: var(--food-ink);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
 }
 
 /* ── Nearby heading ── */
@@ -269,13 +269,13 @@
 .food-nearby-head__note {
   margin: 0;
   color: #716a61;
-  font: 400 13px/18px Inter, system-ui, sans-serif;
+  font: 400 13px/18px var(--font-ui);
 }
 
 .food-nearby-head__count {
   margin: 0;
   color: var(--food-accent);
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
 }
 
 .food-nearby-head__link {
@@ -285,7 +285,7 @@
   border: 0;
   background: transparent;
   color: var(--food-leaf-deep);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -341,7 +341,7 @@
   border-radius: 999px;
   background: #fff;
   color: var(--food-leaf-deep);
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
   box-shadow: 0 3px 10px rgba(23, 51, 42, 0.13);
 }
 
@@ -367,12 +367,12 @@
   border-radius: 999px;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
 }
 
 .food-card__kitchen {
   color: var(--food-muted);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-card__title {
@@ -401,7 +401,7 @@
 
 .food-card__portions {
   color: var(--food-accent);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-card__location {
@@ -433,13 +433,13 @@
 .food-card__seller {
   margin: 0;
   color: #716a61;
-  font: 400 13px/18px Inter, system-ui, sans-serif;
+  font: 400 13px/18px var(--font-ui);
 }
 
 .food-card__price {
   margin: 0;
   color: var(--food-leaf-deep);
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
 }
 
 .food-card__controls {
@@ -483,7 +483,7 @@
   width: 14px;
   text-align: center;
   color: var(--food-ink);
-  font: 700 14px/1 Inter, system-ui, sans-serif;
+  font: 700 14px/1 var(--font-ui);
 }
 
 .food-card__cart-btn {
@@ -496,7 +496,7 @@
   border-radius: 10px;
   background: var(--food-accent);
   color: #fff;
-  font: 600 13px/1 Inter, system-ui, sans-serif;
+  font: 600 13px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -541,7 +541,7 @@
   border-radius: 999px;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 14px/1 Inter, system-ui, sans-serif;
+  font: 800 14px/1 var(--font-ui);
   flex-shrink: 0;
 }
 
@@ -660,7 +660,7 @@
   border: 0;
   background: transparent;
   color: var(--food-accent);
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -710,7 +710,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--food-ink-soft);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-rail__sort-value {
@@ -743,12 +743,12 @@
 .food-rail__kitchens-head h3 {
   margin: 0;
   color: var(--food-ink);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
 }
 
 .food-rail__kitchens-head span {
   color: var(--food-muted);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
 }
 
 .food-rail__kitchen-list {
@@ -784,7 +784,7 @@
   border-radius: 999px;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
   flex-shrink: 0;
 }
 
@@ -815,7 +815,7 @@
 
 .food-rail__kitchen-dist {
   color: var(--food-leaf-deep);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
   flex-shrink: 0;
 }
 
@@ -863,14 +863,14 @@
   border-radius: 999px;
   background: var(--food-accent);
   color: #fff;
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
 }
 
 .food-rail__clear {
   border: 0;
   background: transparent;
   color: var(--food-muted);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -919,7 +919,7 @@
   place-items: center;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 14px/1 Inter, system-ui, sans-serif;
+  font: 800 14px/1 var(--font-ui);
 }
 
 .food-rail__cart-details {
@@ -994,7 +994,7 @@
   border: 0;
   background: transparent;
   color: var(--food-ink);
-  font: 400 11px/1.2 Inter, system-ui, sans-serif;
+  font: 400 11px/1.2 var(--font-ui);
 }
 
 .food-rail__note input::placeholder {
@@ -1088,7 +1088,7 @@
   border-radius: 999px;
   background: var(--food-accent);
   color: #fff;
-  font: 700 14px/1 Inter, system-ui, sans-serif;
+  font: 700 14px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -1165,7 +1165,7 @@
     border-radius: 999px;
     background: var(--food-ink);
     color: #fff;
-    font: 700 13px/1 Inter, system-ui, sans-serif;
+    font: 700 13px/1 var(--font-ui);
     box-shadow: 0 10px 28px rgba(23, 51, 42, 0.22);
     cursor: pointer;
   }
