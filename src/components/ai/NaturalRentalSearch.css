@@ -5,7 +5,6 @@
 @media (max-width: 767px) { .natural-rental-search__panel { top: 76px; max-height: calc(100dvh - 100px); } }
 .natural-rental-search { flex: 1 1 auto; min-width: 0; }
 .natural-rental-search__trigger { flex: 0 0 auto; padding: 8px 10px; border: 1px solid #c7d7ce; border-radius: 8px; background: #edf5ed; color: #163e2d; font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; }
-.natural-rental-search__trigger:hover { background: #dcebdc; }
 .natural-rental-search__trigger:focus-visible { outline: 2px solid #e8603c; outline-offset: 2px; }
 
 @property --ai-border-angle {
