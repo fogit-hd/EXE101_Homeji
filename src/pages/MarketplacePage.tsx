@@ -53,7 +53,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
-import { mapSectionUrl } from '../lib/mapDeepLinks'
+import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
@@ -303,6 +303,7 @@ export function MarketplacePage({
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
   const [orderingPostId, setOrderingPostId] = useState<string | null>(null)
+  const [contactingPostId, setContactingPostId] = useState<string | null>(null)
   const [purchaseReceipt, setPurchaseReceipt] = useState<{ message: string; orderId: string } | null>(null)
   const [purchaseKinds, setPurchaseKinds] = useState<Record<string, PurchaseKind>>({})
   const [purchaseKindFailures, setPurchaseKindFailures] = useState<string[]>([])
@@ -1054,8 +1055,13 @@ export function MarketplacePage({
               </button>
             </>
           ) : null}
-          {!mine && p.status === MarketplacePostStatus.Active ? (
+          {!mine && p.sellerId !== profile?.id && p.status === MarketplacePostStatus.Active ? (
             <>
+              <button type="button" className="btn btn-secondary btn-sm"
+                disabled={contactingPostId !== null}
+                onClick={() => void contactAboutPost(p.id)}>
+                {contactingPostId === p.id ? 'Đang mở…' : 'Nhắn người bán'}
+              </button>
               {p.listingType === MarketplaceListingType.Food ? (
                 <label className="marketplace-quantity">
                   <span>Số lượng</span>
@@ -1289,12 +1295,16 @@ export function MarketplacePage({
   }
 
   const contactAboutPost = async (postId: string) => {
+    if (contactingPostId !== null) return
+    setContactingPostId(postId)
     setActionError('')
     try {
-      await startMarketplaceConversation(postId)
-      navigate(mapSectionUrl('messages'))
+      const conversation = await startMarketplaceConversation(postId)
+      navigate(mapMessagesUrl(conversation.id))
     } catch (err) {
       setActionError(getErrorMessage(err, 'Không mở được cuộc trò chuyện'))
+    } finally {
+      setContactingPostId(null)
     }
   }
 
