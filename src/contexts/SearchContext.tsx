@@ -37,7 +37,7 @@ const PLACEHOLDER: Record<SearchContextName, string> = {
   food: 'Tìm món, nguyên liệu hoặc tên bếp…',
   marketplace: 'Tìm sản phẩm…',
   myListings: 'Tìm trong tin của tôi…',
-  roommate: 'Tìm người ở ghép theo khu vực…',
+  roommate: 'Tìm phòng ở ghép theo đường, trường hoặc tên phòng…',
 }
 
 const CONTEXT_COPY: Record<SearchContextName, { title: string; scope: string }> = {
@@ -47,7 +47,7 @@ const CONTEXT_COPY: Record<SearchContextName, { title: string; scope: string }> 
   food: { title: 'Tìm món', scope: 'Nguyên liệu hoặc tên bếp' },
   marketplace: { title: 'Tìm sản phẩm', scope: 'Đồ dùng đang mở bán' },
   myListings: { title: 'Tin của tôi', scope: 'Tìm trong tin bạn đã đăng' },
-  roommate: { title: 'Ở ghép', scope: 'Theo khu vực bạn quan tâm' },
+  roommate: { title: 'Ở ghép', scope: 'Phòng đang tìm thêm người' },
 }
 
 const EMPTY_SUGGESTIONS: SearchSuggestion[] = []
@@ -99,6 +99,9 @@ function resolveSearchContext(pathname: string, search: string): SearchContextNa
 
 function readUrlQuery(context: SearchContextName, search: string): { value: string; explicit: boolean } {
   const params = new URLSearchParams(search)
+  if (context === 'roommate') {
+    return { value: params.get('roommateQuery') ?? '', explicit: params.has('roommateQuery') }
+  }
   if (context === 'food' || context === 'marketplace' || context === 'myListings') {
     return { value: params.get('q') ?? '', explicit: params.has('q') }
   }
@@ -110,8 +113,14 @@ function readUrlQuery(context: SearchContextName, search: string): { value: stri
 
 function destinationFor(context: SearchContextName, raw: string, currentSearch: string): string | null {
   const query = raw.trim()
-  if (context === 'roommate') return null
   const params = new URLSearchParams(currentSearch)
+  if (context === 'roommate') {
+    params.set('section', 'invitations')
+    params.set('roommateTab', 'rooms')
+    if (query) params.set('roommateQuery', query)
+    else params.delete('roommateQuery')
+    return `/?${params.toString()}`
+  }
   if (context === 'food' || context === 'marketplace' || context === 'myListings') {
     params.set('section', 'marketplace')
     params.set('market', context === 'food' ? 'food' : context === 'myListings' ? 'mine' : 'browse')

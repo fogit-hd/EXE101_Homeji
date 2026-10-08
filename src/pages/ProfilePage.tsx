@@ -528,7 +528,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       {tab === 'lifestyle' ? (
         <form className="profile-section map-motion-fade-up" onSubmit={(e) => void handleLifestyleSave(e)}>
           <header className="profile-section__head">
-            <h3>Lối sống & vai trò</h3>
+            <h3>{lifestyleOnly ? 'Thông tin lối sống' : 'Lối sống & vai trò'}</h3>
             <p>Dùng để gợi ý phòng / ở ghép phù hợp hơn.</p>
           </header>
 

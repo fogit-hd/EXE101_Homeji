@@ -8,12 +8,12 @@ import { ContentSkeleton } from '../ContentSkeleton'
 
 const PAGE_SIZE = 20
 
-export function RoommateRooms() {
+export function RoommateRooms({ initialKeyword = '' }: { initialKeyword?: string }) {
   const { profile } = useAuth()
   const isRenter = profile?.role === UserRole.Renter
-  const [draftKeyword, setDraftKeyword] = useState('')
+  const [draftKeyword, setDraftKeyword] = useState(initialKeyword)
   const [draftBudget, setDraftBudget] = useState(() => profile?.maxBudget?.toString() ?? '')
-  const [filters, setFilters] = useState<{ keyword: string; maxPrice?: number }>(() => ({ keyword: '', maxPrice: profile?.maxBudget ?? undefined }))
+  const [filters, setFilters] = useState<{ keyword: string; maxPrice?: number }>(() => ({ keyword: initialKeyword, maxPrice: profile?.maxBudget ?? undefined }))
   const [page, setPage] = useState(1)
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set())
