@@ -2007,3 +2007,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Read-only AI results stay reviewable before replacing the map filters. */
+.home-ai-review { position: fixed; z-index: 1500; top: 90px; left: 24px; width: min(420px, calc(100vw - 48px)); max-height: calc(100dvh - 125px); overflow: auto; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 18px; padding: 12px; box-shadow: var(--shadow-lg); }
+.home-ai-review > button { float: right; border: 0; background: transparent; color: var(--text-primary); font-size: 24px; cursor: pointer; }

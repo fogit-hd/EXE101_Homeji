@@ -8,6 +8,9 @@ import type { MapSearchBBox } from '../../../lib/placeAutocomplete'
 
 /** Query fields `GET /api/rental-posts` actually accepts. */
 const SUPPORTED_FILTER_KEYS = [
+  'excludedAmenities',
+  'excludeRoommateShare',
+  'ids',
   'keyword',
   'minPrice',
   'maxPrice',
@@ -27,7 +30,7 @@ const SUPPORTED_FILTER_KEYS = [
 
 export type SupportedFilterKey = (typeof SUPPORTED_FILTER_KEYS)[number]
 
-const UI_KEYS = ['section', 'post', 'view', 'searchOnMove'] as const
+const UI_KEYS = ['section', 'post', 'view', 'searchOnMove', 'placeId', 'placeName'] as const
 
 const GATEWAY_KEYS = [
   'paymentId',
@@ -53,6 +56,10 @@ export type MapListingsView = 'split' | 'map' | 'list'
 export type ListingCatalog = 'rooms' | 'market'
 
 export type ListingQuery = {
+  excludedAmenities?: string[]
+  excludeRoommateShare?: boolean
+  minAvailableSlots?: number
+  ids?: string[]
   catalog: ListingCatalog
   keyword: string
   minPrice?: number
@@ -206,6 +213,10 @@ export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
       : null
   const page = readNumber(params, 'page')
   return {
+    excludedAmenities: params.getAll('excludedAmenities'),
+    excludeRoommateShare: params.get('excludeRoommateShare') === 'true',
+    minAvailableSlots: readNumber(params, 'minAvailableSlots'),
+    ids: params.getAll('ids'),
     catalog: params.get('catalog') === 'market' ? 'market' : 'rooms',
     keyword: params.get('keyword')?.trim() ?? '',
     minPrice: readNumber(params, 'minPrice'),
@@ -228,6 +239,10 @@ export function listingQueryToSearchParams(query: ListingQuery): RentalPostSearc
     page: query.page,
     pageSize: 20,
   }
+  if (query.excludedAmenities?.length) params.excludedAmenities = query.excludedAmenities
+  if (query.excludeRoommateShare) params.excludeRoommateShare = true
+  if (query.minAvailableSlots != null) params.minAvailableSlots = query.minAvailableSlots
+  if (query.ids?.length) params.ids = query.ids
   if (query.keyword && validateFilterAgainstCapabilities('keyword')) {
     params.keyword = query.keyword
   }
@@ -373,6 +388,10 @@ export function serializeFiltersToQuery(
   setNum('maxPrice', query.maxPrice)
   setNum('minArea', query.minArea)
   setNum('maxArea', query.maxArea)
+  setNum('minAvailableSlots', query.minAvailableSlots)
+  if (query.excludeRoommateShare) next.set('excludeRoommateShare', 'true')
+  for (const code of query.excludedAmenities ?? []) next.append('excludedAmenities', code)
+  for (const id of query.ids ?? []) next.append('ids', id)
   next.delete('amenities')
   if (validateFilterAgainstCapabilities('amenities')) {
     for (const code of query.amenities) next.append('amenities', code)
@@ -395,6 +414,7 @@ export function queryHasActiveFilters(query: ListingQuery): boolean {
       query.maxPrice != null ||
       query.minArea != null ||
       query.maxArea != null ||
-      query.amenities.length,
+      query.amenities.length ||
+      (query.excludedAmenities?.length ?? 0) || query.excludeRoommateShare || query.minAvailableSlots || query.ids?.length,
   )
 }

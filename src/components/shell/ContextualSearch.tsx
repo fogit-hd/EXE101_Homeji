@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { useSearch } from '../../contexts/SearchContext'
 import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
+import { NaturalRentalSearch } from '../ai/NaturalRentalSearch'
+import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 
 function useNarrowBar() {
   const [narrow, setNarrow] = useState(false)
@@ -54,8 +56,9 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
   } = useSearch()
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(autoFocus)
-  const rootRef = useRef<HTMLFormElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const locationSearch = context === 'map' || context === 'housing'
 
   const dismiss = () => {
     setOpen(false)
@@ -73,12 +76,13 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
   }
 
   return (
-    <div className="hj-search-slot">
+    <div ref={rootRef} className="hj-search-slot">
       <div className="hj-search-context">
         <p className="hj-search-context__title">{contextTitle}</p>
         <p className="hj-search-context__scope">{contextScope}</p>
       </div>
-      <form ref={rootRef} className="hj-search" role="search" onSubmit={onSubmit}>
+      {aiFeatureFlags.naturalSearch && (context === 'housing' || context === 'map') ? <NaturalRentalSearch /> : null}
+      <form className="hj-search" role="search" onSubmit={onSubmit}>
         <label className="hj-search__label" htmlFor="hj-global-search">
           Tìm kiếm
         </label>
@@ -116,8 +120,9 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
             <span className="hj-search__submit-short">Tìm</span>
           </button>
         </div>
-        {open && (suggestions.length > 0 || recentSearches.length > 0 || isLoading || (nearbyAnchor && (context === 'map' || context === 'housing'))) ? (
+        {open && (locationSearch || suggestions.length > 0 || recentSearches.length > 0 || isLoading) ? (
           <ul className="hj-search__suggest" role="listbox">
+            {locationSearch && !query.trim() ? <li className="hj-search__suggest-note">Nhập tên đường (ví dụ: Lê Văn Việt) hoặc trường học. Chọn địa điểm gợi ý để xem phòng và tiện ích gần đó.</li> : null}
             {nearbyAnchor && (context === 'map' || context === 'housing') ? (
               <li>
                 <strong>Gần khu vực đang tìm</strong><p>{nearbyAnchor.label}</p>
@@ -129,6 +134,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
               </li>
             ) : null}
             {isLoading ? <li className="hj-search__suggest-note">Đang gợi ý…</li> : null}
+            {locationSearch && query.trim().length >= 2 && !isLoading && suggestions.length === 0 ? <li className="hj-search__suggest-note">Chưa có gợi ý địa điểm. Thử tên đường đầy đủ hoặc tên trường và cơ sở. Nút Tìm vẫn tìm theo từ khóa tin đăng.</li> : null}
             {suggestions.map((item) => (
               <li key={item.id}>
                 <button
@@ -146,6 +152,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
                 </button>
               </li>
             ))}
+            {suggestions.length === 0 && recentSearches.length > 0 ? <li className="hj-search__suggest-note">Tìm kiếm gần đây</li> : null}
             {suggestions.length === 0 ? recentSearches.map((item) => (
               <li key={item}>
                 <button
@@ -153,9 +160,8 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
                   onPointerDown={(event) => event.preventDefault()}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
-                    submit(item)
-                    setOpen(false)
-                    onClose?.()
+                    if (locationSearch) { setQuery(item); inputRef.current?.focus() }
+                    else { submit(item); setOpen(false); onClose?.() }
                   }}
                 >
                   <strong>{item}</strong>

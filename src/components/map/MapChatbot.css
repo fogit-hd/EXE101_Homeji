@@ -840,3 +840,7 @@
     transform: none;
   }
 }
+.map-chatbot__privacy { padding: 8px 16px; font-size: 12px; color: var(--text-secondary); }
+.map-chatbot__privacy summary { cursor: pointer; }
+.map-chatbot__privacy p { margin: 8px 0; }
+.map-chatbot__privacy button { cursor: pointer; padding: 6px 10px; border: 1px solid #d8e2da; border-radius: 8px; background: #fff; }

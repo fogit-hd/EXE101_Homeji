@@ -6,6 +6,16 @@ import ts from 'typescript'
 const anchorSource = await readFile(new URL('../src/lib/nearbyPanelAnchor.ts', import.meta.url), 'utf8')
 const anchorJavascript = ts.transpileModule(anchorSource, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText
 const { nearbyPanelAnchor } = await import(`data:text/javascript;base64,${Buffer.from(anchorJavascript).toString('base64')}`)
+const intentSource = await readFile(new URL('../src/lib/nearbyChatIntent.ts', import.meta.url), 'utf8')
+const intentJavascript = ts.transpileModule(intentSource, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText
+const { nearbyChatIntent } = await import(`data:text/javascript;base64,${Buffer.from(intentJavascript).toString('base64')}`)
+
+test('nearby chat preserves category and pin context with uppercase Vietnamese Đ', () => {
+  assert.equal(nearbyChatIntent('NHÀ THUỐC Ở ĐÂY'), 'pharmacy')
+  assert.equal(nearbyChatIntent('CÀ PHÊ ĐỂ HỌC GẦN PHÒNG NÀY'), 'studyCafe')
+  assert.equal(nearbyChatIntent('quan an gan ghim nay'), 'food')
+  assert.equal(nearbyChatIntent('nhà thuốc gần vị trí hiện tại của tôi'), null)
+})
 
 const placeSearchSource = await readFile(
   new URL('../src/lib/placeAutocomplete.ts', import.meta.url),
@@ -26,7 +36,8 @@ test('nearby lifestyle search uses Places API New with bounded, distance-ranked 
   assert.match(placeSearchSource, /includedPrimaryTypes/)
   assert.match(placeSearchSource, /rankPreference:/)
   assert.match(placeSearchSource, /maxResultCount:/)
-  assert.match(placeSearchSource, /NEARBY_CACHE_TTL_MS/)
+  assert.match(placeSearchSource, /nearbyRequests\.delete\(key\)/)
+  assert.doesNotMatch(placeSearchSource, /NEARBY_CACHE_TTL_MS|nearbySearchCache/)
 })
 
 test('omnibox offers useful nearby categories around the rental search anchor', () => {

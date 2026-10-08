@@ -479,6 +479,9 @@ export interface PayOsPaymentResponse {
 }
 
 export interface RentalPostSearchParams {
+  excludedAmenities?: string[]
+  excludeRoommateShare?: boolean
+  ids?: string[]
   keyword?: string
   minPrice?: number
   maxPrice?: number
@@ -603,6 +606,15 @@ export interface AiParsedSearchCriteria {
   areaMin: number | null
   areaMax: number | null
   criteria: string[]
+  requiredAmenities?: string[]
+  excludedAmenities?: string[]
+  unknown?: string[]
+  occupants?: number | null
+  excludeRoommateShare?: boolean
+  budgetBasis?: 'rent' | 'total'
+  destination?: string | null
+  maxCommuteMinutes?: number | null
+  travelMode?: 'DRIVING' | 'WALKING' | 'TRANSIT' | null
 }
 
 export interface AiHighlightedRentalPost {
@@ -610,6 +622,11 @@ export interface AiHighlightedRentalPost {
   score: number
   reasons: string[]
   tag: string
+  evidence?: Array<{ postId: string; sourceType: string; field: string; value: string }>
+  reasonEvidence?: Array<{ text: string; postId: string; sourceType: string; field: string; value: string }>
+  updatedAt?: string | null
+  commercialBoost?: number
+  unconfirmedConstraints?: string[]
 }
 
 export interface AiHighlightResponse {
@@ -638,6 +655,7 @@ export interface ChatbotConversation {
 }
 
 export interface ChatbotPopupConfig {
+  historyStorageEnabled?: boolean
   enabled: boolean
   title: string
   greeting: string

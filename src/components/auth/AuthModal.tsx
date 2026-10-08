@@ -40,6 +40,8 @@ function intentCopy(intent: AuthModalIntent | null): string | null {
       return 'Đăng nhập để gửi báo cáo'
     case 'post':
       return 'Đăng nhập để đăng tin hoặc quản lý tin của bạn'
+    case 'chatbot':
+      return 'Đăng nhập để tìm phòng cùng Homeji và giữ tiêu chí trong hội thoại của bạn'
     default:
       return null
   }
@@ -134,7 +136,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
   }
 
   return (
-    <div className="auth-modal-overlay" role="presentation" onClick={onClose}>
+    <div className="auth-modal-overlay" role="presentation" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
       <div
         className="auth-modal card"
         role="dialog"

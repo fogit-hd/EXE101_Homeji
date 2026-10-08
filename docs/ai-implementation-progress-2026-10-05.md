@@ -1,0 +1,70 @@
+# Triển khai AI Homeji — tiến độ ngày 05/10/2026
+
+Phạm vi được người dùng xác nhận: toàn bộ 7 hạng mục trong `C:/Homeji/docs/ai-product-opportunities-2026-10-03.md`, theo giai đoạn; chatbot dùng chung trên mọi route; login/register Three.js + GSAP với đất, núi, phòng trọ và cảnh TP.HCM. Goal vẫn active. Đây là bản triển khai và kiểm tra local, chưa xác nhận sẵn sàng rollout production.
+
+## Những phần đã có trong mã nguồn
+
+### Điều chỉnh tìm kiếm đường/trường theo phản hồi 05/10
+
+- Ô tìm kiếm phòng/bản đồ chuyển hướng dẫn sang tên đường, trường học và nơi làm việc; Thủ Đức/Quận 9 chỉ là phạm vi. Hai dòng trong ảnh là lịch sử cũ, không phải danh sách địa điểm đề xuất. Lịch sử chỉ còn các điểm cụ thể phù hợp từ đang gõ, có nhãn riêng; nhấn lịch sử mở gợi ý để chọn đúng địa điểm thay vì lập tức lọc bằng tên trường.
+- Autocomplete của omnibox giới hạn theo `HOMEJI_SERVICE_AREA`, loại gợi ý thành phố/quận/phường bằng types của Google và tên phạm vi. Các ô địa chỉ khác vẫn giữ cấu hình của chúng. Tên đường có từ “Trường Thọ” hay “Đường số 9” không bị loại nhầm. Tham chiếu [Autocomplete Data API](https://developers.google.com/maps/documentation/javascript/place-autocomplete-data).
+- Giữ `placeId`/`placeName` qua chuẩn hóa URL; sau khi resolve thành công, áp dụng bounds quanh điểm đã chọn và tải phòng bằng tọa độ, giữ giá/tiện nghi. Bounds ban đầu là hộp khoảng 1,8 km mỗi phía; bật tìm theo bản đồ nên pan tiếp sẽ cập nhật theo vùng nhìn thấy. Không gọi đây là khoảng cách tuyến đường hay bán kính tròn chính xác. Giữ tiện ích quanh ghim hiện có.
+- Chưa có Maps sẵn sàng thì không chạy autocomplete hoặc để spinner chờ vô hạn. Có hướng dẫn khi chưa có gợi ý; nút Tìm vẫn là tìm theo từ khóa tin đăng, chọn gợi ý địa điểm mới là tìm quanh đường/trường.
+- Build đạt; 133 frontend tests đạt, gồm kiểm tra lịch sử phạm vi, dấu/không dấu, loại prediction và round-trip URL địa điểm với tọa độ/giá/tiện nghi. Chưa kiểm chứng runtime Google Places thật vì cấu hình/tool gate bên dưới vẫn còn.
+
+| Giai đoạn / hạng mục | Hành vi hiện tại | Bằng chứng và phần cần bổ sung |
+| --- | --- | --- |
+| Phase 0 — nguồn tin | Browser nguồn ngoài có source ID, liên kết HTTPS allowlist, ngày thu thập/ngày nguồn, ngày kiểm tra và ngày hết hạn quảng cáo. Giá/diện tích 0 hiển thị chưa biết. Giá là snapshot tại lần thu thập; tin nguồn không thành tin đã duyệt/đã xác minh. | Database thật có 100 bản ghi nguồn, metadata đầy đủ. Đã đọc trực tiếp thời hạn của 59 quảng cáo Phongtro123 và 41 Muaban, ghi lại ngày kiểm tra: 28 đã qua ngày hết hạn ghi nhận. Mốc còn trong hạn không chứng minh phòng còn trống. UI cũ/server cũ thiếu trường mới vẫn hiện unknown. |
+| 1 — chatbot có nguồn | Server retrieval-first, tối đa 5 ID thật đang Active, không synthetic, trong phạm vi; cấu trúc tiêu chí thay việc nối lịch sử; không tự bỏ constraints; fallback khi provider lỗi. | Tests grounding: giá/vùng/trạng thái/exclusions/capacity/prompt injection. 20 hội thoại độc lập với nhiều bước sửa. Database thật có 11 tin Active không synthetic trong phạm vi; 5 truy vấn bằng repository/service thực không vi phạm constraints hoặc identity evidence. Chế độ phiên không ghi repository; lưu lịch sử mặc định tắt. |
+| 2 — search theo nhu cầu | Search và chat dùng chung intent server. Chip trước khi áp dụng; hard/soft/exclusions, tiền thuê/tổng, số người, diện tích, dấu/không dấu, tiền k/tr/đ/VND, trường/điểm đến và phương tiện. | Benchmark 50 câu = 25 intent được ghi nhãn thủ công × có/không dấu, đạt 50/50 trong unit tests. Đây là tập hồi quy do lập trình viên biên soạn, không đại diện recall thực tế hay khảo sát người dùng. |
+| 3 — giải thích | ReasonEvidence gắn postId/sourceType/field/value; Premium tách khỏi user-fit; chỉ tiện ích có code theo chủ tin mới được dùng làm evidence. | Tests Premium không đổi score, mô tả phủ định/injection không tạo tiện ích. UI có nguồn, ngày tin và sửa thành mong muốn. |
+| 4 — chi phí và commute | Đơn vị tháng/người/lượng dùng, tiền cọc riêng khoản ban đầu; thiếu giữ unknown. Tổng budget chỉ áp dụng các phòng có kịch bản người dùng xác nhận; sửa phí hủy xác nhận cũ. Routes giới hạn 10 origins × 1 điểm chọn, có mode/giờ đi/lỗi từng tuyến; không suy diễn xe máy từ ô tô. | Unit tests phí và Routes request contract/partial failures đạt. Browser xác nhận 2 người, điện 300k/phòng + nước 100k/người, thuê 2,5m = 3m/tháng; không đưa ứng viên chưa xác nhận vào map. Routes thật chưa kiểm tra do local thiếu Maps config. |
+| 5 — tiện ích quanh ghim | Pharmacy/studyCafe theo category Places, anchor theo ghim; không dùng device GPS hoặc pan để chạy chat nearby; chỉ coalesce requests đang chạy, không cache nội dung Places dài hạn; attribution. | Tests nearby hiện có đạt. Cần Browser với Maps config: 20 lần đổi ghim nhanh, response cũ, mobile và quota. “Cafe học bài” chưa chứng minh yên tĩnh/có ổ cắm. |
+| 6 — shortlist | Chọn 2–3 tin đã lưu, đọc lại Active, bỏ tin không còn hợp lệ; bảng giá/diện tích/số chỗ/tiện ích, kịch bản phí, tuyến thực, câu hỏi trước xem phòng. Tải lại lựa chọn xóa tuyến cũ và hủy quyền ghi response cũ. | Browser local đã kiểm tra compare/cost. Khi áp dụng AI map đọc lại danh sách ID qua API; URL giữ exclusions/capacity/IDs qua reload, không tự mở rộng kết quả. Tests service kiểm tra selection có tin ẩn/xóa bị từ chối. Fallback refresh chỉ chạy khi compare trả 404, không đổi lỗi mạng/quyền thành tin đã xóa. |
+| 7 — chủ tin/admin | Draft mẫu chỉ lấy structured facts, preview trước/sau, sửa inputs làm preview hết hiệu lực; xác nhận chỉ điền form, không lưu/đăng tự động. Admin tóm tắt API/kỳ báo cáo, queue đã tải, links mở panel; không gọi duyệt/xóa/giá/thanh toán. | Browser fixture đã kiểm tra draft stale/confirm và audit không mutation; summary số học khớp fixture. API tests quyền admin/renter hiện có đạt. Chưa dùng OCR/ảnh để suy ra tiện ích hay diện tích. |
+
+Chatbot được mount một lần dưới AuthModalProvider, ngoài AppRoutes; account identity đổi thì reset session. Map đăng ký callbacks thay mount riêng. Guest gửi tin mở auth modal; đã sửa click nền modal không làm nó tự đóng ngay sau nút Gửi. FAB tránh các modal/overlay đang chiếm màn hình.
+
+Đã sửa FAB bị ẩn khi panel bản đồ mobile đang mở; mở chatbot đóng panel để tránh chồng nội dung. FAB dùng native click để hỗ trợ Enter; pointer drag giữ cơ chế chặn click sau khi kéo. Browser trước khi công cụ bị dừng đã kiểm tra Enter, chat giữ nội dung qua SPA route và overlay search mobile; drag sau thay đổi click chưa được kiểm tra runtime. Natural search hỗ trợ Escape/trả focus về nút mở; wrapper chứa cả ô tìm kiếm và panel AI để click mở AI không bị outside-dismiss đóng overlay.
+
+Quy tắc hiển thị vị trí đã được dùng chung cho detail/search/compare/AI: người không phải chủ tin không nhận liên hệ xác nhận của tin pass phòng; địa chỉ chỉ còn khu vực, tọa độ làm tròn. Evidence địa chỉ/tọa độ và map focus của AI dùng đúng dữ liệu công khai đã làm gần đúng. UI nhắc tuyến từ ghim gần đúng chưa thay thế đường đi từ cửa phòng. Chủ tin vẫn xem được địa chỉ và liên hệ của mình. API compare trước đây trả trực tiếp DTO nội bộ; thay đổi này chủ động thu hẹp thông tin với người không sở hữu tin.
+
+Login/register có đất phân lớp, núi/cây/nhà, sông/cầu/thuyền và tòa nhà lấy cảm hứng Landmark 81/Bitexco. GSAP hỗ trợ vào cảnh, xoay/quay về nhà, ngày/đêm, dừng chuyển động, pointer tilt; reduced motion, visibility suspension, WebGL fallback và cleanup tài nguyên. Cảnh dựng bằng geometry của dự án, không chép template chưa rõ giấy phép. Nguồn kỹ thuật: `docs/auth-motion-research.md`.
+
+## Kiểm tra đã chạy
+
+- Frontend `npm run build`: đạt; Three được tách thành chunk riêng. Bundle chính còn khoảng 1,5 MB minified/386 KB gzip và có cảnh báo kích thước, chưa đạt một ngân sách hiệu năng đo thực tế.
+- Frontend `node --test tests/*.test.mjs`: 129 đạt, 0 lỗi.
+- Backend Application UnitTests: 289 đạt, 0 lỗi, gồm kiểm tra owner/non-owner/guest, evidence của tin pass phòng và cập nhật metadata nguồn không thay giá/snapshot.
+- Python source pipeline: 23 tests đạt; parser thời hạn xử lý múi giờ Việt Nam, không lấy ngày cập nhật/related ad làm ngày hết hạn; Muaban lấy `service_end` từ đúng classified ID và không suy diễn timezone bị thiếu.
+- Backend API IntegrationTests: 80 đạt, 8 DB tests skipped. Không vượt guard để chạy suite tạo dữ liệu QA lên database thật.
+- SQL query thực trong repository được kiểm tra `ToQueryString()` bằng Npgsql không mở kết nối: constraints/IDs/exclusions/capacity/vùng/synthetic dịch trước LIMIT, có tham số. Không thay thế kiểm tra dữ liệu Postgres thực.
+- ESLint các component/lib/provider mới sạch. Đối chiếu từng file tracked đã sửa với `git show HEAD`: không tăng rule errors. Full lint vẫn lỗi nền có sẵn; không tuyên bố toàn dự án lint sạch. Báo cáo tại `output/verification/lint-baseline-comparison.json`.
+- Browser dùng loopback fixture API 5490 + Vite 5181; dữ liệu/account đều giả để QA UI, không dùng credentials production, không đăng tin/đặt lịch/cọc/đổi giá. UI fixture không chứng minh backend retrieval hoặc Maps thật hoạt động.
+- Đã kiểm tra reduced-motion bằng PNG clip cảnh giữ nguyên qua thao tác UI, WebGL context loss hiện SVG fallback và form vẫn dùng được, restore tạo lại cảnh. Năm lần full navigation kiểm tra canvas 0 khi rời/1 khi trở lại và một lần SPA route/back kiểm tra tương tự. Đây là bằng chứng DOM/cảnh, chưa phải đo heap/GPU memory.
+- Mobile 390 × 844: panel chi phí nằm trong viewport (body 390 px, panel khoảng 366 px), Escape trả focus và chatbot giữ phiên qua route. Ảnh `auth-reduced-motion.jpg`, `auth-webgl-fallback.jpg`, `ai-mobile-cost.jpg`; audit `auth-canvas-route-audit.json`. Ảnh `chatbot-route-session-mobile.jpg` được chụp trước thao tác mở cuối, không dùng làm bằng chứng popup đang mở.
+- Theo yêu cầu dùng dữ liệu thật, đã kết nối cấu hình database hiện tại, audit trong transaction `READ ONLY`, không xuất PII/credentials. Báo cáo `output/verification/real-db-readonly-audit.json`. Migration `20261004135613_AddChatbotSearchCriteria` đã áp dụng, chỉ thêm cột nullable `varchar(8000)` và migration history; 44 hội thoại trước/sau, không còn pending migration. Script và audit tại `chatbot-search-criteria.sql`, `real-db-migration-audit.json`.
+- Đo thêm 20 mẫu warmed-up của application service local + Postgres thật, parser cố ý offline: p50 852,9 ms, p95 4.689,1 ms, max 6.907,9 ms. Không gồm HTTP, cold-start Render, Gemini hay Routes; không dùng số này để khẳng định SLO production đạt.
+- Đã áp dụng migration `20261005075316_AddRentalSourceExpiry`: chỉ thêm `source_checked_at`/`source_expires_at` nullable, giữ nguyên 100 bản ghi và không còn pending migration. Checker đọc metadata theo robots.txt, HTTPS host allowlist, chặn redirects/URL ngoài phạm vi, tối đa 100 URL và một request mỗi giây. Chỉ ghi hai trường metadata; không thay giá, ảnh, địa chỉ, nội dung hoặc trạng thái tin Homeji. Read-only audit sau cập nhật xác nhận 100 checked, 0 unchecked, 28 past recorded deadline: `output/verification/source-quality-readonly-audit.json`.
+- Web reader ban đầu trả bản cũ của nguồn 689056 và hiển thị hết hạn. Fetch trực tiếp ngày 05/10 ghi nhận deadline mới 09/10; báo cáo cuối dùng kết quả fetch trực tiếp, không lấy cache web làm trạng thái hiện tại. Các JSON kiểm tra chỉ giữ URL/source ID/thời hạn/ngày kiểm tra, không lưu HTML, mô tả hay liên hệ người đăng.
+
+## Gate còn mở
+
+1. Chờ quyết định thời hạn lưu lịch sử (7/30 ngày hoặc chỉ phiên). `Chatbot:HistoryStorageEnabled` mặc định false; không bật trước khi chính sách retention và cleanup được triển khai/kiểm tra. Phiên chat vẫn nhớ tiêu chí qua state của client và server validate PreviousCriteria.
+2. Kiểm chứng tích hợp dữ liệu thật đã thực hiện bằng truy vấn chỉ đọc và migration đã áp dụng. Còn kiểm tra luồng trạng thái tin thay đổi trong UI bằng fixture/runtime; không ẩn/xóa tin thật để tạo tình huống test.
+3. Cần Maps/Routes thật cho QA điểm đến, mode, giờ đi, route partial/quota, nearby ghim nhanh; chưa ghi nhận p95 hoặc quota/billing thực của Google/Gemini. Hiện chỉ có `.env.example`, không có `VITE_GOOGLE_MAPS_API_KEY` trong môi trường. Backend không có `Ai:Gemini:ApiKey`/`Ai__Gemini__ApiKey`; `GOOGLE_API_KEY` có mặt nhưng kiểm tra Gemini models trả HTTP 400, không phải credential đã kiểm chứng dùng được cho dự án.
+4. Đo SLO trên hạ tầng warmed-up và cold-start riêng, request/token/quota theo cấu hình thật; không suy ra từ unit tests. Meter `Homeji.AiSearch` có requests, parser fallback, retrieval duration và result count, không ghi raw prompt.
+5. Còn kiểm tra thao tác drag FAB sau thay đổi native click và route cleanup về GPU/listeners. Thời hạn 100 quảng cáo gốc đã kiểm tra, nhưng không được suy ra tình trạng phòng thực tế. Computer Use bị dừng vì không xác định được URL Windows đủ tin cậy để thực thi policy; Browser plugin hiện không có callable tools, không dùng cách khác để vượt chặn.
+6. Frontend/backend triển khai cùng phiên bản: client mới gửi saveHistory/PreviousCriteria và filters IDs/exclusions/capacity. Client cũ tự gửi conversationId không có consent sẽ bị từ chối; cần rollout đồng bộ để tránh lỗi tiếp tục hội thoại cũ.
+
+Flags frontend có thể tắt độc lập: `VITE_AI_NATURAL_SEARCH`, `VITE_AI_DECISION_TOOLS`, `VITE_AI_DRAFT_ASSISTANT`, `VITE_AI_ADMIN_SUMMARY`, `VITE_AI_SOURCE_BROWSER`. Server có `AiSearch:GroundedSearchEnabled` và `Chatbot:Enabled`; quyền API luôn là kiểm tra cuối cùng.
+
+## Ảnh kiểm tra local
+
+- `C:/EXE101_Homeji/output/verification/login-night.jpg`
+- `C:/EXE101_Homeji/output/verification/register-mobile.jpg`
+- `C:/EXE101_Homeji/output/verification/ai-total-cost-confirmed-local.jpg`
+- `C:/EXE101_Homeji/output/verification/ai-source-provenance-local.jpg`
+- `C:/EXE101_Homeji/output/verification/ai-comparison-cost-local.jpg`
+- `C:/EXE101_Homeji/output/verification/ai-draft-preview-local.jpg`
+- `C:/EXE101_Homeji/output/verification/ai-admin-summary-local.jpg`

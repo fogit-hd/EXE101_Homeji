@@ -23,6 +23,8 @@ import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabel } from '../lib/labels'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
+import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
+import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -275,6 +277,10 @@ export function EditRentalPostPage() {
 
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
       <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
+        {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant facts={{ typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
+          amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0 }}
+          title={title} description={description} disabled={saving || uploadingMedia}
+          onApply={draft => { setTitle(draft.title); setDescription(draft.description) }} /> : null}
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">
             <div className="room-transfer-form__notice">

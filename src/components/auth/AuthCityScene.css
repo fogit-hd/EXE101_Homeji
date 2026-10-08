@@ -1,0 +1,21 @@
+.auth-city .auth-city__landscape { position: relative; margin-top: -18px; border-radius: 40px; background: radial-gradient(ellipse at 50% 65%, #cbd6b340, transparent 65%); transition: background 1s; }
+.auth-city.is-night .auth-city__landscape { background: radial-gradient(ellipse at 50% 60%, #344c6045, transparent 70%); }
+.auth-city .auth-city__static { background: none; border-radius: 0; }
+.auth-city__static svg { width: 100%; height: 100%; }
+.auth-city__label { position: absolute; z-index: 1; font-size: 10px; letter-spacing: .15em; color: #315543; padding: 10px 14px; border: 1px solid #506b3930; border-radius: 14px; background: #fffcf1d9; pointer-events: none; box-shadow: 0 5px 25px #38502e09; }
+.auth-city__label small { display: block; font-size: 11px; letter-spacing: 0; color: #6c7667; margin-top: 3px; }
+.auth-city__label--city { right: 6%; top: 19%; }
+.auth-city__label--home { left: 3%; bottom: 21%; }
+.auth-city__controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: -8px 0 20px; position: relative; z-index: 2; }
+.auth-city__controls button { border: 1px solid #49634430; border-radius: 50px; padding: 9px 13px; font: 500 11px/1.5 'Be Vietnam Pro', sans-serif; background: #fffdf7; color: #315543; cursor: pointer; transition: background .2s, transform .2s; }
+.auth-city__controls button:hover { background: #e6ecd9; transform: translateY(-2px); }
+.auth-city__controls button:focus-visible { outline: 3px solid #ba6846; outline-offset: 3px; }
+.auth-city__controls button[aria-pressed="true"] { background: #315543; color: #fffdf7; }
+.auth-city__controls button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 900px) {
+  .auth-city__label--city { top: 8%; right: 1%; }
+  .auth-city__label--home { bottom: 13%; left: 1%; }
+  .auth-city__controls { margin-bottom: 0; gap: 6px; }
+  .auth-city__controls button { padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .auth-city *, .auth-city__controls button:hover { transition: none; transform: none; } }

@@ -1,0 +1,6 @@
+.rental-draft-assistant { border: 1px solid #c9ded7; border-radius: 16px; padding: 18px; margin-bottom: 24px; background: #f5faf7; }
+.rental-draft-assistant summary { cursor: pointer; font-weight: 700; }
+.rental-draft-assistant p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.rental-draft-assistant__preview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0; }
+.rental-draft-assistant__preview section { background: white; padding: 16px; border-radius: 12px; }
+@media (max-width: 640px) { .rental-draft-assistant__preview { grid-template-columns: 1fr; } }

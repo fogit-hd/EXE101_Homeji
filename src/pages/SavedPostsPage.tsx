@@ -13,6 +13,8 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
+import { RentalComparison } from '../components/ai/RentalComparison'
+import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
@@ -28,6 +30,8 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
   const [inviteBusy, setInviteBusy] = useState<string | null>(null)
+  const [compareIds, setCompareIds] = useState<string[]>([])
+  const [comparison, setComparison] = useState<string[] | null>(null)
 
   const loadFn = useCallback(async () => {
     setPosts(await getSavedPosts())
@@ -38,6 +42,8 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const handleUnsave = async (postId: string) => {
     await unsavePost(postId)
     setPosts((prev) => prev.filter((p) => p.id !== postId))
+    setCompareIds(prev => prev.filter(id => id !== postId))
+    setComparison(null)
     if (candidatesFor === postId) {
       setCandidatesFor(null)
       setCandidates([])
@@ -81,6 +87,11 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
     <>
       <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
       <PageNotice message={actionMsg} tone="success" />
+      {aiFeatureFlags.decisionTools && posts.length > 1 ? <div className="saved-compare-controls">
+        <span>Chọn 2–3 tin để so sánh · {compareIds.length}/3</span>
+        <button type="button" className="btn btn-secondary btn-sm" disabled={compareIds.length < 2} onClick={() => setComparison([...compareIds])}>So sánh tin đã chọn</button>
+      </div> : null}
+      {comparison ? <RentalComparison postIds={comparison} onClose={() => setComparison(null)} /> : null}
 
       {showLoader ? (
         disrupted
@@ -95,6 +106,9 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
         <div className="grid-posts">
           {posts.map((post) => (
             <div key={post.id}>
+              {aiFeatureFlags.decisionTools ? <label className="saved-compare-pick"><input type="checkbox" checked={compareIds.includes(post.id)}
+                disabled={!compareIds.includes(post.id) && compareIds.length >= 3}
+                onChange={event => { setCompareIds(prev => event.target.checked ? [...prev, post.id] : prev.filter(id => id !== post.id)); setComparison(null) }} />So sánh {post.title}</label> : null}
               <RentalPostCard
                 post={post}
                 showSave
