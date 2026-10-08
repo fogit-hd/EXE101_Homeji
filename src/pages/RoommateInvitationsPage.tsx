@@ -14,6 +14,7 @@ import { ContentSkeleton } from '../components/ContentSkeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
 import { mapPostUrl } from '../lib/mapDeepLinks'
+import { getErrorMessage } from '../lib/errors'
 import './ProfilePage.css'
 import './RoommateInvitationsPage.css'
 
@@ -26,6 +27,23 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
   const { profile } = useAuth()
   const [invitations, setInvitations] = useState<RoommateInvitation[]>([])
   const [actionError, setActionError] = useState('')
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const handleAction = async (
+    invitationId: string,
+    action: (id: string) => Promise<RoommateInvitation>,
+  ) => {
+    if (busyId) return
+    setBusyId(invitationId)
+    setActionError('')
+    try {
+      updateItem(await action(invitationId))
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'Không cập nhật được lời mời. Vui lòng thử lại.'))
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   const loadFn = useCallback(async () => {
     setInvitations(await getMyInvitations())
@@ -47,6 +65,9 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
         </header>
       ) : null}
       <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      <Link to="/?section=profile&profileTab=lifestyle" className="btn btn-secondary">
+        Cập nhật lối sống của tôi
+      </Link>
 
       {showLoader ? (
         disrupted
@@ -109,16 +130,16 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
                     )}
                     {isReceiver && inv.status === RoommateInvitationStatus.Pending && (
                       <>
-                        <button type="button" className="btn btn-primary btn-sm" onClick={() => void acceptInvitation(inv.id).then(updateItem)}>
+                        <button type="button" className="btn btn-primary btn-sm" disabled={busyId !== null} onClick={() => void handleAction(inv.id, acceptInvitation)}>
                           Chấp nhận
                         </button>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => void rejectInvitation(inv.id).then(updateItem)}>
+                        <button type="button" className="btn btn-ghost btn-sm" disabled={busyId !== null} onClick={() => void handleAction(inv.id, rejectInvitation)}>
                           Từ chối
                         </button>
                       </>
                     )}
                     {isSender && inv.status === RoommateInvitationStatus.Pending && (
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => void cancelInvitation(inv.id).then(updateItem)}>
+                      <button type="button" className="btn btn-ghost btn-sm" disabled={busyId !== null} onClick={() => void handleAction(inv.id, cancelInvitation)}>
                         Hủy lời mời
                       </button>
                     )}
