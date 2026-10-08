@@ -3,13 +3,20 @@ import gsap from 'gsap'
 import type { BufferGeometry, NormalBufferAttributes } from 'three'
 import './AuthCityScene.css'
 
+type SceneAction = 'day' | 'night' | 'explore' | 'home' | 'light-on' | 'light-off' | 'sail' | 'dock' | 'launch' | 'land'
+
 /** Decorative only: authentication never depends on WebGL or animation loading. */
 export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
   const [night, setNight] = useState(false)
   const [paused, setPaused] = useState(false)
-  const actionRef = useRef<(action: 'day' | 'night' | 'explore' | 'home') => void>(() => {})
+  const [roomLit, setRoomLit] = useState(false)
+  const [sailing, setSailing] = useState(false)
+  const [flying, setFlying] = useState(false)
+  const [discovery, setDiscovery] = useState('Chạm một vật thể để khám phá góc Sài Gòn của bạn.')
+  const actionRef = useRef<(action: SceneAction) => void>(() => {})
+  const interactionRef = useRef({ roomLit: false, sailing: false, flying: false })
   const pausedRef = useRef(false)
   const refreshRef = useRef<() => void>(() => {})
   useEffect(() => {
@@ -62,10 +69,13 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
       const windowLight = material(0xffd589)
       windowLight.emissive.setHex(0xffb65c)
       windowLight.emissiveIntensity = 0.1
+      const roomLight = material(0xffd589)
+      roomLight.emissive.setHex(0xffb65c)
+      roomLight.emissiveIntensity = 0.1
       for (const [x, z, h] of [[1.1, 1.9, 1], [2.4, 0.9, 1.4], [2.4, -0.7, 1.2], [-2.6, 0.8, 0.8]]) {
         mesh(new T.BoxGeometry(0.95, h!, 0.85), cream, x!, h! / 2, z!, buildings)
         mesh(new T.ConeGeometry(0.8, 0.45, 4), roof, x!, h! + 0.22, z!, buildings).rotation.y = Math.PI / 4
-        for (let floor = 0; floor < 2; floor++) for (const offset of [-0.23, 0.23]) mesh(new T.BoxGeometry(0.18, 0.18, 0.025), windowLight, x! + offset, 0.3 + floor * 0.4, z! + 0.44, buildings)
+        for (let floor = 0; floor < 2; floor++) for (const offset of [-0.23, 0.23]) mesh(new T.BoxGeometry(0.18, 0.18, 0.025), roomLight, x! + offset, 0.3 + floor * 0.4, z! + 0.44, buildings)
         mesh(new T.BoxGeometry(0.2, 0.38, 0.025), glass, x!, 0.19, z! + 0.445, buildings)
       }
       mesh(new T.BoxGeometry(0.6, 3.5, 0.6), glass, 1, 1.75, -1.4, buildings)
@@ -86,6 +96,13 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
       boat.position.set(-1, 0, 2.5)
       mesh(new T.BoxGeometry(0.3, 0.12, 0.65), roof, 0, 0, 0, boat)
       mesh(new T.BoxGeometry(0.22, 0.18, 0.26), cream, 0, 0.12, 0, boat)
+      const balloon = new T.Group(); world.add(balloon)
+      balloon.position.set(-2.8, 1.1, 1.2)
+      const coral = material(0xe5886f)
+      const canopy = mesh(new T.SphereGeometry(0.5, 16, 12), coral, 0, 0.7, 0, balloon)
+      canopy.scale.y = 1.2
+      mesh(new T.BoxGeometry(0.24, 0.18, 0.24), earth, 0, -0.13, 0, balloon)
+      for (const x of [-0.1, 0.1]) mesh(new T.CylinderGeometry(0.015, 0.015, 0.35, 5), cream, x, 0.1, 0, balloon)
       const sunOrb = mesh(new T.IcosahedronGeometry(0.55, 2), windowLight, -3.6, 4.1, -2.5)
       const marker = new T.Group(); world.add(marker)
       mesh(new T.SphereGeometry(0.25, 12, 8), roof, 2.4, 2.25, 0.9, marker)
@@ -100,7 +117,7 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
           gsap.to(marker.position, { y: 0.2, repeat: -1, yoyo: true, duration: 1.8, ease: 'sine.inOut' })
           gsap.to(clouds.position, { x: 0.5, repeat: -1, yoyo: true, duration: 5, ease: 'sine.inOut' })
           gsap.from(buildings.position, { y: -0.7, duration: 1.4, ease: 'back.out(1.3)' })
-          gsap.to(boat.position, { z: 3.1, repeat: -1, yoyo: true, duration: 5, ease: 'sine.inOut' })
+          gsap.to(boat.rotation, { z: 0.06, repeat: -1, yoyo: true, duration: 2.5, ease: 'sine.inOut' })
           gsap.to(world.position, { y: 0.1, repeat: -1, yoyo: true, duration: 4, ease: 'sine.inOut' })
       })
       let contextLost = false
@@ -116,8 +133,18 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
           transition(sun, { intensity: dark ? 0.5 : 3 })
           transition(windowLight, { emissiveIntensity: dark ? 2 : 0.1 })
           transition(sunOrb.scale, { x: dark ? 0.55 : 1, y: dark ? 0.55 : 1, z: dark ? 0.55 : 1 })
+        } else if (action === 'light-on' || action === 'light-off') {
+          transition(roomLight, { emissiveIntensity: action === 'light-on' ? 3 : 0.1 })
+        } else if (action === 'sail' || action === 'dock') {
+          transition(boat.position, { z: action === 'sail' ? -2.5 : 2.5, x: action === 'sail' ? -1.2 : -1 })
+        } else if (action === 'launch' || action === 'land') {
+          transition(balloon.position, { y: action === 'launch' ? 3.4 : 1.1 })
         } else transition(world.rotation, { y: action === 'explore' ? world.rotation.y + Math.PI / 2 : 0 })
       }
+      const initialObjects = interactionRef.current
+      gsap.set(roomLight, { emissiveIntensity: initialObjects.roomLit ? 3 : 0.1 })
+      gsap.set(boat.position, { z: initialObjects.sailing ? -2.5 : 2.5, x: initialObjects.sailing ? -1.2 : -1 })
+      gsap.set(balloon.position, { y: initialObjects.flying ? 3.4 : 1.1 })
       const resize = () => {
         const { width, height } = host.getBoundingClientRect()
         renderer.setSize(Math.max(1, width), Math.max(1, height), false)
@@ -163,13 +190,28 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
     media.add('(prefers-reduced-motion: no-preference)', () => { gsap.fromTo(hostRef.current, { opacity: 0.65, y: 12 }, { opacity: 1, y: 0, duration: 0.7 }) })
     return () => media.revert()
   }, [mode])
-  return <section className={`auth-city${ready ? ' is-ready' : ''}${night ? ' is-night' : ''}`} aria-label="Một góc Sài Gòn thu nhỏ">
+  return <section className={`auth-city${ready ? ' is-ready' : ''}${night ? ' is-night' : ''}${roomLit ? ' is-room-lit' : ''}${sailing ? ' is-sailing' : ''}${flying ? ' is-flying' : ''}`} aria-label="Một góc Sài Gòn thu nhỏ">
     <div className="auth-city__copy"><span>HOMEJI · MỘT NƠI ĐỂ THUỘC VỀ</span><h2>{mode === 'signup' ? <>Hành trình mới.<br />Bắt đầu từ một mái nhà.</> : <>Sài Gòn rộng lớn.<br />Có một nơi chờ bạn.</>}</h2><p>Qua những ngọn đồi, dọc một dòng sông. Tìm căn phòng nhỏ và những người bạn cùng viết câu chuyện lớn.</p></div>
     <div className="auth-city__landscape">
       <span className="auth-city__label auth-city__label--city">SÀI GÒN<small>Nhịp sống mới</small></span>
       <span className="auth-city__label auth-city__label--home">THỦ ĐỨC<small>Mái ấm của bạn</small></span>
-      <div ref={hostRef} className="auth-city__canvas" aria-hidden="true"><div className="auth-city__static"><svg viewBox="0 0 600 360"><ellipse cx="300" cy="310" rx="220" ry="20" fill="#24382d" opacity=".08"/><path d="M70 240 290 160 530 240 310 340Z" fill="#a76e53"/><path d="M70 225 290 140 530 225 310 315Z" fill="#91ab7e"/><path d="m125 208 65-132 70 107 48-130 84 134" fill="#376958"/><path d="m240 278 55-108 70 97" fill="#75b3ad"/><path d="M355 130h36v95h-36zm42-70h23v155h-23" fill="#416b70"/><path d="M320 238v-66h65v66zm-110 25v-58h62v58z" fill="#f8ddb0"/><path d="m309 172 44-30 45 30zm-111 32 43-27 42 27" fill="#d87351"/></svg></div></div>
+      <div ref={hostRef} className="auth-city__canvas" aria-hidden="true"><div className="auth-city__static"><svg viewBox="0 0 600 360"><ellipse cx="300" cy="310" rx="220" ry="20" fill="#24382d" opacity=".08"/><path d="M70 240 290 160 530 240 310 340Z" fill="#a76e53"/><path d="M70 225 290 140 530 225 310 315Z" fill="#91ab7e"/><path d="m125 208 65-132 70 107 48-130 84 134" fill="#376958"/><path d="m240 278 55-108 70 97" fill="#75b3ad"/><path d="M355 130h36v95h-36zm42-70h23v155h-23" fill="#416b70"/><path d="M320 238v-66h65v66zm-110 25v-58h62v58z" fill="#f8ddb0"/><path d="m309 172 44-30 45 30zm-111 32 43-27 42 27" fill="#d87351"/><g className="auth-city__fallback-room"><path d="M220 220h12v16h-12zm30 0h12v16h-12" fill="#ffcf75"/></g><g className="auth-city__fallback-boat"><path d="m270 265 35 0-8 12h-19z" fill="#d87351"/><path d="m288 243 0 20h-13z" fill="#fff2d9"/></g><g className="auth-city__fallback-balloon"><ellipse cx="130" cy="170" rx="20" ry="25" fill="#e5886f"/><path d="m120 190 5 15h10l5-15" fill="none" stroke="#a76e53" strokeWidth="3"/></g></svg></div></div>
     </div>
+    <div className="auth-city__discoveries" aria-label="Vật thể tương tác">
+      <button type="button" aria-pressed={roomLit} onClick={() => {
+        interactionRef.current.roomLit = !roomLit; actionRef.current(roomLit ? 'light-off' : 'light-on'); setRoomLit(!roomLit)
+        setDiscovery(roomLit ? 'Căn phòng nghỉ ngơi, hẹn bạn trở về.' : 'Đèn đã sáng. Một căn phòng ấm áp đang chờ bạn.')
+      }}><span className="auth-city__object auth-city__object--room" aria-hidden="true">⌂</span><span>Mái ấm<small>{roomLit ? 'Tắt đèn phòng' : 'Bật đèn phòng'}</small></span></button>
+      <button type="button" aria-pressed={sailing} onClick={() => {
+        interactionRef.current.sailing = !sailing; actionRef.current(sailing ? 'dock' : 'sail'); setSailing(!sailing)
+        setDiscovery(sailing ? 'Thuyền đã về bến bên những mái nhà.' : 'Đi một chuyến nhỏ dọc dòng sông Sài Gòn.')
+      }}><span className="auth-city__object auth-city__object--boat" aria-hidden="true">⛵</span><span>Dòng sông<small>{sailing ? 'Đưa thuyền về bến' : 'Cho thuyền ra khơi'}</small></span></button>
+      <button type="button" aria-pressed={flying} onClick={() => {
+        interactionRef.current.flying = !flying; actionRef.current(flying ? 'land' : 'launch'); setFlying(!flying)
+        setDiscovery(flying ? 'Khinh khí cầu hạ xuống. Bắt đầu một hành trình mới nhé.' : 'Khinh khí cầu lên cao, ngắm thành phố từ một góc khác.')
+      }}><span className="auth-city__object auth-city__object--balloon" aria-hidden="true">♧</span><span>Bầu trời<small>{flying ? 'Hạ khinh khí cầu' : 'Thả khinh khí cầu'}</small></span></button>
+    </div>
+    <p className="auth-city__discovery-status" role="status">{discovery}</p>
     <div className="auth-city__controls" aria-label="Khám phá mô hình Sài Gòn">
       <button type="button" onClick={() => { actionRef.current(night ? 'day' : 'night'); setNight(!night) }} aria-pressed={night}>{night ? '☀ Ban ngày' : '☾ Lên đèn'}</button>
       <button type="button" onClick={() => actionRef.current('explore')} disabled={!ready}>↻ Dạo một vòng</button>

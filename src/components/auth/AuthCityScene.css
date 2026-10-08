@@ -19,3 +19,33 @@
   .auth-city__controls button { padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .auth-city *, .auth-city__controls button:hover { transition: none; transform: none; } }
+.auth-city__discoveries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: -18px 20px 0; position: relative; z-index: 2; }
+.auth-city__discoveries button { display: flex; align-items: center; gap: 9px; min-height: 66px; padding: 10px; border: 1px solid #49634430; border-radius: 18px; background: #fffdf7ed; color: #315543; text-align: left; cursor: pointer; box-shadow: 0 6px 20px #38502e09; font: 600 12px/1.5 'Be Vietnam Pro', sans-serif; transition: transform .2s, background .2s, border-color .2s; }
+.auth-city__discoveries button:hover { transform: translateY(-3px); border-color: #ba6846; }
+.auth-city__discoveries button:focus-visible { outline: 3px solid #ba6846; outline-offset: 3px; }
+.auth-city__discoveries button[aria-pressed="true"] { background: #f7e8d2; border-color: #ba6846; }
+.auth-city__discoveries small { display: block; font-size: 10px; font-weight: 400; color: #596657; }
+.auth-city__object { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 34px; font-size: 28px; transition: transform .7s; }
+.auth-city__discoveries button[aria-pressed="true"] .auth-city__object--room { color: #bd7124; filter: drop-shadow(0 0 5px #f2bf57); }
+.auth-city__discoveries button[aria-pressed="true"] .auth-city__object--boat { transform: translateX(3px) rotate(-8deg); }
+.auth-city__object--balloon { position: relative; font-size: 0; }
+.auth-city__object--balloon::before { content: ''; width: 23px; height: 28px; border-radius: 50%; background: linear-gradient(90deg, #db775e 25%, #f6b393 25% 45%, #db775e 45% 65%, #f6b393 65% 80%, #db775e 80%); }
+.auth-city__object--balloon::after { content: ''; position: absolute; width: 9px; height: 6px; bottom: -3px; border-radius: 0 0 3px 3px; background: #a76e53; border-top: 3px solid #ddc19c; }
+.auth-city__discoveries button[aria-pressed="true"] .auth-city__object--balloon { transform: translateY(-5px); }
+.auth-city .auth-city__discovery-status { max-width: none; min-height: 36px; margin: 12px 20px; text-align: center; font-size: 11px; line-height: 1.6; }
+.auth-city__fallback-room { opacity: .25; transition: opacity .7s; }
+.auth-city.is-room-lit .auth-city__fallback-room { opacity: 1; }
+.auth-city__fallback-boat, .auth-city__fallback-balloon { transition: transform 1.1s ease-in-out; }
+.auth-city.is-sailing .auth-city__fallback-boat { transform: translate(12px, -50px); }
+.auth-city.is-flying .auth-city__fallback-balloon { transform: translateY(-75px); }
+@media (max-width: 900px) {
+  .auth-city__discoveries { margin: -8px 0 0; gap: 6px; }
+  .auth-city__discoveries button { padding: 8px 6px; gap: 5px; font-size: 11px; min-height: 64px; }
+  .auth-city__object { width: 24px; font-size: 24px; }
+  .auth-city__object--balloon { font-size: 0; }
+  .auth-city__discoveries small { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-city__discoveries button:hover, .auth-city__discoveries button[aria-pressed="true"] .auth-city__object { transform: none; }
+  .auth-city__fallback-room, .auth-city__fallback-boat, .auth-city__fallback-balloon { transition: none; }
+}

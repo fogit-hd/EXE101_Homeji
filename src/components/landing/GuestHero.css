@@ -939,3 +939,13 @@ html:has(.guest-landing) body::-webkit-scrollbar {
     width: min(320px, 100%);
   }
 }
+.guest-hero__bloom-play { display: grid; justify-items: center; gap: 5px; margin-top: 18px; }
+.guest-hero__bloom-play button { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 5px 14px 5px 7px; border: 1px solid #ffffff85; border-radius: 40px; color: #24382d; background: #fffdf1e8; cursor: pointer; font: 500 12px/1.4 'Be Vietnam Pro', sans-serif; }
+.guest-hero__bloom-play button:focus-visible { outline: 3px solid #ba6846; outline-offset: 4px; }
+.guest-hero__flower { width: 38px; height: 38px; overflow: visible; }
+.guest-hero__petal { fill: #e9a78c; transform-origin: 32px 32px; transform: scale(.65); transition: transform .8s ease, fill .8s; }
+.guest-hero.is-blooming .guest-hero__petal { transform: scale(1); fill: #db805f; }
+.guest-hero.is-blooming .guest-hero__flower { animation: guest-flower-bloom 1s ease both; }
+.guest-hero__bloom-note { min-height: 18px; color: #24382d; font-size: 11px; text-align: center; padding: 2px 9px; background: #fffdf1d9; border-radius: 12px; }
+@keyframes guest-flower-bloom { from { transform: rotate(-30deg) scale(.85); } to { transform: rotate(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .guest-hero__petal { transition: none; } .guest-hero.is-blooming .guest-hero__flower { animation: none; } }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { navigateGuestLanding } from './guestLandingNav'
 import './GuestHero.css'
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
 ] as const
 
 export function GuestHero() {
+  const [blooming, setBlooming] = useState(false)
   const goToMap = (e: React.MouseEvent) => {
     e.preventDefault()
     navigateGuestLanding('map')
@@ -21,7 +23,7 @@ export function GuestHero() {
   }
 
   return (
-    <section className="guest-hero" id="hero" aria-label="Homeji — trang chủ">
+    <section className={`guest-hero${blooming ? ' is-blooming' : ''}`} id="hero" aria-label="Homeji — trang chủ">
       <div className="guest-hero__media" aria-hidden="true">
         <img
           src="/landing/bloom-hero-bg.jpg"
@@ -102,6 +104,17 @@ export function GuestHero() {
               </span>
               <span className="guest-hero__bloom-text">Bắt đầu ngay</span>
             </Link>
+          </div>
+
+          <div className="guest-hero__bloom-play">
+            <button type="button" aria-pressed={blooming} onClick={() => setBlooming(!blooming)}>
+              <svg className="guest-hero__flower" viewBox="0 0 64 64" aria-hidden="true">
+                {[0, 60, 120, 180, 240, 300].map(angle => <g key={angle} transform={`rotate(${angle} 32 32)`}><ellipse className="guest-hero__petal" cx="32" cy="18" rx="8" ry="13" /></g>)}
+                <circle cx="32" cy="32" r="8" fill="#efbf65" />
+              </svg>
+              <span>{blooming ? 'Một khởi đầu đang nở hoa' : 'Chạm để gieo một khởi đầu mới'}</span>
+            </button>
+            <span className="guest-hero__bloom-note" role="status">{blooming ? 'Một mái nhà, một người bạn, một câu chuyện mới.' : 'Một chút niềm vui trước hành trình tìm nhà.'}</span>
           </div>
 
           {/* Refined Glassmorphism Meta Cards */}
