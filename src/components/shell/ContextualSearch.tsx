@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { useSearch } from '../../contexts/SearchContext'
 import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
@@ -75,13 +75,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
     onClose?.()
   }
 
-  return (
-    <div ref={rootRef} className="hj-search-slot">
-      <div className="hj-search-context">
-        <p className="hj-search-context__title">{contextTitle}</p>
-        <p className="hj-search-context__scope">{contextScope}</p>
-      </div>
-      {aiFeatureFlags.naturalSearch && (context === 'housing' || context === 'map') ? <NaturalRentalSearch /> : null}
+  const renderSearch = (aiTrigger: ReactNode) => (
       <form className="hj-search" role="search" onSubmit={onSubmit}>
         <label className="hj-search__label" htmlFor="hj-global-search">
           Tìm kiếm
@@ -115,6 +109,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
               </svg>
             </button>
           ) : null}
+          {aiTrigger}
           <button type="submit" className="hj-search__submit">
             <span className="hj-search__submit-full">Tìm kiếm</span>
             <span className="hj-search__submit-short">Tìm</span>
@@ -171,6 +166,17 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
           </ul>
         ) : null}
       </form>
+  )
+
+  return (
+    <div ref={rootRef} className="hj-search-slot">
+      <div className="hj-search-context">
+        <p className="hj-search-context__title">{contextTitle}</p>
+        <p className="hj-search-context__scope">{contextScope}</p>
+      </div>
+      {aiFeatureFlags.naturalSearch && locationSearch
+        ? <NaturalRentalSearch query={query} onOpen={() => { setOpen(false); setFocused(false) }} renderTrigger={renderSearch} />
+        : renderSearch(null)}
     </div>
   )
 }

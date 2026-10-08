@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { highlightRentalPosts, type AiHighlightResponse, type AiParsedSearchCriteria } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -9,18 +9,25 @@ import { RentalSourceBrowser } from './RentalSourceBrowser'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import './NaturalRentalSearch.css'
 
-export function NaturalRentalSearch() {
-  const { profile } = useAuth()
-  return <NaturalRentalSearchSession key={profile?.id ?? 'guest'} />
+type NaturalRentalSearchProps = {
+  query?: string
+  onOpen?: () => void
+  renderTrigger?: (trigger: ReactNode) => ReactNode
 }
 
-function NaturalRentalSearchSession() {
+export function NaturalRentalSearch(props: NaturalRentalSearchProps) {
+  const { profile } = useAuth()
+  return <NaturalRentalSearchSession key={profile?.id ?? 'guest'} {...props} />
+}
+
+function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: NaturalRentalSearchProps) {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [result, setResult] = useState<AiHighlightResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const previous = useRef<AiParsedSearchCriteria | undefined>(undefined)
+  const seededQuery = useRef('')
   const request = useRef(0)
   const opener = useRef<HTMLButtonElement>(null)
   const identity = useRef<string | null>(null)
@@ -41,12 +48,26 @@ function NaturalRentalSearchSession() {
       if (request.current === current) setError(getErrorMessage(reason, 'Chưa tìm được theo nhu cầu. Bạn có thể dùng bộ lọc thông thường hoặc thử lại.'))
     } finally { if (request.current === current) setLoading(false) }
   }
+  const trigger = <button ref={opener} type="button" className="natural-rental-search__trigger" aria-haspopup="dialog" aria-expanded={open} aria-controls="natural-rental-search-panel" onClick={() => {
+    if (!open) {
+      // A new search-bar query starts fresh; reopening a refinement keeps its criteria.
+      if (query.trim() && query.trim() !== seededQuery.current) {
+        request.current += 1; previous.current = undefined; setLoading(false)
+        setText(query.slice(0, 1000)); setResult(null); setError('')
+      }
+      seededQuery.current = query.trim()
+      onOpen?.()
+    }
+    setOpen(value => !value)
+  }}>Gợi ý AI</button>
   return <div className="natural-rental-search">
-    <button ref={opener} type="button" className="btn btn-ghost btn-sm" aria-expanded={open} onClick={() => setOpen(value => !value)}>Tìm phòng bằng nhu cầu</button>
-    {open ? <section className="natural-rental-search__panel" role="dialog" aria-label="Tìm phòng bằng nhu cầu" onKeyDown={event => {
+    {renderTrigger ? renderTrigger(trigger) : trigger}
+    {open ? <section id="natural-rental-search-panel" className="natural-rental-search__panel" role="dialog" aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
       if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); opener.current?.focus() }
     }}>
       <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={() => { setOpen(false); opener.current?.focus() }}>×</button>
+      <h2>Gợi ý AI tìm phòng</h2>
+      <p>Mô tả ngân sách, số người và tiện ích. Xem các tin phù hợp và xác nhận tiêu chí trước khi áp dụng.</p>
       <form onSubmit={event => { event.preventDefault(); void submit() }}>
         <label htmlFor="natural-rental-query">Mô tả và sửa nhu cầu của bạn</label>
         <textarea id="natural-rental-query" autoFocus maxLength={1000} value={text} disabled={loading} onChange={event => { setText(event.target.value); setResult(null) }} placeholder="2 người, dưới 4 triệu tiền thuê, có bếp, không ở ghép" rows={3} />
