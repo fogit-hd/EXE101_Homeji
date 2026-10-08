@@ -1,6 +1,6 @@
 # Triển khai AI Homeji — tiến độ ngày 05/10/2026
 
-Phạm vi được người dùng xác nhận: toàn bộ 7 hạng mục trong `C:/Homeji/docs/ai-product-opportunities-2026-10-03.md`, theo giai đoạn; chatbot dùng chung trên mọi route; login/register Three.js + GSAP với đất, núi, phòng trọ và cảnh TP.HCM. Goal vẫn active. Đây là bản triển khai và kiểm tra local, chưa xác nhận sẵn sàng rollout production.
+Phạm vi được người dùng xác nhận: toàn bộ 7 hạng mục trong `C:/Homeji/docs/ai-product-opportunities-2026-10-03.md`, theo giai đoạn; chatbot dùng chung trên mọi route; login/register Three.js + GSAP với đất, núi, phòng trọ và cảnh TP.HCM. Cập nhật 08/10: đã phát hành phần hoàn tất theo yêu cầu, goal còn lại đang tạm dừng. Phạm vi, phiên bản và kiểm chứng production được ghi trong [release-2026-10-08.md](./release-2026-10-08.md); các gate bên dưới chưa hoàn tất toàn bộ.
 
 ## Những phần đã có trong mã nguồn
 
@@ -8,7 +8,7 @@ Phạm vi được người dùng xác nhận: toàn bộ 7 hạng mục trong `
 
 - Ô tìm kiếm phòng/bản đồ chuyển hướng dẫn sang tên đường, trường học và nơi làm việc; Thủ Đức/Quận 9 chỉ là phạm vi. Hai dòng trong ảnh là lịch sử cũ, không phải danh sách địa điểm đề xuất. Lịch sử chỉ còn các điểm cụ thể phù hợp từ đang gõ, có nhãn riêng; nhấn lịch sử mở gợi ý để chọn đúng địa điểm thay vì lập tức lọc bằng tên trường.
 - Autocomplete của omnibox giới hạn theo `HOMEJI_SERVICE_AREA`, loại gợi ý thành phố/quận/phường bằng types của Google và tên phạm vi. Các ô địa chỉ khác vẫn giữ cấu hình của chúng. Tên đường có từ “Trường Thọ” hay “Đường số 9” không bị loại nhầm. Tham chiếu [Autocomplete Data API](https://developers.google.com/maps/documentation/javascript/place-autocomplete-data).
-- Giữ `placeId`/`placeName` qua chuẩn hóa URL; sau khi resolve thành công, áp dụng bounds quanh điểm đã chọn và tải phòng bằng tọa độ, giữ giá/tiện nghi. Bounds ban đầu là hộp khoảng 1,8 km mỗi phía; bật tìm theo bản đồ nên pan tiếp sẽ cập nhật theo vùng nhìn thấy. Không gọi đây là khoảng cách tuyến đường hay bán kính tròn chính xác. Giữ tiện ích quanh ghim hiện có.
+- Giữ `placeId`/`placeName` qua chuẩn hóa URL; sau khi resolve thành công, áp dụng bounds quanh điểm đã chọn và tải phòng bằng tọa độ, giữ giá/tiện nghi. Bounds ban đầu là hộp khoảng 1,8 km mỗi phía; lựa chọn địa điểm mặc định tắt tìm khi pan để viewport không thu hẹp truy vấn. Người dùng có thể bật lại tìm theo vùng nhìn thấy. Không gọi đây là khoảng cách tuyến đường hay bán kính tròn chính xác. Giữ tiện ích quanh ghim hiện có.
 - Chưa có Maps sẵn sàng thì không chạy autocomplete hoặc để spinner chờ vô hạn. Có hướng dẫn khi chưa có gợi ý; nút Tìm vẫn là tìm theo từ khóa tin đăng, chọn gợi ý địa điểm mới là tìm quanh đường/trường.
 - Build đạt; 133 frontend tests đạt, gồm kiểm tra lịch sử phạm vi, dấu/không dấu, loại prediction và round-trip URL địa điểm với tọa độ/giá/tiện nghi. Chưa kiểm chứng runtime Google Places thật vì cấu hình/tool gate bên dưới vẫn còn.
 
