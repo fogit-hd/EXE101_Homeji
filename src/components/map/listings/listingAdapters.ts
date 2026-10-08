@@ -56,6 +56,7 @@ export type MapListingsView = 'split' | 'map' | 'list'
 export type ListingCatalog = 'rooms' | 'market'
 
 export type ListingQuery = {
+  placeId?: string
   excludedAmenities?: string[]
   excludeRoommateShare?: boolean
   minAvailableSlots?: number
@@ -199,12 +200,13 @@ function readView(params: URLSearchParams): MapListingsView {
 
 export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
   const searchOnMove = params.get('searchOnMove') !== '0'
+  const placeId = params.get('placeId')?.trim() || undefined
   const minLatitude = readNumber(params, 'minLatitude')
   const maxLatitude = readNumber(params, 'maxLatitude')
   const minLongitude = readNumber(params, 'minLongitude')
   const maxLongitude = readNumber(params, 'maxLongitude')
   const bounds =
-    searchOnMove &&
+    (searchOnMove || placeId) &&
     minLatitude != null &&
     maxLatitude != null &&
     minLongitude != null &&
@@ -213,6 +215,7 @@ export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
       : null
   const page = readNumber(params, 'page')
   return {
+    placeId,
     excludedAmenities: params.getAll('excludedAmenities'),
     excludeRoommateShare: params.get('excludeRoommateShare') === 'true',
     minAvailableSlots: readNumber(params, 'minAvailableSlots'),
@@ -261,7 +264,7 @@ export function listingQueryToSearchParams(query: ListingQuery): RentalPostSearc
   if (query.amenities.length && validateFilterAgainstCapabilities('amenities')) {
     params.amenities = query.amenities
   }
-  if (query.searchOnMove && query.bounds && validateFilterAgainstCapabilities('minLatitude')) {
+  if ((query.searchOnMove || query.placeId) && query.bounds && validateFilterAgainstCapabilities('minLatitude')) {
     params.minLatitude = query.bounds.minLatitude
     params.maxLatitude = query.bounds.maxLatitude
     params.minLongitude = query.bounds.minLongitude
@@ -297,7 +300,7 @@ export function listingQueryToMarketplaceParams(query: ListingQuery): {
   if (query.keyword) params.keyword = query.keyword
   if (query.minPrice != null) params.minPrice = query.minPrice
   if (query.maxPrice != null) params.maxPrice = query.maxPrice
-  if (query.searchOnMove && query.bounds) {
+  if ((query.searchOnMove || query.placeId) && query.bounds) {
     const location = boundsToMarketLocation(query.bounds)
     if (location) {
       params.latitude = location.latitude
@@ -399,7 +402,7 @@ export function serializeFiltersToQuery(
   if (query.page > 1) next.set('page', String(query.page))
   else next.delete('page')
 
-  const bounds = query.searchOnMove ? query.bounds : null
+  const bounds = query.searchOnMove || query.placeId ? query.bounds : null
   setNum('minLatitude', bounds?.minLatitude)
   setNum('maxLatitude', bounds?.maxLatitude)
   setNum('minLongitude', bounds?.minLongitude)

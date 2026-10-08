@@ -22,14 +22,19 @@ const { parseFiltersFromURL, serializeFiltersToQuery, listingQueryToSearchParams
 test('a resolved school destination survives normalization and searches by coordinates with existing filters', () => {
   const incoming = new URLSearchParams('section=listings&view=map&placeId=school-campus&placeName=Đại+học+FPT&maxPrice=4000000&amenities=KITCHEN&searchOnMove=0&page=3')
   const bounds = { minLatitude: 10.8, maxLatitude: 10.84, minLongitude: 106.78, maxLongitude: 106.82 }
-  const selected = serializeFiltersToQuery({ ...parseFiltersFromURL(incoming), bounds, searchOnMove: true, page: 1 }, incoming)
+  const selected = serializeFiltersToQuery({ ...parseFiltersFromURL(incoming), bounds, searchOnMove: false, page: 1 }, incoming)
   const normalized = serializeFiltersToQuery(parseFiltersFromURL(selected), selected)
   assert.equal(normalized.get('placeId'), 'school-campus')
   assert.equal(normalized.get('placeName'), 'Đại học FPT')
+  assert.equal(normalized.get('searchOnMove'), '0')
   assert.deepEqual(listingQueryToSearchParams(parseFiltersFromURL(normalized)), {
     page: 1, pageSize: 20, maxPrice: 4000000, amenities: ['KITCHEN'], ...bounds,
   })
   assert.equal(normalized.toString(), selected.toString())
+  const cleared = new URLSearchParams(normalized)
+  cleared.delete('placeId'); cleared.delete('placeName')
+  assert.equal(parseFiltersFromURL(cleared).bounds, null)
+  assert.equal(listingQueryToSearchParams(parseFiltersFromURL(cleared)).minLatitude, undefined)
 })
 
 test('AI exclusions, capacity and selected IDs survive URL reload and round trip', () => {

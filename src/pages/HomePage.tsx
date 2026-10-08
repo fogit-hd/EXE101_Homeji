@@ -25,7 +25,7 @@ import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
 import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
-import { MAP_FOCUS_ZOOM } from '../lib/googleMaps'
+import { MAP_FIT_MAX_ZOOM, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import {
   loadMapPinLayers,
   saveMapPinLayers,
@@ -230,7 +230,7 @@ function HomePageComponent() {
       locateRequestRef.current += 1
       setLocating(false)
       setSelectedPostId(null)
-      commitMapFocus({ lat: resolved.lat, lng: resolved.lng, zoom: MAP_FOCUS_ZOOM })
+      commitMapFocus({ lat: resolved.lat, lng: resolved.lng, zoom: MAP_FIT_MAX_ZOOM })
       setMapPlaceFocus({ placeId: searchPlaceId, name: searchPlaceName || resolved.name,
         address: resolved.address, lat: resolved.lat, lng: resolved.lng })
       setMapPlaceFocusToken((n) => n + 1)
@@ -240,7 +240,7 @@ function HomePageComponent() {
         const next = new URLSearchParams(prev)
         next.delete('keyword')
         const filters = parseFiltersFromURL(next)
-        return serializeFiltersToQuery({ ...filters, bounds: bboxAround(resolved.lat, resolved.lng, 1.8), searchOnMove: true, page: 1 }, next)
+        return serializeFiltersToQuery({ ...filters, bounds: bboxAround(resolved.lat, resolved.lng, 1.8), searchOnMove: false, page: 1 }, next)
       }, { replace: true })
     }).catch(() => { if (!cancelled) setError('Không thể tải địa điểm từ Google Maps.') })
     return () => { cancelled = true }
