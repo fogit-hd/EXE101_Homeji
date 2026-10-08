@@ -849,6 +849,7 @@ export interface UpsertMarketplacePostInput {
 }
 
 export interface MarketplaceOrder {
+  checkoutId?: string
   id: string
   marketplacePostId: string
   buyerId: string

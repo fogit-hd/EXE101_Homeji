@@ -1,4 +1,4 @@
-import { FOOD_ASSETS, ESTIMATED_DELIVERY_FEE } from './foodAssets'
+import { FOOD_ASSETS } from './foodAssets'
 import { QuantityStepper } from './QuantityStepper'
 import { formatPrice } from '../../../lib/labels'
 
@@ -73,8 +73,6 @@ export function FoodUtilityRail({
   onSelectKitchen,
   compact = false,
 }: Props) {
-  const deliveryFee = cartItems.length > 0 ? ESTIMATED_DELIVERY_FEE : 0
-  const grandTotal = cartTotal + deliveryFee
   const canCheckout =
     !cartBusy && cartItems.length > 0 && cartTotal >= minimumCartTotal
 
@@ -238,9 +236,9 @@ export function FoodUtilityRail({
         <div className="food-rail__plan">
           <div className="food-rail__plan-title">
             <img src={FOOD_ASSETS.icons.bike} alt="" width={15} height={15} />
-            <strong>Gom món, giao một lượt</strong>
+            <strong>Nhận món tại bếp</strong>
           </div>
-          <p>Homeji phối hợp các bếp để món đến cùng lúc, nóng và gọn hơn.</p>
+          <p>Mỗi lần thanh toán gồm món của một bếp. Bạn nhận tại địa chỉ bếp sau khi người bán xác nhận.</p>
         </div>
 
         <footer className="food-rail__footer">
@@ -250,12 +248,12 @@ export function FoodUtilityRail({
               <strong>{formatPrice(cartTotal)}</strong>
             </div>
             <div>
-              <span>Phí giao dự kiến</span>
-              <strong>{formatPrice(deliveryFee)}</strong>
+              <span>Hình thức nhận</span>
+              <strong>Tại bếp</strong>
             </div>
             <div className="food-rail__total">
               <span>Tổng cộng</span>
-              <b>{formatPrice(grandTotal)}</b>
+              <b>{formatPrice(cartTotal)}</b>
             </div>
           </div>
 

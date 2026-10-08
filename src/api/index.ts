@@ -542,6 +542,9 @@ export const archiveMarketplacePost = (id: string) =>
 export const getMyMarketplaceOrders = () =>
   apiRequest<MarketplaceOrder[]>('/api/marketplace-orders')
 
+export const startMarketplaceOrderConversation = (orderId: string) =>
+  apiRequest<PostConversation>(`/api/conversations/marketplace-orders/${orderId}`, { method: 'POST' })
+
 export const createMarketplaceOrder = (
   postId: string,
   data: { pickupAt: string; pickupAddress?: string; note?: string; quantity?: number },

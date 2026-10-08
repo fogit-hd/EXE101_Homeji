@@ -21,6 +21,7 @@ import {
   rejectMarketplaceOrder,
   searchMarketplacePosts,
   startMarketplaceConversation,
+  startMarketplaceOrderConversation,
   updateMarketplacePost,
   createWalletWithdrawal,
   uploadImages,
@@ -62,6 +63,7 @@ import {
   type PurchaseKind,
 } from '../lib/purchaseCatalog'
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
+import { marketplaceOrderGroupKey } from '../lib/marketplaceOrderGroups'
 import {
   resolveMarketplaceDestination,
   subscribeToMarketplaceTabRequests,
@@ -1177,7 +1179,7 @@ export function MarketplacePage({
   const orderGroups = useMemo<MarketplaceOrderGroup[]>(() => {
     const grouped = new Map<string, MarketplaceOrder[]>()
     for (const order of orders) {
-      const groupKey = `${order.buyerId}:${order.sellerId}:${order.createdAt}`
+      const groupKey = marketplaceOrderGroupKey(order)
       const current = grouped.get(groupKey) ?? []
       current.push(order)
       grouped.set(groupKey, current)
@@ -1294,12 +1296,12 @@ export function MarketplacePage({
     openLeaf('sell')
   }
 
-  const contactAboutPost = async (postId: string) => {
+  const contactAboutPost = async (postId: string, orderId?: string) => {
     if (contactingPostId !== null) return
     setContactingPostId(postId)
     setActionError('')
     try {
-      const conversation = await startMarketplaceConversation(postId)
+      const conversation = await (orderId ? startMarketplaceOrderConversation(orderId) : startMarketplaceConversation(postId))
       navigate(mapMessagesUrl(conversation.id))
     } catch (err) {
       setActionError(getErrorMessage(err, 'Không mở được cuộc trò chuyện'))
@@ -1982,7 +1984,8 @@ export function MarketplacePage({
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => void contactAboutPost(firstOrder.marketplacePostId)}
+                          disabled={contactingPostId !== null}
+                          onClick={() => void contactAboutPost(firstOrder.marketplacePostId, firstOrder.id)}
                         >
                           {group.isSeller ? 'Liên hệ người mua' : 'Liên hệ người bán'}
                         </button>
