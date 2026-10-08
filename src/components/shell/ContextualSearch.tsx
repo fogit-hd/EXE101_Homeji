@@ -80,7 +80,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
         <label className="hj-search__label" htmlFor="hj-global-search">
           Tìm kiếm
         </label>
-        <div className="hj-search__field">
+        <div className={`hj-search__field${aiTrigger ? ' hj-search__field--ai' : ''}`}>
           <span className="hj-search__icon" aria-hidden>
             <img className="hj-glyph" src="/bar/search.svg" alt="" width={20} height={20} />
           </span>

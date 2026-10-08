@@ -62,7 +62,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
   }}>Gợi ý AI</button>
   return <div className="natural-rental-search">
     {renderTrigger ? renderTrigger(trigger) : trigger}
-    {open ? <section id="natural-rental-search-panel" className="natural-rental-search__panel" role="dialog" aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
+    {open ? <section id="natural-rental-search-panel" className={`natural-rental-search__panel${loading ? ' is-thinking' : ''}`} role="dialog" aria-busy={loading} aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
       if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); opener.current?.focus() }
     }}>
       <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={() => { setOpen(false); opener.current?.focus() }}>×</button>
