@@ -8,7 +8,7 @@ import { MyPostsPage } from '../../pages/MyPostsPage'
 import { NotificationsPage } from '../../pages/NotificationsPage'
 import { PaymentPage } from '../../pages/PaymentPage'
 import { ProfilePage } from '../../pages/ProfilePage'
-import { RoommateInvitationsPage } from '../../pages/RoommateInvitationsPage'
+import { RoommateWorkspace } from '../roommates/RoommateWorkspace'
 import { SavedPostsPage } from '../../pages/SavedPostsPage'
 import { WantedPostsPage } from '../../pages/WantedPostsPage'
 import { mapMessagesUrl, mapPostUrl, mapSectionUrl } from '../../lib/mapDeepLinks'
@@ -144,7 +144,7 @@ export function FeatureWorkspace({ section }: Props) {
       >
         {section === 'saved' ? <SavedPostsPage embedded /> : null}
         {section === 'invitations' ? (
-          <RoommateInvitationsPage embedded onOpenConversation={openConversation} />
+          <RoommateWorkspace onOpenConversation={openConversation} />
         ) : null}
         {section === 'notifications' ? (
           <NotificationsPage embedded onOpenRelated={handleNotificationOpen} />

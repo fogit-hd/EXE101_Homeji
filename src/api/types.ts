@@ -479,6 +479,7 @@ export interface PayOsPaymentResponse {
 }
 
 export interface RentalPostSearchParams {
+  type?: RentalPostType
   excludedAmenities?: string[]
   excludeRoommateShare?: boolean
   ids?: string[]

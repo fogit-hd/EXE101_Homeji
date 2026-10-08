@@ -10,9 +10,10 @@ type Props = {
   onSave?: () => void
   onUnsave?: () => void
   isSaved?: boolean
+  saveBusy?: boolean
 }
 
-export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved }: Props) {
+export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, saveBusy = false }: Props) {
   return (
     <article className="post-card card">
       <Link to={mapPostUrl(post.id)} className="post-card-link">
@@ -40,11 +41,11 @@ export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved }: Pr
       {showSave && (
         <div className="post-card-actions">
           {isSaved ? (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={onUnsave}>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={saveBusy} onClick={onUnsave}>
               Bỏ lưu
             </button>
           ) : (
-            <button type="button" className="btn btn-primary btn-sm" onClick={onSave}>
+            <button type="button" className="btn btn-primary btn-sm" disabled={saveBusy} onClick={onSave}>
               Lưu tin
             </button>
           )}

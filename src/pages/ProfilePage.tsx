@@ -54,10 +54,10 @@ function initialsFromName(name: string) {
   return `${parts[0]![0] ?? ''}${parts[parts.length - 1]![0] ?? ''}`.toUpperCase()
 }
 
-export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
+export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embedded?: boolean; lifestyleOnly?: boolean }) {
   const { profile, refreshProfile, needsProfileSetup } = useAuth()
   const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState<ProfileTab>(() => searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
+  const [tab, setTab] = useState<ProfileTab>(() => lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
   const [profileErrors, setProfileErrors] = useState<{ displayName?: string; phone?: string }>({})
@@ -272,6 +272,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
+      {!lifestyleOnly ? <>
       <header className="profile-page-header">
         <span className="profile-page-eyebrow">Tài khoản cá nhân</span>
         <h1 className="profile-page-title">
@@ -396,6 +397,8 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
           </button>
         ) : null}
       </div>
+
+      </> : null}
 
       {tab === 'basic' ? (
         <form className="profile-section map-motion-fade-up" onSubmit={(e) => void handleProfileSave(e)}>
@@ -529,7 +532,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
             <p>Dùng để gợi ý phòng / ở ghép phù hợp hơn.</p>
           </header>
 
-          <div className="form-group">
+          {!lifestyleOnly ? <div className="form-group">
             <span className="form-label">Vai trò</span>
             <div className="profile-role-toggle" role="group" aria-label="Chọn vai trò">
               <button
@@ -547,7 +550,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
                 {userRoleLabel[UserRole.Landlord]}
               </button>
             </div>
-          </div>
+          </div> : null}
 
           <div className="profile-grid">
             <div className="form-group">

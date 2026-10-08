@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   createInvitation,
@@ -20,7 +20,7 @@ import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import './SavedPostsPage.css'
 
-export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
+export function SavedPostsPage({ embedded = false, roommateOnly = false }: { embedded?: boolean; roommateOnly?: boolean }) {
   const { profile } = useAuth()
   const isRenter = profile?.role === UserRole.Renter
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
@@ -30,46 +30,72 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
   const [inviteBusy, setInviteBusy] = useState<string | null>(null)
+  const candidateRequest = useRef(0)
+  const inviteLock = useRef(false)
+  const unsaveLock = useRef(false)
+  const [unsaveBusy, setUnsaveBusy] = useState(false)
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [comparison, setComparison] = useState<string[] | null>(null)
 
   const loadFn = useCallback(async () => {
-    setPosts(await getSavedPosts())
-  }, [])
+    const saved = await getSavedPosts()
+    setPosts(roommateOnly ? saved.filter(post => post.type === RentalPostType.RoommateShare) : saved)
+  }, [roommateOnly])
 
   const { showLoader, onIntroComplete, error, disrupted } = usePersistentLoad(loadFn)
 
   const handleUnsave = async (postId: string) => {
-    await unsavePost(postId)
-    setPosts((prev) => prev.filter((p) => p.id !== postId))
-    setCompareIds(prev => prev.filter(id => id !== postId))
-    setComparison(null)
-    if (candidatesFor === postId) {
-      setCandidatesFor(null)
-      setCandidates([])
+    if (unsaveLock.current) return
+    unsaveLock.current = true
+    setUnsaveBusy(true)
+    setActionError('')
+    try {
+      await unsavePost(postId)
+      setPosts((prev) => prev.filter((p) => p.id !== postId))
+      setCompareIds(prev => prev.filter(id => id !== postId))
+      setComparison(null)
+      if (candidatesFor === postId) {
+        candidateRequest.current++
+        setCandidatesFor(null)
+        setCandidates([])
+        setCandLoading(false)
+      }
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'Không bỏ lưu được phòng.'))
+    } finally {
+      unsaveLock.current = false
+      setUnsaveBusy(false)
     }
   }
 
   const loadCandidates = async (postId: string) => {
+    const request = ++candidateRequest.current
     if (candidatesFor === postId) {
       setCandidatesFor(null)
       setCandidates([])
+      setCandLoading(false)
       return
     }
     setCandLoading(true)
     setActionError('')
     setCandidatesFor(postId)
+    setCandidates([])
     try {
-      setCandidates(await getRoommateCandidates(postId))
+      const result = await getRoommateCandidates(postId)
+      if (candidateRequest.current === request) setCandidates(result)
     } catch (e) {
-      setActionError(getErrorMessage(e, 'Không tải được gợi ý ở ghép'))
-      setCandidates([])
+      if (candidateRequest.current === request) {
+        setActionError(getErrorMessage(e, 'Không tải được gợi ý ở ghép'))
+        setCandidates([])
+      }
     } finally {
-      setCandLoading(false)
+      if (candidateRequest.current === request) setCandLoading(false)
     }
   }
 
   const invite = async (postId: string, receiverId: string) => {
+    if (inviteLock.current) return
+    inviteLock.current = true
     setInviteBusy(receiverId)
     setActionError('')
     setActionMsg('')
@@ -79,6 +105,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
     } catch (e) {
       setActionError(getErrorMessage(e, 'Gửi lời mời thất bại'))
     } finally {
+      inviteLock.current = false
       setInviteBusy(null)
     }
   }
@@ -100,7 +127,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
       ) : posts.length === 0 ? (
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
-          <p>Lưu tin phòng từ Khám phá để xem lại tại đây.</p>
+          <p>{roommateOnly ? 'Lưu phòng quan tâm ở tab Tìm phòng để xem gợi ý người cùng ở.' : 'Lưu tin phòng từ Khám phá để xem lại tại đây.'}</p>
         </div>
       ) : (
         <div className="grid-posts">
@@ -113,6 +140,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
                 post={post}
                 showSave
                 isSaved
+                saveBusy={unsaveBusy}
                 onUnsave={() => void handleUnsave(post.id)}
               />
               <div style={{ marginTop: 8 }}>
@@ -146,7 +174,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
                             <button
                               type="button"
                               className="btn btn-primary btn-sm"
-                              disabled={inviteBusy === c.userId}
+                              disabled={inviteBusy !== null}
                               onClick={() => void invite(post.id, c.userId)}
                             >
                               {inviteBusy === c.userId ? 'Đang gửi…' : 'Mời ở ghép'}
