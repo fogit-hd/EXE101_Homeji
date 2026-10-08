@@ -18,8 +18,9 @@
   .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) {
   --ai-border-angle: 0deg;
   border: 4px solid transparent;
-  background: linear-gradient(var(--ai-spectrum-surface), var(--ai-spectrum-surface)) padding-box,
+  --ai-spectrum-fill: linear-gradient(var(--ai-spectrum-surface), var(--ai-spectrum-surface)) padding-box,
     conic-gradient(from var(--ai-border-angle), var(--ai-spectrum-colors)) border-box;
+  background: var(--ai-spectrum-fill);
   animation: ai-spectrum-orbit 6s linear infinite;
   box-shadow: -3px 0 14px #f45b7826, 3px 0 14px #7376f026, 0 3px 12px #38bce820;
 }
@@ -47,6 +48,10 @@
   box-shadow: 0 20px 70px #152a2933, -6px 0 24px #f45b7855, 6px 0 24px #7376f055;
 }
 .ai-spectrum-button:disabled { color: #626b73; box-shadow: none; }
+.ai-spectrum-button.ai-spectrum-button:hover:not(:disabled) {
+  background: var(--ai-spectrum-fill);
+  color: #263a4b;
+}
 @keyframes ai-spectrum-orbit { to { --ai-border-angle: 360deg; } }
 @media (prefers-reduced-motion: reduce) {
   :is(.hj-search__field.hj-search__field--ai, .natural-rental-search__panel,
