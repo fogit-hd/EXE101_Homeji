@@ -14,6 +14,7 @@ import { GoogleMapsProvider } from './contexts/GoogleMapsProvider'
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
 import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
+import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import { AdminModerationPage } from './pages/AdminModerationPage'
 import { CreateRentalPostPage } from './pages/CreateRentalPostPage'
@@ -91,6 +92,7 @@ function App() {
   return (
     <ErrorBoundary reloadOnRetry>
       <ThemeSync />
+      <AiInteractionEffects />
       <NetworkStatusProvider>
         <GoogleMapsProvider>
           <GoogleOAuthRoot>

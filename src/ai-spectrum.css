@@ -17,8 +17,11 @@
   .natural-rental-search__trigger, .map-chatbot .map-chatbot__chip,
   .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) {
   --ai-border-angle: 0deg;
+  --ai-glow-depth: 12px;
   border: 4px solid transparent;
-  --ai-spectrum-fill: linear-gradient(var(--ai-spectrum-surface), var(--ai-spectrum-surface)) padding-box,
+  --ai-spectrum-fill: linear-gradient(to right, #f45b782e, transparent var(--ai-glow-depth), transparent calc(100% - var(--ai-glow-depth)), #7376f02e) padding-box,
+    linear-gradient(to bottom, #38bce826, transparent var(--ai-glow-depth), transparent calc(100% - var(--ai-glow-depth)), #ff9b4526) padding-box,
+    linear-gradient(var(--ai-spectrum-surface), var(--ai-spectrum-surface)) padding-box,
     conic-gradient(from var(--ai-border-angle), var(--ai-spectrum-colors)) border-box;
   background: var(--ai-spectrum-fill);
   animation: ai-spectrum-orbit 6s linear infinite;
@@ -29,11 +32,13 @@
   .map-chatbot .map-chatbot__chip, .map-chatbot .map-chatbot__action,
   .map-chatbot .map-chatbot__send) {
   border-width: 3px;
+  --ai-glow-depth: 8px;
   color: #263a4b;
 }
 
 :is(.natural-rental-search__panel, .map-chatbot__panel.is-visible) {
   border-width: 5px;
+  --ai-glow-depth: 30px;
   box-shadow: 0 20px 70px #152a2933, -5px 0 20px #f45b7833, 5px 0 20px #7376f033;
 }
 
@@ -53,6 +58,30 @@
   color: #263a4b;
 }
 @keyframes ai-spectrum-orbit { to { --ai-border-angle: 360deg; } }
+.natural-rental-search__panel.natural-rental-search__panel {
+  transform-origin: center top;
+  animation: ai-spectrum-orbit 6s linear infinite, ai-popup-open 460ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.natural-rental-search__panel.is-thinking { animation-duration: 2s, 460ms; }
+.map-chatbot__panel {
+  transform: translate3d(0, 20px, 0) scale(.86);
+  transition: opacity 420ms ease, transform 460ms cubic-bezier(.16, 1, .3, 1), left 180ms ease, top 180ms ease;
+}
+.map-chatbot__panel.is-visible { transform: translate3d(0, 0, 0) scale(1); }
+@keyframes ai-popup-open {
+  from { opacity: 0; scale: .88; }
+  to { opacity: 1; scale: 1; }
+}
+.ai-interaction-waves { position: fixed; inset: 0; z-index: 10001; pointer-events: none; overflow: hidden; }
+.ai-interaction-wave {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, transparent 48%, #38bce855 58%, #c969e54d 64%, #f45b783b 70%, transparent 78%);
+  animation: ai-click-wave 600ms cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes ai-click-wave {
+  from { opacity: .85; transform: scale(.12); }
+  to { opacity: 0; transform: scale(1.2); }
+}
 @media (prefers-reduced-motion: reduce) {
   :is(.hj-search__field.hj-search__field--ai, .natural-rental-search__panel,
     .map-chatbot__panel.is-visible, .map-chatbot .map-chatbot__fab,
@@ -60,4 +89,6 @@
     .rental-comparison, .ai-spectrum-button.ai-spectrum-button,
     .natural-rental-search__trigger, .map-chatbot .map-chatbot__chip,
     .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) { animation: none; }
+  .map-chatbot__panel { transition: none; }
+  .ai-interaction-waves { display: none; }
 }
