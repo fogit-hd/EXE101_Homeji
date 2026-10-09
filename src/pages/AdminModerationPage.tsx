@@ -28,6 +28,7 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashboard'
+import { AdminAssistant } from '../components/ai/AdminAssistant'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import { useAuth } from '../contexts/AuthContext'
@@ -317,6 +318,7 @@ export function AdminModerationPage() {
 
       {tab === 'overview' ? (
         <>
+          <AdminAssistant onOpen={(kind, id) => { setTab(kind); window.setTimeout(() => document.getElementById(`admin-assistant-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }} />
           <PageNotice message={analyticsError} tone="error" />
           {analyticsError && !analyticsLoading ? <button type="button" className="btn btn-secondary" onClick={() => { setAnalyticsLoading(true); setAnalyticsAttempt((n) => n + 1) }}>Thử lại</button> : null}
           {analytics && (!analyticsError || analytics.periodDays === analyticsDays) ? <AdminAnalyticsDashboard data={analytics} days={analytics.periodDays} loading={analyticsLoading} onDaysChange={handleAnalyticsDaysChange} /> : analyticsLoading ? <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu điều hành…" /> : null}
@@ -425,7 +427,7 @@ export function AdminModerationPage() {
             <div className="empty-state card">Không có tin chờ duyệt.</div>
           ) : (
             pendingPosts.map((post) => (
-              <article key={post.id} className="card admin-item">
+              <article key={post.id} id={`admin-assistant-${post.id}`} className="card admin-item">
                 <div>
                   {post.ownerConsentContact ? (
                     <>
@@ -495,7 +497,7 @@ export function AdminModerationPage() {
               <div className="empty-state card">Không có báo cáo.</div>
             ) : (
               reports.map((r) => (
-                <article key={r.id} className="card admin-item admin-report-item">
+                <article key={r.id} id={`admin-assistant-${r.id}`} className="card admin-item admin-report-item">
                   <div className="admin-report-content">
                     <div className="admin-report-badges">
                       <span className="badge badge-gray">Báo cáo {reportTargetLabel[r.targetType].toLowerCase()}</span>

@@ -14,6 +14,9 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import { requestMarketplaceCart, requestMarketplaceTab } from '../../lib/marketplaceNavigation'
+import { AiSearchReview } from '../ai/AiSearchReview'
+import { useSearch } from '../../contexts/SearchContext'
+import { deleteChatbotHistory } from '../../api/rentalAssistant'
 import { ChatbotMessageContent } from './ChatbotMessageContent'
 import type { MapAppSection } from './MapAppPanel'
 import './MapChatbot.css'
@@ -65,6 +68,7 @@ type Props = {
 type DisplayMessage = ChatbotMessage & {
   pending?: boolean
   actions?: ChatbotNavigationAction[]
+  searchUpdate?: AiHighlightResponse | null
 }
 
 type FabPos = { x: number; y: number }
@@ -249,6 +253,7 @@ export function MapChatbot({
   onOpenSection,
 }: Props) {
   const navigate = useNavigate()
+  const search = useSearch()
   const { profile } = useAuth()
   const reactId = useId()
   const [open, setOpen] = useState(false)
@@ -259,6 +264,7 @@ export function MapChatbot({
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
   const [suggestionsLeaving, setSuggestionsLeaving] = useState(false)
   const [fabPos, setFabPos] = useState<FabPos>(() =>
@@ -459,6 +465,13 @@ export function MapChatbot({
     const message = text.trim()
     if (!message || busy) return
 
+    const nearbyText = message.toLocaleLowerCase('vi-VN').replaceAll('đ', 'd').normalize('NFD').replace(/\p{M}/gu, '')
+    if (search.nearbyAnchor && /quan an|nha thuoc|ca phe|cua hang/.test(nearbyText)) {
+      search.setNearbyCategory(/nha thuoc/.test(nearbyText) ? 'pharmacy' : /ca phe/.test(nearbyText) ? 'cafe' : /cua hang/.test(nearbyText) ? 'grocery' : 'food')
+      setMessages(prev => [...prev, { id: `nearby-${++pendingIdRef.current}`, conversationId: conversationId ?? '', sender: ChatMessageSender.Assistant, createdAt: new Date().toISOString(), content: `Đã chọn nhóm tiện ích quanh ${search.nearbyAnchor!.label}. Xem popup quanh ghim; dữ liệu từ Google Maps, chưa xác minh yên tĩnh hay ổ cắm.` }])
+      setDraft('')
+      return
+    }
     setBusy(true)
     setError(null)
     setDraft('')
@@ -491,10 +504,9 @@ export function MapChatbot({
         return [
           ...withoutPending,
           reply.userMessage,
-          { ...reply.assistantMessage, actions: reply.actions },
+          { ...reply.assistantMessage, actions: reply.actions, searchUpdate: reply.searchUpdate },
         ]
       })
-      if (reply.searchUpdate) onSearchUpdate?.(reply.searchUpdate)
     } catch (e) {
       setMessages((prev) => prev.filter((m) => m.id !== pendingId))
       setError(getErrorMessage(e, 'Homeji tạm thời không phản hồi'))
@@ -524,6 +536,15 @@ export function MapChatbot({
       setOpen(false)
       navigate(action.target)
     }
+  }
+
+  const clearHistory = async () => {
+    setBusy(true); setError(null)
+    try {
+      if (conversationId) await deleteChatbotHistory(conversationId)
+      setConversationId(undefined); setMessages([]); setDeleteConfirm(false); setDraft(''); setSuggestionsLeaving(false)
+    } catch (e) { setError(getErrorMessage(e, 'Chưa xóa được hội thoại. Vui lòng thử lại.')) }
+    finally { setBusy(false) }
   }
 
   const chatBody = (
@@ -576,6 +597,7 @@ export function MapChatbot({
                 ) : (
                   <>
                     <ChatbotMessageContent content={m.content} />
+                    {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} busy={busy} onApply={() => onSearchUpdate?.(m.searchUpdate!)} onCorrection={text => void send(text)} /> : null}
                     {m.actions && m.actions.length > 0 ? (
                       <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">
                         {m.actions.map((action) => (
@@ -619,6 +641,9 @@ export function MapChatbot({
       </div>
 
       {error ? <p className="map-chatbot__error">{error}</p> : null}
+      {messages.length ? <div className="map-chatbot__actions">
+        {!deleteConfirm ? <button type="button" disabled={busy} onClick={() => setDeleteConfirm(true)}>Xóa hội thoại & tiêu chí</button> : <><span>Xóa hội thoại này khỏi Homeji?</span><button type="button" disabled={busy} onClick={() => void clearHistory()}>Xác nhận xóa</button><button type="button" disabled={busy} onClick={() => setDeleteConfirm(false)}>Giữ lại</button></>}
+      </div> : null}
 
       <form
         className="map-chatbot__form"
@@ -629,6 +654,7 @@ export function MapChatbot({
       >
         <input
           ref={inputRef}
+          maxLength={1000}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Hỏi Homeji ngay"

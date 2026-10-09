@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useSearch } from '../../contexts/SearchContext'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import {
   NEARBY_PLACE_CATEGORY_OPTIONS,
   searchNearbyPlaces,
-  type NearbyPlaceCategory,
   type NearbyPlaceItem,
 } from '../../lib/placeAutocomplete'
 import './MapNearbyPanel.css'
@@ -16,7 +16,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick }: {
   onPick: (place: NearbyPlaceItem) => void
 }) {
   const { apiKey, isLoaded, loadError } = useGoogleMaps()
-  const [category, setCategory] = useState<NearbyPlaceCategory>('food')
+  const { nearbyCategory: category, setNearbyCategory: setCategory } = useSearch()
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<{
     key: string; items: NearbyPlaceItem[]; error?: string
@@ -52,6 +52,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick }: {
             onClick={() => setCategory(option.id)}>{option.label}</button>
         ))}
       </div>
+      {category === 'cafe' ? <p>Nhóm cà phê; chưa có dữ liệu xác nhận yên tĩnh, ổ cắm hoặc phù hợp học tập.</p> : null}
       <div className="map-nearby-panel__results" aria-live="polite" aria-busy={!current && !error}>
         {error ? <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}>Thử lại</button></div>
           : !current ? <p>Đang tìm tiện ích trong bán kính 1,8 km…</p>
@@ -65,7 +66,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick }: {
                 </article>
               ))}
       </div>
-      <footer>Dữ liệu Google Places · Khoảng cách đường thẳng, không phải quãng đường đi bộ. Không phải quán được Homeji tài trợ.</footer>
+      <footer><strong>Google Maps</strong> · Dữ liệu Google Places · Khoảng cách đường thẳng, không phải quãng đường đi bộ. Không phải quán được Homeji tài trợ.</footer>
     </aside>
   )
 }

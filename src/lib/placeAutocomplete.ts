@@ -15,7 +15,7 @@ export type ResolvedPlaceLocation = {
   lng: number
 }
 
-export type NearbyPlaceCategory = 'food' | 'cafe' | 'grocery' | 'health'
+export type NearbyPlaceCategory = 'food' | 'cafe' | 'grocery' | 'health' | 'pharmacy'
 
 export type NearbyPlaceItem = {
   placeId: string
@@ -33,21 +33,17 @@ export const NEARBY_PLACE_CATEGORY_OPTIONS: Array<{
   includedPrimaryTypes: string[]
 }> = [
   { id: 'food', label: 'Ăn uống', includedPrimaryTypes: ['restaurant', 'meal_takeaway'] },
-  { id: 'cafe', label: 'Cà phê', includedPrimaryTypes: ['cafe', 'bakery'] },
+  { id: 'cafe', label: 'Cà phê để học', includedPrimaryTypes: ['cafe', 'bakery'] },
   {
     id: 'grocery',
-    label: 'Tạp hóa',
+    label: 'Cửa hàng / tạp hóa',
     includedPrimaryTypes: ['supermarket', 'convenience_store'],
   },
+  { id: 'pharmacy', label: 'Nhà thuốc', includedPrimaryTypes: ['pharmacy'] },
   { id: 'health', label: 'Y tế', includedPrimaryTypes: ['pharmacy', 'hospital'] },
 ]
 
 const NEARBY_SEARCH_RADIUS_METERS = 1800
-const NEARBY_CACHE_TTL_MS = 5 * 60 * 1000
-const nearbySearchCache = new Map<
-  string,
-  { expiresAt: number; items: NearbyPlaceItem[] }
->()
 
 export type MapSearchBBox = {
   minLatitude: number
@@ -115,7 +111,7 @@ function distanceMeters(
 
 /**
  * Discover daily-life places around a rental/search anchor.
- * Results are distance-ranked, bounded, and cached briefly to limit Places quota usage.
+ * Results are distance-ranked and bounded; Places content is only held in the active UI.
  */
 export async function searchNearbyPlaces(
   anchor: google.maps.LatLngLiteral,
@@ -129,9 +125,6 @@ export async function searchNearbyPlaces(
   if (!categoryOption) return []
 
   const limit = Math.min(Math.max(Math.trunc(options?.limit ?? 5), 1), 8)
-  const cacheKey = `${category}:${anchor.lat.toFixed(4)}:${anchor.lng.toFixed(4)}:${limit}`
-  const cached = nearbySearchCache.get(cacheKey)
-  if (cached && cached.expiresAt > Date.now()) return [...cached.items]
 
   const placesLibrary = await importPlacesLibrary()
   const Place = placesLibrary.Place as typeof google.maps.places.Place & {
@@ -190,10 +183,6 @@ export async function searchNearbyPlaces(
       .sort((left, right) => left.distanceMeters - right.distanceMeters)
       .slice(0, limit)
 
-    nearbySearchCache.set(cacheKey, {
-      expiresAt: Date.now() + NEARBY_CACHE_TTL_MS,
-      items,
-    })
     return [...items]
   } catch (error) {
     if (options?.throwOnError) throw error

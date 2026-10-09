@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { useSearch } from '../../contexts/SearchContext'
 import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
@@ -38,6 +39,7 @@ export function ContextualSearch() {
 }
 
 function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onClose?: () => void }) {
+  const navigate = useNavigate()
   const {
     query,
     placeholder,
@@ -115,6 +117,10 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
             <span className="hj-search__submit-full">Tìm kiếm</span>
             <span className="hj-search__submit-short">Tìm</span>
           </button>
+          {context === 'global' || context === 'map' || context === 'housing' ? <button type="button" className="hj-search__submit" disabled={!query.trim()} onClick={() => {
+            const params = new URLSearchParams({ section: 'listings', view: 'map', aiQuery: query.trim().slice(0, 1000) })
+            navigate(`/?${params.toString()}`); setOpen(false); onClose?.()
+          }}>Tìm theo nhu cầu</button> : null}
         </div>
         {open && (suggestions.length > 0 || recentSearches.length > 0 || isLoading || (nearbyAnchor && (context === 'map' || context === 'housing'))) ? (
           <ul className="hj-search__suggest" role="listbox">

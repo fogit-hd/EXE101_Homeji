@@ -9,6 +9,7 @@ import {
   type MarketplacePost,
   type RentalPostSummary,
 } from '../api'
+import { AiSearchDialog } from '../components/ai/AiSearchDialog'
 import { SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
 import {
   isExploreSurface,
@@ -110,6 +111,11 @@ function HomePageComponent() {
   const isFeatureView =
     isAuthenticated && Boolean(activeSection && activeSection !== 'listings')
 
+  const [aiPreview, setAiPreview] = useState<AiHighlightResponse | null>(null)
+  const aiSearchSignature = nonBoundsSignature(parseFiltersFromURL(searchParams))
+  const [aiApplied, setAiApplied] = useState<{ posts: RentalPostSummary[]; signature: string } | null>(null)
+  const aiRequestRef = useRef(0)
+  const aiQueryRef = useRef('')
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [marketPosts, setMarketPosts] = useState<MarketplacePost[]>([])
   const [loading, setLoading] = useState(true)
@@ -342,20 +348,20 @@ function HomePageComponent() {
 
   const applyAiSearchUpdate = useCallback(
     (update: AiHighlightResponse) => {
+      setAiApplied({ posts: update.posts.map(item => item.post), signature: aiSearchSignature })
+      setSelectedPostId(null)
       const c = update.criteria
-      const nextKeyword = (c.keyword || c.location || update.tag || '').trim()
-      if (nextKeyword) {
-        setKeyword(nextKeyword)
-        setSearchQuery(nextKeyword)
-      }
-      if (c.priceMin != null) setMinPrice(String(Math.round(c.priceMin)))
-      if (c.priceMax != null) setMaxPrice(String(Math.round(c.priceMax)))
+      const nextKeyword = (c.keyword || c.location || '').trim()
+      setKeyword(nextKeyword)
+      setSearchQuery(nextKeyword)
+      setMinPrice(c.priceMin != null ? String(Math.round(c.priceMin)) : '')
+      setMaxPrice(c.priceMax != null ? String(Math.round(c.priceMax)) : '')
       filtersRef.current = {
         ...filtersRef.current,
         bbox: null,
-        keyword: nextKeyword || filtersRef.current.keyword,
-        minPrice: c.priceMin != null ? String(Math.round(c.priceMin)) : filtersRef.current.minPrice,
-        maxPrice: c.priceMax != null ? String(Math.round(c.priceMax)) : filtersRef.current.maxPrice,
+        keyword: nextKeyword,
+        minPrice: c.priceMin != null ? String(Math.round(c.priceMin)) : '',
+        maxPrice: c.priceMax != null ? String(Math.round(c.priceMax)) : '',
       }
       if (update.posts.length > 0) {
         setPosts(update.posts.map((p) => p.post))
@@ -364,7 +370,7 @@ function HomePageComponent() {
           pinFilterResults()
         }
       } else {
-        void loadPosts()
+        setPosts([])
       }
       if (update.mapFocusLatitude != null && update.mapFocusLongitude != null) {
         commitMapFocus({
@@ -375,26 +381,35 @@ function HomePageComponent() {
       }
       openListingsPanel()
     },
-    [commitMapFocus, loadPosts, openListingsPanel, pinFilterResults],
+    [aiSearchSignature, commitMapFocus, openListingsPanel, pinFilterResults],
   )
 
   const handleAiSearch = useCallback(
-    async (text: string) => {
+    async (text: string, intent?: AiHighlightResponse['criteria']) => {
       const q = text.trim()
       if (!q) return
       setAiSearching(true)
       setError('')
+      const requestId = ++aiRequestRef.current
       try {
-        const update = await highlightRentalPosts({ text: q, maxResults: 12 })
-        applyAiSearchUpdate(update)
+        const update = await highlightRentalPosts({ text: q, maxResults: 5, intent })
+        if (requestId === aiRequestRef.current) setAiPreview(update)
       } catch (err) {
-        setError(getErrorMessage(err, 'AI tìm kiếm tạm thời không khả dụng'))
+        if (requestId === aiRequestRef.current) setError(getErrorMessage(err, 'AI tìm kiếm tạm thời không khả dụng'))
       } finally {
-        setAiSearching(false)
+        if (requestId === aiRequestRef.current) setAiSearching(false)
       }
     },
-    [applyAiSearchUpdate],
+    [],
   )
+
+  const aiQuery = searchParams.get('aiQuery') ?? ''
+  useEffect(() => {
+    if (!aiQuery) { aiQueryRef.current = ''; return }
+    if (!isAuthenticated || aiQuery === aiQueryRef.current) return
+    aiQueryRef.current = aiQuery
+    void handleAiSearch(aiQuery)
+  }, [aiQuery, isAuthenticated, handleAiSearch])
 
   useEffect(() => {
     if (isLoading) return
@@ -810,6 +825,7 @@ function HomePageComponent() {
   }, [locateMe])
 
   const resetFilters = useCallback(() => {
+    setAiApplied(null)
     if (isExploreView) {
       setSearchParams((prev) => {
         const cleared = parseFiltersFromURL(prev)
@@ -1045,10 +1061,12 @@ function HomePageComponent() {
   void omnibox
 
   return (
+    <>
+    {aiPreview ? <AiSearchDialog result={aiPreview} busy={aiSearching} onClose={() => { ++aiRequestRef.current; setAiSearching(false); setAiPreview(null) }} onApply={() => { applyAiSearchUpdate(aiPreview); setAiPreview(null) }} onCorrection={text => void handleAiSearch(text, aiPreview.criteria)} /> : null}
     <AuthenticatedHomeMapShell
       destinationMode
       exploreView={exploreView}
-      posts={posts}
+      posts={aiApplied?.signature === aiSearchSignature ? aiApplied.posts : posts}
       marketPosts={marketPosts}
       selectedPostId={selectedPostId}
       selectedPost={selectedPost}
@@ -1078,6 +1096,7 @@ function HomePageComponent() {
       onDetailLabelChange={handleDetailLabelChange}
       onAiSearchUpdate={applyAiSearchUpdate}
     />
+    </>
   )
 }
 

@@ -135,7 +135,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   exploreView = 'map',
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated } = useAuth()
-  const { setNearbyAnchor } = useSearch()
+  const { setNearbyAnchor, setNearbyCategory } = useSearch()
   const [searchParams, setSearchParams] = useSearchParams()
   const listingCatalog = useMemo(() => parseFiltersFromURL(searchParams).catalog, [searchParams])
   const marketMode = listingCatalog === 'market'
@@ -202,6 +202,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
   const nearbyContextKey = selectedPostId ?? selectedPlace?.placeId ?? ''
+  useEffect(() => { setNearbyCategory('food') }, [nearbyContextKey, setNearbyCategory])
   const nearbyAnchor = useMemo(() => nearbyPanelAnchor(
     selectedPostId, selectedPost ?? listingDetail, selectedPlace,
   ), [selectedPostId, selectedPost, listingDetail, selectedPlace])

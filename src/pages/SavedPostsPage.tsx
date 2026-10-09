@@ -13,6 +13,7 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
+import { RentalDecisionPanel } from '../components/ai/RentalDecisionPanel'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import { mapPostUrl } from '../lib/mapDeepLinks'
@@ -22,6 +23,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const { profile } = useAuth()
   const isRenter = profile?.role === UserRole.Renter
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
+  const [compareIds, setCompareIds] = useState<string[]>([])
   const [candidatesFor, setCandidatesFor] = useState<string | null>(null)
   const [candidates, setCandidates] = useState<RoommateCandidate[]>([])
   const [candLoading, setCandLoading] = useState(false)
@@ -38,6 +40,7 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const handleUnsave = async (postId: string) => {
     await unsavePost(postId)
     setPosts((prev) => prev.filter((p) => p.id !== postId))
+    setCompareIds(ids => ids.filter(id => id !== postId))
     if (candidatesFor === postId) {
       setCandidatesFor(null)
       setCandidates([])
@@ -81,6 +84,10 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
     <>
       <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
       <PageNotice message={actionMsg} tone="success" />
+      {compareIds.length >= 2 ? <RentalDecisionPanel postIds={compareIds} onUnavailable={ids => {
+        setCompareIds(current => current.filter(id => !ids.includes(id)))
+        setPosts(current => current.filter(post => !ids.includes(post.id)))
+      }} /> : null}
 
       {showLoader ? (
         disrupted
@@ -95,6 +102,8 @@ export function SavedPostsPage({ embedded = false }: { embedded?: boolean }) {
         <div className="grid-posts">
           {posts.map((post) => (
             <div key={post.id}>
+              <label><input type="checkbox" checked={compareIds.includes(post.id)} disabled={!compareIds.includes(post.id) && compareIds.length >= 3}
+                onChange={event => setCompareIds(ids => event.target.checked ? [...ids, post.id] : ids.filter(id => id !== post.id))} /> Chọn so sánh (2–3 tin)</label>
               <RentalPostCard
                 post={post}
                 showSave

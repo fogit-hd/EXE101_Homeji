@@ -324,7 +324,7 @@ export const parseAiSearch = (text: string) =>
     body: { text },
   })
 
-export const highlightRentalPosts = (data: { text?: string; maxResults?: number }) =>
+export const highlightRentalPosts = (data: { text?: string; maxResults?: number; intent?: AiParsedSearchCriteria }) =>
   apiRequest<AiHighlightResponse>('/api/ai/highlight-rental-posts', {
     method: 'POST',
     body: { text: data.text, maxResults: data.maxResults ?? 8 },

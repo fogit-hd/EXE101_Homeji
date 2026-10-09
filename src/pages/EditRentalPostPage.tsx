@@ -15,6 +15,7 @@ import { DeferredMapBlock, PageFrame } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
+import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { useAuth } from '../contexts/AuthContext'
@@ -265,6 +266,7 @@ export function EditRentalPostPage() {
       <PageNotice message={message} tone="success" />
 
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
+      {postId ? <RentalDraftAssistant postId={postId} title={title} description={description} onApply={(nextTitle, nextDescription) => { setTitle(nextTitle); setDescription(nextDescription) }} /> : null}
       <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">

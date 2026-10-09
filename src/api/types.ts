@@ -603,6 +603,14 @@ export interface AiParsedSearchCriteria {
   areaMin: number | null
   areaMax: number | null
   criteria: string[]
+  budgetKind?: 'rent' | 'total'
+  occupants?: number | null
+  excludeShared?: boolean
+  requiredAmenities?: string[]
+  excludedAmenities?: string[]
+  unknown?: string[]
+  destination?: string | null
+  maxCommuteMinutes?: number | null
 }
 
 export interface AiHighlightedRentalPost {
@@ -610,6 +618,9 @@ export interface AiHighlightedRentalPost {
   score: number
   reasons: string[]
   tag: string
+  evidence?: Array<{ postId: string; sourceType: string; field: string; text: string; updatedAt: string }>
+  userFit?: number
+  commercialBoost?: number
 }
 
 export interface AiHighlightResponse {
@@ -619,6 +630,9 @@ export interface AiHighlightResponse {
   mapFocusAddress: string | null
   mapFocusLatitude: number | null
   mapFocusLongitude: number | null
+  needsConfirmation?: AiHighlightedRentalPost[]
+  clarifications?: string[]
+  compareRequested?: boolean
 }
 
 export interface ChatbotMessage {

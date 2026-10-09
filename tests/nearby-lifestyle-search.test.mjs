@@ -26,7 +26,7 @@ test('nearby lifestyle search uses Places API New with bounded, distance-ranked 
   assert.match(placeSearchSource, /includedPrimaryTypes/)
   assert.match(placeSearchSource, /rankPreference:/)
   assert.match(placeSearchSource, /maxResultCount:/)
-  assert.match(placeSearchSource, /NEARBY_CACHE_TTL_MS/)
+  assert.doesNotMatch(placeSearchSource, /NEARBY_CACHE_TTL_MS|nearbySearchCache/)
 })
 
 test('omnibox offers useful nearby categories around the rental search anchor', () => {
@@ -34,7 +34,8 @@ test('omnibox offers useful nearby categories around the rental search anchor', 
   assert.match(omniboxSource, /NEARBY_PLACE_CATEGORY_OPTIONS\.map/)
   assert.match(placeSearchSource, /Ăn uống/)
   assert.match(placeSearchSource, /Cà phê/)
-  assert.match(placeSearchSource, /Tạp hóa/)
+  assert.match(placeSearchSource, /Cửa hàng \/ tạp hóa/)
+  assert.match(placeSearchSource, /Nhà thuốc/)
   assert.match(placeSearchSource, /Y tế/)
   assert.match(omniboxSource, /Gần khu vực đang tìm/)
   assert.match(omniboxSource, /Dữ liệu Google Places/)
@@ -68,4 +69,17 @@ test('missing and out-of-range locations cannot start a nearby request', () => {
     assert.equal(nearbyPanelAnchor('room', { id: 'room', title: 'Room', latitude, longitude: 106 }, null), null)
   }
   assert.equal(nearbyPanelAnchor(null, null, { placeId: 'p', name: 'P', location: null }), null)
+})
+
+test('twenty successive rental pins always anchor to the selected room', () => {
+  let previous = null
+  for (let index = 0; index < 20; index += 1) {
+    const room = { id: `room-${index}`, title: `Room ${index}`, latitude: 10.8 + index / 1000, longitude: 106.8 + index / 1000 }
+    const anchor = nearbyPanelAnchor(room.id, room, null)
+    assert.equal(anchor.contextKey, room.id)
+    assert.equal(anchor.lat, room.latitude)
+    assert.equal(anchor.lng, room.longitude)
+    if (previous) assert.equal(nearbyPanelAnchor(room.id, previous, null), null)
+    previous = room
+  }
 })
