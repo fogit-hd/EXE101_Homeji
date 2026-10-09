@@ -79,3 +79,10 @@ Người dùng đã chọn hai nhu cầu: đang tìm chỗ ở hoặc đã có c
 - Nghiên cứu nguồn chính thức/GitHub: docs/research/homeji-ui-motion-2026-10-09.md. Không sao chép template bên ngoài. Đã tạo template cá nhân Homeji Cool Teal từ thiết kế cũ cải thiện và bản xem tương tác tại output/visualizations/homeji-design-language.html.
 
 Routes nâng cao và lịch sử AI dài hạn tiếp tục tắt. Trạng thái phát hành được ghi bổ sung sau khi Render và bundle public xác nhận.
+
+### Xác nhận phát hành cuối
+
+- Backend `20bbdc4` được Render xác nhận là Last successfully deployed commit / Live. Health live và ready HTTP 200; hai endpoint /api/roommates và /api/roommates/me trả 401 khi không đăng nhập.
+- Frontend `2a78fa6` đã push main; production phục vụ `/assets/index-CTHcJln_.js` và `/assets/index-CU-jXlma.css`. Bundle có API hồ sơ, lời mời độc lập, hai nhu cầu và consent; CSS có teal và Be Vietnam Pro. Browser production xác nhận font computed Be Vietnam Pro và panel AI mới ở trang login.
+- Ảnh production: output/verification/homeji-login-ai-production-20261009.png. Ảnh mobile/directory và các lỗi–retry dùng fixture local; không dùng chúng làm bằng chứng dữ liệu production. Không thử hai tài khoản Supabase thật đồng thời hoặc thiết bị touch thật.
+- Đã hoàn tất phạm vi Tìm bạn độc lập + cải thiện giao diện/chuyển động + nghiên cứu + template cá nhân + bản xem tương tác của mục tiêu này. Đây không phải tuyên bố mọi ý tưởng tương lai trong tài liệu AI hoặc mọi cổng thanh toán đã được kiểm thử production.
