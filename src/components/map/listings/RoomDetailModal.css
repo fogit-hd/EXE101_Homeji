@@ -11,14 +11,14 @@
 }
 
 .room-detail {
-  --rd-forest: #14271f;
-  --rd-text: #1c241f;
-  --rd-muted: #716a61;
-  --rd-border: #d9d2c5;
-  --rd-surface: #fffdf8;
-  --rd-bg: #f5f0e6;
+  --rd-forest: var(--text-heading);
+  --rd-text: var(--text-primary);
+  --rd-muted: var(--text-secondary);
+  --rd-border: var(--border);
+  --rd-surface: var(--surface-elevated);
+  --rd-bg: var(--surface-muted);
   --rd-orange: #e8603c;
-  --rd-skel: #eee8dc;
+  --rd-skel: var(--surface-input);
   display: flex;
   flex-direction: column;
   width: min(1080px, 100%);
@@ -181,7 +181,7 @@
   border: 0;
   border-radius: 16px;
   background: #17201b;
-  color: #fffdf8;
+  color: #fff;
 }
 
 .room-photo-viewer[open] {
@@ -213,7 +213,7 @@
   border: 1px solid #69756d;
   border-radius: 8px;
   background: #28382e;
-  color: #fffdf8;
+  color: #fff;
   font: inherit;
   cursor: pointer;
 }

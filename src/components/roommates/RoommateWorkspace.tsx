@@ -3,9 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import { UserRole } from '../../api/types'
 import { useAuth } from '../../contexts/AuthContext'
 import { ProfilePage } from '../../pages/ProfilePage'
-import { SavedPostsPage } from '../../pages/SavedPostsPage'
 import { RoommateInvitationsPage } from '../../pages/RoommateInvitationsPage'
 import { RoommateRooms } from './RoommateRooms'
+import { RoommatePeople } from './RoommatePeople'
 import './RoommateWorkspace.css'
 
 type Tab = 'people' | 'rooms' | 'invitations'
@@ -43,14 +43,11 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
           document.getElementById(`roommate-tab-${TABS[next].id}`)?.focus()
         }} onClick={() => selectTab(item.id)}>{item.label}</button>)}
     </div>
-    <div role="tabpanel" id={`roommate-panel-${tab}`} aria-labelledby={`roommate-tab-${tab}`}>
+    <div key={tab} className="roommate-workspace__panel" role="tabpanel" id={`roommate-panel-${tab}`} aria-labelledby={`roommate-tab-${tab}`}>
       {tab === 'rooms' ? <RoommateRooms initialKeyword={params.get('roommateQuery')?.slice(0, 200) ?? ''}
         key={`${profile?.id ?? 'guest'}:${profile?.maxBudget ?? 'all'}:${params.get('roommateQuery') ?? ''}`} /> : null}
-      {tab === 'people' ? isRenter ? <>
-        <h2>Người cùng quan tâm phòng đã lưu</h2>
-        <p>Chọn “Gợi ý người ở ghép” dưới phòng đã lưu để xem độ phù hợp và gửi lời mời. Cả hai cần lưu cùng phòng.</p>
-        <SavedPostsPage embedded roommateOnly />
-      </> : <p>Tìm bạn ở ghép dành cho hồ sơ người thuê.</p> : null}
+      {tab === 'people' ? isRenter ? <RoommatePeople onViewInvitations={() => selectTab('invitations')} />
+        : <p>Tìm bạn ở ghép dành cho hồ sơ người thuê.</p> : null}
       {tab === 'invitations' ? isRenter ? <RoommateInvitationsPage embedded onOpenConversation={onOpenConversation} />
         : <p>Lời mời ở ghép dành cho hồ sơ người thuê.</p> : null}
     </div>

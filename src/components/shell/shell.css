@@ -178,7 +178,7 @@
   height: 44px;
   padding: 0 16px;
   border-bottom: 2px solid transparent;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -334,7 +334,7 @@
 
 .hj-account__role {
   margin: 2px 8px 10px;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -397,7 +397,7 @@
 .hj-mega__group-label,
 .hj-mega__group-toggle {
   margin: 0 0 8px;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -425,7 +425,7 @@
 
 .hj-mega__cluster {
   margin: 10px 8px 2px;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -514,7 +514,7 @@
 
 .hj-search-context__scope {
   margin: 4px 0 0;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 18px;
 }
@@ -555,7 +555,7 @@
 .hj-search__icon {
   display: grid;
   flex: 0 0 auto;
-  color: #716a61;
+  color: var(--text-secondary);
 }
 
 .hj-search__input {
@@ -571,7 +571,7 @@
 }
 
 .hj-search__input::placeholder {
-  color: #716a61;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -582,7 +582,7 @@
   height: 32px;
   border: 0;
   background: transparent;
-  color: #716a61;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -657,12 +657,12 @@
 }
 
 .hj-search__suggest button:hover {
-  background: #f5f0e6;
+  background: var(--surface-muted);
 }
 
 .hj-search__suggest span,
 .hj-search__suggest-note {
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -685,7 +685,7 @@
   inset: 0;
   z-index: 80;
   padding: 16px;
-  background: #f5f0e6;
+  background: var(--surface-muted);
 }
 
 .hj-search-overlay .hj-search-slot {
@@ -831,7 +831,7 @@
   padding: 0 0 8px;
   border: 0;
   background: transparent;
-  color: #716a61;
+  color: var(--text-secondary);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -873,7 +873,7 @@
 .hj-notify__empty {
   margin: 0;
   padding: 28px 8px;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 14px;
   text-align: center;
 }
@@ -945,7 +945,7 @@
 }
 
 .hj-notify .notification-item small {
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -987,7 +987,7 @@
 
 .hj-notify .notification-item__unread-label {
   background: var(--text-heading);
-  color: #fffdf8;
+  color: #fff;
 }
 
 .hj-notify .notification-item__type {

@@ -50,7 +50,7 @@
 }
 
 .feature-workspace.is-marketplace {
-  background: #f5f0e6;
+  background: var(--surface-muted);
 }
 
 .feature-workspace.is-marketplace .feature-workspace__frame,

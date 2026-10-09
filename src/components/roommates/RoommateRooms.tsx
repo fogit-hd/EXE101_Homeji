@@ -79,7 +79,7 @@ export function RoommateRooms({ initialKeyword = '' }: { initialKeyword?: string
   }
 
   return <section aria-label="Tìm phòng ở ghép">
-    <p>Phòng đang tìm thêm người và còn chỗ trống. Lưu phòng quan tâm để tìm người cùng ở.</p>
+    <p>Phòng đang tìm thêm người và còn chỗ trống. Bạn có thể lưu để xem lại hoặc kết nối trước ở tab Tìm bạn.</p>
     <form className="roommate-workspace__filters" onSubmit={search}>
       <label>Đường, trường hoặc tên phòng<input className="form-input" value={draftKeyword}
         maxLength={200} onChange={event => setDraftKeyword(event.target.value)} placeholder="VD: Linh Trung, UEL" /></label>

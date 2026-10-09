@@ -394,10 +394,12 @@ export interface RoommateCandidate {
 
 export interface RoommateInvitation {
   id: string
-  rentalPostId: string
-  rentalPostTitle: string
+  rentalPostId: string | null
+  rentalPostTitle: string | null
   senderId: string
   receiverId: string
+  senderDisplayName?: string | null
+  receiverDisplayName?: string | null
   status: RoommateInvitationStatus
   conversationId: string | null
   createdAt: string

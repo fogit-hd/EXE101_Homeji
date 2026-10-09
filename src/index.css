@@ -1,18 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
 
 :root {
   --font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   /* ── Homeji product tokens (logged-in, desktop #19323b sidebar) ── */
-  --hj-paper: #f3f7fa;
-  --hj-ink: #19323b;
+  --hj-paper: var(--surface-muted);
+  --hj-ink: var(--text-heading);
   --hj-accent: #087f8c;
-  --hj-cream: #ffffff;
-  --hj-border: #dce5eb;
-  --hj-muted: #5b6b76;
+  --hj-cream: var(--surface);
+  --hj-border: var(--border);
+  --hj-muted: var(--text-secondary);
   --hj-soft: #82929c;
-  --hj-nav-idle: #dce2de;
-  --hj-nav-line: #334039;
-  --hj-accent-soft: #e4f4f5;
+  --hj-nav-idle: #dce5eb;
+  --hj-nav-line: #334854;
+  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
   --hj-radius-sm: 8px;
   --hj-radius-md: 14px;
   --hj-radius-lg: 22px;
@@ -97,36 +97,39 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --dur-fast: 150ms;
+  --hj-brand-coral: #c24933;
+  --hj-brand-coral-soft: #fff0eb;
   --dur-med: 280ms;
   --dur-slow: 420ms;
   /* Map chrome fill — never brand green (prevents GPU clear flash). */
   --map-canvas-bg: #e7eef3;
   color-scheme: light;
   font-family: var(--font-ui);
-  line-height: 1.5;
+  line-height: 1.6;
+  font-synthesis: none;
   color: var(--text-primary);
   background: var(--surface-muted);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-/* Soft warm dark — not a stiff charcoal admin console. */
+/* Match system appearance with the same slate and teal semantic roles. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --grab-green: #1ad66a;
-    --grab-green-hover: #14b85a;
+    --grab-green: #62cbd2;
+    --grab-green-hover: #8edce0;
     --grab-blue: #4b9fff;
     --grab-blue-hover: #2f86f0;
-    --text-primary: #e8eee9;
-    --text-secondary: #a3aea7;
-    --text-heading: #f4f7f5;
-    --border: #3a433d;
-    --surface: #1c221e;
-    --surface-muted: #141916;
-    --surface-input: #2a312c;
-    --surface-elevated: #242b26;
-    --surface-glass: rgba(28, 34, 30, 0.94);
+    --text-primary: #e6edf2;
+    --text-secondary: #a8b9c4;
+    --text-heading: #f2f7fa;
+    --border: #354955;
+    --surface: #182b36;
+    --surface-muted: #10212b;
+    --surface-input: #223945;
+    --surface-elevated: #1d333f;
+    --surface-glass: rgba(24, 43, 54, 0.94);
     --overlay-scrim: rgba(0, 0, 0, 0.5);
     --shadow-color: 0, 0, 0;
     --maps-blue: #8ab4f8;
@@ -140,25 +143,25 @@
     --success: #81c995;
     --error-soft: rgba(242, 139, 130, 0.14);
     --success-soft: rgba(129, 201, 149, 0.14);
-    --map-canvas-bg: #1f2622;
+    --map-canvas-bg: #1b303b;
   }
 }
 
 html[data-theme='dark'] {
   color-scheme: dark;
-  --grab-green: #1ad66a;
-  --grab-green-hover: #14b85a;
+  --grab-green: #62cbd2;
+  --grab-green-hover: #8edce0;
   --grab-blue: #4b9fff;
   --grab-blue-hover: #2f86f0;
-  --text-primary: #e8eee9;
-  --text-secondary: #a3aea7;
-  --text-heading: #f4f7f5;
-  --border: #3a433d;
-  --surface: #1c221e;
-  --surface-muted: #141916;
-  --surface-input: #2a312c;
-  --surface-elevated: #242b26;
-  --surface-glass: rgba(28, 34, 30, 0.94);
+  --text-primary: #e6edf2;
+  --text-secondary: #a8b9c4;
+  --text-heading: #f2f7fa;
+  --border: #354955;
+  --surface: #182b36;
+  --surface-muted: #10212b;
+  --surface-input: #223945;
+  --surface-elevated: #1d333f;
+  --surface-glass: rgba(24, 43, 54, 0.94);
   --overlay-scrim: rgba(0, 0, 0, 0.5);
   --shadow-color: 0, 0, 0;
   --maps-blue: #8ab4f8;
@@ -172,7 +175,7 @@ html[data-theme='dark'] {
   --success: #81c995;
   --error-soft: rgba(242, 139, 130, 0.14);
   --success-soft: rgba(129, 201, 149, 0.14);
-  --map-canvas-bg: #1f2622;
+  --map-canvas-bg: #1b303b;
 }
 
 html[data-theme='light'] {
@@ -299,6 +302,13 @@ body {
   --nav-height: 0px;
   /* Vietnamese-capable stack (Be Vietnam Pro already imported in this file). */
   font-family: var(--font-ui);
+  /* Rebind aliases here so inherited root values cannot retain the OS dark palette. */
+  --hj-paper: var(--surface-muted);
+  --hj-ink: var(--text-heading);
+  --hj-cream: var(--surface);
+  --hj-border: var(--border);
+  --hj-muted: var(--text-secondary);
+  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
   /* Logged-in product stays cool light — not OS dark admin chrome */
   color-scheme: light;
   --grab-green: #087f8c;

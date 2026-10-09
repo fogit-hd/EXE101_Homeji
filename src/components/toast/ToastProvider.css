@@ -16,9 +16,9 @@
   gap: 10px;
   padding: 10px 10px 10px 12px;
   border-radius: 10px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   background: var(--surface-elevated);
-  color: #14271f;
+  color: var(--text-heading);
   box-shadow: 0 8px 24px rgba(20, 39, 31, 0.12);
   pointer-events: auto;
 }
@@ -49,9 +49,9 @@
 }
 
 .app-toast--info {
-  border-color: #d9d2c5;
+  border-color: var(--border);
   background: var(--surface-elevated);
-  color: #14271f;
+  color: var(--text-heading);
 }
 
 .app-toast__close {

@@ -9,7 +9,7 @@
   place-items: center;
   overflow: hidden;
   color: #f4f7f5;
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   background: #07140f;
 }
 
@@ -259,7 +259,7 @@
   border-radius: 0;
   background: none;
   color: #fff;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 1em;
   font-weight: 600;
   vertical-align: baseline;
@@ -277,7 +277,7 @@
   border: none;
   background: none;
   padding: 0;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -306,7 +306,7 @@
   border: none;
   background: none;
   color: rgba(255, 255, 255, 0.55);
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -332,7 +332,7 @@
   padding: 10px 4px;
   background: none;
   color: rgba(255, 255, 255, 0.88);
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -365,7 +365,7 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.86rem;
   color: rgba(255, 255, 255, 0.72);
 }
@@ -501,7 +501,7 @@
   max-width: 32ch;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-ui);
   font-style: italic;
   font-weight: 500;
   font-size: 0.88em;
@@ -524,7 +524,7 @@
   padding: 0;
   border: none;
   background: none;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-ui);
   font-style: italic;
   font-weight: 500;
   font-size: 0.9em;
@@ -574,7 +574,7 @@
   margin: 0;
   max-width: none;
   text-align: left;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(0.95rem, 1.25vw, 1.08rem);
   font-weight: 500;
   font-style: italic;
@@ -585,7 +585,7 @@
 }
 
 .auth-cinema__msg--ask {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-ui);
   font-style: italic;
   font-weight: 500;
   font-size: inherit;
@@ -755,7 +755,7 @@
   cursor: pointer;
   background: transparent;
   color: #e8fff0;
-  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -961,7 +961,7 @@
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
-  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.95rem;
   line-height: 1.5;
   font-weight: 600;
@@ -1028,7 +1028,7 @@
   visibility: hidden;
   pointer-events: none;
   white-space: nowrap;
-  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.95rem;
   line-height: 1.5;
   font-weight: 600;
@@ -1181,7 +1181,7 @@
   border-radius: 0;
   background: transparent;
   color: #fff;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.95em;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -1448,7 +1448,7 @@
 .auth-cinema__story-error {
   margin: 0.4em 0 0;
   padding-left: 1.7em;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-ui);
   font-style: italic;
   font-size: 0.95rem;
   color: #ffb4a8;
@@ -1517,7 +1517,7 @@
 
 .auth-cinema__title {
   margin: 0 0 6px;
-  font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 1.55rem;
   font-weight: 700;
   letter-spacing: -0.03em;

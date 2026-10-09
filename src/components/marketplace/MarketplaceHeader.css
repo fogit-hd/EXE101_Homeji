@@ -1,11 +1,11 @@
 .marketplace-header {
-  --mh-ink: #14271f;
+  --mh-ink: var(--text-heading);
   --mh-ink-soft: #28473d;
-  --mh-muted: #716a61;
-  --mh-line: #d9d2c5;
+  --mh-muted: var(--text-secondary);
+  --mh-line: var(--border);
   --mh-mint: #fff0e9;
   --mh-accent: #a43c22;
-  --mh-paper: #f5f0e6;
+  --mh-paper: var(--surface-muted);
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -45,7 +45,7 @@
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
-  color: #14271f;
+  color: var(--text-heading);
 }
 
 .marketplace-header__utilities {

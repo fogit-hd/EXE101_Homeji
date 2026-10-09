@@ -52,7 +52,11 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
   const { showLoader, onIntroComplete, error, disrupted } = usePersistentLoad(loadFn)
 
   const updateItem = (updated: RoommateInvitation) => {
-    setInvitations((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
+    setInvitations((prev) => prev.map((i) => (i.id === updated.id ? {
+      ...updated,
+      senderDisplayName: updated.senderDisplayName ?? i.senderDisplayName,
+      receiverDisplayName: updated.receiverDisplayName ?? i.receiverDisplayName,
+    } : i)))
   }
 
   return (
@@ -76,7 +80,7 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
       ) : invitations.length === 0 ? (
         <div className="roommate-empty">
           <p className="roommate-empty__title">Chưa có lời mời nào</p>
-          <p className="roommate-empty__copy">Lưu tin ở ghép từ Khám phá và gửi lời mời ở ghép từ đó.</p>
+          <p className="roommate-empty__copy">Mở tab Tìm bạn để kết nối theo nhu cầu và lối sống, kể cả khi chưa chọn phòng.</p>
         </div>
       ) : (
         <div className="roommate-grid">
@@ -97,21 +101,21 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
                 <div className="roommate-card__body">
                   <div className="roommate-card__top">
                     <p className="roommate-card__name">
-                      {isReceiver ? 'Người gửi lời mời' : 'Người được mời'}
+                      {isReceiver ? inv.senderDisplayName || 'Người gửi lời mời' : inv.receiverDisplayName || 'Người được mời'}
                     </p>
                     <span className={`roommate-card__status ${statusClass}`}>
                       {invitationStatusLabel[inv.status]}
                     </span>
                   </div>
-                  <p className="roommate-card__post">{inv.rentalPostTitle}</p>
+                  <p className="roommate-card__post">{inv.rentalPostTitle || 'Kết nối tìm bạn cùng ở'}</p>
                   <p className="roommate-card__role">
                     {isReceiver ? 'Bạn được mời' : isSender ? 'Bạn đã gửi lời mời' : 'Lời mời'}
                   </p>
                   <p className="roommate-card__date">{formatDate(inv.createdAt)}</p>
                   <div className="roommate-card__actions">
-                    <Link to={mapPostUrl(inv.rentalPostId)} className="btn btn-ghost btn-sm">
+                    {inv.rentalPostId ? <Link to={mapPostUrl(inv.rentalPostId)} className="btn btn-ghost btn-sm">
                       Xem tin đăng
-                    </Link>
+                    </Link> : null}
                     {inv.status === RoommateInvitationStatus.Accepted && (
                       <button
                         type="button"

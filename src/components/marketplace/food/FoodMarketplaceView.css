@@ -1,19 +1,19 @@
 /* Food marketplace — Figma node 26:2263 (Homeji — Chợ đồ ăn) */
 
 .marketplace-page--food {
-  --food-ink: #14271f;
+  --food-ink: var(--text-heading);
   --food-ink-soft: #1c241f;
-  --food-muted: #716a61;
-  --food-line: #d9d2c5;
-  --food-paper: #f5f0e6;
-  --food-mint: #fffdf8;
+  --food-muted: var(--text-secondary);
+  --food-line: var(--border);
+  --food-paper: var(--surface-muted);
+  --food-mint: var(--surface-elevated);
   --food-leaf: #e1f4e8;
   --food-leaf-deep: #24543e;
   --food-accent: #a43c22;
   --food-accent-soft: #fff0e9;
   --food-gold: #f8d76d;
   --food-card-shadow: none;
-  background: #f5f0e6;
+  background: var(--surface-muted);
   color: var(--food-ink);
   font-family: var(--font-ui);
 }
@@ -72,7 +72,7 @@
   flex: 1 1 280px;
   min-height: 48px;
   padding: 0 16px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-elevated);
 }
@@ -149,7 +149,7 @@
   min-height: 236px;
   border-radius: 16px;
   overflow: hidden;
-  background: #14271f;
+  background: var(--text-heading);
 }
 
 .food-featured__copy {
@@ -263,12 +263,12 @@
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
-  color: #14271f;
+  color: var(--text-heading);
 }
 
 .food-nearby-head__note {
   margin: 0;
-  color: #716a61;
+  color: var(--text-secondary);
   font: 400 13px/18px var(--font-ui);
 }
 
@@ -304,7 +304,7 @@
   display: flex;
   flex-direction: column;
   min-height: 240px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   background: var(--surface-elevated);
@@ -426,13 +426,13 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
 .food-card__seller {
   margin: 0;
-  color: #716a61;
+  color: var(--text-secondary);
   font: 400 13px/18px var(--font-ui);
 }
 
@@ -633,7 +633,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface-elevated);
 }

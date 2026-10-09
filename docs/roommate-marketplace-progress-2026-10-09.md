@@ -66,3 +66,16 @@ Backend `b5cdc44`, frontend `aa825fa`:
 - Frontend aa825fa đã được xác nhận ở bundle public `/assets/index-DgMTnjZv.js`: API liên hệ theo đơn và nội dung nhận món tại bếp đã có.
 - Frontend `61729eb` bổ sung khóa thao tác / bắt lỗi / khôi phục nút cho Đánh dấu đã bán và Ẩn tin. Browser fixture cho Đánh dấu đã bán gặp 503: nút vẫn dùng lại được; retry thành công, danh sách tải lại có badge Đã bán và bỏ nút chỉnh trạng thái. Ảnh `output/verification/marketplace-inventory-retry-fixture-20261009.png`. Build, lint và 8 tests frontend vẫn đạt.
 - Bundle public cuối đã kiểm tra `/assets/index-cslymMxB.js`, có order-chat và xử lý lỗi inventory mới. Luồng Tìm bạn độc lập với phòng vẫn chờ người dùng chọn mô hình; không đánh dấu toàn mục tiêu hoàn tất.
+
+## Tìm bạn độc lập và giao diện — cập nhật sau khi đã làm rõ
+
+Người dùng đã chọn hai nhu cầu: đang tìm chỗ ở hoặc đã có chỗ ở muốn tìm người ghép. Cả hai không cần sở hữu tin phòng hay cùng lưu một phòng. Các ghi chú “chờ làm rõ” phía trên là lịch sử, không còn là trạng thái hiện tại.
+
+- Backend `20bbdc4`: API hồ sơ khám phá và danh sách có phân trang/từ khóa/nhu cầu; mặc định riêng tư, chỉ xuất hiện khi đồng ý. Tắt hiển thị cũng ẩn khỏi gợi ý theo phòng đã lưu. Lời mời độc lập chống trùng cả hai chiều; chấp nhận mở cuộc trò chuyện lưu bền vững. Giữ lời mời gắn phòng cũ và tên người tham gia.
+- Frontend: form chọn hai nhu cầu, giới thiệu, đồng ý hiển thị; tìm theo trường/khu vực/tên; gửi lời mời, retry lỗi và chuyển sang tab lời mời. Không tạo hồ sơ hay tin nhắn production để kiểm thử.
+- Giữ bố cục Homeji, thống nhất Be Vietnam Pro và nền trắng lạnh/slate với điểm nhấn teal. Viền AI 2 px, màu loang vào trong 8–12 px; popup và tab chuyển nhẹ, hover 2 px. Chế độ giảm chuyển động dừng animation. Gallery thêm vuốt/kéo ngang khi chưa zoom; giữ nút và phím mũi tên, giữ kéo để pan khi đã zoom. Cuộn trang vẫn native.
+- PostgreSQL riêng: 312 unit + 97 API/database tests đạt, 0 skipped. Kiểm tra thật gửi/đọc tin nhắn của hai người, chặn người ngoài; migration và tính duy nhất cặp lời mời. Bằng chứng: C:\Homeji\output\quality\local-a347c26f134f4b32ad76c2141d8fcfe7\tests\local_net9.0_20261009142922.trx.
+- Frontend build, lint các file TypeScript sửa và 16 tests đạt. Browser fixture kiểm tra lưu/reload, lỗi 503 rồi retry, lọc UEL, lời mời không gắn phòng, gallery kéo ngang và phím. Edge 390 px không tràn ngang; reduced-motion dừng animation panel/tab. Chưa đo hiệu năng trên điện thoại thật; cảnh báo bundle lớn còn tồn tại.
+- Nghiên cứu nguồn chính thức/GitHub: docs/research/homeji-ui-motion-2026-10-09.md. Không sao chép template bên ngoài. Đã tạo template cá nhân Homeji Cool Teal từ thiết kế cũ cải thiện và bản xem tương tác tại output/visualizations/homeji-design-language.html.
+
+Routes nâng cao và lịch sử AI dài hạn tiếp tục tắt. Trạng thái phát hành được ghi bổ sung sau khi Render và bundle public xác nhận.
