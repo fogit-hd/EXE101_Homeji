@@ -15,7 +15,6 @@ import { DeferredMapBlock, PageFrame } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
-import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { useAuth } from '../contexts/AuthContext'
@@ -24,6 +23,8 @@ import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
 import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabel } from '../lib/labels'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
+import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
+import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -100,6 +101,13 @@ export function EditRentalPostPage() {
         latitude: isValidCoord(latNum, lngNum) ? latNum : Number(latitude),
         longitude: isValidCoord(latNum, lngNum) ? lngNum : Number(longitude),
         amenities: amenities.map((a) => normalizeAmenityCode(a)),
+        // PUT replaces these terms even though this form does not edit them.
+        electricityPrice: post?.electricityPrice ?? 0,
+        waterPrice: post?.waterPrice ?? 0,
+        internetPrice: post?.internetPrice ?? 0,
+        maxOccupants: post?.maxOccupants ?? 1,
+        availableSlots: post?.availableSlots ?? 1,
+        houseRules: post?.houseRules ?? undefined,
         availableFrom: availableFrom || undefined,
         transferKind: type === RentalPostType.RoomTransfer ? transferKind : undefined,
         originalLeaseEndsOn: type === RentalPostType.RoomTransfer ? originalLeaseEndsOn : undefined,
@@ -130,6 +138,7 @@ export function EditRentalPostPage() {
   const handleAddMedia = async () => {
     if (!postId || !profile || saving || uploadingMedia || mediaFiles.length === 0) return
     setError('')
+    setMessage('')
     setUploadingMedia(true)
     try {
       const remainingSlots = Math.max(0, 10 - (post?.media.length ?? 0))
@@ -152,9 +161,10 @@ export function EditRentalPostPage() {
           isThumbnail: (updated?.media.length ?? 0) === 0,
           sortOrder: updated?.media.length ?? 0,
         })
+        // Keep acknowledged attachments visible even if a later request fails.
+        setPost(updated)
+        setMediaFiles((remaining) => remaining.slice(1))
       }
-      setPost(updated)
-      setMediaFiles([])
       setMessage(`Đã tải lên ${uploaded.length} ảnh.`)
     } catch (err) {
       setError(getErrorMessage(err, 'Thêm ảnh thất bại'))
@@ -266,8 +276,11 @@ export function EditRentalPostPage() {
       <PageNotice message={message} tone="success" />
 
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
-      {postId ? <RentalDraftAssistant postId={postId} title={title} description={description} onApply={(nextTitle, nextDescription) => { setTitle(nextTitle); setDescription(nextDescription) }} /> : null}
       <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
+        {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant facts={{ typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
+          amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0 }}
+          title={title} description={description} disabled={saving || uploadingMedia}
+          onApply={draft => { setTitle(draft.title); setDescription(draft.description) }} /> : null}
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">
             <div className="room-transfer-form__notice">
@@ -429,9 +442,10 @@ export function EditRentalPostPage() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
+              disabled={saving || uploadingMedia}
               onChange={(event) => setMediaFiles(Array.from(event.target.files ?? []))}
             />
-            <button type="button" className="btn btn-secondary" disabled={uploadingMedia || mediaFiles.length === 0} onClick={() => void handleAddMedia()}>
+            <button type="button" className="btn btn-secondary" disabled={saving || uploadingMedia || mediaFiles.length === 0 || (post?.media.length ?? 0) >= 10} onClick={() => void handleAddMedia()}>
               {uploadingMedia ? 'Đang tải...' : `Tải ${mediaFiles.length || ''} ảnh`}
             </button>
           </div>

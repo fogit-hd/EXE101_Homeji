@@ -76,9 +76,125 @@ User changes in the payment workflow and backend import notes remain intact. The
 - Complete HTTP/browser rental create/edit/upload/submit with controlled non-production persistence. Actual backend service/repository persistence and validation are now covered; file upload/transport/authentication and migrations are not.
 - Responsive checks of remaining feature panels/content-loaded administrative tabs. Admin overview/maintenance and payment-waiting routes have now been checked at 320 px, in addition to messages, sale forms and inventory controls; both Profile tabs at 390 px.
 - Review remaining hard-coded dark card surfaces and text in administrative/less-used screens against rendered contrast.
-- Actual authenticated production subscription display comparison for the affected account (aggregate SQL alone cannot prove that account's UI is fixed).
+- The current authenticated account's subscription comparison is now verified as described below; historical behavior for an unidentified Pro Max account is not established.
 - Broader production smoke checks beyond the observed home/profile/subscription pages; coordinated frontend/backend deployment is now live.
 
 ## Read-only production subscription findings
 
 At the checked database time, six active Premium records had package `PREMIUM_90` / “Homeji Premium 90 ngày”; no record was named Pro Max. Ten completed Premium payments all had linked subscription rows. These are aggregate findings, not a diagnosis of an unidentified individual account. No rights were granted or payment states changed.
+
+## Current follow-up: no Docker required
+
+The user explicitly requested continuing without Docker. Docker is not required for
+the application or deployment and is not a gate for UI/build/unit/API verification.
+The optional isolated PostgreSQL HTTP cases remain unverified; no production writes
+are used to substitute for them. Backend integration README now records independent
+test commands and an existing local PostgreSQL option without installing a server.
+
+- Re-run on current sources: frontend build succeeds; all 84 frontend tests pass;
+  backend application 133 pass; API integration 71 pass and 8 database-dependent cases
+  skip. Skips do not prove persistence, JWT authentication, file upload or migrations.
+- Latest deployed color checkpoint before this follow-up: frontend
+  `0c24765dde9ffd1e406843ea0fc6e7bb8c8c68d8`, Render
+  `dep-db0ump0jo6nc73a19s3g` Live. Populated production food at 320 px has 21 cards,
+  corrected peach featured caption, dark green prices and white-on-burnt-orange actions.
+  Production wallet captions/actions and persisted goods category filters were also
+  verified, superseding the pending-live notes above.
+- Current authenticated production account displays Homeji Premium 90 ngày, expiry
+  00:51 12 October 2026 (UTC+7). Read-only SQL finds exactly one matching displayed-name
+  profile with active `PREMIUM_90` and expiry `2026-10-11 17:51:04.940231+00`.
+  Package and localized expiry match. No entitlement/payment mutation was performed.
+  This establishes the observed account, not an invented Pro Max package.
+- Additional actual production inspection finds two rental-owner cards at 320 px:
+  action groups consume the flex row, content width is 0 px, document width 440 px.
+  The rental card now has a dedicated class: desktop actions are bounded to 40% and
+  stack below content at <=768 px. Notification popup styling is unchanged.
+  Local fixture after correction: content/actions each 240 px at viewport 320,
+  document width 305 plus scrollbar gutter; desktop 1280 has content 727.2 px and
+  actions 320 px, document width 1280. No rental status action was submitted.
+  Screenshot: `output/verification/rental-owner-card-mobile-fixed.jpg`.
+
+The rental-card layout is now verified live in merged release
+`ae4a94d32109913facd018f366170553147241ab`, Render deploy
+`dep-db15ghbtqb8s738vlhhg` (Live, 46.3 seconds). It preserves the user's newer
+`7dcc36c` changes. Both real rental-owner cards at 320 px have content/actions 240 px,
+document 305 px plus gutter, and the shared footer. Screenshot:
+`output/verification/production-rental-owner-card-mobile-fixed.jpg`.
+Full completion
+is not asserted; remaining rendered states and controlled upload/submit evidence stay
+in scope, with optional database verification clearly separated from Docker availability.
+
+## Rental editing: preserve existing terms
+
+The edit form's PUT payload omitted electricity/water/internet prices, max occupants,
+available slots and house rules. The backend DTO assigns defaults to omitted fields
+and `RentalPostService.UpdateAsync` passes every field to `UpdateDetails`, so editing
+only a title could overwrite existing rental terms. These fields are now copied from
+the loaded post; legacy payloads lacking them retain backend-compatible defaults.
+No new business rule or database migration is introduced.
+
+`node --test tests/rental-edit-preservation.test.mjs` executes the actual
+`persistDraft` function body with a captured API boundary. Before the fix both cases
+failed (electricityPrice undefined instead of 3500 / 0); after the fix both pass.
+It checks preservation of all six fields, zero charges, null house rules, legacy
+defaults and changed title/price. This proves the request payload, not PostgreSQL
+persistence or actual browser upload. Current worktree build and all 88 frontend
+tests pass. Concurrent user chatbot edits remain unstaged and preserved.
+
+## Rental images: partial-failure progress
+
+The image handler previously updated the visible post only after every metadata
+attachment succeeded. If a later request failed, confirmed images disappeared from
+the local display and remained selected for retry. It also cleared files that were
+not processed because of the ten-image limit. The handler now updates the visible
+post and removes each acknowledged file from the selection after each successful
+attachment. Failed/unprocessed files remain selected. File selection/upload controls
+are disabled while saving/uploading; upload is disabled at ten images. Previous
+success text is cleared at the start of an attempt.
+
+Four actual-handler tests cover partial metadata failure, ordered successful
+attachments/thumbnail, ten-image bounds and storage failure. The two failing cases
+were observed before the fix and all four pass after it; full worktree build and all
+92 frontend tests pass. This does not guarantee idempotency when a server commits
+an attachment but its response is lost; that requires server reconciliation.
+
+A local-only RAM API/browser check uploaded three public project PNGs using the
+real file chooser/multipart client, with an injected second-attachment failure.
+Three seeded images became four visible images; the retry button read “Tải 2 ảnh”.
+Retry uploaded only two files and produced six visible attachments. Changing the
+title and choosing “Lưu & gửi duyệt” recorded PUT with the new title followed by
+SUBMIT with the same title and six images, then navigated to My Posts. These are
+synthetic image responses and RAM persistence, not Cloudinary, PostgreSQL or actual
+JWT verification. No production image, post or financial mutation occurred.
+Concurrent user auth-scene and chatbot edits remain excluded from this release.
+
+## Populated production payment palette follow-up
+
+Read-only inspection of actual plans/history found remaining contrast failures:
+payment eyebrow 2.88:1 on the warm page, lead 4.21:1, current-package muted labels
+4.30:1, gray plan duration text 1.46:1 on orange, white feature text 3.53:1 on orange,
+and transaction captions/statuses around 3.76–4.37:1. The audit walks rendered DOM
+text against its nearest opaque solid background; gradients, partial opacity and
+image backgrounds are excluded and are not automatically certified.
+
+Payment CSS now has scoped accent `#a43c22`, muted `#526358` and inverse-muted
+`#d7e3da` tokens for plans/history/waiting surfaces. Featured/popular plan price text
+is explicitly white, preventing generic paragraph styling from turning duration
+text gray. The dark green current-package card is preserved. No package prices,
+benefits, entitlement or payment behavior changes. Numeric regression tests cover
+the actual light/warm/tinted/dark surfaces; full build and 93 frontend tests pass.
+Commit `eda8331`, Render `dep-db15o83tqb8s738vsrd0` is Live (65 seconds).
+Read-only actual production measurement after reload finds no failures among 53
+eligible plan text elements and 124 eligible history text elements. The same audit
+exclusions above still apply; no checkout or payment-update action was performed.
+
+## Profile caption palette follow-up
+
+Both loaded production Profile tabs showed four solid-background failures: eyebrow
+2.88:1, lead 4.21:1, role badge 4.44:1, inactive tab 4.34:1. Profile CSS now darkens
+these semantic captions. Premium/verification badge variants retain their gold,
+green and red meanings using explicit light backgrounds and readable dark text,
+rather than bright yellow/green/red on tinted light surfaces. A numerical regression
+test covers those pairs. This changes visual presentation only, not account role,
+subscription or profile fields. Current worktree build and all 94 tests pass.
+Live rendered verification for this latest profile adjustment is pending.

@@ -9,10 +9,12 @@ import { AuthProvider } from './contexts/AuthContext'
 import { SearchProvider } from './contexts/SearchContext'
 import { ToastProvider } from './components/toast/ToastProvider'
 import { AuthModalProvider } from './contexts/AuthModalContext'
+import { ChatbotProvider } from './contexts/ChatbotContext'
 import { GoogleMapsProvider } from './contexts/GoogleMapsProvider'
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
 import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
+import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import { AdminModerationPage } from './pages/AdminModerationPage'
 import { CreateRentalPostPage } from './pages/CreateRentalPostPage'
@@ -90,6 +92,7 @@ function App() {
   return (
     <ErrorBoundary reloadOnRetry>
       <ThemeSync />
+      <AiInteractionEffects />
       <NetworkStatusProvider>
         <GoogleMapsProvider>
           <GoogleOAuthRoot>
@@ -99,9 +102,11 @@ function App() {
               <SearchProvider>
               <ToastProvider>
               <AuthModalProvider>
+                <ChatbotProvider>
                 <ErrorBoundary reloadOnRetry>
                   <AppRoutes />
                 </ErrorBoundary>
+                </ChatbotProvider>
               </AuthModalProvider>
               </ToastProvider>
               </SearchProvider>

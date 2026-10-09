@@ -89,6 +89,16 @@ test('review cards reserve content space and stack controls on small screens', (
   assert.match(mobile, /\.admin-item\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/)
   assert.match(mobile, /\.admin-item > \.admin-actions\s*\{[^}]*flex: none;[^}]*max-width: 100%;/)
 })
+test('rental owner cards preserve content width and wrap mobile actions without changing notifications', () => {
+  assert.match(read('pages/MyPostsPage.tsx'), /className="card notification-item rental-owner-card map-motion-fade-up"/)
+  const css = read('pages/pages.css')
+  assert.match(css, /\.rental-owner-card > \.notification-item__actions\s*\{[^}]*flex: 0 1 320px;[^}]*max-width: 40%;/)
+  assert.match(css, /\.rental-owner-card > div:first-child\s*\{[^}]*overflow-wrap: anywhere;/)
+  const mobile = css.slice(css.indexOf('@media (max-width: 768px)'))
+  assert.match(mobile, /\.rental-owner-card\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/)
+  assert.match(mobile, /\.rental-owner-card > \.notification-item__actions\s*\{[^}]*flex: none;[^}]*max-width: 100%;[^}]*justify-content: flex-start;/)
+})
+
 test('shared footer is present without route exclusions', () => {
   assert.match(read('components/layout/AppLayout.tsx'), /<SiteFooter compact=/)
 })
@@ -97,11 +107,62 @@ test('payment plans and waiting screen share the Vietnamese-safe typeface', () =
   assert.match(css, /\.payment-page, \.payment-embed, \.payment-wait-page \{ font-family: 'Be Vietnam Pro', sans-serif; \}/)
   assert.match(css, /:is\(\.payment-page, \.payment-embed, \.payment-wait-page\) :is\(h1, h2, h3, strong/)
 })
+
+test('payment plan and transaction captions use readable semantic colors', () => {
+  const css = read('pages/PaymentPage.css')
+  assert.match(css, /--payment-accent: #a43c22;/)
+  assert.match(css, /--payment-muted: #526358;/)
+  assert.match(css, /--payment-inverse-muted: #d7e3da;/)
+  assert.ok(!css.includes('color: #e8603c'), 'old payment eyebrow failed on the warm page')
+  assert.ok(!css.includes('var(--hj-accent'), 'payment text and orange cards use the accessible scoped accent')
+  for (const oldMuted of ['#777a71', '#7b7f75', '#828579', '#707568', '#9da794']) {
+    assert.ok(!css.includes(`color: ${oldMuted}`), `replace low-contrast payment caption ${oldMuted}`)
+  }
+  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) \.payment-plan-card__price\s*\{[^}]*color: #fff;/)
+  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) :is\(\.payment-plan-card__total, \.payment-plan-card__savings\)\s*\{[^}]*color: #fff;[^}]*opacity: 1;/)
+  assert.match(css, /\.payment-plan-card__price small\s*\{[^}]*opacity: 1;/)
+  assert.match(css, /\.payment-plan-card__total,\s*\.payment-plan-card__savings\s*\{[^}]*opacity: 1;/)
+  for (const background of ['f3ebdd', 'fffdf9', 'f6f7ef', 'f8f7f2', 'f0efeb']) {
+    assert.ok(contrast('526358', background) >= 4.5)
+  }
+  assert.ok(contrast('fff', 'a43c22') >= 4.5)
+  assert.ok(contrast('a43c22', 'f3ebdd') >= 4.5)
+  assert.ok(contrast('d7e3da', '24543e') >= 4.5)
+})
 test('own listings use authenticated inventory instead of public active search', () => {
   assert.ok(/tab === 'sell' \|\| tab === 'mine'[^}]*getMyMarketplacePosts/s.test(read('pages/MarketplacePage.tsx')))
 })
 test('profile skeleton depends on data, not an animation callback it never emits', () => {
   assert.ok(!read('pages/ProfilePage.tsx').includes('useHomejiLoading(profileLoading)'))
+})
+
+test('profile captions, inactive tabs and account badges retain readable colors', () => {
+  const css = read('pages/ProfilePage.css')
+  for (const selector of ['.profile-page-eyebrow', '.profile-page-lead', '.profile-badge']) {
+    const rule = css.slice(css.indexOf(`${selector} {`)).split('}')[0]
+    const color = rule.match(/color: #([\da-f]{6});/)?.[1]
+    assert.ok(color, `${selector} defines its semantic foreground`)
+    assert.ok(contrast(color, selector === '.profile-badge' ? 'eaf0ec' : 'f3ebdd') >= 4.5)
+  }
+  assert.match(css, /:is\(\.profile-page, \.profile-embed\) \.tab:not\(\.active\)\s*\{[^}]*color: #526358;/)
+  for (const [foreground, background] of [['7b530c', 'fff0cd'], ['24543e', 'e4f0e8'], ['9a3b2c', 'fcebe8']]) {
+    assert.ok(contrast(foreground, background) >= 4.5)
+  }
+})
+
+test('roommate cards use readable state colors and remain within narrow grids', () => {
+  const css = read('pages/RoommateInvitationsPage.css')
+  assert.match(css, /--roommate-accent: #a43c22;/)
+  assert.match(css, /--roommate-muted: #526358;/)
+  assert.match(css, /minmax\(min\(100%, 280px\), 1fr\)/)
+  assert.match(css, /\.roommate-card__top\s*\{[^}]*flex-wrap: wrap;/)
+  assert.match(css, /\.roommate-card__date\s*\{[^}]*color: var\(--roommate-muted\);/)
+  assert.match(css, /\.roommate-card\.is-accepted \.roommate-card__avatar\s*\{[^}]*background: var\(--roommate-accent\);[^}]*color: #fff;/)
+  assert.ok(contrast('fff', 'a43c22') >= 4.5)
+  assert.ok(contrast('526358', 'fff9ef') >= 4.5)
+  assert.ok(contrast('24382d', 'd8cdbb') >= 4.5)
+  assert.ok(contrast('a43c22', 'fce8df') >= 4.5)
+  assert.ok(contrast('24543e', 'e4f0e8') >= 4.5)
 })
 
 test('editing the rental address invalidates the previous coordinates', () => {

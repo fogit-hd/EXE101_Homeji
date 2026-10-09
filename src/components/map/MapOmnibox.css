@@ -277,7 +277,7 @@
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__input {
-  font-family: 'Be Vietnam Pro', Manrope, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.98rem;
 }
 

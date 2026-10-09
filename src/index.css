@@ -1,37 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;800&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
 
 :root {
-  /* ── Homeji product tokens (logged-in, desktop #18231d sidebar) ── */
-  --hj-paper: #f3ebdd;
-  --hj-ink: #18231d;
-  --hj-accent: #e65c3a;
-  --hj-cream: #fff9ef;
-  --hj-border: #d8cdbb;
-  --hj-muted: #756f64;
-  --hj-soft: #a49b8e;
-  --hj-nav-idle: #dce2de;
-  --hj-nav-line: #334039;
-  --hj-accent-soft: #fce8df;
+  --font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  /* ── Homeji product tokens (logged-in, desktop #19323b sidebar) ── */
+  --hj-paper: var(--surface-muted);
+  --hj-ink: var(--text-heading);
+  --hj-accent: #087f8c;
+  --hj-cream: var(--surface);
+  --hj-border: var(--border);
+  --hj-muted: var(--text-secondary);
+  --hj-soft: #82929c;
+  --hj-nav-idle: #dce5eb;
+  --hj-nav-line: #334854;
+  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
   --hj-radius-sm: 8px;
   --hj-radius-md: 14px;
   --hj-radius-lg: 22px;
   --hj-radius-xl: 30px;
   --hj-sidebar: 228px;
-  --hj-grab-green: #00b14f;
+  --hj-grab-green: #087f8c;
   /* ──────────────────────────────────────────────────────────────── */
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #2a312c;
-  --text-secondary: #66706a;
-  --text-heading: #1f2923;
-  --border: #dde4de;
-  --surface: #fcfdfb;
-  --surface-muted: #f2f6f3;
-  --surface-input: #eaf0ec;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(252, 253, 251, 0.94);
+  --surface-glass: rgba(255, 255, 255, 0.94);
   --overlay-scrim: rgba(28, 36, 31, 0.4);
   --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
@@ -96,36 +97,39 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --dur-fast: 150ms;
+  --hj-brand-coral: #c24933;
+  --hj-brand-coral-soft: #fff0eb;
   --dur-med: 280ms;
   --dur-slow: 420ms;
   /* Map chrome fill — never brand green (prevents GPU clear flash). */
-  --map-canvas-bg: #e4ebe6;
+  --map-canvas-bg: #e7eef3;
   color-scheme: light;
-  font-family: 'Be Vietnam Pro', Manrope, Inter, system-ui, sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-ui);
+  line-height: 1.6;
+  font-synthesis: none;
   color: var(--text-primary);
   background: var(--surface-muted);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-/* Soft warm dark — not a stiff charcoal admin console. */
+/* Match system appearance with the same slate and teal semantic roles. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --grab-green: #1ad66a;
-    --grab-green-hover: #14b85a;
+    --grab-green: #62cbd2;
+    --grab-green-hover: #8edce0;
     --grab-blue: #4b9fff;
     --grab-blue-hover: #2f86f0;
-    --text-primary: #e8eee9;
-    --text-secondary: #a3aea7;
-    --text-heading: #f4f7f5;
-    --border: #3a433d;
-    --surface: #1c221e;
-    --surface-muted: #141916;
-    --surface-input: #2a312c;
-    --surface-elevated: #242b26;
-    --surface-glass: rgba(28, 34, 30, 0.94);
+    --text-primary: #e6edf2;
+    --text-secondary: #a8b9c4;
+    --text-heading: #f2f7fa;
+    --border: #354955;
+    --surface: #182b36;
+    --surface-muted: #10212b;
+    --surface-input: #223945;
+    --surface-elevated: #1d333f;
+    --surface-glass: rgba(24, 43, 54, 0.94);
     --overlay-scrim: rgba(0, 0, 0, 0.5);
     --shadow-color: 0, 0, 0;
     --maps-blue: #8ab4f8;
@@ -139,25 +143,25 @@
     --success: #81c995;
     --error-soft: rgba(242, 139, 130, 0.14);
     --success-soft: rgba(129, 201, 149, 0.14);
-    --map-canvas-bg: #1f2622;
+    --map-canvas-bg: #1b303b;
   }
 }
 
 html[data-theme='dark'] {
   color-scheme: dark;
-  --grab-green: #1ad66a;
-  --grab-green-hover: #14b85a;
+  --grab-green: #62cbd2;
+  --grab-green-hover: #8edce0;
   --grab-blue: #4b9fff;
   --grab-blue-hover: #2f86f0;
-  --text-primary: #e8eee9;
-  --text-secondary: #a3aea7;
-  --text-heading: #f4f7f5;
-  --border: #3a433d;
-  --surface: #1c221e;
-  --surface-muted: #141916;
-  --surface-input: #2a312c;
-  --surface-elevated: #242b26;
-  --surface-glass: rgba(28, 34, 30, 0.94);
+  --text-primary: #e6edf2;
+  --text-secondary: #a8b9c4;
+  --text-heading: #f2f7fa;
+  --border: #354955;
+  --surface: #182b36;
+  --surface-muted: #10212b;
+  --surface-input: #223945;
+  --surface-elevated: #1d333f;
+  --surface-glass: rgba(24, 43, 54, 0.94);
   --overlay-scrim: rgba(0, 0, 0, 0.5);
   --shadow-color: 0, 0, 0;
   --maps-blue: #8ab4f8;
@@ -171,24 +175,24 @@ html[data-theme='dark'] {
   --success: #81c995;
   --error-soft: rgba(242, 139, 130, 0.14);
   --success-soft: rgba(129, 201, 149, 0.14);
-  --map-canvas-bg: #1f2622;
+  --map-canvas-bg: #1b303b;
 }
 
 html[data-theme='light'] {
   color-scheme: light;
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #2a312c;
-  --text-secondary: #66706a;
-  --text-heading: #1f2923;
-  --border: #dde4de;
-  --surface: #fcfdfb;
-  --surface-muted: #f2f6f3;
-  --surface-input: #eaf0ec;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(252, 253, 251, 0.94);
+  --surface-glass: rgba(255, 255, 255, 0.94);
   --overlay-scrim: rgba(28, 36, 31, 0.4);
   --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
@@ -204,7 +208,7 @@ html[data-theme='light'] {
   --success: #39b54a;
   --error-soft: rgba(234, 67, 53, 0.1);
   --success-soft: rgba(57, 181, 74, 0.12);
-  --map-canvas-bg: #e4ebe6;
+  --map-canvas-bg: #e7eef3;
   --app-chrome-tint: var(--surface);
   --app-hub-paper: var(--surface);
   --app-explore-paper: var(--surface);
@@ -235,6 +239,10 @@ textarea,
 label {
   -webkit-tap-highlight-color: transparent;
   tap-highlight-color: transparent;
+}
+
+button, input, select, textarea {
+  font-family: var(--font-ui);
 }
 
 html {
@@ -293,22 +301,29 @@ body {
   --app-bottom-nav-height: 0px;
   --nav-height: 0px;
   /* Vietnamese-capable stack (Be Vietnam Pro already imported in this file). */
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
-  /* Logged-in product stays warm light — not OS dark admin chrome */
+  font-family: var(--font-ui);
+  /* Rebind aliases here so inherited root values cannot retain the OS dark palette. */
+  --hj-paper: var(--surface-muted);
+  --hj-ink: var(--text-heading);
+  --hj-cream: var(--surface);
+  --hj-border: var(--border);
+  --hj-muted: var(--text-secondary);
+  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
+  /* Logged-in product stays cool light — not OS dark admin chrome */
   color-scheme: light;
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
   --grab-blue: #136fd8;
   --grab-blue-hover: #0e52a3;
-  --text-primary: #2a312c;
-  --text-secondary: #66706a;
-  --text-heading: #1f2923;
-  --border: #dde4de;
-  --surface: #fcfdfb;
-  --surface-muted: #f2f6f3;
-  --surface-input: #eaf0ec;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
   --surface-elevated: #ffffff;
-  --surface-glass: rgba(252, 253, 251, 0.94);
+  --surface-glass: rgba(255, 255, 255, 0.94);
   --overlay-scrim: rgba(28, 36, 31, 0.4);
   --shadow-color: 28, 42, 34;
   --maps-blue: #1a73e8;
@@ -324,7 +339,7 @@ body {
   --success: #39b54a;
   --error-soft: rgba(234, 67, 53, 0.1);
   --success-soft: rgba(57, 181, 74, 0.12);
-  --map-canvas-bg: #e4ebe6;
+  --map-canvas-bg: #e7eef3;
   --app-chrome-tint: var(--surface);
   --app-hub-paper: var(--surface);
   --app-explore-paper: var(--surface);
@@ -336,7 +351,7 @@ body {
 }
 
 .app-shell--product:not(.app-shell--map) .app-main {
-  background: var(--hj-paper, #f3ebdd);
+  background: var(--hj-paper, #f3f7fa);
 }
 
 .app-shell--product .app-main {
@@ -424,6 +439,7 @@ a:hover {
 }
 
 h1, h2, h3, h4 {
+  font-family: var(--font-ui);
   color: var(--text-heading);
   margin: 0 0 12px;
 }
@@ -463,7 +479,7 @@ p {
   padding: 12px 24px;
   border-radius: var(--radius-sm);
   border: none;
-  font: 600 16px/1 Inter, sans-serif;
+  font: 600 16px/1 var(--font-ui);
   cursor: pointer;
   transition:
     background var(--dur-fast) var(--ease-out),
@@ -574,7 +590,7 @@ p {
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   padding: 12px 20px;
-  font: 400 14px Arial, sans-serif;
+  font: 400 14px var(--font-ui);
   color: var(--text-primary);
 }
 
@@ -677,7 +693,7 @@ p {
   border: none;
   border-bottom: 2px solid transparent;
   padding: 12px 16px 12px 0;
-  font: 400 16px Inter, sans-serif;
+  font: 400 16px var(--font-ui);
   color: var(--text-secondary);
   cursor: pointer;
   transition:

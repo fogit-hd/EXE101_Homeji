@@ -8,11 +8,11 @@
 
 /* Product shell pages sit on cream paper */
 .app-shell--product .page-frame:not(.page-frame--bleed) {
-  background: #f5f0e6;
+  background: var(--surface-muted);
 }
 
 .app-shell--product .page-frame__header {
-  background: #f5f0e6;
+  background: var(--surface-muted);
 }
 
 .page-frame--bleed {
@@ -45,7 +45,7 @@
 
 .page-frame__eyebrow {
   margin: 0;
-  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 10px/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: #e8603c;
@@ -53,18 +53,18 @@
 
 .page-frame__title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 600;
   letter-spacing: 0;
   line-height: 44px;
-  color: #14271f;
+  color: var(--text-heading);
 }
 
 .page-frame__lead {
   margin: 0;
-  font: 400 14px/22px Inter, 'Be Vietnam Pro', sans-serif;
-  color: #716a61;
+  font: 400 14px/22px var(--font-ui);
+  color: var(--text-secondary);
 }
 
 .app-shell--product .page-frame__title {

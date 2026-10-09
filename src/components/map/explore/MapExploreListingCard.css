@@ -74,7 +74,7 @@
 
 .map-explore-card__price {
   margin: 0;
-  font: 400 14px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 14px/1.2 var(--font-ui);
   color: var(--hj-ink, #18231d);
   white-space: nowrap;
 }
@@ -110,7 +110,7 @@
 
 .map-explore-card__title {
   margin: 0;
-  font: 400 12px/1.3 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 12px/1.3 var(--font-ui);
   color: var(--hj-ink, #18231d);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -120,14 +120,14 @@
 
 .map-explore-card__district {
   margin: 0;
-  font: 400 10px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 10px/1.2 var(--font-ui);
   color: var(--hj-accent, #e65c3a);
   white-space: nowrap;
 }
 
 .map-explore-card__meta {
   margin: 0;
-  font: 400 10px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 10px/1.2 var(--font-ui);
   color: var(--hj-muted, #756f64);
   white-space: nowrap;
   overflow: hidden;

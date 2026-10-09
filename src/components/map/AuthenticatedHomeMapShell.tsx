@@ -25,7 +25,7 @@ import { HomeListingSkeleton } from '../HomeListingSkeleton'
 import { PageNotice } from '../toast/PageNotice'
 import { MapListingCard } from '../MapListingCard'
 import { MapAppPanel, isWideMapSection, type MapAppSection } from './MapAppPanel'
-import { MapChatbot } from './MapChatbot'
+import { useChatbotSurface } from '../../contexts/chatbot-surface'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
 import { MapEdgeToggle } from './MapEdgeToggle'
 import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
@@ -135,7 +135,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   exploreView = 'map',
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated } = useAuth()
-  const { setNearbyAnchor, setNearbyCategory } = useSearch()
+  const { setNearbyAnchor, nearbyCategory, setNearbyCategory } = useSearch()
   const [searchParams, setSearchParams] = useSearchParams()
   const listingCatalog = useMemo(() => parseFiltersFromURL(searchParams).catalog, [searchParams])
   const marketMode = listingCatalog === 'market'
@@ -181,7 +181,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   } | null>(null)
   const [routeError, setRouteError] = useState<string | null>(null)
   const [homieDismiss, setHomieDismiss] = useState(0)
-  const [homieOpen, setHomieOpen] = useState(false)
   const [marketplaceCartOpen, setMarketplaceCartOpen] = useState(false)
   const [notificationRefreshKey, setNotificationRefreshKey] = useState(0)
   const [unreadBadge, setUnreadBadge] = useState(0)
@@ -202,7 +201,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const detailOpen = !!(selectedPostId || selectedPost || selectedPlace || placeLoading)
   const nearbyContextKey = selectedPostId ?? selectedPlace?.placeId ?? ''
-  useEffect(() => { setNearbyCategory('food') }, [nearbyContextKey, setNearbyCategory])
   const nearbyAnchor = useMemo(() => nearbyPanelAnchor(
     selectedPostId, selectedPost ?? listingDetail, selectedPlace,
   ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
@@ -275,7 +273,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleHomieOpenChange = useCallback(
     (open: boolean) => {
-      setHomieOpen(open)
       if (!open || !isMobileSheetViewport()) return
       closePanel()
     },
@@ -983,9 +980,24 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     />
   )
 
-  const hideHomieFab = destinationMode && isMapMode
+  const handleNearbyRequest = useCallback((category: import('../../lib/placeAutocomplete').NearbyPlaceCategory) => {
+    if (!nearbyAnchor || !detailOpen || uiCollapsed) return false
+    setNearbyCategory(category)
+    setNearbyDismissedKey(null)
+    return true
+  }, [nearbyAnchor, detailOpen, uiCollapsed, setNearbyCategory])
+  useChatbotSurface({
+    onSearchUpdate: onAiSearchUpdate,
+    onOpenSection: handleOpenAppSection,
+    onNearbyRequest: handleNearbyRequest,
+    dismissSignal: homieDismiss,
+    onOpenChange: handleHomieOpenChange,
+    avoidRightContent: panelOpen && panelSection === 'marketplace',
+    hideFab: (detailOpen && !uiCollapsed) || marketplaceCartOpen,
+  })
   const nearbyPanel = nearbyVisible && nearbyAnchor ? (
     <MapNearbyPanel key={nearbyAnchor.contextKey} anchor={nearbyAnchor}
+      category={nearbyCategory} onCategoryChange={setNearbyCategory}
       onClose={() => setNearbyDismissedKey(nearbyContextKey)} onPick={handlePickNearby} />
   ) : null
 
@@ -1003,20 +1015,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
       />
 
-      {!hideHomieFab ? (
-        <MapChatbot
-          onSearchUpdate={onAiSearchUpdate}
-          onOpenSection={handleOpenAppSection}
-          dismissSignal={homieDismiss}
-          onOpenChange={handleHomieOpenChange}
-          avoidRightContent={panelOpen && panelSection === 'marketplace'}
-          hideFab={
-            (detailOpen && !uiCollapsed) ||
-            marketplaceCartOpen ||
-            (isMobileSheetViewport() && (panelOpen || homieOpen))
-          }
-        />
-      ) : null}
 
       <MapToast
         message={locationError || toast}

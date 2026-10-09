@@ -140,7 +140,7 @@
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface-input);
-  color: var(--text-secondary);
+  color: #526358;
   font-size: 0.72rem;
   font-weight: 650;
   line-height: 1.2;
@@ -148,27 +148,27 @@
 
 .profile-badge.is-premium {
   border-color: rgba(212, 175, 55, 0.45);
-  background: rgba(212, 175, 55, 0.14);
-  color: #e8c547;
+  background: #fff0cd;
+  color: #7b530c;
 }
 
 .profile-badge.is-verify.is-ok {
   border-color: rgba(0, 177, 79, 0.4);
-  background: rgba(0, 177, 79, 0.12);
-  color: var(--grab-green, #00b14f);
+  background: #e4f0e8;
+  color: #24543e;
 }
 
 .profile-badge.is-verify.is-pending {
   border-color: rgba(251, 188, 5, 0.4);
-  background: rgba(251, 188, 5, 0.12);
-  color: #fbbc05;
+  background: #fff0cd;
+  color: #7b530c;
 }
 
 .profile-badge.is-verify.is-bad,
 .profile-badge.is-warn {
   border-color: rgba(234, 67, 53, 0.35);
-  background: rgba(234, 67, 53, 0.12);
-  color: #ea4335;
+  background: #fcebe8;
+  color: #9a3b2c;
 }
 
 .profile-hero__hint {
@@ -381,15 +381,15 @@
 }
 
 .profile-page-eyebrow {
-  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 10px/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #e8603c;
+  color: #a43c22;
 }
 
 .profile-page-title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   line-height: 44px;
   font-weight: 600;
@@ -399,8 +399,12 @@
 
 .profile-page-lead {
   margin: 0;
-  font: 400 0.88rem/1.5 Inter, 'Be Vietnam Pro', sans-serif;
-  color: var(--hj-muted, #756f64);
+  font: 400 0.88rem/1.5 var(--font-ui);
+  color: #526358;
+}
+
+:is(.profile-page, .profile-embed) .tab:not(.active) {
+  color: #526358;
 }
 
 /* Profile page canvas */

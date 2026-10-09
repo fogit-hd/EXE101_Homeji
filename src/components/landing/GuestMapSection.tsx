@@ -11,7 +11,8 @@ import { RentalMap } from '../map/RentalMap'
 import { MapPlaceDetailPanel } from '../map/MapPlaceDetailPanel'
 import { MapNearbyPanel } from '../map/MapNearbyPanel'
 import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
-import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
+import type { NearbyPlaceItem, NearbyPlaceCategory } from '../../lib/placeAutocomplete'
+import { useChatbotSurface } from '../../contexts/chatbot-surface'
 import { useAuthModal } from '../../contexts/AuthModalContext'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { getErrorMessage } from '../../lib/errors'
@@ -58,6 +59,7 @@ export function GuestMapSection() {
   const [mapFocus, setMapFocus] = useState<MapFocusPoint | null>(GUEST_DEFAULT_FOCUS)
   const [mapFocusToken, setMapFocusToken] = useState(0)
   const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
+  const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
   const [nearbyPinned, setNearbyPinned] = useState<{ lat: number; lng: number; title: string; kindLabel: string; token: number } | null>(null)
 
   const wards = useMemo(() => wardsForDistrict(districtId), [districtId])
@@ -202,6 +204,13 @@ export function GuestMapSection() {
     selectedPostId, selectedPost ?? listingDetail, selectedPlace,
   ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
   const nearbyVisible = !!nearbyAnchor && nearbyDismissedKey !== nearbyAnchor.contextKey && detailOpen
+  const handleChatNearby = useCallback((category: NearbyPlaceCategory) => {
+    if (!nearbyAnchor) return false
+    setNearbyCategory(category)
+    setNearbyDismissedKey(null)
+    return true
+  }, [nearbyAnchor])
+  useChatbotSurface({ onNearbyRequest: handleChatNearby })
 
   const selectedPlacePin = useMemo(() => {
     if (selectedPost) return null
@@ -380,6 +389,7 @@ export function GuestMapSection() {
               {nearbyAnchor && nearbyVisible ? <MapNearbyPanel
                 key={nearbyAnchor.contextKey}
                 anchor={nearbyAnchor}
+                category={nearbyCategory} onCategoryChange={setNearbyCategory}
                 onPick={handleNearbyPick}
                 onClose={() => { setNearbyDismissedKey(nearbyAnchor.contextKey); setNearbyPinned(null) }}
               /> : null}

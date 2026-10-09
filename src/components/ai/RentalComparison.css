@@ -1,0 +1,20 @@
+.rental-comparison { padding: 24px; margin: 20px 0; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-elevated); color: var(--text-primary); }
+.rental-comparison header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.rental-comparison header span { font-size: 10px; letter-spacing: .15em; color: var(--text-muted); }
+.rental-comparison h2 { margin: 5px 0; }
+.rental-comparison__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 18px; }
+.rental-comparison__grid article { min-width: 0; border: 1px solid var(--border); padding: 18px; border-radius: 16px; }
+.rental-comparison h3 { color: var(--text-heading); font-size: 17px; }
+.rental-comparison dl { display: grid; gap: 5px; font-size: 13px; }
+.rental-comparison dt { color: var(--text-muted); margin-top: 9px; }
+.rental-comparison dd { margin: 0; }
+.rental-comparison details { margin-top: 16px; font-size: 12px; }
+.rental-comparison summary { cursor: pointer; font-weight: 700; }
+.rental-comparison :is(input, select) { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 9px; padding: 9px; background: var(--surface); color: var(--text-primary); font: inherit; }
+.rental-comparison label { display: block; font-size: 12px; margin: 10px 0 4px; }
+.rental-comparison fieldset { margin: 14px 0; border: 1px solid var(--border); border-radius: 9px; }
+.rental-comparison small { color: var(--text-muted); line-height: 1.6; }
+.rental-comparison__commute { margin: 18px 0; max-width: 600px; display: grid; gap: 8px; }
+.rental-comparison__attribution { font-size: 12px; }
+.saved-compare-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.saved-compare-pick { display: flex; gap: 8px; align-items: center; padding: 8px 0; font-size: 13px; }

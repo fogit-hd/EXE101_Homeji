@@ -13,6 +13,7 @@ import { fetchPlacePredictions, searchNearbyPlaces, type NearbyPlaceCategory } f
 import { useGoogleMaps } from './GoogleMapsProvider'
 import type { NearbyAnchor } from '../components/map/MapNearbyPanel'
 import { isUsefulSearchQuery } from '../lib/searchQuery'
+import { relevantRecentLocations } from '../lib/localPlaceSearch'
 
 export type SearchContextName =
   | 'global'
@@ -31,22 +32,22 @@ export type SearchSuggestion = {
 
 const PLACEHOLDER: Record<SearchContextName, string> = {
   global: 'Tìm phòng, khu vực, đồ dùng hoặc người ở ghép…',
-  housing: 'Tìm khu vực, đường, trường học hoặc nơi làm việc…',
-  map: 'Tìm địa điểm hoặc phòng trên bản đồ…',
+  housing: 'Nhập tên đường, trường học hoặc nơi làm việc…',
+  map: 'Tìm đường, trường học hoặc địa điểm để xem phòng gần đó…',
   food: 'Tìm món, nguyên liệu hoặc tên bếp…',
   marketplace: 'Tìm sản phẩm…',
   myListings: 'Tìm trong tin của tôi…',
-  roommate: 'Tìm người ở ghép theo khu vực…',
+  roommate: 'Tìm phòng ở ghép theo đường, trường hoặc tên phòng…',
 }
 
 const CONTEXT_COPY: Record<SearchContextName, { title: string; scope: string }> = {
   global: { title: 'Tìm nơi ở hợp gu', scope: 'Phòng, khu vực và hơn thế nữa' },
-  housing: { title: 'Tìm phòng', scope: 'Khu vực, đường, trường hoặc nơi làm' },
-  map: { title: 'Tìm trên bản đồ', scope: 'Địa điểm hoặc phòng quanh bạn' },
+  housing: { title: 'Tìm phòng gần địa điểm', scope: 'Đường, trường học hoặc nơi làm việc' },
+  map: { title: 'Tìm phòng gần địa điểm', scope: 'Phạm vi Thủ Đức · Quận 9' },
   food: { title: 'Tìm món', scope: 'Nguyên liệu hoặc tên bếp' },
   marketplace: { title: 'Tìm sản phẩm', scope: 'Đồ dùng đang mở bán' },
   myListings: { title: 'Tin của tôi', scope: 'Tìm trong tin bạn đã đăng' },
-  roommate: { title: 'Ở ghép', scope: 'Theo khu vực bạn quan tâm' },
+  roommate: { title: 'Ở ghép', scope: 'Phòng đang tìm thêm người' },
 }
 
 const EMPTY_SUGGESTIONS: SearchSuggestion[] = []
@@ -98,6 +99,9 @@ function resolveSearchContext(pathname: string, search: string): SearchContextNa
 
 function readUrlQuery(context: SearchContextName, search: string): { value: string; explicit: boolean } {
   const params = new URLSearchParams(search)
+  if (context === 'roommate') {
+    return { value: params.get('roommateQuery') ?? '', explicit: params.has('roommateQuery') }
+  }
   if (context === 'food' || context === 'marketplace' || context === 'myListings') {
     return { value: params.get('q') ?? '', explicit: params.has('q') }
   }
@@ -109,8 +113,14 @@ function readUrlQuery(context: SearchContextName, search: string): { value: stri
 
 function destinationFor(context: SearchContextName, raw: string, currentSearch: string): string | null {
   const query = raw.trim()
-  if (context === 'roommate') return null
   const params = new URLSearchParams(currentSearch)
+  if (context === 'roommate') {
+    params.set('section', 'invitations')
+    params.set('roommateTab', 'rooms')
+    if (query) params.set('roommateQuery', query)
+    else params.delete('roommateQuery')
+    return `/?${params.toString()}`
+  }
   if (context === 'food' || context === 'marketplace' || context === 'myListings') {
     params.set('section', 'marketplace')
     params.set('market', context === 'food' ? 'food' : context === 'myListings' ? 'mine' : 'browse')
@@ -214,7 +224,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true }
   }, [nearbyAnchor, nearbyCategory, nearbyKey, mapsLoaded])
   const suggestText = query.trim()
-  const canSuggest = placeSearch && suggestText.length >= 2 && isUsefulSearchQuery(suggestText)
+  const canSuggest = placeSearch && mapsLoaded && suggestText.length >= 2 && isUsefulSearchQuery(suggestText)
   const suggestions = canSuggest && suggestionPack.key === suggestText ? suggestionPack.items : EMPTY_SUGGESTIONS
   const isLoading = canSuggest && (suggestionPack.key !== suggestText || suggestionPack.loading)
 
@@ -230,7 +240,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       setSuggestionPack((prev) => (
         prev.key === suggestText && prev.loading ? prev : { key: suggestText, items: [], loading: true }
       ))
-      void fetchPlacePredictions(suggestText, { limit: 6 })
+      void fetchPlacePredictions(suggestText, { limit: 6, concreteLocalPlaces: true })
         .then((items) => {
           if (controller.signal.aborted) return
           setSuggestionPack({
@@ -298,13 +308,13 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     contextTitle: CONTEXT_COPY[context].title,
     contextScope: CONTEXT_COPY[context].scope,
     suggestions,
-    recentSearches,
+    recentSearches: placeSearch ? relevantRecentLocations(recentSearches, query) : recentSearches,
     isLoading,
     setQuery,
     submit,
     clear,
     pickSuggestion,
-  }), [clear, context, isLoading, pickSuggestion, query, queryByContext, recentSearches, setQuery, submit, suggestions, nearbyAnchor, nearbyCategory, nearbySuggestions, nearbyLoading])
+  }), [clear, context, placeSearch, isLoading, pickSuggestion, query, queryByContext, recentSearches, setQuery, submit, suggestions, nearbyAnchor, nearbyCategory, nearbySuggestions, nearbyLoading])
 
   return <SearchReactContext.Provider value={value}>{children}</SearchReactContext.Provider>
 }

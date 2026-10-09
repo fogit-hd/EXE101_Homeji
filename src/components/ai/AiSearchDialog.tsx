@@ -19,6 +19,6 @@ export function AiSearchDialog({ result, busy, onClose, onApply, onCorrection }:
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
     if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
   }}><div><button type="button" onClick={onClose}>Đóng</button>
-    <AiSearchReview result={result} busy={busy} onApply={onApply} onCorrection={onCorrection} />
+    <AiSearchReview result={result} onApply={() => { if (!busy) onApply() }} onRefine={text => { if (!busy) onCorrection(text) }} />
   </div></div>
 }

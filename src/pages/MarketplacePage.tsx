@@ -21,6 +21,7 @@ import {
   rejectMarketplaceOrder,
   searchMarketplacePosts,
   startMarketplaceConversation,
+  startMarketplaceOrderConversation,
   updateMarketplacePost,
   createWalletWithdrawal,
   uploadImages,
@@ -53,7 +54,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
-import { mapSectionUrl } from '../lib/mapDeepLinks'
+import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
@@ -62,6 +63,7 @@ import {
   type PurchaseKind,
 } from '../lib/purchaseCatalog'
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
+import { marketplaceOrderGroupKey } from '../lib/marketplaceOrderGroups'
 import {
   resolveMarketplaceDestination,
   subscribeToMarketplaceTabRequests,
@@ -303,6 +305,7 @@ export function MarketplacePage({
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
   const [orderingPostId, setOrderingPostId] = useState<string | null>(null)
+  const [contactingPostId, setContactingPostId] = useState<string | null>(null)
   const [purchaseReceipt, setPurchaseReceipt] = useState<{ message: string; orderId: string } | null>(null)
   const [purchaseKinds, setPurchaseKinds] = useState<Record<string, PurchaseKind>>({})
   const [purchaseKindFailures, setPurchaseKindFailures] = useState<string[]>([])
@@ -332,6 +335,8 @@ export function MarketplacePage({
   const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
   const [cartNote, setCartNote] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
+  const [inventoryBusy, setInventoryBusy] = useState(false)
+  const inventoryActionLock = useRef(false)
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const handledMarketplaceSelectionRef = useRef<string | null>(null)
@@ -772,6 +777,24 @@ export function MarketplacePage({
     }
   }
 
+  const updateInventoryStatus = async (postId: string, action: 'sold' | 'archive') => {
+    if (inventoryActionLock.current) return
+    inventoryActionLock.current = true
+    setInventoryBusy(true)
+    setActionError('')
+    setActionMsg('')
+    try {
+      await (action === 'sold' ? markMarketplacePostSold(postId) : archiveMarketplacePost(postId))
+      await reload()
+      setActionMsg(action === 'sold' ? 'Đã đánh dấu tin đã bán.' : 'Đã ẩn tin.')
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'Không cập nhật được trạng thái tin. Vui lòng thử lại.'))
+    } finally {
+      inventoryActionLock.current = false
+      setInventoryBusy(false)
+    }
+  }
+
   const rememberCreatedPurchase = async (orderId: string, message: string) => {
     setPurchaseReceipt({ message, orderId })
     try {
@@ -1032,6 +1055,7 @@ export function MarketplacePage({
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
+                disabled={inventoryBusy}
                 onClick={() => beginEdit(p)}
               >
                 Chỉnh sửa
@@ -1040,7 +1064,8 @@ export function MarketplacePage({
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  onClick={() => void markMarketplacePostSold(p.id).then(() => reload())}
+                  disabled={inventoryBusy}
+                  onClick={() => void updateInventoryStatus(p.id, 'sold')}
                 >
                   Đánh dấu đã bán
                 </button>
@@ -1048,14 +1073,20 @@ export function MarketplacePage({
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => void archiveMarketplacePost(p.id).then(() => reload())}
+                disabled={inventoryBusy}
+                onClick={() => void updateInventoryStatus(p.id, 'archive')}
               >
                 Ẩn tin
               </button>
             </>
           ) : null}
-          {!mine && p.status === MarketplacePostStatus.Active ? (
+          {!mine && p.sellerId !== profile?.id && p.status === MarketplacePostStatus.Active ? (
             <>
+              <button type="button" className="btn btn-secondary btn-sm"
+                disabled={contactingPostId !== null}
+                onClick={() => void contactAboutPost(p.id)}>
+                {contactingPostId === p.id ? 'Đang mở…' : 'Nhắn người bán'}
+              </button>
               {p.listingType === MarketplaceListingType.Food ? (
                 <label className="marketplace-quantity">
                   <span>Số lượng</span>
@@ -1171,7 +1202,7 @@ export function MarketplacePage({
   const orderGroups = useMemo<MarketplaceOrderGroup[]>(() => {
     const grouped = new Map<string, MarketplaceOrder[]>()
     for (const order of orders) {
-      const groupKey = `${order.buyerId}:${order.sellerId}:${order.createdAt}`
+      const groupKey = marketplaceOrderGroupKey(order)
       const current = grouped.get(groupKey) ?? []
       current.push(order)
       grouped.set(groupKey, current)
@@ -1288,13 +1319,17 @@ export function MarketplacePage({
     openLeaf('sell')
   }
 
-  const contactAboutPost = async (postId: string) => {
+  const contactAboutPost = async (postId: string, orderId?: string) => {
+    if (contactingPostId !== null) return
+    setContactingPostId(postId)
     setActionError('')
     try {
-      await startMarketplaceConversation(postId)
-      navigate(mapSectionUrl('messages'))
+      const conversation = await (orderId ? startMarketplaceOrderConversation(orderId) : startMarketplaceConversation(postId))
+      navigate(mapMessagesUrl(conversation.id))
     } catch (err) {
       setActionError(getErrorMessage(err, 'Không mở được cuộc trò chuyện'))
+    } finally {
+      setContactingPostId(null)
     }
   }
 
@@ -1972,7 +2007,8 @@ export function MarketplacePage({
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => void contactAboutPost(firstOrder.marketplacePostId)}
+                          disabled={contactingPostId !== null}
+                          onClick={() => void contactAboutPost(firstOrder.marketplacePostId, firstOrder.id)}
                         >
                           {group.isSeller ? 'Liên hệ người mua' : 'Liên hệ người bán'}
                         </button>

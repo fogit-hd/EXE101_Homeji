@@ -11,6 +11,7 @@ import {
 } from '../../../api'
 import { useAuth } from '../../../contexts/AuthContext'
 import { getErrorMessage } from '../../../lib/errors'
+import { gallerySwipeDirection } from '../../../lib/gallerySwipe'
 import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
 import houseUrl from '../../../assets/room-detail/house.svg'
@@ -492,6 +493,7 @@ function PhotoGallery({ urls }: { urls: string[] }) {
   const [index, setIndex] = useState(0)
   const [view, setView] = useState({ scale: 1, x: 0, y: 0 })
   const dragRef = useRef<{ x: number; y: number } | null>(null)
+  const swipeRef = useRef<{ x: number; y: number } | null>(null)
   const viewerRef = useRef<HTMLDialogElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const openPhoto = (nextIndex: number) => {
@@ -608,9 +610,15 @@ function PhotoGallery({ urls }: { urls: string[] }) {
         <div
           ref={viewportRef}
           className={`room-photo-viewer__viewport${view.scale > 1 ? ' is-zoomed' : ''}`}
+          style={{ touchAction: view.scale > 1 ? 'none' : 'pan-y' }}
           onDoubleClick={(event) => zoomAt(view.scale > 1 ? 1 / view.scale : 2, event.clientX, event.clientY)}
           onPointerDown={(event) => {
-            if (event.button !== 0 || view.scale <= 1) return
+            if (event.button !== 0) return
+            if (view.scale <= 1) {
+              swipeRef.current = { x: event.clientX, y: event.clientY }
+              event.currentTarget.setPointerCapture(event.pointerId)
+              return
+            }
             event.preventDefault()
             event.currentTarget.setPointerCapture(event.pointerId)
             dragRef.current = { x: event.clientX, y: event.clientY }
@@ -628,14 +636,21 @@ function PhotoGallery({ urls }: { urls: string[] }) {
               y: Math.max(-rect.height * (previous.scale - 1) / 2, Math.min(rect.height * (previous.scale - 1) / 2, previous.y + dy)),
             }))
           }}
-          onPointerUp={() => { dragRef.current = null }}
-          onPointerCancel={() => { dragRef.current = null }}
-          onLostPointerCapture={() => { dragRef.current = null }}
+          onPointerUp={event => {
+            const start = swipeRef.current
+            if (start && view.scale <= 1 && visible.length > 1) {
+              const direction = gallerySwipeDirection(event.clientX - start.x, event.clientY - start.y)
+              if (direction) movePhoto(direction)
+            }
+            dragRef.current = null; swipeRef.current = null
+          }}
+          onPointerCancel={() => { dragRef.current = null; swipeRef.current = null }}
+          onLostPointerCapture={() => { dragRef.current = null; swipeRef.current = null }}
         >
           <img className="room-photo-viewer__image" src={current} alt={`Ảnh phòng ${safeIndex + 1}`} draggable={false}
             style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }} />
         </div>
-        <p className="room-photo-viewer__hint">Lăn chuột để zoom · Kéo để di chuyển · Nhấp đúp để phóng to / thu nhỏ</p>
+        <p className="room-photo-viewer__hint">Vuốt ngang hoặc dùng nút để đổi ảnh · Khi phóng to, kéo để di chuyển · Nhấp đúp để zoom</p>
         {visible.length > 1 ? (
           <div className="room-photo-viewer__navigation">
             <button type="button" onClick={() => movePhoto(-1)}>← Ảnh trước</button>

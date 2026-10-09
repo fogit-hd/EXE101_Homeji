@@ -1,21 +1,21 @@
 /* Food marketplace — Figma node 26:2263 (Homeji — Chợ đồ ăn) */
 
 .marketplace-page--food {
-  --food-ink: #14271f;
+  --food-ink: var(--text-heading);
   --food-ink-soft: #1c241f;
-  --food-muted: #716a61;
-  --food-line: #d9d2c5;
-  --food-paper: #f5f0e6;
-  --food-mint: #fffdf8;
+  --food-muted: var(--text-secondary);
+  --food-line: var(--border);
+  --food-paper: var(--surface-muted);
+  --food-mint: var(--surface-elevated);
   --food-leaf: #e1f4e8;
   --food-leaf-deep: #24543e;
   --food-accent: #a43c22;
   --food-accent-soft: #fff0e9;
   --food-gold: #f8d76d;
   --food-card-shadow: none;
-  background: #f5f0e6;
+  background: var(--surface-muted);
   color: var(--food-ink);
-  font-family: Inter, 'Be Vietnam Pro', system-ui, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .marketplace-page--food .sr-only {
@@ -72,9 +72,9 @@
   flex: 1 1 280px;
   min-height: 48px;
   padding: 0 16px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .food-search input {
@@ -83,7 +83,7 @@
   border: 0;
   background: transparent;
   color: var(--food-ink);
-  font: 400 14px/1.2 Inter, system-ui, sans-serif;
+  font: 400 14px/1.2 var(--font-ui);
 }
 
 .food-search input::placeholder {
@@ -106,7 +106,7 @@
   border-radius: 8px;
   background: var(--food-mint);
   color: var(--food-muted);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
 }
 
 .food-catalog__chips {
@@ -122,7 +122,7 @@
   border-radius: 999px;
   background: #fff;
   color: var(--food-ink-soft);
-  font: 600 12px/1 Inter, system-ui, sans-serif;
+  font: 600 12px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -149,7 +149,7 @@
   min-height: 236px;
   border-radius: 16px;
   overflow: hidden;
-  background: #14271f;
+  background: var(--text-heading);
 }
 
 .food-featured__copy {
@@ -178,7 +178,7 @@
 
 .food-featured__title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.5rem, 2.4vw, 2.25rem);
   font-weight: 400;
   line-height: 1.08;
@@ -207,7 +207,7 @@
   border-radius: 12px;
   background: var(--food-accent);
   color: #fff;
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
   cursor: pointer;
 }
 
@@ -222,7 +222,7 @@
 
 .food-featured__price {
   color: #fff;
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-featured__media {
@@ -246,7 +246,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.91);
   color: var(--food-ink);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
 }
 
 /* ── Nearby heading ── */
@@ -259,23 +259,23 @@
 
 .food-nearby-head h2 {
   margin: 0 0 3px;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
-  color: #14271f;
+  color: var(--text-heading);
 }
 
 .food-nearby-head__note {
   margin: 0;
-  color: #716a61;
-  font: 400 13px/18px Inter, system-ui, sans-serif;
+  color: var(--text-secondary);
+  font: 400 13px/18px var(--font-ui);
 }
 
 .food-nearby-head__count {
   margin: 0;
   color: var(--food-accent);
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
 }
 
 .food-nearby-head__link {
@@ -285,7 +285,7 @@
   border: 0;
   background: transparent;
   color: var(--food-leaf-deep);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -304,10 +304,10 @@
   display: flex;
   flex-direction: column;
   min-height: 240px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .food-card.is-in-cart {
@@ -341,7 +341,7 @@
   border-radius: 999px;
   background: #fff;
   color: var(--food-leaf-deep);
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
   box-shadow: 0 3px 10px rgba(23, 51, 42, 0.13);
 }
 
@@ -367,17 +367,17 @@
   border-radius: 999px;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
 }
 
 .food-card__kitchen {
   color: var(--food-muted);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-card__title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 21px;
   font-weight: 400;
   line-height: 1.15;
@@ -401,7 +401,7 @@
 
 .food-card__portions {
   color: var(--food-accent);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-card__location {
@@ -426,20 +426,20 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  color: #716a61;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
 .food-card__seller {
   margin: 0;
-  color: #716a61;
-  font: 400 13px/18px Inter, system-ui, sans-serif;
+  color: var(--text-secondary);
+  font: 400 13px/18px var(--font-ui);
 }
 
 .food-card__price {
   margin: 0;
   color: var(--food-leaf-deep);
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-ui);
 }
 
 .food-card__controls {
@@ -483,7 +483,7 @@
   width: 14px;
   text-align: center;
   color: var(--food-ink);
-  font: 700 14px/1 Inter, system-ui, sans-serif;
+  font: 700 14px/1 var(--font-ui);
 }
 
 .food-card__cart-btn {
@@ -496,7 +496,7 @@
   border-radius: 10px;
   background: var(--food-accent);
   color: #fff;
-  font: 600 13px/1 Inter, system-ui, sans-serif;
+  font: 600 13px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -541,7 +541,7 @@
   border-radius: 999px;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 14px/1 Inter, system-ui, sans-serif;
+  font: 800 14px/1 var(--font-ui);
   flex-shrink: 0;
 }
 
@@ -633,9 +633,9 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border: 1px solid #d9d2c5;
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .food-rail__location-head {
@@ -647,7 +647,7 @@
 
 .food-rail__location-head h2 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 20px;
   font-weight: 400;
   color: var(--food-ink);
@@ -660,7 +660,7 @@
   border: 0;
   background: transparent;
   color: var(--food-accent);
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -710,7 +710,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--food-ink-soft);
-  font: 700 12px/1 Inter, system-ui, sans-serif;
+  font: 700 12px/1 var(--font-ui);
 }
 
 .food-rail__sort-value {
@@ -743,12 +743,12 @@
 .food-rail__kitchens-head h3 {
   margin: 0;
   color: var(--food-ink);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
 }
 
 .food-rail__kitchens-head span {
   color: var(--food-muted);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
 }
 
 .food-rail__kitchen-list {
@@ -784,7 +784,7 @@
   border-radius: 999px;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 12px/1 Inter, system-ui, sans-serif;
+  font: 800 12px/1 var(--font-ui);
   flex-shrink: 0;
 }
 
@@ -815,7 +815,7 @@
 
 .food-rail__kitchen-dist {
   color: var(--food-leaf-deep);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
   flex-shrink: 0;
 }
 
@@ -849,7 +849,7 @@
 
 .food-rail__cart-title h2 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 21px;
   font-weight: 400;
   color: var(--food-ink);
@@ -863,14 +863,14 @@
   border-radius: 999px;
   background: var(--food-accent);
   color: #fff;
-  font: 800 11px/1 Inter, system-ui, sans-serif;
+  font: 800 11px/1 var(--font-ui);
 }
 
 .food-rail__clear {
   border: 0;
   background: transparent;
   color: var(--food-muted);
-  font: 700 11px/1 Inter, system-ui, sans-serif;
+  font: 700 11px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -919,7 +919,7 @@
   place-items: center;
   background: var(--food-leaf);
   color: var(--food-leaf-deep);
-  font: 800 14px/1 Inter, system-ui, sans-serif;
+  font: 800 14px/1 var(--font-ui);
 }
 
 .food-rail__cart-details {
@@ -994,7 +994,7 @@
   border: 0;
   background: transparent;
   color: var(--food-ink);
-  font: 400 11px/1.2 Inter, system-ui, sans-serif;
+  font: 400 11px/1.2 var(--font-ui);
 }
 
 .food-rail__note input::placeholder {
@@ -1066,7 +1066,7 @@
 }
 
 .food-rail__total b {
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 700;
 }
@@ -1088,7 +1088,7 @@
   border-radius: 999px;
   background: var(--food-accent);
   color: #fff;
-  font: 700 14px/1 Inter, system-ui, sans-serif;
+  font: 700 14px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -1165,7 +1165,7 @@
     border-radius: 999px;
     background: var(--food-ink);
     color: #fff;
-    font: 700 13px/1 Inter, system-ui, sans-serif;
+    font: 700 13px/1 var(--font-ui);
     box-shadow: 0 10px 28px rgba(23, 51, 42, 0.22);
     cursor: pointer;
   }

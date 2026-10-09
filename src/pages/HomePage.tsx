@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { AiSearchReview } from '../components/ai/AiSearchReview'
 import {
   getRentalPost,
   highlightRentalPosts,
@@ -9,7 +10,6 @@ import {
   type MarketplacePost,
   type RentalPostSummary,
 } from '../api'
-import { AiSearchDialog } from '../components/ai/AiSearchDialog'
 import { SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
 import {
   isExploreSurface,
@@ -25,7 +25,7 @@ import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
 import { useOnReconnect } from '../contexts/NetworkStatusContext'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
 import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
-import { MAP_FOCUS_ZOOM } from '../lib/googleMaps'
+import { MAP_FIT_MAX_ZOOM, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import {
   loadMapPinLayers,
   saveMapPinLayers,
@@ -92,6 +92,7 @@ function HomePageComponent() {
   const mapsReady = Boolean(apiKey && mapsLoaded)
   const { schools, loading: schoolsLoading } = useNearbyGuestSchools(mapsReady && isAuthenticated)
   const location = useLocation()
+  const [pendingAiReview, setPendingAiReview] = useState<AiHighlightResponse | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const urlSectionRaw = searchParams.get('section')
   const urlPostId = searchParams.get('post')
@@ -111,11 +112,6 @@ function HomePageComponent() {
   const isFeatureView =
     isAuthenticated && Boolean(activeSection && activeSection !== 'listings')
 
-  const [aiPreview, setAiPreview] = useState<AiHighlightResponse | null>(null)
-  const aiSearchSignature = nonBoundsSignature(parseFiltersFromURL(searchParams))
-  const [aiApplied, setAiApplied] = useState<{ posts: RentalPostSummary[]; signature: string } | null>(null)
-  const aiRequestRef = useRef(0)
-  const aiQueryRef = useRef('')
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [marketPosts, setMarketPosts] = useState<MarketplacePost[]>([])
   const [loading, setLoading] = useState(true)
@@ -220,22 +216,35 @@ function HomePageComponent() {
   const [mapPlaceFocusToken, setMapPlaceFocusToken] = useState(0)
   const searchPlaceId = searchParams.get('placeId')
   const searchPlaceName = searchParams.get('placeName') ?? ''
+  const appliedPlaceFocus = useRef('')
   useEffect(() => {
-    if (!searchPlaceId || !isExploreView) return
+    if (!searchPlaceId || !isExploreView) { appliedPlaceFocus.current = ''; return }
+    if (!mapsReady) return
+    const key = `${searchPlaceId}\0${searchPlaceName}`
+    if (appliedPlaceFocus.current === key) return
     let cancelled = false
     void resolvePlaceCoordinates(searchPlaceId).then((resolved) => {
       if (cancelled) return
       if (!resolved) { setError('Không thể xác định vị trí địa điểm. Vui lòng thử lại.'); return }
+      appliedPlaceFocus.current = key
       locateRequestRef.current += 1
       setLocating(false)
       setSelectedPostId(null)
-      commitMapFocus({ lat: resolved.lat, lng: resolved.lng, zoom: MAP_FOCUS_ZOOM })
+      commitMapFocus({ lat: resolved.lat, lng: resolved.lng, zoom: MAP_FIT_MAX_ZOOM })
       setMapPlaceFocus({ placeId: searchPlaceId, name: searchPlaceName || resolved.name,
         address: resolved.address, lat: resolved.lat, lng: resolved.lng })
       setMapPlaceFocusToken((n) => n + 1)
+      // The destination drives spatial retrieval, independent of a school's name
+      // appearing in a rental title or address. Keep the user's price/amenity filters.
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('keyword')
+        const filters = parseFiltersFromURL(next)
+        return serializeFiltersToQuery({ ...filters, bounds: bboxAround(resolved.lat, resolved.lng, 1.8), searchOnMove: false, page: 1 }, next)
+      }, { replace: true })
     }).catch(() => { if (!cancelled) setError('Không thể tải địa điểm từ Google Maps.') })
     return () => { cancelled = true }
-  }, [searchPlaceId, searchPlaceName, isExploreView, commitMapFocus])
+  }, [searchPlaceId, searchPlaceName, isExploreView, mapsReady, commitMapFocus, setSearchParams])
 
   const pinFilterResults = useCallback(() => {
     // Prefer fitting pins over a prior area focus / user pan.
@@ -249,7 +258,6 @@ function HomePageComponent() {
   const [locationError, setLocationError] = useState('')
   const disruptedRef = useRef(false)
   const locateRequestRef = useRef(0)
-  const autoLocateStartedRef = useRef(false)
   const userLocationRef = useRef(userLocation)
   userLocationRef.current = userLocation
   disruptedRef.current = disrupted
@@ -348,30 +356,45 @@ function HomePageComponent() {
 
   const applyAiSearchUpdate = useCallback(
     (update: AiHighlightResponse) => {
-      setAiApplied({ posts: update.posts.map(item => item.post), signature: aiSearchSignature })
-      setSelectedPostId(null)
       const c = update.criteria
+      if (c.unknown?.length) return
+      const params = new URLSearchParams({ section: 'listings' })
       const nextKeyword = (c.keyword || c.location || '').trim()
-      setKeyword(nextKeyword)
-      setSearchQuery(nextKeyword)
-      setMinPrice(c.priceMin != null ? String(Math.round(c.priceMin)) : '')
+      if (nextKeyword) params.set('keyword', nextKeyword)
+        if (c.priceMin != null && c.budgetBasis !== 'total') params.set('minPrice', String(c.priceMin))
+      if (c.priceMax != null) params.set('maxPrice', String(c.priceMax))
+      if (c.areaMin != null) params.set('minArea', String(c.areaMin))
+      if (c.areaMax != null) params.set('maxArea', String(c.areaMax))
+      for (const code of c.requiredAmenities ?? []) params.append('amenities', code)
+      for (const code of c.excludedAmenities ?? []) params.append('excludedAmenities', code)
+      if (c.excludeRoommateShare) params.set('excludeRoommateShare', 'true')
+      if (c.occupants) params.set('minAvailableSlots', String(c.occupants))
+      for (const id of update.posts.length ? update.posts.map(item => item.post.id) : ['00000000-0000-0000-0000-000000000000']) params.append('ids', id)
+      setSearchParams(params)
+      setPendingAiReview(null)
+      if (nextKeyword) {
+        setKeyword(nextKeyword)
+        setSearchQuery(nextKeyword)
+      }
+        setMinPrice(c.priceMin != null && c.budgetBasis !== 'total' ? String(Math.round(c.priceMin)) : '')
       setMaxPrice(c.priceMax != null ? String(Math.round(c.priceMax)) : '')
+      setSelectedAmenities(c.requiredAmenities ?? [])
       filtersRef.current = {
         ...filtersRef.current,
         bbox: null,
         keyword: nextKeyword,
         minPrice: c.priceMin != null ? String(Math.round(c.priceMin)) : '',
         maxPrice: c.priceMax != null ? String(Math.round(c.priceMax)) : '',
+        selectedAmenities: c.requiredAmenities ?? [],
       }
       if (update.posts.length > 0) {
-        setPosts(update.posts.map((p) => p.post))
+        setPosts([])
+        setLoading(true)
         setSelectedPostId(null)
         if (update.mapFocusLatitude == null || update.mapFocusLongitude == null) {
           pinFilterResults()
         }
-      } else {
-        setPosts([])
-      }
+      } else setPosts([])
       if (update.mapFocusLatitude != null && update.mapFocusLongitude != null) {
         commitMapFocus({
           lat: Number(update.mapFocusLatitude),
@@ -381,35 +404,35 @@ function HomePageComponent() {
       }
       openListingsPanel()
     },
-    [aiSearchSignature, commitMapFocus, openListingsPanel, pinFilterResults],
+    [commitMapFocus, openListingsPanel, pinFilterResults, setSearchParams],
   )
 
+  useEffect(() => {
+    const update = (location.state as { aiSearchUpdate?: AiHighlightResponse } | null)?.aiSearchUpdate
+    if (!update || !isAuthenticated || isLoading) return
+    // Consume the navigation event after the route mounts; cancelled navigations cannot apply stale filters.
+    let cancelled = false
+    queueMicrotask(() => { if (!cancelled) applyAiSearchUpdate(update) })
+    return () => { cancelled = true }
+  }, [location.state, isAuthenticated, isLoading, applyAiSearchUpdate])
+
   const handleAiSearch = useCallback(
-    async (text: string, intent?: AiHighlightResponse['criteria']) => {
+    async (text: string) => {
       const q = text.trim()
       if (!q) return
       setAiSearching(true)
       setError('')
-      const requestId = ++aiRequestRef.current
       try {
-        const update = await highlightRentalPosts({ text: q, maxResults: 5, intent })
-        if (requestId === aiRequestRef.current) setAiPreview(update)
+        const update = await highlightRentalPosts({ text: q, maxResults: 12 })
+        setPendingAiReview(update)
       } catch (err) {
-        if (requestId === aiRequestRef.current) setError(getErrorMessage(err, 'AI tìm kiếm tạm thời không khả dụng'))
+        setError(getErrorMessage(err, 'AI tìm kiếm tạm thời không khả dụng'))
       } finally {
-        if (requestId === aiRequestRef.current) setAiSearching(false)
+        setAiSearching(false)
       }
     },
     [],
   )
-
-  const aiQuery = searchParams.get('aiQuery') ?? ''
-  useEffect(() => {
-    if (!aiQuery) { aiQueryRef.current = ''; return }
-    if (!isAuthenticated || aiQuery === aiQueryRef.current) return
-    aiQueryRef.current = aiQuery
-    void handleAiSearch(aiQuery)
-  }, [aiQuery, isAuthenticated, handleAiSearch])
 
   useEffect(() => {
     if (isLoading) return
@@ -818,14 +841,7 @@ function HomePageComponent() {
     })()
   }, [commitMapFocus])
 
-  useEffect(() => {
-    if (autoLocateStartedRef.current) return
-    autoLocateStartedRef.current = true
-    locateMe()
-  }, [locateMe])
-
   const resetFilters = useCallback(() => {
-    setAiApplied(null)
     if (isExploreView) {
       setSearchParams((prev) => {
         const cleared = parseFiltersFromURL(prev)
@@ -835,6 +851,10 @@ function HomePageComponent() {
         cleared.minArea = undefined
         cleared.maxArea = undefined
         cleared.amenities = []
+        cleared.excludedAmenities = []
+        cleared.excludeRoommateShare = false
+        cleared.minAvailableSlots = undefined
+        cleared.ids = []
         cleared.page = 1
         cleared.bounds = null
         return serializeFiltersToQuery(cleared, prev)
@@ -1062,11 +1082,15 @@ function HomePageComponent() {
 
   return (
     <>
-    {aiPreview ? <AiSearchDialog result={aiPreview} busy={aiSearching} onClose={() => { ++aiRequestRef.current; setAiSearching(false); setAiPreview(null) }} onApply={() => { applyAiSearchUpdate(aiPreview); setAiPreview(null) }} onCorrection={text => void handleAiSearch(text, aiPreview.criteria)} /> : null}
+    {pendingAiReview ? <aside className="home-ai-review" aria-label="Xác nhận tìm kiếm">
+      <button type="button" onClick={() => setPendingAiReview(null)} aria-label="Đóng xác nhận tìm kiếm">×</button>
+      <AiSearchReview result={pendingAiReview} onApply={applyAiSearchUpdate}
+        onRefine={text => { setSearchQuery(text); setPendingAiReview(null) }} />
+    </aside> : null}
     <AuthenticatedHomeMapShell
       destinationMode
       exploreView={exploreView}
-      posts={aiApplied?.signature === aiSearchSignature ? aiApplied.posts : posts}
+      posts={posts}
       marketPosts={marketPosts}
       selectedPostId={selectedPostId}
       selectedPost={selectedPost}

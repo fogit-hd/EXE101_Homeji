@@ -1,5 +1,7 @@
 import { DEFAULT_MAP_CENTER, geocodeAddress, looksLikeAddressQuery } from './googleMaps'
 import { importPlacesLibrary } from './loadGoogleMaps'
+import { isConcretePlacePrediction } from './localPlaceSearch'
+import { HOMEJI_SERVICE_AREA } from './homejiServiceArea'
 
 export type PlacePredictionItem = {
   placeId: string
@@ -15,7 +17,7 @@ export type ResolvedPlaceLocation = {
   lng: number
 }
 
-export type NearbyPlaceCategory = 'food' | 'cafe' | 'grocery' | 'health' | 'pharmacy'
+export type NearbyPlaceCategory = 'food' | 'cafe' | 'grocery' | 'health' | 'pharmacy' | 'studyCafe'
 
 export type NearbyPlaceItem = {
   placeId: string
@@ -33,17 +35,20 @@ export const NEARBY_PLACE_CATEGORY_OPTIONS: Array<{
   includedPrimaryTypes: string[]
 }> = [
   { id: 'food', label: 'Ăn uống', includedPrimaryTypes: ['restaurant', 'meal_takeaway'] },
-  { id: 'cafe', label: 'Cà phê để học', includedPrimaryTypes: ['cafe', 'bakery'] },
+  { id: 'cafe', label: 'Cà phê', includedPrimaryTypes: ['cafe', 'bakery'] },
   {
     id: 'grocery',
-    label: 'Cửa hàng / tạp hóa',
+    label: 'Tạp hóa',
     includedPrimaryTypes: ['supermarket', 'convenience_store'],
   },
-  { id: 'pharmacy', label: 'Nhà thuốc', includedPrimaryTypes: ['pharmacy'] },
   { id: 'health', label: 'Y tế', includedPrimaryTypes: ['pharmacy', 'hospital'] },
+  { id: 'pharmacy', label: 'Nhà thuốc', includedPrimaryTypes: ['pharmacy'] },
+  { id: 'studyCafe', label: 'Cà phê để học', includedPrimaryTypes: ['cafe'] },
 ]
 
 const NEARBY_SEARCH_RADIUS_METERS = 1800
+// Coalesce only requests currently in flight; do not retain Places content as an app cache.
+const nearbyRequests = new Map<string, Promise<NearbyPlaceItem[]>>()
 
 export type MapSearchBBox = {
   minLatitude: number
@@ -111,9 +116,22 @@ function distanceMeters(
 
 /**
  * Discover daily-life places around a rental/search anchor.
- * Results are distance-ranked and bounded; Places content is only held in the active UI.
+ * Results are distance-ranked and bounded; only requests in flight are coalesced.
  */
 export async function searchNearbyPlaces(
+  anchor: google.maps.LatLngLiteral,
+  category: NearbyPlaceCategory,
+  options?: { limit?: number; throwOnError?: boolean },
+): Promise<NearbyPlaceItem[]> {
+  const key = `${category}:${anchor.lat}:${anchor.lng}:${options?.limit ?? 5}:${options?.throwOnError ?? false}`
+  const pending = nearbyRequests.get(key)
+  if (pending) return pending
+  const request = requestNearbyPlaces(anchor, category, options)
+  nearbyRequests.set(key, request)
+  try { return await request } finally { nearbyRequests.delete(key) }
+}
+
+async function requestNearbyPlaces(
   anchor: google.maps.LatLngLiteral,
   category: NearbyPlaceCategory,
   options?: { limit?: number; throwOnError?: boolean },
@@ -196,7 +214,7 @@ export async function searchNearbyPlaces(
  */
 export async function fetchPlacePredictions(
   input: string,
-  options?: { limit?: number },
+  options?: { limit?: number; concreteLocalPlaces?: boolean },
 ): Promise<PlacePredictionItem[]> {
   const q = input.trim()
   if (q.length < 2) return []
@@ -211,6 +229,7 @@ export async function fetchPlacePredictions(
           input: string
           includedRegionCodes?: string[]
           language?: string
+          locationRestriction?: google.maps.LatLngBoundsLiteral
           locationBias?: {
             circle: { center: google.maps.LatLngLiteral; radius: number }
           }
@@ -225,9 +244,12 @@ export async function fetchPlacePredictions(
         input: q,
         includedRegionCodes: ['vn'],
         language: 'vi',
-        locationBias: {
+        ...(options?.concreteLocalPlaces ? { locationRestriction: {
+          south: HOMEJI_SERVICE_AREA.minLatitude, north: HOMEJI_SERVICE_AREA.maxLatitude,
+          west: HOMEJI_SERVICE_AREA.minLongitude, east: HOMEJI_SERVICE_AREA.maxLongitude,
+        } } : { locationBias: {
           circle: { center: DEFAULT_MAP_CENTER, radius: 25000 },
-        },
+        } }),
       })
 
       const out: PlacePredictionItem[] = []
@@ -238,6 +260,7 @@ export async function fetchPlacePredictions(
               text?: unknown
               mainText?: unknown
               secondaryText?: unknown
+              types?: string[]
             }
           | undefined
         if (!pred?.placeId) continue
@@ -247,6 +270,7 @@ export async function fetchPlacePredictions(
           'Địa điểm'
         const subtitle =
           readPredictionText(pred.secondaryText) || 'Địa điểm trên Google Maps'
+        if (options?.concreteLocalPlaces && !isConcretePlacePrediction(title, pred.types)) continue
         out.push({ placeId: pred.placeId, title, subtitle })
         if (out.length >= limit) break
       }

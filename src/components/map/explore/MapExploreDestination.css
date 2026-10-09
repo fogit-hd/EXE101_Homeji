@@ -35,7 +35,7 @@
 
 .map-explore__eyebrow {
   margin: 0;
-  font: 400 10px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 10px/1.2 var(--font-ui);
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--map-explore-accent);
@@ -44,7 +44,7 @@
 .map-explore__title {
   margin: 0;
   /* Instrument Serif lacks Vietnamese diacritics — use Be Vietnam Pro (already loaded). */
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.6rem, 2.6vw, 2.375rem);
   font-weight: 600;
   line-height: 1.15;
@@ -55,7 +55,7 @@
 .map-explore__count {
   margin: 0;
   flex: 0 0 auto;
-  font: 400 12px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 12px/1.2 var(--font-ui);
   color: var(--map-explore-muted);
   white-space: nowrap;
 }
@@ -84,7 +84,7 @@
   border-radius: 8px;
   background: var(--map-explore-cream);
   color: var(--map-explore-ink);
-  font: 400 12px/1 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 12px/1 var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -133,7 +133,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--map-explore-ink);
-  font: 400 12px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 12px/1.2 var(--font-ui);
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
@@ -160,7 +160,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--map-explore-ink);
-  font: 400 13px/1 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 13px/1 var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -192,7 +192,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--map-explore-muted);
-  font: 600 13px/1 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 600 13px/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -307,7 +307,7 @@
 
 .map-explore__panel-title {
   margin: 0;
-  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 1.2;
@@ -317,7 +317,7 @@
 
 .map-explore__panel-sub {
   margin: 2px 0 0;
-  font: 400 10px/1.2 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 10px/1.2 var(--font-ui);
   color: var(--map-explore-muted);
 }
 
@@ -342,7 +342,7 @@
   border-radius: 8px;
   background: var(--map-explore-ink);
   color: #fff;
-  font: 400 13px/1 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 13px/1 var(--font-ui);
   text-decoration: none;
 }
 
@@ -364,14 +364,14 @@
 
 .map-explore__state-title {
   margin: 0;
-  font: 600 14px/1.3 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 600 14px/1.3 var(--font-ui);
   color: var(--map-explore-ink);
 }
 
 .map-explore__state-copy,
 .map-explore__state p {
   margin: 0;
-  font: 400 12px/1.4 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 400 12px/1.4 var(--font-ui);
   color: var(--map-explore-muted);
 }
 
@@ -384,7 +384,7 @@
   border-radius: 8px;
   background: var(--map-explore-cream);
   color: var(--map-explore-ink);
-  font: 500 12px/1 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font: 500 12px/1 var(--font-ui);
   cursor: pointer;
 }
 

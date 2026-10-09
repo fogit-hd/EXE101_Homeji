@@ -85,7 +85,7 @@
 
 .rental-map__stage-title {
   margin: 4px 0 0;
-  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-family: var(--font-ui);
   font-size: 1.05rem;
   font-weight: 650;
   letter-spacing: -0.02em;
@@ -95,7 +95,7 @@
 .rental-map__stage-copy {
   margin: 0;
   max-width: 34ch;
-  font-family: 'Be Vietnam Pro', Manrope, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text-secondary);
@@ -482,7 +482,7 @@
   text-align: center;
   color: var(--text-secondary);
   font-size: 14px;
-  font-family: 'Be Vietnam Pro', Manrope, sans-serif;
+  font-family: var(--font-ui);
   background: var(--map-canvas-bg, #e4ebe6);
 }
 
@@ -509,7 +509,7 @@
 
 .map-error-panel__title {
   margin: 0;
-  font-family: Sora, 'Be Vietnam Pro', sans-serif;
+  font-family: var(--font-ui);
   font-weight: 650;
   letter-spacing: -0.02em;
   color: var(--text-heading);

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   getMyLandlordVerification,
   submitLandlordVerification,
@@ -53,9 +54,10 @@ function initialsFromName(name: string) {
   return `${parts[0]![0] ?? ''}${parts[parts.length - 1]![0] ?? ''}`.toUpperCase()
 }
 
-export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
+export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embedded?: boolean; lifestyleOnly?: boolean }) {
   const { profile, refreshProfile, needsProfileSetup } = useAuth()
-  const [tab, setTab] = useState<ProfileTab>('basic')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<ProfileTab>(() => lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
   const [profileErrors, setProfileErrors] = useState<{ displayName?: string; phone?: string }>({})
@@ -68,6 +70,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
   const [petPreference, setPetPreference] = useState<PetPreference>(PetPreference.Unknown)
   const [smokingPreference, setSmokingPreference] = useState<SmokingPreference>(SmokingPreference.Unknown)
   const [maxBudget, setMaxBudget] = useState('')
+  const [preferredArea, setPreferredArea] = useState('')
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'error' | 'info' } | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingLifestyle, setSavingLifestyle] = useState(false)
@@ -97,6 +100,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
     setPetPreference(profile.petPreference)
     setSmokingPreference(profile.smokingPreference)
     setMaxBudget(profile.maxBudget != null ? String(profile.maxBudget) : '')
+    setPreferredArea(profile.preferredArea ?? '')
   }, [profile])
 
   useEffect(() => {
@@ -207,6 +211,12 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   const handleLifestyleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (savingLifestyle) return
+    const budget = maxBudget.trim() ? Number(maxBudget) : undefined
+    if (budget !== undefined && (!Number.isFinite(budget) || budget <= 0)) {
+      showToast('Ngân sách tối đa phải là số lớn hơn 0.', 'error')
+      return
+    }
     setSavingLifestyle(true)
     try {
       await updateMyLifestyle({
@@ -214,8 +224,8 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
         sleepHabit,
         petPreference,
         smokingPreference,
-        maxBudget: maxBudget ? Number(maxBudget) : undefined,
-        preferredArea: 'Thủ Đức',
+        maxBudget: budget,
+        preferredArea: preferredArea.trim() || undefined,
       })
       await refreshProfile()
       showToast('Đã lưu lối sống & vai trò.', 'success')
@@ -262,6 +272,7 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
+      {!lifestyleOnly ? <>
       <header className="profile-page-header">
         <span className="profile-page-eyebrow">Tài khoản cá nhân</span>
         <h1 className="profile-page-title">
@@ -386,6 +397,8 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
           </button>
         ) : null}
       </div>
+
+      </> : null}
 
       {tab === 'basic' ? (
         <form className="profile-section map-motion-fade-up" onSubmit={(e) => void handleProfileSave(e)}>
@@ -515,11 +528,11 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
       {tab === 'lifestyle' ? (
         <form className="profile-section map-motion-fade-up" onSubmit={(e) => void handleLifestyleSave(e)}>
           <header className="profile-section__head">
-            <h3>Lối sống & vai trò</h3>
+            <h3>{lifestyleOnly ? 'Thông tin lối sống' : 'Lối sống & vai trò'}</h3>
             <p>Dùng để gợi ý phòng / ở ghép phù hợp hơn.</p>
           </header>
 
-          <div className="form-group">
+          {!lifestyleOnly ? <div className="form-group">
             <span className="form-label">Vai trò</span>
             <div className="profile-role-toggle" role="group" aria-label="Chọn vai trò">
               <button
@@ -537,9 +550,15 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
                 {userRoleLabel[UserRole.Landlord]}
               </button>
             </div>
-          </div>
+          </div> : null}
 
           <div className="profile-grid">
+            <div className="form-group">
+              <label className="form-label" htmlFor="profile-preferred-area">Khu vực muốn ở</label>
+              <input id="profile-preferred-area" className="form-input" value={preferredArea}
+                maxLength={150} onChange={(e) => setPreferredArea(e.target.value)}
+                placeholder="VD: gần UEL, Linh Trung" />
+            </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-sleep">
                 Thói quen ngủ
@@ -599,8 +618,8 @@ export function ProfilePage({ embedded = false }: { embedded?: boolean }) {
                 id="profile-budget"
                 className="form-input"
                 type="number"
-                min={0}
-                step={100000}
+                min={0.01}
+                step="any"
                 value={maxBudget}
                 onChange={(e) => setMaxBudget(e.target.value)}
                 placeholder="VD: 3500000"

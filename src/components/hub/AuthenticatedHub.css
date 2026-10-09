@@ -1,12 +1,12 @@
 .hub-home {
-  --hub-ink: #14271f;
+  --hub-ink: var(--text-heading);
   --hub-body: #1c241f;
-  --hub-muted: #716a61;
-  --hub-line: #d9d2c5;
-  --hub-paper: #f5f0e6;
-  --hub-card: #fffdf8;
-  --hub-coral: #e8603c;
-  --hub-leaf: #008f46;
+  --hub-muted: var(--text-secondary);
+  --hub-line: var(--border);
+  --hub-paper: var(--surface-muted);
+  --hub-card: var(--surface-elevated);
+  --hub-coral: #a43c22;
+  --hub-leaf: #24543e;
   box-sizing: border-box;
   width: min(1320px, 100%);
   margin: 0 auto;
@@ -15,7 +15,7 @@
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
   color: var(--hub-body);
-  font-family: Inter, Roboto, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .hub-home * {
@@ -47,7 +47,7 @@
 .hub-welcome h1 {
   margin: 0;
   color: var(--hub-ink);
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 600;
   line-height: 44px;
@@ -217,7 +217,7 @@
 .hub-market h2 {
   margin: 0;
   color: var(--hub-ink);
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
@@ -230,6 +230,18 @@
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+}
+
+.hub-rooms header p {
+  color: var(--hub-muted);
+}
+
+.hub-rooms header > a {
+  color: var(--hub-coral);
+}
+
+.hub-rooms .hub-photo {
+  color: var(--hub-muted);
 }
 
 .hub-viewings ul,
@@ -357,7 +369,7 @@
 }
 
 .hub-alert strong {
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 20px;
   font-weight: 500;
 }
@@ -552,7 +564,7 @@
 
 .hub-skel span {
   border-radius: 16px;
-  background: linear-gradient(90deg, #efe8dc 0%, #fffdf8 50%, #efe8dc 100%);
+  background: linear-gradient(90deg, var(--surface-input) 0%, var(--surface-elevated) 50%, var(--surface-input) 100%);
   background-size: 200% 100%;
   animation: hub-shimmer 1.2s ease-in-out infinite;
 }

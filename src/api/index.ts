@@ -324,13 +324,16 @@ export const parseAiSearch = (text: string) =>
     body: { text },
   })
 
-export const highlightRentalPosts = (data: { text?: string; maxResults?: number; intent?: AiParsedSearchCriteria }) =>
+export const highlightRentalPosts = (data: { text?: string; maxResults?: number; previousCriteria?: AiParsedSearchCriteria }) =>
   apiRequest<AiHighlightResponse>('/api/ai/highlight-rental-posts', {
     method: 'POST',
-    body: { text: data.text, maxResults: data.maxResults ?? 8 },
+    body: { text: data.text, maxResults: data.maxResults ?? 5, previousCriteria: data.previousCriteria },
   })
 
 // Chatbot
+export const deleteChatbotConversation = (id: string) =>
+  apiRequest<void>(`/api/chatbot/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' })
+
 export const getChatbotPopupConfig = () =>
   apiRequest<ChatbotPopupConfig>('/api/chatbot/popup-config')
 
@@ -340,11 +343,13 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const sendChatbotMessage = (data: { conversationId?: string; message: string }) =>
+export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria }) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     method: 'POST',
     body: {
       message: data.message,
+      saveHistory: data.saveHistory === true,
+      ...(data.previousCriteria ? { previousCriteria: data.previousCriteria } : {}),
       ...(data.conversationId ? { conversationId: data.conversationId } : {}),
     },
   })
@@ -536,6 +541,9 @@ export const archiveMarketplacePost = (id: string) =>
 
 export const getMyMarketplaceOrders = () =>
   apiRequest<MarketplaceOrder[]>('/api/marketplace-orders')
+
+export const startMarketplaceOrderConversation = (orderId: string) =>
+  apiRequest<PostConversation>(`/api/conversations/marketplace-orders/${orderId}`, { method: 'POST' })
 
 export const createMarketplaceOrder = (
   postId: string,

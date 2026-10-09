@@ -1,0 +1,11 @@
+.ai-search-review { border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin: 12px 0; background: var(--surface-elevated); color: var(--text-primary); font-size: 12px; }
+.ai-search-review__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.ai-search-review__chips :is(button, span) { background: var(--surface-soft, #edf2e9); border: 1px solid var(--border); color: var(--text-primary); border-radius: 20px; padding: 6px 9px; font: inherit; }
+.ai-search-review button { cursor: pointer; }
+.ai-search-review button:focus-visible, .ai-search-review a:focus-visible { outline: 3px solid var(--grab-green); outline-offset: 2px; }
+.ai-search-review__apply { border: 0; padding: 9px 12px; background: var(--grab-green); color: #fff; border-radius: 9px; font: inherit; }
+.ai-search-review__listing { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
+.ai-search-review__listing a { font-weight: 700; color: var(--text-heading); }
+.ai-search-review__listing p, .ai-search-review__listing ul { margin: 0; }
+.ai-search-review__listing ul { padding-left: 18px; }
+.ai-search-review__listing small { color: var(--text-muted); }

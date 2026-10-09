@@ -1,11 +1,11 @@
 .map-listings {
-  --ml-ink: #17261f;
-  --ml-paper: #f3ebdd;
-  --ml-card: #fffdf8;
-  --ml-line: #d9d0c1;
-  --ml-muted: #6f756f;
-  --ml-coral: #e95e43;
-  --ml-green: #2d7b55;
+  --ml-ink: var(--text-heading);
+  --ml-paper: var(--surface-muted);
+  --ml-card: var(--surface-elevated);
+  --ml-line: var(--border);
+  --ml-muted: var(--text-secondary);
+  --ml-coral: var(--hj-accent);
+  --ml-green: var(--hj-accent);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -43,7 +43,7 @@
 
 .map-listings__title-block h1 {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-weight: 500;
   font-size: clamp(1.8rem, 3vw, 2.5rem);
   line-height: 1.1;
@@ -55,7 +55,7 @@
   margin: 0 0 6px;
   color: #e8603c;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -101,7 +101,7 @@
   background: var(--ml-coral);
   color: #fff;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 16px;
   text-align: center;
 }
@@ -197,7 +197,7 @@
   background: var(--ml-coral);
   color: #fff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .map-listings__search-go img {
@@ -307,7 +307,7 @@
 .map-listings.is-map-first {
   gap: 0;
   padding: 0;
-  background: #fffdf8;
+  background: var(--surface-elevated);
 }
 
 .map-listings.is-map-first .map-listings__header {
@@ -319,8 +319,8 @@
   height: 56px;
   padding: 0 24px;
   gap: 10px;
-  border-bottom: 1px solid #d9d2c5;
-  background: #fffdf8;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
   overflow-x: auto;
 }
 
@@ -335,7 +335,7 @@
 .map-listings__rule {
   width: 1px;
   height: 20px;
-  background: #d9d2c5;
+  background: var(--border);
   flex: 0 0 auto;
 }
 
@@ -430,8 +430,8 @@
   width: min(380px, calc(100% - 32px));
   max-width: 380px;
   z-index: 4;
-  background: #fffdf8;
-  border: 1px solid #d9d2c5;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(20, 39, 31, 0.08);
 }
@@ -450,8 +450,8 @@
 
 .map-listings__panel-close,
 .map-listings__panel-open {
-  border: 1px solid #d9d2c5;
-  background: #fffdf8;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
   color: #14271f;
   border-radius: 6px;
   height: 30px;
@@ -517,10 +517,10 @@
 }
 
 .map-listings__popover {
-  --ml-ink: #17261f;
-  --ml-card: #fffdf8;
-  --ml-line: #d9d2c5;
-  --ml-muted: #6f756f;
+  --ml-ink: var(--text-heading);
+  --ml-card: var(--surface-elevated);
+  --ml-line: var(--border);
+  --ml-muted: var(--text-secondary);
   position: fixed;
   z-index: 80;
   top: 0;
@@ -533,8 +533,8 @@
   margin: 0;
   padding: 12px;
   box-sizing: border-box;
-  background: #fffdf8;
-  border: 1px solid #d9d2c5;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 10px 28px rgba(20, 39, 31, 0.14);
   color: #1e2722;
@@ -761,15 +761,17 @@
 
 .map-listings__preview-price strong,
 .map-listings__price {
-  font-family: Lora, Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   color: var(--ml-coral);
   font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .map-listings__preview p {
   margin: 4px 0 0;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .map-listings__preview-sub {
@@ -809,7 +811,7 @@
   background: var(--ml-coral);
   color: #fff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .map-listings__preview-open img {
@@ -849,7 +851,7 @@
 
 .map-listings__panel-head h2 {
   margin: 0;
-  font-family: Lora, Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 600;
 }
@@ -966,7 +968,7 @@
   background: var(--ml-coral);
   color: #fff;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.04em;
 }
 
@@ -978,9 +980,10 @@
 }
 
 .map-listings__name {
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.3;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .map-listings__address {
@@ -1150,7 +1153,7 @@
 }
 
 .map-listings--list .map-listings__name {
-  min-height: 2.6em;
+  min-height: 2.9em;
 }
 
 .map-listings--list .map-listings__address {
@@ -1180,12 +1183,12 @@
 }
 
 .map-listings--list .map-listings__price {
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .map-listings--list .map-listings__name {
-  font-size: 13px;
-  line-height: 1.3;
+  font-size: 16px;
+  line-height: 1.45;
 }
 
 .map-listings__card-photo {
@@ -1259,7 +1262,7 @@
     max-height: 46vh;
     padding: 8px;
     border-radius: 16px 16px 0 0;
-    background: #fffdf8;
+    background: var(--surface-elevated);
     box-shadow: none;
   }
 

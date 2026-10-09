@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { useSearch } from '../../contexts/SearchContext'
 import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
+import { NaturalRentalSearch } from '../ai/NaturalRentalSearch'
+import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 
 function useNarrowBar() {
   const [narrow, setNarrow] = useState(false)
@@ -39,7 +40,6 @@ export function ContextualSearch() {
 }
 
 function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onClose?: () => void }) {
-  const navigate = useNavigate()
   const {
     query,
     placeholder,
@@ -56,8 +56,9 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
   } = useSearch()
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(autoFocus)
-  const rootRef = useRef<HTMLFormElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const locationSearch = context === 'map' || context === 'housing'
 
   const dismiss = () => {
     setOpen(false)
@@ -74,17 +75,12 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
     onClose?.()
   }
 
-  return (
-    <div className="hj-search-slot">
-      <div className="hj-search-context">
-        <p className="hj-search-context__title">{contextTitle}</p>
-        <p className="hj-search-context__scope">{contextScope}</p>
-      </div>
-      <form ref={rootRef} className="hj-search" role="search" onSubmit={onSubmit}>
+  const renderSearch = (aiTrigger: ReactNode) => (
+      <form className="hj-search" role="search" onSubmit={onSubmit}>
         <label className="hj-search__label" htmlFor="hj-global-search">
           Tìm kiếm
         </label>
-        <div className="hj-search__field">
+        <div className={`hj-search__field${aiTrigger ? ' hj-search__field--ai' : ''}`}>
           <span className="hj-search__icon" aria-hidden>
             <img className="hj-glyph" src="/bar/search.svg" alt="" width={20} height={20} />
           </span>
@@ -113,17 +109,15 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
               </svg>
             </button>
           ) : null}
+          {aiTrigger}
           <button type="submit" className="hj-search__submit">
             <span className="hj-search__submit-full">Tìm kiếm</span>
             <span className="hj-search__submit-short">Tìm</span>
           </button>
-          {context === 'global' || context === 'map' || context === 'housing' ? <button type="button" className="hj-search__submit" disabled={!query.trim()} onClick={() => {
-            const params = new URLSearchParams({ section: 'listings', view: 'map', aiQuery: query.trim().slice(0, 1000) })
-            navigate(`/?${params.toString()}`); setOpen(false); onClose?.()
-          }}>Tìm theo nhu cầu</button> : null}
         </div>
-        {open && (suggestions.length > 0 || recentSearches.length > 0 || isLoading || (nearbyAnchor && (context === 'map' || context === 'housing'))) ? (
+        {open && (locationSearch || suggestions.length > 0 || recentSearches.length > 0 || isLoading) ? (
           <ul className="hj-search__suggest" role="listbox">
+            {locationSearch && !query.trim() ? <li className="hj-search__suggest-note">Nhập tên đường (ví dụ: Lê Văn Việt) hoặc trường học. Chọn địa điểm gợi ý để xem phòng và tiện ích gần đó.</li> : null}
             {nearbyAnchor && (context === 'map' || context === 'housing') ? (
               <li>
                 <strong>Gần khu vực đang tìm</strong><p>{nearbyAnchor.label}</p>
@@ -135,6 +129,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
               </li>
             ) : null}
             {isLoading ? <li className="hj-search__suggest-note">Đang gợi ý…</li> : null}
+            {locationSearch && query.trim().length >= 2 && !isLoading && suggestions.length === 0 ? <li className="hj-search__suggest-note">Chưa có gợi ý địa điểm. Thử tên đường đầy đủ hoặc tên trường và cơ sở. Nút Tìm vẫn tìm theo từ khóa tin đăng.</li> : null}
             {suggestions.map((item) => (
               <li key={item.id}>
                 <button
@@ -152,6 +147,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
                 </button>
               </li>
             ))}
+            {suggestions.length === 0 && recentSearches.length > 0 ? <li className="hj-search__suggest-note">Tìm kiếm gần đây</li> : null}
             {suggestions.length === 0 ? recentSearches.map((item) => (
               <li key={item}>
                 <button
@@ -159,9 +155,8 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
                   onPointerDown={(event) => event.preventDefault()}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
-                    submit(item)
-                    setOpen(false)
-                    onClose?.()
+                    if (locationSearch) { setQuery(item); inputRef.current?.focus() }
+                    else { submit(item); setOpen(false); onClose?.() }
                   }}
                 >
                   <strong>{item}</strong>
@@ -171,6 +166,17 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
           </ul>
         ) : null}
       </form>
+  )
+
+  return (
+    <div ref={rootRef} className="hj-search-slot">
+      <div className="hj-search-context">
+        <p className="hj-search-context__title">{contextTitle}</p>
+        <p className="hj-search-context__scope">{contextScope}</p>
+      </div>
+      {aiFeatureFlags.naturalSearch && locationSearch
+        ? <NaturalRentalSearch query={query} onOpen={() => { setOpen(false); setFocused(false) }} renderTrigger={renderSearch} />
+        : renderSearch(null)}
     </div>
   )
 }

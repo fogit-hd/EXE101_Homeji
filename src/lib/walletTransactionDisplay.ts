@@ -1,4 +1,5 @@
 import type { MarketplaceOrder, WalletTransaction } from '../api/types'
+import { marketplaceOrderGroupKey } from './marketplaceOrderGroups.ts'
 
 const REFUND_TRANSACTION_KIND = 3
 
@@ -8,7 +9,7 @@ export function groupMarketplaceOrderRefunds(
 ): WalletTransaction[] {
   const orderGroupById = new Map(orders.map((order) => [
     order.id,
-    `${order.buyerId}:${order.sellerId}:${order.createdAt}`,
+    marketplaceOrderGroupKey(order),
   ]))
   const refundGroups = new Map<string, WalletTransaction[]>()
 

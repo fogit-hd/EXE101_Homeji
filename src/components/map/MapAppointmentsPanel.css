@@ -4,6 +4,8 @@
    ══════════════════════════════════════════════════════════════ */
 
 .map-appointments {
+  --hj-muted: #526358;
+  --hj-accent: #a43c22;
   width: 100%;
   max-width: none;
   min-width: 0;
@@ -35,15 +37,15 @@
 }
 
 .map-appointments__eyebrow {
-  font: 700 10px/1.2 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 700 10px/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #e8603c;
+  color: var(--hj-accent);
 }
 
 .map-appointments__page-title {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 600;
   line-height: 44px;
@@ -52,7 +54,7 @@
 
 .map-appointments__page-lead {
   margin: 0;
-  font: 400 0.9rem/1.45 Inter, 'Be Vietnam Pro', sans-serif;
+  font: 400 0.9rem/1.45 var(--font-ui);
   color: var(--hj-muted, #756f64);
 }
 
@@ -71,7 +73,7 @@
   border-radius: 999px;
   background: var(--hj-accent, #e65c3a);
   color: #fff;
-  font: 600 0.84rem/1 Inter, sans-serif;
+  font: 600 0.84rem/1 var(--font-ui);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -97,7 +99,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--hj-muted, #756f64);
-  font: 600 0.8rem/1 Inter, sans-serif;
+  font: 600 0.8rem/1 var(--font-ui);
   cursor: pointer;
 }
 
@@ -116,7 +118,7 @@
 
 @media (max-width: 900px) {
   .map-appointments__layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -145,7 +147,7 @@
 }
 
 .map-appointments__cal-nav strong {
-  font: 600 0.92rem/1.2 Inter, sans-serif;
+  font: 600 0.92rem/1.2 var(--font-ui);
   text-transform: capitalize;
 }
 
@@ -170,30 +172,32 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   text-align: center;
-  font: 500 0.68rem/1 Inter, sans-serif;
+  font: 500 0.68rem/1 var(--font-ui);
   color: #8a958e;
 }
 
 .map-appointments__cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px 4px;
 }
 
 .map-appointments__cal-day {
   position: relative;
+  width: 100%;
+  min-width: 0;
   aspect-ratio: 1;
   min-height: 34px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #fff;
-  font: 500 0.72rem/1 Inter, sans-serif;
+  font: 500 0.72rem/1 var(--font-ui);
   cursor: pointer;
 }
 
 .map-appointments__cal-day.is-out {
-  color: #5c6a61;
+  color: #aeb9b2;
 }
 
 .map-appointments__cal-day.is-selected {
@@ -238,14 +242,14 @@
 }
 
 .map-appointments__month-sum-head span {
-  font: 500 0.65rem/1 Inter, sans-serif;
+  font: 500 0.65rem/1 var(--font-ui);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #aeb9b2;
 }
 
 .map-appointments__month-sum-head em {
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-style: normal;
   font-size: 1.35rem;
   color: #fff;
@@ -260,7 +264,7 @@
 .map-appointments__month-chips span {
   padding: 5px 10px;
   border-radius: 999px;
-  font: 500 0.7rem/1.2 Inter, sans-serif;
+  font: 500 0.7rem/1.2 var(--font-ui);
 }
 
 .map-appointments__month-chips .is-ok {
@@ -292,7 +296,8 @@
 
 .map-appointments__prep-head h2 {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  color: #fff;
+  font-family: var(--font-ui);
   font-size: 1.15rem;
   font-weight: 400;
 }
@@ -310,7 +315,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font: 400 0.78rem/1.3 Inter, sans-serif;
+  font: 400 0.78rem/1.3 var(--font-ui);
   color: #b8c2bc;
   cursor: pointer;
 }
@@ -339,13 +344,13 @@
 
 .map-appointments__day-head h2 {
   margin: 0;
-  font: 600 1rem/1.3 Inter, sans-serif;
+  font: 600 1rem/1.3 var(--font-ui);
   text-transform: capitalize;
   color: var(--hj-ink, #18231d);
 }
 
 .map-appointments__day-head span {
-  font: 400 0.85rem/1.3 Inter, sans-serif;
+  font: 400 0.85rem/1.3 var(--font-ui);
   color: var(--hj-muted, #756f64);
 }
 
@@ -378,7 +383,7 @@
 }
 
 .map-appointments__tl-time {
-  font: 700 0.85rem/1.2 Inter, sans-serif;
+  font: 700 0.85rem/1.2 var(--font-ui);
   color: var(--hj-ink, #18231d);
   padding-top: 18px;
   text-align: right;
@@ -431,7 +436,7 @@
   display: inline-flex;
   padding: 3px 9px;
   border-radius: 999px;
-  font: 700 0.65rem/1.2 Inter, sans-serif;
+  font: 700 0.65rem/1.2 var(--font-ui);
   letter-spacing: 0.04em;
 }
 
@@ -453,7 +458,7 @@
 
 .map-appointments__tl-title {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-ui);
   font-size: 1.15rem;
   font-weight: 400;
   line-height: 1.25;
@@ -463,7 +468,8 @@
 .map-appointments__tl-note,
 .map-appointments__tl-meta {
   margin: 0;
-  font: 400 0.8rem/1.4 Inter, sans-serif;
+  overflow-wrap: anywhere;
+  font: 400 0.8rem/1.4 var(--font-ui);
   color: var(--hj-muted, #756f64);
 }
 
@@ -475,7 +481,7 @@
 }
 
 .map-appointments__tl-links a {
-  font: 600 0.8rem/1.3 Inter, sans-serif;
+  font: 600 0.8rem/1.3 var(--font-ui);
   color: var(--hj-accent, #e65c3a);
   text-decoration: none;
 }
@@ -499,7 +505,7 @@
   border: 1px solid var(--hj-border, #d8cdbb);
   border-radius: var(--hj-radius-sm, 8px);
   background: #fff;
-  font: 600 0.8rem/1 Inter, sans-serif;
+  font: 600 0.8rem/1 var(--font-ui);
   cursor: pointer;
   color: var(--hj-ink, #18231d);
 }
@@ -521,7 +527,7 @@
   background: var(--hj-cream, #fff9ef);
   border: 1px dashed var(--hj-border, #d8cdbb);
   border-radius: var(--hj-radius-lg, 22px);
-  font: 400 0.88rem/1.5 Inter, sans-serif;
+  font: 400 0.88rem/1.5 var(--font-ui);
   color: var(--hj-muted, #756f64);
 }
 
@@ -559,7 +565,7 @@
   min-height: 36px;
   padding: 7px 14px;
   border-radius: 8px;
-  font: 650 0.8rem/1 Inter, sans-serif;
+  font: 650 0.8rem/1 var(--font-ui);
   cursor: pointer;
 }
 

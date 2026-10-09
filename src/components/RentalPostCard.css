@@ -4,8 +4,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: #fffdf8;
-  border: 1px solid #d9d2c5;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 
@@ -62,12 +62,12 @@
 }
 
 .post-card-body h3 {
-  font-family: Fraunces, Georgia, serif;
-  font-size: 13px;
+  font-family: var(--font-ui);
+  font-size: 16px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.45;
   margin: 0 0 4px;
-  color: #14271f;
+  color: var(--text-heading);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -77,10 +77,12 @@
 }
 
 .post-card-price {
-  font-size: 14px;
-  font-weight: 650;
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   line-height: 1.3;
-  color: #087a38 !important;
+  color: var(--hj-accent);
   margin: 0 0 2px;
   white-space: nowrap;
   overflow: hidden;

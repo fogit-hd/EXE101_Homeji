@@ -1,0 +1,7 @@
+.rental-cost { margin-top: 16px; min-width: 0; font-size: 12px; line-height: 1.6; }
+.rental-cost summary { cursor: pointer; font-weight: 700; }
+.rental-cost label { display: block; margin: 10px 0 4px; }
+.rental-cost :is(input, select) { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 9px; padding: 9px; background: var(--surface); color: var(--text-primary); font: inherit; }
+.rental-cost fieldset { min-width: 0; margin: 14px 0; padding: 12px; border: 1px solid var(--border); border-radius: 9px; }
+.rental-cost small { display: block; color: var(--text-muted); }
+.rental-cost button { max-width: 100%; white-space: normal; }

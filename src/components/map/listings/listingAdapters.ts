@@ -8,6 +8,9 @@ import type { MapSearchBBox } from '../../../lib/placeAutocomplete'
 
 /** Query fields `GET /api/rental-posts` actually accepts. */
 const SUPPORTED_FILTER_KEYS = [
+  'excludedAmenities',
+  'excludeRoommateShare',
+  'ids',
   'keyword',
   'minPrice',
   'maxPrice',
@@ -27,7 +30,7 @@ const SUPPORTED_FILTER_KEYS = [
 
 export type SupportedFilterKey = (typeof SUPPORTED_FILTER_KEYS)[number]
 
-const UI_KEYS = ['section', 'post', 'view', 'searchOnMove'] as const
+const UI_KEYS = ['section', 'post', 'view', 'searchOnMove', 'placeId', 'placeName'] as const
 
 const GATEWAY_KEYS = [
   'paymentId',
@@ -53,6 +56,11 @@ export type MapListingsView = 'split' | 'map' | 'list'
 export type ListingCatalog = 'rooms' | 'market'
 
 export type ListingQuery = {
+  placeId?: string
+  excludedAmenities?: string[]
+  excludeRoommateShare?: boolean
+  minAvailableSlots?: number
+  ids?: string[]
   catalog: ListingCatalog
   keyword: string
   minPrice?: number
@@ -192,12 +200,13 @@ function readView(params: URLSearchParams): MapListingsView {
 
 export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
   const searchOnMove = params.get('searchOnMove') !== '0'
+  const placeId = params.get('placeId')?.trim() || undefined
   const minLatitude = readNumber(params, 'minLatitude')
   const maxLatitude = readNumber(params, 'maxLatitude')
   const minLongitude = readNumber(params, 'minLongitude')
   const maxLongitude = readNumber(params, 'maxLongitude')
   const bounds =
-    searchOnMove &&
+    (searchOnMove || placeId) &&
     minLatitude != null &&
     maxLatitude != null &&
     minLongitude != null &&
@@ -206,6 +215,11 @@ export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
       : null
   const page = readNumber(params, 'page')
   return {
+    placeId,
+    excludedAmenities: params.getAll('excludedAmenities'),
+    excludeRoommateShare: params.get('excludeRoommateShare') === 'true',
+    minAvailableSlots: readNumber(params, 'minAvailableSlots'),
+    ids: params.getAll('ids'),
     catalog: params.get('catalog') === 'market' ? 'market' : 'rooms',
     keyword: params.get('keyword')?.trim() ?? '',
     minPrice: readNumber(params, 'minPrice'),
@@ -228,6 +242,10 @@ export function listingQueryToSearchParams(query: ListingQuery): RentalPostSearc
     page: query.page,
     pageSize: 20,
   }
+  if (query.excludedAmenities?.length) params.excludedAmenities = query.excludedAmenities
+  if (query.excludeRoommateShare) params.excludeRoommateShare = true
+  if (query.minAvailableSlots != null) params.minAvailableSlots = query.minAvailableSlots
+  if (query.ids?.length) params.ids = query.ids
   if (query.keyword && validateFilterAgainstCapabilities('keyword')) {
     params.keyword = query.keyword
   }
@@ -246,7 +264,7 @@ export function listingQueryToSearchParams(query: ListingQuery): RentalPostSearc
   if (query.amenities.length && validateFilterAgainstCapabilities('amenities')) {
     params.amenities = query.amenities
   }
-  if (query.searchOnMove && query.bounds && validateFilterAgainstCapabilities('minLatitude')) {
+  if ((query.searchOnMove || query.placeId) && query.bounds && validateFilterAgainstCapabilities('minLatitude')) {
     params.minLatitude = query.bounds.minLatitude
     params.maxLatitude = query.bounds.maxLatitude
     params.minLongitude = query.bounds.minLongitude
@@ -282,7 +300,7 @@ export function listingQueryToMarketplaceParams(query: ListingQuery): {
   if (query.keyword) params.keyword = query.keyword
   if (query.minPrice != null) params.minPrice = query.minPrice
   if (query.maxPrice != null) params.maxPrice = query.maxPrice
-  if (query.searchOnMove && query.bounds) {
+  if ((query.searchOnMove || query.placeId) && query.bounds) {
     const location = boundsToMarketLocation(query.bounds)
     if (location) {
       params.latitude = location.latitude
@@ -373,6 +391,10 @@ export function serializeFiltersToQuery(
   setNum('maxPrice', query.maxPrice)
   setNum('minArea', query.minArea)
   setNum('maxArea', query.maxArea)
+  setNum('minAvailableSlots', query.minAvailableSlots)
+  if (query.excludeRoommateShare) next.set('excludeRoommateShare', 'true')
+  for (const code of query.excludedAmenities ?? []) next.append('excludedAmenities', code)
+  for (const id of query.ids ?? []) next.append('ids', id)
   next.delete('amenities')
   if (validateFilterAgainstCapabilities('amenities')) {
     for (const code of query.amenities) next.append('amenities', code)
@@ -380,7 +402,7 @@ export function serializeFiltersToQuery(
   if (query.page > 1) next.set('page', String(query.page))
   else next.delete('page')
 
-  const bounds = query.searchOnMove ? query.bounds : null
+  const bounds = query.searchOnMove || query.placeId ? query.bounds : null
   setNum('minLatitude', bounds?.minLatitude)
   setNum('maxLatitude', bounds?.maxLatitude)
   setNum('minLongitude', bounds?.minLongitude)
@@ -395,6 +417,7 @@ export function queryHasActiveFilters(query: ListingQuery): boolean {
       query.maxPrice != null ||
       query.minArea != null ||
       query.maxArea != null ||
-      query.amenities.length,
+      query.amenities.length ||
+      (query.excludedAmenities?.length ?? 0) || query.excludeRoommateShare || query.minAvailableSlots || query.ids?.length,
   )
 }

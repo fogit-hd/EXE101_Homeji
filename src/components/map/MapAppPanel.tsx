@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { SavedPostsPage } from '../../pages/SavedPostsPage'
-import { RoommateInvitationsPage } from '../../pages/RoommateInvitationsPage'
+import { RoommateWorkspace } from '../roommates/RoommateWorkspace'
 import { NotificationsPage, type NotificationReadChange } from '../../pages/NotificationsPage'
 import { PaymentPage } from '../../pages/PaymentPage'
 import { ProfilePage } from '../../pages/ProfilePage'
@@ -250,7 +250,7 @@ export function MapAppPanel({
           {displayed === 'listings' ? listingsContent : null}
           {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
           {displayed === 'invitations' ? (
-            <RoommateInvitationsPage embedded onOpenConversation={onOpenConversation} />
+            <RoommateWorkspace onOpenConversation={onOpenConversation} />
           ) : null}
           {displayed === 'notifications' ? (
             <NotificationsPage
