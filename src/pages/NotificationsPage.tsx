@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -15,6 +15,7 @@ import { ContentSkeleton } from '../components/ContentSkeleton'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
 import { getNotificationPresentation } from '../lib/notificationPresentation'
 import { notificationTargetHref } from '../lib/notificationTarget'
+import { getErrorMessage } from '../lib/errors'
 
 export type NotificationReadChange =
   | { kind: 'one'; notification: Notification }
@@ -37,9 +38,16 @@ export function NotificationsPage({
 }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadOnly, setUnreadOnly] = useState(false)
+  const [readBusy, setReadBusy] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
+  const readLock = useRef(false)
+  // Read state is monotonic: an older list response cannot resurrect a read item.
+  const readIds = useRef(new Set<string>())
 
   const loadFn = useCallback(async () => {
-    setNotifications(await getNotifications(unreadOnly))
+    const loaded = await getNotifications(unreadOnly)
+    setNotifications(loaded.map(notification => readIds.current.has(notification.id)
+      ? { ...notification, isRead: true } : notification))
   }, [unreadOnly])
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(
@@ -48,29 +56,56 @@ export function NotificationsPage({
   )
 
   const handleMarkRead = async (id: string) => {
+    if (readLock.current) return
     const before = notifications.find((n) => n.id === id)
-    const updated = await markNotificationRead(id)
-    setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)))
-    if (before && !before.isRead) {
+    if (!before || before.isRead || readIds.current.has(id)) return
+    readLock.current = true
+    setReadBusy(id)
+    setActionError('')
+    try {
+      const updated = await markNotificationRead(id)
+      readIds.current.add(id)
+      setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)))
       onReadStateChange?.({ kind: 'one', notification: before })
+    } catch (reason) {
+      setActionError(getErrorMessage(reason, 'Không đánh dấu được thông báo. Vui lòng thử lại.'))
+    } finally {
+      readLock.current = false
+      setReadBusy(null)
     }
   }
 
   const handleMarkAll = async () => {
-    await markAllNotificationsRead()
-    onReadStateChange?.({ kind: 'all' })
-    void reload()
+    if (readLock.current) return
+    readLock.current = true
+    setReadBusy('all')
+    setActionError('')
+    try {
+      await markAllNotificationsRead()
+      notifications.forEach(notification => readIds.current.add(notification.id))
+      setNotifications(prev => prev.map(notification => readIds.current.has(notification.id)
+        ? { ...notification, isRead: true } : notification))
+      onReadStateChange?.({ kind: 'all' })
+      void reload()
+    } catch (reason) {
+      setActionError(getErrorMessage(reason, 'Không đánh dấu được tất cả thông báo. Vui lòng thử lại.'))
+    } finally {
+      readLock.current = false
+      setReadBusy(null)
+    }
   }
 
   const popup = surface === 'popup'
+  const visibleNotifications = unreadOnly ? notifications.filter(notification => !notification.isRead) : notifications
 
   const markAllAction = (
     <button
       type="button"
       className={popup ? 'hj-notify__mark-all' : 'btn btn-secondary btn-sm'}
+      disabled={readBusy !== null}
       onClick={() => void handleMarkAll()}
     >
-      Đánh dấu tất cả đã đọc
+      {readBusy === 'all' ? 'Đang đánh dấu…' : 'Đánh dấu tất cả đã đọc'}
     </button>
   )
 
@@ -111,16 +146,17 @@ export function NotificationsPage({
   const list = (
     <>
       <PageNotice message={error && !disrupted ? error : ''} tone="error" />
+      <PageNotice message={actionError} tone="error" />
 
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
           : <ContentSkeleton variant="list" label="Đang tải thông báo…" />
-      ) : notifications.length === 0 ? (
+      ) : visibleNotifications.length === 0 ? (
         <div className={popup ? 'hj-notify__empty' : 'empty-state card'}>Không có thông báo.</div>
       ) : (
         <div className="notification-list">
-          {notifications.map((n) => {
+          {visibleNotifications.map((n) => {
             const presentation = getNotificationPresentation(n)
             const target = notificationTargetHref(n)
             return (
@@ -155,9 +191,10 @@ export function NotificationsPage({
                   <button
                     type="button"
                     className={popup ? 'hj-notify__read' : 'btn btn-ghost btn-sm'}
+                    disabled={readBusy !== null}
                     onClick={() => void handleMarkRead(n.id)}
                   >
-                    Đánh dấu đã đọc
+                    {readBusy === n.id ? 'Đang đánh dấu…' : 'Đánh dấu đã đọc'}
                   </button>
                 )}
               </div>

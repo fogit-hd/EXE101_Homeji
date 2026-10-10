@@ -6,6 +6,7 @@ import {
 } from '../../api/roommateDiscovery'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, petPreferenceLabel, sleepHabitLabel, smokingPreferenceLabel } from '../../lib/labels'
+import { reconcileRoommateInvitations, upsertRoommateInvitation } from './roommateInvitationState'
 import './RoommatePeople.css'
 
 const INTENTS = [
@@ -33,6 +34,8 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
   const [invitations, setInvitations] = useState<RoommateInvitation[]>([])
   const [sendingId, setSendingId] = useState<string | null>(null)
   const inviteLock = useRef(false)
+  const invitationRevision = useRef(0)
+  const invitationMutations = useRef(new Map<string, number>())
 
   useEffect(() => {
     const controller = new AbortController()
@@ -47,11 +50,15 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
 
   useEffect(() => {
     const controller = new AbortController()
+    const snapshotRevision = invitationRevision.current
     async function load() {
       setLoading(true); setError('')
       try {
         const [data, pending] = await Promise.all([searchRoommates(query, controller.signal), getMyInvitations()])
-        if (!controller.signal.aborted) { setDirectory(data); setInvitations(pending) }
+        if (!controller.signal.aborted) {
+          setDirectory(data)
+          setInvitations(current => reconcileRoommateInvitations(pending, current, snapshotRevision, invitationMutations.current))
+        }
       } catch (reason) {
         if (!controller.signal.aborted) setError(getErrorMessage(reason, 'Không tải được danh sách tìm bạn.'))
       } finally { if (!controller.signal.aborted) setLoading(false) }
@@ -77,8 +84,12 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
     inviteLock.current = true; setSendingId(userId); setActionError(''); setNotice('')
     try {
       const created = await inviteRoommate(userId)
-      setInvitations(previous => [...previous, created])
-      setNotice('Đã gửi lời mời. Bạn có thể nhắn tin sau khi người nhận chấp nhận.')
+      invitationRevision.current += 1
+      invitationMutations.current.set(created.id, invitationRevision.current)
+      setInvitations(previous => upsertRoommateInvitation(previous, created))
+      setNotice(created.status === RoommateInvitationStatus.Accepted
+        ? 'Bạn và người này đã kết nối. Mở Lời mời để tiếp tục nhắn tin.'
+        : 'Đã gửi lời mời. Bạn có thể nhắn tin sau khi người nhận chấp nhận.')
     } catch (reason) {
       setActionError(getErrorMessage(reason, 'Không gửi được lời mời. Vui lòng thử lại.'))
       setReload(value => value + 1)

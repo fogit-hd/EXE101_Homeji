@@ -12,6 +12,12 @@ const posts = [1, 2, 3].map(index => ({
   createdAt: now, updatedAt: now, viewCount: 0, saveCount: 0, isOwnerPremium: false, boostScore: 0,
 }))
 const audit = []
+const notificationScenario = process.env.HOMEJI_QA_NOTIFICATIONS === '1'
+let notificationFailures = notificationScenario ? 1 : 0
+const notifications = notificationScenario ? [1, 2].map(index => ({
+  id: `notification-qa-${index}`, userId, title: `Thông báo server QA ${index}`,
+  message: 'Thông báo giả lập kiểm tra đánh dấu đã đọc.', type: 1, isRead: false, createdAt: now,
+})) : []
 const criteria = { location: 'Thủ Đức', keyword: null, priceMin: null, priceMax: 4000000, areaMin: null, areaMax: null, criteria: [], requiredAmenities: ['KITCHEN'], excludedAmenities: [], unknown: [], occupants: 2, budgetBasis: 'rent', excludeRoommateShare: true, destination: null }
 const result = { criteria, tag: 'Phù hợp theo dữ liệu tin', mapFocusLatitude: posts[0].latitude, mapFocusLongitude: posts[0].longitude, mapFocusAddress: posts[0].address,
   posts: posts.map(post => ({ post, score: 37, reasons: ['Giá nằm trong ngân sách tối đa.', 'Khớp tiện ích chủ tin khai báo: KITCHEN.'], tag: 'Phù hợp theo dữ liệu tin', updatedAt: now, commercialBoost: 0,
@@ -31,6 +37,18 @@ const server = http.createServer(async (request, response) => {
   audit.push(record)
   let body = []
   if (path === '/__qa/audit') body = audit
+  else if (path === '/api/notifications') body = notifications.filter(item => url.searchParams.get('unreadOnly') !== 'true' || !item.isRead)
+  else if (request.method === 'POST' && (path === '/api/notifications/read-all' || /^\/api\/notifications\/[^/]+\/read$/.test(path))) {
+    if (notificationScenario) await new Promise(resolve => setTimeout(resolve, 1200))
+    if (notificationFailures > 0) {
+      notificationFailures--
+      response.writeHead(400, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify({ message: 'QA: chưa đánh dấu được; thử lại.' }))
+      return
+    }
+    if (path.endsWith('/read-all')) notifications.forEach(item => { item.isRead = true })
+    else { body = notifications.find(item => path.includes(item.id)); if (body) body.isRead = true }
+  }
   else if (path === '/api/account/login') body = { accessToken: 'local-ui-fixture-only', userId, email: 'qa-ai@example.test' }
   else if (path === '/api/profile/me') body = profile
   else if (path === '/api/chatbot/popup-config') body = { enabled: true, title: 'Homeji', greeting: 'Trợ lý kiểm thử local', suggestedPrompts: [] }

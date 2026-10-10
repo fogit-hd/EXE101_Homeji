@@ -397,8 +397,8 @@ export const markNotificationRead = (notificationId: string) => {
 }
 
 export const markAllNotificationsRead = async () => {
-  markAllDefaultNotificationsRead()
   await apiRequest<void>('/api/notifications/read-all', { method: 'POST' })
+  markAllDefaultNotificationsRead()
 }
 
 // Reports
