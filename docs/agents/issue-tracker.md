@@ -24,4 +24,3 @@ GitHub shares issue and PR numbers. Confirm a referenced number is an issue befo
 ## Repository scope
 
 Frontend work belongs in this repository; backend work belongs in `thanhduykx/Homeji_BE`. For a change spanning both, create linked issues in the respective repositories and record dependencies explicitly.
-
