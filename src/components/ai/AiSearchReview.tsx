@@ -3,11 +3,12 @@ import { useState } from 'react'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import type { AiHighlightResponse } from '../../api'
 import { RentalPostType } from '../../api'
-import { amenityLabel, formatPrice } from '../../lib/labels'
+import { amenityLabel, formatPrice, formatListingRent, formatListingArea } from '../../lib/labels'
 import './AiSearchReview.css'
 import { ShortlistCommutePlanner, type CommuteConfirmation } from './ShortlistCommutePlanner'
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
+import { buildRentalSearchChips } from './rentalSearchChips'
 
 export function AiSearchReview({ result, onApply, onRefine }: {
   result: AiHighlightResponse
@@ -35,21 +36,7 @@ function AiSearchReviewSession({ result, onApply, onRefine }: {
     const monthly = confirmedCosts[item.post.id]
     return monthly != null && (c.priceMax == null || monthly <= c.priceMax) && (c.priceMin == null || monthly >= c.priceMin)
   }) : routedPosts
-  const chips = [
-    ...(c.location ? [{ text: c.location, edit: 'Tìm lại phòng ở ' }] : []),
-    ...(c.priceMax != null ? [{ text: `${c.budgetBasis === 'total' ? 'Cả phí' : 'Tiền thuê'} ≤ ${formatPrice(c.priceMax)}`, edit: 'Đổi ngân sách dưới ' }] : []),
-    ...(c.priceMin != null ? [{ text: `Từ ${formatPrice(c.priceMin)}`, edit: 'Từ ' }] : []),
-    ...(c.occupants ? [{ text: `${c.occupants} người`, edit: 'Phòng cho ' }] : []),
-    ...(c.areaMin != null ? [{ text: `Diện tích ≥ ${c.areaMin} m²`, edit: 'Bỏ diện tích' }] : []),
-    ...(c.areaMax != null ? [{ text: `Diện tích ≤ ${c.areaMax} m²`, edit: 'Bỏ diện tích' }] : []),
-    ...(c.destination ? [{ text: `Điểm đến: ${c.destination}`, edit: 'Bỏ điểm đến' }] : []),
-    ...(c.maxCommuteMinutes ? [{ text: `Đường đi ≤ ${c.maxCommuteMinutes} phút`, edit: 'Bỏ điểm đến' }] : []),
-    ...(c.travelMode ? [{ text: c.travelMode === 'DRIVING' ? 'Ô tô' : c.travelMode === 'WALKING' ? 'Đi bộ' : 'Phương tiện công cộng', edit: 'Phương tiện đi học: ' }] : []),
-    ...(c.requiredAmenities ?? []).map(code => ({ text: `Cần ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
-    ...(c.criteria ?? []).map(code => ({ text: `Ưu tiên ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
-    ...(c.excludedAmenities ?? []).map(code => ({ text: `Không có ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
-    ...(c.excludeRoommateShare ? [{ text: 'Không ở ghép', edit: 'Chấp nhận ở ghép' }] : []),
-  ]
+  const chips = buildRentalSearchChips(c)
   const unknownPriceUnit = result.posts.some(item => rentalPriceBasis(item.post) === 'unknown')
   const unresolved = Boolean(c.unknown?.length) || unknownPriceUnit
   return <section className="ai-search-review" aria-label="Tiêu chí và tin phòng có nguồn">
@@ -69,7 +56,7 @@ function AiSearchReviewSession({ result, onApply, onRefine }: {
     {unresolved && routedPosts.length ? <strong>Tin ứng viên cần xác nhận phí hoặc đường đi; chưa đáp ứng toàn bộ yêu cầu.</strong> : null}
     {(pendingCosts ? routedPosts : visiblePosts).slice(0, 5).map(item => <article key={item.post.id} className="ai-search-review__listing">
       <Link to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`}>{item.post.title}</Link>
-      <strong>{formatPrice(item.post.price)} · {rentalPriceLabel(rentalPriceBasis(item.post))} · {item.post.area} m²</strong>
+      <strong>{formatListingRent(item.post.price)} · {rentalPriceLabel(rentalPriceBasis(item.post))} · {formatListingArea(item.post.area)}</strong>
       <span>{item.post.address}</span>
       {item.post.type === RentalPostType.RoomTransfer ? <small>Tin pass phòng dùng vị trí gần đúng. Tuyến từ ghim này chưa thay thế đường đi từ cửa phòng.</small> : null}
       {item.post.isOwnerPremium ? <small>Chủ tin Premium · ưu tiên thương mại riêng</small> : null}

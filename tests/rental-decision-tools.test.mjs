@@ -60,6 +60,15 @@ test('monthly usage and per-person fees remain separate from deposit', () => {
   assert.equal(result.parts.water, 200000)
 })
 
+test('missing source rent keeps monthly and initial totals unknown even when all fees are confirmed', () => {
+  const result = calculateRentalCost({ ...scenario(), rent: null })
+  assert.equal(result.monthly, null)
+  assert.equal(result.initial, null)
+  assert.equal(result.parts.rent, null)
+  assert.ok(result.unknown.includes('rent'))
+  assert.equal(result.knownMonthly, 670000)
+})
+
 test('unknown units and blank fees cannot turn into zero or an official total', () => {
   const input = scenario()
   input.water.unit = 'unknown'

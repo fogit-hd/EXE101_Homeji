@@ -18,9 +18,11 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
   const [other, setOther] = useState<number | null>(null)
   const [deposit, setDeposit] = useState<number | null>(null)
   const [initialFees, setInitialFees] = useState<number | null>(null)
+  // Listing zero has no confirmation metadata; it cannot mean free rent.
+  const knownRent = Number.isFinite(rent) && rent > 0 ? rent : null
   let result: ReturnType<typeof calculateRentalCost> | null = null
   try {
-    result = calculateRentalCost({ rent, occupants: people, electricity, water, internet, otherMonthly: other, deposit, initialFees })
+    result = calculateRentalCost({ rent: knownRent, occupants: people, electricity, water, internet, otherMonthly: other, deposit, initialFees })
   } catch { /* Invalid intermediate input stays visible for correction. */ }
   const update = <T,>(setter: (value: T) => void, value: T) => { onInvalidate?.(); setter(value) }
   const feeFields = (label: string, fee: RentalFee, setFee: (next: RentalFee) => void) => <fieldset>
@@ -37,6 +39,7 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
   </fieldset>
   return <details className="rental-cost"><summary>Ước tính chi phí theo kịch bản của bạn</summary>
     <p>Giá thuê lấy từ tin. Nhập các khoản bạn đã hỏi chủ phòng; nhập 0 khi đã xác nhận miễn phí. Bỏ trống giữ trạng thái chưa biết.</p>
+    {knownRent === null ? <p role="status">Tin chưa có giá thuê hợp lệ. Chưa thể xác nhận tổng chi phí; cần người đăng cập nhật giá.</p> : null}
     <label htmlFor={`${id}-people`}>Số người</label><input id={`${id}-people`} type="number" min="1" max="20" value={people} onChange={event => update(setPeople, Number(event.target.value))} />
     {feeFields('Điện', electricity, setElectricity)}{feeFields('Nước', water, setWater)}
     {([

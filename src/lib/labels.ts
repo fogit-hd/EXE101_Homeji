@@ -23,6 +23,12 @@ import {
 export const formatPrice = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 
+// Listing measurements have no explicit-free marker; zero/malformed values stay unknown.
+export const formatListingRent = (value: number) =>
+  Number.isFinite(value) && value > 0 ? formatPrice(value) : 'Chưa có thông tin'
+export const formatListingArea = (value: number) =>
+  Number.isFinite(value) && value > 0 ? `${value} m²` : 'Chưa có thông tin'
+
 export const formatDate = (value: string) =>
   new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 

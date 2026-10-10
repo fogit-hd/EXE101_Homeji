@@ -65,14 +65,20 @@ const require = createRequire(import.meta.url)
 const reviewSource = (await readFile(new URL('../src/components/ai/AiSearchReview.tsx', import.meta.url), 'utf8'))
   .replace(/^import .*\r?\n/gm, '')
 const reviewJs = ts.transpileModule(reviewSource, { compilerOptions: { module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.React } }).outputText
+const chipLabelsUrl = compileUrl(`export const amenityLabel = value => value; export const formatPrice = value => String(value);`)
+const chipsUrl = compileUrl((await readFile(new URL('../src/components/ai/rentalSearchChips.ts', import.meta.url), 'utf8'))
+  .replace('../../lib/labels', chipLabelsUrl))
 const bindings = `
 import React, { useState } from '${pathToFileURL(require.resolve('react')).href}';
 import { Link } from '${pathToFileURL(require.resolve('react-router-dom')).href}';
 import { RentalPostType } from '${typesUrl}';
 import { rentalPriceBasis, rentalPriceLabel } from '${compileUrl(source.replace('../../api/types', typesUrl))}';
+import { buildRentalSearchChips } from '${chipsUrl}';
 const aiFeatureFlags = { commute: false };
 const amenityLabel = value => value;
 const formatPrice = value => String(value);
+const formatListingRent = value => Number.isFinite(value) && value > 0 ? String(value) : 'Chưa có thông tin';
+const formatListingArea = value => Number.isFinite(value) && value > 0 ? value + ' m²' : 'Chưa có thông tin';
 const ShortlistCommutePlanner = () => null;
 const RentalCostCalculator = () => React.createElement('span', null, 'WHOLE_ROOM_CALCULATOR');
 `

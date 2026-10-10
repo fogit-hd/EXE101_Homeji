@@ -12,6 +12,7 @@ const posts = [1, 2, 3].map(index => ({
   createdAt: now, updatedAt: now, viewCount: 0, saveCount: 0, isOwnerPremium: false, boostScore: 0,
 }))
 const audit = []
+if (process.env.HOMEJI_QA_MISSING_RENT === '1') Object.assign(posts[0], { price: 0, area: 0, maxOccupants: 0 })
 const notificationScenario = process.env.HOMEJI_QA_NOTIFICATIONS === '1'
 let notificationFailures = notificationScenario ? 1 : 0
 const notifications = notificationScenario ? [1, 2].map(index => ({

@@ -6,7 +6,7 @@ import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { calculateShortlistCommute, type CommuteMode, type CommuteResult } from '../../lib/shortlistCommute'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { getErrorMessage } from '../../lib/errors'
-import { amenityLabel, formatPrice } from '../../lib/labels'
+import { amenityLabel, formatListingRent, formatListingArea } from '../../lib/labels'
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { ApiRequestError } from '../../api/client'
 import { isLowestComparablePrice, rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
@@ -72,7 +72,8 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
       if (routeRequest.current === request) setError(getErrorMessage(reason, 'Chưa tính được đường đi.'))
     } finally { if (routeRequest.current === request) setRouting(false) }
   }
-  const largest = items.length > 1 ? Math.max(...items.map(item => item.post.area)) : null
+  const knownAreas = items.map(item => item.post.area).filter(area => Number.isFinite(area) && area > 0)
+  const largest = knownAreas.length > 1 ? Math.max(...knownAreas) : null
 
   return <section className="rental-comparison" aria-labelledby="rental-comparison-title">
     <header><div><span>SHORTLIST CỦA BẠN</span><h2 id="rental-comparison-title">So sánh có căn cứ</h2></div>
@@ -105,9 +106,9 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
           <p>{post.address}</p>
           {post.type === RentalPostType.RoomTransfer ? <small>Tin pass phòng dùng vị trí gần đúng nếu bạn không phải chủ tin; cần xác nhận địa chỉ trước khi đi xem.</small> : null}
           <dl>
-            <dt>{rentalPriceLabel(priceBasis)}</dt><dd>{formatPrice(post.price)}{isLowestComparablePrice(post, items.map(item => item.post)) ? ' · thấp nhất trong các tin cùng đơn vị' : ''}</dd>
-            <dt>Diện tích</dt><dd>{post.area} m²{post.area === largest ? ' · rộng nhất trong lựa chọn' : ''}</dd>
-            <dt>Số người tối đa theo tin</dt><dd>{post.maxOccupants ?? 'Chưa có thông tin'}</dd>
+            <dt>{rentalPriceLabel(priceBasis)}</dt><dd>{formatListingRent(post.price)}{isLowestComparablePrice(post, items.map(item => item.post)) ? ' · thấp nhất trong các tin cùng đơn vị' : ''}</dd>
+            <dt>Diện tích</dt><dd>{formatListingArea(post.area)}{post.area === largest ? ' · rộng nhất trong lựa chọn' : ''}</dd>
+            <dt>Số người tối đa theo tin</dt><dd>{post.maxOccupants != null && Number.isInteger(post.maxOccupants) && post.maxOccupants > 0 ? post.maxOccupants : 'Chưa có thông tin'}</dd>
             <dt>Số chỗ còn lại theo tin</dt><dd>{post.availableSlots ?? 'Chưa có thông tin'}</dd>
             <dt>Tiện ích được chủ tin khai báo</dt><dd>{post.amenities.length ? post.amenities.map(amenityLabel).join(', ') : 'Chưa có thông tin'}</dd>
             <dt>Nguồn / cập nhật</dt><dd>Chủ tin · {new Date(post.updatedAt).toLocaleDateString('vi-VN')}</dd>
