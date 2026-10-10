@@ -54,4 +54,3 @@ test('hard, soft and exclusion refinements retain their distinct visible meaning
   assert.equal(chips.find(chip => chip.text.startsWith('Không có ')).edit, 'Không cần Máy lạnh')
   assert.equal(buildRentalSearchChips({ ...base, budgetBasis: 'total' }).find(chip => chip.text.startsWith('Cả phí')).text.includes('4.000.000'), true)
 })
-
