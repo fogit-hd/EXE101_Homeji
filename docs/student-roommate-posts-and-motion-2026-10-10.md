@@ -18,3 +18,8 @@ Reusable accessible tabs have a measured sliding indicator, keyboard navigation 
 
 ## Release
 Backend commit `a6c6b6f` pushed to main. Deployment checks will be appended after live verification.
+
+Live verification 2026-10-10:
+- Backend `a6c6b6f`: Render shows Deploy succeeded / Live, duration2m23s; `/health/live` and `/health/ready`200; invalid ownerRole99 returns400. Public renter feed returns only ownerRole1.
+- Frontend `c76eda3`: production now serves `/assets/index-BVOGL1j-.js` and `/assets/index-B1W39hgD.css`; browser confirms Tin ở ghép, author/school/places, per-person price, self-post CTA and direct-contact buttons using current server data. Production was inspected read-only; no message or post submitted.
+- Actual production screenshot: `output/verification/student-roommate-production.png`.
