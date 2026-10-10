@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import './interaction-motion.css'
 
-const ACTIONS = '.btn, .auth-cinema__submit, .guest-hero__bloom-cta, .guest-hero__top-consult-btn, .roommate-people button, .marketplace-header button, [role="tab"], .hj-mega__link'
+const ACTIONS = 'button, [role="button"], summary, .btn, .auth-cinema__submit, .guest-hero__bloom-cta, .guest-hero__top-consult-btn, .roommate-people button, .marketplace-header button, [role="tab"], .hj-mega__link'
 const AI_ACTIONS = '.ai-spectrum-button, .natural-rental-search__trigger, .map-chatbot__fab, .map-chatbot__chip, .map-chatbot__action, .map-chatbot__send'
 const REVEALS = '.guest-mission__copy, .guest-mission__stat, .guest-steps li, .guest-audience__card, .guest-trust__points li, .hub-card, .hub-room-card, .roommate-people__person, .roommate-posts__card, .marketplace-card--browse, .food-card, .profile-section, [data-motion-reveal]'
 

@@ -17,9 +17,9 @@ export function useTabTransition(value: string, order: readonly string[], childS
     // Food cart overlays are fixed siblings of its catalog: animate the catalog, not their containing block.
     const targets = childSelector ? [...element.querySelectorAll<HTMLElement>(childSelector)] : [element]
     const animations = targets.map(target => target.animate([
-      { opacity: .68, transform: `translateX(${direction * 8}px)` },
-      { opacity: 1, transform: 'translateX(0)' },
-    ], { duration: 240, easing: 'cubic-bezier(.16, 1, .3, 1)' }))
+      { opacity: .25, translate: `${direction * 28}px 6px`, scale: '.99' },
+      { opacity: 1, translate: '0 0', scale: '1' },
+    ], { duration: 320, easing: 'cubic-bezier(.16, 1, .3, 1)' }))
     const cancel = () => animations.forEach(animation => animation.cancel())
     const reduce = () => { if (preference.matches) cancel() }
     preference.addEventListener('change', reduce)

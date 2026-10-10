@@ -1,3 +1,5 @@
+import { useMotionPresence } from '../motion/useMotionPresence'
+import { useTabTransition } from '../motion/useTabTransition'
 import { useEffect, useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { CredentialResponse } from '@react-oauth/google'
@@ -16,6 +18,8 @@ import {
   validateRegistrationEmail,
 } from '../../lib/userInputValidation'
 import './AuthModal.css'
+
+const AUTH_MODES = ['login', 'register'] as const
 
 type Props = {
   open: boolean
@@ -49,6 +53,8 @@ function intentCopy(intent: AuthModalIntent | null): string | null {
 
 export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess }: Props) {
   const { login, register, setSessionFromAuth } = useAuth()
+  const { present, ...presence } = useMotionPresence(open, 'fade')
+  const formRef = useTabTransition(mode, AUTH_MODES)
   const titleId = useId()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -73,7 +79,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  if (!open) return null
+  if (!present) return null
 
   const subtitle = intentCopy(intent)
 
@@ -136,8 +142,9 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
   }
 
   return (
-    <div className="auth-modal-overlay" role="presentation" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
+    <div {...presence} className="auth-modal-overlay" role="presentation" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
       <div
+        ref={formRef}
         className="auth-modal card"
         role="dialog"
         aria-modal="true"

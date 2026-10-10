@@ -1,3 +1,4 @@
+import { useMotionPresence } from '../../motion/useMotionPresence'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { RentalPostType } from '../../../api/types'
@@ -77,6 +78,7 @@ export function RoomDetailModal({
 }: Props) {
   const { isAuthenticated, profile } = useAuth()
   const isRenter = profile?.role === UserRole.Renter
+  const { present, ...presence } = useMotionPresence(Boolean(listingId), 'fade')
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const listingIdRef = useRef<string | null>(null)
@@ -96,7 +98,7 @@ export function RoomDetailModal({
   const [scheduleAt, setScheduleAt] = useState('')
   const [scheduleNote, setScheduleNote] = useState('')
 
-  const matched = result && result.id === listingId && result.attempt === attempt ? result : null
+  const matched = result && (result.id === listingId || (!listingId && present)) && result.attempt === attempt ? result : null
   const loadState: LoadState = matched?.state ?? 'loading'
   const post = matched?.state === 'ready' ? matched.post : null
   const isStudentShare = post?.type === RentalPostType.RoommateShare && post.ownerRole === UserRole.Renter
@@ -184,7 +186,7 @@ export function RoomDetailModal({
     }
   }, [listingId])
 
-  if (!listingId) return null
+  if (!present) return null
 
   const notify = (message: string, tone: 'ok' | 'err' = 'ok') => {
     if (!listingId) return
@@ -193,7 +195,7 @@ export function RoomDetailModal({
 
   const handleSave = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
-    if (!onToggleSave || saveBusy) return
+    if (!listingId || !onToggleSave || saveBusy) return
     onToggleSave(listingId)
   }
 
@@ -260,7 +262,7 @@ export function RoomDetailModal({
   }
 
   return createPortal(
-    <div className="room-detail__backdrop" onMouseDown={onBackdrop}>
+    <div {...presence} className="room-detail__backdrop" onMouseDown={onBackdrop}>
       <div
         ref={dialogRef}
         className="room-detail"

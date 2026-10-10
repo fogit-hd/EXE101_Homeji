@@ -1,4 +1,5 @@
-﻿import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useMotionPresence } from '../motion/useMotionPresence'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getNotifications, NotificationType, UserRole, type Notification } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -53,7 +54,9 @@ export function GlobalHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const { present: accountPresent, ...accountPresence } = useMotionPresence(accountOpen)
   const [notifyOpen, setNotifyOpen] = useState(() => sectionIsNotifications(location.search))
+  const { present: notifyPresent, ...notifyPresence } = useMotionPresence(notifyOpen)
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -429,9 +432,10 @@ export function GlobalHeader() {
                 ) : null}
               </span>
             </button>
-            {notifyOpen ? (
+            {notifyPresent ? (
               <div
                 id={notifyId}
+                {...notifyPresence}
                 className="hj-notify__pop"
                 role="dialog"
                 aria-modal="false"
@@ -483,8 +487,8 @@ export function GlobalHeader() {
               <span className="hj-profile__mark">{mark}</span>
               <BarGlyph name="chevron" size={14} turned={accountOpen} />
             </button>
-            {accountOpen ? (
-              <div id={accountId} className="hj-account__menu" role="menu">
+            {accountPresent ? (
+              <div {...accountPresence} id={accountId} className="hj-account__menu" role="menu">
                 <p className="hj-account__name">{displayName}</p>
                 <p className="hj-account__role">Tài khoản cá nhân</p>
                 {accountLinks.map((item) => (

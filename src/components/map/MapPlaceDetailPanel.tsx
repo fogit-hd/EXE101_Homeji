@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode, type WheelEvent } from 'react'
+import { MotionTabs } from '../motion/MotionTabs'
+import { useTabTransition } from '../motion/useTabTransition'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type WheelEvent } from 'react'
 import {
   createViewingAppointment,
   getRentalPostReviews,
@@ -211,9 +213,14 @@ export function MapPlaceDetailPanel({
 
   const tabs = isListing ? listingTabs : placeTabs
   const [tab, setTab] = useState<DetailTab>('overview')
-  const [tabPhase, setTabPhase] = useState<'enter' | 'exit'>('enter')
+  const tabOrder = useMemo(() => tabs.map(item => item.id), [tabs])
+  const tabContentRef = useTabTransition(tab, tabOrder)
   const panelRef = useRef<HTMLElement | null>(null)
-  const tabSwitchScrollTopRef = useRef<number | null>(null)
+  const tabScrollTop = useRef<number | null>(null)
+  useLayoutEffect(() => {
+    if (panelRef.current && tabScrollTop.current != null) panelRef.current.scrollTop = tabScrollTop.current
+    tabScrollTop.current = null
+  }, [tab])
   const [reviews, setReviews] = useState<RentalReviewCollection | null>(null)
   const [reviewsPostId, setReviewsPostId] = useState<string | null>(null)
   const reviewsLoading = Boolean(open && isListing && post?.id && reviewsPostId !== post.id)
@@ -240,7 +247,6 @@ export function MapPlaceDetailPanel({
   useEffect(() => {
     if (open) {
       setTab('overview')
-      setTabPhase('enter')
       setScheduleOpen(false)
       setActionMsg(null)
       setStreetViewFailed(false)
@@ -253,17 +259,8 @@ export function MapPlaceDetailPanel({
 
   const switchTab = (next: string) => {
     if (next === tab) return
-    tabSwitchScrollTopRef.current = panelRef.current?.scrollTop ?? null
-    setTabPhase('exit')
-    window.setTimeout(() => {
-      setTab(next)
-      setTabPhase('enter')
-      const savedScrollTop = tabSwitchScrollTopRef.current
-      if (savedScrollTop == null) return
-      window.requestAnimationFrame(() => {
-        if (panelRef.current) panelRef.current.scrollTop = savedScrollTop
-      })
-    }, 180)
+    tabScrollTop.current = panelRef.current?.scrollTop ?? null
+    setTab(next)
   }
 
   const handlePanelWheelCapture = (event: WheelEvent<HTMLElement>) => {
@@ -567,20 +564,9 @@ export function MapPlaceDetailPanel({
   const showPhotoOverlayChrome = collapsed
   const canOpenPhotoBrowser = tab === 'overview' && photoSourceUrls.length > 0
   const tabsBar = (
-    <div className={`map-detail-panel__tabs${tab === 'overview' ? '' : ' is-sticky'}`} role="tablist">
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          role="tab"
-          aria-selected={tab === t.id}
-          className={`map-detail-panel__tab${tab === t.id ? ' is-active' : ''}`}
-          onClick={() => switchTab(t.id)}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
+    <MotionTabs items={tabs} value={tab} onChange={switchTab} label="Chi tiết địa điểm"
+      className={`map-detail-panel__tabs${tab === 'overview' ? '' : ' is-sticky'}`}
+      buttonClassName="map-detail-panel__tab" idPrefix="map-detail-tab" panelId="map-detail-content" />
   )
   const renderPhotoTabs = (extraClass?: string) => (
     <div className={`map-detail-panel__tabs map-detail-photo-tabs${extraClass ? ` ${extraClass}` : ''}`} role="tablist">
@@ -895,7 +881,7 @@ export function MapPlaceDetailPanel({
           </div>
         </div>
       ) : (
-      <div className={`map-detail-panel__content map-detail-panel__body--${tabPhase}`} role="tabpanel">
+      <div ref={tabContentRef} className="map-detail-panel__content" role="tabpanel" id="map-detail-content" aria-labelledby={`map-detail-tab-${tab}`}>
           {loading ? <ContentSkeleton compact variant="detail" label="Đang tải thông tin địa điểm…" /> : null}
 
           {!loading && tab === 'overview' && isListing && post ? (

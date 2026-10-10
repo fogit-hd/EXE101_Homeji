@@ -8,3 +8,6 @@
 @media (prefers-reduced-motion: reduce) {
   .motion-tabs__indicator, .motion-tabs > [role='tab'] { transition: none; }
 }
+
+.motion-tabs > .map-detail-panel__tab.is-active { border-bottom-color: transparent; }
+.map-detail-panel__tabs.motion-tabs { --mh-accent: var(--grab-blue); }

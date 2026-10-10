@@ -1,3 +1,4 @@
+import { useMotionPresence } from './motion/useMotionPresence'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
   VI_MONTHS,
@@ -44,6 +45,7 @@ export function ScheduleDateTimePicker({
   const id = idProp ?? autoId
   const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
+  const { present, ...presence } = useMotionPresence(open)
 
   const selected = parseLocalInputValue(value)
   const [viewMonth, setViewMonth] = useState(() => selected ?? new Date())
@@ -145,8 +147,8 @@ export function ScheduleDateTimePicker({
         </span>
       </button>
 
-      {open ? (
-        <div className="schedule-dt__panel" role="dialog" aria-label="Chọn thời gian">
+      {present ? (
+        <div {...presence} className="schedule-dt__panel" role="dialog" aria-label="Chọn thời gian">
           <div className="schedule-dt__top">
             <div className="schedule-dt__cal-head">
               <button
