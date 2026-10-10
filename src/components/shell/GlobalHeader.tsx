@@ -1,12 +1,14 @@
 import { useMotionPresence } from '../motion/useMotionPresence'
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { ScreenPending } from '../ScreenPending'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getNotifications, NotificationType, UserRole, type Notification } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotificationHub } from '../../hooks/useNotificationHub'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { notificationTargetHref } from '../../lib/notificationTarget'
-import { NotificationsPage, type NotificationReadChange } from '../../pages/NotificationsPage'
+import type { NotificationReadChange } from '../../pages/NotificationsPage'
+import { NotificationsPage } from '../../pages/deferredPages'
 import { CategoryMegaMenu } from './CategoryMegaMenu'
 import { ContextualSearch } from './ContextualSearch'
 import { resolveMarketplaceDestination } from '../../lib/marketplaceNavigation'
@@ -442,6 +444,7 @@ export function GlobalHeader() {
                 aria-labelledby={`${notifyId}-title`}
                 tabIndex={-1}
               >
+                <Suspense fallback={<ScreenPending />}>
                 <NotificationsPage
                   surface="popup"
                   headingId={`${notifyId}-title`}
@@ -465,6 +468,7 @@ export function GlobalHeader() {
                     else setUnreadNotifications((count) => Math.max(0, count - 1))
                   }}
                 />
+                </Suspense>
               </div>
             ) : null}
           </div>

@@ -7,6 +7,7 @@ import { amenityLabel, formatPrice } from '../../lib/labels'
 import './AiSearchReview.css'
 import { ShortlistCommutePlanner, type CommuteConfirmation } from './ShortlistCommutePlanner'
 import { RentalCostCalculator } from './RentalCostCalculator'
+import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 
 export function AiSearchReview({ result, onApply, onRefine }: {
   result: AiHighlightResponse
@@ -49,7 +50,8 @@ function AiSearchReviewSession({ result, onApply, onRefine }: {
     ...(c.excludedAmenities ?? []).map(code => ({ text: `Không có ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
     ...(c.excludeRoommateShare ? [{ text: 'Không ở ghép', edit: 'Chấp nhận ở ghép' }] : []),
   ]
-  const unresolved = Boolean(c.unknown?.length)
+  const unknownPriceUnit = result.posts.some(item => rentalPriceBasis(item.post) === 'unknown')
+  const unresolved = Boolean(c.unknown?.length) || unknownPriceUnit
   return <section className="ai-search-review" aria-label="Tiêu chí và tin phòng có nguồn">
     <strong>Homeji hiểu bạn muốn…</strong>
     <div className="ai-search-review__chips">{chips.map(chip => onRefine
@@ -60,13 +62,14 @@ function AiSearchReviewSession({ result, onApply, onRefine }: {
       {visiblePosts.length === 0 ? <p>Chưa có tin phù hợp. Các điều kiện được giữ nguyên.</p> : null}
       {pendingCosts ? <p>Chỉ áp dụng những phòng trong ngân sách theo kịch bản chi phí bạn đã xác nhận. Các khoản này do bạn nhập, chưa phải báo giá của chủ phòng.</p> : null}
     </>}
+    {unknownPriceUnit ? <p role="status">Một số tin ở ghép chưa rõ giá theo người hay cả phòng. Hỏi người đăng đơn vị hoặc sửa yêu cầu để loại các tin này trước khi áp dụng ngân sách.</p> : null}
     {pendingCommute && !aiFeatureFlags.commute ? <p>Kiểm tra thời gian đi học chưa được bật. Bạn có thể sửa yêu cầu để tìm theo giá, diện tích và tiện ích trước.</p> : null}
     {aiFeatureFlags.commute && pendingCommute && result.posts.length ? <ShortlistCommutePlanner origins={result.posts.slice(0, 5).map(item => item.post)}
       destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
     {unresolved && routedPosts.length ? <strong>Tin ứng viên cần xác nhận phí hoặc đường đi; chưa đáp ứng toàn bộ yêu cầu.</strong> : null}
     {(pendingCosts ? routedPosts : visiblePosts).slice(0, 5).map(item => <article key={item.post.id} className="ai-search-review__listing">
       <Link to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`}>{item.post.title}</Link>
-      <strong>{formatPrice(item.post.price)} / tháng · {item.post.area} m²</strong>
+      <strong>{formatPrice(item.post.price)} · {rentalPriceLabel(rentalPriceBasis(item.post))} · {item.post.area} m²</strong>
       <span>{item.post.address}</span>
       {item.post.type === RentalPostType.RoomTransfer ? <small>Tin pass phòng dùng vị trí gần đúng. Tuyến từ ghim này chưa thay thế đường đi từ cửa phòng.</small> : null}
       {item.post.isOwnerPremium ? <small>Chủ tin Premium · ưu tiên thương mại riêng</small> : null}
@@ -80,12 +83,12 @@ function AiSearchReviewSession({ result, onApply, onRefine }: {
       <small>Chưa xác nhận tình trạng phòng trống và phí phát sinh.</small>
       {pendingCosts ? <>
         {confirmedCosts[item.post.id] != null ? <p role="status">Kịch bản đã xác nhận: {formatPrice(confirmedCosts[item.post.id])} / tháng · {visiblePosts.some(post => post.post.id === item.post.id) ? 'trong ngân sách' : 'vượt ngân sách'}</p> : null}
-        <RentalCostCalculator rent={item.post.price} occupantsHint={c.occupants ?? 1} monthlyCeiling={c.priceMax}
+        {rentalPriceBasis(item.post) === 'room' ? <RentalCostCalculator rent={item.post.price} occupantsHint={c.occupants ?? 1} monthlyCeiling={c.priceMax}
           onConfirmMonthly={monthly => setConfirmedCosts(current => ({ ...current, [item.post.id]: monthly }))}
           onInvalidate={() => setConfirmedCosts(current => {
             if (!(item.post.id in current)) return current
             const next = { ...current }; delete next[item.post.id]; return next
-          })} />
+          })} /> : <p>Không dùng giá mỗi người hoặc giá chưa rõ đơn vị để tính tổng chi phí cả phòng. Tin này chưa được xác nhận cho bộ lọc ngân sách cả phí; hỏi người đăng hoặc sửa yêu cầu.</p>}
       </> : null}
     </article>)}
   </section>

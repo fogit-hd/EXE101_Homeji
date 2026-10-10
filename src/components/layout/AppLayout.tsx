@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef } from 'react'
+import { Suspense, useLayoutEffect, useRef } from 'react'
+import { ScreenPending } from '../ScreenPending'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { isExploreMapMode } from '../chrome/exploreMode'
@@ -75,7 +76,9 @@ export function AppLayout() {
           }
           data-nav={navType}
         >
-          <Outlet />
+          <Suspense fallback={<ScreenPending />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
       <SiteFooter compact={isMapPeer || isMessagesWorkspace} />

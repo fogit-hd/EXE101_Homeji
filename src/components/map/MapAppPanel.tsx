@@ -1,14 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { SavedPostsPage } from '../../pages/SavedPostsPage'
-import { RoommateWorkspace } from '../roommates/RoommateWorkspace'
-import { NotificationsPage, type NotificationReadChange } from '../../pages/NotificationsPage'
-import { PaymentPage } from '../../pages/PaymentPage'
-import { ProfilePage } from '../../pages/ProfilePage'
-import { MarketplacePage } from '../../pages/MarketplacePage'
-import { WantedPostsPage } from '../../pages/WantedPostsPage'
-import { ActivitiesPage } from '../../pages/ActivitiesPage'
-import { MyPostsPage } from '../../pages/MyPostsPage'
-import { MapAppointmentsPanel } from './MapAppointmentsPanel'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
+import { ScreenPending } from '../ScreenPending'
+import type { NotificationReadChange } from '../../pages/NotificationsPage'
+import {
+  SavedPostsPage, RoommateWorkspace, NotificationsPage, PaymentPage, ProfilePage,
+  MarketplacePage, WantedPostsPage, ActivitiesPage, MyPostsPage, MapAppointmentsPanel,
+} from '../../pages/deferredPages'
 import './MapMotion.css'
 import './MapAppPanel.css'
 
@@ -247,6 +243,7 @@ export function MapAppPanel({
             isMessages ? ' is-fill' : ''
           }`}
         >
+          <Suspense key={displayed} fallback={<ScreenPending />}>
           {displayed === 'listings' ? listingsContent : null}
           {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
           {displayed === 'invitations' ? (
@@ -279,6 +276,7 @@ export function MapAppPanel({
           {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}
           {displayed === 'activities' ? <ActivitiesPage embedded /> : null}
           {displayed === 'myPosts' ? <MyPostsPage embedded /> : null}
+          </Suspense>
         </div>
       </div>
     </aside>

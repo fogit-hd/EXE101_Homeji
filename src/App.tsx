@@ -17,17 +17,11 @@ import { ThemeSync } from './components/ThemeSync'
 import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
 import { InteractionMotion } from './components/motion/InteractionMotion'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
-import { AdminModerationPage } from './pages/AdminModerationPage'
-import { CreateRentalPostPage } from './pages/CreateRentalPostPage'
-import { EditRentalPostPage } from './pages/EditRentalPostPage'
-import { ExplorePage } from './pages/ExplorePage'
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
-import { HomePage } from './pages/HomePage'
-import { PaymentWaitingPage } from './pages/PaymentWaitingPage'
-import { LoginPage } from './pages/LoginPage'
-import { PrivacyPolicyPage, TermsOfServicePage } from './pages/LegalPage'
-import { RegisterPage } from './pages/RegisterPage'
-import { AuthCallbackPage, ResetPasswordPage } from './pages/ResetPasswordPage'
+import {
+  AdminModerationPage, CreateRentalPostPage, EditRentalPostPage, ExplorePage,
+  ForgotPasswordPage, HomePage, PaymentWaitingPage, LoginPage, PrivacyPolicyPage,
+  TermsOfServicePage, RegisterPage, AuthCallbackPage, ResetPasswordPage,
+} from './pages/deferredPages'
 import './components/layout/footer.css'
 import './pages/HomePage.css'
 import './pages/auth.css'

@@ -1,0 +1,2 @@
+.screen-pending { width: 100%; min-height: 12rem; padding: 1.5rem; color: var(--hj-text, #18343f); }
+.screen-pending__placeholder { height: 6rem; margin-top: 1rem; border-radius: 1rem; background: var(--hj-surface-muted, #eaf2f6); }

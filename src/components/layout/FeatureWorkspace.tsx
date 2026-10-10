@@ -1,20 +1,15 @@
 import { PageFrame } from '../chrome'
-import { useCallback } from 'react'
+import { Suspense, useCallback } from 'react'
+import { ScreenPending } from '../ScreenPending'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationType, type Notification } from '../../api'
-import { ActivitiesPage } from '../../pages/ActivitiesPage'
-import { MarketplacePage } from '../../pages/MarketplacePage'
-import { MyPostsPage } from '../../pages/MyPostsPage'
-import { NotificationsPage } from '../../pages/NotificationsPage'
-import { PaymentPage } from '../../pages/PaymentPage'
-import { ProfilePage } from '../../pages/ProfilePage'
-import { RoommateWorkspace } from '../roommates/RoommateWorkspace'
-import { SavedPostsPage } from '../../pages/SavedPostsPage'
-import { WantedPostsPage } from '../../pages/WantedPostsPage'
+import {
+  ActivitiesPage, MarketplacePage, MyPostsPage, NotificationsPage, PaymentPage,
+  ProfilePage, RoommateWorkspace, SavedPostsPage, WantedPostsPage,
+  MapAppointmentsPanel, MapMessagesPanel,
+} from '../../pages/deferredPages'
 import { mapMessagesUrl, mapPostUrl, mapSectionUrl } from '../../lib/mapDeepLinks'
 import type { MapAppSection } from '../map/MapAppPanel'
-import { MapAppointmentsPanel } from '../map/MapAppointmentsPanel'
-import { MapMessagesPanel } from '../map/MapMessagesPanel'
 import './FeatureWorkspace.css'
 
 const TITLES: Partial<Record<MapAppSection, string>> = {
@@ -142,6 +137,7 @@ export function FeatureWorkspace({ section }: Props) {
         chromeSlots={!figmaOwnHeader}
         className="feature-workspace__frame"
       >
+        <Suspense key={section} fallback={<ScreenPending />}>
         {section === 'saved' ? <SavedPostsPage embedded /> : null}
         {section === 'invitations' ? (
           <RoommateWorkspace onOpenConversation={openConversation} />
@@ -166,6 +162,7 @@ export function FeatureWorkspace({ section }: Props) {
         {section === 'wanted' ? <WantedPostsPage embedded /> : null}
         {section === 'activities' ? <ActivitiesPage embedded /> : null}
         {section === 'myPosts' ? <MyPostsPage embedded /> : null}
+        </Suspense>
       </PageFrame>
     </div>
   )
