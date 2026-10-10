@@ -661,3 +661,8 @@ export const reviewLandlordVerification = (
 // Activities
 export const getMyActivities = (params?: { type?: UserActivityType; take?: number }) =>
   apiRequest<UserActivity[]>('/api/activities', { params })
+
+export const generateRentalDraft = (facts: import('../lib/rentalDraft').RentalDraftFacts) =>
+  apiRequest<{ title: string; description: string; missing: string[] }>('/api/ai/rental-draft', {
+    method: 'POST', body: facts,
+  })
