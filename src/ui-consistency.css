@@ -5,7 +5,7 @@
 .badge-gray { color: var(--text-secondary); }
 .badge-blue { color: #0e52a3; }
 .page-frame__eyebrow { color: var(--hj-brand-coral); }
-.btn-map-cta { color: var(--hj-accent); }
+.btn-map-cta { color: var(--grab-green-hover); }
 .btn-map-cta:hover:not(:disabled) { color: #066875; }
 .wallet-summary__balance { color: #fff; line-height: 1.25; }
 .wallet-summary__available { background: var(--hj-accent); }
@@ -19,9 +19,9 @@
 .map-messages.is-workspace .map-messages__bubble.is-mine :is(p, time) { color: #fff; }
 .map-messages__composer :is(input, textarea) { color: var(--text-heading); background: var(--surface-elevated); }
 .marketplace-header__ghost { color: #a43c22; background: #fff3ec; }
-.marketplace-card__badge, .marketplace-card__badge.is-mine { color: var(--hj-accent); }
+.marketplace-card__badge, .marketplace-card__badge.is-mine { color: var(--grab-green-hover); }
 .marketplace-card__price { color: var(--hj-accent); }
-.rental-edit-form .amenity-chip.active { color: var(--hj-accent); }
+.rental-edit-form .amenity-chip.active { color: var(--grab-green-hover); }
 .marketplace-header__utilities { flex-wrap: wrap; }
 .marketplace-header__subtabs-group { flex-wrap: wrap; min-width: 0; }
 .hub-market { background: var(--hj-accent-soft); color: var(--text-heading); }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { declaration, contrastColors } from './helpers/theme-colors.mjs'
 
 const read = (path) => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
 const luminance = (hex) => {
@@ -16,27 +17,18 @@ const contrast = (foreground, background) => {
 test('shared primary buttons retain readable white text in normal and hover states', () => {
   const css = read('ui-consistency.css')
   for (const selector of ['.btn-primary', '.btn-primary:hover:not(:disabled)']) {
-    const rule = css.slice(css.indexOf(`${selector} {`)).split('}')[0]
-    const background = rule.match(/background: #(\w{6})/)?.[1]
-    assert.ok(background)
-    assert.match(rule, /color: #fff;/)
-    assert.ok(1.05 / (luminance(background) + 0.05) >= 4.5)
+    assert.ok(contrastColors(declaration(css, selector, 'color'), declaration(css, selector, 'background')) >= 4.5)
   }
 })
 
 test('status badges, section captions and map links retain small-text contrast', () => {
   const css = read('ui-consistency.css')
   for (const [selector, background] of [
-    ['.badge-gray', 'eaf0ec'], ['.badge-green', '24543e'], ['.badge-blue', 'e3eefa'],
-    ['.page-frame__eyebrow', 'f5f0e6'], ['.btn-map-cta', 'fceee6'],
-    ['.btn-map-cta:hover:not(:disabled)', 'f8e9ee'],
+    ['.badge-gray', 'var(--surface-input)'], ['.badge-green', 'var(--hj-accent)'], ['.badge-blue', 'rgba(19, 111, 216, 0.12)'],
+    ['.page-frame__eyebrow', 'var(--surface-muted)'], ['.btn-map-cta', 'var(--pastel-peach)'],
+    ['.btn-map-cta:hover:not(:disabled)', 'color-mix(in srgb, var(--pastel-rose) 45%, var(--pastel-peach))'],
   ]) {
-    const start = css.indexOf(`${selector} {`)
-    assert.ok(start >= 0, `${selector} has an explicit semantic correction`)
-    const rule = css.slice(start).split('}')[0]
-    const color = rule.match(/(?:^|[;{])\s*color: #([\da-f]{3,6});/)?.[1]
-    assert.ok(color, `${selector} has a foreground color`)
-    assert.ok(contrast(color, background) >= 4.5, `${selector} readable at caption size`)
+    assert.ok(contrastColors(declaration(css, selector, 'color'), background) >= 4.5, `${selector} readable at caption size`)
   }
 })
 test('home viewing and message panels have equal desktop columns', () => {
@@ -47,8 +39,10 @@ test('home viewing and message panels have equal desktop columns', () => {
 
 test('product prices, statuses and food actions have readable small-text colors', () => {
   const css = read('ui-consistency.css')
-  assert.match(css, /\.marketplace-card__badge, \.marketplace-card__badge.is-mine \{ color: #24543e; \}/)
-  assert.match(css, /\.marketplace-card__price \{ color: #24543e; \}/)
+  for (const background of ['var(--pastel-mint)', 'color-mix(in srgb, var(--grab-green) 14%, var(--surface-muted))']) {
+    assert.ok(contrastColors(declaration(css, '.marketplace-card__badge, .marketplace-card__badge.is-mine', 'color'), background) >= 4.5)
+  }
+  assert.ok(contrastColors(declaration(css, '.marketplace-card__price', 'color'), 'var(--surface-elevated)') >= 4.5)
   const marketplace = read('pages/MarketplacePage.css')
   for (const variant of ['browse', 'mine']) {
     const rule = marketplace.slice(marketplace.indexOf(`.marketplace-card--${variant} .marketplace-card__price {`)).split('}')[0]
@@ -104,7 +98,8 @@ test('shared footer is present without route exclusions', () => {
 })
 test('payment plans and waiting screen share the Vietnamese-safe typeface', () => {
   const css = read('ui-consistency.css')
-  assert.match(css, /\.payment-page, \.payment-embed, \.payment-wait-page \{ font-family: 'Be Vietnam Pro', sans-serif; \}/)
+  assert.equal(declaration(css, '.payment-page, .payment-embed, .payment-wait-page', 'font-family'), 'var(--font-ui)')
+  assert.match(read('index.css'), /--font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;/)
   assert.match(css, /:is\(\.payment-page, \.payment-embed, \.payment-wait-page\) :is\(h1, h2, h3, strong/)
 })
 
