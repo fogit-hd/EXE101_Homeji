@@ -25,6 +25,7 @@ import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabe
 import { mapSectionUrl } from '../lib/mapDeepLinks'
 import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
+import { rentalPriceBasis } from '../components/ai/rentalPriceBasis'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -288,6 +289,7 @@ export function EditRentalPostPage() {
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
       <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
         {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant facts={{ typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
+          priceBasis: rentalPriceBasis({ type, ownerRole: post?.ownerRole ?? profile?.role }),
           amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0 }}
           title={title} description={description} disabled={saving || uploadingMedia}
           onApply={draft => { setTitle(draft.title); setDescription(draft.description) }} /> : null}
