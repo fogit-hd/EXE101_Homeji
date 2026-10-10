@@ -6,7 +6,7 @@ import test from 'node:test'
 const source = readFileSync(new URL('../src/pages/EditRentalPostPage.tsx', import.meta.url), 'utf8')
 const handler = source.slice(source.indexOf('const persistDraft = async () => {'), source.indexOf('const handleSave ='))
 
-async function captureSave(post) {
+async function captureSave(post, overrides = {}) {
   let request
   const context = {
     postId: 'local-test-only', post, latNum: 10.87, lngNum: 106.8,
@@ -16,9 +16,9 @@ async function captureSave(post) {
     availableFrom: '2026-10-05', transferKind: 1, originalLeaseEndsOn: '',
     passFee: '0', transferReason: '', ownerConsentConfirmed: false, ownerConsentContact: '',
     isValidCoord: () => true, normalizeAmenityCode: value => value,
-    RentalPostType: { RoomTransfer: 3 },
+    RentalPostType: { RoomTransfer: 3 }, isRenterShare: false, maxOccupants: '', availableSlots: '',
     updateRentalPost: async (_id, payload) => { request = payload; return { ...post, ...payload } },
-    setPost: () => {},
+    setPost: () => {}, ...overrides,
   }
   const save = new Function(...Object.keys(context), `${handler}; return persistDraft`)(...Object.values(context))
   await save()
@@ -45,3 +45,14 @@ test('legacy rental payloads retain backend-compatible defaults and valid zero c
   assert.equal(payload.availableSlots, 1)
   assert.equal(payload.houseRules, undefined)
 })
+
+ test('renter share saves the edited capacity and slots with per-person cost', async () => {
+  const payload = await captureSave({ maxOccupants: 4, availableSlots: 2 }, { isRenterShare: true, maxOccupants: '3', availableSlots: '1', type: 2 });
+  assert.equal(payload.maxOccupants, 3);
+  assert.equal(payload.availableSlots, 1);
+  assert.equal(payload.price, 3500000);
+});
+test('invalid roommate capacity is rejected before an API write', async () => {
+  await assert.rejects(captureSave({}, { isRenterShare: true, maxOccupants: '2', availableSlots: '3' }));
+  await assert.rejects(captureSave({}, { isRenterShare: true, maxOccupants: '2.5', availableSlots: '1' }));
+});

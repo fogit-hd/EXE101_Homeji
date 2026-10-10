@@ -717,9 +717,7 @@ p {
 }
 
 /* Route outlet fade — opacity only (transform breaks sticky/ScrollTrigger descendants) */
-.route-outlet {
-  animation: route-fade-in var(--dur-med) var(--ease-out);
-}
+.route-outlet { animation: none; }
 
 @keyframes route-fade-in {
   from {

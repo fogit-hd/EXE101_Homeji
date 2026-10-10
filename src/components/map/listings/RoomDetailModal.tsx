@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { RentalPostType } from '../../../api/types'
 import {
   ApiRequestError,
   MediaType,
@@ -98,6 +99,7 @@ export function RoomDetailModal({
   const matched = result && result.id === listingId && result.attempt === attempt ? result : null
   const loadState: LoadState = matched?.state ?? 'loading'
   const post = matched?.state === 'ready' ? matched.post : null
+  const isStudentShare = post?.type === RentalPostType.RoommateShare && post.ownerRole === UserRole.Renter
   const actionMessage = notice && notice.id === listingId ? notice.message : null
   const actionTone = notice?.tone ?? 'ok'
   const scheduleOpen = scheduleListingId != null && scheduleListingId === listingId
@@ -336,6 +338,10 @@ export function RoomDetailModal({
                 <PhotoGallery urls={listingPhotos(post)} />
                 <div className="room-detail__summary">
                   <h3>{post.title?.trim() || 'Tin đăng'}</h3>
+                  {isStudentShare ? <p className="room-detail__muted">
+                    {post.ownerDisplayName || 'Người đăng'}{post.ownerSchool ? ` · ${post.ownerSchool}` : ''}
+                    {post.availableSlots ? ` · Cần thêm ${post.availableSlots} người ghép` : ''}
+                  </p> : null}
                   {address ? (
                     <p className="room-detail__address">
                       <img src={mapPinUrl} alt="" width={18} height={18} />
@@ -357,7 +363,7 @@ export function RoomDetailModal({
                 </div>
                 {description ? (
                   <section className="room-detail__section">
-                    <h4>Về căn phòng</h4>
+                    <h4>{isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Về căn phòng'}</h4>
                     <p>{description}</p>
                   </section>
                 ) : null}
@@ -376,14 +382,14 @@ export function RoomDetailModal({
               </div>
               <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ">
                 <div className="room-detail__price">
-                  <p className="room-detail__kicker">Giá thuê phòng</p>
+                  <p className="room-detail__kicker">{isStudentShare ? 'Chi phí dự kiến/người/tháng' : 'Giá thuê phòng'}</p>
                   <p className="room-detail__amount">{rentLabel ?? 'Chưa cung cấp'}</p>
-                  <p className="room-detail__muted">Giá thuê theo tin đăng</p>
+                  <p className="room-detail__muted">{isStudentShare ? 'Người đang ở đăng tìm thêm bạn ghép. Trao đổi để xác nhận cách chia các khoản phí.' : 'Giá thuê theo tin đăng'}</p>
                 </div>
                 <hr />
                 <div className="room-detail__costs">
-                  <h4>Chi phí thuê phòng</h4>
-                  <CostRow label="Tiền thuê" value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
+                  <h4>{isStudentShare ? 'Chi phí được người đăng cung cấp' : 'Chi phí thuê phòng'}</h4>
+                  <CostRow label={isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
                   <CostRow label="Tiền cọc" value={depositLabel ?? 'Chưa cung cấp'} muted={!depositLabel} />
                   <CostRow label="Điện, nước" value={utilities} muted={utilities === 'Chưa cung cấp'} />
                   <CostRow label="Phí khác" value={otherFee ?? 'Chưa cung cấp'} muted={!otherFee} />
@@ -399,7 +405,7 @@ export function RoomDetailModal({
                     <img src={messageCircleUrl} alt="" width={20} height={20} />
                     Liên hệ người đăng
                   </h4>
-                  <p>Bạn quan tâm căn phòng này? Nhắn tin để hỏi thêm hoặc đặt lịch xem phòng.</p>
+                  <p>{isStudentShare ? 'Nhắn người đang ở để trao đổi lối sống, chỗ trống và cách chia chi phí.' : 'Bạn quan tâm căn phòng này? Nhắn tin để hỏi thêm hoặc đặt lịch xem phòng.'}</p>
                   {areaMissing ? (
                     <p className="room-detail__muted">
                       Diện tích và tình trạng phòng chưa được cung cấp. Bạn có thể hỏi thêm khi liên hệ.
@@ -408,7 +414,7 @@ export function RoomDetailModal({
                 </div>
                 <div className="room-detail__note">
                   <strong>Xem phòng trước khi quyết định</strong>
-                  <p>Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.</p>
+                  <p>{isStudentShare ? 'Thống nhất chi phí và quy tắc ở chung trước khi quyết định.' : 'Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.'}</p>
                 </div>
               </aside>
             </div>
@@ -647,7 +653,7 @@ function PhotoGallery({ urls }: { urls: string[] }) {
           onPointerCancel={() => { dragRef.current = null; swipeRef.current = null }}
           onLostPointerCapture={() => { dragRef.current = null; swipeRef.current = null }}
         >
-          <img className="room-photo-viewer__image" src={current} alt={`Ảnh phòng ${safeIndex + 1}`} draggable={false}
+          <img key={current} className="room-photo-viewer__image" src={current} alt={`Ảnh phòng ${safeIndex + 1}`} draggable={false}
             style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }} />
         </div>
         <p className="room-photo-viewer__hint">Vuốt ngang hoặc dùng nút để đổi ảnh · Khi phóng to, kéo để di chuyển · Nhấp đúp để zoom</p>

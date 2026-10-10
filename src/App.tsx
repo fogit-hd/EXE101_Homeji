@@ -15,6 +15,7 @@ import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
 import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
 import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
+import { InteractionMotion } from './components/motion/InteractionMotion'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import { AdminModerationPage } from './pages/AdminModerationPage'
 import { CreateRentalPostPage } from './pages/CreateRentalPostPage'
@@ -93,6 +94,7 @@ function App() {
     <ErrorBoundary reloadOnRetry>
       <ThemeSync />
       <AiInteractionEffects />
+      <InteractionMotion />
       <NetworkStatusProvider>
         <GoogleMapsProvider>
           <GoogleOAuthRoot>

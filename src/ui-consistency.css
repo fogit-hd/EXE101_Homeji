@@ -177,7 +177,7 @@
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  :is(.roommate-people__person, .marketplace-workspace, .profile-section) {
+  .marketplace-workspace {
     animation: hj-content-enter 220ms var(--ease-out) both;
   }
   @keyframes hj-content-enter {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { createRentalPostDraft } from '../api'
 import { RentalPostType, UserRole } from '../api/types'
@@ -29,15 +29,18 @@ export function CreateRentalPostPage() {
   const [type, setType] = useState<RentalPostType>(initialType)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const createLock = useRef(false)
   const availableTypes = useMemo<RentalPostType[]>(
     () => profile?.role === UserRole.Renter
-      ? [RentalPostType.RoomTransfer]
+      ? [RentalPostType.RoommateShare, RentalPostType.RoomTransfer]
       : [RentalPostType.VacantRoom, RentalPostType.RoommateShare],
     [profile?.role],
   )
   const selectedType = availableTypes.includes(type) ? type : availableTypes[0]
 
   const handleCreate = async () => {
+    if (createLock.current) return
+    createLock.current = true
     setError('')
     setLoading(true)
     try {
@@ -46,6 +49,7 @@ export function CreateRentalPostPage() {
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tạo tin nháp'))
     } finally {
+      createLock.current = false
       setLoading(false)
     }
   }
@@ -85,7 +89,7 @@ export function CreateRentalPostPage() {
               <p>
                 {t === RentalPostType.VacantRoom
                   ? 'Cho thuê phòng trống'
-                  : 'Tìm bạn ở ghép cùng phòng'}
+                  : profile?.role === UserRole.Renter ? 'Bạn tự đăng tìm người ở cùng: giới thiệu bản thân, chỗ đang ở và số người cần ghép' : 'Tìm bạn ở ghép cùng phòng'}
               </p>
             )}
           </button>

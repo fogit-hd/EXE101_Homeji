@@ -1,5 +1,6 @@
 import { primaryOf, type MarketplacePrimary, type MarketplaceTab } from '../../lib/marketplaceNavigation'
 import { formatAvailableBalance } from '../../lib/walletMoney'
+import { MotionTabs } from '../motion/MotionTabs'
 import './MarketplaceHeader.css'
 
 const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
@@ -109,42 +110,19 @@ export function MarketplaceHeader({
         </div>
       </div>
 
-      <div className="marketplace-header__tabs" role="tablist" aria-label="Chợ Homeji">
-        {PRIMARY_TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={primary === item.id}
-            className={`marketplace-header__tab${primary === item.id ? ' is-active' : ''}`}
-            onClick={() => openPrimary(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <MotionTabs items={PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
+        className="marketplace-header__tabs" buttonClassName="marketplace-header__tab"
+        idPrefix="marketplace-primary" panelId="marketplace-panel" />
 
       {subTabs ? (
-        <div className="marketplace-header__subtabs" role="tablist" aria-label={primary === 'shopping' ? 'Mua sắm' : 'Quản lý cửa hàng'}>
-          <div className="marketplace-header__subtabs-group">
-            {subTabs.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={tab === item.id}
-                className={`marketplace-header__subtab${tab === item.id ? ' is-active' : ''}`}
-                onClick={() => onTabChange(item.id)}
-              >
-                {item.label}
-                {item.id === 'sales' && sellerActionCount > 0 ? (
-                  <span className="marketplace-header__alert" aria-label={`${sellerActionCount} đơn cần xử lý`}>
-                    {sellerActionCount}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
+        <div className="marketplace-header__subtabs">
+          <MotionTabs items={subTabs} value={tab} onChange={onTabChange}
+            label={primary === 'shopping' ? 'Mua sắm' : 'Quản lý cửa hàng'}
+            className="marketplace-header__subtabs-group" buttonClassName="marketplace-header__subtab"
+            idPrefix="marketplace-subtab" panelId="marketplace-panel" renderLabel={(id, label) => <>
+              {label}
+              {id === 'sales' && sellerActionCount > 0 ? <span className="marketplace-header__alert" aria-label={`${sellerActionCount} đơn cần xử lý`}>{sellerActionCount}</span> : null}
+            </>} />
           {primary === 'shopping' && tab === 'browse' ? (
             <p className="marketplace-header__subhint">Đơn bán thuộc Quản lý cửa hàng</p>
           ) : null}

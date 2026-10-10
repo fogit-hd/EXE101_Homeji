@@ -1,0 +1,10 @@
+.motion-tabs { position: relative; isolation: isolate; }
+.motion-tabs__indicator {
+  position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
+  background: var(--mh-accent, var(--hj-accent)); pointer-events: none; opacity: 0;
+  transition: transform 280ms cubic-bezier(.22, 1.12, .36, 1), width 280ms cubic-bezier(.22, 1.12, .36, 1);
+}
+.motion-tabs > [role='tab'] { transition: scale 120ms cubic-bezier(.16, 1, .3, 1), color 160ms ease, background-color 160ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-tabs__indicator, .motion-tabs > [role='tab'] { transition: none; }
+}

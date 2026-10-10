@@ -5,13 +5,11 @@
 #roommate-lifestyle { width: 100%; min-width: 0; }
 .roommate-workspace__tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); }
 .roommate-workspace__tabs button { padding: 12px 18px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--text-secondary); cursor: pointer; font-weight: 600; }
-.roommate-workspace__tabs button[aria-selected='true'] { border-color: var(--hj-accent); color: var(--hj-accent); }
+.roommate-workspace__tabs button[aria-selected='true'] { color: var(--hj-accent); }
 .roommate-workspace__filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-block: 16px; }
 .roommate-workspace__filters label { display: grid; gap: 8px; flex: 1 1 200px; min-width: 0; }
 .roommate-workspace__rooms { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,240px),1fr)); gap: 16px; }
 .roommate-workspace__pagination { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
 .roommate-workspace__error { color: var(--error); }
-.roommate-workspace__panel { animation: roommate-panel-enter 180ms var(--ease-out, ease-out) both; }
-@keyframes roommate-panel-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .roommate-workspace__panel { animation: none; } }
+.roommate-workspace__panel { min-width: 0; }
 @media (max-width: 480px) { .roommate-workspace__tabs button { flex: 1; padding-inline: 10px; } .roommate-workspace__filters label, .roommate-workspace__filters button { flex-basis: 100%; } }

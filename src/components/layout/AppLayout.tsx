@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { isExploreMapMode } from '../chrome/exploreMode'
@@ -8,39 +8,6 @@ import { Navbar } from './Navbar'
 import { SiteFooter } from './SiteFooter'
 import './footer.css'
 import './AppLayout.css'
-
-function useRouteViewTransition(pathname: string, enabled: boolean) {
-  useEffect(() => {
-    if (!enabled) return
-    if (typeof document === 'undefined') return
-    const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => {
-        finished: Promise<void>
-        skipTransition?: () => void
-      }
-    }
-    if (typeof doc.startViewTransition !== 'function') return
-
-    try {
-      const transition = doc.startViewTransition(() => {
-        /* React already committed; this just enables the VT snapshot. */
-      })
-      void transition.finished.catch((err: unknown) => {
-        if (err instanceof DOMException && err.name === 'AbortError') return
-        if (
-          err &&
-          typeof err === 'object' &&
-          'name' in err &&
-          (err as { name: string }).name === 'AbortError'
-        ) {
-          return
-        }
-      })
-    } catch {
-      /* ignore unsupported / interrupted transitions */
-    }
-  }, [pathname, enabled])
-}
 
 export function AppLayout() {
   const location = useLocation()
@@ -67,7 +34,21 @@ export function AppLayout() {
     location.pathname === '/' &&
     new URLSearchParams(location.search).get('section') === 'messages'
 
-  useRouteViewTransition(location.pathname, !isMapPeer)
+  const outletRef = useRef<HTMLDivElement>(null)
+  // Camera bounds, filters and message IDs must not replay the page transition.
+  const destination = `${location.pathname}:${new URLSearchParams(location.search).get('section') ?? 'home'}`
+  useLayoutEffect(() => {
+    const node = outletRef.current
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (isMapPeer || reduced.matches || !node?.animate) return
+    // Opacity only: transforming this ancestor breaks sticky and fixed descendants.
+    const animation = node.animate([{ opacity: .3 }, { opacity: 1 }], {
+      duration: 240, easing: 'cubic-bezier(.16,1,.3,1)',
+    })
+    const cancel = () => { if (reduced.matches) animation.cancel() }
+    reduced.addEventListener('change', cancel)
+    return () => { animation.cancel(); reduced.removeEventListener('change', cancel) }
+  }, [destination, isMapPeer])
 
   return (
     <div
@@ -86,6 +67,7 @@ export function AppLayout() {
       {isAuthedApp ? <AppShell /> : <Navbar />}
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
         <div
+          ref={outletRef}
           /* Keep HomePage mounted across hub / map / feature switches on `/`. */
           key={location.pathname === '/' ? 'home-root' : location.pathname}
           className={

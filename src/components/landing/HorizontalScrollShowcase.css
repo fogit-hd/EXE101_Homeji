@@ -405,3 +405,40 @@
     transform: none !important;
   }
 }
+
+/* CSS media query also protects the first render before the preference listener runs. */
+@media (prefers-reduced-motion: reduce) {
+  .dxh-scroll-outer {
+    height: auto !important;
+    min-height: 0;
+    overscroll-behavior-y: auto;
+  }
+
+  .dxh-scroll-sticky {
+    position: relative;
+    height: auto;
+    overflow: visible;
+    transform: none;
+    touch-action: auto;
+  }
+
+  .dxh-scroll-inner {
+    display: grid;
+    width: 100%;
+    height: auto;
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .dxh-panel {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: clamp(32px, 6vw, 72px) clamp(20px, 6vw, 80px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .dxh-panel__copy { min-width: 0; }
+  .dxh-panel p { margin-inline: auto; }
+  .dxh-track-ui { display: none; }
+}

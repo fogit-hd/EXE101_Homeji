@@ -237,7 +237,7 @@
 
 .marketplace-header__tab.is-active {
   color: var(--mh-accent);
-  border-bottom-color: var(--mh-accent);
+  border-bottom-color: transparent;
 }
 
 .marketplace-header__tab:hover {
@@ -282,7 +282,7 @@
 .marketplace-header__subtab.is-active {
   background: var(--mh-mint);
   color: var(--mh-accent);
-  border-bottom-color: var(--mh-accent);
+  border-bottom-color: transparent;
 }
 
 .marketplace-header__subtab:focus-visible {

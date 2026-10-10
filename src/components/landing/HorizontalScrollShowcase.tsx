@@ -7,7 +7,6 @@ import { isMobileLandingViewport } from './mobileLanding'
 import './HorizontalScrollShowcase.css'
 
 gsap.registerPlugin(ScrollTrigger)
-gsap.config({ reducedMotion: false } as gsap.GSAPConfig)
 
 const LOTTIE = {
   thinking: '/lottie/thinking-boy.lottie',
@@ -112,6 +111,16 @@ export function HorizontalScrollShowcase() {
   const lastShieldFrameRef = useRef(-1)
   const syncProtectionRef = useRef<(hp: number) => void>(() => {})
   const [mobileViewport, setMobileViewport] = useState(() => isMobileLandingViewport())
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches)
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 900px)')
@@ -127,6 +136,13 @@ export function HorizontalScrollShowcase() {
     const inner = innerRef.current
     const progressFill = progressRef.current
     if (!section || !sticky || !inner) return
+    if (reducedMotion) {
+      // Native document flow keeps every panel readable without scroll interception.
+      section.style.removeProperty('height')
+      syncProtectionRef.current = () => {}
+      sticky.style.removeProperty('--dxh-progress')
+      return
+    }
 
     const { startHold: START_HOLD_VH, horiz: HORIZ_VH, endHold: END_HOLD_VH, scrub: SCRUB } =
       journeyTune()
@@ -494,12 +510,15 @@ export function HorizontalScrollShowcase() {
       window.clearTimeout(t2)
       window.removeEventListener('resize', onResize)
       ctx.revert()
+      section.style.removeProperty('height')
+      syncProtectionRef.current = () => {}
+      sticky.style.removeProperty('--dxh-progress')
     }
-  }, [mobileViewport])
+  }, [mobileViewport, reducedMotion])
 
   return (
     <section
-      className="dxh-scroll-outer"
+      className={`dxh-scroll-outer${reducedMotion ? ' dxh-scroll-outer--reduced' : ''}`}
       id="journey"
       ref={sectionRef}
       aria-label="Bạn đang muốn tìm nhà?"
@@ -543,9 +562,10 @@ export function HorizontalScrollShowcase() {
             <div className="dxh-panel__media" data-reveal="ask-media">
               <div className="dxh-lottie-frame dxh-lottie-frame--ask">
                 <DotLottieReact
+                  key={reducedMotion ? 'static' : 'animated'}
                   src={LOTTIE.thinking}
-                  loop
-                  autoplay
+                  loop={!reducedMotion}
+                  autoplay={!reducedMotion}
                   style={{ width: '100%', height: '100%' }}
                 />
               </div>
@@ -556,9 +576,10 @@ export function HorizontalScrollShowcase() {
             <div className="dxh-panel__media" data-reveal="map-media">
               <div className="dxh-lottie-frame dxh-lottie-frame--map">
                 <DotLottieReact
+                  key={reducedMotion ? 'static' : 'animated'}
                   src={LOTTIE.mapSearch}
-                  loop
-                  autoplay
+                  loop={!reducedMotion}
+                  autoplay={!reducedMotion}
                   style={{ width: '100%', height: '100%' }}
                 />
               </div>
@@ -591,9 +612,10 @@ export function HorizontalScrollShowcase() {
             <div className="dxh-panel__media" data-reveal="search-media">
               <div className="dxh-lottie-frame dxh-lottie-frame--search">
                 <DotLottieReact
+                  key={reducedMotion ? 'static' : 'animated'}
                   src={LOTTIE.search}
-                  loop
-                  autoplay
+                  loop={!reducedMotion}
+                  autoplay={!reducedMotion}
                   style={{ width: '100%', height: '100%' }}
                 />
               </div>
@@ -601,9 +623,18 @@ export function HorizontalScrollShowcase() {
           </article>
 
           <ProtectionPanel
+            key={reducedMotion ? 'static' : 'animated'}
             panelRef={protectionPanelRef}
             playerRef={protectionPlayerRef}
             onReady={() => {
+              if (reducedMotion) {
+                const player = protectionPlayerRef.current
+                if (player && player.totalFrames > 0) {
+                  player.pause()
+                  player.setFrame(Math.min(PROTECTION_FRAME_ASSEMBLED, player.totalFrames - 1))
+                }
+                return
+              }
               const p = Number(
                 stickyRef.current?.style.getPropertyValue('--dxh-progress') || 0,
               )

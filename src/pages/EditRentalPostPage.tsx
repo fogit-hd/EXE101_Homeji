@@ -10,7 +10,7 @@ import {
   uploadImages,
   type RentalPost,
 } from '../api'
-import { MediaType, RentalPostType, RoomTransferKind } from '../api/types'
+import { MediaType, RentalPostType, RoomTransferKind, UserRole } from '../api/types'
 import { DeferredMapBlock, PageFrame } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
@@ -36,12 +36,15 @@ export function EditRentalPostPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
+  const [maxOccupants, setMaxOccupants] = useState('')
+  const [availableSlots, setAvailableSlots] = useState('')
   const [deposit, setDeposit] = useState('')
   const [area, setArea] = useState('')
   const [address, setAddress] = useState('')
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   const [type, setType] = useState<RentalPostType>(RentalPostType.VacantRoom)
+  const isRenterShare = type === RentalPostType.RoommateShare && (post?.ownerRole ?? profile?.role) === UserRole.Renter
   const [amenities, setAmenities] = useState<string[]>([])
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const [uploadingMedia, setUploadingMedia] = useState(false)
@@ -65,6 +68,8 @@ export function EditRentalPostPage() {
     setTitle(data.title)
     setDescription(data.description)
     setPrice(String(data.price))
+    setMaxOccupants(data.maxOccupants ? String(data.maxOccupants) : '')
+    setAvailableSlots(data.availableSlots ? String(data.availableSlots) : '')
     setDeposit(String(data.deposit))
     setArea(String(data.area))
     setAddress(data.address)
@@ -90,6 +95,11 @@ export function EditRentalPostPage() {
   const persistDraft = async () => {
     if (!postId) throw new Error('Không tìm thấy tin đăng.')
     if (!isValidCoord(latNum, lngNum)) throw new Error('Chọn địa chỉ hoặc vị trí hợp lệ trước khi lưu.')
+    if (isRenterShare && (!Number.isInteger(Number(maxOccupants)) || Number(maxOccupants) < 1
+      || !Number.isInteger(Number(availableSlots)) || Number(availableSlots) < 1
+      || Number(availableSlots) > Number(maxOccupants))) {
+      throw new Error('Số người ở tối đa và số người cần ghép phải là số nguyên dương; số người cần ghép không vượt quá sức chứa.')
+    }
     const updated = await updateRentalPost(postId, {
         type,
         title,
@@ -105,8 +115,8 @@ export function EditRentalPostPage() {
         electricityPrice: post?.electricityPrice ?? 0,
         waterPrice: post?.waterPrice ?? 0,
         internetPrice: post?.internetPrice ?? 0,
-        maxOccupants: post?.maxOccupants ?? 1,
-        availableSlots: post?.availableSlots ?? 1,
+        maxOccupants: isRenterShare ? Number(maxOccupants) : post?.maxOccupants ?? 1,
+        availableSlots: isRenterShare ? Number(availableSlots) : post?.availableSlots ?? 1,
         houseRules: post?.houseRules ?? undefined,
         availableFrom: availableFrom || undefined,
         transferKind: type === RentalPostType.RoomTransfer ? transferKind : undefined,
@@ -331,17 +341,28 @@ export function EditRentalPostPage() {
             <p className="room-transfer-form__warning">Không đặt cọc trước khi xem phòng, xác minh người cho thuê và đọc văn bản chuyển giao.</p>
           </section>
         ) : null}
+        {isRenterShare ? <section aria-label="Thông tin tìm người ghép">
+          <h2>Tin tìm người ở cùng</h2>
+          <p>Giới thiệu bạn học hoặc làm ở đâu, lối sống và người bạn muốn ở cùng. Bạn đăng bằng hồ sơ người thuê; không cần đứng tên sở hữu nhà.</p>
+          <p className="form-hint">Chi phí bên dưới là phần dự kiến mỗi người trả hàng tháng. Nêu rõ điện, nước và khoản phát sinh trong mô tả. Tin chỉ công khai sau khi được duyệt.</p>
+          <div className="form-row">
+            <div className="form-group"><label className="form-label" htmlFor="share-capacity">Tổng số người có thể ở</label>
+              <input id="share-capacity" className="form-input" type="number" min="1" step="1" required value={maxOccupants} onChange={event => setMaxOccupants(event.target.value)} /></div>
+            <div className="form-group"><label className="form-label" htmlFor="share-slots">Số người đang cần ghép thêm</label>
+              <input id="share-slots" className="form-input" type="number" min="1" max={Number(maxOccupants) > 0 ? Number(maxOccupants) : undefined} step="1" required value={availableSlots} onChange={event => setAvailableSlots(event.target.value)} /></div>
+          </div>
+        </section> : null}
         <div className="form-group">
           <label className="form-label" htmlFor="rental-title">Tiêu đề</label>
           <input id="rental-title" className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
         </div>
         <div className="form-group">
-          <label className="form-label" htmlFor="rental-description">Mô tả</label>
+          <label className="form-label" htmlFor="rental-description">{isRenterShare ? 'Giới thiệu bản thân và chỗ ở' : 'Mô tả'}</label>
           <textarea id="rental-description" className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={4000} required />
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label" htmlFor="rental-price">Giá thuê (VND / tháng)</label>
+            <label className="form-label" htmlFor="rental-price">{isRenterShare ? 'Chi phí dự kiến/người/tháng (VND)' : 'Giá thuê (VND / tháng)'}</label>
             <input id="rental-price" className="form-input" type="number" min="1" step="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
           </div>
           <div className="form-group">

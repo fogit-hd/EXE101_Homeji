@@ -336,6 +336,14 @@ export interface RentalPostMedia {
 
 export interface RentalPostSummary {
   id: string
+  ownerId?: string
+  ownerRole?: UserRole | null
+  ownerDisplayName?: string | null
+  ownerAvatarPath?: string | null
+  ownerSchool?: string | null
+  descriptionExcerpt?: string | null
+  maxOccupants?: number
+  availableSlots?: number
   type: RentalPostType
   title: string
   price: number
@@ -482,6 +490,7 @@ export interface PayOsPaymentResponse {
 
 export interface RentalPostSearchParams {
   type?: RentalPostType
+  ownerRole?: UserRole
   excludedAmenities?: string[]
   excludeRoommateShare?: boolean
   ids?: string[]

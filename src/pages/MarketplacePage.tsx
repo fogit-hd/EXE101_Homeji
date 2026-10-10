@@ -88,7 +88,11 @@ import {
 } from '../components/marketplace/wallet/WalletPage'
 import { formatWalletAmount, parseWalletTab, readDepositReturn } from '../lib/walletMoney'
 import '../components/marketplace/food/FoodMarketplaceView.css'
+import { useTabTransition } from '../components/motion/useTabTransition'
+import { primaryOf } from '../lib/marketplaceNavigation'
 import './MarketplacePage.css'
+
+const TAB_MOTION_ORDER: readonly MarketplaceTab[] = ['food', 'browse', 'purchases', 'mine', 'sell', 'sales', 'wallet']
 
 const DEFAULT_LAT = 10.8706
 const DEFAULT_LNG = 106.7974
@@ -293,6 +297,7 @@ export function MarketplacePage({
     if (fromUrl) return fromUrl
     return takeMarketplaceTabRequest('food')
   })
+  const tabPanelRef = useTabTransition(tab, TAB_MOTION_ORDER, tab === 'food' ? '.food-catalog, .food-rail-desktop' : undefined)
   const [posts, setPosts] = useState<MarketplacePost[]>([])
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
   const [categorySelection, setCategorySelection] = useState({ tab, value: '' })
@@ -1483,6 +1488,8 @@ export function MarketplacePage({
         </div>
       ) : null}
 
+      <div ref={tabPanelRef} className="marketplace-tab-panel" id="marketplace-panel" role="tabpanel"
+        aria-labelledby={`marketplace-${tab === 'purchases' || tab === 'wallet' ? 'primary' : 'subtab'}-${tab === 'purchases' || tab === 'wallet' ? primaryOf(tab) : tab}`}>
       {tab === 'food' ? (
         <>
         {catalogToolbar}
@@ -2132,6 +2139,8 @@ export function MarketplacePage({
       )}
         </div>
       )}
+
+      </div>
 
       <MapToast
         message={toastMessage}

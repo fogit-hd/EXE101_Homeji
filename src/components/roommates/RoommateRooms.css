@@ -1,0 +1,22 @@
+.roommate-posts { min-width: 0; }
+.roommate-posts__intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.roommate-posts__intro h2 { margin: 0 0 6px; font-size: 20px; }
+.roommate-posts__intro p { margin: 0; color: var(--text-secondary); max-width: 64ch; }
+.roommate-posts__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.roommate-posts__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+.roommate-posts__card { display: flex; flex-direction: column; gap: 12px; padding: 20px; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 20px; min-width: 0; overflow-wrap: anywhere; }
+.roommate-posts__author { display: flex; align-items: center; gap: 10px; }
+.roommate-posts__author > div { flex: 1; min-width: 0; }
+.roommate-posts__author p { margin: 4px 0 0; color: var(--text-secondary); font-size: 13px; }
+.roommate-posts__avatar { width: 44px; height: 44px; border-radius: 50%; flex: none; object-fit: cover; display: grid; place-items: center; color: var(--hj-accent); background: var(--hj-accent-soft); font-weight: 700; }
+.roommate-posts__slots { border-radius: 999px; padding: 5px 9px; background: var(--hj-accent-soft); color: var(--hj-accent); font-size: 12px; font-weight: 600; }
+.roommate-posts__card h3 { margin: 0; font-size: 18px; line-height: 1.5; }
+.roommate-posts__card h3 a { color: var(--text-heading); }
+.roommate-posts__description { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.65; margin: 0; }
+.roommate-posts__address, .roommate-posts__capacity { margin: 0; color: var(--text-secondary); font-size: 13px; }
+.roommate-posts__cost { margin-top: auto; display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--border); }
+.roommate-posts__cost span { color: var(--text-secondary); font-size: 12px; }
+.roommate-posts__cost strong { color: var(--hj-accent); font-size: 20px; }
+.roommate-posts__empty { padding: 24px; border: 1px dashed var(--border); border-radius: 18px; background: var(--surface-muted); }
+.roommate-posts__empty h3 { margin-top: 0; }
+@media (max-width: 480px) { .roommate-posts__card { padding: 16px; } .roommate-posts__intro .roommate-posts__actions { width: 100%; } .roommate-posts__slots { max-width: 90px; } }

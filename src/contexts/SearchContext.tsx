@@ -37,7 +37,7 @@ const PLACEHOLDER: Record<SearchContextName, string> = {
   food: 'Tìm món, nguyên liệu hoặc tên bếp…',
   marketplace: 'Tìm sản phẩm…',
   myListings: 'Tìm trong tin của tôi…',
-  roommate: 'Tìm phòng ở ghép theo đường, trường hoặc tên phòng…',
+  roommate: 'Tìm tin sinh viên tìm người ghép theo đường hoặc tiêu đề…',
 }
 
 const CONTEXT_COPY: Record<SearchContextName, { title: string; scope: string }> = {
@@ -47,7 +47,7 @@ const CONTEXT_COPY: Record<SearchContextName, { title: string; scope: string }> 
   food: { title: 'Tìm món', scope: 'Nguyên liệu hoặc tên bếp' },
   marketplace: { title: 'Tìm sản phẩm', scope: 'Đồ dùng đang mở bán' },
   myListings: { title: 'Tin của tôi', scope: 'Tìm trong tin bạn đã đăng' },
-  roommate: { title: 'Ở ghép', scope: 'Phòng đang tìm thêm người' },
+  roommate: { title: 'Tin ở ghép', scope: 'Người đang ở đăng tìm thêm bạn ghép' },
 }
 
 const EMPTY_SUGGESTIONS: SearchSuggestion[] = []

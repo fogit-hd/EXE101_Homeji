@@ -6,18 +6,23 @@ import { ProfilePage } from '../../pages/ProfilePage'
 import { RoommateInvitationsPage } from '../../pages/RoommateInvitationsPage'
 import { RoommateRooms } from './RoommateRooms'
 import { RoommatePeople } from './RoommatePeople'
+import { MotionTabs } from '../motion/MotionTabs'
+import { useTabTransition } from '../motion/useTabTransition'
 import './RoommateWorkspace.css'
 
 type Tab = 'people' | 'rooms' | 'invitations'
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'people', label: 'Tìm bạn' }, { id: 'rooms', label: 'Tìm phòng' }, { id: 'invitations', label: 'Lời mời' },
+  { id: 'people', label: 'Tìm bạn' }, { id: 'rooms', label: 'Tin ở ghép' }, { id: 'invitations', label: 'Lời mời' },
 ]
+
+const TAB_ORDER = TABS.map(item => item.id)
 
 export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?: (id: string) => void }) {
   const { profile } = useAuth()
   const [params, setParams] = useSearchParams()
   const raw = params.get('roommateTab')
   const tab: Tab = raw === 'rooms' || raw === 'people' ? raw : 'invitations'
+  const panelRef = useTabTransition(tab, TAB_ORDER)
   const [editingLifestyle, setEditingLifestyle] = useState(false)
   const isRenter = profile?.role === UserRole.Renter
   const selectTab = (next: Tab) => setParams(previous => { const result = new URLSearchParams(previous); result.set('roommateTab', next); return result })
@@ -31,20 +36,11 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
       </button>
       {editingLifestyle ? <div id="roommate-lifestyle"><ProfilePage embedded lifestyleOnly /></div> : null}
     </section> : <p>Hồ sơ người thuê dùng lối sống để tìm người cùng ở và gửi lời mời. Bạn vẫn có thể xem phòng.</p>}
-    <div className="roommate-workspace__tabs" role="tablist" aria-label="Khám phá ở ghép">
-      {TABS.map(item => <button key={item.id} type="button" role="tab" id={`roommate-tab-${item.id}`}
-        aria-selected={tab === item.id} aria-controls={`roommate-panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1}
-        onKeyDown={event => {
-          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
-          event.preventDefault()
-          const index = TABS.findIndex(item => item.id === tab)
-          const next = event.key === 'Home' ? 0 : event.key === 'End' ? TABS.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + TABS.length) % TABS.length
-          selectTab(TABS[next].id)
-          document.getElementById(`roommate-tab-${TABS[next].id}`)?.focus()
-        }} onClick={() => selectTab(item.id)}>{item.label}</button>)}
-    </div>
-    <div key={tab} className="roommate-workspace__panel" role="tabpanel" id={`roommate-panel-${tab}`} aria-labelledby={`roommate-tab-${tab}`}>
+    <MotionTabs items={TABS} value={tab} onChange={selectTab} label="Khám phá ở ghép"
+      className="roommate-workspace__tabs" idPrefix="roommate-tab" panelId="roommate-panel" />
+    <div ref={panelRef} className="roommate-workspace__panel" role="tabpanel" id="roommate-panel" aria-labelledby={`roommate-tab-${tab}`}>
       {tab === 'rooms' ? <RoommateRooms initialKeyword={params.get('roommateQuery')?.slice(0, 200) ?? ''}
+        onOpenConversation={onOpenConversation}
         key={`${profile?.id ?? 'guest'}:${profile?.maxBudget ?? 'all'}:${params.get('roommateQuery') ?? ''}`} /> : null}
       {tab === 'people' ? isRenter ? <RoommatePeople onViewInvitations={() => selectTab('invitations')} />
         : <p>Tìm bạn ở ghép dành cho hồ sơ người thuê.</p> : null}
