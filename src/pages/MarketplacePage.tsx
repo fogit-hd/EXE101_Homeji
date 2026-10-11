@@ -97,7 +97,7 @@ const TAB_MOTION_ORDER: readonly MarketplaceTab[] = ['food', 'browse', 'purchase
 const DEFAULT_LAT = 10.8706
 const DEFAULT_LNG = 106.7974
 /** Placeholder — API requires ≥1 media URL when no file selected. */
-const DEFAULT_MEDIA = '/brand/homeji-logo.png'
+const DEFAULT_MEDIA = '/brand/homeji-logo2.png'
 const MAX_MEDIA = 10
 const MINIMUM_FOOD_CART_TOTAL = 25_000
 

@@ -1042,7 +1042,7 @@ export function MapOmnibox({
       >
             <div className="gmaps-nav-drawer__head">
               <Link to="/" className="gmaps-nav-drawer__brand" onClick={closeNav}>
-                <img src="/brand/homeji-logo.png" alt="Homeji" width={120} height={34} />
+                <img src="/brand/homeji-logo2.png" alt="Homeji" width={120} height={34} />
               </Link>
             </div>
 

@@ -49,7 +49,7 @@ Map-first rental discovery cho khu vực Thủ Đức / Q.9: guest landing cinem
 
 ## Brand Commitments
 
-- Tên: **Homeji**; logo `public/brand/homeji-logo.png`.
+- Tên: **Homeji**; logo `public/brand/homeji-logo2.png`.
 - Giọng UI: tiếng Việt, ngắn gọn, thực dụng (nhãn trạng thái tin, vai trò, sở thích ở ghép trong `labels.ts`).
 - Màu thương hiệu chính: xanh lá Grab `#00b14f` / hover `#009241`; liên kết/CTA phụ xanh `#136fd8`.
 - Landing guest: Manrope + Be Vietnam Pro; app shell mặc định Inter.

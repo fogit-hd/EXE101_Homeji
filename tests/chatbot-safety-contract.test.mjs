@@ -14,7 +14,7 @@ const marketplaceSource = await readFile(
 test('chatbot presents the Homeji name and logo', () => {
   assert.match(chatbotSource, /const HOMEJI_TITLE = 'Homeji'/)
   assert.match(chatbotSource, /function HomejiAvatar/)
-  assert.match(chatbotSource, /src="\/brand\/homeji-logo\.png"/)
+  assert.match(chatbotSource, /src="\/brand\/homeji-logo2\.png"/)
   assert.doesNotMatch(chatbotSource, /\bHomie\b/)
 })
 

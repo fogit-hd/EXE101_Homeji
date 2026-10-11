@@ -93,7 +93,7 @@ function HomejiAvatar({ inline = false }: { inline?: boolean }) {
       className={`map-chatbot__avatar${inline ? ' map-chatbot__avatar--inline' : ''}`}
       aria-hidden
     >
-      <img src="/brand/homeji-logo.png" alt="" draggable={false} />
+      <img src="/brand/homeji-logo2.png" alt="" draggable={false} />
     </span>
   )
 }
@@ -795,7 +795,7 @@ export function MapChatbot({
           setOpen(value => !value)
         }}
       >
-        <img src="/brand/homeji-logo.png" alt="" width="44" height="44" draggable={false} />
+        <img src="/brand/homeji-logo2.png" alt="" width="44" height="44" draggable={false} />
       </button>
       ) : null}
     </div>

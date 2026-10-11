@@ -30,7 +30,7 @@ export function Navbar() {
       <div className="container navbar-inner">
         <Link to="/" className="navbar-brand" onClick={closeMenu}>
           <img
-            src="/brand/homeji-logo.png"
+            src="/brand/homeji-logo2.png"
             alt="Homeji"
             className="navbar-brand__logo"
             width={140}

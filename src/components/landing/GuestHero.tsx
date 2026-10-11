@@ -37,7 +37,7 @@ export function GuestHero() {
         <header className="guest-hero__top">
           <div className="guest-hero__brand">
             <img
-              src="/brand/homeji-logo.png"
+              src="/brand/homeji-logo2.png"
               alt=""
               className="guest-hero__corner-logo"
               width={38}
