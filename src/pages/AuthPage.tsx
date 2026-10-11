@@ -21,6 +21,7 @@ import { ConnectHomejiCta, warmConnectLottie } from './AuthPageConnect'
 import { AiVoiceFloat, PasswordEyeToggle, voiceTravelDuration } from './AuthPageMotion'
 import { layoutWelcomeStrokes, WELCOME_PHRASE } from './authWelcomeHandwrite'
 import './AuthPage.css'
+import './AuthFormLayout.css'
 
 const TOGGLE_COOLDOWN_MS = 1000
 
@@ -1093,7 +1094,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   return (
     <div
-      className={`auth-cinema${connectUiLocked ? ' is-connect-locked is-connecting-hard' : ''}`}
+      className={`auth-cinema${showFormCard ? ' auth-cinema--form' : ''}${connectUiLocked ? ' is-connect-locked is-connecting-hard' : ''}`}
       role="main"
       aria-label={mode === 'signin' ? 'Đăng nhập' : 'Đăng ký'}
     >

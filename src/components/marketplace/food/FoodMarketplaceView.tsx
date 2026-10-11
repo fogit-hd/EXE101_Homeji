@@ -4,6 +4,7 @@ import {
   FOOD_ASSETS,
 } from './foodAssets'
 import { FoodCard } from './FoodCard'
+import { FoodSourceDirectory } from './FoodSourceDirectory'
 import {
   FoodUtilityRail,
   type FoodCartLine,
@@ -123,6 +124,7 @@ export function FoodMarketplaceView({
   return (
     <div className="food-market-body">
       <div className="food-catalog">
+        <FoodSourceDirectory />
         <section className="food-featured" aria-label="Gợi ý hôm nay">
           <div className="food-featured__copy">
             <div className="food-featured__status">
