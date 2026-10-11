@@ -6,6 +6,14 @@ import { rentalSourceFreshness } from '../../lib/rentalSourceFreshness'
 
 const dateLabel = (value: string | null) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleDateString('vi-VN') : 'Chưa có thông tin'
 
+function sourceImage(raw: string): string | null {
+  try {
+    const url = new URL(raw)
+    return url.protocol === 'https:' && !url.username && !url.password && !url.port
+      && ['pt123.cdn.static123.com'].includes(url.hostname) ? url.href : null
+  } catch { return null }
+}
+
 export function RentalSourceBrowser() {
   const [keyword, setKeyword] = useState('')
   const [district, setDistrict] = useState('')
@@ -29,7 +37,7 @@ export function RentalSourceBrowser() {
     <p>Đây là quảng cáo được thu thập từ website khác. Homeji chưa xác minh phòng còn trống, người cho thuê, địa chỉ hoặc phí. Tin nguồn không được coi là tin phòng đã duyệt để đặt lịch hay đặt cọc.</p>
     <form onSubmit={event => { event.preventDefault(); void load(1) }}>
       <label htmlFor="source-keyword">Từ khóa tin nguồn</label><input id="source-keyword" maxLength={200} value={keyword} onChange={event => { changeFilters(); setKeyword(event.target.value) }} />
-      <label htmlFor="source-district">Khu vực</label><select id="source-district" value={district} onChange={event => { changeFilters(); setDistrict(event.target.value) }}><option value="">Thủ Đức & Quận 9</option><option value="thuduc">Thủ Đức</option><option value="quan9">Quận 9</option></select>
+      <label htmlFor="source-district">Khu vực</label><select id="source-district" value={district} onChange={event => { changeFilters(); setDistrict(event.target.value) }}><option value="">Thủ Đức & Quận 9</option><option value="thu-duc">Thủ Đức</option><option value="quan-9">Quận 9</option></select>
       <button type="submit" className="btn btn-secondary btn-sm" disabled={loading}>{loading ? 'Đang tải…' : 'Xem tin nguồn'}</button>
     </form>
     {error ? <p role="alert">{error}</p> : null}
@@ -39,6 +47,10 @@ export function RentalSourceBrowser() {
       const freshness = rentalSourceFreshness(item.sourceExpiresAt, item.sourceCheckedAt)
       return <article key={item.id} className="ai-search-review__listing">
         <strong>{item.title}</strong><span>{item.address}</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{item.imageUrls.map(sourceImage).filter((url): url is string => url !== null).slice(0, 3).map(url =>
+          <a key={url} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`Ảnh từ tin nguồn: ${item.title}`} loading="lazy" referrerPolicy="no-referrer" style={{ width: 160, height: 110, objectFit: 'cover', borderRadius: 8 }} onError={event => { event.currentTarget.hidden = true }} /></a>
+        )}</div>
+        <small>Ảnh do nguồn đăng cung cấp, Homeji chưa xác minh ảnh với phòng thực tế.</small>
         <span>Giá tại lần thu thập: {item.price > 0 ? formatPrice(item.price) : 'Chưa có thông tin'} · Diện tích: {item.area > 0 ? `${item.area} m²` : 'Chưa có thông tin'}</span>
         <small>Nguồn: {item.source} · mã {item.sourceId}</small>
         <small>Thu thập: {dateLabel(item.collectedAt)} · ngày cập nhật nguồn: {dateLabel(item.sourceUpdatedAt)}</small>

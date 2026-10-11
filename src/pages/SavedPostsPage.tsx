@@ -13,6 +13,7 @@ import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
+import { RentalDecisionPanel } from '../components/ai/RentalDecisionPanel'
 import { RentalComparison } from '../components/ai/RentalComparison'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 import { useAuth } from '../contexts/AuthContext'
@@ -118,7 +119,7 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
         <span>Chọn 2–3 tin để so sánh · {compareIds.length}/3</span>
         <button type="button" className="btn btn-secondary btn-sm" disabled={compareIds.length < 2} onClick={() => setComparison([...compareIds])}>So sánh tin đã chọn</button>
       </div> : null}
-      {comparison ? <RentalComparison postIds={comparison} onClose={() => setComparison(null)} /> : null}
+      {comparison ? <><RentalComparison postIds={comparison} onClose={() => setComparison(null)} /><RentalDecisionPanel postIds={comparison} onUnavailable={ids => { setCompareIds(current => current.filter(id => !ids.includes(id))); setComparison(current => current ? current.filter(id => !ids.includes(id)) : null) }} /></> : null}
 
       {showLoader ? (
         disrupted

@@ -1,0 +1,19 @@
+.rental-assistant { padding: 16px; border: 1px solid #cbd5e1; border-radius: 16px; background: #f8fafc; color: #172033; margin: 12px 0; }
+.rental-assistant h3 { margin: 0 0 10px; }
+.rental-assistant p { font-size: 13px; line-height: 1.6; }
+.rental-assistant__fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; margin: 12px 0; }
+.rental-assistant label { display: grid; gap: 5px; font-size: 12px; }
+.rental-assistant input,.rental-assistant select,.rental-assistant textarea { width: 100%; min-width: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; background: white; color: #172033; }
+.rental-assistant details { margin: 10px 0; }
+.rental-assistant summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.rental-assistant__table-wrap { overflow-x: auto; }
+.rental-assistant table { border-collapse: collapse; font-size: 12px; width: 100%; }
+.rental-assistant th,.rental-assistant td { border-bottom: 1px solid #dbe3ec; padding: 10px; min-width: 130px; text-align: left; vertical-align: top; }
+.rental-assistant__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.rental-assistant__chips button { border: 1px solid #93c5fd; background: #eff6ff; border-radius: 15px; padding: 6px 10px; color: #1e40af; font-size: 12px; }
+.rental-assistant__card { background: white; padding: 12px; border: 1px solid #dbe3ec; border-radius: 10px; margin: 8px 0; }
+.rental-assistant__card a { color: #1d4ed8; }
+.rental-assistant__card small { display: block; font-size: 11px; margin: 6px 0; }
+.rental-assistant__modal { position: fixed; inset: 0; z-index: 4000; background: #0f172a80; padding: 24px; display: grid; place-items: center; }
+.rental-assistant__modal > div { max-width: 700px; width: 100%; max-height: 90dvh; overflow: auto; background: white; padding: 16px; border-radius: 18px; }
+@media(max-width:600px) { .rental-assistant__modal { padding: 8px; } }
