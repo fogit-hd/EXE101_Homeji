@@ -2,7 +2,9 @@
 import http from 'node:http'
 const now = '2026-10-05T00:00:00Z'
 const userId = '11111111-1111-4111-8111-111111111111'
-const profile = { id: userId, displayName: 'Homeji kiểm thử', role: 3, onboardingCompleted: true, isPremium: false, landlordVerificationStatus: 0 }
+const qaRole = Number(process.env.HOMEJI_QA_ROLE ?? '3')
+if (![1, 2, 3].includes(qaRole)) throw new Error('HOMEJI_QA_ROLE must be 1, 2 or 3')
+const profile = { id: userId, displayName: 'Homeji kiểm thử', role: qaRole, onboardingCompleted: true, isPremium: false, landlordVerificationStatus: 0 }
 const posts = [1, 2, 3].map(index => ({
   id: `22222222-2222-4222-8222-22222222222${index}`, ownerId: userId, type: 1, status: 3,
   title: `Phòng kiểm thử ${index} · Thủ Đức`, description: 'Thông tin local để kiểm thử giao diện.',
@@ -59,7 +61,11 @@ const server = http.createServer(async (request, response) => {
     else { body = notifications.find(item => path.includes(item.id)); if (body) body.isRead = true }
   }
   else if (path === '/api/account/login') body = { accessToken: 'local-ui-fixture-only', userId, email: 'qa-ai@example.test' }
-  else if (path === '/api/profile/me') body = profile
+  else if (path === '/api/profile/me') {
+    const delay = Number(process.env.HOMEJI_QA_PROFILE_DELAY_MS ?? '0')
+    if (Number.isFinite(delay) && delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(delay, 5000)))
+    body = profile
+  }
   else if (path === '/api/chatbot/popup-config') body = { enabled: true, title: 'Homeji', greeting: 'Trợ lý kiểm thử local', suggestedPrompts: [] }
   else if (path === '/api/ai/highlight-rental-posts') body = queryResult
   else if (path === '/api/ai/rental-draft') body = { title: 'Bản nháp kiểm thử local', description: 'Chỉ dùng kiểm thử hủy request; không đăng tin.', missing: ['Kiểm tra thông tin trước khi đăng'] }

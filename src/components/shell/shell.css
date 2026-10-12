@@ -278,6 +278,21 @@
   outline-offset: 2px;
 }
 
+.app-shell .hj-shell .hj-actions > a.hj-admin-cta {
+  display: inline-flex;
+  gap: 7px;
+  background: #087f8c;
+  font-weight: 700;
+}
+.app-shell .hj-shell .hj-actions > a.hj-admin-cta:hover,
+.app-shell .hj-shell .hj-actions > a.hj-admin-cta[aria-current="page"] { background: #065e68; }
+
+@media (max-width: 479px) {
+  .hj-bar--admin .hj-logo__word { display: none; }
+  .hj-admin-cta > svg { display: none; }
+  .app-shell .hj-shell .hj-actions > a.hj-admin-cta { padding: 0 8px; margin-left: 2px; }
+}
+
 .hj-profile {
   display: inline-flex;
   align-items: center;

@@ -342,6 +342,7 @@ export function GlobalHeader() {
   }
 
   const displayName = profile?.displayName?.trim() || 'Tài khoản'
+  const isAdmin = profile?.role === UserRole.Admin
   const mark = initials(displayName)
   const pillars = PRIMARY_PILLARS.map((item) => (
     item.id === 'market' ? { ...item, href: marketplaceHref('browse') } : item
@@ -353,13 +354,13 @@ export function GlobalHeader() {
     { id: 'wanted', label: 'Tin tìm phòng', href: mapSectionUrl('wanted'), icon: 'search' as const },
     { id: 'activities', label: 'Nhật ký hoạt động', href: mapSectionUrl('activities'), icon: 'activity' as const },
   ]
-  if (profile?.role === UserRole.Admin) {
-    accountLinks.push({ id: 'admin', label: 'Admin', href: '/admin', icon: 'shield' })
+  if (isAdmin) {
+    accountLinks.unshift({ id: 'admin', label: 'Quản trị', href: '/admin', icon: 'shield' })
   }
 
   return (
     <header className="hj-header">
-      <div className="hj-bar">
+      <div className={`hj-bar${isAdmin ? ' hj-bar--admin' : ''}`}>
         <div
           className="hj-header__menu"
           ref={anchorRef}
@@ -474,7 +475,9 @@ export function GlobalHeader() {
           </div>
           <HeaderLink href={mapSectionUrl('messages')} label="" icon="message" count={unreadMessages} />
           <HeaderLink href={mapSectionUrl('myPosts')} label="Quản lý tin" />
-          <Link to="/posts/new" className="hj-post-cta">Đăng tin</Link>
+          {isAdmin ? <Link to="/admin" className="hj-post-cta hj-admin-cta" aria-current={location.pathname === '/admin' ? 'page' : undefined}>
+            <ShellIcon name="shield" /><span>Quản trị</span>
+          </Link> : <Link to="/posts/new" className="hj-post-cta">Đăng tin</Link>}
           <div className="hj-account" ref={accountRef}>
             <button
               type="button"
@@ -494,7 +497,7 @@ export function GlobalHeader() {
             {accountPresent ? (
               <div {...accountPresence} id={accountId} className="hj-account__menu" role="menu">
                 <p className="hj-account__name">{displayName}</p>
-                <p className="hj-account__role">Tài khoản cá nhân</p>
+                <p className="hj-account__role">{isAdmin ? 'Quản trị viên' : 'Tài khoản cá nhân'}</p>
                 {accountLinks.map((item) => (
                   <Link
                     key={item.id}

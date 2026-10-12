@@ -7,6 +7,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { checkEmail, isEmailTaken, googleLoginWithIdToken } from '../api'
 import { consumeSessionTerminationMessage } from '../api/authSession'
 import { useAuth } from '../contexts/AuthContext'
+import { authDestination } from '../lib/authDestination'
 import { getErrorMessage } from '../lib/errors'
 import { googleOAuthClientId } from '../lib/googleOAuthClient'
 import {
@@ -266,10 +267,10 @@ function VoiceParkSlot({
 }
 
 export function AuthPage({ initialMode }: AuthPageProps) {
-  const { login, register, isAuthenticated, isLoading, setSessionFromAuth } = useAuth()
+  const { login, register, isAuthenticated, isLoading, profile, setSessionFromAuth } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  const from = (location.state as { from?: string } | null)?.from
 
   const modeFromPath: AuthMode =
     initialMode ?? (location.pathname.startsWith('/register') ? 'signup' : 'signin')
@@ -494,10 +495,10 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }, [showStory, storyStep])
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate(mode === 'signin' ? from : '/', { replace: true })
+    if (!isLoading && isAuthenticated && !submitting) {
+      navigate(mode === 'signin' ? authDestination(from, profile?.role) : '/', { replace: true })
     }
-  }, [isAuthenticated, isLoading, navigate, from, mode])
+  }, [isAuthenticated, isLoading, navigate, from, mode, profile?.role, submitting])
 
   useEffect(() => {
     const next: AuthMode = location.pathname.startsWith('/register') ? 'signup' : 'signin'
@@ -904,7 +905,6 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     setSubmitting(true)
     try {
       await login(email, password)
-      navigate(from, { replace: true })
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng nhập thất bại'))
     } finally {
@@ -948,7 +948,6 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     try {
       const session = await googleLoginWithIdToken({ idToken: credentialResponse.credential })
       await setSessionFromAuth(session)
-      navigate(mode === 'signin' ? from : '/', { replace: true })
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng nhập Google thất bại'))
     } finally {
