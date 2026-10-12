@@ -11,3 +11,5 @@ Four rendering regressions failed against the previous component, then passed af
 API fields are additive and optional in the frontend types for rolling deployment compatibility. Existing decimal price fields are preserved; their eligibility metadata determines whether they may be shown. No migration or production-data rewrite is needed.
 
 Release isolation: an archive of commit 1cb5e63, excluding every unrelated uncommitted change, also passes the production build and all 192 Node tests.
+
+Production verification: backend commit 8901ad1 is Live (Render duration 2m19s), GET /health/ready returned 200 Healthy. On the original frontend origin /admin, all 51 active listings remain counted; the price card displays 36 eligible whole-room prices and 15 omitted listings, with 36 usable floor-area samples. A per-person-only area displays unavailable price instead of zero currency. Screenshot: ignored output/quality/full-audit/admin-price-production-2026-10-12.png. The latest frontend commit b62f37c was independently archived with its own npm ci dependencies and passed build plus all 192 Node tests, avoiding concurrent root working-tree changes.
