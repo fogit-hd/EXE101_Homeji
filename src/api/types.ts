@@ -264,7 +264,14 @@ export type AdminPriceSignal =
   | 'hold'
   | 'insufficient_data'
 
-export interface AdminProductKpis {
+export interface AdminPriceEvidence {
+  priceBasis?: 'room_month'
+  priceSampleCount?: number
+  excludedPriceCount?: number
+  priceAreaSampleCount?: number
+}
+
+export interface AdminProductKpis extends AdminPriceEvidence {
   totalUsers: number
   newUsers: number
   activeListings: number
@@ -289,7 +296,7 @@ export interface AdminAnalyticsTrendPoint {
   viewingRequests: number
 }
 
-export interface AdminAreaInsight {
+export interface AdminAreaInsight extends AdminPriceEvidence {
   areaName: string
   latitude: number
   longitude: number

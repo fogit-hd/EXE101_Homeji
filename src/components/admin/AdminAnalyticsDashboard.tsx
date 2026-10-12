@@ -16,6 +16,9 @@ import { importMapsLibrary } from '../../lib/loadGoogleMaps'
 import { formatPrice } from '../../lib/labels'
 import './AdminAnalyticsDashboard.css'
 import { AdminTrafficPanel } from './AdminTrafficPanel'
+import { adminPriceEvidence, adminPriceRecommendation, adminPriceSignal } from './adminPriceEvidence'
+
+const comparablePriceLabel = (value: number | null) => value === null ? 'Chưa có dữ liệu giá đủ điều kiện' : formatPrice(value)
 
 type TrendMetric = 'searches' | 'listingViews' | 'saves' | 'viewingRequests'
 
@@ -55,6 +58,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
   const selectedArea =
     data.areas.find((area) => area.areaName === selectedAreaName) ?? data.areas[0] ?? null
   const kpis = data.kpis
+  const prices = adminPriceEvidence(kpis)
   const cards = [
     {
       label: 'Người dùng',
@@ -67,9 +71,9 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
       detail: `+${kpis.newListings.toLocaleString('vi-VN')} tin mới`,
     },
     {
-      label: 'Giá thuê trung vị',
-      value: formatPrice(kpis.medianMonthlyPrice),
-      detail: `Mức giá ở giữa các tin · Bình quân ${formatPrice(kpis.averagePricePerSquareMeter)}/m²`,
+      label: 'Giá cả phòng trung vị / tháng',
+      value: comparablePriceLabel(prices.monthlyPrice),
+      detail: `${prices.description} Bình quân/m²/tháng: ${comparablePriceLabel(prices.pricePerSquareMeter)}`,
     },
     {
       label: 'Nhu cầu tìm phòng',
@@ -192,8 +196,8 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
               <tr>
                 <th>Khu vực</th>
                 <th>Tin</th>
-                <th>Giá trung vị</th>
-                <th>Giá/m²</th>
+                <th>Giá cả phòng/tháng · trung vị</th>
+                <th>Giá/m²/tháng</th>
                 <th>Lưu/xem</th>
                 <th>Chỉ số cầu</th>
                 <th>Tín hiệu</th>
@@ -208,11 +212,11 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
                 >
                   <td><button type="button" onClick={() => setSelectedAreaName(area.areaName)}>{area.areaName}</button><small>{confidenceLabels[area.confidence]}</small></td>
                   <td>{area.activeListings}</td>
-                  <td>{formatPrice(area.medianMonthlyPrice)}</td>
-                  <td>{formatPrice(area.averagePricePerSquareMeter)}</td>
+                  <td>{comparablePriceLabel(adminPriceEvidence(area).monthlyPrice)}<small>{adminPriceEvidence(area).description}</small></td>
+                  <td>{comparablePriceLabel(adminPriceEvidence(area).pricePerSquareMeter)}</td>
                   <td>{area.saveRate.toLocaleString('vi-VN')}%</td>
                   <td>{area.demandIndex}</td>
-                  <td><span className={`admin-price-signal is-${area.priceSignal}`}>{signalLabels[area.priceSignal]}</span></td>
+                  <td><span className={`admin-price-signal is-${adminPriceSignal(area)}`}>{signalLabels[adminPriceSignal(area)]}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -224,8 +228,8 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
         <summary>Nguồn dữ liệu và cách đọc chỉ số</summary>
         <p>Tìm kiếm và xem tin chỉ ghi nhận người dùng đã đăng nhập; lượt xem không gồm chủ tin. Lượt lưu là các mục còn được lưu, tạo trong kỳ; bỏ lưu sẽ làm số này giảm. Yêu cầu xem gồm mọi trạng thái, không đồng nghĩa đã thuê thành công.</p>
         <p>Tỷ lệ lưu/xem và lịch xem/lưu là tỷ số hoạt động độc lập, có thể vượt 100%; không phải tỷ lệ chuyển đổi của cùng nhóm khách hàng. Ngày theo giờ Việt Nam; ngày hôm nay chưa hoàn tất.</p>
-        <p>Nguồn cung và giá là ảnh chụp các tin đang hoạt động. Giá/m² là trung bình giá/m² của từng tin. Bản đồ hiển thị tối đa 20 khu vực có chỉ số cầu cao nhất và tọa độ hợp lệ; vị trí là tâm các tin, không phải ranh giới hành chính.</p>
-        <p>Chỉ số cầu so với toàn bộ tin hoạt động: 65% tỷ số lưu/xem và 35% yêu cầu xem/tin trong kỳ, mốc 100 là trung bình, giới hạn 250. Mẫu vừa cần 4 tin và 50 lượt xem; mẫu lớn cần 8 tin và 200 lượt xem. Đây là ngưỡng vận hành, không phải kiểm định thống kê. So sánh giá giữa khu vực chưa kiểm soát chất lượng phòng; chỉ nên thử nghiệm, không tăng/giảm tự động.</p>
+        <p>Nguồn cung là ảnh chụp toàn bộ tin đang hoạt động. Thống kê giá chỉ dùng giá dương theo cả phòng/tháng; loại giá theo người, chưa rõ đơn vị và chưa rõ giá, không quy đổi theo số người. Giá/m² chỉ dùng các tin trong nhóm giá này có diện tích dương. Số mẫu và số tin bị loại được ghi cạnh giá. Bản đồ hiển thị tối đa 20 khu vực có chỉ số cầu cao nhất và tọa độ hợp lệ; vị trí là tâm các tin, không phải ranh giới hành chính.</p>
+        <p>Chỉ số cầu so với toàn bộ tin hoạt động: 65% tỷ số lưu/xem và 35% yêu cầu xem/tin trong kỳ, mốc 100 là trung bình, giới hạn 250. Mẫu vừa cần 4 tin và 50 lượt xem; mẫu lớn cần 8 tin và 200 lượt xem. Gợi ý giá còn cần ít nhất 4 mẫu giá cả phòng có diện tích ở khu vực và toàn hệ thống. Đây là ngưỡng vận hành, không phải kiểm định thống kê. So sánh giá giữa khu vực chưa kiểm soát chất lượng phòng; chỉ nên thử nghiệm, không tăng/giảm tự động.</p>
       </details>
       <p className="admin-analytics__updated">
         Cập nhật {new Date(data.generatedAt).toLocaleString('vi-VN')} · Tín hiệu giá chỉ dùng để thử nghiệm có kiểm soát.
@@ -235,19 +239,22 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
 }
 
 function AreaDecisionCard({ area }: { area: AdminAreaInsight }) {
+  const prices = adminPriceEvidence(area)
+  const signal = adminPriceSignal(area)
   return (
     <div className="admin-area-decision">
       <div>
-        <span className={`admin-price-signal is-${area.priceSignal}`}>{signalLabels[area.priceSignal]}</span>
+        <span className={`admin-price-signal is-${signal}`}>{signalLabels[signal]}</span>
         <h4>{area.areaName}</h4>
-        <p>{area.recommendation}</p>
+        <p>{adminPriceRecommendation(area)}</p>
+        <p>{prices.description}</p>
         <p>{confidenceLabels[area.confidence]} · Dựa trên {area.totalViews.toLocaleString('vi-VN')} lượt xem tin, {area.totalSaves.toLocaleString('vi-VN')} lượt lưu và {area.viewingRequests.toLocaleString('vi-VN')} yêu cầu xem trong kỳ.</p>
         <p className="admin-analytics__legend">Chỉ số cầu so mức quan tâm với toàn hệ thống: 100 là mốc tham chiếu. Không phải số khách hay xác suất thuê được. Gợi ý giá cần chủ nhà xem xét, không tự áp dụng.</p>
       </div>
       <dl>
         <div><dt>Chỉ số cầu</dt><dd>{area.demandIndex}</dd></div>
         <div><dt>Tin hoạt động</dt><dd>{area.activeListings}</dd></div>
-        <div><dt>Giá trung vị</dt><dd>{formatPrice(area.medianMonthlyPrice)}</dd></div>
+        <div><dt>Giá cả phòng/tháng · trung vị</dt><dd>{comparablePriceLabel(prices.monthlyPrice)}</dd></div>
         <div><dt>Lịch xem</dt><dd>{area.viewingRequests}</dd></div>
       </dl>
     </div>
@@ -374,7 +381,7 @@ function AdminDemandMap({
         validAreas.forEach((area) => {
           const content = document.createElement('button')
           content.type = 'button'
-          content.className = `admin-demand-pin is-${area.priceSignal}${selectedAreaName === area.areaName ? ' is-selected' : ''}`
+          content.className = `admin-demand-pin is-${adminPriceSignal(area)}${selectedAreaName === area.areaName ? ' is-selected' : ''}`
           content.setAttribute('aria-label', `${area.areaName}, ${area.activeListings} tin, chỉ số cầu ${area.demandIndex}`)
           content.textContent = String(area.activeListings)
           content.style.setProperty('--pin-scale', String(Math.min(1.45, 0.85 + area.activeListings * 0.08)))
