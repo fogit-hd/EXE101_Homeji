@@ -390,7 +390,7 @@ export function GlobalHeader() {
           />
         </div>
         <Link to="/" className="hj-logo" aria-label="Homeji — Trang chủ">
-          <img className="hj-logo__mark" src="/bar/homeji-logo2.png" alt="Homeji" width={48} height={48} />
+          <img className="hj-logo__mark" src="/brand/homeji-logo2.png" alt="Homeji" width={48} height={48} />
           <span className="hj-logo__word">Homeji</span>
         </Link>
         <nav className="hj-primary" aria-label="Điều hướng chính">
