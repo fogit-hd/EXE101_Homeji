@@ -3,3 +3,17 @@
   outline-offset: 4px;
   scroll-margin-block: 100px;
 }
+
+.admin-assistant-tasks {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 16px 0;
+  list-style: none;
+}
+
+.admin-assistant-tasks .btn {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+}
