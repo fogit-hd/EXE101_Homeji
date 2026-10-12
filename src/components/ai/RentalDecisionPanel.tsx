@@ -5,6 +5,7 @@ import { AddressAutocomplete } from '../map/AddressAutocomplete'
 import { formatPrice, amenityLabel } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { getErrorMessage } from '../../lib/errors'
+import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import './RentalAssistant.css'
 
 const initialScenario: CostScenario = { occupants: 1, electricityKwh: 0, waterM3: 0, electricityUnit: 'unknown', waterUnit: 'unknown', internetUnit: 'unknown' }
@@ -52,7 +53,7 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
     requestRef.current = controller
     setPendingKey(key); setError(''); setResult(undefined)
     try {
-      const response = await getRentalDecision(postIds, scenario, destination ? {
+      const response = await getRentalDecision(postIds, scenario, aiFeatureFlags.commute && destination ? {
         ...destination, mode, departureTime: mode === 'DRIVE' && departure ? new Date(departure).toISOString() : undefined,
       } : undefined, controller.signal)
       if (controller.signal.aborted) return
@@ -80,7 +81,7 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
     <details><summary>Xác nhận khoản bằng 0 trong kịch bản</summary><p>Chỉ chọn sau khi đã hỏi chủ phòng. Đây là xác nhận của bạn cho kịch bản, không phải Homeji xác minh.</p>
       {(['electricityFreeConfirmed', 'waterFreeConfirmed', 'internetFreeConfirmed', 'depositFreeConfirmed'] as const).map((field, i) => <label key={field}><span><input type="checkbox" checked={scenario[field] ?? false} onChange={e => setScenario(s => ({ ...s, [field]: e.target.checked }))} /> {['Điện miễn phí', 'Nước miễn phí', 'Internet miễn phí', 'Không thu cọc'][i]}</span></label>)}
     </details>
-    <details><summary>Tính đường đi tới điểm đến bạn chọn</summary>
+    {aiFeatureFlags.commute ? <details><summary>Tính đường đi tới điểm đến bạn chọn</summary>
       <p>Chỉ gửi tọa độ các phòng được chọn và điểm đến này tới Google Maps khi nhấn tính. Không sử dụng vị trí thiết bị.</p>
       <AddressAutocomplete value={address} onChange={value => { setAddress(value); setDestination(undefined) }}
         onPlaceSelect={place => { setAddress(place.address); setDestination({ label: place.address, latitude: place.lat, longitude: place.lng, mode }) }} placeholder="Chọn đúng cơ sở trường / điểm đến" />
@@ -88,8 +89,8 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
       {mode === 'DRIVE' ? <label>Giờ đi dự kiến<input type="datetime-local" value={departure} onChange={e => setDeparture(e.target.value)} /></label> : null}
       <button type="button" onClick={() => { setDestination(undefined); setAddress('') }}>Bỏ điểm đến</button>
       {address && !destination ? <p>Hãy chọn một gợi ý địa điểm để xác nhận tọa độ.</p> : null}
-    </details>
-    <button type="button" className="btn btn-secondary" disabled={busy || !postIds.length || !!address && !destination} onClick={() => void calculate()}>{busy ? 'Đang tính…' : 'Làm mới so sánh / tính kịch bản'}</button>
+    </details> : null}
+    <button type="button" className="btn btn-secondary" disabled={busy || !postIds.length || aiFeatureFlags.commute && !!address && !destination} onClick={() => void calculate()}>{busy ? 'Đang tính…' : 'Làm mới so sánh / tính kịch bản'}</button>
     {error ? <p role="alert">{error}</p> : null}
     {data ? <>
       <p role="status">{data.summary}</p>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { compareRentalPosts, getRentalPost, RentalPostStatus, RentalPostType, type CompareRentalPostItem } from '../../api'
+import { compareRentalPosts, getRentalPost, RentalPostType, type CompareRentalPostItem } from '../../api'
 import { AddressAutocomplete, type PlaceResult } from '../map/AddressAutocomplete'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
 import { calculateShortlistCommute, type CommuteMode, type CommuteResult } from '../../lib/shortlistCommute'
@@ -10,6 +10,7 @@ import { amenityLabel, formatListingRent, formatListingArea } from '../../lib/la
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { ApiRequestError } from '../../api/client'
 import { isLowestComparablePrice, rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
+import { recoverRentalComparison } from './recoverRentalComparison'
 import './RentalComparison.css'
 
 const modeLabels: Record<CommuteMode, string> = { DRIVING: 'Ô tô', WALKING: 'Đi bộ', TRANSIT: 'Phương tiện công cộng' }
@@ -45,13 +46,14 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
           setError(getErrorMessage(reason, 'Không tải được so sánh.'))
           return
         }
-        // If one selected post has disappeared, retain only freshly authorized active posts.
-        const refreshed = await Promise.allSettled(ids.map(id => getRentalPost(id, { auth: true })))
-        const available = refreshed.flatMap(result => result.status === 'fulfilled' && result.value.status === RentalPostStatus.Active
-          ? [{ post: result.value, averageRating: 0, reviewCount: 0 }] : [])
+        const recovered = await recoverRentalComparison(ids, id => getRentalPost(id, { auth: true }),
+          reason => reason instanceof ApiRequestError && reason.status === 404)
         if (!cancelled) {
-          setItems(available)
-          setError(available.length < ids.length ? 'Một số tin không còn công khai và đã được bỏ khỏi so sánh.' : getErrorMessage(reason, 'Không tải được so sánh.'))
+          setItems(recovered.posts)
+          setError(recovered.unresolvedCount
+            ? 'Chưa kiểm chứng được toàn bộ tin vì lỗi tải dữ liệu hoặc quyền truy cập. Vui lòng tải lại; chưa thể kết luận các tin này không còn công khai.'
+            : recovered.removedCount ? 'Một số tin không còn công khai và đã được bỏ khỏi so sánh.'
+              : getErrorMessage(reason, 'Không tải được so sánh.'))
         }
       } finally { if (!cancelled) setLoading(false) }
     }
