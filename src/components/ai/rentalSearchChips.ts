@@ -6,6 +6,7 @@ export type RentalSearchChip = { text: string; edit: string }
 /** Refinements edit the existing intent; only the explicit new-search action resets its constraints. */
 export function buildRentalSearchChips(c: AiParsedSearchCriteria): RentalSearchChip[] {
   return [
+    ...(c.keyword?.trim() ? [{ text: `Từ khóa: ${c.keyword.trim()}`, edit: 'Bỏ từ khóa' }] : []),
     ...(c.location ? [{ text: c.location, edit: 'Đổi khu vực sang ' }] : []),
     ...(c.priceMax != null ? [{ text: `${c.budgetBasis === 'total' ? 'Cả phí' : 'Tiền thuê'} ≤ ${formatPrice(c.priceMax)}`, edit: 'Đổi ngân sách dưới ' }] : []),
     ...(c.priceMin != null ? [{ text: `Từ ${formatPrice(c.priceMin)}`, edit: 'Từ ' }] : []),

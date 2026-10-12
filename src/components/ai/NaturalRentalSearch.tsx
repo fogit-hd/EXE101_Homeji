@@ -32,6 +32,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
   const seededQuery = useRef('')
   const request = useRef(0)
   const opener = useRef<HTMLButtonElement>(null)
+  const queryInput = useRef<HTMLTextAreaElement>(null)
   const identity = useRef<string | null>(null)
   const { profile, isAuthenticated } = useAuth()
   const authModal = useAuthModal()
@@ -72,12 +73,12 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
       <p>Mô tả ngân sách, số người và tiện ích. Xem các tin phù hợp và xác nhận tiêu chí trước khi áp dụng.</p>
       <form onSubmit={event => { event.preventDefault(); void submit() }}>
         <label htmlFor="natural-rental-query">Mô tả và sửa nhu cầu của bạn</label>
-        <textarea id="natural-rental-query" autoFocus maxLength={1000} value={text} disabled={loading} onChange={event => { setText(event.target.value); setResult(null) }} placeholder="2 người, dưới 4 triệu tiền thuê, có bếp, không ở ghép" rows={3} />
+        <textarea ref={queryInput} id="natural-rental-query" autoFocus maxLength={1000} value={text} disabled={loading} onChange={event => { setText(event.target.value); setResult(null) }} placeholder="2 người, dưới 4 triệu tiền thuê, có bếp, không ở ghép" rows={3} />
         <button type="submit" className="btn btn-primary btn-sm ai-spectrum-button" disabled={loading || !text.trim()}>{loading ? 'Đang tìm…' : 'Hiểu nhu cầu và tìm tin'}</button>
-        <button type="button" className="btn btn-ghost btn-sm" disabled={loading} onClick={() => { previous.current = undefined; setResult(null); setText(''); setError('') }}>Bắt đầu nhu cầu mới</button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={loading} onClick={() => { previous.current = undefined; setResult(null); setText(''); setError(''); queryInput.current?.focus() }}>Bắt đầu nhu cầu mới</button>
       </form>
       {error ? <p role="alert">{error}</p> : null}
-      {result ? <AiSearchReview result={result} onRefine={value => { setText(value); setResult(null) }} onApply={update => { setOpen(false); navigate('/?section=listings', { state: { aiSearchUpdate: update } }) }} /> : null}
+      {result ? <AiSearchReview result={result} onRefine={value => { setText(value); setResult(null); queryInput.current?.focus() }} onApply={update => { setOpen(false); navigate('/?section=listings', { state: { aiSearchUpdate: update } }) }} /> : null}
       {aiFeatureFlags.sourceBrowser ? <RentalSourceBrowser /> : null}
     </section> : null}
   </div>

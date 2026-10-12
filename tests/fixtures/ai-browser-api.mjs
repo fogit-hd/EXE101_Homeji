@@ -20,6 +20,7 @@ const notifications = notificationScenario ? [1, 2].map(index => ({
   message: 'Thông báo giả lập kiểm tra đánh dấu đã đọc.', type: 1, isRead: false, createdAt: now,
 })) : []
 const criteria = { location: 'Thủ Đức', keyword: null, priceMin: null, priceMax: 4000000, areaMin: null, areaMax: null, criteria: [], requiredAmenities: ['KITCHEN'], excludedAmenities: [], unknown: [], occupants: 2, budgetBasis: 'rent', excludeRoommateShare: true, destination: null }
+if (process.env.HOMEJI_QA_SEARCH_KEYWORD === '1') criteria.keyword = 'Võ Văn Ngân'
 const result = { criteria, tag: 'Phù hợp theo dữ liệu tin', mapFocusLatitude: posts[0].latitude, mapFocusLongitude: posts[0].longitude, mapFocusAddress: posts[0].address,
   posts: posts.map(post => ({ post, score: 37, reasons: ['Giá nằm trong ngân sách tối đa.', 'Khớp tiện ích chủ tin khai báo: KITCHEN.'], tag: 'Phù hợp theo dữ liệu tin', updatedAt: now, commercialBoost: 0,
     reasonEvidence: [{ text: 'Giá nằm trong ngân sách tối đa.', postId: post.id, sourceType: 'listing', field: 'price', value: String(post.price) }, { text: 'Khớp tiện ích chủ tin khai báo: KITCHEN.', postId: post.id, sourceType: 'listing', field: 'amenities', value: 'KITCHEN' }], evidence: [] })) }
@@ -31,6 +32,7 @@ const server = http.createServer(async (request, response) => {
   try { if (payload) input = JSON.parse(payload) } catch { response.writeHead(400); response.end(); return }
   const path = url.pathname
   const queryResult = { ...result, criteria: { ...criteria,
+    ...(process.env.HOMEJI_QA_SEARCH_KEYWORD === '1' && input.text === 'Bỏ từ khóa' ? { keyword: null } : {}),
     ...(input.message?.includes('cả phí') || input.text?.includes('cả phí') ? { budgetBasis: 'total', unknown: ['feeUnits'] } : {}),
   } }
   const record = { method: request.method, path }

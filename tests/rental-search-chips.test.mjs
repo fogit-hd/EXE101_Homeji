@@ -47,6 +47,16 @@ test('cleared constraints disappear from chips without retaining the previous se
   assert.deepEqual(buildRentalSearchChips(cleared), [])
 })
 
+test('retained keyword is visible and can be cleared without resetting other chips', () => {
+  const criteria = { ...base, keyword: '  đường Võ Văn Ngân  ' }
+  const chips = buildRentalSearchChips(criteria)
+  assert.deepEqual(chips[0], { text: 'Từ khóa: đường Võ Văn Ngân', edit: 'Bỏ từ khóa' })
+  assert.equal(chips.length, buildRentalSearchChips(base).length + 1)
+  assert.deepEqual(buildRentalSearchChips({ ...criteria, keyword: null }), buildRentalSearchChips(base))
+  assert.deepEqual(buildRentalSearchChips({ ...base, keyword: '   ' }), buildRentalSearchChips(base))
+  assert.equal(criteria.keyword, '  đường Võ Văn Ngân  ')
+})
+
 test('hard, soft and exclusion refinements retain their distinct visible meaning', () => {
   const chips = buildRentalSearchChips(base)
   assert.equal(chips.find(chip => chip.text.startsWith('Cần ')).edit, 'Không cần Bếp')
