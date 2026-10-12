@@ -38,6 +38,12 @@ const server = http.createServer(async (request, response) => {
   const record = { method: request.method, path }
   if (path.includes('/ai/') || path.includes('/chatbot/messages')) record.previousCriteria = input.previousCriteria ?? null
   audit.push(record)
+  if (path === '/api/ai/highlight-rental-posts' || path === '/api/ai/rental-draft') {
+    response.once('close', () => { record.cancelled = !response.writableFinished })
+    const delay = Number(process.env.HOMEJI_QA_AI_DELAY_MS ?? 0)
+    if (Number.isFinite(delay) && delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(delay, 15000)))
+    if (response.destroyed) return
+  }
   let body = []
   if (path === '/__qa/audit') body = audit
   else if (path === '/api/notifications') body = notifications.filter(item => url.searchParams.get('unreadOnly') !== 'true' || !item.isRead)
@@ -56,6 +62,7 @@ const server = http.createServer(async (request, response) => {
   else if (path === '/api/profile/me') body = profile
   else if (path === '/api/chatbot/popup-config') body = { enabled: true, title: 'Homeji', greeting: 'Trợ lý kiểm thử local', suggestedPrompts: [] }
   else if (path === '/api/ai/highlight-rental-posts') body = queryResult
+  else if (path === '/api/ai/rental-draft') body = { title: 'Bản nháp kiểm thử local', description: 'Chỉ dùng kiểm thử hủy request; không đăng tin.', missing: ['Kiểm tra thông tin trước khi đăng'] }
   else if (path === '/api/chatbot/messages') body = { conversationId: userId, userMessage: { id: 'qa-message', conversationId: userId, sender: 1, content: input.message, createdAt: now }, assistantMessage: { id: 'qa-reply', conversationId: userId, sender: 2, content: 'Xem tiêu chí và xác nhận trước khi áp dụng.', createdAt: now }, searchUpdate: queryResult, actions: [] }
   else if (path === '/api/rental-posts/compare') body = { posts: posts.filter(post => input.postIds?.includes(post.id)).map(post => ({ post, averageRating: 0, reviewCount: 0 })) }
   else if (path === '/api/rental-posts') body = url.searchParams.has('ids') ? posts.filter(post => url.searchParams.getAll('ids').includes(post.id)) : posts

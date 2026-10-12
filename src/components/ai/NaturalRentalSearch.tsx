@@ -31,44 +31,56 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
   const previous = useRef<AiParsedSearchCriteria | undefined>(undefined)
   const seededQuery = useRef('')
   const request = useRef(0)
+  const pending = useRef<AbortController | null>(null)
   const opener = useRef<HTMLButtonElement>(null)
   const queryInput = useRef<HTMLTextAreaElement>(null)
   const identity = useRef<string | null>(null)
   const { profile, isAuthenticated } = useAuth()
   const authModal = useAuthModal()
   const navigate = useNavigate()
-  useEffect(() => () => { request.current += 1 }, [])
+  useEffect(() => () => { request.current += 1; pending.current?.abort() }, [])
+  const cancelSearch = () => {
+    request.current += 1
+    pending.current?.abort()
+    pending.current = null
+    setLoading(false)
+  }
+  const close = () => { cancelSearch(); setOpen(false); opener.current?.focus() }
   const submit = async () => {
     if (!text.trim() || loading) return
     if (!isAuthenticated) { authModal.openAuthModal({ intent: 'chatbot' }); return }
     if (identity.current !== profile?.id) { previous.current = undefined; identity.current = profile?.id ?? null }
     const current = ++request.current
+    const controller = new AbortController()
+    pending.current?.abort()
+    pending.current = controller
     setLoading(true); setError(''); setResult(null)
     try {
-      const reply = await highlightRentalPosts({ text: text.trim(), maxResults: 5, previousCriteria: previous.current })
+      const reply = await highlightRentalPosts({ text: text.trim(), maxResults: 5, previousCriteria: previous.current }, controller.signal)
       if (request.current === current) { previous.current = reply.criteria; setResult(reply) }
     } catch (reason) {
       if (request.current === current) setError(getErrorMessage(reason, 'Chưa tìm được theo nhu cầu. Bạn có thể dùng bộ lọc thông thường hoặc thử lại.'))
-    } finally { if (request.current === current) setLoading(false) }
+    } finally { if (request.current === current) { pending.current = null; setLoading(false) } }
   }
   const trigger = <button ref={opener} type="button" className="natural-rental-search__trigger" aria-haspopup="dialog" aria-expanded={open} aria-controls="natural-rental-search-panel" onClick={() => {
     if (!open) {
       // A new search-bar query starts fresh; reopening a refinement keeps its criteria.
       if (query.trim() && query.trim() !== seededQuery.current) {
-        request.current += 1; previous.current = undefined; setLoading(false)
+        cancelSearch(); previous.current = undefined
         setText(query.slice(0, 1000)); setResult(null); setError('')
       }
       seededQuery.current = query.trim()
       onOpen?.()
     }
+    if (open) cancelSearch()
     setOpen(value => !value)
   }}>Gợi ý AI</button>
   return <div className="natural-rental-search">
     {renderTrigger ? renderTrigger(trigger) : trigger}
     {present ? <section {...presence} id="natural-rental-search-panel" className={`natural-rental-search__panel${loading ? ' is-thinking' : ''}`} role="dialog" aria-busy={loading} aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
-      if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); opener.current?.focus() }
+      if (event.key === 'Escape') { event.stopPropagation(); close() }
     }}>
-      <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={() => { setOpen(false); opener.current?.focus() }}>×</button>
+      <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={close}>×</button>
       <h2>Gợi ý AI tìm phòng</h2>
       <p>Mô tả ngân sách, số người và tiện ích. Xem các tin phù hợp và xác nhận tiêu chí trước khi áp dụng.</p>
       <form onSubmit={event => { event.preventDefault(); void submit() }}>

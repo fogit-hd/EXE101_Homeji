@@ -324,10 +324,11 @@ export const parseAiSearch = (text: string) =>
     body: { text },
   })
 
-export const highlightRentalPosts = (data: { text?: string; maxResults?: number; previousCriteria?: AiParsedSearchCriteria }) =>
+export const highlightRentalPosts = (data: { text?: string; maxResults?: number; previousCriteria?: AiParsedSearchCriteria }, signal?: AbortSignal) =>
   apiRequest<AiHighlightResponse>('/api/ai/highlight-rental-posts', {
     method: 'POST',
     body: { text: data.text, maxResults: data.maxResults ?? 5, previousCriteria: data.previousCriteria },
+    signal,
   })
 
 // Chatbot
@@ -662,7 +663,7 @@ export const reviewLandlordVerification = (
 export const getMyActivities = (params?: { type?: UserActivityType; take?: number }) =>
   apiRequest<UserActivity[]>('/api/activities', { params })
 
-export const generateRentalDraft = (facts: import('../lib/rentalDraft').RentalDraftFacts) =>
+export const generateRentalDraft = (facts: import('../lib/rentalDraft').RentalDraftFacts, signal?: AbortSignal) =>
   apiRequest<{ title: string; description: string; missing: string[] }>('/api/ai/rental-draft', {
-    method: 'POST', body: facts,
+    method: 'POST', body: facts, signal,
   })

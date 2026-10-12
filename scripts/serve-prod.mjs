@@ -57,23 +57,72 @@ function proxyApi(req, res) {
   const headers = { ...req.headers, host: targetUrl.host }
   delete headers['accept-encoding']
 
+  let upstreamResponse
+  let cancelled = false
+  let failed = false
+  let completed = false
+  const cleanup = () => {
+    req.off('aborted', cancel)
+    res.off('close', onClose)
+    res.off('finish', onFinish)
+    upstreamResponse?.off('aborted', onUpstreamAborted)
+  }
+  const cancel = () => {
+    if (cancelled || completed || failed) return
+    cancelled = true
+    cleanup()
+    req.unpipe(upstream)
+    upstreamResponse?.unpipe(res)
+    upstreamResponse?.destroy()
+    upstream.destroy()
+  }
+  const onClose = () => {
+    // IncomingMessage 'close' also fires after a normal upload, before its response.
+    if (!res.writableFinished) cancel()
+  }
+  const onFinish = () => {
+    completed = true
+    cleanup()
+  }
+  const fail = (err) => {
+    if (cancelled || completed || failed) return
+    if (req.aborted || res.destroyed) { cancel(); return }
+    failed = true
+    cleanup()
+    req.unpipe(upstream)
+    upstreamResponse?.unpipe(res)
+    upstreamResponse?.destroy()
+    upstream.destroy()
+    console.error('[api-proxy]', err.message)
+    if (res.headersSent) {
+      // A partial upstream body cannot be replaced by JSON or reported as complete.
+      res.destroy()
+    } else {
+      res.writeHead(502, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ title: 'Bad Gateway', detail: 'API proxy failed' }))
+    }
+  }
+  const onUpstreamAborted = () => fail(new Error('Upstream response aborted'))
   const upstream = lib.request(
     targetUrl,
     { method: req.method, headers },
     (up) => {
+      upstreamResponse = up
+      up.once('error', fail)
+      up.once('aborted', onUpstreamAborted)
+      if (cancelled || failed || res.destroyed) { up.destroy(); return }
       res.writeHead(up.statusCode || 502, up.headers)
       up.pipe(res)
     },
   )
 
-  upstream.on('error', (err) => {
-    console.error('[api-proxy]', err.message)
-    if (!res.headersSent) {
-      res.writeHead(502, { 'Content-Type': 'application/json' })
-    }
-    res.end(JSON.stringify({ title: 'Bad Gateway', detail: 'API proxy failed' }))
-  })
-
+  upstream.once('error', fail)
+  req.once('aborted', cancel)
+  req.once('error', cancel)
+  req.once('close', () => req.off('error', cancel))
+  res.once('close', onClose)
+  res.once('finish', onFinish)
+  if (req.aborted || res.destroyed) { cancel(); return }
   req.pipe(upstream)
 }
 
