@@ -39,7 +39,7 @@ export function RentalDraftAssistant({ facts, title, description, disabled, onAp
   }
   return <details className="rental-draft-assistant" onToggle={event => { if (!event.currentTarget.open) cancel() }}>
     <summary>Trợ lý soạn tin · xem trước rồi xác nhận</summary>
-    <p>Gợi ý theo thông tin bạn đã điền. Ảnh không được dùng để đo diện tích hoặc suy ra tiện ích. Gemini soạn bản nháp từ thông tin này; bạn xem lại trước khi áp dụng.</p>
+    <p>Gemini gợi ý cách trình bày từ thông tin bạn đã điền. Bản nháp không xác minh giá, tiện ích hay tình trạng phòng. Ảnh không được dùng để đo diện tích hoặc suy ra tiện ích. Bạn kiểm tra lại trước khi áp dụng.</p>
     <button type="button" className="btn btn-secondary btn-sm ai-spectrum-button" disabled={disabled || busy} aria-busy={busy} onClick={() => void generate()}>{busy ? 'Gemini đang soạn…' : 'Tạo bản gợi ý bằng Gemini'}</button>
     {busy ? <button type="button" className="btn btn-ghost btn-sm" onClick={cancel}>Hủy soạn</button> : null}
     {busy ? <p role="status">Đang soạn từ thông tin bạn cung cấp…</p> : null}
