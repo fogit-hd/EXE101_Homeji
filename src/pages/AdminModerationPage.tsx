@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
@@ -45,6 +45,7 @@ import {
   userRoleLabel,
 } from '../lib/labels'
 import './ProfilePage.css'
+import '../components/admin/AdminTaskFocus.css'
 
 export function cleanAdminReportText(value: string | null | undefined) {
   const cleaned = value?.replace(/\s*\[[A-Z][A-Z0-9_:-]{4,}\]\s*$/u, '').trim()
@@ -71,6 +72,7 @@ export function AdminModerationPage() {
   const [consentVerificationNotes, setConsentVerificationNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [taskNotice, setTaskNotice] = useState('')
   const [terminationTargetId, setTerminationTargetId] = useState<string | null>(null)
   const [terminationReasons, setTerminationReasons] = useState<Record<string, string>>({})
   const [terminatingUserId, setTerminatingUserId] = useState<string | null>(null)
@@ -79,6 +81,8 @@ export function AdminModerationPage() {
   const [maintenanceStart, setMaintenanceStart] = useState('')
   const [maintenanceEnd, setMaintenanceEnd] = useState('')
   const [sendingMaintenance, setSendingMaintenance] = useState(false)
+  const [queueSnapshot, setQueueSnapshot] = useState<{ revision: number; reportStatus: ReportStatus | undefined }>({ revision: 0, reportStatus: ReportStatus.Pending })
+  const taskFocusRef = useRef<{ kind: 'posts' | 'reports'; id: string; afterRevision: number } | null>(null)
 
   const loadFn = useCallback(async () => {
     const [posts, reportList, verificationList, withdrawalList, activeUserList] = await Promise.all([
@@ -93,6 +97,7 @@ export function AdminModerationPage() {
     setVerifications(verificationList)
     setWithdrawals(withdrawalList)
     setActiveUsers(activeUserList)
+    setQueueSnapshot(current => ({ revision: current.revision + 1, reportStatus }))
   }, [reportStatus])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted, reload } = usePersistentLoad(
@@ -102,6 +107,28 @@ export function AdminModerationPage() {
 
   const loadPosts = () => void reload()
   const loadReports = () => void reload()
+  const openAssistantTask = (kind: 'posts' | 'reports', id: string) => {
+    setTaskNotice('')
+    taskFocusRef.current = { kind, id, afterRevision: queueSnapshot.revision + 1 }
+    setTab(kind)
+    if (kind === 'reports') setReportStatus(ReportStatus.Pending)
+    void reload()
+  }
+  useEffect(() => {
+    const target = taskFocusRef.current
+    if (!target) return
+    if (tab !== target.kind) { taskFocusRef.current = null; return }
+    if (showLoader || queueSnapshot.revision < target.afterRevision
+      || (target.kind === 'reports' && queueSnapshot.reportStatus !== ReportStatus.Pending)) return
+    taskFocusRef.current = null
+    const row = document.getElementById(`admin-${target.kind}-${target.id}`)
+    if (row) {
+      row.focus({ preventScroll: true })
+      row.scrollIntoView({ block: 'center', behavior: 'instant' })
+    } else {
+      setTaskNotice('Mục này không còn trong hàng chờ mới nhất. Danh sách đã được cập nhật để bạn tiếp tục kiểm tra.')
+    }
+  }, [tab, showLoader, queueSnapshot])
   useEffect(() => {
     let cancelled = false
     void getAdminProductAnalytics(analyticsDays)
@@ -317,12 +344,14 @@ export function AdminModerationPage() {
       <Link to="/?section=listings&view=map">Mở trải nghiệm khách hàng</Link>
       <PageNotice message={error || (loadError && !disrupted ? loadError : '')} tone="error" />
       <PageNotice message={message} tone="success" />
+      {taskNotice ? <p role="status">{taskNotice}</p> : null}
 
       {tab === 'overview' ? (
         <>
-          {aiFeatureFlags.adminSummary ? <AdminOperationsSummary counts={{ posts: pendingPosts.length, reports: reports.length, verifications: verifications.length, withdrawals: withdrawals.length }}
-            analytics={!analyticsLoading && !analyticsError ? analytics : null} loading={showLoader} error={loadError || ''} onOpen={setTab} /> : null}
-          {aiFeatureFlags.adminSummary ? <AdminAssistant onOpen={(kind) => setTab(kind)} /> : null}
+          {aiFeatureFlags.adminSummary ? <AdminAssistant onOpen={openAssistantTask} onRefreshQueues={reload}>
+            <AdminOperationsSummary counts={{ posts: pendingPosts.length, reports: reports.length, verifications: verifications.length, withdrawals: withdrawals.length }}
+              analytics={!analyticsLoading && !analyticsError ? analytics : null} loading={showLoader} error={loadError || ''} onOpen={setTab} />
+          </AdminAssistant> : null}
           <PageNotice message={analyticsError} tone="error" />
           {analyticsError && !analyticsLoading ? <button type="button" className="btn btn-secondary" onClick={() => { setAnalyticsLoading(true); setAnalyticsAttempt((n) => n + 1) }}>Thử lại</button> : null}
           {analytics && (!analyticsError || analytics.periodDays === analyticsDays) ? <AdminAnalyticsDashboard data={analytics} days={analytics.periodDays} loading={analyticsLoading} onDaysChange={handleAnalyticsDaysChange} /> : analyticsLoading ? <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu điều hành…" /> : null}
@@ -431,7 +460,7 @@ export function AdminModerationPage() {
             <div className="empty-state card">Không có tin chờ duyệt.</div>
           ) : (
             pendingPosts.map((post) => (
-              <article key={post.id} className="card admin-item">
+              <article key={post.id} id={`admin-posts-${post.id}`} tabIndex={-1} className="card admin-item admin-task-target" aria-label={post.title || 'Tin chờ duyệt'}>
                 <div>
                   {post.ownerConsentContact ? (
                     <>
@@ -501,7 +530,7 @@ export function AdminModerationPage() {
               <div className="empty-state card">Không có báo cáo.</div>
             ) : (
               reports.map((r) => (
-                <article key={r.id} className="card admin-item admin-report-item">
+                <article key={r.id} id={`admin-reports-${r.id}`} tabIndex={-1} className="card admin-item admin-report-item admin-task-target" aria-label={`Báo cáo: ${r.targetDisplayName || 'Nội dung cần kiểm tra'}`}>
                   <div className="admin-report-content">
                     <div className="admin-report-badges">
                       <span className="badge badge-gray">Báo cáo {reportTargetLabel[r.targetType].toLowerCase()}</span>

@@ -14,6 +14,12 @@ const posts = [1, 2, 3].map(index => ({
   createdAt: now, updatedAt: now, viewCount: 0, saveCount: 0, isOwnerPremium: false, boostScore: 0,
 }))
 const audit = []
+const adminTaskScenario = process.env.HOMEJI_QA_ADMIN_TASKS === '1'
+const reports = [1, 2].map(index => ({ id: `33333333-3333-4333-8333-33333333333${index}`,
+  reporterId: userId, reporterDisplayName: 'Người kiểm thử', targetType: 1, targetId: posts[index - 1].id,
+  targetDisplayName: `Tin bị báo cáo ${index}`, targetImagePath: null, relatedRentalPostId: posts[index - 1].id,
+  reason: `Lý do kiểm thử ${index}`, description: 'Chỉ dùng kiểm thử local.', status: 1,
+  resolutionNote: null, createdAt: now, updatedAt: now }))
 if (process.env.HOMEJI_QA_MISSING_RENT === '1') Object.assign(posts[0], { price: 0, area: 0, maxOccupants: 0 })
 const notificationScenario = process.env.HOMEJI_QA_NOTIFICATIONS === '1'
 let notificationFailures = notificationScenario ? 1 : 0
@@ -76,11 +82,21 @@ const server = http.createServer(async (request, response) => {
   else if (path === '/api/rental-posts/mine') body = posts
   else if (path.startsWith('/api/rental-posts/')) body = posts.find(post => path.endsWith(post.id)) ?? posts[0]
   else if (path === '/api/rental-source-listings') body = [{ id: userId, source: 'phongtro123', sourceId: 'QA-only', sourceUrl: 'https://phongtro123.com/', title: 'Tin nguồn kiểm thử', address: 'Thủ Đức', district: 'thuduc', price: 0, area: 0, imageUrls: [], sourceUpdatedAt: null, collectedAt: now }]
-  else if (path === '/api/admin/moderation/rental-posts/pending') body = posts.slice(0, 1)
+  else if (path === '/api/admin/moderation/rental-posts/pending') body = posts.slice(0, adminTaskScenario ? 3 : 1)
+  else if (path === '/api/admin/moderation/reports' && adminTaskScenario) body = !url.searchParams.has('status') || url.searchParams.get('status') === '1' ? reports : []
+  else if (path === '/api/rental-assistant/admin-summary' && adminTaskScenario) body = {
+    calculatedAt: now, pendingPosts: 3, pendingReports: 2, summary: 'Hiện có 3 tin phòng và 2 báo cáo chờ xử lý. Dữ liệu kiểm thử local.',
+    tasks: [{ kind: 'posts', id: posts[1].id, label: posts[1].title },
+      { kind: 'reports', id: reports[1].id, label: 'Tin bị báo cáo 2 · Lý do kiểm thử 2' },
+      { kind: 'posts', id: '99999999-9999-4999-8999-999999999999', label: 'Tin đã rời hàng chờ' },
+      { kind: 'payments', id: userId, label: 'Không được thực thi' }],
+  }
   else if (path === '/api/admin/analytics/product') body = { generatedAt: now, periodDays: Number(url.searchParams.get('days') ?? 30), kpis: { totalUsers: 20, newUsers: 3, activeListings: 3, newListings: 3, medianMonthlyPrice: 3000000, averagePricePerSquareMeter: 150000, searches: 30, listingViews: 50, saves: 10, viewingRequests: 3, saveToViewRate: 20, viewingRequestToSaveRate: 30 }, trend: [], areas: [] }
   else if (path === '/api/admin/analytics/traffic') body = { generatedAt: now, periodDays: 30, trackingStartedAt: null, pageViews: 0, sessions: 0, activeSessions: 0, trend: [], topPages: [] }
   else if (path === '/api/subscriptions/me') body = { tier: 1, isPremium: false }
   else if (path.startsWith('/hubs/')) { response.writeHead(503); response.end(); return }
   response.writeHead(200, { 'Content-Type': 'application/json' }); response.end(JSON.stringify(body))
 })
-server.listen(5490, '127.0.0.1', () => console.log('AI UI fixtures on loopback port 5490. No production credentials or actions.'))
+const qaPort = Number(process.env.HOMEJI_QA_PORT ?? '5490')
+if (!Number.isInteger(qaPort) || qaPort < 1024 || qaPort > 65535) throw new Error('Invalid HOMEJI_QA_PORT')
+server.listen(qaPort, '127.0.0.1', () => console.log(`AI UI fixtures on loopback port ${qaPort}. No production credentials or actions.`))

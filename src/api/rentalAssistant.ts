@@ -32,5 +32,5 @@ export type AdminAssistantSummary = {
   calculatedAt: string; pendingPosts: number; pendingReports: number; summary: string
   tasks: Array<{ kind: string; id: string; label: string }>
 }
-export const getAdminAssistantSummary = () => apiRequest<AdminAssistantSummary>('/api/rental-assistant/admin-summary')
+export const getAdminAssistantSummary = (signal?: AbortSignal) => apiRequest<AdminAssistantSummary>('/api/rental-assistant/admin-summary', { signal })
 export const deleteChatbotHistory = (conversationId: string) => apiRequest<void>(`/api/chatbot/conversations/${encodeURIComponent(conversationId)}`, { method: 'DELETE' })
