@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { getRentalDecision, type CostScenario, type CommuteDestination, type DecisionResponse } from '../../api/rentalAssistant'
 import { AddressAutocomplete } from '../map/AddressAutocomplete'
-import { formatPrice, amenityLabel } from '../../lib/labels'
-import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { getErrorMessage } from '../../lib/errors'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
+import { RentalDecisionResults } from './RentalDecisionResults'
 import './RentalAssistant.css'
 
 const initialScenario: CostScenario = { occupants: 1, electricityKwh: 0, waterM3: 0, electricityUnit: 'unknown', waterUnit: 'unknown', internetUnit: 'unknown' }
@@ -92,27 +90,6 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
     </details> : null}
     <button type="button" className="btn btn-secondary" disabled={busy || !postIds.length || aiFeatureFlags.commute && !!address && !destination} onClick={() => void calculate()}>{busy ? 'Đang tính…' : 'Làm mới so sánh / tính kịch bản'}</button>
     {error ? <p role="alert">{error}</p> : null}
-    {data ? <>
-      <p role="status">{data.summary}</p>
-      {data.unavailablePostIds.length ? <p>Tin bị ẩn, hết hạn hoặc không còn phù hợp đã được bỏ khỏi so sánh.</p> : null}
-      <div className="rental-assistant__table-wrap"><table><caption>Thông tin chủ tin và kịch bản bạn nhập</caption><thead><tr><th>Tiêu chí</th>{data.posts.map(item => <th key={item.post.id}><Link to={mapPostUrl(item.post.id)}>{item.post.title}</Link></th>)}</tr></thead><tbody>
-        {[
-          ['Tiền thuê / tháng', (item: typeof data.posts[number]) => formatPrice(item.post.price)],
-          ['Diện tích', (item: typeof data.posts[number]) => `${item.post.area} m²`],
-          ['Chỗ trống / tối đa', (item: typeof data.posts[number]) => `${item.post.availableSlots ?? 'Chưa rõ'} / ${item.post.maxOccupants ?? 'Chưa rõ'}`],
-          ['Tiện ích theo tin', (item: typeof data.posts[number]) => item.post.amenities.map(amenityLabel).join(', ') || 'Chưa có thông tin'],
-          ['Chi phí đã tính / tháng', (item: typeof data.posts[number]) => formatPrice(item.cost.knownMonthlySubtotal) + (item.cost.unknown.length ? ' (chưa đủ phí)' : ' (kịch bản bạn nhập)')],
-          ['Tổng tháng', (item: typeof data.posts[number]) => item.cost.estimatedMonthlyTotal == null ? 'Chưa đủ thông tin' : formatPrice(item.cost.estimatedMonthlyTotal)],
-          ['Cọc theo tin', (item: typeof data.posts[number]) => item.post.deposit > 0 ? formatPrice(item.post.deposit) : 'Chưa xác nhận'],
-          ['Ban đầu: thuê + cọc + phí pass + khoản khác', (item: typeof data.posts[number]) => item.cost.initialPayment == null ? 'Chưa đủ thông tin' : formatPrice(item.cost.initialPayment) + ' (kịch bản bạn nhập)'],
-          ['Đường đi', (item: typeof data.posts[number]) => !item.commute ? 'Chưa chọn điểm đến' : item.commute.durationMinutes == null ? 'Chưa tính được' : `${Math.ceil(item.commute.durationMinutes)} phút · ${item.commute.distanceMeters} m · ${item.commute.mode === 'DRIVE' ? 'Ô tô' : 'Đi bộ'}${maxCommuteMinutes ? item.commute.durationMinutes <= maxCommuteMinutes ? ' · Đáp ứng trần thời gian' : ' · Vượt trần thời gian' : ''}`],
-          ['Thời điểm tuyến', (item: typeof data.posts[number]) => item.commute ? new Date(item.commute.departureTime ?? item.commute.calculatedAt).toLocaleString('vi-VN') : 'Chưa tính'],
-          ['Nguồn / cập nhật', (item: typeof data.posts[number]) => `Chủ tin · ${new Date(item.cost.updatedAt).toLocaleDateString('vi-VN')} · chưa xác minh phí`],
-        ].map(([label, render]) => <tr key={String(label)}><th scope="row">{String(label)}</th>{data.posts.map(item => <td key={item.post.id}>{typeof render === 'function' ? render(item) : null}</td>)}</tr>)}
-      </tbody></table></div>
-      {budgetCeiling ? <p>Ngân sách tổng {formatPrice(budgetCeiling)}: {data.posts.map(item => `${item.post.title}: ${item.cost.estimatedMonthlyTotal == null ? 'cần xác nhận' : item.cost.estimatedMonthlyTotal <= budgetCeiling ? 'trong trần theo kịch bản bạn nhập' : 'vượt trần theo kịch bản bạn nhập'}`).join(' · ')}.</p> : null}
-      {data.posts.map(item => <details key={item.post.id}><summary>Những điều cần hỏi — {item.post.title}</summary><ul>{[...item.cost.unknown, ...item.cost.questions].map(text => <li key={text}>{text}</li>)}</ul></details>)}
-      {destination ? <small>Google Maps · Thời gian thay đổi theo tuyến và giao thông.</small> : null}
-    </> : null}
+    {data ? <RentalDecisionResults data={data} budgetCeiling={budgetCeiling} maxCommuteMinutes={maxCommuteMinutes} /> : null}
   </section>
 }

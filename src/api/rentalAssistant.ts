@@ -13,7 +13,8 @@ export type CommuteDestination = {
 export type DecisionItem = {
   post: RentalPost
   cost: {
-    postId: string; knownMonthlySubtotal: number; estimatedMonthlyTotal: number | null
+    postId: string; knownMonthlySubtotal: number | null; estimatedMonthlyTotal: number | null
+    priceBasis?: 'room' | 'person' | 'unknown'
     initialPayment: number | null; unknown: string[]; questions: string[]; sourceType: string; updatedAt: string
   }
   commute: {
