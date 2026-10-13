@@ -8,7 +8,7 @@ import './BrandIntro.css'
 
 const SLOGAN = 'Trọ an tâm · Nâng tầm cuộc sống'
 /** Never hold the user longer than this; home shows its own skeleton if still loading. */
-const MAX_HOLD_MS = 8500
+const MAX_HOLD_MS = 10000
 /** Mask brush width (font units): wide enough to cover a stroke's full thickness from its outline. */
 const BRUSH = 150
 /** Flat stroke list in writing order: each letter, then its accents as their own short strokes. */
@@ -114,7 +114,7 @@ export function BrandIntro() {
       const homeY = top
       const sloganTop = homeY + size * HOMEJI_MARK_H / HOMEJI_MARK_W + gap
       gsap.set(hero, { x: homeX, y: homeY, width: size, height: size * HOMEJI_MARK_H / HOMEJI_MARK_W, transformOrigin: '50% 100%' })
-      gsap.set(slogan, { attr: { width: lineW, height: lineH }, left: (vw - lineW) / 2, top: sloganTop })
+      gsap.set(slogan, { width: lineW, height: lineH, left: (vw - lineW) / 2, top: sloganTop })
       const sr = { left: (vw - lineW) / 2, top: sloganTop }
       /** Font-unit point → client px. */
       const sp = (x: number, y: number) => ({ x: sr.left + x * u, y: sr.top + (y - SLOGAN_TOP) * u })
@@ -126,7 +126,24 @@ export function BrandIntro() {
         const p = stroke.getPointAtLength(Math.max(0, Math.min(length, len)))
         return { x: homeX + p.x * k, y: homeY + p.y * k }
       }
-      const movePen = (x: number, y: number) => gsap.set(pen, { x, y })
+      // The visible tip follows its target through a critically damped spring, so velocity is
+      // continuous everywhere (no jerks at stroke joins) and tiny outline wiggles are filtered out.
+      const penTarget = { x: 0, y: 0 }
+      const penPos = { x: 0, y: 0, vx: 0, vy: 0 }
+      const OMEGA = 30
+      const movePen = (x: number, y: number) => { penTarget.x = x; penTarget.y = y }
+      const follow = (_time: number, deltaMs: number) => {
+        const dt = Math.min(0.05, deltaMs / 1000)
+        const steps = Math.max(1, Math.ceil(dt / 0.008))
+        const h = dt / steps
+        for (let n = 0; n < steps; n++) {
+          penPos.vx += (OMEGA * OMEGA * (penTarget.x - penPos.x) - 2 * OMEGA * penPos.vx) * h
+          penPos.vy += (OMEGA * OMEGA * (penTarget.y - penPos.y) - 2 * OMEGA * penPos.vy) * h
+          penPos.x += penPos.vx * h
+          penPos.y += penPos.vy * h
+        }
+        gsap.set(pen, { x: penPos.x, y: penPos.y })
+      }
 
       gsap.set(stroke, { strokeDasharray: length, strokeDashoffset: length, opacity: 1, strokeWidth: 34 })
       gsap.set(fill, { opacity: 0 })
@@ -136,6 +153,9 @@ export function BrandIntro() {
       const first = brushes[0].getPointAtLength(0)
       const start = markPt(0)
       movePen(start.x, start.y)
+      Object.assign(penPos, { x: start.x, y: start.y, vx: 0, vy: 0 })
+      gsap.set(pen, { x: start.x, y: start.y })
+      gsap.ticker.add(follow)
 
       // Tail: the thread leaves the mark's foot and swoops into the first letter.
       const sx = homeX + 250 * k
@@ -186,7 +206,7 @@ export function BrandIntro() {
         .to(stroke, { strokeWidth: 18, duration: 0.45, ease: 'power1.out' }, t - 0.12)
 
       // 3 — Without lifting, the pen slides to the mark's foot and swoops down to the text.
-      tl.to(pen, { x: sx, y: sy, duration: 0.14, ease: 'power1.inOut' }, t)
+      tl.to(penTarget, { x: sx, y: sy, duration: 0.14, ease: 'power1.inOut' }, t)
       t += 0.14
       const tw = { v: 0 }
       tl.set(tail, { opacity: 1 }, t)
@@ -204,36 +224,86 @@ export function BrandIntro() {
       //     riding the live drawing point; accents follow their letter as short separate strokes.
       tl.to(tail, { opacity: 0, duration: 0.45, ease: 'power1.out' }, t + 0.25)
         .to(stroke, { opacity: 0, duration: 0.4 }, t + 0.1)
-      const WRITE = 2.8
-      const LIFT = 0.05 // pen-lift hop between strokes
-      const weight = lens.map(l => Math.sqrt(l))
-      const wsum = weight.reduce((a, b) => a + b, 0)
-      const drawTotal = WRITE - LIFT * (brushes.length - 1)
-      brushes.forEach((b, i) => {
-        const d = (weight[i] / wsum) * drawTotal
-        const accent = STROKES[i].accent
-        const o = { v: 0 }
-        if (i > 0) {
-          const p0 = b.getPointAtLength(0)
-          const c = sp(p0.x, p0.y)
-          tl.to(pen, { x: c.x, y: c.y, duration: LIFT, ease: 'sine.inOut' }, t)
-          t += LIFT
-        }
-        tl.to(o, {
-          v: 1, duration: d, ease: accent ? 'power2.out' : 'sine.inOut',
-          onUpdate: () => {
-            b.style.strokeDashoffset = `${(lens[i] + 1) * (1 - o.v)}`
-            const p = b.getPointAtLength(lens[i] * o.v)
-            const c = sp(p.x, p.y)
-            movePen(c.x, c.y)
-          },
-        }, t)
-        if (accent) {
-          // A flicked mark: tiny overshoot as the pen snaps it on.
-          tl.fromTo(b.parentElement!.nextElementSibling!, { scale: 1.25, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.35, ease: 'back.out(3)' }, t)
-        }
-        t += d
+      // One master clock drives ink and pen. Letters share LETTER_TIME by sqrt(length); every
+      // accent gets its own clearly visible ACCENT_TIME; between strokes the lifted pen glides
+      // on a curved arc whose time grows with distance. The tip rides a smoothed centreline
+      // (moving average of the outline) instead of jumping around each contour.
+      const LETTER_TIME = 1.5
+      const ACCENT_TIME = 0.2
+      type Seg =
+        | { kind: 'ink'; i: number; t0: number; t1: number }
+        | { kind: 'glide'; a: { x: number; y: number }; b: { x: number; y: number }; lift: number; t0: number; t1: number }
+      const SAMPLES = 90
+      const centre = brushes.map((b, i) => {
+        const raw = Array.from({ length: SAMPLES + 1 }, (_, n) => {
+          const p = b.getPointAtLength((lens[i] * n) / SAMPLES)
+          return sp(p.x, p.y)
+        })
+        const win = STROKES[i].accent ? 6 : 14
+        return raw.map((_, n) => {
+          let x = 0, y = 0, c = 0
+          for (let m = Math.max(0, n - win); m <= Math.min(SAMPLES, n + win); m++) { x += raw[m].x; y += raw[m].y; c++ }
+          return { x: x / c, y: y / c }
+        })
       })
+      const at = (pts: { x: number; y: number }[], f: number) => {
+        const s2 = Math.max(0, Math.min(1, f)) * SAMPLES
+        const n = Math.min(SAMPLES - 1, Math.floor(s2))
+        const r = s2 - n
+        return { x: pts[n].x + (pts[n + 1].x - pts[n].x) * r, y: pts[n].y + (pts[n + 1].y - pts[n].y) * r }
+      }
+      const letterW = brushes.reduce((sum, _, i) => sum + (STROKES[i].accent ? 0 : Math.sqrt(lens[i])), 0)
+      const segs: Seg[] = []
+      let clock = 0
+      let prev = { x: tx, y: ty }
+      brushes.forEach((_, i) => {
+        const entry = centre[i][0]
+        const dist = Math.hypot(entry.x - prev.x, entry.y - prev.y)
+        if (i > 0 || dist > 1) {
+          const g = 0.012 + Math.min(0.09, dist / (fs * 30))
+          segs.push({ kind: 'glide', a: prev, b: entry, lift: Math.min(fs * 0.35, 6 + dist * 0.25), t0: clock, t1: clock + g })
+          clock += g
+        }
+        const d = STROKES[i].accent ? ACCENT_TIME : (Math.sqrt(lens[i]) / letterW) * LETTER_TIME
+        segs.push({ kind: 'ink', i, t0: clock, t1: clock + d })
+        clock += d
+        prev = centre[i][SAMPLES]
+      })
+      const WRITE = clock
+      const offsets = brushes.map(() => -1)
+      const master = { t: 0 }
+      tl.to(master, {
+        t: WRITE, duration: WRITE, ease: 'none',
+        onUpdate: () => {
+          const now = master.t
+          for (const sg of segs) {
+            if (sg.kind === 'ink') {
+              const f = Math.max(0, Math.min(1, (now - sg.t0) / (sg.t1 - sg.t0)))
+              // Gentle ease-in/out inside each stroke: slows into the ends and tight turns.
+              const e = 0.5 - 0.5 * Math.cos(Math.PI * f) * 0.6 - 0.2 * (1 - 2 * f) // blend linear + sine
+              const fe = Math.max(0, Math.min(1, e))
+              const off = (lens[sg.i] + 1) * (1 - fe)
+              if (offsets[sg.i] !== off) { offsets[sg.i] = off; brushes[sg.i].style.strokeDashoffset = `${off}` }
+              if (now >= sg.t0 && now <= sg.t1) { const p = at(centre[sg.i], fe); movePen(p.x, p.y) }
+            } else if (now >= sg.t0 && now <= sg.t1) {
+              const f = (now - sg.t0) / (sg.t1 - sg.t0)
+              const e = f * f * (3 - 2 * f)
+              const mx = (sg.a.x + sg.b.x) / 2
+              const my = Math.min(sg.a.y, sg.b.y) - sg.lift
+              const x = (1 - e) ** 2 * sg.a.x + 2 * (1 - e) * e * mx + e * e * sg.b.x
+              const y = (1 - e) ** 2 * sg.a.y + 2 * (1 - e) * e * my + e * e * sg.b.y
+              movePen(x, y)
+            }
+          }
+        },
+      }, t)
+      segs.forEach(sg => {
+        if (sg.kind === 'ink' && STROKES[sg.i].accent) {
+          tl.fromTo(brushes[sg.i].parentElement!.nextElementSibling!, { scale: 1.2, transformOrigin: '50% 50%' },
+            { scale: 1, duration: 0.45, ease: 'back.out(2.5)' }, t + sg.t1 - 0.05)
+        }
+      })
+      t += WRITE
 
       tl.to(pen, { scale: 0, opacity: 0, duration: 0.22, ease: 'power2.in' }, t)
 
@@ -250,6 +320,7 @@ export function BrandIntro() {
         tl.progress(1)
         gsap.set(body, { scaleX: 1, scaleY: 1 })
         gsap.set(q('.hj-intro__pen'), { opacity: 0 })
+        gsap.ticker.remove(follow)
         const target = findLogoTarget()
         const out = gsap.timeline({ onComplete: finish, defaults: { ease: 'power3.inOut' } })
         out.to(q('.hj-intro__status, .hj-intro__skip'), { opacity: 0, duration: 0.2 }, 0)
@@ -281,7 +352,7 @@ export function BrandIntro() {
       const stopReady = whenHomeReady(() => {
         void assets.then(() => { if (!alive) return; ready = true; tryLeave() })
       })
-      return () => { alive = false; window.clearTimeout(maxTimer); stopReady() }
+      return () => { gsap.ticker.remove(follow); alive = false; window.clearTimeout(maxTimer); stopReady() }
     }, node)
     // Outlines are inline vectors — no web-font wait needed; start on the next frame.
     const raf = requestAnimationFrame(() => { if (!disposed) ctx = build() })
