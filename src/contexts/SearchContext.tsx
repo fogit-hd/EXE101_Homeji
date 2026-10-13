@@ -106,6 +106,9 @@ function readUrlQuery(context: SearchContextName, search: string): { value: stri
     return { value: params.get('q') ?? '', explicit: params.has('q') }
   }
   if (context === 'housing' || context === 'map') {
+    if (!params.has('keyword') && params.has('placeId')) {
+      return { value: params.get('placeName') ?? '', explicit: true }
+    }
     return { value: params.get('keyword') ?? '', explicit: params.has('keyword') }
   }
   return { value: '', explicit: false }
@@ -196,7 +199,8 @@ export function SearchProvider({ children }: { children: ReactNode }) {
 
   if (appliedStamp !== urlStamp) {
     setAppliedStamp(urlStamp)
-    if (url.explicit) {
+    // Removing a URL query clears this context; switching contexts keeps its draft.
+    if (url.explicit || appliedStamp.split('\0', 1)[0] === context) {
       setQueryByContext((prev) => {
         if ((prev[context] ?? '') === url.value) return prev
         return { ...prev, [context]: url.value }
