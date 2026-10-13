@@ -16,6 +16,8 @@ import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
 import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
 import { InteractionMotion } from './components/motion/InteractionMotion'
+import { BrandIntro } from './components/intro/BrandIntro'
+import { MotionConfig } from 'motion/react'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import {
   AdminModerationPage, CreateRentalPostPage, EditRentalPostPage, ExplorePage,
@@ -86,7 +88,9 @@ function GoogleOAuthRoot({ children }: { children: ReactNode }) {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
+      <MotionConfig reducedMotion="user">
       <ThemeSync />
+      <BrandIntro />
       <AiInteractionEffects />
       <InteractionMotion />
       <NetworkStatusProvider>
@@ -111,6 +115,7 @@ function App() {
           </GoogleOAuthRoot>
         </GoogleMapsProvider>
       </NetworkStatusProvider>
+      </MotionConfig>
     </ErrorBoundary>
   )
 }

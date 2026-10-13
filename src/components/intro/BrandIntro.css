@@ -1,0 +1,172 @@
+/* Brand intro (GSAP). Above everything, including the static boot layer it replaces. */
+.hj-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483001;
+  display: grid;
+  place-items: center;
+  color: #f2f7f4;
+  font-family: 'Be Vietnam Pro', 'Manrope', system-ui, sans-serif;
+  pointer-events: auto;
+}
+.hj-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  /* Must match #hj-boot in index.html: identical first frame, no flash. */
+  background: radial-gradient(120% 90% at 50% 45%, #0f2219 0%, #070f0b 60%, #040806 100%);
+  will-change: opacity;
+}
+.hj-intro__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(20px, 3.2vh, 32px);
+  perspective: 700px;
+}
+.hj-intro__mark {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+}
+.hj-intro__dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--grab-green, #00b14f);
+  box-shadow: 0 0 0 6px rgba(0, 177, 79, 0.18), 0 0 28px rgba(0, 177, 79, 0.65);
+  will-change: transform, opacity;
+}
+.hj-intro__ring {
+  position: absolute;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 177, 79, 0.85);
+  box-shadow: 0 0 24px rgba(0, 177, 79, 0.35), inset 0 0 18px rgba(0, 177, 79, 0.25);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.hj-intro__disc {
+  position: absolute;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  /* Light pad so the green mark reads on the dark stage; dissolves before the FLIP lands. */
+  background: radial-gradient(circle at 50% 40%, #ffffff 0%, #eef6f1 62%, #dcebe2 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 18px 60px rgba(0, 177, 79, 0.35), 0 0 120px rgba(0, 177, 79, 0.25);
+  will-change: transform, opacity;
+}
+.hj-intro__logo {
+  position: relative;
+  width: 112px;
+  height: 113px;
+  object-fit: contain;
+  
+  will-change: transform, opacity;
+  opacity: 0;
+}
+.hj-intro__slogan {
+  --sweep: -60%;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.32em;
+  row-gap: 0.1em;
+  max-width: min(92vw, 720px);
+  padding: 0 16px;
+  font-size: clamp(1.3rem, 3.4vw, 2.15rem);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+.hj-intro__phrase {
+  display: inline-flex;
+  column-gap: 0.32em;
+  white-space: nowrap;
+}
+.hj-intro__word {
+  display: inline-flex;
+  white-space: nowrap;
+  transform-style: preserve-3d;
+}
+.hj-intro__char {
+  display: inline-block;
+  /* Room for stacked Vietnamese diacritics (ộ, ầ, ữ) so nothing clips during the flip. */
+  padding-block: 0.12em;
+  backface-visibility: hidden;
+  /* One viewport-anchored gradient across all glyphs = a single green light sweep. */
+  background-image: linear-gradient(100deg, #f2f7f4 0%, #f2f7f4 40%, #7dffb4 48%, #ffffff 50%, #7dffb4 52%, #f2f7f4 60%, #f2f7f4 100%);
+  background-size: 250% 100%;
+  background-position: calc(100% - var(--sweep)) 0;
+  background-attachment: fixed;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  will-change: transform, opacity, filter;
+}
+.hj-intro__accent .hj-intro__char {
+  background: none;
+  color: var(--grab-green, #00b14f);
+  text-shadow: 0 0 18px rgba(0, 177, 79, 0.7);
+}
+.hj-intro__accent { display: inline-block; }
+.hj-intro__status {
+  position: absolute;
+  top: calc(100% + 28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(242, 247, 244, 0.62);
+  opacity: 0;
+  transition: opacity 280ms cubic-bezier(.16, 1, .3, 1);
+  white-space: nowrap;
+}
+.hj-intro__bar {
+  position: relative;
+  width: 120px;
+  height: 2px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(242, 247, 244, 0.12);
+}
+.hj-intro__bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--grab-green, #00b14f);
+  animation: hj-intro-bar 1.1s cubic-bezier(.65, 0, .35, 1) infinite;
+}
+.hj-intro--waiting .hj-intro__status { opacity: 1; }
+@keyframes hj-intro-bar {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(260%); }
+}
+.hj-intro__skip {
+  position: absolute;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 1px solid rgba(242, 247, 244, 0.22);
+  border-radius: 999px;
+  background: rgba(242, 247, 244, 0.06);
+  color: rgba(242, 247, 244, 0.85);
+  font: 500 0.875rem/1 'Be Vietnam Pro', system-ui, sans-serif;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.hj-intro__skip:hover { background: rgba(242, 247, 244, 0.14); border-color: rgba(242, 247, 244, 0.4); color: #fff; }
+.hj-intro__skip:focus-visible { outline: 2px solid var(--grab-green, #00b14f); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .hj-intro { display: none; }
+}

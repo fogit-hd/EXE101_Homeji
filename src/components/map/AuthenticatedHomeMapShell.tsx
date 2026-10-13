@@ -1,5 +1,7 @@
 import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
+import { fadeSwap, listItem } from '../../lib/motionTokens'
 import {
   getNotifications,
   getRentalPost,
@@ -817,10 +819,14 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       <div ref={listRef} className="map-app-panel__listings">
         <PageNotice message={error} tone="error" />
 
+        {/* Skeleton → content cross-fade; cards then stagger in (Motion, tokens in lib/motionTokens). */}
+        <AnimatePresence mode="popLayout" initial={false}>
         {showPostsLoader ? (
-          <HomeListingSkeleton count={4} />
+          <motion.div key="skeleton" variants={fadeSwap} initial="initial" animate="enter" exit="exit">
+            <HomeListingSkeleton count={4} />
+          </motion.div>
         ) : displayPosts.length === 0 ? (
-          <div className="home-list-empty">
+          <motion.div key="empty" className="home-list-empty" variants={fadeSwap} initial="initial" animate="enter" exit="exit">
             <h2 className="home-list-empty__title">Không tìm thấy phòng phù hợp</h2>
             <p className="home-list-empty__copy">
               Thử đổi khu vực, khoảng giá hoặc bỏ bớt tiện ích.
@@ -828,10 +834,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             <button type="button" className="btn btn-primary btn-sm" onClick={onResetFilters}>
               Đặt lại bộ lọc
             </button>
-          </div>
+          </motion.div>
         ) : (
-          displayPosts.map((post, index) => (
-            <div key={post.id} data-post-id={post.id}>
+          <motion.div key="results" variants={fadeSwap} initial="initial" animate="enter" exit="exit">
+          {displayPosts.map((post, index) => (
+            <motion.div key={post.id} data-post-id={post.id} variants={listItem} custom={index} initial="initial" animate="enter">
               <MapListingCard
                 post={post}
                 active={focusedPostId === post.id}
@@ -841,9 +848,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
                 onLeave={handleCardLeave}
                 onSelect={() => handleSelectPost(post.id)}
               />
-            </div>
-          ))
+            </motion.div>
+          ))}
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
     ),
     [

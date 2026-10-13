@@ -12,7 +12,7 @@ web
 
 ## Stack
 
-React 19 + TypeScript + Vite 8 + react-router-dom 7 + plain CSS (CSS variables trong `src/index.css`). Không Next.js, không RSC, không Tailwind, không shadcn. Dev proxy `/api` và `/hubs` tới backend Homeji. Entry: `src/main.tsx` → `App.tsx` (BrowserRouter).
+React 19 + TypeScript + Vite 8 + react-router-dom 7 + plain CSS (CSS variables trong `src/index.css`). Animation UI: **Motion** (`motion/react`, token chung trong `src/lib/motionTokens.ts`, `MotionConfig reducedMotion="user"`); **GSAP chỉ dùng cho intro thương hiệu** (`src/components/intro/BrandIntro.tsx`). Không Next.js, không RSC, không Tailwind, không shadcn. Dev proxy `/api` và `/hubs` tới backend Homeji. Entry: `src/main.tsx` → `App.tsx` (BrowserRouter).
 
 ## Users
 
@@ -43,7 +43,7 @@ Map-first rental discovery cho khu vực Thủ Đức / Q.9: guest landing cinem
 
 **Ràng buộc kỹ thuật (đã xác nhận trong code):**
 - Không bọc `React.StrictMode` khi dùng Google Maps Vector (tránh double-mount WebGL).
-- Map shell: tránh View Transitions và `transform` press trên nút (GPU thrash).
+- Map shell: tránh View Transitions và `transform` press trên nút (GPU thrash) — kể cả khi dùng Motion (`whileTap` scale không áp lên nút map shell).
 - `--map-canvas-bg` không dùng brand green (tránh flash clear GPU).
 - Mobile và web độc lập: không import/copy source giữa `exe-homeji-web` và `exe-homeji-mobile`.
 

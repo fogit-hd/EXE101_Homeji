@@ -64,6 +64,7 @@ import {
 import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
 import '../components/map/MapMotion.css'
 import './HomePage.css'
+import { markHomeReady } from '../lib/introGate'
 
 const AMENITY_OPTIONS_LIST = [...AMENITY_OPTIONS]
 
@@ -282,6 +283,14 @@ function HomePageComponent() {
     selectedAmenities,
     bbox: filtersRef.current.bbox,
   }
+  // Brand intro hand-off: first listing response settled and (when used) the Maps script is in.
+  const { loadError: mapsLoadError } = useGoogleMaps()
+  useEffect(() => {
+    if (isLoading || loading) return
+    if (isAuthenticated && apiKey && !mapsLoaded && !mapsLoadError) return
+    markHomeReady()
+  }, [isLoading, loading, isAuthenticated, apiKey, mapsLoaded, mapsLoadError])
+
   const { showLoader: showPostsLoader, onIntroComplete: onPostsIntroComplete } = useHomejiLoading(
     loading,
     disrupted,
