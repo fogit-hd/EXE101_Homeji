@@ -1,5 +1,6 @@
 import { primaryOf, type MarketplacePrimary, type MarketplaceTab } from '../../lib/marketplaceNavigation'
 import { formatAvailableBalance } from '../../lib/walletMoney'
+import { SegmentedTabs } from '../motion/SegmentedTabs'
 import { MotionTabs } from '../motion/MotionTabs'
 import './MarketplaceHeader.css'
 
@@ -116,13 +117,18 @@ export function MarketplaceHeader({
 
       {subTabs ? (
         <div className="marketplace-header__subtabs">
+          {primary === 'shopping' ? (
+            <SegmentedTabs items={SHOPPING_TABS} value={tab} onChange={onTabChange} label="Mua sắm"
+              className="marketplace-header__subtabs-group" idPrefix="marketplace-subtab" panelId="marketplace-panel" />
+          ) : (
           <MotionTabs items={subTabs} value={tab} onChange={onTabChange}
-            label={primary === 'shopping' ? 'Mua sắm' : 'Quản lý cửa hàng'}
+            label="Quản lý cửa hàng"
             className="marketplace-header__subtabs-group" buttonClassName="marketplace-header__subtab"
             idPrefix="marketplace-subtab" panelId="marketplace-panel" renderLabel={(id, label) => <>
               {label}
               {id === 'sales' && sellerActionCount > 0 ? <span className="marketplace-header__alert" aria-label={`${sellerActionCount} đơn cần xử lý`}>{sellerActionCount}</span> : null}
             </>} />
+          )}
           {primary === 'shopping' && tab === 'browse' ? (
             <p className="marketplace-header__subhint">Đơn bán thuộc Quản lý cửa hàng</p>
           ) : null}

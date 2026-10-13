@@ -91,6 +91,8 @@ import '../components/marketplace/food/FoodMarketplaceView.css'
 import { useTabTransition } from '../components/motion/useTabTransition'
 import { primaryOf } from '../lib/marketplaceNavigation'
 import './MarketplacePage.css'
+import { MarketplaceFilterPanel } from '../components/marketplace/MarketplaceFilterPanel'
+import type { MarketplaceFilterValue } from '../components/marketplace/marketplaceFilterValue'
 
 const TAB_MOTION_ORDER: readonly MarketplaceTab[] = ['food', 'browse', 'purchases', 'mine', 'sell', 'sales', 'wallet']
 
@@ -1123,27 +1125,37 @@ export function MarketplacePage({
     )
   }
 
-  const filterCategories = useMemo(() => {
+  const categoriesForKind = useCallback((kindValue: string) => {
     const kind = tab === 'food' ? MarketplaceListingType.Food
       : tab === 'browse' ? MarketplaceListingType.SecondHand
-        : kindFilter ? Number(kindFilter) : null
+        : kindValue ? Number(kindValue) : null
     const defaults = kind === MarketplaceListingType.Food ? FOOD_CATEGORIES
       : kind === MarketplaceListingType.SecondHand ? GOODS_CATEGORIES : MARKETPLACE_CATEGORIES
     return catalogCategories(tab === 'mine' ? myPosts : browsePosts, defaults, kind, category)
-  }, [tab, myPosts, browsePosts, kindFilter, category])
+  }, [tab, myPosts, browsePosts, category])
 
-  const listForTab = useMemo(() => {
+  /** Loaded posts for the current tab before catalog filters (map seller selection applied). */
+  const baseListForTab = useMemo(() => {
     const unfiltered = tab === 'mine'
       ? myPosts
       : tab === 'food'
         ? browsePosts.filter((post) => post.listingType === MarketplaceListingType.Food)
         : browsePosts.filter((post) => post.listingType !== MarketplaceListingType.Food)
-    const selectedList = selectedMarketplaceId && tab !== 'mine'
+    return selectedMarketplaceId && tab !== 'mine'
       ? unfiltered.filter((post) => post.sellerId === selectedMarketplaceId)
       : unfiltered
-    const list = filterCatalog(selectedList, { keyword, category, kind: tab === 'mine' ? kindFilter : '', status: tab === 'mine' ? postStatusFilter : '', price: priceFilter, sort: catalogSort })
-    return list
-  }, [tab, myPosts, browsePosts, selectedMarketplaceId, keyword, category, kindFilter, postStatusFilter, priceFilter, catalogSort])
+  }, [tab, myPosts, browsePosts, selectedMarketplaceId])
+
+  const listForTab = useMemo(
+    () => filterCatalog(baseListForTab, { keyword, category, kind: tab === 'mine' ? kindFilter : '', status: tab === 'mine' ? postStatusFilter : '', price: priceFilter, sort: catalogSort }),
+    [tab, baseListForTab, keyword, category, kindFilter, postStatusFilter, priceFilter, catalogSort],
+  )
+
+  /** Count loaded posts that a staged panel selection would show (sorting does not change counts). */
+  const countForFilters = useCallback((f: MarketplaceFilterValue) =>
+    filterCatalog(baseListForTab, { keyword, category: f.category, kind: tab === 'mine' ? f.kind : '', status: tab === 'mine' ? f.status : '', price: f.price, sort: '' }).length,
+  [baseListForTab, keyword, tab])
+
   const foodSellerGroups = useMemo(() => {
     if (tab !== 'food') return []
     const grouped = new Map<string, MarketplacePost[]>()
@@ -1361,28 +1373,7 @@ export function MarketplacePage({
   )
 
   const catalogToolbar = (
-    <div className="marketplace-toolbar" aria-label="Bộ lọc">
-      <label className="marketplace-toolbar__field">
-        <span>Danh mục</span>
-        <select
-          className="form-select"
-          aria-label="Lọc danh mục"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="">Tất cả danh mục</option>
-          {filterCategories.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-      </label>
-      {tab === 'mine' && <>
-        <label className="marketplace-toolbar__field"><span>Loại tin</span><select className="form-select" value={kindFilter} onChange={(event) => { setKindFilter(event.target.value); setCategory('') }}><option value="">Tất cả loại tin</option><option value={MarketplaceListingType.Food}>Đồ ăn</option><option value={MarketplaceListingType.SecondHand}>Đồ dùng</option></select></label>
-        <label className="marketplace-toolbar__field"><span>Trạng thái</span><select className="form-select" value={postStatusFilter} onChange={(event) => setPostStatusFilter(event.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(marketplacePostStatusLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      </>}
-      <label className="marketplace-toolbar__field"><span>Khoảng giá</span><select className="form-select" value={priceFilter} onChange={(event) => setPriceFilter(event.target.value)}><option value="">Tất cả mức giá</option><option value="under100">Dưới 100.000 đ</option><option value="100to500">100.000–500.000 đ</option><option value="over500">Trên 500.000 đ</option></select></label>
-      <label className="marketplace-toolbar__field"><span>Sắp xếp</span><select className="form-select" value={catalogSort} onChange={(event) => setCatalogSort(event.target.value)}><option value="default">Mới nhất</option><option value="priceAsc">Giá tăng dần</option><option value="priceDesc">Giá giảm dần</option>{userLocation && <option value="nearby">Gần nhất</option>}</select></label>
-      <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setCategory(''); setKindFilter(''); setPostStatusFilter(''); setPriceFilter(''); setCatalogSort('default') }}>Xóa bộ lọc</button>
+    <div className="marketplace-toolbar marketplace-toolbar--panel" aria-label="Bộ lọc">
       {tab === 'browse' ? (
         <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
           {userLocation ? (
@@ -1399,6 +1390,23 @@ export function MarketplacePage({
           )}
         </div>
       ) : null}
+      <MarketplaceFilterPanel
+        value={{ category, price: priceFilter, sort: catalogSort, kind: tab === 'mine' ? kindFilter : '', status: tab === 'mine' ? postStatusFilter : '' }}
+        onApply={(next) => {
+          if (tab === 'mine') { setKindFilter(next.kind); setPostStatusFilter(next.status) }
+          setCategory(next.category)
+          setPriceFilter(next.price)
+          setCatalogSort(next.sort)
+        }}
+        categoriesFor={categoriesForKind}
+        countFor={countForFilters}
+        unit={tab === 'food' ? 'món' : tab === 'browse' ? 'món đồ' : 'tin'}
+        hasLocation={Boolean(userLocation)}
+        mineOptions={tab === 'mine' ? {
+          kinds: [{ value: '', label: 'Tất cả' }, { value: String(MarketplaceListingType.Food), label: 'Đồ ăn' }, { value: String(MarketplaceListingType.SecondHand), label: 'Đồ dùng' }],
+          statuses: [{ value: '', label: 'Tất cả' }, ...Object.entries(marketplacePostStatusLabel).map(([value, label]) => ({ value, label }))],
+        } : undefined}
+      />
     </div>
   )
 
