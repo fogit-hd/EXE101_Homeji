@@ -17,6 +17,7 @@ import { getNotificationPresentation } from '../lib/notificationPresentation'
 import { notificationTargetHref } from '../lib/notificationTarget'
 import { getErrorMessage } from '../lib/errors'
 import { RevealText } from '../components/motion/RevealText'
+import { NotificationPopupList } from './NotificationPopupList'
 
 export type NotificationReadChange =
   | { kind: 'one'; notification: Notification }
@@ -99,6 +100,8 @@ export function NotificationsPage({
   const popup = surface === 'popup'
   const visibleNotifications = unreadOnly ? notifications.filter(notification => !notification.isRead) : notifications
 
+  const unreadCount = notifications.filter(notification => !notification.isRead).length
+
   const markAllAction = (
     <button
       type="button"
@@ -134,6 +137,7 @@ export function NotificationsPage({
         onClick={() => setUnreadOnly(true)}
       >
         Chưa đọc
+        {popup && unreadCount > 0 ? <span className="hj-notify__tab-count">{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
       </button>
     </div>
   )
@@ -153,6 +157,14 @@ export function NotificationsPage({
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
           : <ContentSkeleton variant="list" label="Đang tải thông báo…" />
+      ) : popup ? (
+        <NotificationPopupList
+          items={visibleNotifications}
+          unreadOnly={unreadOnly}
+          readBusy={readBusy}
+          onOpen={onOpenRelated}
+          onMarkRead={(id) => void handleMarkRead(id)}
+        />
       ) : visibleNotifications.length === 0 ? (
         <div className={popup ? 'hj-notify__empty' : 'empty-state card'}>Không có thông báo.</div>
       ) : (
