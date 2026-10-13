@@ -1,3 +1,4 @@
+import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ScreenPending } from '../ScreenPending'
@@ -407,6 +408,7 @@ export function GlobalHeader() {
         </nav>
         <ContextualSearch />
         <div className="hj-actions">
+          <HomejiAiButton />
           <HeaderLink href={mapSectionUrl('saved')} label="" icon="heart" />
           <div className="hj-notify" ref={notifyRef}>
             <button

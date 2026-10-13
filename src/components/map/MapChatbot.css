@@ -844,3 +844,7 @@
 .map-chatbot__privacy summary { cursor: pointer; }
 .map-chatbot__privacy p { margin: 8px 0; }
 .map-chatbot__privacy button { cursor: pointer; padding: 6px 10px; border: 1px solid #d8e2da; border-radius: 8px; background: #fff; }
+
+/* Navbar-launched panel: Motion drives opacity/transform; CSS only positions it. */
+.map-chatbot__panel.is-nav { z-index: 1300; transition: none; }
+.map-chatbot.is-nav { position: fixed; inset: 0; z-index: 1300; pointer-events: none; }

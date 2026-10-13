@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { navigateGuestLanding } from './guestLandingNav'
 import './GuestHero.css'
 import { RevealText } from '../motion/RevealText'
@@ -12,6 +14,12 @@ const NAV_ITEMS = [
 ] as const
 
 export function GuestHero() {
+  // Landing only: keep scrolling, drop the visible scrollbar.
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('hj-no-scrollbar')
+    return () => root.classList.remove('hj-no-scrollbar')
+  }, [])
   const goToMap = (e: React.MouseEvent) => {
     e.preventDefault()
     navigateGuestLanding('map')
@@ -65,6 +73,7 @@ export function GuestHero() {
           </nav>
 
           <div className="guest-hero__top-actions">
+            <HomejiAiButton tone="glass" />
             <Link to="/login" className="guest-hero__top-login-link">
               Đăng nhập
             </Link>
