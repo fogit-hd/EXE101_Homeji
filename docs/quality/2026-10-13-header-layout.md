@@ -17,3 +17,5 @@ Verification:
 - Local screenshots: output/quality/full-audit/header-920-before.png and header-920-after.png.
 
 No authentication/role, search query, API, database or moderation behavior is changed. Other active working-tree UI changes are excluded from this release. Routes and long-term chatbot history remain disabled. Production verification is recorded after release, separately from local fixture results.
+
+Production follow-up: original https://exe101-homeji.onrender.com serves index-C3kKySkT.css with the new tablet range. After reloading the real Admin session, the same geometry probe at measured innerWidth920 returns zero overlaps and zero viewport overflow, and Saved/Messages links expose their new names. The production origin used a different browser zoom, so the explicit viewport was adjusted until the measured CSS width was920 rather than relying on requested device pixels. Screenshot: output/quality/full-audit/header-920-production.png. Temporary viewport override was reset; no role or moderation data was changed. Implementation commit562bf87 is pushed to main.
