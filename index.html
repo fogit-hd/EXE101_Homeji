@@ -20,8 +20,6 @@
          or an intro flicker for returning visitors. Mirrors src/lib/introGate.ts. */
       (function () {
         try {
-          var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          var seen = sessionStorage.getItem('hj-intro-seen') === '1'
           if (location.pathname === '/') document.documentElement.dataset.intro = '1'
         } catch (e) {}
       })()
