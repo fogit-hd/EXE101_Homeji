@@ -15,8 +15,18 @@ export function HomejiMark({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox={HOMEJI_MARK_VIEWBOX} role="img" aria-label="Homeji">
       <path className="hj-mark__fill" d={HOMEJI_MARK_PATH} fill={HOMEJI_MARK_INK} />
-      <path className="hj-mark__stroke" d={HOMEJI_MARK_PATH} fill="none" stroke="#00a046"
+      <defs>
+        <linearGradient id="hj-mark-warm" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#ffc247" />
+          <stop offset="0.5" stopColor="#ffd98a" />
+          <stop offset="1" stopColor="#00b14f" />
+        </linearGradient>
+      </defs>
+      <path className="hj-mark__stroke" d={HOMEJI_MARK_PATH} fill="none" stroke="#50666a"
         strokeWidth={30} strokeLinejoin="round" strokeLinecap="round" />
+      {/* Warm "lights on" outline, revealed by the intro's flicker. */}
+      <path className="hj-mark__glow" d={HOMEJI_MARK_PATH} fill="none" stroke="url(#hj-mark-warm)"
+        strokeWidth={34} strokeLinejoin="round" strokeLinecap="round" opacity={0} />
     </svg>
   )
 }

@@ -8,11 +8,8 @@ import './BrandIntro.css'
 const SLOGAN = 'Trọ an tâm · Nâng tầm cuộc sống'
 /** Never hold the user longer than this; home shows its own skeleton if still loading. */
 const MAX_HOLD_MS = 7000
-/** Logo size while it is the hopping character, relative to its drawn size. */
-const HOP_SCALE = 0.42
 /** Visible header logos the intro mark lands on (FLIP target), in priority order. */
 const LOGO_TARGETS = ['.hj-logo__mark', '.guest-hero__corner-logo', '.navbar img[src*="homeji-logo"]']
-const SPARK_COLORS = ['#00b14f', '#2fd27a', '#9be7bd', '#18343f']
 
 type Word = { key: string; graphemes: string[]; accent: boolean }
 type Phrase = { key: string; words: Word[] }
@@ -67,24 +64,6 @@ function warmAssets(): Promise<unknown> {
   return Promise.all(jobs)
 }
 
-/** A little dust/spark burst where the character lands; nodes remove themselves. */
-function burst(stage: HTMLElement, x: number, y: number, count = 9) {
-  for (let i = 0; i < count; i++) {
-    const s = document.createElement('span')
-    s.className = 'hj-intro__spark'
-    s.style.background = SPARK_COLORS[i % SPARK_COLORS.length]
-    stage.appendChild(s)
-    const angle = Math.PI + (Math.PI * (i + 0.5)) / count + gsap.utils.random(-0.15, 0.15)
-    const dist = gsap.utils.random(22, 46)
-    gsap.fromTo(s, { x, y, scale: gsap.utils.random(0.6, 1.1), opacity: 1 }, {
-      x: x + Math.cos(angle) * dist,
-      y: y + Math.sin(angle) * dist * 0.7,
-      scale: 0, opacity: 0, duration: gsap.utils.random(0.36, 0.52), ease: 'power2.out',
-      onComplete: () => s.remove(),
-    })
-  }
-}
-
 export function BrandIntro() {
   const [active, setActive] = useState(introRequested)
   const root = useRef<HTMLDivElement>(null)
@@ -121,7 +100,7 @@ export function BrandIntro() {
     }
 
     // Measure only once the slogan face is in: a late font swap re-wraps the text on
-    // mobile and would send the hopping logo to stale word positions.
+    // mobile and would aim the light beam at stale line positions.
     let ctx: gsap.Context | null = null
     let disposed = false
     const fontGate = Promise.race([
@@ -132,31 +111,59 @@ export function BrandIntro() {
       // ---- Layout in stage space (works for one-line desktop and two-line mobile).
       const stageBox = stage.getBoundingClientRect()
       const size = hero.offsetWidth
-      const words = q('.hj-intro__word') as HTMLElement[]
+      const k = size / 1256
       const homeX = stageBox.width / 2 - size / 2
       const sloganTop = (q('.hj-intro__slogan')[0] as HTMLElement).offsetTop
-      const homeY = sloganTop - size - 28
-      /** Character mode: scaled from the bottom centre, so (x,y) = where its feet touch. */
-      const feet = (w: HTMLElement) => {
-        const r = w.getBoundingClientRect()
-        return { x: r.left - stageBox.left + r.width / 2 - size / 2, y: r.top - stageBox.top - size + 6 }
-      }
+      const homeY = sloganTop - size - 36
       const length = stroke.getTotalLength()
       const dot = q('.hj-intro__dot')[0] as HTMLElement
+      const chars = q('.hj-intro__char') as HTMLElement[]
+      const conePoly = node.querySelector<SVGPolygonElement>('.hj-intro__cone-shape')!
+      const spot = q('.hj-intro__spot')[0] as HTMLElement
+      /** Light source: the doorway inside the house mark (mark units 784,880). */
+      const door = { x: homeX + 784 * k, y: homeY + 880 * k }
+
+      // Group graphemes into visual lines so the beam sweeps each wrapped line in turn.
+      type Glyph = { el: HTMLElement; cx: number; lit: boolean }
+      type Line = { top: number; bottom: number; left: number; right: number; glyphs: Glyph[] }
+      const lines: Line[] = []
+      for (const el of chars) {
+        const r = el.getBoundingClientRect()
+        const top = r.top - stageBox.top
+        let line = lines.find(l => Math.abs(l.top - top) < r.height / 2)
+        if (!line) { line = { top, bottom: top + r.height, left: Infinity, right: -Infinity, glyphs: [] }; lines.push(line) }
+        line.left = Math.min(line.left, r.left - stageBox.left)
+        line.right = Math.max(line.right, r.right - stageBox.left)
+        line.glyphs.push({ el, cx: r.left - stageBox.left + r.width / 2, lit: false })
+      }
+      lines.sort((l1, l2) => l1.top - l2.top)
 
       gsap.set(hero, { x: homeX, y: homeY, transformOrigin: '50% 100%' })
       gsap.set(stroke, { strokeDasharray: length, strokeDashoffset: length, opacity: 1 })
-      gsap.set(q('.hj-mark__fill'), { opacity: 0 })
-      gsap.set(q('.hj-intro__char'), { opacity: 0, yPercent: 90, scale: 0.4, rotate: () => gsap.utils.random(-14, 14) })
-      // The pin lands exactly where the pen stroke begins (path start: 184,396 in mark units).
-      gsap.set(q('.hj-intro__dot'), { left: homeX + 184 * (size / 1256), top: homeY + 396 * (size / 1256) })
-      gsap.set(q('.hj-intro__ring'), { left: homeX + 184 * (size / 1256), top: homeY + 396 * (size / 1256), scale: 0.2, opacity: 0 })
+      gsap.set(q('.hj-mark__fill, .hj-mark__glow, .hj-intro__halo, .hj-intro__cone, .hj-intro__spot'), { opacity: 0 })
+      gsap.set(q('.hj-intro__halo'), { left: homeX + size / 2, top: homeY + size * 0.56, scale: 0.6 })
+      gsap.set(dot, { left: homeX + 184 * k, top: homeY + 396 * k })
+      gsap.set(q('.hj-intro__ring'), { left: homeX + 184 * k, top: homeY + 396 * k, scale: 0.2, opacity: 0 })
+
+      const lightGlyph = (g: Glyph) => {
+        if (g.lit) return
+        g.lit = true
+        g.el.classList.add('is-lit')
+        gsap.fromTo(g.el, { y: 2 }, { y: 0, duration: 0.5, ease: 'back.out(3)' })
+      }
+      /** Aim the cone from the doorway to a pool of light centred at x on a text line. */
+      const aim = (line: Line, x: number, spread: number) => {
+        const yb = line.bottom + 6
+        conePoly.setAttribute('points', `${door.x - 16},${door.y} ${door.x + 16},${door.y} ${x + spread},${yb} ${x - spread},${yb}`)
+        gsap.set(spot, { left: x, top: (line.top + line.bottom) / 2, width: spread * 2.4, height: (line.bottom - line.top) * 1.8 })
+        for (const g of line.glyphs) if (g.cx <= x + spread * 0.35) lightGlyph(g)
+      }
 
       let minDone = false
       let ready = false
       let alive = true
       const tryLeave = () => { if (minDone && ready) leave() }
-      // The hand-off waits for the whole performance (and the data), never cuts it mid-hop.
+      // The hand-off waits for the whole performance (and the data), never cuts it mid-sweep.
       const tl = gsap.timeline({
         defaults: { ease: 'power3.out' },
         onComplete: () => {
@@ -165,88 +172,75 @@ export function BrandIntro() {
           tryLeave()
         },
       })
-      // 1 — the green pin drops in and pings.
-      tl.fromTo(q('.hj-intro__dot'), { scale: 0, yPercent: -260 }, { scale: 1, yPercent: 0, duration: 0.32, ease: 'back.out(2.6)' })
+      // 1 — Dusk settles in while the green pin drops and pings.
+      tl.to(q('.hj-intro__dusk'), { opacity: 1, duration: 0.9, ease: 'sine.inOut' }, 0)
+        .to(q('.hj-intro__slogan'), { opacity: 1, duration: 0.8, ease: 'sine.inOut' }, 0.3)
+        .fromTo(dot, { scale: 0, yPercent: -260 }, { scale: 1, yPercent: 0, duration: 0.32, ease: 'back.out(2.6)' }, 0.05)
         .to(q('.hj-intro__ring'), {
-          keyframes: [{ opacity: 0.6, duration: 0.05 }, { opacity: 0, duration: 0.7 }],
+          keyframes: [{ opacity: 0.5, duration: 0.05 }, { opacity: 0, duration: 0.7 }],
           scale: 2.2, duration: 0.75, ease: 'power2.out', stagger: 0.16,
-        }, 0.22)
-      // 2 — the pin becomes the pen: the house mark is traced in one continuous stroke, then ink floods in.
-        .set(hero, { opacity: 1 }, 0.44)
-        .to(q('.hj-intro__dot'), { scale: 0.62, duration: 0.16, ease: 'power2.out' }, 0.44)
+        }, 0.27)
+      // 2 — The pin becomes the pen and traces the house; it stays hollow, lights off.
+        .set(hero, { opacity: 1 }, 0.46)
+        .to(dot, { scale: 0.55, duration: 0.16, ease: 'power2.out' }, 0.46)
         .to(stroke, {
-          strokeDashoffset: 0, duration: 0.82, ease: 'power1.inOut',
-          // The pin rides the tip of the line like a pen nib.
+          strokeDashoffset: 0, duration: 0.85, ease: 'power1.inOut',
           onUpdate: () => {
             const at = length - Number(gsap.getProperty(stroke, 'strokeDashoffset'))
             const pt = stroke.getPointAtLength(Math.max(0, Math.min(length, at)))
-            const k = size / 1256
             gsap.set(dot, { left: homeX + pt.x * k, top: homeY + pt.y * k })
           },
-        }, 0.44)
-        .to(dot, { scale: 0, duration: 0.18, ease: 'power2.in' }, 1.2)
-        .to(q('.hj-mark__fill'), { opacity: 1, duration: 0.3, ease: 'power1.out' }, 1.12)
-        .to(stroke, { opacity: 0, duration: 0.3 }, 1.2)
-      // 3 — it comes alive: squash, spring up, jelly wobble on landing.
-        .to(body, { scaleY: 0.78, scaleX: 1.16, duration: 0.14, ease: 'power2.out', transformOrigin: '50% 100%' }, 1.3)
-        .to(body, { scaleY: 1.12, scaleX: 0.9, duration: 0.14, ease: 'power2.out' })
-        .to(hero, { y: homeY - 34, duration: 0.2, ease: 'power2.out' }, '<')
-        .to(hero, { y: homeY, duration: 0.18, ease: 'power2.in' })
-        .to(body, { scaleY: 1, scaleX: 1, duration: 0.18, ease: 'power2.in' }, '<')
-        .to(body, { keyframes: { scaleX: [1, 1.14, 0.94, 1.04, 1], scaleY: [1, 0.86, 1.06, 0.98, 1] }, duration: 0.42, ease: 'none' })
-        .addLabel('hop', '-=0.3')
+        }, 0.46)
+        .to(dot, { scale: 0, duration: 0.18, ease: 'power2.in' }, 1.25)
+      // 3 — Lights on: a switch flicker, then a warm gold-to-green glow and a happy little hop.
+        .addLabel('lights', 1.42)
+        .to(q('.hj-mark__glow'), {
+          keyframes: [
+            { opacity: 0.9, duration: 0.05 }, { opacity: 0.08, duration: 0.07 },
+            { opacity: 0.75, duration: 0.05 }, { opacity: 0.15, duration: 0.11 },
+            { opacity: 1, duration: 0.12 },
+          ], ease: 'none',
+        }, 'lights')
+        .to(q('.hj-intro__halo'), { opacity: 1, scale: 1, duration: 0.7, ease: 'power2.out' }, 'lights+=0.36')
+        .to(body, { keyframes: { scaleY: [1, 0.86, 1.08, 0.97, 1], scaleX: [1, 1.1, 0.95, 1.02, 1] }, duration: 0.5, ease: 'none', transformOrigin: '50% 100%' }, 'lights+=0.36')
+        .to(hero, { keyframes: [{ y: homeY - 16, duration: 0.17, ease: 'power2.out' }, { y: homeY, duration: 0.17, ease: 'power2.in' }] }, 'lights+=0.42')
+        .addLabel('beam', 'lights+=0.6')
+        .to(q('.hj-intro__cone, .hj-intro__spot'), { opacity: 1, duration: 0.25, ease: 'power1.out' }, 'beam')
 
-      // 4 — hop-and-stamp: shrink into a character and bounce word to word; each landing stamps its letters out.
-      let prev = { x: homeX, y: homeY }
-      words.forEach((word, i) => {
-        const to = feet(word)
-        const peak = Math.min(prev.y, to.y) - (i === 0 ? 70 : 34)
-        const t = i === 0 ? 'hop' : `land${i - 1}+=0.08`
-        const dur = i === 0 ? 0.32 : 0.17
-        if (i === 0) tl.to(hero, { scale: HOP_SCALE, duration: dur, ease: 'power2.inOut' }, t)
-        // Arc: x travels linearly while y goes up then down (two eased halves).
-        tl.to(hero, { x: to.x, duration: dur, ease: 'none' }, i === 0 ? 'hop' : t)
-          .to(hero, { y: peak, duration: dur / 2, ease: 'power2.out' }, t)
-          .to(body, { scaleY: 1.1, scaleX: 0.92, duration: dur / 2, ease: 'power1.out' }, t)
-          .to(hero, { y: to.y, duration: dur / 2, ease: 'power2.in' }, `${t}+=${dur / 2}`)
-          .to(body, { scaleY: 1, scaleX: 1, duration: dur / 2, ease: 'power1.in' }, `${t}+=${dur / 2}`)
-          .addLabel(`land${i}`, `${t}+=${dur}`)
-          .to(body, { keyframes: { scaleY: [1, 0.72, 1], scaleX: [1, 1.2, 1] }, duration: 0.14, ease: 'power1.out' }, `land${i}`)
-          .add(() => {
-            const r = word.getBoundingClientRect()
-            burst(stage, r.left - stageBox.left + r.width / 2, r.top - stageBox.top + 4)
-          }, `land${i}`)
-          .to(word.querySelectorAll('.hj-intro__char'), {
-            opacity: 1, yPercent: 0, scale: 1, rotate: 0,
-            duration: 0.5, ease: 'back.out(3)', stagger: 0.03,
-          }, `land${i}`)
-        prev = to
+      // 4 — The beam sweeps each line left→right; whatever it touches lights up and stays lit.
+      const sweepTotal = 1.25
+      const widthSum = lines.reduce((sum, l) => sum + (l.right - l.left), 0) || 1
+      let at = 0
+      lines.forEach((line, i) => {
+        const span = line.right - line.left
+        const dur = Math.max(0.45, sweepTotal * (span / widthSum))
+        const spread = Math.max(48, Math.min(88, span * 0.13))
+        const beamX = { x: line.left - spread }
+        tl.to(beamX, {
+          x: line.right + spread * 0.6, duration: dur, ease: i === lines.length - 1 ? 'sine.inOut' : 'sine.in',
+          onUpdate: () => aim(line, beamX.x, spread),
+          onStart: () => aim(line, beamX.x, spread),
+        }, `beam+=${at}`)
+        at += dur + 0.04
       })
-
-      // 5 — leap back to centre stage and breathe while the page finishes loading.
-      tl.addLabel('home', `land${words.length - 1}+=0.12`)
-        .to(hero, { x: homeX, duration: 0.4, ease: 'power1.inOut' }, 'home')
-        .to(hero, { y: Math.min(prev.y, homeY) - 60, duration: 0.2, ease: 'power2.out' }, 'home')
-        .to(hero, { y: homeY, duration: 0.2, ease: 'power2.in' }, '>')
-        .to(hero, { scale: 0.78, duration: 0.4, ease: 'back.out(1.6)' }, '<-0.2')
-        .to(body, { rotate: 360, duration: 0.4, ease: 'power2.inOut', transformOrigin: '50% 55%' }, '<-0.2')
-        .to(body, { keyframes: { scaleY: [1, 0.8, 1.06, 1], scaleX: [1, 1.14, 0.96, 1] }, duration: 0.34, ease: 'none', transformOrigin: '50% 100%' })
-        .add(() => {
-          gsap.to(body, { scaleY: 1.04, scaleX: 0.975, duration: 0.6, ease: 'sine.inOut', yoyo: true, repeat: -1, transformOrigin: '50% 100%' })
-        })
+      tl.add(() => lines.forEach(l => l.glyphs.forEach(lightGlyph)), `beam+=${at}`)
+        .to(q('.hj-intro__cone, .hj-intro__spot'), { opacity: 0, duration: 0.3, ease: 'power1.in' }, `beam+=${at - 0.1}`)
+      // 5 — Dawn: the dusk lifts back to white, the ink floods in so the mark matches the header logo.
+        .addLabel('dawn', `beam+=${at + 0.05}`)
+        .to(q('.hj-intro__dusk'), { opacity: 0, duration: 0.6, ease: 'sine.inOut' }, 'dawn')
+        .to(q('.hj-mark__fill'), { opacity: 1, duration: 0.45, ease: 'power1.out' }, 'dawn+=0.1')
+        .to(q('.hj-mark__glow, .hj-intro__halo'), { opacity: 0, duration: 0.5 }, 'dawn+=0.15')
+        .to(stroke, { opacity: 0, duration: 0.3 }, 'dawn+=0.2')
 
       const leave = () => {
         if (leaving) return
         leaving = true
         tl.progress(1)
-        gsap.killTweensOf(body)
         gsap.set(body, { scaleX: 1, scaleY: 1, rotate: 0 })
         const target = findLogoTarget()
         const out = gsap.timeline({ onComplete: finish, defaults: { ease: 'power3.inOut' } })
         out.to(q('.hj-intro__status, .hj-intro__skip'), { opacity: 0, duration: 0.2 }, 0)
-          .to(q('.hj-intro__char'), {
-            opacity: 0, yPercent: -50, duration: 0.3, ease: 'power2.in', stagger: { each: 0.008, from: 'center' },
-          }, 0.05)
+          .to(q('.hj-intro__slogan'), { opacity: 0, y: -10, duration: 0.35, ease: 'power2.in' }, 0.05)
         if (target) {
           // 6 — FLIP: a little crouch, then it jumps onto the real header logo and hands the pixel over.
           const a = hero.getBoundingClientRect()
@@ -295,8 +289,22 @@ export function BrandIntro() {
 
   return createPortal(
     <div ref={root} className="hj-intro" role="dialog" aria-modal="true" aria-label="Homeji — giới thiệu">
-      <div className="hj-intro__backdrop" />
+      <div className="hj-intro__backdrop">
+        <div className="hj-intro__dusk" />
+      </div>
       <div className="hj-intro__stage">
+        <span className="hj-intro__halo" aria-hidden="true" />
+        <svg className="hj-intro__cone" aria-hidden="true">
+          <defs>
+            <linearGradient id="hj-cone-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#ffe3a3" stopOpacity="0.95" />
+              <stop offset="0.55" stopColor="#ffd27a" stopOpacity="0.55" />
+              <stop offset="1" stopColor="#fff0c8" stopOpacity="0.4" />
+            </linearGradient>
+          </defs>
+          <polygon className="hj-intro__cone-shape" points="0,0 0,0 0,0" fill="url(#hj-cone-grad)" />
+        </svg>
+        <span className="hj-intro__spot" aria-hidden="true" />
         <span className="hj-intro__ring" aria-hidden="true" />
         <span className="hj-intro__ring" aria-hidden="true" />
         <span className="hj-intro__dot" aria-hidden="true" />

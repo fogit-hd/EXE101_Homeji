@@ -17,6 +17,49 @@
     radial-gradient(130% 100% at 50% 40%, #ffffff 0%, #f5fcf8 45%, #eefaf3 100%);
   will-change: opacity;
 }
+.hj-intro__dusk {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  /* "Ánh đèn" dusk: pale blue-grey/sage, never dark. */
+  background:
+    radial-gradient(55% 45% at 50% 44%, rgba(255, 236, 196, 0.25) 0%, rgba(255, 236, 196, 0) 70%),
+    radial-gradient(130% 100% at 50% 40%, #d6dfdf 0%, #bfcdcc 55%, #a9bab8 100%);
+  will-change: opacity;
+}
+.hj-intro__halo {
+  position: absolute;
+  width: 360px;
+  height: 300px;
+  margin: -150px 0 0 -180px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 214, 128, 0.55), rgba(255, 214, 128, 0.18) 55%, rgba(0, 177, 79, 0.08) 75%, transparent);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.hj-intro__cone {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  filter: blur(8px);
+  opacity: 0;
+}
+.hj-intro__spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 228, 160, 0.75), rgba(255, 220, 140, 0.3) 60%, transparent);
+  filter: blur(6px);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+}
 .hj-intro__stage {
   position: relative;
   width: min(92vw, 760px);
@@ -36,6 +79,7 @@
   will-change: transform;
 }
 .hj-intro__body { width: 100%; height: 100%; will-change: transform; }
+.hj-mark__glow { filter: drop-shadow(0 0 22px rgba(255, 196, 90, 0.85)) drop-shadow(0 0 6px rgba(255, 220, 140, 0.9)); }
 .hj-intro__mark {
   display: block;
   width: 100%;
@@ -63,17 +107,6 @@
   opacity: 0;
   will-change: transform, opacity;
 }
-.hj-intro__spark {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 9px;
-  height: 9px;
-  margin: -4.5px 0 0 -4.5px;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
-}
 .hj-intro__slogan {
   margin: 0;
   display: flex;
@@ -90,15 +123,23 @@
 }
 .hj-intro__phrase { display: inline-flex; column-gap: 0.36em; white-space: nowrap; }
 .hj-intro__word { display: inline-flex; white-space: nowrap; }
+.hj-intro__slogan { position: relative; z-index: 1; opacity: 0; }
 .hj-intro__char {
-  opacity: 0; /* GSAP reveals; avoids a pre-init flash of the full slogan */
+  /* In shadow until the beam passes. */
+  color: rgba(24, 52, 63, 0.17);
+  transition: color 420ms cubic-bezier(.16, 1, .3, 1), text-shadow 620ms cubic-bezier(.16, 1, .3, 1);
   display: inline-block;
   /* Room for stacked Vietnamese diacritics (ộ, ầ, ố) so nothing clips while springing. */
   padding-block: 0.12em;
   transform-origin: 50% 100%;
   will-change: transform, opacity;
 }
-.hj-intro__accent .hj-intro__char { color: #00b14f; }
+.hj-intro__char.is-lit {
+  color: #18343f;
+  /* Subtle emboss + warm lamplight. */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75), 0 -1px 0 rgba(24, 52, 63, 0.12), 0 0 18px rgba(255, 190, 80, 0.55), 0 0 2px rgba(255, 210, 120, 0.6);
+}
+.hj-intro__accent .hj-intro__char.is-lit { color: #00b14f; }
 .hj-intro__status {
   position: absolute;
   top: calc(100% + 28px);
