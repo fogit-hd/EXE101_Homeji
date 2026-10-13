@@ -413,7 +413,7 @@ export function GlobalHeader() {
           <div className="hj-notify" ref={notifyRef}>
             <button
               type="button"
-              className={`hj-action hj-notify__trigger${notifyOpen ? ' is-active' : ''}${unreadNotifications > 0 ? ' is-hot' : ''}`}
+              className={`hj-action hj-action--icon hj-notify__trigger${notifyOpen ? ' is-active' : ''}${unreadNotifications > 0 ? ' is-hot' : ''}`}
               aria-label={
                 unreadNotifications > 0
                   ? `Thông báo, ${unreadNotifications} chưa đọc`
@@ -590,7 +590,7 @@ function HeaderLink({
   return (
     <Link
       to={href}
-      className={`hj-action${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
+      className={`hj-action${label ? '' : ' hj-action--icon'}${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
       aria-label={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel}
       aria-current={active ? 'page' : undefined}
     >
@@ -600,7 +600,7 @@ function HeaderLink({
           {count > 0 ? <span className="hj-action__badge">{count > 99 ? '99+' : count}</span> : null}
         </span>
       ) : null}
-      <span className="hj-action__label">{label}</span>
+      {label ? <span className="hj-action__label">{label}</span> : null}
     </Link>
   )
 }

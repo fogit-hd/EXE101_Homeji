@@ -221,6 +221,14 @@
   background: #eee8dd;
 }
 
+.hj-action--icon {
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+}
+
 .hj-action__icon {
   position: relative;
   display: grid;
