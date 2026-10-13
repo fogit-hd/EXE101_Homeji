@@ -28,6 +28,7 @@ import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
+import { PromoBanner } from './PromoBanner'
 import './AuthenticatedHub.css'
 
 const RECENT_SEARCH_KEY = 'homeji:map-search-recent'
@@ -382,6 +383,8 @@ export function AuthenticatedHub() {
               ))}
             </ul>
           </section>
+
+          <PromoBanner />
 
           <section className="hub-card hub-progress" aria-labelledby="hub-progress">
             <h2 id="hub-progress">Hành trình tìm nhà</h2>

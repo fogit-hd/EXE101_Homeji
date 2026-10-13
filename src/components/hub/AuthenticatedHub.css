@@ -157,10 +157,9 @@
 .hub-messages header a { white-space: nowrap; }
 .hub-rooms { grid-column: 1 / -1; order: 3; }
 .hub-progress {
-  grid-column: 1 / -1;
+  grid-column: 10 / -1;
   order: 1;
-  justify-self: end;
-  width: min(318px, 100%);
+  min-width: 0;
 }
 .hub-area {
   grid-column: 1 / -1;
