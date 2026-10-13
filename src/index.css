@@ -862,3 +862,17 @@ p {
     font-size: 24px;
   }
 }
+
+/* Thin, quiet scrollbars everywhere (elements that hide theirs keep scrollbar-width: none). */
+:root { --hj-scroll-thumb: rgba(23, 33, 28, 0.25); --hj-scroll-thumb-hover: rgba(23, 33, 28, 0.45); }
+/* Firefox: standard props. Chromium/Safari use the ::-webkit rules below (setting scrollbar-width there would disable them). */
+@supports not selector(::-webkit-scrollbar) {
+  html, * { scrollbar-width: thin; scrollbar-color: var(--hj-scroll-thumb) transparent; }
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  border: 1px solid transparent; border-radius: 999px;
+  background: var(--hj-scroll-thumb); background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { border-width: 0; background: var(--hj-scroll-thumb-hover); }

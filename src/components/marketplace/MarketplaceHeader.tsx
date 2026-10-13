@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { primaryOf, type MarketplacePrimary, type MarketplaceTab } from '../../lib/marketplaceNavigation'
 import { formatAvailableBalance } from '../../lib/walletMoney'
 import { SegmentedTabs } from '../motion/SegmentedTabs'
@@ -63,6 +64,8 @@ type Props = {
   onTabChange: (tab: MarketplaceTab) => void
   onOpenSell: () => void
   onTopUp: () => void
+  /** Rendered beside the shopping segmented switch (filter button + chips). */
+  subtabsExtra?: ReactNode
 }
 
 export function MarketplaceHeader({
@@ -73,6 +76,7 @@ export function MarketplaceHeader({
   onTabChange,
   onOpenSell,
   onTopUp,
+  subtabsExtra,
 }: Props) {
   const headline = HEADLINES[tab]
   const primary = primaryOf(tab)
@@ -118,8 +122,11 @@ export function MarketplaceHeader({
       {subTabs ? (
         <div className="marketplace-header__subtabs">
           {primary === 'shopping' ? (
-            <SegmentedTabs items={SHOPPING_TABS} value={tab} onChange={onTabChange} label="Mua sắm"
+            <div className="marketplace-header__subtabs-lead">
+              <SegmentedTabs items={SHOPPING_TABS} value={tab} onChange={onTabChange} label="Mua sắm"
               className="marketplace-header__subtabs-group" idPrefix="marketplace-subtab" panelId="marketplace-panel" />
+              {subtabsExtra}
+            </div>
           ) : (
           <MotionTabs items={subTabs} value={tab} onChange={onTabChange}
             label="Quản lý cửa hàng"

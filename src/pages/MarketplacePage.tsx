@@ -1373,23 +1373,7 @@ export function MarketplacePage({
   )
 
   const catalogToolbar = (
-    <div className="marketplace-toolbar marketplace-toolbar--panel" aria-label="Bộ lọc">
-      {tab === 'browse' ? (
-        <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
-          {userLocation ? (
-            <span>{catalogSort === 'nearby' ? 'Xếp từ gần đến xa' : 'Trong phạm vi 50 km quanh bạn'}</span>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              disabled={locating || !onRequestLocation}
-              onClick={onRequestLocation}
-            >
-              {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
-            </button>
-          )}
-        </div>
-      ) : null}
+    <div className={`marketplace-toolbar marketplace-toolbar--panel${tab === 'mine' ? '' : ' marketplace-toolbar--inline'}`} aria-label="Bộ lọc">
       <MarketplaceFilterPanel
         value={{ category, price: priceFilter, sort: catalogSort, kind: tab === 'mine' ? kindFilter : '', status: tab === 'mine' ? postStatusFilter : '' }}
         onApply={(next) => {
@@ -1407,6 +1391,22 @@ export function MarketplacePage({
           statuses: [{ value: '', label: 'Tất cả' }, ...Object.entries(marketplacePostStatusLabel).map(([value, label]) => ({ value, label }))],
         } : undefined}
       />
+      {tab === 'browse' ? (
+        <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
+          {userLocation ? (
+            <span>{catalogSort === 'nearby' ? 'Xếp từ gần đến xa' : 'Trong phạm vi 50 km quanh bạn'}</span>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={locating || !onRequestLocation}
+              onClick={onRequestLocation}
+            >
+              {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   )
 
@@ -1461,6 +1461,7 @@ export function MarketplacePage({
         onTabChange={openLeaf}
         onOpenSell={beginNewSale}
         onTopUp={openWalletDeposit}
+        subtabsExtra={tab === 'food' || tab === 'browse' ? catalogToolbar : null}
       />
 
       {purchaseReceipt ? (
@@ -1500,7 +1501,6 @@ export function MarketplacePage({
         aria-labelledby={`marketplace-${tab === 'purchases' || tab === 'wallet' ? 'primary' : 'subtab'}-${tab === 'purchases' || tab === 'wallet' ? primaryOf(tab) : tab}`}>
       {tab === 'food' ? (
         <>
-        {catalogToolbar}
         <FoodMarketplaceView
           posts={listForTab}
           kitchens={foodKitchens}
@@ -1614,7 +1614,7 @@ export function MarketplacePage({
             </div>
           </div>
         ) : null}
-        {tab === 'browse' || tab === 'mine' ? catalogToolbar : null}
+        {tab === 'mine' ? catalogToolbar : null}
         {tab === 'purchases' || tab === 'sales' ? orderToolbar : null}
       {showLoader ? (
         disrupted ? (

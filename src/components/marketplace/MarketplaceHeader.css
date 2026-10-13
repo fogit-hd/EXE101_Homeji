@@ -368,3 +368,20 @@
     padding-right: 18px;
   }
 }
+
+/* Segmented switch + filter button share one row */
+.marketplace-header__subtabs-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.marketplace-header__subtabs { position: relative; z-index: 5; }
+@media (max-width: 639.98px) {
+  .marketplace-header__subtabs-lead { flex-wrap: nowrap; gap: 8px; }
+  .marketplace-header__subtabs-lead .segmented-tabs__tab { min-width: 0; padding: 0 14px; }
+  .marketplace-header__subtabs-lead .marketplace-toolbar--inline { flex-wrap: nowrap; }
+  .marketplace-header__subtabs-lead .marketplace-distance-sort { display: none; }
+}

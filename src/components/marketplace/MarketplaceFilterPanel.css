@@ -123,3 +123,13 @@
   .mfp-chips { flex: 1; overflow-x: auto; scrollbar-width: none; }
   .mfp-chips::-webkit-scrollbar { display: none; }
 }
+
+/* Inline variant: sits right of the segmented switch, chips after the button, panel opens left-anchored */
+.marketplace-toolbar--inline { flex: 1 1 auto; min-width: 0; gap: 10px; }
+.marketplace-toolbar--inline .mfp { margin-left: 0; justify-content: flex-start; flex: 0 1 auto; }
+.marketplace-toolbar--inline .mfp-chips { order: 2; }
+.marketplace-toolbar--inline .mfp-panel:not(.mfp-panel--sheet) { left: 0; right: auto; transform-origin: top left; }
+.marketplace-toolbar--inline .marketplace-distance-sort { color: var(--text-secondary); font: 400 13px/18px var(--font-ui); }
+@media (max-width: 639.98px) {
+  .marketplace-toolbar--inline .mfp-chips { display: none; }
+}
