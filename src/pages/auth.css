@@ -141,7 +141,7 @@
   font-size: 14px;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .auth-card {
     animation: none;
   }

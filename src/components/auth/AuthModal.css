@@ -90,7 +90,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .auth-modal {
     animation: none;
   }

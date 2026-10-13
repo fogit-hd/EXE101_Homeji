@@ -113,7 +113,7 @@ export function GlobalHeader() {
       const box = scroller()
       const yBefore = box.get()
       const heightBefore = shell.getBoundingClientRect().height
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const reduceMotion = window.matchMedia('not all').matches
       const field = reduceMotion ? null : shell.querySelector('.hj-search__field')
       const fieldFrom = field instanceof HTMLElement ? field.getBoundingClientRect() : null
       lock = 2

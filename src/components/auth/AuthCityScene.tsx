@@ -109,10 +109,10 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
       mesh(new T.ConeGeometry(0.18, 0.35, 8), roof, 2.4, 2, 0.9, marker).rotation.z = Math.PI
       const clouds = new T.Group(); world.add(clouds)
       for (const [x, z] of [[-2, -1], [1, 2]]) for (let i = 0; i < 3; i++) mesh(new T.SphereGeometry(0.35, 10, 6), cream, x! + i * 0.38, 4.4 + (i === 1 ? 0.12 : 0), z!, clouds)
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
+      const reduced = window.matchMedia('not all')
       const context = gsap.context(() => {})
       const motion = gsap.matchMedia()
-      motion.add('(prefers-reduced-motion: no-preference)', () => {
+      motion.add('all', () => {
           gsap.from(world.scale, { x: 0.85, y: 0.85, z: 0.85, duration: 1.3, ease: 'power2.out' })
           gsap.to(marker.position, { y: 0.2, repeat: -1, yoyo: true, duration: 1.8, ease: 'sine.inOut' })
           gsap.to(clouds.position, { x: 0.5, repeat: -1, yoyo: true, duration: 5, ease: 'sine.inOut' })
@@ -187,7 +187,7 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
   }, [])
   useEffect(() => {
     const media = gsap.matchMedia()
-    media.add('(prefers-reduced-motion: no-preference)', () => { gsap.fromTo(hostRef.current, { opacity: 0.65, y: 12 }, { opacity: 1, y: 0, duration: 0.7 }) })
+    media.add('all', () => { gsap.fromTo(hostRef.current, { opacity: 0.65, y: 12 }, { opacity: 1, y: 0, duration: 0.7 }) })
     return () => media.revert()
   }, [mode])
   return <section className={`auth-city${ready ? ' is-ready' : ''}${night ? ' is-night' : ''}${roomLit ? ' is-room-lit' : ''}${sailing ? ' is-sailing' : ''}${flying ? ' is-flying' : ''}`} aria-label="Một góc Sài Gòn thu nhỏ">

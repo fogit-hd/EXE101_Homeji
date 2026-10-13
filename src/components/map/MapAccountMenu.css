@@ -149,7 +149,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .gmaps-omnibox__notify.is-unread {
     animation: none;
   }

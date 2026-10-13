@@ -83,7 +83,7 @@
   from { opacity: .85; transform: scale(.12); }
   to { opacity: 0; transform: scale(1.2); }
 }
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   :is(.hj-search__field.hj-search__field--ai, .natural-rental-search__panel,
     .map-chatbot__panel.is-visible, .map-chatbot .map-chatbot__fab,
     .map-chatbot .map-chatbot__form, .ai-search-review, .rental-draft-assistant,

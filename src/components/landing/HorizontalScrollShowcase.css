@@ -399,7 +399,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .dxh-panel [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
@@ -407,7 +407,7 @@
 }
 
 /* CSS media query also protects the first render before the preference listener runs. */
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .dxh-scroll-outer {
     height: auto !important;
     min-height: 0;

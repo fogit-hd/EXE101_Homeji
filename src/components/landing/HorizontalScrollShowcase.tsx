@@ -112,11 +112,11 @@ export function HorizontalScrollShowcase() {
   const syncProtectionRef = useRef<(hp: number) => void>(() => {})
   const [mobileViewport, setMobileViewport] = useState(() => isMobileLandingViewport())
   const [reducedMotion, setReducedMotion] = useState(
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    () => window.matchMedia('not all').matches,
   )
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const media = window.matchMedia('not all')
     const onChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches)
     media.addEventListener('change', onChange)
     return () => media.removeEventListener('change', onChange)

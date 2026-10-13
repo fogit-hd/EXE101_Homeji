@@ -1521,7 +1521,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .home-map-panel,
   .home-list-panel,
   .amenity-chip {

@@ -149,7 +149,7 @@
   .auth-city__caption { display: none; }
   .auth-cinema__stage { position: relative; right: auto; width: min(400px, 100%); }
 }
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .auth-cinema *, .hub-banner * { animation: none !important; transition: none !important; }
 }
 
@@ -169,14 +169,14 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
 }
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+@media (hover: hover) and (pointer: fine)  {
   :is(.post-card, .marketplace-card--browse, .food-card, .roommate-people__person):hover {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--hj-accent) 35%, var(--border));
     box-shadow: var(--shadow-sm);
   }
 }
-@media (prefers-reduced-motion: no-preference) {
+@media all {
   .marketplace-workspace {
     animation: hj-content-enter 220ms var(--ease-out) both;
   }

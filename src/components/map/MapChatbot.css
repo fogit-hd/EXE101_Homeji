@@ -819,7 +819,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .map-chatbot,
   .map-chatbot__fab,
   .map-chatbot__panel,

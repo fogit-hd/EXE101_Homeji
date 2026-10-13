@@ -1030,7 +1030,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .hj-bar,
   .hj-mega,
   .hj-account__menu,

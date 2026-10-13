@@ -733,7 +733,7 @@ p {
   animation-duration: var(--dur-med);
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   *,
   *::before,
   *::after {
