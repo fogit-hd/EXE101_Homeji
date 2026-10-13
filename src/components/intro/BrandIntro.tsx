@@ -16,8 +16,8 @@ const FONT_WAIT_MS = 1500
 /** Visible header logos the intro mark lands on (FLIP target), in priority order. */
 const LOGO_TARGETS = ['.hj-logo__mark', '.guest-hero__corner-logo', '.navbar img[src*="homeji-logo"]']
 
-/** Grapheme cluster; `base` is the letter without diacritics when it has any. */
-type Glyph = { key: string; text: string; base: string | null; below: boolean }
+/** Grapheme cluster; `accent` marks letters carrying Vietnamese diacritics. */
+type Glyph = { key: string; text: string; accent: boolean }
 
 /** Grapheme split (Intl.Segmenter) so stacked Vietnamese marks (ộ, ầ, ố) never break apart. */
 function splitSlogan(text: string): Glyph[] {
@@ -26,11 +26,7 @@ function splitSlogan(text: string): Glyph[] {
     ? Array.from(new Intl.Segmenter('vi', { granularity: 'grapheme' }).segment(nfc), s => s.segment)
     : Array.from(nfc)
   return parts.map((g, i) => {
-    const nfd = g.normalize('NFD')
-    const marks = nfd.replace(/[^\u0300-\u036f]/g, '')
-    const base = marks ? nfd.replace(/[\u0300-\u036f]/g, '').normalize('NFC') : null
-    // Only a dot-below (ọ, ạ…) gets dotted under the letter; everything else above.
-    return { key: `g${i}`, text: g, base, below: marks === '\u0323' }
+    return { key: `g${i}`, text: g, accent: /[\u0300-\u036f]/.test(g.normalize('NFD')) }
   })
 }
 
@@ -241,20 +237,17 @@ export function BrandIntro() {
         .to(stroke, { opacity: 0, duration: 0.4 }, t + 0.1)
       t += WRITE
 
-      // 5 — The pen returns to dot every diacritic; each mark lands with a springy bounce.
+      // 5 — Accented letters are written whole (real Dancing Script marks); as the pen
+      //     passes each one it gives a small springy lift so the marks feel "flicked" on.
       const accents = q('.hj-intro__g--accent') as HTMLElement[]
-      const DOT = 0.07
-      accents.forEach((el, i) => {
+      accents.forEach(el => {
         const r = el.getBoundingClientRect()
-        const below = el.dataset.below === '1'
-        const at = t + 0.06 + i * DOT
-        tl.to(pen, { x: r.left + r.width / 2, y: r.top + r.height * (below ? 0.88 : 0.16), duration: DOT, ease: 'power2.out' }, at - DOT)
-          .set(el.querySelector('.hj-intro__base'), { opacity: 0 }, at)
-          .fromTo(el.querySelector('.hj-intro__full'),
-            { opacity: 0, y: below ? 10 : -14, scale: 1.45 },
-            { opacity: 1, y: 0, scale: 1, duration: 0.42, ease: 'back.out(4)' }, at)
+        const at = t - WRITE + WRITE * Math.min(1, Math.max(0, (r.right - sr.left) / sr.width))
+        tl.fromTo(el, { y: 0, scale: 1 }, {
+          keyframes: [{ y: -fs * 0.1, scale: 1.12, duration: 0.12, ease: 'power2.out' }, { y: 0, scale: 1, duration: 0.38, ease: 'back.out(3)' }],
+        }, at)
       })
-      t += 0.06 + accents.length * DOT
+      t += 0.08
       tl.to(pen, { scale: 0, opacity: 0, duration: 0.22, ease: 'power2.in' }, t)
 
       // 6 — Squash-and-stretch bounce: the house is alive.
@@ -328,12 +321,9 @@ export function BrandIntro() {
       </div>
       <p className="hj-intro__slogan" aria-label={SLOGAN}>
         <span className="hj-intro__line" aria-hidden="true">
-          {glyphs.map(g => g.base
+          {glyphs.map(g => g.accent
             ? (
-              <span key={g.key} className="hj-intro__g hj-intro__g--accent" data-below={g.below ? '1' : '0'}>
-                <span className="hj-intro__base">{g.base}</span>
-                <span className="hj-intro__full">{g.text}</span>
-              </span>
+              <span key={g.key} className="hj-intro__g hj-intro__g--accent">{g.text}</span>
             )
             : <span key={g.key} className={g.text === '·' ? 'hj-intro__g hj-intro__g--sep' : 'hj-intro__g'}>{g.text === ' ' ? '\u00a0' : g.text}</span>)}
         </span>

@@ -62,14 +62,7 @@
   clip-path: inset(-50% 100% -50% -6%);
 }
 .hj-intro__g { position: relative; display: inline-block; }
-.hj-intro__full {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
-  transform-origin: 50% 70%;
-  will-change: transform, opacity;
-}
+.hj-intro__g--accent { transform-origin: 50% 90%; will-change: transform; }
 .hj-intro__pen {
   position: absolute;
   left: 0;
