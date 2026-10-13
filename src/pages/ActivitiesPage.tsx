@@ -3,10 +3,11 @@ import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { ActivitiesSkeleton } from '../components/skeletons/PageSkeletons'
 import { formatActivityDisplay } from '../lib/activityDisplay'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
 import './ProfilePage.css'
+import { RevealText } from '../components/motion/RevealText'
 
 export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
   const [items, setItems] = useState<UserActivity[]>([])
@@ -27,7 +28,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
     <div className={embedded ? 'map-embed profile-embed account-surface' : 'container page account-surface'}>
       {!embedded ? (
         <>
-          <h1 className="page-title">Nhật ký hoạt động</h1>
+          <RevealText as="h1" className="page-title" text="Nhật ký hoạt động" />
         </>
       ) : null}
 
@@ -55,7 +56,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="list" label="Đang tải nhật ký hoạt động…" />
+          : <ActivitiesSkeleton />
       ) : items.length === 0 ? (
         <div className="empty-state card">Chưa có nhật ký hoạt động.</div>
       ) : (

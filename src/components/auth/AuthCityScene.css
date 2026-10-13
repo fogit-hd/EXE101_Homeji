@@ -18,7 +18,7 @@
   .auth-city__controls { margin-bottom: 0; gap: 6px; }
   .auth-city__controls button { padding: 8px 10px; }
 }
-@media (prefers-reduced-motion: reduce) { .auth-city *, .auth-city__controls button:hover { transition: none; transform: none; } }
+@media not all /* reduced-motion ignored: Homeji always animates */ { .auth-city *, .auth-city__controls button:hover { transition: none; transform: none; } }
 .auth-city__discoveries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: -18px 20px 0; position: relative; z-index: 2; }
 .auth-city__discoveries button { display: flex; align-items: center; gap: 9px; min-height: 66px; padding: 10px; border: 1px solid #49634430; border-radius: 18px; background: #fffdf7ed; color: #315543; text-align: left; cursor: pointer; box-shadow: 0 6px 20px #38502e09; font: 600 12px/1.5 var(--font-ui); transition: transform .2s, background .2s, border-color .2s; }
 .auth-city__discoveries button:hover { transform: translateY(-3px); border-color: #ba6846; }
@@ -45,7 +45,7 @@
   .auth-city__object--balloon { font-size: 0; }
   .auth-city__discoveries small { font-size: 9px; }
 }
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .auth-city__discoveries button:hover, .auth-city__discoveries button[aria-pressed="true"] .auth-city__object { transform: none; }
   .auth-city__fallback-room, .auth-city__fallback-boat, .auth-city__fallback-balloon { transition: none; }
 }

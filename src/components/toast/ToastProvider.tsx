@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from 'motion/react'
+import { SPRING, transitions } from '../../lib/motionTokens'
 import {
   useCallback,
   useEffect,
@@ -55,14 +57,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div className="app-toasts" aria-live="polite">
+        <AnimatePresence initial={false}>
         {toasts.map((toast) => (
-          <div key={toast.id} className={`app-toast app-toast--${toast.tone}`} role="status">
+          <motion.div
+            key={toast.id}
+            layout
+            className={`app-toast app-toast--${toast.tone}`}
+            role="status"
+            initial={{ opacity: 0, y: -14, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: SPRING.soft }}
+            exit={{ opacity: 0, x: 24, scale: 0.96, transition: transitions.exit }}
+          >
             <p>{toast.message}</p>
             <button type="button" className="app-toast__close" onClick={() => dismiss(toast.id)} aria-label="Đóng thông báo">
               ×
             </button>
-          </div>
+          </motion.div>
         ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   )

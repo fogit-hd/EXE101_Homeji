@@ -7,7 +7,7 @@
 .roommate-workspace__lifestyle-toggle.btn:focus-visible { outline: 3px solid #087f8c; outline-offset: 4px; }
 .roommate-workspace__lifestyle-chevron { flex-shrink: 0; transition: transform 180ms ease; }
 .roommate-workspace__lifestyle-toggle[aria-expanded='true'] .roommate-workspace__lifestyle-chevron { transform: rotate(180deg); }
-@media (prefers-reduced-motion: reduce) { .roommate-workspace__lifestyle-chevron { transition: none; } }
+@media not all /* reduced-motion ignored: Homeji always animates */ { .roommate-workspace__lifestyle-chevron { transition: none; } }
 @media (max-width: 480px) { .roommate-workspace__lifestyle-toggle.btn { width: 100%; } }
 #roommate-lifestyle { width: 100%; min-width: 0; }
 .roommate-workspace__tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); }

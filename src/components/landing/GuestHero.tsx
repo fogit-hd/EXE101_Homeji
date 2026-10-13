@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { navigateGuestLanding } from './guestLandingNav'
 import './GuestHero.css'
+import { RevealText } from '../motion/RevealText'
 
 const NAV_ITEMS = [
   { id: 'mission', label: 'Sứ mệnh', hasArrow: true },
@@ -11,6 +14,12 @@ const NAV_ITEMS = [
 ] as const
 
 export function GuestHero() {
+  // Landing only: keep scrolling, drop the visible scrollbar.
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('hj-no-scrollbar')
+    return () => root.classList.remove('hj-no-scrollbar')
+  }, [])
   const goToMap = (e: React.MouseEvent) => {
     e.preventDefault()
     navigateGuestLanding('map')
@@ -64,6 +73,7 @@ export function GuestHero() {
           </nav>
 
           <div className="guest-hero__top-actions">
+            <HomejiAiButton tone="glass" />
             <Link to="/login" className="guest-hero__top-login-link">
               Đăng nhập
             </Link>
@@ -76,11 +86,7 @@ export function GuestHero() {
         {/* Center hero content */}
         <div className="guest-hero__center">
           <div className="guest-hero__slogan-wrap">
-            <h1 className="guest-hero__hello">
-              Trọ an tâm
-              <br />
-              Nâng tầm cuộc sống
-            </h1>
+            <RevealText as="h1" className="guest-hero__hello" text={'Trọ an tâm\nNâng tầm cuộc sống'} delay={0.1} />
           </div>
           <p className="guest-hero__sub">
             Nền tảng tìm phòng trọ &amp; bạn ở ghép an toàn

@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice } from '../../lib/labels'
 import { mapMessagesUrl, mapPostUrl } from '../../lib/mapDeepLinks'
-import { ContentSkeleton } from '../ContentSkeleton'
+import { RoommateRoomsSkeleton } from '../skeletons/PageSkeletons'
 import './RoommateRooms.css'
 
 const PAGE_SIZE = 20
@@ -95,7 +95,7 @@ export function RoommateRooms({ initialKeyword = '', onOpenConversation }: Props
     </form>
     {actionError ? <p role="alert" className="roommate-workspace__error">{actionError}</p> : null}
     {error ? <div role="alert" className="roommate-workspace__error"><p>{error}</p><button className="btn btn-secondary" type="button" onClick={() => setRetry(value => value + 1)}>Thử lại</button></div> : null}
-    {loading ? <ContentSkeleton variant="list" label="Đang tìm tin ghép…" /> : !error && posts.length ?
+    {loading ? <RoommateRoomsSkeleton /> : !error && posts.length ?
       <div className="roommate-posts__grid">{posts.map(post => {
         const ownPost = post.ownerId === profile?.id
         const author = post.ownerDisplayName?.trim() || 'Người đăng tin'

@@ -107,7 +107,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .rental-map__stage-pulse {
     animation: none;
     border-color: color-mix(in srgb, var(--grab-green) 35%, transparent);
@@ -708,7 +708,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .rental-map__view-switcher button {
     transition-duration: 0.01ms !important;
   }

@@ -15,7 +15,7 @@ import {
 } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { MyPostsSkeleton } from '../components/skeletons/PageSkeletons'
 import { getErrorMessage } from '../lib/errors'
 import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/labels'
 import { mapPostUrl, mapSectionUrl } from '../lib/mapDeepLinks'
@@ -98,7 +98,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="dashboard" label="Đang tải tin đã đăng…" />
+          : <MyPostsSkeleton />
       ) : (
         <>
           {stats ? (

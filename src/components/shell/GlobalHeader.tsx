@@ -1,6 +1,7 @@
+import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { ScreenPending } from '../ScreenPending'
+import { NotificationsSkeleton } from '../skeletons/PageSkeletons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getNotifications, NotificationType, UserRole, type Notification } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -113,7 +114,7 @@ export function GlobalHeader() {
       const box = scroller()
       const yBefore = box.get()
       const heightBefore = shell.getBoundingClientRect().height
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const reduceMotion = window.matchMedia('not all').matches
       const field = reduceMotion ? null : shell.querySelector('.hj-search__field')
       const fieldFrom = field instanceof HTMLElement ? field.getBoundingClientRect() : null
       lock = 2
@@ -407,11 +408,12 @@ export function GlobalHeader() {
         </nav>
         <ContextualSearch />
         <div className="hj-actions">
+          <HomejiAiButton />
           <HeaderLink href={mapSectionUrl('saved')} label="" icon="heart" />
           <div className="hj-notify" ref={notifyRef}>
             <button
               type="button"
-              className={`hj-action hj-notify__trigger${notifyOpen ? ' is-active' : ''}${unreadNotifications > 0 ? ' is-hot' : ''}`}
+              className={`hj-action hj-action--icon hj-notify__trigger${notifyOpen ? ' is-active' : ''}${unreadNotifications > 0 ? ' is-hot' : ''}`}
               aria-label={
                 unreadNotifications > 0
                   ? `Thông báo, ${unreadNotifications} chưa đọc`
@@ -446,7 +448,7 @@ export function GlobalHeader() {
                 aria-labelledby={`${notifyId}-title`}
                 tabIndex={-1}
               >
-                <Suspense fallback={<ScreenPending />}>
+                <Suspense fallback={<NotificationsSkeleton tabs={false} />}>
                 <NotificationsPage
                   surface="popup"
                   headingId={`${notifyId}-title`}
@@ -588,7 +590,7 @@ function HeaderLink({
   return (
     <Link
       to={href}
-      className={`hj-action${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
+      className={`hj-action${label ? '' : ' hj-action--icon'}${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
       aria-label={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel}
       aria-current={active ? 'page' : undefined}
     >
@@ -598,7 +600,7 @@ function HeaderLink({
           {count > 0 ? <span className="hj-action__badge">{count > 99 ? '99+' : count}</span> : null}
         </span>
       ) : null}
-      <span className="hj-action__label">{label}</span>
+      {label ? <span className="hj-action__label">{label}</span> : null}
     </Link>
   )
 }

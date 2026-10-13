@@ -127,7 +127,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .mobile-tabbar__item::after,
   .mobile-tabbar__item svg,
   .mobile-tabbar__label {

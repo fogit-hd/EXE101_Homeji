@@ -1139,7 +1139,7 @@
   to { transform: translateX(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .food-cart-sticky,
   .food-cart-backdrop,
   .food-cart-drawer,
@@ -2220,7 +2220,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .wallet-subtabs button {
     transition: none;
   }

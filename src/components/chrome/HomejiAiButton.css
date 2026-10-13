@@ -1,0 +1,27 @@
+.hj-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 34px;
+  padding: 0 12px 0 10px;
+  border: 1px solid #cdeedb;
+  border-radius: 999px;
+  background: #effaf3;
+  color: #087a3c;
+  font: 600 13px/1 var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+}
+.hj-ai-btn svg { width: 16px; height: 16px; fill: currentColor; }
+.hj-ai-btn:hover { background: #e2f6ea; border-color: #9fd8b6; }
+.hj-ai-btn:active { transform: scale(0.97); }
+.hj-ai-btn:focus-visible { outline: 2px solid #00b14f; outline-offset: 2px; }
+.hj-ai-btn.is-open { background: #00b14f; border-color: #00b14f; color: #fff; box-shadow: 0 6px 16px rgba(0, 177, 79, 0.28); }
+.hj-ai-btn.is-glass { background: rgba(255, 255, 255, 0.78); border-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); }
+.hj-ai-btn.is-glass.is-open { background: #00b14f; color: #fff; }
+@media (max-width: 760px) {
+  .hj-ai-btn { width: 34px; padding: 0; justify-content: center; }
+  .hj-ai-btn__label { display: none; }
+}

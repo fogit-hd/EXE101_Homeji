@@ -30,6 +30,7 @@ import {
 } from './guestMapAreas'
 import '../map/MapPlaceDetailPanel.css'
 import './GuestMapSection.css'
+import { RevealText } from '../motion/RevealText'
 
 const PAGE_SIZE = 24
 const GUEST_SELECTION_PAD = { top: 24, bottom: 80 }
@@ -239,7 +240,7 @@ export function GuestMapSection() {
       <div className="guest-map__shell">
         <div className="guest-map__intro">
           <p className="guest-map__eyebrow">Bản đồ</p>
-          <h2 className="guest-map__title">Khám phá phòng quanh Thủ Đức &amp; Q.9</h2>
+          <RevealText className="guest-map__title" text="Khám phá phòng quanh Thủ Đức & Q.9" />
 
           <form
             className="guest-map__filters"

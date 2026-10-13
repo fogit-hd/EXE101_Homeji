@@ -511,7 +511,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .guest-hero__explore-ring {
     animation: none;
   }
@@ -899,7 +899,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .guest-hero__frame {
     animation: none;
   }

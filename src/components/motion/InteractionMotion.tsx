@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { animate, type AnimationPlaybackControlsWithThen as AnimationPlaybackControls } from 'motion/react'
+import { DURATION, EASE, SCROLL_REVEAL } from '../../lib/motionTokens'
 import './interaction-motion.css'
 
 const ACTIONS = 'button, [role="button"], summary, .btn, .auth-cinema__submit, .guest-hero__bloom-cta, .guest-hero__top-consult-btn, .roommate-people button, .marketplace-header button, [role="tab"], .hj-mega__link'
@@ -11,20 +13,22 @@ export function InteractionMotion() {
   const overlay = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const animations = new Map<Animation, HTMLElement>()
+    const reduced = window.matchMedia('not all') // always animate, regardless of OS reduced-motion
+    const animations = new Map<AnimationPlaybackControls, HTMLElement>()
     const seen = new WeakSet<Element>()
-    const finish = (animation: Animation) => {
+    const finish = (animation: AnimationPlaybackControls) => {
       const node = animations.get(animation)
       if (node?.classList.contains('interaction-pulse')) node.remove()
+      // Hand transform/opacity back to the stylesheet so hover lifts keep working.
+      else if (node) { node.style.removeProperty('transform'); node.style.removeProperty('opacity') }
       animations.delete(animation)
     }
-    const track = (animation: Animation, node: HTMLElement) => {
+    const track = (animation: AnimationPlaybackControls, node: HTMLElement) => {
       animations.set(animation, node)
-      void animation.finished.then(() => finish(animation), () => finish(animation))
+      void animation.then(() => finish(animation), () => finish(animation))
     }
     const cancel = () => {
-      animations.forEach((_, animation) => animation.cancel())
+      animations.forEach((_, animation) => animation.stop())
     }
     const onPreference = () => { if (reduced.matches) cancel() }
     reduced.addEventListener('change', onPreference)
@@ -33,7 +37,7 @@ export function InteractionMotion() {
       if (reduced.matches || !(event.target instanceof Element) || !overlay.current) return
       const target = event.target.closest(ACTIONS)
       if (!(target instanceof HTMLElement) || target.matches(':disabled, [aria-disabled="true"]')
-        || target.closest('.gm-style') || target.matches(AI_ACTIONS) || !target.animate) return
+        || target.closest('.gm-style') || target.matches(AI_ACTIONS)) return
       const bounds = target.getBoundingClientRect()
       if (!bounds.width || !bounds.height) return
       const node = document.createElement('span')
@@ -45,12 +49,12 @@ export function InteractionMotion() {
       // Bound rapid clicks without queueing feedback behind the user's next action.
       if (overlay.current.childElementCount >= 3) {
         const oldest = overlay.current.firstElementChild
-        animations.forEach((element, animation) => { if (element === oldest) animation.cancel() })
+        animations.forEach((element, animation) => { if (element === oldest) animation.stop() })
         oldest?.remove()
       }
       overlay.current.append(node)
-      track(node.animate([{ opacity: .38, transform: 'scale(.35)' }, { opacity: 0, transform: 'scale(1)' }],
-        { duration: 380, easing: 'cubic-bezier(.16,1,.3,1)' }), node)
+      track(animate(node, { opacity: [.38, 0], scale: [.35, 1] },
+        { duration: DURATION.reveal, ease: EASE.out }), node)
     }
     document.addEventListener('click', pulse)
 
@@ -60,18 +64,26 @@ export function InteractionMotion() {
         if (!entry.isIntersecting) return
         intersection?.unobserve(entry.target)
         const node = entry.target
-        if (!(node instanceof HTMLElement) || reduced.matches || !node.animate || node.contains(document.activeElement)) return
-        // Nothing is hidden while waiting for the observer or when JavaScript fails.
-        track(node.animate([
-          { opacity: .35, translate: '0 12px' }, { opacity: 1, translate: '0 0' },
-        ], { duration: 360, delay: Math.min(stagger++, 5) * 35, easing: 'cubic-bezier(.16,1,.3,1)' }), node)
+        if (!(node instanceof HTMLElement)) return
+        const wasHidden = node.classList.contains('hj-pre-reveal')
+        node.classList.remove('hj-pre-reveal')
+        if (reduced.matches || node.contains(document.activeElement)) return
+        const { from } = SCROLL_REVEAL
+        // Cards rise and settle; nodes that were already on screen only get a soft lift.
+        track(animate(node, {
+          opacity: [wasHidden ? from.opacity : 0.6, 1], y: [from.y, 0], scale: [from.scale, 1],
+        }, {
+          duration: SCROLL_REVEAL.duration, delay: Math.min(stagger++, SCROLL_REVEAL.maxStagger) * SCROLL_REVEAL.stagger, ease: EASE.out,
+        }), node)
       })
-    }, { threshold: .12 })
+    }, { threshold: .12, rootMargin: '0px 0px -6% 0px' })
     const register = (root: Element) => {
       const nodes = root.matches(REVEALS) ? [root, ...root.querySelectorAll(REVEALS)] : root.querySelectorAll(REVEALS)
       nodes.forEach(node => {
         if (seen.has(node)) return
         seen.add(node)
+        // Pre-hide only what starts below the fold, so it can rise in from nothing when reached.
+        if (node instanceof HTMLElement && node.getBoundingClientRect().top > window.innerHeight) node.classList.add('hj-pre-reveal')
         intersection?.observe(node)
       })
     }
@@ -84,6 +96,7 @@ export function InteractionMotion() {
       document.removeEventListener('click', pulse)
       reduced.removeEventListener('change', onPreference)
       intersection?.disconnect()
+      document.querySelectorAll('.hj-pre-reveal').forEach(n => n.classList.remove('hj-pre-reveal'))
       mutations.disconnect()
       cancel()
     }

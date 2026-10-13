@@ -139,6 +139,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .content-skeleton::after { animation: none; }
 }

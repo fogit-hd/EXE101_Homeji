@@ -915,7 +915,7 @@
   filter: brightness(1.035);
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .map-listings__card {
     transition: none;
   }

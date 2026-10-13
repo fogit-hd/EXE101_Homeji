@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
-import { ContentSkeleton } from '../ContentSkeleton'
+import { AppointmentListSkeleton } from '../skeletons/PageSkeletons'
 import { viewingAppointmentStatusLabel } from '../../lib/labels'
 import { isoToLocalInputValue } from '../../lib/scheduleDateTime'
 import './MapAppointmentsPanel.css'
@@ -498,7 +498,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
             </span>
           </div>
 
-          {loading ? <ContentSkeleton compact count={3} label="Đang tải lịch hẹn…" /> : null}
+          {loading ? <AppointmentListSkeleton /> : null}
 
           {!loading && displayItems.length === 0 ? (
             <div className="map-appointments__empty-state">

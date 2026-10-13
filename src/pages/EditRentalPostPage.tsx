@@ -14,7 +14,7 @@ import { MediaType, RentalPostType, RoomTransferKind, UserRole } from '../api/ty
 import { DeferredMapBlock, PageFrame } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { PostFormSkeleton } from '../components/skeletons/PageSkeletons'
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { useAuth } from '../contexts/AuthContext'
@@ -297,7 +297,7 @@ export function EditRentalPostPage() {
       />
     ) : (
       <PageFrame title="Chỉnh sửa tin đăng">
-        <ContentSkeleton variant="form" count={6} label="Đang tải nội dung chỉnh sửa tin…" />
+        <PostFormSkeleton />
       </PageFrame>
     )
   }

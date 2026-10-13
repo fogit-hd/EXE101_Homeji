@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ScreenPending } from '../ScreenPending'
+import { SectionSkeleton } from '../skeletons/RouteSkeleton'
 import type { NotificationReadChange } from '../../pages/NotificationsPage'
 import {
   SavedPostsPage, RoommateWorkspace, NotificationsPage, PaymentPage, ProfilePage,
@@ -243,7 +243,7 @@ export function MapAppPanel({
             isMessages ? ' is-fill' : ''
           }`}
         >
-          <Suspense key={displayed} fallback={<ScreenPending />}>
+          <Suspense key={displayed} fallback={<SectionSkeleton section={displayed} />}>
           {displayed === 'listings' ? listingsContent : null}
           {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
           {displayed === 'invitations' ? (

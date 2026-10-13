@@ -1,3 +1,4 @@
+import { Sk } from '../../skeletons/Skeleton'
 import type { MarketplacePost } from '../../../api'
 import { formatPrice } from '../../../lib/labels'
 import {
@@ -100,6 +101,7 @@ export function FoodMarketplaceView({
     .join(', ')
 
   const railProps = {
+    loading,
     kitchens,
     cartItems,
     cartItemCount,
@@ -125,6 +127,17 @@ export function FoodMarketplaceView({
     <div className="food-market-body">
       <div className="food-catalog">
         <FoodSourceDirectory />
+        {loading ? (
+        <section className="food-featured food-featured--loading" aria-busy="true" aria-label="Đang tải gợi ý hôm nay">
+          <div className="food-featured__copy sk-stack">
+            <Sk w={140} h={10} />
+            <Sk w="85%" h={28} r={10} />
+            <Sk w="70%" h={12} />
+            <div className="sk-row" style={{ marginTop: 8 }}><Sk w={150} h={40} r={999} /><Sk w={90} h={16} /></div>
+          </div>
+          <div className="food-featured__media"><Sk w="100%" h="100%" r={16} style={{ minHeight: 150 }} /></div>
+        </section>
+        ) : (
         <section className="food-featured" aria-label="Gợi ý hôm nay">
           <div className="food-featured__copy">
             <div className="food-featured__status">
@@ -171,26 +184,32 @@ export function FoodMarketplaceView({
             ) : null}
           </div>
         </section>
+        )}
 
         <div className="food-nearby-head">
           <div>
             <h2>Gần bạn hôm nay</h2>
             <p className="food-nearby-head__note">
-              {kitchens.length > 0
+              {loading ? <Sk w={150} h={10} /> : kitchens.length > 0
                 ? `${kitchens.length} bếp trong danh sách này`
                 : 'Chưa có bếp trong danh sách này'}
             </p>
           </div>
           <p className="food-nearby-head__count">
-            {posts.length === 0 ? 'Chưa có món' : `${posts.length} món trên trang này`}
+            {loading ? <Sk w={110} h={12} /> : posts.length === 0 ? 'Chưa có món' : `${posts.length} món trên trang này`}
           </p>
         </div>
 
         {loading ? (
           <div className="food-catalog__state" role="status">
-            <div className="food-skeleton-grid" aria-hidden="true">
+            <div className="food-skeleton-grid sk-screen" aria-hidden="true">
               {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="food-skeleton-card" />
+                <div key={index} className="food-skeleton-card sk-card">
+                  <Sk h={170} r={14} />
+                  <Sk w="75%" h={16} />
+                  <Sk w="50%" h={11} />
+                  <div className="sk-row" style={{ marginTop: 'auto', justifyContent: 'space-between' }}><Sk w={90} h={18} /><Sk w={96} h={36} r={999} /></div>
+                </div>
               ))}
             </div>
             <span className="sr-only">Đang tải món ăn…</span>

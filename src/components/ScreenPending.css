@@ -1,2 +1,8 @@
-.screen-pending { width: 100%; min-height: 12rem; padding: 1.5rem; color: var(--hj-text, #18343f); }
-.screen-pending__placeholder { height: 6rem; margin-top: 1rem; border-radius: 1rem; background: var(--hj-surface-muted, #eaf2f6); }
+.screen-pending { width: 100%; min-height: 12rem; padding: 1.5rem; display: grid; gap: .75rem; align-content: start; opacity: 0; animation: screen-pending-in .32s cubic-bezier(.22,1,.36,1) .18s forwards; }
+.screen-pending__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.screen-pending__bar, .screen-pending__block { border-radius: .75rem; background: linear-gradient(90deg, var(--hj-surface-muted, #eef3f1) 0%, color-mix(in srgb, var(--hj-surface-muted, #eef3f1) 60%, #fff) 50%, var(--hj-surface-muted, #eef3f1) 100%); background-size: 200% 100%; animation: screen-pending-shimmer 1.4s ease-in-out infinite; }
+.screen-pending__bar { height: .9rem; width: 42%; }
+.screen-pending__bar--lg { height: 1.4rem; width: 64%; }
+.screen-pending__block { height: 7rem; margin-top: .5rem; border-radius: 1rem; }
+@keyframes screen-pending-in { to { opacity: 1 } }
+@keyframes screen-pending-shimmer { from { background-position: 100% 0 } to { background-position: -100% 0 } }

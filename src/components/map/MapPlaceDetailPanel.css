@@ -1850,7 +1850,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .map-detail-panel,
   .map-detail-panel.is-visible,
   .map-detail-action__icon {

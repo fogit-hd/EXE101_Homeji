@@ -1,5 +1,7 @@
-import { Suspense, useLayoutEffect, useRef } from 'react'
-import { ScreenPending } from '../ScreenPending'
+import { Suspense, useLayoutEffect } from 'react'
+import { useAnimate } from 'motion/react'
+import { transitions } from '../../lib/motionTokens'
+import { RouteSkeleton } from '../skeletons/RouteSkeleton'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { isExploreMapMode } from '../chrome/exploreMode'
@@ -35,21 +37,15 @@ export function AppLayout() {
     location.pathname === '/' &&
     new URLSearchParams(location.search).get('section') === 'messages'
 
-  const outletRef = useRef<HTMLDivElement>(null)
+  const [outletRef, animateOutlet] = useAnimate<HTMLDivElement>()
   // Camera bounds, filters and message IDs must not replay the page transition.
   const destination = `${location.pathname}:${new URLSearchParams(location.search).get('section') ?? 'home'}`
   useLayoutEffect(() => {
-    const node = outletRef.current
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (isMapPeer || reduced.matches || !node?.animate) return
+    if (isMapPeer || !outletRef.current) return
     // Opacity only: transforming this ancestor breaks sticky and fixed descendants.
-    const animation = node.animate([{ opacity: .3 }, { opacity: 1 }], {
-      duration: 240, easing: 'cubic-bezier(.16,1,.3,1)',
-    })
-    const cancel = () => { if (reduced.matches) animation.cancel() }
-    reduced.addEventListener('change', cancel)
-    return () => { animation.cancel(); reduced.removeEventListener('change', cancel) }
-  }, [destination, isMapPeer])
+    const controls = animateOutlet(outletRef.current, { opacity: [0, 1] }, transitions.reveal)
+    return () => controls.stop()
+  }, [destination, isMapPeer, animateOutlet, outletRef])
 
   return (
     <div
@@ -76,7 +72,7 @@ export function AppLayout() {
           }
           data-nav={navType}
         >
-          <Suspense fallback={<ScreenPending />}>
+          <Suspense fallback={<RouteSkeleton />}>
             <Outlet />
           </Suspense>
         </div>

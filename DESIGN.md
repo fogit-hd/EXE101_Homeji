@@ -216,6 +216,7 @@ Khi edit `exe-homeji-web/**`:
 | --- | --- |
 | Framework | Vite SPA + react-router-dom (client only) |
 | Styling | Plain CSS + CSS variables — không Tailwind/shadcn |
+| Motion | `motion` (`motion/react`) cho mọi animation UI (route/section, panel, modal, list stagger, layout, hover/press, skeleton→content). Duration/easing chỉ lấy từ `src/lib/motionTokens.ts`; `MotionConfig reducedMotion="never"` bọc App (Homeji luôn chạy animation, bỏ qua cài đặt giảm chuyển động của OS). Chỉ animate `transform`/`opacity`. GSAP **chỉ** cho intro thương hiệu. Không transform-press trên nút map shell. |
 | `react-best-practices` | Chỉ quy tắc client SPA: async parallel, bundle imports, client fetch, rerender, rendering, js. **Bỏ qua** mọi rule `server-*`, RSC, server actions, `next/dynamic`, hydration-as-SSR-framework |
 | `frontend-app-builder` | Chỉ khi user xin UI greenfield / image-gen concept mới. Refactor màn hình Homeji hiện có → bám DESIGN.md + CSS hiện tại |
 | `ui-ux-pro-max` | Có thể tham khảo heuristic chung; ưu tiên token Homeji hơn palette CSV generic |

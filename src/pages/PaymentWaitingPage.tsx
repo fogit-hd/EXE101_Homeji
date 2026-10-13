@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PaymentPurpose, PaymentStatus } from '../api/types'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { PaymentWaitSkeleton } from '../components/skeletons/PageSkeletons'
 import { PaymentDetails } from '../components/payments/PaymentDetails'
 import { ShellIcon } from '../components/shell/ShellIcons'
 import { usePaymentTracking } from '../hooks/usePaymentTracking'
@@ -27,7 +27,7 @@ export function PaymentWaitingPage() {
   if (!payment) return (
     <div className="payment-wait-page">
       <Link className="payment-back" to={historyUrl}>← Quay lại giao dịch</Link>
-      {error ? <div className="payment-wait-card"><h1>Chưa tải được giao dịch</h1><p role="alert">{error}</p><button className="payment-button" disabled={busy} onClick={() => void refresh()}>{busy ? 'Đang tải…' : 'Thử lại'}</button></div> : <ContentSkeleton variant="dashboard" count={2} label="Đang tải thanh toán…" />}
+      {error ? <div className="payment-wait-card"><h1>Chưa tải được giao dịch</h1><p role="alert">{error}</p><button className="payment-button" disabled={busy} onClick={() => void refresh()}>{busy ? 'Đang tải…' : 'Thử lại'}</button></div> : <PaymentWaitSkeleton />}
     </div>
   )
 

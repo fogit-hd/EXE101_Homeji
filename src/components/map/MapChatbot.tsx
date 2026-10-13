@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { motion } from 'motion/react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -22,6 +23,11 @@ import { AiSearchReview } from '../ai/AiSearchReview'
 import { nearbyChatIntent } from '../../lib/nearbyChatIntent'
 import type { NearbyPlaceCategory } from '../../lib/placeAutocomplete'
 import type { MapAppSection } from './MapAppPanel'
+import {
+  HOMEJI_AI_TRIGGER_ATTR,
+  onHomejiAiToggle,
+  publishHomejiAiOpen,
+} from '../../lib/homejiAiLauncher'
 import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
@@ -30,11 +36,7 @@ const HOMEJI_GREETING =
 /** Synced from video-src/AI Chat loading.lottie */
 const AI_CHAT_LOADING_SRC = '/lottie/ai-chat-loading.lottie'
 
-const FAB_SIZE = 58
-const FAB_GAP = 12
 const VIEW_MARGIN = 12
-const DRAG_THRESHOLD = 6
-const FAB_POS_KEY = 'homeji.chatbot.fabPos'
 const SHEET_MEDIA = '(max-width: 900px)'
 const ACTION_SECTIONS = new Set<MapAppSection>([
   'listings',
@@ -60,7 +62,7 @@ type Props = {
   /** Tăng giá trị để đóng Homeji từ bên ngoài (mobile overlay exclusivity). */
   dismissSignal?: number
   onOpenChange?: (open: boolean) => void
-  /** Ẩn nút Homeji khi overlay mobile đang mở (chat, tab, v.v.). */
+  /** Legacy: callers asked to hide the floating button; now only closes an open chat when it turns on. */
   hideFab?: boolean
   /** Tự né sang mép trái khi một panel rộng đang chiếm phần nội dung bên phải. */
   avoidRightContent?: boolean
@@ -75,16 +77,11 @@ type DisplayMessage = ChatbotMessage & {
   searchUpdate?: AiHighlightResponse | null
 }
 
-type FabPos = { x: number; y: number }
-
-type PanelSide = 'left' | 'right' | 'above' | 'below'
-
 type PanelLayout = {
   left: number
   top: number
   width: number
   maxHeight: number
-  side: PanelSide
 }
 
 function HomejiAvatar({ inline = false }: { inline?: boolean }) {
@@ -98,154 +95,16 @@ function HomejiAvatar({ inline = false }: { inline?: boolean }) {
   )
 }
 
-function defaultFabPos(): FabPos {
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 800
-  return {
-    x: Math.max(VIEW_MARGIN, vw - FAB_SIZE - 68),
-    y: Math.max(VIEW_MARGIN, vh - FAB_SIZE - 24),
-  }
-}
-
-function clampFabPos(pos: FabPos): FabPos {
+/** Desktop: hang under the navbar trigger, right edges aligned. */
+function navPanelLayout(anchor: DOMRect | null): PanelLayout {
   const vw = window.innerWidth
   const vh = window.innerHeight
-  return {
-    x: Math.max(VIEW_MARGIN, Math.min(pos.x, vw - FAB_SIZE - VIEW_MARGIN)),
-    y: Math.max(VIEW_MARGIN, Math.min(pos.y, vh - FAB_SIZE - VIEW_MARGIN)),
-  }
-}
-
-function readStoredFabPos(): FabPos {
-  try {
-    const raw = localStorage.getItem(FAB_POS_KEY)
-    if (!raw) return defaultFabPos()
-    const parsed = JSON.parse(raw) as Partial<FabPos>
-    if (typeof parsed.x !== 'number' || typeof parsed.y !== 'number') return defaultFabPos()
-    return clampFabPos({ x: parsed.x, y: parsed.y })
-  } catch {
-    return defaultFabPos()
-  }
-}
-
-function panelMetrics() {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  const width = Math.min(360, vw - VIEW_MARGIN * 2)
-  const maxHeight = Math.min(vh * 0.56, 520, vh - VIEW_MARGIN * 2)
-  return { width, maxHeight, vw, vh }
-}
-
-function computePanelLayout(fab: FabPos): PanelLayout {
-  const { width, maxHeight, vw, vh } = panelMetrics()
-  const fabRight = fab.x + FAB_SIZE
-  const fabBottom = fab.y + FAB_SIZE
-  const fabCx = fab.x + FAB_SIZE / 2
-  const fabCy = fab.y + FAB_SIZE / 2
-
-  const spaceRight = vw - fabRight - VIEW_MARGIN
-  const spaceLeft = fab.x - VIEW_MARGIN
-  const spaceBelow = vh - fabBottom - VIEW_MARGIN
-  const spaceAbove = fab.y - VIEW_MARGIN
-
-  const preferHorizontal = fabCx < vw / 2 ? 'right' : 'left'
-  const preferVertical = fabCy < vh / 2 ? 'below' : 'above'
-
-  const scored: Array<{ side: PanelSide; score: number }> = [
-    {
-      side: 'right',
-      score:
-        spaceRight +
-        (preferHorizontal === 'right' ? 1200 : 0) +
-        (spaceRight >= width ? 500 : spaceRight),
-    },
-    {
-      side: 'left',
-      score:
-        spaceLeft +
-        (preferHorizontal === 'left' ? 1200 : 0) +
-        (spaceLeft >= width ? 500 : spaceLeft),
-    },
-    {
-      side: 'below',
-      score:
-        spaceBelow +
-        (preferVertical === 'below' ? 900 : 0) +
-        (spaceBelow >= maxHeight * 0.7 ? 400 : spaceBelow),
-    },
-    {
-      side: 'above',
-      score:
-        spaceAbove +
-        (preferVertical === 'above' ? 900 : 0) +
-        (spaceAbove >= maxHeight * 0.7 ? 400 : spaceAbove),
-    },
-  ]
-
-  scored.sort((a, b) => b.score - a.score)
-  const side = scored[0]?.side ?? 'above'
-
-  let left = 0
-  let top = 0
-
-  if (side === 'right') {
-    left = fabRight + FAB_GAP
-    top = fabCy - maxHeight / 2
-  } else if (side === 'left') {
-    left = fab.x - FAB_GAP - width
-    top = fabCy - maxHeight / 2
-  } else if (side === 'below') {
-    left = fabCx - width / 2
-    top = fabBottom + FAB_GAP
-  } else {
-    left = fabCx - width / 2
-    top = fab.y - FAB_GAP - maxHeight
-  }
-
-  left = Math.max(VIEW_MARGIN, Math.min(left, vw - VIEW_MARGIN - width))
-  top = Math.max(VIEW_MARGIN, Math.min(top, vh - VIEW_MARGIN - maxHeight))
-
-  return { left, top, width, maxHeight, side }
-}
-
-function welcomeLayout(fab: FabPos, side: PanelSide) {
-  const welcomeW = Math.min(238, window.innerWidth - 32)
-  const welcomeH = 54
-  const fabCx = fab.x + FAB_SIZE / 2
-  const fabCy = fab.y + FAB_SIZE / 2
-
-  let left = 0
-  let top = 0
-  let tip: PanelSide = 'right'
-
-  if (side === 'right' || (side !== 'left' && fabCx < window.innerWidth / 2)) {
-    left = fab.x + FAB_SIZE + 10
-    top = fabCy - welcomeH / 2
-    tip = 'left'
-  } else if (side === 'left') {
-    left = fab.x - 10 - welcomeW
-    top = fabCy - welcomeH / 2
-    tip = 'right'
-  } else if (side === 'below') {
-    left = fabCx - welcomeW / 2
-    top = fab.y + FAB_SIZE + 10
-    tip = 'above'
-  } else {
-    left = fabCx - welcomeW / 2
-    top = fab.y - 10 - welcomeH
-    tip = 'below'
-  }
-
-  left = Math.max(
-    VIEW_MARGIN,
-    Math.min(left, window.innerWidth - VIEW_MARGIN - welcomeW),
-  )
-  top = Math.max(
-    VIEW_MARGIN,
-    Math.min(top, window.innerHeight - VIEW_MARGIN - welcomeH),
-  )
-
-  return { left, top, width: welcomeW, tip }
+  const width = Math.min(400, vw - VIEW_MARGIN * 2)
+  const top = Math.round((anchor?.bottom ?? 64) + 10)
+  const right = anchor ? anchor.right : vw - VIEW_MARGIN
+  const left = Math.max(VIEW_MARGIN, Math.min(right - width, vw - VIEW_MARGIN - width))
+  const maxHeight = Math.max(320, Math.min(600, vh - top - VIEW_MARGIN))
+  return { left, top, width, maxHeight }
 }
 
 export function MapChatbot({
@@ -253,16 +112,16 @@ export function MapChatbot({
   dismissSignal = 0,
   onOpenChange,
   hideFab = false,
-  avoidRightContent = false,
   onOpenSection,
   onNearbyRequest,
 }: Props) {
   const navigate = useNavigate()
-  const { profile, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { openAuthModal } = useAuthModal()
   const reactId = useId()
   const [open, setOpen] = useState(false)
-  const [welcomeDismissed, setWelcomeDismissed] = useState(false)
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [config, setConfig] = useState<ChatbotPopupConfig | null>(null)
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [saveHistory, setSaveHistory] = useState(false)
@@ -273,27 +132,40 @@ export function MapChatbot({
   const [error, setError] = useState<string | null>(null)
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
   const [suggestionsLeaving, setSuggestionsLeaving] = useState(false)
-  const [fabPos, setFabPos] = useState<FabPos>(() =>
-    typeof window === 'undefined' ? { x: 0, y: 0 } : readStoredFabPos(),
-  )
-  const [dragging, setDragging] = useState(false)
   const [sheetMode, setSheetMode] = useState(isSheetViewport)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const pendingIdRef = useRef(0)
-  const suppressFabClick = useRef(false)
-  const dragRef = useRef<{
-    pointerId: number
-    startX: number
-    startY: number
-    originX: number
-    originY: number
-    moved: boolean
-  } | null>(null)
-  const autoAvoidOriginRef = useRef<FabPos | null>(null)
 
-  const panel = computePanelLayout(fabPos)
-  const welcome = welcomeLayout(fabPos, panel.side)
+  const panel = navPanelLayout(anchor)
+
+  useEffect(() => onHomejiAiToggle(({ anchor: rect, open: want }) => {
+    setAnchor(rect)
+    setOpen((value) => want ?? !value)
+  }), [])
+
+  useEffect(() => {
+    publishHomejiAiOpen(open)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (event: PointerEvent) => {
+      const target = event.target as Element | null
+      if (!target || panelRef.current?.contains(target)) return
+      if (target.closest(`[${HOMEJI_AI_TRIGGER_ATTR}]`)) return
+      // Portaled UI launched from the chat (auth modal, review sheets) must not close it.
+      if (target.closest('[role="dialog"]')) return
+      setOpen(false)
+    }
+    const onResize = () => setAnchor(document.querySelector(`[${HOMEJI_AI_TRIGGER_ATTR}]`)?.getBoundingClientRect() ?? null)
+    document.addEventListener('pointerdown', onDown)
+    window.addEventListener('resize', onResize)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [open])
 
   useEffect(() => {
     let cancelled = false
@@ -329,37 +201,6 @@ export function MapChatbot({
   }, [])
 
   useEffect(() => {
-    const onResize = () => setFabPos((prev) => clampFabPos(prev))
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-
-  useEffect(() => {
-    if (sheetMode) return
-    if (avoidRightContent) {
-      setWelcomeDismissed(true)
-      setFabPos((current) => {
-        autoAvoidOriginRef.current ??= current
-        return clampFabPos({
-          x: 84,
-          y: current.y,
-        })
-      })
-      return
-    }
-
-    const previous = autoAvoidOriginRef.current
-    if (!previous) return
-    autoAvoidOriginRef.current = null
-    setFabPos(clampFabPos(previous))
-  }, [avoidRightContent, sheetMode])
-
-  useEffect(() => {
-    if (!open) return
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, busy, open])
-
-  useEffect(() => {
     if (!open) return
     const focusFrame = window.requestAnimationFrame(() => inputRef.current?.focus())
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -389,84 +230,10 @@ export function MapChatbot({
 
   if (config && !config.enabled) return null
 
-  const displayName = profile?.displayName?.trim() || 'bạn'
   const showGreeting = messages.length === 0
   const showTyping = busy && messages.some((m) => m.pending)
-  const panelVisible = open && !hideFab
+  const panelVisible = open
 
-  const openChatbot = () => {
-    setWelcomeDismissed(true)
-    setOpen(true)
-  }
-
-  const persistFabPos = (pos: FabPos) => {
-    try {
-      localStorage.setItem(FAB_POS_KEY, JSON.stringify(pos))
-    } catch {
-      /* ignore */
-    }
-  }
-
-  const onFabPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0) return
-    suppressFabClick.current = false
-    event.currentTarget.setPointerCapture(event.pointerId)
-    dragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: fabPos.x,
-      originY: fabPos.y,
-      moved: false,
-    }
-  }
-
-  const onFabPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-
-    const dx = event.clientX - drag.startX
-    const dy = event.clientY - drag.startY
-    if (!drag.moved && dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return
-
-    if (!drag.moved) {
-      drag.moved = true
-      autoAvoidOriginRef.current = null
-      setDragging(true)
-      setWelcomeDismissed(true)
-    }
-
-    setFabPos(
-      clampFabPos({
-        x: drag.originX + dx,
-        y: drag.originY + dy,
-      }),
-    )
-  }
-
-  const endFabPointer = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-
-    const wasDrag = drag.moved
-    suppressFabClick.current = wasDrag || event.type === 'pointercancel'
-    dragRef.current = null
-    setDragging(false)
-
-    if (wasDrag) {
-      setFabPos((prev) => {
-        const next = clampFabPos(prev)
-        persistFabPos(next)
-        return next
-      })
-      return
-    }
-
-  }
 
   const send = async (text: string, fromSuggestion = false) => {
     const message = text.trim()
@@ -698,20 +465,27 @@ export function MapChatbot({
   )
 
   return (
-    <div
-      className={`map-chatbot${dragging ? ' is-dragging' : ''}`}
-      style={{ pointerEvents: 'none' }}
-    >
-      <div
-        className={`map-chatbot__panel is-${panel.side}${panelVisible ? ' is-visible' : ''}${
+    <div className="map-chatbot is-nav" style={{ pointerEvents: 'none' }}>
+      <motion.div
+        ref={panelRef}
+        className={`map-chatbot__panel is-nav${panelVisible ? ' is-visible' : ''}${
           sheetMode ? ' is-sheet' : ''
         }${busy ? ' is-thinking' : ''}`}
+        initial={false}
+        animate={panelVisible
+          ? { opacity: 1, y: 0, scale: 1 }
+          : { opacity: 0, y: sheetMode ? '100%' : -10, scale: sheetMode ? 1 : 0.97 }}
+        transition={panelVisible
+          ? { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 }
+          : { duration: 0.18, ease: [0.4, 0, 1, 1] }}
         style={{
           pointerEvents: panelVisible ? 'auto' : 'none',
+          visibility: panelVisible ? 'visible' : undefined,
           left: panel.left,
           top: panel.top,
           width: panel.width,
           maxHeight: panel.maxHeight,
+          transformOrigin: sheetMode ? 'center bottom' : 'top right',
         }}
         aria-hidden={!panelVisible}
         inert={!panelVisible}
@@ -736,68 +510,7 @@ export function MapChatbot({
           </button>
         </header>
         {chatBody}
-      </div>
-
-      {!hideFab && !open && !welcomeDismissed ? (
-        <div
-          className={`map-chatbot__welcome is-tip-${welcome.tip}`}
-          role="status"
-          aria-live="polite"
-          style={{
-            left: welcome.left,
-            top: welcome.top,
-            width: welcome.width,
-            pointerEvents: 'auto',
-          }}
-        >
-          <button
-            type="button"
-            className="map-chatbot__welcome-text"
-            onClick={openChatbot}
-          >
-            <strong>Xin chào, {displayName} 👋</strong>
-            <span>Hôm nay bạn cần tìm gì?</span>
-          </button>
-          <button
-            type="button"
-            className="map-chatbot__welcome-close"
-            aria-label="Ẩn lời chào"
-            title="Ẩn lời chào"
-            onClick={() => setWelcomeDismissed(true)}
-          >
-            ×
-          </button>
-        </div>
-      ) : null}
-
-      {!hideFab ? (
-      <button
-        type="button"
-        className={`map-chatbot__fab map-motion-press${open ? ' is-open' : ''}${
-          dragging ? ' is-dragging' : ''
-        }`}
-        style={{
-          pointerEvents: 'auto',
-          left: fabPos.x,
-          top: fabPos.y,
-        }}
-        aria-expanded={open}
-        aria-label={open ? 'Đóng Homeji' : 'Mở Homeji — kéo để di chuyển'}
-        title={open ? 'Đóng Homeji' : 'Homeji — kéo để di chuyển'}
-        onPointerDown={onFabPointerDown}
-        onPointerMove={onFabPointerMove}
-        onPointerUp={endFabPointer}
-        onPointerCancel={endFabPointer}
-        onClick={event => {
-          if (event.detail > 0 && suppressFabClick.current) { suppressFabClick.current = false; return }
-          suppressFabClick.current = false
-          setWelcomeDismissed(true)
-          setOpen(value => !value)
-        }}
-      >
-        <img src="/brand/homeji-logo2.png" alt="" width="44" height="44" draggable={false} />
-      </button>
-      ) : null}
+      </motion.div>
     </div>
   )
 }

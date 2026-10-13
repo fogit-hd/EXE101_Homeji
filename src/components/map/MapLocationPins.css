@@ -466,7 +466,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .map-pin-cluster__bubble {
     transition: none;
   }

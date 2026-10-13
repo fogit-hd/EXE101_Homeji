@@ -171,7 +171,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .guest-poster-menu__panel,
   .guest-poster-menu__chevron,
   .guest-poster-menu__trigger,

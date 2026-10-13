@@ -487,7 +487,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media not all /* reduced-motion ignored: Homeji always animates */ {
   .auth-mascot,
   .auth-mascot__aura,
   .auth-mascot__ring,

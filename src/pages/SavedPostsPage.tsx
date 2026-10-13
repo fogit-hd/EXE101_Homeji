@@ -11,7 +11,7 @@ import {
 import { RentalPostType, UserRole } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { RoommateCandidatesSkeleton, SavedSkeleton } from '../components/skeletons/PageSkeletons'
 import { RentalPostCard } from '../components/RentalPostCard'
 import { RentalDecisionPanel } from '../components/ai/RentalDecisionPanel'
 import { RentalComparison } from '../components/ai/RentalComparison'
@@ -124,7 +124,7 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
+          : <SavedSkeleton />
       ) : posts.length === 0 ? (
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
@@ -160,7 +160,7 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
                   </button>
                   {candidatesFor === post.id ? (
                     candLoading ? (
-                      <ContentSkeleton compact count={2} label="Đang tải gợi ý người ở ghép…" />
+                      <RoommateCandidatesSkeleton />
                     ) : candidates.length === 0 ? (
                       <p className="map-appointments__empty">Chưa có ứng viên phù hợp.</p>
                     ) : (

@@ -11,7 +11,7 @@ export function useTabTransition(value: string, order: readonly string[], childS
     const changed = previous.current !== value
     previous.current = value
     if (!element || !changed || typeof element.animate !== 'function') return
-    const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const preference = window.matchMedia('not all')
     if (preference.matches) return
     const direction = to >= from ? 1 : -1
     // Food cart overlays are fixed siblings of its catalog: animate the catalog, not their containing block.

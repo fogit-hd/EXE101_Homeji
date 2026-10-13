@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   deleteConversationAttachment,
   downloadConversationAttachment,
   getConversationMessages,
   getConversations,
+  getMarketplacePost,
+  getRentalPost,
+  ConversationSubjectType,
   MessageAttachmentContext,
   MessageAttachmentStatus,
   sendConversationMessage,
@@ -13,7 +17,6 @@ import {
   type PostMessageAttachment,
 } from '../../api'
 import { getStoredSession } from '../../api/client'
-import { useAuth } from '../../contexts/AuthContext'
 import {
   chatLocationKindLabel,
   encodeChatLocation,
@@ -21,11 +24,12 @@ import {
   type ChatLocationPayload,
 } from '../../lib/chatLocation'
 import { getDeviceLocation } from '../../lib/geolocation'
-import { formatDate } from '../../lib/labels'
+import { formatPrice } from '../../lib/labels'
+import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { getErrorMessage } from '../../lib/errors'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
-import { ContentSkeleton } from '../ContentSkeleton'
+import { ConversationListSkeleton } from '../skeletons/PageSkeletons'
 import { staticMapUrl } from '../../lib/mapStaticMedia'
 import './MapMessagesPanel.css'
 
@@ -202,12 +206,89 @@ function conversationPreview(
   body: string | null | undefined,
   senderId: string | null | undefined,
   myId: string | null | undefined,
-): string {
-  if (!body?.trim()) return 'Chưa có tin nhắn'
+): { text: string; muted: boolean } {
+  if (!body?.trim()) return { text: 'Bắt đầu trò chuyện', muted: true }
   const loc = parseChatLocation(body)
-  const text = loc ? loc.title?.trim() || 'Đã chia sẻ vị trí' : body.trim()
-  if (myId && senderId && senderId === myId) return `Bạn: ${text}`
-  return text
+  const text = loc ? '📍 Đã gửi một vị trí' : body.trim()
+  if (myId && senderId && senderId === myId) return { text: `Bạn: ${text}`, muted: false }
+  return { text, muted: false }
+}
+
+const AVATAR_COLORS = ['#2f855a', '#c05621', '#6b46c1', '#2b6cb0', '#b83280', '#0f766e', '#a16207', '#4c51bf']
+
+function avatarColor(seed: string): string {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
+}
+
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+  return (name.slice(0, 2) || '?').toUpperCase()
+}
+
+function Avatar({ name, seed, small = false }: { name: string; seed: string; small?: boolean }) {
+  return (
+    <span className={`map-messages__avatar${small ? ' is-small' : ''}`} style={{ background: avatarColor(seed) }} aria-hidden>
+      {initialsOf(name)}
+    </span>
+  )
+}
+
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+const DAY_MS = 86_400_000
+
+/** Inbox stamp: "Vừa xong", "5 phút", "3 giờ", "Hôm qua", "3 thg 10" (year only when not this year). */
+function relativeTime(iso: string, now = new Date()): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const diff = now.getTime() - d.getTime()
+  if (diff < 60_000) return 'Vừa xong'
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} phút`
+  const days = Math.round((startOfDay(now) - startOfDay(d)) / DAY_MS)
+  if (days === 0) return `${Math.floor(diff / 3_600_000)} giờ`
+  if (days === 1) return 'Hôm qua'
+  return d.getFullYear() === now.getFullYear()
+    ? `${d.getDate()} thg ${d.getMonth() + 1}`
+    : `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+}
+
+function dayLabel(iso: string, now = new Date()): string {
+  const d = new Date(iso)
+  const days = Math.round((startOfDay(now) - startOfDay(d)) / DAY_MS)
+  if (days === 0) return 'Hôm nay'
+  if (days === 1) return 'Hôm qua'
+  return d.getFullYear() === now.getFullYear()
+    ? `${d.getDate()} thg ${d.getMonth() + 1}`
+    : `${d.getDate()} thg ${d.getMonth() + 1}, ${d.getFullYear()}`
+}
+
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+
+const GROUP_GAP_MS = 5 * 60_000
+
+const subjectTag: Record<number, { label: string; tone: string }> = {
+  [ConversationSubjectType.RentalPost]: { label: 'Phòng thuê', tone: 'room' },
+  [ConversationSubjectType.MarketplacePost]: { label: 'Chợ đồ', tone: 'market' },
+  [ConversationSubjectType.WantedPost]: { label: 'Tin cần tìm', tone: 'wanted' },
+}
+
+type ContextItem = {
+  key: string
+  kind: string
+  title: string
+  detail?: string
+  thumb?: string | null
+  href?: string
+  at: number
+  onOpen?: () => void
+}
+
+type SubjectInfo = { conversationId: string; title: string; price?: number; thumb: string | null; href: string }
+
+function directionsUrl(lat: number, lng: number) {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
 }
 
 function LocationBubble({
@@ -245,6 +326,8 @@ function LocationBubble({
           alt=""
           loading="lazy"
         />
+      ) : hasCoords ? (
+        <span className="map-messages__loc-map is-fallback" aria-hidden><i /></span>
       ) : null}
       <span className="map-messages__loc-kind">{chatLocationKindLabel(payload.kind)}</span>
       <strong className="map-messages__loc-title">{highlightText(payload.title, query)}</strong>
@@ -256,10 +339,15 @@ function LocationBubble({
           {payload.lat!.toFixed(5)}, {payload.lng!.toFixed(5)}
         </p>
       ) : null}
-      {hasCoords && onOpen ? (
+      {hasCoords ? (
+        <div className="map-messages__loc-actions">
+          <a className="map-messages__loc-btn" href={directionsUrl(payload.lat!, payload.lng!)} target="_blank" rel="noopener noreferrer">
+            Chỉ đường
+          </a>
+      {onOpen ? (
         <button
           type="button"
-          className="map-messages__loc-btn map-motion-press"
+          className="map-messages__loc-btn is-ghost map-motion-press"
           onClick={() =>
             onOpen({
               lat: payload.lat!,
@@ -274,7 +362,35 @@ function LocationBubble({
           Mở trên bản đồ
         </button>
       ) : null}
+        </div>
+      ) : null}
     </div>
+  )
+}
+
+function ContextCard({ item, onPicked }: { item: ContextItem; onPicked?: () => void }) {
+  const inner = (
+    <>
+      <span className="map-messages__ctx-thumb">
+        {item.thumb ? <img src={item.thumb} alt="" loading="lazy" /> : <svg viewBox="0 0 24 24" aria-hidden><path d="M3 10.5 12 4l9 6.5V20H3z" /></svg>}
+      </span>
+      <span className="map-messages__ctx-copy">
+        <strong>{item.title}</strong>
+        <small>
+          {item.detail ? <b>{item.detail}</b> : null}
+          <span>{item.kind}</span>
+        </small>
+      </span>
+      <span className="map-messages__ctx-go" aria-hidden>›</span>
+    </>
+  )
+  if (item.onOpen) {
+    return <button type="button" className="map-messages__ctx-card" onClick={() => { item.onOpen?.(); onPicked?.() }}>{inner}</button>
+  }
+  const external = item.href?.startsWith('http')
+  return (
+    <a className="map-messages__ctx-card" href={item.href} onClick={onPicked}
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{inner}</a>
   )
 }
 
@@ -297,8 +413,6 @@ export function MapMessagesPanel({
   const isFloating = isFloatingInbox || isFloatingThread
   /** FeatureWorkspace page (not map dock): split inbox | thread. */
   const isWorkspace = embedded && !isFloating
-  const { profile } = useAuth()
-  const displayName = profile?.displayName?.trim()?.split(/\s+/).pop() || 'bạn'
 
   const [conversations, setConversations] = useState<PostConversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
@@ -419,6 +533,72 @@ export function MapMessagesPanel({
 
   const active = conversations.find((c) => c.id === activeId) ?? null
   const peerName = active?.otherParticipantName?.trim() || 'Người dùng'
+
+  // Conversation subject (room / item) for the header context card.
+  const [subject, setSubject] = useState<SubjectInfo | null>(null)
+  const [ctxOpen, setCtxOpen] = useState(false)
+  const ctxRef = useRef<HTMLDivElement>(null)
+  useDismissOnOutside(ctxOpen, [ctxRef], () => setCtxOpen(false))
+  const subjectKey = active ? `${active.id}|${active.subjectType}|${active.subjectId}` : ''
+  useEffect(() => {
+    if (!subjectKey) return
+    const [conversationId, typeRaw, subjectId] = subjectKey.split('|')
+    const type = Number(typeRaw)
+    let cancelled = false
+    const done = (info: Omit<SubjectInfo, 'conversationId'>) => {
+      if (!cancelled) setSubject({ conversationId, ...info })
+    }
+    if (type === ConversationSubjectType.RentalPost) {
+      void getRentalPost(subjectId).then((post) => done({
+        title: post.title,
+        price: post.price,
+        thumb: post.thumbnailPath,
+        href: mapPostUrl(post.id),
+      })).catch(() => undefined)
+    } else if (type === ConversationSubjectType.MarketplacePost) {
+      void getMarketplacePost(subjectId).then((post) => done({
+        title: post.title,
+        price: post.price,
+        thumb: post.mediaUrls?.find((url) => url.trim()) ?? null,
+        href: `/?section=marketplace&market=${post.listingType === 2 ? 'food' : 'browse'}`,
+      })).catch(() => undefined)
+    }
+    return () => { cancelled = true }
+  }, [subjectKey])
+
+  const contextItems = useMemo<ContextItem[]>(() => {
+    const items: ContextItem[] = []
+    if (active && subject?.conversationId === active.id) {
+      items.push({
+        key: 'subject',
+        kind: subjectTag[active.subjectType]?.label ?? 'Tin đăng',
+        title: subject.title,
+        detail: subject.price != null ? formatPrice(subject.price) : undefined,
+        thumb: subject.thumb,
+        href: subject.href,
+        at: new Date(active.createdAt).getTime(),
+      })
+    }
+    for (const m of messages) {
+      const loc = parseChatLocation(m.body)
+      if (!loc || loc.kind !== 'place') continue
+      const hasCoords = loc.lat != null && loc.lng != null
+      items.push({
+        key: m.id,
+        kind: 'Đã chia sẻ',
+        title: loc.title,
+        detail: loc.address,
+        thumb: hasCoords ? staticMapUrl({ lat: loc.lat!, lng: loc.lng! }, { width: 96, height: 96, zoom: 15 }) : null,
+        href: hasCoords && !onFocusMap ? directionsUrl(loc.lat!, loc.lng!) : undefined,
+        onOpen: hasCoords && onFocusMap
+          ? () => onFocusMap({ lat: loc.lat!, lng: loc.lng!, title: loc.title, address: loc.address, kind: loc.kind, conversationId: m.conversationId })
+          : undefined,
+        at: new Date(m.sentAt).getTime(),
+      })
+    }
+    return items.sort((a, b) => b.at - a.at)
+  }, [active, subject, messages, onFocusMap])
+  const primaryContext = contextItems[0] ?? null
 
   const matchedIds = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -622,13 +802,6 @@ export function MapMessagesPanel({
     })
   }, [conversations, inboxFilter, inboxQuery])
 
-  const initials = (name: string) => {
-    const parts = name.trim().split(/\s+/).filter(Boolean)
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-    }
-    return (name.slice(0, 2) || '?').toUpperCase()
-  }
 
   return (
     <div
@@ -638,20 +811,6 @@ export function MapMessagesPanel({
         isFloatingThread || threadVisible ? ' is-thread' : ' is-inbox'
       }`}
     >
-      {isWorkspace ? (
-        <header className="map-messages__page-head">
-          <div className="map-messages__page-copy">
-            <span className="map-messages__eyebrow">Trao đổi</span>
-            <h1 className="map-messages__page-title">Tin nhắn của {displayName}</h1>
-            <p className="map-messages__page-lead">
-              Chủ nhà, người ở ghép và người bán quanh khu phố — tất cả trong một hộp thư.
-            </p>
-          </div>
-          <a href="/?section=listings" className="map-messages__new-btn">
-            Tin nhắn mới
-          </a>
-        </header>
-      ) : null}
 
       {isFloatingInbox ? (
         <header className="map-messages__float-head">
@@ -684,6 +843,12 @@ export function MapMessagesPanel({
       >
         {isWorkspace ? (
           <>
+            <header className="map-messages__inbox-head">
+              <h1 className="map-messages__inbox-title">Tin nhắn</h1>
+              <a href="/?section=listings" className="map-messages__new-icon" aria-label="Tin nhắn mới" title="Tin nhắn mới">
+                <svg viewBox="0 0 24 24" aria-hidden><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+              </a>
+            </header>
             <label className="map-messages__inbox-search" ref={inboxSearchRef}>
               <input
                 type="search"
@@ -702,7 +867,7 @@ export function MapMessagesPanel({
                 className={inboxFilter === 'all' ? 'is-active' : ''}
                 onClick={() => setInboxFilter('all')}
               >
-                Tất cả {conversations.length}
+                Tất cả
               </button>
               <button
                 type="button"
@@ -711,7 +876,7 @@ export function MapMessagesPanel({
                 className={inboxFilter === 'unread' ? 'is-active' : ''}
                 onClick={() => setInboxFilter('unread')}
               >
-                Chưa đọc {unreadTotal}
+                Chưa đọc{unreadTotal > 0 ? <span className="map-messages__filter-count">{unreadTotal}</span> : null}
               </button>
               <button
                 type="button"
@@ -725,7 +890,7 @@ export function MapMessagesPanel({
             </div>
           </>
         ) : null}
-        {loading ? <ContentSkeleton compact count={3} label="Đang tải hộp thư…" /> : null}
+        {loading ? <ConversationListSkeleton /> : null}
         {!loading && filteredConversations.length === 0 ? (
           <p className="map-messages__empty">
             {conversations.length === 0
@@ -743,24 +908,28 @@ export function MapMessagesPanel({
                 }`}
                 onClick={() => openThread(c.id)}
               >
-                <span className="map-messages__avatar" aria-hidden>
-                  {initials(c.otherParticipantName || '?')}
-                </span>
+                <Avatar name={c.otherParticipantName || '?'} seed={c.otherParticipantId || c.id} />
                 <span className="map-messages__meta">
                   <span className="map-messages__meta-top">
                     <strong>{c.otherParticipantName || 'Người dùng'}</strong>
                     <time className="map-messages__time" dateTime={c.updatedAt}>
-                      {formatDate(c.updatedAt)}
+                      {relativeTime(c.updatedAt)}
                     </time>
                   </span>
                   <span className="map-messages__meta-bottom">
-                    <small className="map-messages__preview">
-                      {conversationPreview(c.lastMessage, c.lastMessageSenderId, me)}
-                    </small>
+                    {(() => {
+                      const pv = conversationPreview(c.lastMessage, c.lastMessageSenderId, me)
+                      return <small className={`map-messages__preview${pv.muted ? ' is-muted' : ''}`}>{pv.text}</small>
+                    })()}
                     {(c.unreadCount ?? 0) > 0 ? (
-                      <span className="map-messages__unread-dot" aria-hidden />
+                      <span className="map-messages__unread-badge" aria-label={`${c.unreadCount} tin chưa đọc`}>
+                        {c.unreadCount > 99 ? '99+' : c.unreadCount}
+                      </span>
                     ) : null}
                   </span>
+                  {subjectTag[c.subjectType] ? (
+                    <span className={`map-messages__tag is-${subjectTag[c.subjectType].tone}`}>{subjectTag[c.subjectType].label}</span>
+                  ) : null}
                 </span>
               </button>
             </li>
@@ -784,15 +953,58 @@ export function MapMessagesPanel({
           <>
         <header className="map-messages__thread-head">
           {isFloatingThread ? null : (
-            <button type="button" className="map-messages__back map-motion-press" onClick={closeThread}>
-              ←
+            <button type="button" className="map-messages__back map-motion-press" onClick={closeThread} aria-label="Quay lại hộp thư">
+              <svg viewBox="0 0 24 24" aria-hidden><path d="m15 6-6 6 6 6" /></svg>
             </button>
           )}
+          <Avatar name={peerName} seed={active?.otherParticipantId || activeId || peerName} small />
           <div className="map-messages__thread-titles">
             <strong className="map-messages__peer-name" title={peerName}>
               {peerName}
             </strong>
+            {active && subjectTag[active.subjectType] ? (
+              <small className="map-messages__peer-sub">{subjectTag[active.subjectType].label}</small>
+            ) : null}
           </div>
+
+          {primaryContext ? (
+            <div className="map-messages__ctx" ref={ctxRef}>
+              <ContextCard item={primaryContext} />
+              {contextItems.length > 1 ? (
+                <button
+                  type="button"
+                  className={`map-messages__ctx-more${ctxOpen ? ' is-open' : ''}`}
+                  aria-expanded={ctxOpen}
+                  aria-haspopup="dialog"
+                  aria-label={`Xem ${contextItems.length} mục đã nhắc trong cuộc trò chuyện`}
+                  onClick={() => setCtxOpen((v) => !v)}
+                >
+                  +{contextItems.length - 1}
+                </button>
+              ) : null}
+              <AnimatePresence>
+                {ctxOpen ? (
+                  <motion.div
+                    className="map-messages__ctx-pop"
+                    role="dialog"
+                    aria-label="Các mục trong cuộc trò chuyện"
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setCtxOpen(false) }}
+                  >
+                    <strong className="map-messages__ctx-pop-title">Đã nhắc trong cuộc trò chuyện</strong>
+                    <ul>
+                      {contextItems.map((item) => (
+                        <li key={item.key}><ContextCard item={item} onPicked={() => setCtxOpen(false)} /></li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          ) : null}
 
           <div className="map-messages__thread-actions">
             <button
@@ -875,23 +1087,40 @@ export function MapMessagesPanel({
         ) : null}
 
         <div className="map-messages__bubbles">
-          {messages.map((m) => {
+          <AnimatePresence initial={false}>
+          {messages.map((m, idx) => {
             const mine = me != null && m.senderId === me
             const location = parseChatLocation(m.body)
             const isHit = matchedIds.includes(m.id)
             const isCurrent =
               isHit && matchedIds[Math.min(matchIndex, matchedIds.length - 1)] === m.id
+            const prev = messages[idx - 1]
+            const next = messages[idx + 1]
+            const t = new Date(m.sentAt).getTime()
+            const newDay = !prev || startOfDay(new Date(prev.sentAt)) !== startOfDay(new Date(m.sentAt))
+            const joinsPrev = !newDay && prev?.senderId === m.senderId && t - new Date(prev.sentAt).getTime() < GROUP_GAP_MS
+            const nextNewDay = !next || startOfDay(new Date(next.sentAt)) !== startOfDay(new Date(m.sentAt))
+            const joinsNext = !nextNewDay && next?.senderId === m.senderId && new Date(next.sentAt).getTime() - t < GROUP_GAP_MS
+            const hasText = !location && m.body.trim().length > 0
             return (
-              <div
-                key={m.id}
-                ref={(el) => {
+              <Fragment key={m.id}>
+              {newDay ? <div className="map-messages__day" role="separator">{dayLabel(m.sentAt)}</div> : null}
+              <motion.div
+                ref={(el: HTMLDivElement | null) => {
                   if (el) matchRefs.current.set(m.id, el)
                   else matchRefs.current.delete(m.id)
                 }}
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 460, damping: 32 }}
                 className={`map-messages__bubble${mine ? ' is-mine' : ''}${
                   location ? ' is-location' : ''
-                }${isHit ? ' is-hit' : ''}${isCurrent ? ' is-hit-current' : ''}`}
+                }${joinsPrev ? ' joins-prev' : ''}${joinsNext ? ' joins-next' : ''}${!hasText && !location ? ' is-media' : ''}${isHit ? ' is-hit' : ''}${isCurrent ? ' is-hit-current' : ''}`}
               >
+                {!mine && !joinsNext ? (
+                  <span className="map-messages__bubble-avatar"><Avatar name={peerName} seed={m.senderId} small /></span>
+                ) : null}
+                <div className="map-messages__bubble-body">
                 {m.attachments?.length ? (
                   <div className="map-messages__images">
                     {m.attachments.map((attachment) => (
@@ -927,13 +1156,16 @@ export function MapMessagesPanel({
                     query={searchQuery}
                     conversationId={activeId}
                   />
-                ) : (
+                ) : hasText ? (
                   <p>{highlightText(m.body, searchQuery)}</p>
-                )}
-                <time>{formatDate(m.sentAt)}</time>
-              </div>
+                ) : null}
+                </div>
+                {!joinsNext ? <time dateTime={m.sentAt}>{clock(m.sentAt)}</time> : null}
+              </motion.div>
+              </Fragment>
             )
           })}
+          </AnimatePresence>
           <div ref={bottomRef} />
         </div>
 
@@ -946,10 +1178,10 @@ export function MapMessagesPanel({
                 disabled={sending}
                 onClick={() => imageInputRef.current?.click()}
               >
-                Gửi ảnh phòng…
+                <svg viewBox="0 0 24 24" aria-hidden><rect x="3" y="5" width="18" height="14" rx="3" /><circle cx="9" cy="11" r="2" /><path d="m21 16-5-5-8 8" /></svg>Gửi ảnh phòng…
               </button>
               <button type="button" role="menuitem" disabled={sending} onClick={() => void handleSendGps()}>
-                Gửi vị trí hiện tại
+                <svg viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg>Gửi vị trí hiện tại
               </button>
               <button
                 type="button"
@@ -960,7 +1192,7 @@ export function MapMessagesPanel({
                   setAttachMode('address')
                 }}
               >
-                Gửi địa chỉ…
+                <svg viewBox="0 0 24 24" aria-hidden><path d="M3 21h18M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>Gửi địa chỉ…
               </button>
               <button
                 type="button"
@@ -972,7 +1204,7 @@ export function MapMessagesPanel({
                   void handleSendTarget('place', selectedPlace, 'Địa điểm trên bản đồ')
                 }
               >
-                Gửi địa điểm{selectedPlace ? `: ${selectedPlace.name}` : ''}
+                <svg viewBox="0 0 24 24" aria-hidden><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5Z" /></svg>Gửi địa điểm{selectedPlace ? `: ${selectedPlace.name}` : ''}
               </button>
               <button
                 type="button"
@@ -984,7 +1216,7 @@ export function MapMessagesPanel({
                   void handleSendTarget('place', selectedListing, 'Tin đăng')
                 }
               >
-                Gửi tin đăng{selectedListing ? `: ${selectedListing.name}` : ''}
+                <svg viewBox="0 0 24 24" aria-hidden><path d="M4 5h16v14H4z" /><path d="M8 9h8M8 13h5" /></svg>Gửi tin đăng{selectedListing ? `: ${selectedListing.name}` : ''}
               </button>
               <button
                 type="button"
@@ -994,7 +1226,7 @@ export function MapMessagesPanel({
                   mapArea && void handleSendTarget('area', mapArea, 'Khu vực')
                 }
               >
-                Gửi khu vực{mapArea ? `: ${mapArea.name}` : ''}
+                <svg viewBox="0 0 24 24" aria-hidden><path d="M4 4h16v16H4z" strokeDasharray="3 3" /></svg>Gửi khu vực{mapArea ? `: ${mapArea.name}` : ''}
               </button>
             </div>
           ) : null}
@@ -1110,21 +1342,23 @@ export function MapMessagesPanel({
               disabled={!activeId || sending}
               onClick={() => setAttachMode((m) => (m ? null : 'menu'))}
             >
-              +
+              <svg viewBox="0 0 24 24" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Nhập tin nhắn…"
+              placeholder={activeId ? `Nhắn cho ${peerName}…` : 'Nhập tin nhắn…'}
               aria-label="Nội dung tin nhắn"
               disabled={!activeId}
             />
             <button
               type="submit"
-              className="map-motion-press"
+              className="map-messages__send map-motion-press"
+              aria-label="Gửi"
+              title="Gửi"
               disabled={(imageFiles.length === 0 && !draft.trim()) || sending}
             >
-              Gửi
+              <svg viewBox="0 0 24 24" aria-hidden><path d="M5 12h13M13 6l6 6-6 6" /></svg>
             </button>
           </form>
         </div>

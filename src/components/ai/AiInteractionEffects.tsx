@@ -10,7 +10,7 @@ export function AiInteractionEffects() {
   const nextId = useRef(0)
 
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const reduced = window.matchMedia('not all')
     const timers = new Set<number>()
     const pulse = (event: MouseEvent) => {
       if (reduced.matches || !(event.target instanceof Element)) return

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { forgotPassword } from '../api'
 import { PageNotice } from '../components/toast/PageNotice'
 import { getErrorMessage } from '../lib/errors'
+import { RevealText } from '../components/motion/RevealText'
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -31,7 +32,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="container page auth-page">
       <div className="auth-card card">
-        <h1 className="page-title">Quên mật khẩu</h1>
+        <RevealText as="h1" className="page-title" text="Quên mật khẩu" />
         <p className="page-subtitle">Nhập email để nhận liên kết đặt lại mật khẩu</p>
 
         <PageNotice message={error} tone="error" />

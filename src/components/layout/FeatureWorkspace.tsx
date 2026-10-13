@@ -1,6 +1,6 @@
 import { PageFrame } from '../chrome'
 import { Suspense, useCallback } from 'react'
-import { ScreenPending } from '../ScreenPending'
+import { SectionSkeleton } from '../skeletons/RouteSkeleton'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationType, type Notification } from '../../api'
 import {
@@ -137,7 +137,7 @@ export function FeatureWorkspace({ section }: Props) {
         chromeSlots={!figmaOwnHeader}
         className="feature-workspace__frame"
       >
-        <Suspense key={section} fallback={<ScreenPending />}>
+        <Suspense key={section} fallback={<SectionSkeleton section={section} />}>
         {section === 'saved' ? <SavedPostsPage embedded /> : null}
         {section === 'invitations' ? (
           <RoommateWorkspace onOpenConversation={openConversation} />

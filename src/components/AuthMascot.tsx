@@ -66,7 +66,7 @@ export function AuthMascot({
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const mq = window.matchMedia('not all')
     const sync = () => setSystemReduced(mq.matches)
     sync()
     mq.addEventListener?.('change', sync)
