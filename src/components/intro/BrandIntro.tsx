@@ -8,7 +8,7 @@ import './BrandIntro.css'
 
 const SLOGAN = 'Trọ an tâm · Nâng tầm cuộc sống'
 /** Never hold the user longer than this; home shows its own skeleton if still loading. */
-const MAX_HOLD_MS = 7000
+const MAX_HOLD_MS = 8500
 /** Mask brush width (font units): wide enough to cover a stroke's full thickness from its outline. */
 const BRUSH = 150
 /** Flat stroke list in writing order: each letter, then its accents as their own short strokes. */
@@ -204,8 +204,8 @@ export function BrandIntro() {
       //     riding the live drawing point; accents follow their letter as short separate strokes.
       tl.to(tail, { opacity: 0, duration: 0.45, ease: 'power1.out' }, t + 0.25)
         .to(stroke, { opacity: 0, duration: 0.4 }, t + 0.1)
-      const WRITE = 1.45
-      const LIFT = 0.035 // pen-lift hop between strokes
+      const WRITE = 2.8
+      const LIFT = 0.05 // pen-lift hop between strokes
       const weight = lens.map(l => Math.sqrt(l))
       const wsum = weight.reduce((a, b) => a + b, 0)
       const drawTotal = WRITE - LIFT * (brushes.length - 1)
