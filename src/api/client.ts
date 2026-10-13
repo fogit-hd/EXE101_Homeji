@@ -21,6 +21,7 @@ function resolveApiBase(): string {
 
 const API_BASE = resolveApiBase()
 const API_TIMEOUT_MS = 20_000
+export const AI_REQUEST_TIMEOUT_MS = 40_000
 const UPLOAD_TIMEOUT_MS = 90_000
 
 export class ApiRequestError extends Error {
@@ -52,8 +53,7 @@ async function fetchWithTimeout(
     else external.addEventListener('abort', onExternalAbort, { once: true })
   }
   try {
-    const { signal: _externalSignal, ...rest } = init
-    return await fetch(input, { ...rest, signal: controller.signal })
+    return await fetch(input, { ...init, signal: controller.signal })
   } catch (error) {
     if (external?.aborted) {
       throw error instanceof DOMException ? error : new DOMException('Aborted', 'AbortError')
@@ -112,6 +112,7 @@ type RequestOptions = {
   auth?: boolean
   params?: Record<string, string | number | boolean | string[] | undefined>
   signal?: AbortSignal
+  timeoutMs?: number
 }
 
 function buildUrl(path: string, params?: RequestOptions['params']): string {
@@ -142,7 +143,7 @@ function parseErrorBody(text: string, statusText: string): ApiError {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, auth = true, params, signal } = options
+  const { method = 'GET', body, auth = true, params, signal, timeoutMs = API_TIMEOUT_MS } = options
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
@@ -169,7 +170,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal,
-    }, API_TIMEOUT_MS)
+    }, timeoutMs)
   } catch (error) {
     if (error instanceof ApiRequestError) throw error
     if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {

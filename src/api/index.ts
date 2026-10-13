@@ -1,4 +1,4 @@
-import { apiDownload, apiRequest, apiUpload } from './client'
+import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload } from './client'
 import {
   getDefaultNotifications,
   isDefaultNotificationId,
@@ -320,12 +320,14 @@ export const completeViewingAppointment = (id: string) =>
 // AI
 export const parseAiSearch = (text: string) =>
   apiRequest<AiParsedSearchCriteria>('/api/ai/parse-search', {
+    timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     body: { text },
   })
 
 export const highlightRentalPosts = (data: { text?: string; maxResults?: number; previousCriteria?: AiParsedSearchCriteria }, signal?: AbortSignal) =>
   apiRequest<AiHighlightResponse>('/api/ai/highlight-rental-posts', {
+    timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     body: { text: data.text, maxResults: data.maxResults ?? 5, previousCriteria: data.previousCriteria },
     signal,
@@ -346,6 +348,7 @@ export const getChatbotMessages = (conversationId: string) =>
 
 export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria }) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
+    timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     body: {
       message: data.message,
@@ -665,5 +668,6 @@ export const getMyActivities = (params?: { type?: UserActivityType; take?: numbe
 
 export const generateRentalDraft = (facts: import('../lib/rentalDraft').RentalDraftFacts, signal?: AbortSignal) =>
   apiRequest<{ title: string; description: string; missing: string[] }>('/api/ai/rental-draft', {
+    timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST', body: facts, signal,
   })
