@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
 import { INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
-import { HOMEJI_MARK_H, HOMEJI_MARK_PATH, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
+import { HOMEJI_MARK_H, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
 import { SLOGAN_BOTTOM, SLOGAN_GLYPHS, SLOGAN_TOP, SLOGAN_WIDTH } from './sloganGlyphs'
 import './BrandIntro.css'
 
@@ -46,18 +46,6 @@ function warmAssets(): Promise<unknown> {
     if (img.decode) jobs.push(img.decode().catch(() => {}))
   }
   return Promise.all(jobs)
-}
-
-/** Cumulative path length at every command end — the pen eases into each corner. */
-function cornerLengths(path: string): number[] {
-  const cmds = path.match(/[MLCZ][^MLCZ]*/g) ?? []
-  const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  const out = [0]
-  for (let i = 2; i <= cmds.length; i++) {
-    probe.setAttribute('d', cmds.slice(0, i).join(''))
-    out.push(probe.getTotalLength())
-  }
-  return out
 }
 
 export function BrandIntro() {
@@ -123,7 +111,6 @@ export function BrandIntro() {
 
       // ---- Pen path through the mark: slow into corners, fast on straights.
       const length = stroke.getTotalLength()
-      const corners = cornerLengths(HOMEJI_MARK_PATH)
       const markPt = (len: number) => {
         const p = stroke.getPointAtLength(Math.max(0, Math.min(length, len)))
         return { x: homeX + p.x * k, y: homeY + p.y * k }
@@ -200,117 +187,123 @@ export function BrandIntro() {
       })
 
       // 1 — The thread tip fades in as the first stroke starts.
-      tl.fromTo(pen, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power1.out' }, 0.16)
-        .set(hero, { opacity: 1 }, 0.16)
+      let t = 0.16
+      tl.fromTo(pen, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power1.out' }, t)
+        .set(hero, { opacity: 1 }, t)
 
-      // 2 — One continuous line draws the house; each segment eases so the pen
-      //     decelerates into corners like a hand would.
-      const DRAW = 1.2
-      let t = 0.18
-      const st = { len: 0 }
-      for (let i = 1; i < corners.length; i++) {
-        const d = Math.max(0.045, ((corners[i] - corners[i - 1]) / length) * DRAW)
-        tl.to(st, {
-          len: corners[i], duration: d, ease: 'sine.inOut',
-          onUpdate: () => {
-            stroke.style.strokeDashoffset = `${length - st.len}`
-            const p = markPt(st.len)
-            movePen(p.x, p.y)
-          },
-        }, t)
-        t += d
-      }
-      // The ink floods in behind the thread, which thins and then hands over to the fill.
-      tl.to(fill, { opacity: 1, duration: 0.45, ease: 'power1.out' }, t - 0.12)
-        .to(stroke, { strokeWidth: 18, duration: 0.45, ease: 'power1.out' }, t - 0.12)
-
-      // 3 — Without lifting, the pen slides to the mark's foot and swoops down to the text.
-      const slide = { v: 0 }
-      const from = markPt(length)
-      tl.to(slide, { v: 1, duration: 0.14, ease: 'power1.inOut', onUpdate: () => movePen(from.x + (sx - from.x) * slide.v, from.y + (sy - from.y) * slide.v) }, t)
-      t += 0.14
-      const tw = { v: 0 }
-      tl.set(tail, { opacity: 1 }, t)
-        .to(tw, {
-        v: 1, duration: 0.3, ease: 'sine.in',
-        onUpdate: () => {
-          tail.style.strokeDashoffset = `${tailLen * (1 - tw.v)}`
-          const p = tail.getPointAtLength(tailLen * tw.v)
-          movePen(p.x, p.y)
-        },
-      }, t)
-      t += 0.3
-
-      // 4 — Handwriting: every letter is laid down along its own outline in pen order, the tip
-      //     riding the live drawing point; accents follow their letter as short separate strokes.
-      tl.to(tail, { opacity: 0, duration: 0.45, ease: 'power1.out' }, t + 0.25)
-        .to(stroke, { opacity: 0, duration: 0.4 }, t + 0.1)
-      // One master clock drives ink and pen. Letters share LETTER_TIME by sqrt(length); every
-      // accent gets its own clearly visible ACCENT_TIME; between strokes the lifted pen glides
-      // on a short eased arc. The tip sits exactly on the ink frontier (same path, same length),
-      // and each contour is its own stroke so the tip never jumps mid-stroke.
-      const LETTER_TIME = 1.15
-      const ACCENT_TIME = 0.18
-      type Seg =
-        | { kind: 'ink'; i: number; t0: number; t1: number }
-        | { kind: 'glide'; a: { x: number; y: number }; b: { x: number; y: number }; lift: number; t0: number; t1: number }
+      // 2–4 — ONE continuous motion: the house outline, the slide to its foot, the swoop down,
+      //        then every glyph loop and accent with short lifted glides in between. All of it
+      //        is laid out on a single arc-length chain and played at near-constant speed
+      //        (mild global ease-in/out only), so the thread never stops mid-writing.
+      type Pt = { x: number; y: number }
       /** Exact ink frontier: the same path and the same length that drive the mask reveal. */
       const frontier = (i: number, f: number) => {
         const p = brushes[i].getPointAtLength(lens[i] * f)
         return sp(p.x, p.y)
       }
-      const letterW = brushes.reduce((sum, _, i) => sum + (STROKES[i].accent ? 0 : Math.sqrt(lens[i])), 0)
+      type Seg = { dur: number; t0: number; apply: (f: number) => void; done?: () => void }
       const segs: Seg[] = []
       let clock = 0
-      let prev = { x: tx, y: ty }
+      const push = (dur: number, apply: (f: number) => void, done?: () => void) => {
+        segs.push({ dur, t0: clock, apply, done })
+        clock += dur
+      }
+      const arcLen = (a: Pt, b: Pt, lift: number) => Math.hypot(b.x - a.x, b.y - a.y) + lift * 1.2
+      const glide = (a: Pt, b: Pt, speed: number) => {
+        const dist = Math.hypot(b.x - a.x, b.y - a.y)
+        if (dist < 0.5) return
+        const lift = Math.min(fs * 0.3, dist * 0.22)
+        const mx = (a.x + b.x) / 2
+        const my = Math.min(a.y, b.y) - lift
+        push(arcLen(a, b, lift) / speed, f => movePen(
+          (1 - f) ** 2 * a.x + 2 * (1 - f) * f * mx + f * f * b.x,
+          (1 - f) ** 2 * a.y + 2 * (1 - f) * f * my + f * f * b.y))
+      }
+
+      // Phase A: house + slide + swoop (~1.5s).
+      const from = markPt(length)
+      const logoPx = length * k
+      const slidePx = Math.hypot(sx - from.x, sy - from.y)
+      const tailPx = tailLen
+      const speedA = (logoPx + slidePx + tailPx) / 1.5
+      push(logoPx / speedA, f => {
+        stroke.style.strokeDashoffset = `${length * (1 - f)}`
+        const p = markPt(length * f)
+        movePen(p.x, p.y)
+      })
+      const logoEnd = clock
+      push(slidePx / speedA, f => movePen(from.x + (sx - from.x) * f, from.y + (sy - from.y) * f))
+      const tailStart = clock
+      push(tailPx / speedA, f => {
+        tail.style.strokeDashoffset = `${tailLen * (1 - f)}`
+        const p = tail.getPointAtLength(tailLen * f)
+        movePen(p.x, p.y)
+      })
+      const writeStart = clock
+
+      // Phase B: the slogan (~3s). Glides run 1.4× faster than ink, never stopping.
+      let inkPx = 0
+      let gl = 0
+      let prev: Pt = { x: tx, y: ty }
       brushes.forEach((_, i) => {
-        const entry = frontier(i, 0)
-        const dist = Math.hypot(entry.x - prev.x, entry.y - prev.y)
-        if (i > 0 || dist > 1) {
-          const g = 0.006 + Math.min(0.05, dist / (fs * 50))
-          segs.push({ kind: 'glide', a: prev, b: entry, lift: Math.min(fs * 0.35, 6 + dist * 0.25), t0: clock, t1: clock + g })
-          clock += g
-        }
-        const d = STROKES[i].accent ? ACCENT_TIME / STROKES.filter(o => o.accent && o.glyph === STROKES[i].glyph && o.key.split('-')[1] === STROKES[i].key.split('-')[1]).length : (Math.sqrt(lens[i]) / letterW) * LETTER_TIME
-        segs.push({ kind: 'ink', i, t0: clock, t1: clock + d })
-        clock += d
+        const e = frontier(i, 0)
+        const d = Math.hypot(e.x - prev.x, e.y - prev.y)
+        if (d >= 0.5) gl += arcLen(prev, e, Math.min(fs * 0.3, d * 0.22)) / 1.4
+        inkPx += lens[i] * u
         prev = frontier(i, 1)
       })
-      const WRITE = clock
-      const offsets = brushes.map(() => -1)
-      const master = { t: 0 }
+      const speedB = (inkPx + gl) / 3.0
+      prev = { x: tx, y: ty }
+      const accentDone: { i: number; at: number }[] = []
+      brushes.forEach((b, i) => {
+        glide(prev, frontier(i, 0), speedB * 1.4)
+        push((lens[i] * u) / speedB, f => {
+          b.style.strokeDashoffset = `${(lens[i] + 1) * (1 - f)}`
+          const p = frontier(i, f)
+          movePen(p.x, p.y)
+        })
+        if (STROKES[i].accent) accentDone.push({ i, at: clock })
+        prev = frontier(i, 1)
+      })
+      const CHAIN = clock
+
+      // Near-linear time map: 80% linear + 20% sine ease → speed never drops below ~0.7×.
+      const master = { p: 0 }
+      let cursor = 0
       tl.to(master, {
-        t: WRITE, duration: WRITE, ease: 'none',
+        p: 1, duration: CHAIN, ease: 'none',
         onUpdate: () => {
-          const now = master.t
-          for (const sg of segs) {
-            if (sg.kind === 'ink') {
-              const f = Math.max(0, Math.min(1, (now - sg.t0) / (sg.t1 - sg.t0)))
-              // Gentle ease-in/out inside each stroke: slows into the ends and tight turns.
-              const e = 0.5 - 0.5 * Math.cos(Math.PI * f) * 0.6 - 0.2 * (1 - 2 * f) // blend linear + sine
-              const fe = Math.max(0, Math.min(1, e))
-              const off = (lens[sg.i] + 1) * (1 - fe)
-              if (offsets[sg.i] !== off) { offsets[sg.i] = off; brushes[sg.i].style.strokeDashoffset = `${off}` }
-              if (now >= sg.t0 && now <= sg.t1) { const p = frontier(sg.i, fe); movePen(p.x, p.y) }
-            } else if (now >= sg.t0 && now <= sg.t1) {
-              const f = (now - sg.t0) / (sg.t1 - sg.t0)
-              const e = f * f * (3 - 2 * f)
-              const mx = (sg.a.x + sg.b.x) / 2
-              const my = Math.min(sg.a.y, sg.b.y) - sg.lift
-              const x = (1 - e) ** 2 * sg.a.x + 2 * (1 - e) * e * mx + e * e * sg.b.x
-              const y = (1 - e) ** 2 * sg.a.y + 2 * (1 - e) * e * my + e * e * sg.b.y
-              movePen(x, y)
-            }
+          const x = master.p
+          const now = CHAIN * (0.8 * x + 0.2 * (0.5 - 0.5 * Math.cos(Math.PI * x)))
+          while (cursor < segs.length - 1 && now >= segs[cursor].t0 + segs[cursor].dur) {
+            segs[cursor].apply(1) // finish any segment skipped within a frame
+            cursor++
           }
+          const sg = segs[cursor]
+          sg.apply(Math.max(0, Math.min(1, (now - sg.t0) / sg.dur)))
         },
       }, t)
-      segs.forEach(sg => {
-        if (sg.kind === 'ink' && STROKES[sg.i].accent) {
-          tl.fromTo(brushes[sg.i].parentElement!.nextElementSibling!, { scale: 1.2, transformOrigin: '50% 50%' },
-            { scale: 1, duration: 0.45, ease: 'back.out(2.5)' }, t + sg.t1 - 0.05)
+      // Real-time positions of chain events (inverse of the time map, numerically).
+      const realAt = (chainT: number) => {
+        let lo = 0, hi = 1
+        for (let n = 0; n < 30; n++) {
+          const m = (lo + hi) / 2
+          const v = CHAIN * (0.8 * m + 0.2 * (0.5 - 0.5 * Math.cos(Math.PI * m)))
+          if (v < chainT) lo = m; else hi = m
         }
+        return t + lo * CHAIN
+      }
+      // The ink floods in behind the thread, which thins and then hands over to the fill.
+      tl.to(fill, { opacity: 1, duration: 0.45, ease: 'power1.out' }, realAt(logoEnd) - 0.12)
+        .to(stroke, { strokeWidth: 18, duration: 0.45, ease: 'power1.out' }, realAt(logoEnd) - 0.12)
+        .set(tail, { opacity: 1 }, realAt(tailStart))
+        .to(tail, { opacity: 0, duration: 0.45, ease: 'power1.out' }, realAt(writeStart) + 0.25)
+        .to(stroke, { opacity: 0, duration: 0.4 }, realAt(writeStart) + 0.1)
+      accentDone.forEach(({ i, at }) => {
+        tl.fromTo(brushes[i].parentElement!.nextElementSibling!, { scale: 1.2, transformOrigin: '50% 50%' },
+          { scale: 1, duration: 0.45, ease: 'back.out(2.5)' }, realAt(at) - 0.05)
       })
-      t += WRITE
+      t += CHAIN
 
       tl.to(pen, { opacity: 0, duration: 0.22, ease: 'power2.in' }, t)
 
