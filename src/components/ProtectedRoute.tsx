@@ -1,14 +1,14 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { UserRole } from '../api/types'
 import { useAuth } from '../contexts/AuthContext'
-import { ContentSkeleton } from './ContentSkeleton'
+import { RouteSkeleton } from './skeletons/RouteSkeleton'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
-    return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang mở Homeji…" /></main>
+    return <RouteSkeleton />
   }
 
   if (!isAuthenticated) {
@@ -28,7 +28,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { profile, isLoading } = useAuth()
 
   if (isLoading) {
-    return <main className="container page"><ContentSkeleton variant="dashboard" label="Đang kiểm tra quyền quản trị…" /></main>
+    return <RouteSkeleton />
   }
 
   if (profile?.role !== UserRole.Admin) {

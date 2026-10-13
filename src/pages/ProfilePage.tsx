@@ -15,7 +15,7 @@ import {
   SmokingPreference,
   UserRole,
 } from '../api/types'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { ProfileSkeleton } from '../components/skeletons/PageSkeletons'
 import { MapToast } from '../components/map/MapToast'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -263,7 +263,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
   if (profileLoading) {
     return (
       <main className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
-        <ContentSkeleton variant="profile" label="Đang tải hồ sơ…" />
+        <ProfileSkeleton />
       </main>
     )
   }

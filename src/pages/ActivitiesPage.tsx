@@ -3,7 +3,7 @@ import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { ActivitiesSkeleton } from '../components/skeletons/PageSkeletons'
 import { formatActivityDisplay } from '../lib/activityDisplay'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
 import './ProfilePage.css'
@@ -56,7 +56,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="list" label="Đang tải nhật ký hoạt động…" />
+          : <ActivitiesSkeleton />
       ) : items.length === 0 ? (
         <div className="empty-state card">Chưa có nhật ký hoạt động.</div>
       ) : (

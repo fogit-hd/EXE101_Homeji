@@ -1,7 +1,7 @@
 import { Suspense, useLayoutEffect } from 'react'
 import { useAnimate } from 'motion/react'
 import { transitions } from '../../lib/motionTokens'
-import { ScreenPending } from '../ScreenPending'
+import { RouteSkeleton } from '../skeletons/RouteSkeleton'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { isExploreMapMode } from '../chrome/exploreMode'
@@ -72,7 +72,7 @@ export function AppLayout() {
           }
           data-nav={navType}
         >
-          <Suspense fallback={<ScreenPending />}>
+          <Suspense fallback={<RouteSkeleton />}>
             <Outlet />
           </Suspense>
         </div>

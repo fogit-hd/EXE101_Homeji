@@ -1,0 +1,97 @@
+/* Shared skeleton primitive — light theme, shimmer always on (intentionally no reduced-motion opt-out). */
+.sk-screen {
+  --sk-base: #e2e8eb;
+  --sk-shine: #f6f9fa;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  animation: sk-in .24s ease-out both;
+}
+.sk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sk {
+  display: block;
+  flex: none;
+  max-width: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--sk-base, #e2e8eb) 0%, var(--sk-base, #e2e8eb) 35%, var(--sk-shine, #f6f9fa) 50%, var(--sk-base, #e2e8eb) 65%, var(--sk-base, #e2e8eb) 100%);
+  background-size: 300% 100%;
+  background-attachment: fixed;
+  animation: sk-shimmer 1.6s linear infinite !important;
+}
+.sk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e6ecee;
+  border-radius: 16px;
+  background: #fff;
+}
+.sk-row { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.sk-stack { display: flex; flex-direction: column; gap: 9px; min-width: 0; flex: 1 1 auto; }
+.sk-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sk-max { max-width: 100%; }
+.sk-grow { flex: 1 1 auto; min-width: 0; }
+.sk-grid { display: grid; gap: 16px; min-width: 0; }
+.sk-split { display: grid; gap: 18px; align-items: start; min-width: 0; }
+@keyframes sk-shimmer { from { background-position: 100% 0 } to { background-position: -50% 0 } }
+@keyframes sk-in { from { opacity: 0 } to { opacity: 1 } }
+
+/* Bootstrap wrapper (rendered before the page chunk exists) — mirrors feature workspace padding. */
+.sk-route { width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 20px 32px; box-sizing: border-box; }
+.sk-route--wide { max-width: none; }
+.sk-route--fill { padding: 0; height: calc(100dvh - 64px); max-width: none; }
+
+/* ---------- Hub ---------- */
+.sk-hub__hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px; border-radius: 18px; background: #eef7f6; }
+.sk-hub__promo { grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); }
+.sk-hub__banner { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; min-height: 212px; padding: 22px; border-radius: 18px; background: #fbf4ec; }
+.sk-hub__lower { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
+.sk-room-row { display: flex; gap: 14px; align-items: center; }
+
+/* ---------- Listings (explore) ---------- */
+.sk-listings__body { grid-template-columns: 400px minmax(0, 1fr); }
+.sk-listings__map { height: calc(100dvh - 210px); min-height: 360px; border-radius: 18px; }
+
+/* ---------- Messages ---------- */
+.sk-messages { flex-direction: row; gap: 0; height: 100%; min-height: 520px; border: 1px solid #e6ecee; border-radius: 16px; overflow: hidden; background: #fff; }
+.sk-messages__list { display: flex; flex-direction: column; gap: 14px; width: 320px; flex: none; padding: 16px; border-right: 1px solid #e6ecee; }
+.sk-messages__thread { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.sk-messages__bar { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #eef2f3; }
+.sk-messages__bubbles { display: flex; flex-direction: column; gap: 14px; flex: 1; padding: 22px; }
+.sk-messages__bubbles .is-mine { align-self: flex-end; }
+.sk-messages__composer { padding: 14px 18px; border-top: 1px solid #eef2f3; }
+
+/* ---------- Payments ---------- */
+.sk-pay__plans { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sk-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; align-items: center; padding: 12px 4px; border-bottom: 1px solid #eef2f3; }
+
+/* ---------- Generic grids ---------- */
+.sk-cards-4 { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.sk-cards-3 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.sk-two-col { grid-template-columns: 1fr 1fr; }
+.sk-appt { grid-template-columns: 300px minmax(0, 1fr); }
+.sk-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.sk-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sk-center { align-self: center; width: min(440px, 100%); }
+
+@media (max-width: 900px) {
+  .sk-hub__promo, .sk-hub__lower, .sk-listings__body, .sk-appt { grid-template-columns: minmax(0, 1fr); }
+  .sk-listings__map, .sk-hide-tablet { display: none; }
+  .sk-pay__plans, .sk-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .sk-route { padding: 14px 14px 24px; }
+  .sk-hub__banner { grid-template-columns: 1fr; min-height: 180px; }
+  .sk-hub__banner > :last-child { display: none; }
+  .sk-pay__plans, .sk-two-col, .sk-cards-3, .sk-cards-4 { grid-template-columns: minmax(0, 1fr); }
+  .sk-messages { border-radius: 0; border: 0; }
+  .sk-messages__list { width: 100%; border-right: 0; }
+  .sk-messages__thread, .sk-hide-mobile { display: none; }
+  .sk-table-row { grid-template-columns: 2fr 1fr; }
+  .sk-table-row > :nth-child(n+3) { display: none; }
+}
+.hub-skel-page { grid-column: 1 / -1; order: 2; }

@@ -12,6 +12,7 @@ import { RentalPostType, UserRole } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
+import { SavedSkeleton } from '../components/skeletons/PageSkeletons'
 import { RentalPostCard } from '../components/RentalPostCard'
 import { RentalDecisionPanel } from '../components/ai/RentalDecisionPanel'
 import { RentalComparison } from '../components/ai/RentalComparison'
@@ -124,7 +125,7 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
+          : <SavedSkeleton />
       ) : posts.length === 0 ? (
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>

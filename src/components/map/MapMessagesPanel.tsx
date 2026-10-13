@@ -29,7 +29,7 @@ import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { getErrorMessage } from '../../lib/errors'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
-import { ContentSkeleton } from '../ContentSkeleton'
+import { ConversationListSkeleton } from '../skeletons/PageSkeletons'
 import { staticMapUrl } from '../../lib/mapStaticMedia'
 import './MapMessagesPanel.css'
 
@@ -890,7 +890,7 @@ export function MapMessagesPanel({
             </div>
           </>
         ) : null}
-        {loading ? <ContentSkeleton compact count={3} label="Đang tải hộp thư…" /> : null}
+        {loading ? <ConversationListSkeleton /> : null}
         {!loading && filteredConversations.length === 0 ? (
           <p className="map-messages__empty">
             {conversations.length === 0

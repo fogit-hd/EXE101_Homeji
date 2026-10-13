@@ -16,7 +16,7 @@ import {
 } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { WantedSkeleton } from '../components/skeletons/PageSkeletons'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import { mapMessagesUrl } from '../lib/mapDeepLinks'
@@ -223,7 +223,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant={tab === 'create' ? 'form' : 'list'} label="Đang tải nhu cầu tìm phòng…" />
+          : <WantedSkeleton form={tab === 'create'} />
       ) : tab === 'create' ? (
         !isRenter ? (
           <div className="page-frame-empty">

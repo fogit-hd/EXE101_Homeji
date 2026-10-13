@@ -10,7 +10,7 @@ import {
 import { RoommateInvitationStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { InvitationsSkeleton } from '../components/skeletons/PageSkeletons'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
 import { mapPostUrl } from '../lib/mapDeepLinks'
@@ -76,7 +76,7 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="list" label="Đang tải lời mời ở ghép…" />
+          : <InvitationsSkeleton />
       ) : invitations.length === 0 ? (
         <div className="roommate-empty">
           <p className="roommate-empty__title">Chưa có lời mời nào</p>

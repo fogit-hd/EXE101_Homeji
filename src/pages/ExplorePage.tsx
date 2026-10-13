@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { ListingsSkeleton } from '../components/skeletons/PageSkeletons'
 
 /**
  * Map explore is now embedded on the guest landing (`/#map`).
@@ -12,7 +12,7 @@ export function ExplorePage() {
   if (authLoading) {
     return (
       <main className="container page">
-        <ContentSkeleton variant="detail" label="Đang mở bản đồ Homeji…" />
+        <ListingsSkeleton />
       </main>
     )
   }

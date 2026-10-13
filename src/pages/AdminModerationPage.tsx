@@ -27,6 +27,7 @@ import { LandlordVerificationStatus, ReportStatus, ReportTargetType, WalletWithd
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
+import { AdminSkeleton } from '../components/skeletons/PageSkeletons'
 import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashboard'
 import { AdminAssistant } from '../components/ai/AdminAssistant'
 import { AdminOperationsSummary } from '../components/admin/AdminOperationsSummary'
@@ -361,7 +362,7 @@ export function AdminModerationPage() {
       {tab !== 'overview' && (showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={loadError} />
-          : <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu kiểm duyệt…" />
+          : <AdminSkeleton withHeader={false} />
       ) : (
         <>
 

@@ -1,7 +1,7 @@
 import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { ScreenPending } from '../ScreenPending'
+import { NotificationsSkeleton } from '../skeletons/PageSkeletons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getNotifications, NotificationType, UserRole, type Notification } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -448,7 +448,7 @@ export function GlobalHeader() {
                 aria-labelledby={`${notifyId}-title`}
                 tabIndex={-1}
               >
-                <Suspense fallback={<ScreenPending />}>
+                <Suspense fallback={<NotificationsSkeleton tabs={false} />}>
                 <NotificationsPage
                   surface="popup"
                   headingId={`${notifyId}-title`}

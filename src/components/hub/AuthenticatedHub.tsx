@@ -31,6 +31,7 @@ import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
 import { PromoBanner } from './PromoBanner'
 import './AuthenticatedHub.css'
+import { HubBodySkeleton } from '../skeletons/PageSkeletons'
 
 const RECENT_SEARCH_KEY = 'homeji:map-search-recent'
 
@@ -275,10 +276,8 @@ export function AuthenticatedHub() {
       </section>
 
       {phase === 'loading' ? (
-        <div className="hub-skel" aria-busy="true" aria-label="Đang tải trang chủ">
-          <span />
-          <span />
-          <span />
+        <div className="hub-skel-page sk-screen" role="status" aria-busy="true" aria-label="Đang tải trang chủ">
+          <HubBodySkeleton />
         </div>
       ) : null}
 

@@ -15,7 +15,7 @@ import {
 import { PaymentStatus, SubscriptionTier } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { PaymentsSkeleton } from '../components/skeletons/PageSkeletons'
 import { MapToast } from '../components/map/MapToast'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
 import { ShellIcon } from '../components/shell/ShellIcons'
@@ -212,7 +212,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       />
     ) : (
       <main className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
-        <ContentSkeleton variant="dashboard" count={3} label="Đang tải gói đăng ký…" />
+        <PaymentsSkeleton />
       </main>
     )
   }

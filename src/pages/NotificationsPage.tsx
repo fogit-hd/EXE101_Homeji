@@ -11,7 +11,7 @@ import {
 } from '../components/chrome'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { NotificationsSkeleton } from '../components/skeletons/PageSkeletons'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
 import { getNotificationPresentation } from '../lib/notificationPresentation'
 import { notificationTargetHref } from '../lib/notificationTarget'
@@ -156,7 +156,7 @@ export function NotificationsPage({
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <ContentSkeleton variant="list" label="Đang tải thông báo…" />
+          : <NotificationsSkeleton tabs={false} />
       ) : popup ? (
         <NotificationPopupList
           items={visibleNotifications}
