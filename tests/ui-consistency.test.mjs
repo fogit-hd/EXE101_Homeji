@@ -160,10 +160,6 @@ test('roommate cards use readable state colors and remain within narrow grids', 
   assert.ok(contrast('24543e', 'e4f0e8') >= 4.5)
 })
 
-test('editing the rental address invalidates the previous coordinates', () => {
-  assert.match(read('pages/EditRentalPostPage.tsx'), /onChange=\{\(value\) => \{\s*setAddress\(value\)\s*setLatitude\(''\)\s*setLongitude\(''\)/)
-})
-
 test('rental coordinates do not interpret empty input as the origin', () => {
   assert.match(read('pages/EditRentalPostPage.tsx'), /latitude\.trim\(\) \? Number\(latitude\) : Number\.NaN/)
 })

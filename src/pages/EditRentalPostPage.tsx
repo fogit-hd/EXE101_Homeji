@@ -52,6 +52,9 @@ export function EditRentalPostPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const operationLock = useRef(false)
+  const addressVersion = useRef(0)
+  const busy = saving || uploadingMedia
   const formRef = useRef<HTMLFormElement>(null)
   const [availableFrom, setAvailableFrom] = useState('')
   const [originalLeaseEndsOn, setOriginalLeaseEndsOn] = useState('')
@@ -133,7 +136,9 @@ export function EditRentalPostPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (saving || uploadingMedia) return
+    if (operationLock.current) return
+    operationLock.current = true
+    addressVersion.current += 1
     setError('')
     setSaving(true)
     try {
@@ -143,12 +148,15 @@ export function EditRentalPostPage() {
       setError(getErrorMessage(err, 'Lưu thất bại'))
     } finally {
       setSaving(false)
+      operationLock.current = false
     }
   }
 
   const handleAddMedia = async () => {
-    if (!postId || !profile || saving || uploadingMedia || mediaFiles.length === 0) return
+    if (!postId || !profile || operationLock.current || mediaFiles.length === 0) return
     setError('')
+    operationLock.current = true
+    addressVersion.current += 1
     setMessage('')
     setUploadingMedia(true)
     try {
@@ -181,22 +189,32 @@ export function EditRentalPostPage() {
       setError(getErrorMessage(err, 'Thêm ảnh thất bại'))
     } finally {
       setUploadingMedia(false)
+      operationLock.current = false
     }
   }
 
   const handleDeleteMedia = async (mediaId: string) => {
-    if (!postId || saving || uploadingMedia) return
+    if (!postId || operationLock.current) return
+    operationLock.current = true
+    addressVersion.current += 1
+    setSaving(true)
+    setError('')
     try {
       await deleteRentalPostMedia(postId, mediaId)
       const updated = await getRentalPost(postId)
       setPost(updated)
     } catch (err) {
       setError(getErrorMessage(err, 'Xóa ảnh thất bại'))
+    } finally {
+      setSaving(false)
+      operationLock.current = false
     }
   }
 
   const handleSubmit = async () => {
-    if (!postId || saving || uploadingMedia || !formRef.current?.reportValidity()) return
+    if (!postId || operationLock.current || !formRef.current?.reportValidity()) return
+    operationLock.current = true
+    addressVersion.current += 1
     setError('')
     setSaving(true)
     try {
@@ -209,16 +227,24 @@ export function EditRentalPostPage() {
       setError(getErrorMessage(err, 'Gửi duyệt thất bại'))
     } finally {
       setSaving(false)
+      operationLock.current = false
     }
   }
 
   const handleArchive = async () => {
-    if (!postId || saving || uploadingMedia || !confirm('Lưu trữ tin đăng này?')) return
+    if (!postId || operationLock.current || !confirm('Lưu trữ tin đăng này?')) return
+    operationLock.current = true
+    addressVersion.current += 1
+    setSaving(true)
+    setError('')
     try {
       await archiveRentalPost(postId)
       navigate('/')
     } catch (err) {
       setError(getErrorMessage(err, 'Lưu trữ thất bại'))
+    } finally {
+      setSaving(false)
+      operationLock.current = false
     }
   }
 
@@ -230,24 +256,33 @@ export function EditRentalPostPage() {
   }
 
   const handlePlaceSelect = (place: { address: string; lat: number; lng: number }) => {
+    if (operationLock.current) return
+    addressVersion.current += 1
     setAddress(place.address)
     setLatitude(String(place.lat))
     setLongitude(String(place.lng))
   }
 
   const handleGeocodeAddress = async () => {
-    if (!mapsLoaded || !address.trim()) return
+    if (operationLock.current || !mapsLoaded || !address.trim()) return
+    const version = ++addressVersion.current
     setError('')
-    const result = await geocodeAddress(address)
-    if (!result) {
-      setError('Không tìm thấy tọa độ cho địa chỉ này.')
-      return
+    try {
+      const result = await geocodeAddress(address)
+      if (version !== addressVersion.current || operationLock.current) return
+      if (!result) {
+        setError('Không tìm thấy tọa độ cho địa chỉ này.')
+        return
+      }
+      setAddress(result.formattedAddress)
+      setLatitude(String(result.lat))
+      setLongitude(String(result.lng))
+      setMapPickerOpen(true)
+      setMessage('Đã cập nhật tọa độ từ địa chỉ.')
+    } catch (err) {
+      if (version === addressVersion.current && !operationLock.current)
+        setError(getErrorMessage(err, 'Không lấy được tọa độ. Vui lòng thử lại.'))
     }
-    setAddress(result.formattedAddress)
-    setLatitude(String(result.lat))
-    setLongitude(String(result.lng))
-    setMapPickerOpen(true)
-    setMessage('Đã cập nhật tọa độ từ địa chỉ.')
   }
 
   const latNum = latitude.trim() ? Number(latitude) : Number.NaN
@@ -272,10 +307,10 @@ export function EditRentalPostPage() {
       title="Chỉnh sửa tin đăng"
       actions={
         <>
-          <button type="button" className="btn btn-primary btn-sm" disabled={saving || uploadingMedia} onClick={() => void handleSubmit()}>
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void handleSubmit()}>
             Gửi duyệt
           </button>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleArchive()}>
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void handleArchive()}>
             Lưu trữ
           </button>
         </>
@@ -287,11 +322,12 @@ export function EditRentalPostPage() {
       <PageNotice message={message} tone="success" />
 
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
+      <fieldset disabled={busy} aria-label="Thông tin và ảnh tin đăng" style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
         {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant facts={{ typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
           priceBasis: rentalPriceBasis({ type, ownerRole: post?.ownerRole ?? profile?.role }),
           amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0 }}
-          title={title} description={description} disabled={saving || uploadingMedia}
+          title={title} description={description} disabled={busy}
           onApply={draft => { setTitle(draft.title); setDescription(draft.description) }} /> : null}
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">
@@ -381,7 +417,10 @@ export function EditRentalPostPage() {
           <AddressAutocomplete
             id="rental-address"
             value={address}
+            disabled={busy}
             onChange={(value) => {
+              if (operationLock.current) return
+              addressVersion.current += 1
               setAddress(value)
               setLatitude('')
               setLongitude('')
@@ -426,6 +465,8 @@ export function EditRentalPostPage() {
                 latitude={isValidCoord(latNum, lngNum) ? latNum : 10.7769}
                 longitude={isValidCoord(latNum, lngNum) ? lngNum : 106.7009}
                 onLocationChange={(lat, lng) => {
+                  if (operationLock.current) return
+                  addressVersion.current += 1
                   setLatitude(String(lat))
                   setLongitude(String(lng))
                 }}
@@ -465,7 +506,7 @@ export function EditRentalPostPage() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
-              disabled={saving || uploadingMedia}
+              disabled={busy}
               onChange={(event) => setMediaFiles(Array.from(event.target.files ?? []))}
             />
             <button type="button" className="btn btn-secondary" disabled={saving || uploadingMedia || mediaFiles.length === 0 || (post?.media.length ?? 0) >= 10} onClick={() => void handleAddMedia()}>
@@ -482,9 +523,10 @@ export function EditRentalPostPage() {
       </section>
 
       <div className="rental-form-actions">
-        <button type="button" className="btn btn-primary" disabled={saving || uploadingMedia} onClick={() => void handleSubmit()}>{saving ? 'Đang lưu và gửi…' : 'Lưu & gửi duyệt'}</button>
-        <button type="button" className="btn btn-secondary" onClick={() => void handleArchive()}>Lưu trữ</button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void handleSubmit()}>{saving ? 'Đang xử lý…' : 'Lưu & gửi duyệt'}</button>
+        <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void handleArchive()}>Lưu trữ</button>
       </div>
+      </fieldset>
     </PageFrame>
   )
 }

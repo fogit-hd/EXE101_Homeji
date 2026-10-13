@@ -17,6 +17,7 @@ async function runUpload({ existing = 0, count = 3, failAt = 0, storageFails = f
   const payloads = []
   const context = {
     postId: 'qa-only', profile: { id: 'qa-owner' }, post: visible,
+    operationLock: { current: false }, addressVersion: { current: 0 },
     saving: false, uploadingMedia: false, mediaFiles: files,
     MediaType: { Image: 1 },
     setError: value => { error = value },

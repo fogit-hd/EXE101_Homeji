@@ -22,6 +22,7 @@ type Props = {
   placeholder?: string
   className?: string
   required?: boolean
+  disabled?: boolean
 }
 
 /**
@@ -36,6 +37,7 @@ export function AddressAutocomplete({
   placeholder = 'Nhập địa chỉ phòng trọ...',
   className = 'form-input',
   required,
+  disabled = false,
 }: Props) {
   const { apiKey, isLoaded } = useGoogleMaps()
   const listId = useId()
@@ -43,41 +45,53 @@ export function AddressAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null)
   const onChangeRef = useRef(onChange)
   const onPlaceSelectRef = useRef(onPlaceSelect)
-  onChangeRef.current = onChange
-  onPlaceSelectRef.current = onPlaceSelect
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<PlacePredictionItem[]>([])
   const [activeIndex, setActiveIndex] = useState(-1)
   const [resolving, setResolving] = useState(false)
+  const selectionVersion = useRef(0)
+  const disabledRef = useRef(disabled)
+  useEffect(() => {
+    onChangeRef.current = onChange
+    onPlaceSelectRef.current = onPlaceSelect
+    disabledRef.current = disabled
+  }, [onChange, onPlaceSelect, disabled])
+  const [selectionScope, setSelectionScope] = useState({ value, disabled })
+  if (selectionScope.value !== value || selectionScope.disabled !== disabled) {
+    if (selectionScope.disabled !== disabled) setOpen(false)
+    setSelectionScope({ value, disabled })
+    setResolving(false)
+  }
+  useEffect(() => {
+    selectionVersion.current += 1
+    return () => { selectionVersion.current += 1 }
+  }, [disabled, value])
   useDismissOnOutside(open, [rootRef], () => {
     setOpen(false)
     inputRef.current?.blur()
   })
 
   useEffect(() => {
-    if (!isLoaded || !apiKey) {
-      setItems([])
-      setLoading(false)
-      return
-    }
-
     const q = value.trim()
-    if (q.length < 2) {
-      setItems([])
-      setLoading(false)
-      return
-    }
-
     let cancelled = false
-    setLoading(true)
     const timer = window.setTimeout(() => {
+      if (disabled || !isLoaded || !apiKey || q.length < 2) {
+        setItems([])
+        setLoading(false)
+        return
+      }
+      setLoading(true)
       void fetchPlacePredictions(q, { limit: 6 }).then((next) => {
         if (cancelled) return
         setItems(next)
         setLoading(false)
         setActiveIndex(next.length ? 0 : -1)
+      }).catch(() => {
+        if (cancelled) return
+        setItems([])
+        setLoading(false)
       })
     }, 220)
 
@@ -85,13 +99,16 @@ export function AddressAutocomplete({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [value, isLoaded, apiKey])
+  }, [value, isLoaded, apiKey, disabled])
 
   const pick = async (item: PlacePredictionItem) => {
+    if (disabledRef.current) return
+    const version = ++selectionVersion.current
     setOpen(false)
     setResolving(true)
     try {
       const resolved = await resolvePlaceCoordinates(item.placeId)
+      if (version !== selectionVersion.current || disabledRef.current) return
       if (resolved) {
         const address = resolved.address || resolved.name || item.title
         onChangeRef.current(address)
@@ -103,12 +120,15 @@ export function AddressAutocomplete({
       } else {
         onChangeRef.current(item.title)
       }
+    } catch {
+      // Keep manual address entry usable if the optional provider lookup fails.
+      if (version === selectionVersion.current) setOpen(false)
     } finally {
-      setResolving(false)
+      if (version === selectionVersion.current) setResolving(false)
     }
   }
 
-  const showList = open && (loading || items.length > 0 || value.trim().length >= 2)
+  const showList = !disabled && open && (loading || items.length > 0 || value.trim().length >= 2)
 
   return (
     <div ref={rootRef} className="address-autocomplete">
@@ -118,6 +138,7 @@ export function AddressAutocomplete({
         className={className}
         value={value}
         onChange={(e) => {
+          selectionVersion.current += 1
           onChange(e.target.value)
           setOpen(true)
         }}
@@ -132,7 +153,7 @@ export function AddressAutocomplete({
                 : placeholder
         }
         required={required}
-        disabled={!apiKey ? false : !isLoaded || resolving}
+        disabled={disabled || (apiKey ? !isLoaded || resolving : false)}
         autoComplete="off"
         role="combobox"
         aria-expanded={showList}
