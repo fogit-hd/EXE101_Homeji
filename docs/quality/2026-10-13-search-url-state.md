@@ -7,3 +7,5 @@ Browser Back removed the URL query while leaving the search field populated. Hou
 Verification: the actual local browser reproduced stale housing text before the fix; Back/Forward passed for all three contexts after it. Eight provider transition tests pass, including place selection and draft preservation. An isolated production build, focused ESLint and 202 Node tests passed. The isolated source excludes unrelated work in progress; only the two URL synchronization hunks are included in this release.
 
 Production deployment verification is recorded separately after release. This change does not alter search endpoints or map viewport requests.
+
+Production verification: https://exe101-homeji.onrender.com served index-CEiUqDQd.js. Authenticated UI checks passed: housing keyword=UEL, roommate roommateQuery=UEL, and marketplace q=bàn each cleared the field on Back and restored it on Forward. The separately visible Render frontend service uses the alternate -qlcu address; no manual action was taken against that service. Production claims above are based on the original requested URL itself.
