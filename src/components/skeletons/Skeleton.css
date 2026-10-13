@@ -100,3 +100,7 @@
 .food-featured--loading .food-featured__media { display: flex; }
 .sk-candidates { gap: 8px; }
 .food-featured.food-featured--loading { background: #fff; border: 1px solid #e6ecee; color: inherit; }
+.food-rail__kitchen-row--skeleton { display: flex; align-items: center; gap: 10px; cursor: default; }
+.food-rail__kitchen-row--skeleton .food-rail__kitchen-info { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.food-rail__cart-empty--skeleton { display: flex; flex-direction: column; gap: 8px; }
+.food-rail .sk, .marketplace-page .sk { --sk-base: #e2e8eb; --sk-shine: #f6f9fa; }

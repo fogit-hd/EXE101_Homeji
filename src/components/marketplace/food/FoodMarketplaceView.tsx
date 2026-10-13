@@ -101,6 +101,7 @@ export function FoodMarketplaceView({
     .join(', ')
 
   const railProps = {
+    loading,
     kitchens,
     cartItems,
     cartItemCount,

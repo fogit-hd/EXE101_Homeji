@@ -1,3 +1,4 @@
+import { Sk } from '../../skeletons/Skeleton'
 import { FOOD_ASSETS } from './foodAssets'
 import { QuantityStepper } from './QuantityStepper'
 import { formatPrice } from '../../../lib/labels'
@@ -43,6 +44,7 @@ type Props = {
   onCheckout: () => void
   onSelectKitchen?: (sellerId: string) => void
   compact?: boolean
+  loading?: boolean
 }
 
 function formatKitchenDistance(distanceKm: number | null): string {
@@ -72,6 +74,7 @@ export function FoodUtilityRail({
   onCheckout,
   onSelectKitchen,
   compact = false,
+  loading = false,
 }: Props) {
   const canCheckout =
     !cartBusy && cartItems.length > 0 && cartTotal >= minimumCartTotal
@@ -116,9 +119,16 @@ export function FoodUtilityRail({
       <section className="food-rail__kitchens" aria-labelledby="food-rail-kitchens-title">
         <div className="food-rail__kitchens-head">
           <h3 id="food-rail-kitchens-title">Bếp đang mở gần bạn</h3>
-          <span>{kitchens.length} bếp</span>
+          <span>{loading ? <Sk w={44} h={10} /> : `${kitchens.length} bếp`}</span>
         </div>
-        <ul className="food-rail__kitchen-list">
+        <ul className="food-rail__kitchen-list" aria-busy={loading || undefined}>
+          {loading && kitchens.length === 0 ? Array.from({ length: 3 }, (_, i) => (
+            <li key={`sk-${i}`} className="food-rail__kitchen-row food-rail__kitchen-row--skeleton" aria-hidden="true">
+              <Sk w={32} h={32} r={999} />
+              <span className="food-rail__kitchen-info"><Sk w="70%" h={12} /><Sk w="50%" h={9} /></span>
+              <Sk w={34} h={10} />
+            </li>
+          )) : null}
           {kitchens.slice(0, 4).map((kitchen) => (
             <li key={kitchen.sellerId}>
               <button
@@ -144,7 +154,7 @@ export function FoodUtilityRail({
               </button>
             </li>
           ))}
-          {kitchens.length === 0 ? (
+          {!loading && kitchens.length === 0 ? (
             <li className="food-rail__empty-kitchens">Chưa có bếp gần bạn.</li>
           ) : null}
         </ul>
@@ -173,7 +183,13 @@ export function FoodUtilityRail({
           ) : null}
         </header>
 
-        {cartItems.length === 0 ? (
+        {loading && cartItems.length === 0 ? (
+          <div className="food-rail__cart-empty food-rail__cart-empty--skeleton" role="status" aria-label="Đang tải giỏ hàng…">
+            <Sk w="55%" h={14} />
+            <Sk w="85%" h={10} />
+            <Sk w="65%" h={10} />
+          </div>
+        ) : cartItems.length === 0 ? (
           <div className="food-rail__cart-empty">
             <strong>Giỏ đang trống</strong>
             <p>Chọn món từ một bếp để bắt đầu đặt hàng.</p>
@@ -245,7 +261,7 @@ export function FoodUtilityRail({
           <div className="food-rail__summary">
             <div>
               <span>Tạm tính</span>
-              <strong>{formatPrice(cartTotal)}</strong>
+              <strong>{loading && cartItems.length === 0 ? <Sk w={48} h={12} /> : formatPrice(cartTotal)}</strong>
             </div>
             <div>
               <span>Hình thức nhận</span>
@@ -253,7 +269,7 @@ export function FoodUtilityRail({
             </div>
             <div className="food-rail__total">
               <span>Tổng cộng</span>
-              <b>{formatPrice(cartTotal)}</b>
+              <b>{loading && cartItems.length === 0 ? <Sk w={64} h={16} /> : formatPrice(cartTotal)}</b>
             </div>
           </div>
 

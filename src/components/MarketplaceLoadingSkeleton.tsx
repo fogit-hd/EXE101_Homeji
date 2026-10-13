@@ -1,4 +1,5 @@
 import type { MarketplaceTab } from '../lib/marketplaceNavigation'
+import { Sk, SkCard } from './skeletons/Skeleton'
 import './MarketplaceLoadingSkeleton.css'
 
 type Props = {
@@ -130,9 +131,23 @@ export function MarketplaceLoadingSkeleton({ tab, walletView = 'topup' }: Props)
       aria-live="polite"
       aria-busy="true"
     >
-      <span className="sr-only">Đang tải nội dung Chợ Homeji…</span>
+      <span className="sr-only sk-sr">Đang tải nội dung Chợ Homeji…</span>
       {isWallet ? (
         <WalletSkeleton view={walletView} />
+      ) : tab === 'browse' ? (
+        <div className="marketplace-list marketplace-list--grid sk-screen">
+          {Array.from({ length: 6 }, (_, index) => (
+            <SkCard key={index} style={{ padding: 0, overflow: 'hidden', gap: 0 }}>
+              <Sk h={200} r={0} />
+              <div className="sk-stack" style={{ padding: 14 }}>
+                <Sk w={70} h={18} r={999} />
+                <Sk w="80%" h={15} />
+                <Sk w={110} h={18} />
+                <Sk w="60%" h={10} />
+              </div>
+            </SkCard>
+          ))}
+        </div>
       ) : isSellerList ? (
         Array.from({ length: 3 }, (_, index) => <SellerSkeleton key={index} />)
       ) : (
