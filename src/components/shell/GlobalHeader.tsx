@@ -18,6 +18,7 @@ import { ShellIcon } from './ShellIcons'
 const CLOSE_DELAY_MS = 180
 const COMPACT_AFTER = 80
 const EXPAND_BEFORE = 32
+const headerIconLabels = { heart: 'Tin đã lưu', bell: 'Thông báo', message: 'Tin nhắn' }
 
 /** Logged-in home is `/` with no section and no post. Every other route stays compact. */
 function isHomeBarRoute(routeKey: string): boolean {
@@ -580,6 +581,7 @@ function HeaderLink({
   count?: number
 }) {
   const location = useLocation()
+  const accessibleLabel = label || (icon ? headerIconLabels[icon] : '')
   const section = new URLSearchParams(location.search).get('section')
   const expected = new URLSearchParams(href.includes('?') ? href.slice(href.indexOf('?') + 1) : '').get('section')
   const active = location.pathname === '/' && expected != null && section === expected
@@ -587,7 +589,7 @@ function HeaderLink({
     <Link
       to={href}
       className={`hj-action${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
-      aria-label={count > 0 ? `${label}, ${count} chưa đọc` : label}
+      aria-label={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel}
       aria-current={active ? 'page' : undefined}
     >
       {icon ? (

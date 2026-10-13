@@ -1,0 +1,19 @@
+/* Tablet chrome keeps the full search field separate from account actions. */
+@media (767px < width <= 1100px) {
+  .app-shell .hj-shell,
+  .app-shell .hj-shell.is-compact {
+    --hj-header-h: 128px;
+  }
+
+  .app-shell .hj-shell .hj-bar,
+  .app-shell .hj-shell.is-compact .hj-bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 64px 64px;
+    grid-template-areas:
+      "menu brand utils"
+      "search search search";
+    height: 128px;
+    min-height: 128px;
+    padding: 0 16px;
+  }
+}
