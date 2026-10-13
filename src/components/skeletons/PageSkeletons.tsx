@@ -396,3 +396,36 @@ export function LegalSkeleton() {
     </SkScreen>
   )
 }
+
+/* ---------- Admin analytics block (toolbar, KPIs, map + trend panels, actions) ---------- */
+export function AdminAnalyticsSkeleton() {
+  return (
+    <SkScreen name="admin-analytics" label="Đang tải dữ liệu điều hành…">
+      <div className="sk-header">
+        <div className="sk-stack"><Sk w={160} h={10} /><Sk w={260} h={22} className="sk-max" /></div>
+        <div className="sk-row">{range(3).map(i => <Sk key={i} w={64} h={32} r={999} />)}</div>
+      </div>
+      <div className="sk-grid sk-metrics">{range(4).map(i => <SkCard key={i}><Sk w="55%" h={10} /><Sk w="45%" h={26} /><Sk w="70%" h={10} /></SkCard>)}</div>
+      <div className="sk-grid sk-hub__lower">
+        <SkCard><Sk w={90} h={10} /><Sk w={200} h={16} /><Sk h={260} r={12} /></SkCard>
+        <SkCard><Sk w={80} h={10} /><Sk w={160} h={16} /><Sk h={150} r={12} />{range(4).map(i => <Sk key={i} w={`${90 - i * 15}%`} h={14} r={6} />)}</SkCard>
+      </div>
+      <SkCard><Sk w={130} h={10} /><Sk w={220} h={16} />{range(3).map(i => <ListRow key={i} icon={32} />)}</SkCard>
+    </SkScreen>
+  )
+}
+
+/* ---------- Roommate candidates under a saved post ---------- */
+export function RoommateCandidatesSkeleton({ count = 2 }: { count?: number }) {
+  return (
+    <SkScreen name="roommate-candidates" label="Đang tải gợi ý người ở ghép…" className="sk-candidates">
+      {range(count).map(i => (
+        <SkCard key={i} style={{ padding: 12, gap: 8 }}>
+          <Sk w="45%" h={14} />
+          <Sk w="75%" h={10} />
+          <Sk w={96} h={30} r={999} />
+        </SkCard>
+      ))}
+    </SkScreen>
+  )
+}

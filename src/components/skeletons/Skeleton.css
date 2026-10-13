@@ -17,7 +17,6 @@
   border-radius: 8px;
   background: linear-gradient(90deg, var(--sk-base, #e2e8eb) 0%, var(--sk-base, #e2e8eb) 35%, var(--sk-shine, #f6f9fa) 50%, var(--sk-base, #e2e8eb) 65%, var(--sk-base, #e2e8eb) 100%);
   background-size: 300% 100%;
-  background-attachment: fixed;
   animation: sk-shimmer 1.6s linear infinite !important;
 }
 .sk-card {
@@ -95,3 +94,9 @@
   .sk-table-row > :nth-child(n+3) { display: none; }
 }
 .hub-skel-page { grid-column: 1 / -1; order: 2; }
+
+/* Food marketplace: skeleton cards reuse the food grid sizing. */
+.food-skeleton-card.sk-card { background: #fff; animation: none; height: 320px; }
+.food-featured--loading .food-featured__media { display: flex; }
+.sk-candidates { gap: 8px; }
+.food-featured.food-featured--loading { background: #fff; border: 1px solid #e6ecee; color: inherit; }

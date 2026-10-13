@@ -24,6 +24,7 @@ import {
 import { isUsefulSearchQuery } from '../../../lib/searchQuery'
 import { useSearch } from '../../../contexts/SearchContext'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
+import { Sk, SkCard } from '../../skeletons/Skeleton'
 import './MapListingsWorkspace.css'
 
 const RECENT_KEY = 'homeji:map-search-recent'
@@ -173,7 +174,7 @@ export function MapListingsWorkspace({
               <div className="map-listings__title-block">
                 <p className="map-listings__kicker">Khám phá</p>
                 <h1>{marketMode ? 'Chợ đồ quanh khu bạn đang xem' : 'Tìm một căn phòng hợp nhịp sống'}</h1>
-                <p>{countLabel}</p>
+                <p>{loading ? <Sk w={160} h={12} /> : countLabel}</p>
               </div>
             </div>
             <RecentRow onPick={(keyword) => submit(keyword)} />
@@ -346,7 +347,7 @@ export function MapListingsWorkspace({
           >
             <div className="map-listings__panel-head">
               <div>
-                <h2>{countLabel}</h2>
+                <h2>{loading ? <Sk w={180} h={16} /> : countLabel}</h2>
                 <p>Trang {query.page}</p>
               </div>
               {query.view === 'split' ? (
@@ -364,9 +365,21 @@ export function MapListingsWorkspace({
                   </button>
                 </div>
               ) : loading && cards.length === 0 ? (
-                <p className="map-listings__state" role="status">
-                  {marketMode ? 'Đang tải chợ đồ…' : 'Đang tải phòng…'}
-                </p>
+                <ul className="map-listings__cards sk-screen" role="status" aria-busy="true" aria-label={marketMode ? 'Đang tải chợ đồ…' : 'Đang tải phòng…'}>
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <li key={i}>
+                      <SkCard style={{ padding: 0, overflow: 'hidden', gap: 0, width: '100%' }}>
+                        <Sk h={140} r={0} />
+                        <div className="sk-stack" style={{ padding: 12 }}>
+                          <Sk w="85%" h={14} />
+                          <Sk w="55%" h={11} />
+                          <Sk w={100} h={16} />
+                          <Sk w="70%" h={10} />
+                        </div>
+                      </SkCard>
+                    </li>
+                  ))}
+                </ul>
               ) : cards.length === 0 ? (
                 <div className="map-listings__state" role="status">
                   <p>{marketMode ? 'Không có tin chợ khớp bộ lọc.' : 'Không có phòng khớp bộ lọc.'}</p>

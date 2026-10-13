@@ -26,8 +26,7 @@ import {
 import { LandlordVerificationStatus, ReportStatus, ReportTargetType, WalletWithdrawalStatus } from '../api/types'
 import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
-import { AdminSkeleton } from '../components/skeletons/PageSkeletons'
+import { AdminAnalyticsSkeleton, AdminSkeleton } from '../components/skeletons/PageSkeletons'
 import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashboard'
 import { AdminAssistant } from '../components/ai/AdminAssistant'
 import { AdminOperationsSummary } from '../components/admin/AdminOperationsSummary'
@@ -355,7 +354,7 @@ export function AdminModerationPage() {
           </AdminAssistant> : null}
           <PageNotice message={analyticsError} tone="error" />
           {analyticsError && !analyticsLoading ? <button type="button" className="btn btn-secondary" onClick={() => { setAnalyticsLoading(true); setAnalyticsAttempt((n) => n + 1) }}>Thử lại</button> : null}
-          {analytics && (!analyticsError || analytics.periodDays === analyticsDays) ? <AdminAnalyticsDashboard data={analytics} days={analytics.periodDays} loading={analyticsLoading} onDaysChange={handleAnalyticsDaysChange} /> : analyticsLoading ? <ContentSkeleton variant="dashboard" label="Đang tải dữ liệu điều hành…" /> : null}
+          {analytics && (!analyticsError || analytics.periodDays === analyticsDays) ? <AdminAnalyticsDashboard data={analytics} days={analytics.periodDays} loading={analyticsLoading} onDaysChange={handleAnalyticsDaysChange} /> : analyticsLoading ? <AdminAnalyticsSkeleton /> : null}
         </>
       ) : null}
 
