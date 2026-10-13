@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { animate, useReducedMotion, type DOMKeyframesDefinition } from 'motion/react'
+import { animate, type DOMKeyframesDefinition } from 'motion/react'
 import { DURATION, EASE } from '../../lib/motionTokens'
 
 /**
@@ -9,7 +9,7 @@ import { DURATION, EASE } from '../../lib/motionTokens'
 export function useMotionPresence(open: boolean, kind: 'popup' | 'collapse' | 'fade' = 'popup') {
   const [retained, setRetained] = useState(open)
   const ref = useRef<HTMLDivElement>(null)
-  const reduced = useReducedMotion()
+  const reduced = false // always animate, regardless of OS reduced-motion
   if (open && !retained) setRetained(true)
   const present = open || retained
 

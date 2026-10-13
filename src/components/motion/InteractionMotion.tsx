@@ -13,7 +13,7 @@ export function InteractionMotion() {
   const overlay = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const reduced = window.matchMedia('not all') // always animate, regardless of OS reduced-motion
     const animations = new Map<AnimationPlaybackControls, HTMLElement>()
     const seen = new WeakSet<Element>()
     const finish = (animation: AnimationPlaybackControls) => {

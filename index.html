@@ -15,15 +15,14 @@
     <title>Homeji — Tìm phòng trọ & bạn ở ghép</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="image" href="/brand/homeji-logo2.png" />
-    <script>
+        <script>
       /* Brand intro gate: decided before first paint so there is never a white flash
          or an intro flicker for returning visitors. Mirrors src/lib/introGate.ts. */
       (function () {
         try {
           var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
           var seen = sessionStorage.getItem('hj-intro-seen') === '1'
-          if (location.pathname === '/' && !reduce && !seen) document.documentElement.dataset.intro = '1'
+          if (location.pathname === '/') document.documentElement.dataset.intro = '1'
         } catch (e) {}
       })()
     </script>
@@ -31,7 +30,9 @@
       #hj-boot { display: none }
       html[data-intro='1'] #hj-boot {
         display: block; position: fixed; inset: 0; z-index: 2147483000;
-        background: radial-gradient(120% 90% at 50% 45%, #0f2219 0%, #070f0b 60%, #040806 100%);
+        background:
+          radial-gradient(60% 50% at 50% 46%, rgba(0, 177, 79, 0.10) 0%, rgba(0, 177, 79, 0) 70%),
+          radial-gradient(130% 100% at 50% 40%, #ffffff 0%, #f5fcf8 45%, #eefaf3 100%);
       }
       html[data-intro='1'], html[data-intro='1'] body { overflow: hidden }
     </style>
