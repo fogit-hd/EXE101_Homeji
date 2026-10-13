@@ -60,3 +60,25 @@ export const popup = {
   open: { opacity: 1, y: 0, scale: 1 },
   closed: { opacity: 0, y: 16, scale: 0.94 },
 }
+
+/** Rich heading reveal: each grapheme rises, unblurs and settles with a soft spring. */
+export const TEXT_REVEAL = {
+  /** Upper bound for the whole stagger so long headings never drag. */
+  maxStagger: 0.85,
+  perChar: 0.028,
+  char: {
+    hidden: { opacity: 0, y: '0.6em', rotate: 4, filter: 'blur(8px)' },
+    show: {
+      opacity: 1, y: '0em', rotate: 0, filter: 'blur(0px)',
+      transition: { type: 'spring', stiffness: 420, damping: 28, mass: 0.7, filter: { duration: 0.42, ease: EASE.out }, opacity: { duration: 0.3, ease: EASE.out } },
+    },
+  } satisfies Variants,
+} as const
+
+/** Scroll entrance for cards/sections (used by InteractionMotion). */
+export const SCROLL_REVEAL = {
+  from: { opacity: 0, y: 26, scale: 0.97 },
+  duration: 0.6,
+  stagger: 0.06,
+  maxStagger: 6,
+} as const

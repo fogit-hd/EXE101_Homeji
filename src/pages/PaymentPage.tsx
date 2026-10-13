@@ -30,6 +30,7 @@ import { paymentWaitingUrl } from '../lib/paymentLifecycle'
 import { currentSubscription } from '../lib/currentSubscription'
 import './MarketplacePage.css'
 import './PaymentPage.css'
+import { RevealText } from '../components/motion/RevealText'
 
 type PayTab = 'plans' | 'history'
 
@@ -235,7 +236,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     <div className={`payment-page${embedded ? ' payment-embed map-embed' : ' container page'}`}>
       <header className="payment-page-header">
         <span className="payment-page-eyebrow">HOMEJI MEMBERSHIP</span>
-        <h1 className="payment-page-title">{tab === 'history' ? 'Giao dịch của bạn' : 'Tìm nhanh hơn. Chọn tự tin hơn.'}</h1>
+        <RevealText as="h1" key={tab} className="payment-page-title" text={tab === 'history' ? 'Giao dịch của bạn' : 'Tìm nhanh hơn. Chọn tự tin hơn.'} />
         <p className="payment-page-lead">
           {tab === 'history' ? 'Theo dõi thanh toán và quản lý gói thành viên ở cùng một nơi.' : 'Nâng cấp khi bạn cần thêm lợi thế trong hành trình tìm nhà — không ràng buộc dài hạn.'}
         </p>

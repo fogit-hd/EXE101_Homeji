@@ -1,0 +1,11 @@
+/* RevealText: layout is final from the first frame (no CLS); only transform/opacity/filter animate. */
+.hj-reveal__line { display: block; }
+.hj-reveal__word { display: inline-block; white-space: nowrap; }
+.hj-reveal__char {
+  display: inline-block;
+  /* Room for stacked Vietnamese diacritics while the glyph is mid-flight. */
+  padding-block: 0.08em;
+  margin-block: -0.08em;
+  transform-origin: 50% 90%;
+  will-change: transform, opacity, filter;
+}

@@ -23,6 +23,7 @@ import { AiVoiceFloat, PasswordEyeToggle, voiceTravelDuration } from './AuthPage
 import { layoutWelcomeStrokes, WELCOME_PHRASE } from './authWelcomeHandwrite'
 import './AuthPage.css'
 import './AuthFormLayout.css'
+import { RevealText } from '../components/motion/RevealText'
 
 const TOGGLE_COOLDOWN_MS = 1000
 
@@ -1618,7 +1619,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
             <div className="auth-cinema__card">
               {mode === 'signin' ? (
                 <>
-                  <h1 className="auth-cinema__title">Đăng nhập</h1>
+                  <RevealText as="h1" className="auth-cinema__title" text="Đăng nhập" />
                   <p className="auth-cinema__subtitle">Chào mừng trở lại Homeji</p>
                   {error ? (
                     <div className="auth-cinema__alert auth-cinema__alert--error">{error}</div>
@@ -1677,7 +1678,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                 </>
               ) : (
                 <>
-                  <h1 className="auth-cinema__title">Đăng ký</h1>
+                  <RevealText as="h1" className="auth-cinema__title" text="Đăng ký" />
                   <p className="auth-cinema__subtitle">Tạo tài khoản Homeji miễn phí</p>
                   {error ? (
                     <div className="auth-cinema__alert auth-cinema__alert--error">{error}</div>

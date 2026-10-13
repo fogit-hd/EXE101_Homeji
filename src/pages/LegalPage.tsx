@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import './LegalPage.css'
+import { RevealText } from '../components/motion/RevealText'
 
 const UPDATED_AT = '03/10/2026'
 
@@ -20,7 +21,7 @@ function LegalLayout({
         </Link>
         <header>
           <p className="legal-page__eyebrow">HOMEJI</p>
-          <h1>{title}</h1>
+          <RevealText as="h1" text={title} />
           <p className="legal-page__updated">Cập nhật lần cuối: {UPDATED_AT}</p>
           <p className="legal-page__intro">{intro}</p>
         </header>

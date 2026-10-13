@@ -64,6 +64,7 @@ import {
 import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
 import '../components/map/MapMotion.css'
 import './HomePage.css'
+import { RevealText } from '../components/motion/RevealText'
 import { markHomeReady } from '../lib/introGate'
 
 const AMENITY_OPTIONS_LIST = [...AMENITY_OPTIONS]
@@ -962,9 +963,7 @@ function HomePageComponent() {
           <div className="guest-mission__grid">
             <div className="guest-mission__copy">
               <p className="guest-mission__eyebrow">Sứ mệnh</p>
-              <h2 className="guest-mission__quote">
-                Không chỉ tìm phòng — tìm nơi bạn thuộc về.
-              </h2>
+              <RevealText className="guest-mission__quote" text="Không chỉ tìm phòng — tìm nơi bạn thuộc về." />
               <p className="guest-mission__body">
                 Homeji kết nối sinh viên tìm phòng, bạn cùng phòng và chủ nhà quanh Thủ Đức &amp; Q.9.
                 Minh bạch thông tin, rõ ràng quy trình — để việc chuyển nhà gần trường trở nên nhẹ nhàng
@@ -991,7 +990,7 @@ function HomePageComponent() {
         <HorizontalScrollShowcase />
         <section className="guest-steps" id="how" aria-label="Cách Homeji hoạt động">
           <p className="guest-steps__eyebrow">Cách hoạt động</p>
-          <h2 className="guest-steps__title">Ba bước để tìm chỗ ở phù hợp</h2>
+          <RevealText className="guest-steps__title" text="Ba bước để tìm chỗ ở phù hợp" />
           <p className="guest-steps__lead">
             Từ phòng gần trường đến bạn cùng phòng — Homeji giữ quy trình ngắn, rõ và dễ theo dõi.
           </p>
@@ -1022,7 +1021,7 @@ function HomePageComponent() {
 
         <section className="guest-audience" id="for" aria-label="Dành cho ai">
           <p className="guest-audience__eyebrow">Dành cho ai</p>
-          <h2 className="guest-audience__title">Ba vai trò trên</h2>
+          <RevealText className="guest-audience__title" text="Ba vai trò trên" />
           <div className="guest-audience__grid">
             <article className="guest-audience__card">
               <h3>Sinh viên tìm phòng</h3>
@@ -1049,7 +1048,7 @@ function HomePageComponent() {
 
         <section className="guest-trust" id="start" aria-label="Cam kết Homeji">
           <p className="guest-trust__eyebrow">Cam kết</p>
-          <h2 className="guest-trust__title">Minh bạch trước, quyết định sau</h2>
+          <RevealText className="guest-trust__title" text="Minh bạch trước, quyết định sau" />
           <p className="guest-trust__body">
             Homeji phục vụ hệ sinh thái quanh trường: sinh viên tìm phòng, tìm bạn cùng phòng, và chủ
             nhà cho thuê. Ưu tiên thông tin rõ — khu vực, giá, tiện ích và quy trình kết nối.

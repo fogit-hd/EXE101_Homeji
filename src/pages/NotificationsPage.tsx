@@ -16,6 +16,7 @@ import { formatDate, notificationTypeLabel } from '../lib/labels'
 import { getNotificationPresentation } from '../lib/notificationPresentation'
 import { notificationTargetHref } from '../lib/notificationTarget'
 import { getErrorMessage } from '../lib/errors'
+import { RevealText } from '../components/motion/RevealText'
 
 export type NotificationReadChange =
   | { kind: 'one'; notification: Notification }
@@ -225,7 +226,7 @@ export function NotificationsPage({
       {!embedded ? (
         <div className="page-header-row">
           <div>
-            <h1 className="page-title">Thông báo</h1>
+            <RevealText as="h1" className="page-title" text="Thông báo" />
             <p className="page-subtitle">Cập nhật mới nhất từ Homeji</p>
           </div>
           {markAllAction}

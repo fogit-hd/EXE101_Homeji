@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import './GuestListingPreview.css'
+import { RevealText } from '../motion/RevealText'
 
 /**
  * Landing teaser only — full search lives on /explore
@@ -10,7 +11,7 @@ export function GuestListingPreview() {
     <section className="guest-preview" id="listings" aria-label="Phòng tốt trên Homeji">
       <div className="guest-preview__inner">
         <p className="guest-preview__eyebrow">Phòng tốt gần bạn</p>
-        <h2 className="guest-preview__title">Tìm phòng quanh Thủ Đức &amp; Q.9</h2>
+        <RevealText className="guest-preview__title" text="Tìm phòng quanh Thủ Đức & Q.9" />
         <p className="guest-preview__lead">
           Xem tin theo từ khóa và khu vực
         </p>

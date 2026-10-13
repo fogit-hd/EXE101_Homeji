@@ -7,6 +7,7 @@ import { ContentSkeleton } from '../components/ContentSkeleton'
 import { formatActivityDisplay } from '../lib/activityDisplay'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
 import './ProfilePage.css'
+import { RevealText } from '../components/motion/RevealText'
 
 export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
   const [items, setItems] = useState<UserActivity[]>([])
@@ -27,7 +28,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
     <div className={embedded ? 'map-embed profile-embed account-surface' : 'container page account-surface'}>
       {!embedded ? (
         <>
-          <h1 className="page-title">Nhật ký hoạt động</h1>
+          <RevealText as="h1" className="page-title" text="Nhật ký hoạt động" />
         </>
       ) : null}
 
