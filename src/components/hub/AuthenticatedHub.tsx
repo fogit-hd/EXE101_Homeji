@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import {
   getConversations,
@@ -231,6 +232,13 @@ export function AuthenticatedHub() {
   const lead = matchingNotes.length > 0
     ? `${matchingNotes.length} tin mới khớp tìm kiếm của bạn.`
     : 'Tiếp tục hành trình tìm một nơi ở vừa ngân sách, vừa đúng nhịp sống của bạn.'
+  const hasSide = Boolean(
+    bundle &&
+      (bundle.candidates.length > 0 ||
+        bundle.invitations.length > 0 ||
+        bundle.failed.market ||
+        bundle.market.length > 0),
+  )
   const progressSteps = [savedAny, contacted, booked, !bundle?.failed.activities && viewed].filter(Boolean).length
   const progressTotal = bundle?.failed.activities ? 3 : 4
 
@@ -291,7 +299,15 @@ export function AuthenticatedHub() {
               </Link>
             </header>
             {bundle.failed.appointments ? <p className="hub-quiet">Không tải được lịch xem.</p> : null}
-            {!bundle.failed.appointments && upcoming.length === 0 ? <p className="hub-quiet">Chưa có buổi xem nào sắp tới.</p> : null}
+            {!bundle.failed.appointments && upcoming.length === 0 ? (
+              <div className="hub-empty">
+                <span className="hub-empty__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3" /><path d="M8 3v4M16 3v4M3.5 10h17" /></svg>
+                </span>
+                <p>Chưa có buổi xem nào sắp tới.</p>
+                <Link to={exploreListUrl()}>Tìm phòng để đặt lịch →</Link>
+              </div>
+            ) : null}
             <ul>
               {upcoming.map((item) => (
                 <li key={item.id}>
@@ -338,52 +354,6 @@ export function AuthenticatedHub() {
             </ul>
           </section>
 
-          <section className="hub-rooms" aria-labelledby="hub-rooms">
-            <header>
-              <div>
-                <h2 id="hub-rooms">Phòng đang mở</h2>
-                <p>Tin đang mở trên Homeji</p>
-              </div>
-              {savedAlerts[0] ? (
-                <Link to={mapSectionUrl('notifications')}>{savedAlerts[0].title}</Link>
-              ) : (
-                <Link to={exploreListUrl()}>Xem tất cả</Link>
-              )}
-            </header>
-            {bundle.failed.rooms ? <p className="hub-quiet">Không tải được phòng.</p> : null}
-            {!bundle.failed.rooms && bundle.rooms.length === 0 ? <p className="hub-quiet">Chưa có phòng để gợi ý.</p> : null}
-            <ul>
-              {bundle.rooms.map((post) => (
-                <li key={post.id}>
-                  <Link to={`/?post=${encodeURIComponent(post.id)}`}>
-                    <span className="hub-photo">
-                      {post.thumbnailPath ? (
-                        <img
-                          src={post.thumbnailPath}
-                          alt=""
-                          onError={(event) => {
-                            event.currentTarget.hidden = true
-                          }}
-                        />
-                      ) : null}
-                      Chưa có ảnh
-                    </span>
-                    <div className="hub-room-copy">
-                      {savedIds.has(post.id) ? <em>Đã lưu</em> : null}
-                      <strong>{formatPrice(post.price)}</strong>
-                      <b>{post.title}</b>
-                      <span>{post.address}</span>
-                      <small>
-                        {post.area > 0 ? `${post.area} m² · ` : ''}
-                        {rentalPostTypeLabel[post.type]}
-                      </small>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-
           <PromoBanner />
 
           <section className="hub-card hub-progress" aria-labelledby="hub-progress">
@@ -402,44 +372,134 @@ export function AuthenticatedHub() {
             </ul>
           </section>
 
-          {bundle.candidates.length > 0 ? (
-            <section className="hub-card hub-roommates" aria-labelledby="hub-roommates">
-              <h2 id="hub-roommates">Ở ghép</h2>
-              <ul>
-                {bundle.candidates.map((person) => (
-                  <li key={person.userId}>
-                    <strong>{person.displayName}</strong>
-                    {person.preferredArea ? <span>{person.preferredArea}</span> : null}
-                    {Number.isFinite(person.matchScore) ? <em>{person.matchScore}%</em> : null}
-                  </li>
-                ))}
-              </ul>
-              <Link to={mapSectionUrl('invitations')}>Xem lời mời</Link>
-            </section>
-          ) : bundle.invitations.length > 0 ? (
-            <section className="hub-card hub-roommates" aria-labelledby="hub-roommates">
-              <h2 id="hub-roommates">Ở ghép</h2>
-              <p>{bundle.invitations.length} lời mời đang mở.</p>
-              <Link to={mapSectionUrl('invitations')}>Xem lời mời</Link>
-            </section>
+          {savedAlerts[0] ? (
+            <Link className="hub-update" to={mapSectionUrl('notifications')}>
+              <span className="hub-update__dot" aria-hidden="true" />
+              <strong>{savedAlerts[0].title}</strong>
+              {savedAlerts[0].message?.trim() ? <span className="hub-update__body">{savedAlerts[0].message.trim()}</span> : null}
+              <em>Xem thông báo →</em>
+            </Link>
           ) : null}
 
-          {bundle.failed.market ? (
-            <section className="hub-card hub-market hub-market--quiet" aria-labelledby="hub-market">
-              <h2 id="hub-market">Chợ đồ khu phố</h2>
-              <p>Không tải được món quanh khu phố.</p>
-            </section>
-          ) : bundle.market.length > 0 ? (
-            <section className="hub-market" aria-labelledby="hub-market">
-              <p>Chợ đồ khu phố</p>
-              <h2 id="hub-market">{bundle.market[0]!.title}</h2>
-              <ul>
-                {bundle.market.map((item) => (
-                  <li key={item.id}>{item.title} · {formatPrice(item.price)}</li>
-                ))}
-              </ul>
-              <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ</Link>
-            </section>
+          <section className={`hub-card hub-rooms${hasSide ? '' : ' hub-rooms--full'}`} aria-labelledby="hub-rooms">
+            <header>
+              <div>
+                <h2 id="hub-rooms">Phòng đang mở</h2>
+                <p>Tin đang mở trên Homeji</p>
+              </div>
+              <Link to={exploreListUrl()}>Xem tất cả →</Link>
+            </header>
+            {bundle.failed.rooms ? <p className="hub-quiet">Không tải được phòng.</p> : null}
+            {!bundle.failed.rooms && bundle.rooms.length === 0 ? <p className="hub-quiet">Chưa có phòng để gợi ý.</p> : null}
+            <ul>
+              {bundle.rooms.map((post, index) => (
+                <motion.li
+                  key={post.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.32, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link to={`/?post=${encodeURIComponent(post.id)}`}>
+                    <span className="hub-room__photo">
+                      {post.thumbnailPath ? (
+                        <img
+                          src={post.thumbnailPath}
+                          alt=""
+                          loading="lazy"
+                          onError={(event) => {
+                            event.currentTarget.hidden = true
+                          }}
+                        />
+                      ) : null}
+                      <span className="hub-room__nophoto">Chưa có ảnh</span>
+                      {savedIds.has(post.id) ? <em className="hub-room__saved">♥ Đã lưu</em> : null}
+                    </span>
+                    <span className="hub-room__copy">
+                      <b>{post.title}</b>
+                      <span>{post.address}</span>
+                      <small>
+                        {post.area > 0 ? `${post.area} m² · ` : ''}
+                        {rentalPostTypeLabel[post.type]}
+                      </small>
+                    </span>
+                    <span className="hub-room__price">
+                      <strong>{formatPrice(post.price)}</strong>
+                      <small>/tháng</small>
+                    </span>
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+          </section>
+
+          {hasSide ? (
+            <div className="hub-side">
+              {bundle.candidates.length > 0 || bundle.invitations.length > 0 ? (
+                <section className="hub-card hub-roommates" aria-labelledby="hub-roommates">
+                  <header>
+                    <h2 id="hub-roommates">Ở ghép</h2>
+                    <Link to={mapSectionUrl('invitations')}>Xem lời mời →</Link>
+                  </header>
+                  {bundle.candidates.length > 0 ? (
+                    <ul>
+                      {bundle.candidates.map((person) => (
+                        <li key={person.userId}>
+                          <b aria-hidden="true">{initials(person.displayName)}</b>
+                          <span>
+                            <strong>{person.displayName}</strong>
+                            {person.preferredArea ? <small>{person.preferredArea}</small> : null}
+                          </span>
+                          {Number.isFinite(person.matchScore) ? <em>{person.matchScore}%</em> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="hub-roommates__count">
+                      <strong>{bundle.invitations.length}</strong>
+                      <span>lời mời ở ghép<br />đang chờ bạn phản hồi</span>
+                    </div>
+                  )}
+                  {bundle.candidates.length === 0 ? (
+                    <Link className="hub-roommates__cta" to={mapSectionUrl('invitations')}>Xem lời mời</Link>
+                  ) : null}
+                </section>
+              ) : null}
+
+              {bundle.failed.market || bundle.market.length > 0 ? (
+                <section className="hub-card hub-market" aria-labelledby="hub-market">
+                  <header>
+                    <h2 id="hub-market">Chợ đồ khu phố</h2>
+                    <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ →</Link>
+                  </header>
+                  {bundle.failed.market ? (
+                    <p className="hub-quiet">Không tải được món quanh khu phố.</p>
+                  ) : (
+                    <ul>
+                      {bundle.market.map((item) => (
+                        <li key={item.id}>
+                          <Link to={mapSectionUrl('marketplace')}>
+                            <span className="hub-market__thumb">
+                              {item.mediaUrls[0] ? (
+                                <img
+                                  src={item.mediaUrls[0]}
+                                  alt=""
+                                  loading="lazy"
+                                  onError={(event) => {
+                                    event.currentTarget.hidden = true
+                                  }}
+                                />
+                              ) : null}
+                            </span>
+                            <b>{item.title}</b>
+                            <strong>{formatPrice(item.price)}</strong>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              ) : null}
+            </div>
           ) : null}
         </>
       ) : null}
