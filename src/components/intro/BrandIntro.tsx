@@ -12,7 +12,9 @@ const MAX_HOLD_MS = 10000
 /** Mask brush width (font units): wide enough to cover a stroke's full thickness from its outline. */
 const BRUSH = 150
 /** Flat stroke list in writing order: each letter, then its accents as their own short strokes. */
-const STROKES = SLOGAN_GLYPHS.flatMap((g, gi) => g.strokes.map((s, si) => ({ ...s, key: `s${gi}-${si}`, glyph: gi })))
+const STROKES = SLOGAN_GLYPHS.flatMap((g, gi) => g.strokes.flatMap((s, si) =>
+  // One entry per closed contour, so the pen never teleports between sub-paths mid-stroke.
+  s.d.split(/(?=M)/).filter(Boolean).map((d, ci) => ({ d, accent: s.accent, key: `s${gi}-${si}-${ci}`, glyph: gi }))))
 /** Visible header logos the intro mark lands on (FLIP target), in priority order. */
 const LOGO_TARGETS = ['.hj-logo__mark', '.guest-hero__corner-logo', '.navbar img[src*="homeji-logo"]']
 
@@ -78,7 +80,7 @@ export function BrandIntro() {
     const hero = q('.hj-intro__hero')[0] as HTMLElement
     const body = q('.hj-intro__body')[0] as HTMLElement
     const slogan = node.querySelector<SVGSVGElement>('.hj-intro__slogan')!
-    const pen = q('.hj-intro__pen')[0] as HTMLElement
+    const pen = node.querySelector<SVGPathElement>('.hj-intro__tip')!
     const tail = node.querySelector<SVGPathElement>('.hj-intro__tail')!
     const stroke = node.querySelector<SVGPathElement>('.hj-mark__stroke')!
     const fill = node.querySelector<SVGPathElement>('.hj-mark__fill')!
@@ -126,25 +128,45 @@ export function BrandIntro() {
         const p = stroke.getPointAtLength(Math.max(0, Math.min(length, len)))
         return { x: homeX + p.x * k, y: homeY + p.y * k }
       }
-      // The visible tip follows its target through a critically damped spring, so velocity is
-      // continuous everywhere (no jerks at stroke joins) and tiny outline wiggles are filtered out.
-      const penTarget = { x: 0, y: 0 }
-      const penPos = { x: 0, y: 0, vx: 0, vy: 0 }
-      const OMEGA = 30
-      const movePen = (x: number, y: number) => { penTarget.x = x; penTarget.y = y }
-      const follow = (_time: number, deltaMs: number) => {
-        const dt = Math.min(0.05, deltaMs / 1000)
-        const steps = Math.max(1, Math.ceil(dt / 0.008))
-        const h = dt / steps
-        for (let n = 0; n < steps; n++) {
-          penPos.vx += (OMEGA * OMEGA * (penTarget.x - penPos.x) - 2 * OMEGA * penPos.vx) * h
-          penPos.vy += (OMEGA * OMEGA * (penTarget.y - penPos.y) - 2 * OMEGA * penPos.vy) * h
-          penPos.x += penPos.vx * h
-          penPos.y += penPos.vy * h
+      // The tip is set directly every frame — locked to the exact point being drawn, no lag.
+      // Thread tip: a short tapered ribbon trailing back from the exact ink frontier along the
+      // recent path. Width follows direction (downstrokes thick, upstrokes thin). It is rebuilt
+      // from the frontier each frame, so it is rigidly attached — no lag, no sway.
+      const tipLen = Math.max(18, fs * 0.55)
+      const wDown = Math.max(2.4, fs * 0.056)
+      const wUp = Math.max(1.1, fs * 0.022)
+      let trail: { x: number; y: number }[] = []
+      const movePen = (x: number, y: number) => {
+        const last = trail[0]
+        if (last && Math.hypot(x - last.x, y - last.y) < 0.4) return
+        if (last && Math.hypot(x - last.x, y - last.y) > tipLen * 1.5) trail = []
+        trail.unshift({ x, y })
+        let acc = 0
+        for (let n = 1; n < trail.length; n++) {
+          acc += Math.hypot(trail[n].x - trail[n - 1].x, trail[n].y - trail[n - 1].y)
+          if (acc > tipLen) { trail.length = n + 1; break }
         }
-        gsap.set(pen, { x: penPos.x, y: penPos.y })
+        if (trail.length < 2) { pen.setAttribute('d', ''); return }
+        const left: string[] = []
+        const right: string[] = []
+        let run = 0
+        for (let n = 0; n < trail.length; n++) {
+          const a = trail[Math.max(0, n - 1)]
+          const b = trail[Math.min(trail.length - 1, n + 1)]
+          const dx = a.x - b.x
+          const dy = a.y - b.y
+          const dl = Math.hypot(dx, dy) || 1
+          if (n > 0) run += Math.hypot(trail[n].x - trail[n - 1].x, trail[n].y - trail[n - 1].y)
+          const down = Math.max(0, Math.min(1, 0.5 + 0.5 * (dy / dl))) // moving down the page → thick
+          const taper = Math.pow(Math.max(0, 1 - run / tipLen), 0.8)
+          const w = (wUp + (wDown - wUp) * down) * taper / 2
+          const nx = -dy / dl
+          const ny = dx / dl
+          left.push(`${(trail[n].x + nx * w).toFixed(2)} ${(trail[n].y + ny * w).toFixed(2)}`)
+          right.push(`${(trail[n].x - nx * w).toFixed(2)} ${(trail[n].y - ny * w).toFixed(2)}`)
+        }
+        pen.setAttribute('d', `M${left.join(' L')} L${right.reverse().join(' L')} Z`)
       }
-
       gsap.set(stroke, { strokeDasharray: length, strokeDashoffset: length, opacity: 1, strokeWidth: 34 })
       gsap.set(fill, { opacity: 0 })
       const brushes = Array.from(node.querySelectorAll<SVGPathElement>('.hj-intro__brush'))
@@ -153,9 +175,6 @@ export function BrandIntro() {
       const first = brushes[0].getPointAtLength(0)
       const start = markPt(0)
       movePen(start.x, start.y)
-      Object.assign(penPos, { x: start.x, y: start.y, vx: 0, vy: 0 })
-      gsap.set(pen, { x: start.x, y: start.y })
-      gsap.ticker.add(follow)
 
       // Tail: the thread leaves the mark's foot and swoops into the first letter.
       const sx = homeX + 250 * k
@@ -180,8 +199,8 @@ export function BrandIntro() {
         },
       })
 
-      // 1 — The pen tip appears with a soft pop.
-      tl.fromTo(pen, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.28, ease: 'back.out(3)' }, 0)
+      // 1 — The thread tip fades in as the first stroke starts.
+      tl.fromTo(pen, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power1.out' }, 0.16)
         .set(hero, { opacity: 1 }, 0.16)
 
       // 2 — One continuous line draws the house; each segment eases so the pen
@@ -206,7 +225,9 @@ export function BrandIntro() {
         .to(stroke, { strokeWidth: 18, duration: 0.45, ease: 'power1.out' }, t - 0.12)
 
       // 3 — Without lifting, the pen slides to the mark's foot and swoops down to the text.
-      tl.to(penTarget, { x: sx, y: sy, duration: 0.14, ease: 'power1.inOut' }, t)
+      const slide = { v: 0 }
+      const from = markPt(length)
+      tl.to(slide, { v: 1, duration: 0.14, ease: 'power1.inOut', onUpdate: () => movePen(from.x + (sx - from.x) * slide.v, from.y + (sy - from.y) * slide.v) }, t)
       t += 0.14
       const tw = { v: 0 }
       tl.set(tail, { opacity: 1 }, t)
@@ -226,48 +247,34 @@ export function BrandIntro() {
         .to(stroke, { opacity: 0, duration: 0.4 }, t + 0.1)
       // One master clock drives ink and pen. Letters share LETTER_TIME by sqrt(length); every
       // accent gets its own clearly visible ACCENT_TIME; between strokes the lifted pen glides
-      // on a curved arc whose time grows with distance. The tip rides a smoothed centreline
-      // (moving average of the outline) instead of jumping around each contour.
-      const LETTER_TIME = 1.5
-      const ACCENT_TIME = 0.2
+      // on a short eased arc. The tip sits exactly on the ink frontier (same path, same length),
+      // and each contour is its own stroke so the tip never jumps mid-stroke.
+      const LETTER_TIME = 1.15
+      const ACCENT_TIME = 0.18
       type Seg =
         | { kind: 'ink'; i: number; t0: number; t1: number }
         | { kind: 'glide'; a: { x: number; y: number }; b: { x: number; y: number }; lift: number; t0: number; t1: number }
-      const SAMPLES = 90
-      const centre = brushes.map((b, i) => {
-        const raw = Array.from({ length: SAMPLES + 1 }, (_, n) => {
-          const p = b.getPointAtLength((lens[i] * n) / SAMPLES)
-          return sp(p.x, p.y)
-        })
-        const win = STROKES[i].accent ? 6 : 14
-        return raw.map((_, n) => {
-          let x = 0, y = 0, c = 0
-          for (let m = Math.max(0, n - win); m <= Math.min(SAMPLES, n + win); m++) { x += raw[m].x; y += raw[m].y; c++ }
-          return { x: x / c, y: y / c }
-        })
-      })
-      const at = (pts: { x: number; y: number }[], f: number) => {
-        const s2 = Math.max(0, Math.min(1, f)) * SAMPLES
-        const n = Math.min(SAMPLES - 1, Math.floor(s2))
-        const r = s2 - n
-        return { x: pts[n].x + (pts[n + 1].x - pts[n].x) * r, y: pts[n].y + (pts[n + 1].y - pts[n].y) * r }
+      /** Exact ink frontier: the same path and the same length that drive the mask reveal. */
+      const frontier = (i: number, f: number) => {
+        const p = brushes[i].getPointAtLength(lens[i] * f)
+        return sp(p.x, p.y)
       }
       const letterW = brushes.reduce((sum, _, i) => sum + (STROKES[i].accent ? 0 : Math.sqrt(lens[i])), 0)
       const segs: Seg[] = []
       let clock = 0
       let prev = { x: tx, y: ty }
       brushes.forEach((_, i) => {
-        const entry = centre[i][0]
+        const entry = frontier(i, 0)
         const dist = Math.hypot(entry.x - prev.x, entry.y - prev.y)
         if (i > 0 || dist > 1) {
-          const g = 0.012 + Math.min(0.09, dist / (fs * 30))
+          const g = 0.006 + Math.min(0.05, dist / (fs * 50))
           segs.push({ kind: 'glide', a: prev, b: entry, lift: Math.min(fs * 0.35, 6 + dist * 0.25), t0: clock, t1: clock + g })
           clock += g
         }
-        const d = STROKES[i].accent ? ACCENT_TIME : (Math.sqrt(lens[i]) / letterW) * LETTER_TIME
+        const d = STROKES[i].accent ? ACCENT_TIME / STROKES.filter(o => o.accent && o.glyph === STROKES[i].glyph && o.key.split('-')[1] === STROKES[i].key.split('-')[1]).length : (Math.sqrt(lens[i]) / letterW) * LETTER_TIME
         segs.push({ kind: 'ink', i, t0: clock, t1: clock + d })
         clock += d
-        prev = centre[i][SAMPLES]
+        prev = frontier(i, 1)
       })
       const WRITE = clock
       const offsets = brushes.map(() => -1)
@@ -284,7 +291,7 @@ export function BrandIntro() {
               const fe = Math.max(0, Math.min(1, e))
               const off = (lens[sg.i] + 1) * (1 - fe)
               if (offsets[sg.i] !== off) { offsets[sg.i] = off; brushes[sg.i].style.strokeDashoffset = `${off}` }
-              if (now >= sg.t0 && now <= sg.t1) { const p = at(centre[sg.i], fe); movePen(p.x, p.y) }
+              if (now >= sg.t0 && now <= sg.t1) { const p = frontier(sg.i, fe); movePen(p.x, p.y) }
             } else if (now >= sg.t0 && now <= sg.t1) {
               const f = (now - sg.t0) / (sg.t1 - sg.t0)
               const e = f * f * (3 - 2 * f)
@@ -305,7 +312,7 @@ export function BrandIntro() {
       })
       t += WRITE
 
-      tl.to(pen, { scale: 0, opacity: 0, duration: 0.22, ease: 'power2.in' }, t)
+      tl.to(pen, { opacity: 0, duration: 0.22, ease: 'power2.in' }, t)
 
       // 6 — Squash-and-stretch bounce: the house is alive.
       tl.to(body, { scaleY: 0.84, scaleX: 1.1, duration: 0.14, ease: 'power2.in', transformOrigin: '50% 100%' }, t)
@@ -319,8 +326,7 @@ export function BrandIntro() {
         leaving = true
         tl.progress(1)
         gsap.set(body, { scaleX: 1, scaleY: 1 })
-        gsap.set(q('.hj-intro__pen'), { opacity: 0 })
-        gsap.ticker.remove(follow)
+        gsap.set(pen, { opacity: 0 })
         const target = findLogoTarget()
         const out = gsap.timeline({ onComplete: finish, defaults: { ease: 'power3.inOut' } })
         out.to(q('.hj-intro__status, .hj-intro__skip'), { opacity: 0, duration: 0.2 }, 0)
@@ -352,7 +358,7 @@ export function BrandIntro() {
       const stopReady = whenHomeReady(() => {
         void assets.then(() => { if (!alive) return; ready = true; tryLeave() })
       })
-      return () => { gsap.ticker.remove(follow); alive = false; window.clearTimeout(maxTimer); stopReady() }
+      return () => { alive = false; window.clearTimeout(maxTimer); stopReady() }
     }, node)
     // Outlines are inline vectors — no web-font wait needed; start on the next frame.
     const raf = requestAnimationFrame(() => { if (!disposed) ctx = build() })
@@ -375,6 +381,7 @@ export function BrandIntro() {
       <div className="hj-intro__backdrop" />
       <svg className="hj-intro__ink" aria-hidden="true">
         <path className="hj-intro__tail" fill="none" stroke="#00b14f" strokeLinecap="round" />
+        <path className="hj-intro__tip" />
       </svg>
       <div className="hj-intro__hero">
         <div className="hj-intro__body"><HomejiMark className="hj-intro__mark" /></div>
@@ -392,7 +399,6 @@ export function BrandIntro() {
           </g>
         ))}
       </svg>
-      <span className="hj-intro__pen" aria-hidden="true" />
       <p className="hj-intro__status" role="status">
         <span className="hj-intro__bar" aria-hidden="true" />
         Đang chuẩn bị trang chủ…

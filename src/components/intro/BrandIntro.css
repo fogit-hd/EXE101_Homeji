@@ -48,20 +48,15 @@
   transform-origin: 50% 50%;
 }
 .hj-intro__ink-glyph { fill: #00b14f; }
-.hj-intro__pen {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 3;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
-  border-radius: 50%;
-  background: #00b14f;
-  box-shadow: 0 0 0 5px rgba(0, 177, 79, 0.18), 0 0 22px 6px rgba(0, 177, 79, 0.32);
+.hj-intro__ink { z-index: 3; }
+/* Thread tip: tapered ribbon at the ink frontier (geometry rebuilt per frame by GSAP). */
+.hj-intro__tip {
+  fill: #1fd06e;
+  stroke: #1fd06e;
+  stroke-width: 0.6;
+  stroke-linejoin: round;
   opacity: 0;
-  pointer-events: none;
-  will-change: transform;
+  filter: drop-shadow(0 0 3px rgba(0, 177, 79, 0.55));
 }
 .hj-intro__status {
   position: absolute;
