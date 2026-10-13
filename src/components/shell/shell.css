@@ -571,8 +571,22 @@
   height: 44px;
 }
 
-.hj-search__field:focus-within {
-  border-color: #e8603c;
+.hj-search__field {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Focus lives on the pill, never on the bare input (no browser rectangle). */
+.hj-search .hj-search__field:focus-within,
+.hj-search .hj-search__field.hj-search__field--ai:focus-within {
+  border-color: #00b14f;
+  background: var(--surface-elevated);
+  box-shadow: 0 0 0 3px rgba(0, 177, 79, 0.16);
+  animation: none;
+}
+
+.hj-search .hj-search__input:focus,
+.hj-search .hj-search__input:focus-visible {
+  outline: none;
 }
 
 .hj-search__icon {
@@ -662,6 +676,12 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-elevated);
+  box-shadow: 0 12px 32px rgba(18, 24, 28, 0.12);
+}
+
+.hj-search__suggest-note {
+  padding: 6px 10px 4px;
+  line-height: 1.45;
 }
 
 .hj-search__suggest button {
