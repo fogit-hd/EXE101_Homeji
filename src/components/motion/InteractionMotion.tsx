@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { animate, type AnimationPlaybackControlsWithThen as AnimationPlaybackControls } from 'motion/react'
-import { DURATION, EASE, STAGGER } from '../../lib/motionTokens'
+import { DURATION, EASE, SCROLL_REVEAL } from '../../lib/motionTokens'
 import './interaction-motion.css'
 
 const ACTIONS = 'button, [role="button"], summary, .btn, .auth-cinema__submit, .guest-hero__bloom-cta, .guest-hero__top-consult-btn, .roommate-people button, .marketplace-header button, [role="tab"], .hj-mega__link'
@@ -64,18 +64,26 @@ export function InteractionMotion() {
         if (!entry.isIntersecting) return
         intersection?.unobserve(entry.target)
         const node = entry.target
-        if (!(node instanceof HTMLElement) || reduced.matches || node.contains(document.activeElement)) return
-        // Nothing is hidden while waiting for the observer or when JavaScript fails.
-        track(animate(node, { opacity: [.35, 1], y: [12, 0] }, {
-          duration: DURATION.reveal, delay: Math.min(stagger++, 5) * STAGGER.list, ease: EASE.out,
+        if (!(node instanceof HTMLElement)) return
+        const wasHidden = node.classList.contains('hj-pre-reveal')
+        node.classList.remove('hj-pre-reveal')
+        if (reduced.matches || node.contains(document.activeElement)) return
+        const { from } = SCROLL_REVEAL
+        // Cards rise and settle; nodes that were already on screen only get a soft lift.
+        track(animate(node, {
+          opacity: [wasHidden ? from.opacity : 0.6, 1], y: [from.y, 0], scale: [from.scale, 1],
+        }, {
+          duration: SCROLL_REVEAL.duration, delay: Math.min(stagger++, SCROLL_REVEAL.maxStagger) * SCROLL_REVEAL.stagger, ease: EASE.out,
         }), node)
       })
-    }, { threshold: .12 })
+    }, { threshold: .12, rootMargin: '0px 0px -6% 0px' })
     const register = (root: Element) => {
       const nodes = root.matches(REVEALS) ? [root, ...root.querySelectorAll(REVEALS)] : root.querySelectorAll(REVEALS)
       nodes.forEach(node => {
         if (seen.has(node)) return
         seen.add(node)
+        // Pre-hide only what starts below the fold, so it can rise in from nothing when reached.
+        if (node instanceof HTMLElement && node.getBoundingClientRect().top > window.innerHeight) node.classList.add('hj-pre-reveal')
         intersection?.observe(node)
       })
     }
@@ -88,6 +96,7 @@ export function InteractionMotion() {
       document.removeEventListener('click', pulse)
       reduced.removeEventListener('change', onPreference)
       intersection?.disconnect()
+      document.querySelectorAll('.hj-pre-reveal').forEach(n => n.classList.remove('hj-pre-reveal'))
       mutations.disconnect()
       cancel()
     }

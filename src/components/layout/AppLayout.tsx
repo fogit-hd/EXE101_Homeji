@@ -43,7 +43,7 @@ export function AppLayout() {
   useLayoutEffect(() => {
     if (isMapPeer || !outletRef.current) return
     // Opacity only: transforming this ancestor breaks sticky and fixed descendants.
-    const controls = animateOutlet(outletRef.current, { opacity: [0.3, 1] }, transitions.base)
+    const controls = animateOutlet(outletRef.current, { opacity: [0, 1] }, transitions.reveal)
     return () => controls.stop()
   }, [destination, isMapPeer, animateOutlet, outletRef])
 
