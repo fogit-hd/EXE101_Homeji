@@ -1,34 +1,20 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
-// Self-hosted script face; unicode-range subsets (incl. Vietnamese) load on demand.
-import '@fontsource/dancing-script/700.css'
 import { INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
 import { HOMEJI_MARK_H, HOMEJI_MARK_PATH, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
+import { SLOGAN_BOTTOM, SLOGAN_GLYPHS, SLOGAN_TOP, SLOGAN_WIDTH } from './sloganGlyphs'
 import './BrandIntro.css'
 
 const SLOGAN = 'Trọ an tâm · Nâng tầm cuộc sống'
-const SCRIPT_FONT = '700 64px "Dancing Script"'
 /** Never hold the user longer than this; home shows its own skeleton if still loading. */
 const MAX_HOLD_MS = 7000
-/** Never wait longer than this for the script font before starting anyway. */
-const FONT_WAIT_MS = 1500
+/** Mask brush width (font units): wide enough to cover a stroke's full thickness from its outline. */
+const BRUSH = 150
+/** Flat stroke list in writing order: each letter, then its accents as their own short strokes. */
+const STROKES = SLOGAN_GLYPHS.flatMap((g, gi) => g.strokes.map((s, si) => ({ ...s, key: `s${gi}-${si}`, glyph: gi })))
 /** Visible header logos the intro mark lands on (FLIP target), in priority order. */
 const LOGO_TARGETS = ['.hj-logo__mark', '.guest-hero__corner-logo', '.navbar img[src*="homeji-logo"]']
-
-/** Grapheme cluster; `accent` marks letters carrying Vietnamese diacritics. */
-type Glyph = { key: string; text: string; accent: boolean }
-
-/** Grapheme split (Intl.Segmenter) so stacked Vietnamese marks (ộ, ầ, ố) never break apart. */
-function splitSlogan(text: string): Glyph[] {
-  const nfc = text.normalize('NFC')
-  const parts = typeof Intl !== 'undefined' && 'Segmenter' in Intl
-    ? Array.from(new Intl.Segmenter('vi', { granularity: 'grapheme' }).segment(nfc), s => s.segment)
-    : Array.from(nfc)
-  return parts.map((g, i) => {
-    return { key: `g${i}`, text: g, accent: /[\u0300-\u036f]/.test(g.normalize('NFD')) }
-  })
-}
 
 function findLogoTarget(): HTMLElement | null {
   for (const selector of LOGO_TARGETS) {
@@ -60,16 +46,6 @@ function warmAssets(): Promise<unknown> {
   return Promise.all(jobs)
 }
 
-/** Waits for the script face (with the exact slogan glyphs) so nothing swaps mid-stroke. */
-function scriptFontReady(): Promise<unknown> {
-  const fonts = document.fonts
-  if (!fonts?.load) return Promise.resolve()
-  return Promise.race([
-    fonts.load(SCRIPT_FONT, SLOGAN).then(() => fonts.ready).catch(() => {}),
-    new Promise(resolve => window.setTimeout(resolve, FONT_WAIT_MS)),
-  ])
-}
-
 /** Cumulative path length at every command end — the pen eases into each corner. */
 function cornerLengths(path: string): number[] {
   const cmds = path.match(/[MLCZ][^MLCZ]*/g) ?? []
@@ -86,7 +62,6 @@ export function BrandIntro() {
   const [active, setActive] = useState(introRequested)
   const root = useRef<HTMLDivElement>(null)
   const skipRef = useRef<() => void>(() => {})
-  const glyphs = useMemo(() => splitSlogan(SLOGAN), [])
 
   useLayoutEffect(() => {
     // React's overlay paints the identical first frame, so drop the static boot layer.
@@ -102,8 +77,7 @@ export function BrandIntro() {
     const html = document.documentElement
     const hero = q('.hj-intro__hero')[0] as HTMLElement
     const body = q('.hj-intro__body')[0] as HTMLElement
-    const slogan = q('.hj-intro__slogan')[0] as HTMLElement
-    const line = q('.hj-intro__line')[0] as HTMLElement
+    const slogan = node.querySelector<SVGSVGElement>('.hj-intro__slogan')!
     const pen = q('.hj-intro__pen')[0] as HTMLElement
     const tail = node.querySelector<SVGPathElement>('.hj-intro__tail')!
     const stroke = node.querySelector<SVGPathElement>('.hj-mark__stroke')!
@@ -130,19 +104,20 @@ export function BrandIntro() {
       const size = Math.round(Math.max(104, Math.min(150, Math.min(vw, vh) * 0.2)))
       const k = size / HOMEJI_MARK_W
       // Fit the slogan on one line: start at the design size and shrink to the viewport.
-      let fs = Math.min(60, Math.max(26, vw * 0.06))
-      slogan.style.fontSize = `${fs}px`
-      const avail = vw - 40
-      if (line.offsetWidth > avail) { fs *= avail / line.offsetWidth; slogan.style.fontSize = `${fs}px` }
-      const lineH = line.offsetHeight
+      const fs = Math.min(64, Math.max(22, vw * 0.064), ((vw - 40) * 1000) / SLOGAN_WIDTH)
+      const u = fs / 1000 // px per font unit
+      const lineW = SLOGAN_WIDTH * u
+      const lineH = (SLOGAN_BOTTOM - SLOGAN_TOP) * u
       const gap = Math.max(18, size * 0.2)
       const top = Math.max(24, (vh - (size * HOMEJI_MARK_H / HOMEJI_MARK_W + gap + lineH)) / 2 - vh * 0.03)
       const homeX = (vw - size) / 2
       const homeY = top
       const sloganTop = homeY + size * HOMEJI_MARK_H / HOMEJI_MARK_W + gap
       gsap.set(hero, { x: homeX, y: homeY, width: size, height: size * HOMEJI_MARK_H / HOMEJI_MARK_W, transformOrigin: '50% 100%' })
-      gsap.set(slogan, { top: sloganTop })
-      const sr = line.getBoundingClientRect()
+      gsap.set(slogan, { attr: { width: lineW, height: lineH }, left: (vw - lineW) / 2, top: sloganTop })
+      const sr = { left: (vw - lineW) / 2, top: sloganTop }
+      /** Font-unit point → client px. */
+      const sp = (x: number, y: number) => ({ x: sr.left + x * u, y: sr.top + (y - SLOGAN_TOP) * u })
 
       // ---- Pen path through the mark: slow into corners, fast on straights.
       const length = stroke.getTotalLength()
@@ -155,15 +130,17 @@ export function BrandIntro() {
 
       gsap.set(stroke, { strokeDasharray: length, strokeDashoffset: length, opacity: 1, strokeWidth: 34 })
       gsap.set(fill, { opacity: 0 })
-      gsap.set(line, { clipPath: 'inset(-50% 100% -50% -6%)' })
+      const brushes = Array.from(node.querySelectorAll<SVGPathElement>('.hj-intro__brush'))
+      const lens = brushes.map(b => b.getTotalLength())
+      brushes.forEach((b, i) => gsap.set(b, { strokeDasharray: lens[i] + 1, strokeDashoffset: lens[i] + 1 }))
+      const first = brushes[0].getPointAtLength(0)
       const start = markPt(0)
       movePen(start.x, start.y)
 
       // Tail: the thread leaves the mark's foot and swoops into the first letter.
       const sx = homeX + 250 * k
       const sy = homeY + 1048 * k
-      const tx = sr.left + fs * 0.08
-      const ty = sr.top + sr.height * 0.62
+      const { x: tx, y: ty } = sp(first.x, first.y)
       tail.setAttribute('d', `M${sx} ${sy} C ${sx - fs * 0.9} ${sy + (ty - sy) * 0.9}, ${tx - fs * 1.2} ${ty - fs * 0.5}, ${tx} ${ty}`)
       tail.style.strokeWidth = `${Math.max(2.5, fs * 0.07)}`
       const tailLen = tail.getTotalLength()
@@ -223,31 +200,41 @@ export function BrandIntro() {
       }, t)
       t += 0.3
 
-      // 4 — Handwriting: the line is revealed under the pen; the tip bobs along the baseline.
-      const WRITE = 0.95
-      const wr = { p: 0 }
-      tl.to(wr, {
-        p: 1, duration: WRITE, ease: 'power1.inOut',
-        onUpdate: () => {
-          line.style.clipPath = `inset(-50% ${Math.max(-6, 100 - wr.p * 106)}% -50% -6%)`
-          movePen(sr.left + sr.width * wr.p, sr.top + sr.height * (0.58 + 0.1 * Math.sin(wr.p * 58)))
-        },
-      }, t)
-        .to(tail, { opacity: 0, duration: 0.45, ease: 'power1.out' }, t + 0.25)
+      // 4 — Handwriting: every letter is laid down along its own outline in pen order, the tip
+      //     riding the live drawing point; accents follow their letter as short separate strokes.
+      tl.to(tail, { opacity: 0, duration: 0.45, ease: 'power1.out' }, t + 0.25)
         .to(stroke, { opacity: 0, duration: 0.4 }, t + 0.1)
-      t += WRITE
-
-      // 5 — Accented letters are written whole (real Dancing Script marks); as the pen
-      //     passes each one it gives a small springy lift so the marks feel "flicked" on.
-      const accents = q('.hj-intro__g--accent') as HTMLElement[]
-      accents.forEach(el => {
-        const r = el.getBoundingClientRect()
-        const at = t - WRITE + WRITE * Math.min(1, Math.max(0, (r.right - sr.left) / sr.width))
-        tl.fromTo(el, { y: 0, scale: 1 }, {
-          keyframes: [{ y: -fs * 0.1, scale: 1.12, duration: 0.12, ease: 'power2.out' }, { y: 0, scale: 1, duration: 0.38, ease: 'back.out(3)' }],
-        }, at)
+      const WRITE = 1.45
+      const LIFT = 0.035 // pen-lift hop between strokes
+      const weight = lens.map(l => Math.sqrt(l))
+      const wsum = weight.reduce((a, b) => a + b, 0)
+      const drawTotal = WRITE - LIFT * (brushes.length - 1)
+      brushes.forEach((b, i) => {
+        const d = (weight[i] / wsum) * drawTotal
+        const accent = STROKES[i].accent
+        const o = { v: 0 }
+        if (i > 0) {
+          const p0 = b.getPointAtLength(0)
+          const c = sp(p0.x, p0.y)
+          tl.to(pen, { x: c.x, y: c.y, duration: LIFT, ease: 'sine.inOut' }, t)
+          t += LIFT
+        }
+        tl.to(o, {
+          v: 1, duration: d, ease: accent ? 'power2.out' : 'sine.inOut',
+          onUpdate: () => {
+            b.style.strokeDashoffset = `${(lens[i] + 1) * (1 - o.v)}`
+            const p = b.getPointAtLength(lens[i] * o.v)
+            const c = sp(p.x, p.y)
+            movePen(c.x, c.y)
+          },
+        }, t)
+        if (accent) {
+          // A flicked mark: tiny overshoot as the pen snaps it on.
+          tl.fromTo(b.parentElement!.nextElementSibling!, { scale: 1.25, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.35, ease: 'back.out(3)' }, t)
+        }
+        t += d
       })
-      t += 0.08
+
       tl.to(pen, { scale: 0, opacity: 0, duration: 0.22, ease: 'power2.in' }, t)
 
       // 6 — Squash-and-stretch bounce: the house is alive.
@@ -296,13 +283,15 @@ export function BrandIntro() {
       })
       return () => { alive = false; window.clearTimeout(maxTimer); stopReady() }
     }, node)
-    void scriptFontReady().then(() => { if (!disposed) ctx = build() })
+    // Outlines are inline vectors — no web-font wait needed; start on the next frame.
+    const raf = requestAnimationFrame(() => { if (!disposed) ctx = build() })
 
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') skipRef.current() }
     window.addEventListener('keydown', onKey)
     return () => {
       window.removeEventListener('keydown', onKey)
       disposed = true
+      cancelAnimationFrame(raf)
       ctx?.revert()
       if (hiddenTarget) hiddenTarget.style.removeProperty('visibility')
     }
@@ -319,15 +308,19 @@ export function BrandIntro() {
       <div className="hj-intro__hero">
         <div className="hj-intro__body"><HomejiMark className="hj-intro__mark" /></div>
       </div>
-      <p className="hj-intro__slogan" aria-label={SLOGAN}>
-        <span className="hj-intro__line" aria-hidden="true">
-          {glyphs.map(g => g.accent
-            ? (
-              <span key={g.key} className="hj-intro__g hj-intro__g--accent">{g.text}</span>
-            )
-            : <span key={g.key} className={g.text === '·' ? 'hj-intro__g hj-intro__g--sep' : 'hj-intro__g'}>{g.text === ' ' ? '\u00a0' : g.text}</span>)}
-        </span>
-      </p>
+      <svg className="hj-intro__slogan" role="img" aria-label={SLOGAN}
+        viewBox={`0 ${SLOGAN_TOP} ${SLOGAN_WIDTH} ${SLOGAN_BOTTOM - SLOGAN_TOP}`}>
+        {STROKES.map(s => (
+          <g key={s.key}>
+            <mask id={`hj-${s.key}`} maskUnits="userSpaceOnUse" x={-300} y={SLOGAN_TOP - 300}
+              width={SLOGAN_WIDTH + 600} height={SLOGAN_BOTTOM - SLOGAN_TOP + 600}>
+              <path className="hj-intro__brush" d={s.d} fill="none" stroke="#fff" strokeWidth={BRUSH}
+                strokeLinecap="butt" strokeLinejoin="round" />
+            </mask>
+            <path className="hj-intro__ink-glyph" d={s.d} mask={`url(#hj-${s.key})`} />
+          </g>
+        ))}
+      </svg>
       <span className="hj-intro__pen" aria-hidden="true" />
       <p className="hj-intro__status" role="status">
         <span className="hj-intro__bar" aria-hidden="true" />

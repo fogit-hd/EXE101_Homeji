@@ -42,27 +42,12 @@
 .hj-intro__slogan {
   position: absolute;
   left: 0;
-  right: 0;
   top: 0;
-  margin: 0;
   z-index: 1;
-  text-align: center;
-  white-space: nowrap;
-  font-family: 'Dancing Script', 'Be Vietnam Pro', cursive;
-  font-weight: 700;
-  font-size: 60px;
-  line-height: 1.5;
-  color: #00b14f;
+  overflow: visible;
   transform-origin: 50% 50%;
 }
-.hj-intro__line {
-  display: inline-block;
-  padding: 0 0.1em;
-  /* Revealed left→right under the pen by GSAP. */
-  clip-path: inset(-50% 100% -50% -6%);
-}
-.hj-intro__g { position: relative; display: inline-block; }
-.hj-intro__g--accent { transform-origin: 50% 90%; will-change: transform; }
+.hj-intro__ink-glyph { fill: #00b14f; }
 .hj-intro__pen {
   position: absolute;
   left: 0;
