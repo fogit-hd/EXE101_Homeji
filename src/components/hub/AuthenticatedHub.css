@@ -589,9 +589,13 @@
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  transition: background-color 0.18s ease;
+  transition: transform 0.18s ease;
 }
-.hub-roommates__cta:hover { background: #009241; }
+.hub-roommates__cta:hover {
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-2px);
+}
 
 .hub-market li + li { border-top: 1px solid #eef0f2; }
 .hub-market li a {

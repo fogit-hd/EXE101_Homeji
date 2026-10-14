@@ -131,10 +131,6 @@
   text-decoration: none;
 }
 
-.hj-logo:hover {
-  background: #eee8dd;
-}
-
 .hj-logo:focus-visible {
   outline: 2px solid var(--text-heading);
   outline-offset: 2px;
@@ -219,6 +215,10 @@
 .hj-action:hover,
 .hj-action.is-active {
   background: #eee8dd;
+}
+
+.hj-action--text:hover {
+  background: transparent;
 }
 
 .hj-action--icon {

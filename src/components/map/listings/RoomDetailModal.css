@@ -70,7 +70,7 @@
 .room-detail__close,
 .room-detail__book,
 .room-detail__retry,
-.room-detail__schedule button {
+.room-detail__schedule > button {
   border: 1px solid var(--rd-border);
   background: var(--rd-surface);
   color: var(--rd-forest);
@@ -92,7 +92,7 @@
 .room-detail__save:disabled,
 .room-detail__book:disabled,
 .room-detail__message:disabled,
-.room-detail__schedule button:disabled {
+.room-detail__schedule > button:disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -543,6 +543,12 @@
   min-width: min(280px, 100%);
 }
 
+/* The booking picker sits in the modal footer, so open its calendar upward. */
+.room-detail__schedule .schedule-dt__panel {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .room-detail__schedule label {
   display: flex;
   flex-direction: column;
@@ -561,7 +567,7 @@
   font: 400 14px/20px var(--font-ui);
 }
 
-.room-detail__schedule button {
+.room-detail__schedule > button {
   align-self: flex-start;
   height: 36px;
   padding: 0 14px;

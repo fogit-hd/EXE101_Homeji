@@ -590,7 +590,7 @@ function HeaderLink({
   return (
     <Link
       to={href}
-      className={`hj-action${label ? '' : ' hj-action--icon'}${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
+      className={`hj-action${label ? ' hj-action--text' : ' hj-action--icon'}${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
       aria-label={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel}
       aria-current={active ? 'page' : undefined}
     >

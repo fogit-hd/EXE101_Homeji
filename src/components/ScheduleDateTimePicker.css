@@ -73,7 +73,7 @@
   top: calc(100% + 4px);
   left: 0;
   width: 260px;
-  max-width: 100%;
+  max-width: min(260px, calc(100vw - 24px));
   padding: 10px;
   display: grid;
   gap: 6px;

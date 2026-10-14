@@ -76,7 +76,11 @@
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.hub-promo__cta:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.hub-promo__cta:hover {
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-2px);
+}
 
 .hub-promo__dots {
   position: absolute;

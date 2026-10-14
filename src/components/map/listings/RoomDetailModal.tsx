@@ -218,7 +218,11 @@ export function RoomDetailModal({
 
   const handleBookViewing = async () => {
     if (!post?.id || !scheduleAt) return
-    if (!isAuthenticated || !isRenter) {
+    if (isAuthenticated && !isRenter) {
+      notify('Tài khoản hiện tại chưa có vai trò Người thuê. Vào Hồ sơ → Lối sống & vai trò, chọn Người thuê rồi lưu để đặt lịch.', 'err')
+      return
+    }
+    if (!isAuthenticated) {
       notify('Chỉ người thuê đã đăng nhập mới đặt lịch xem.', 'err')
       return
     }

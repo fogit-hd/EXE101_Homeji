@@ -7,7 +7,7 @@ type Props = {
   onDismiss?: () => void
 }
 
-/** Top-center toast — keeps text during exit so fade-out completes. */
+/** Top-right toast — keeps text during exit so fade-out completes. */
 export function MapToast({ message, tone = 'info', onDismiss }: Props) {
   const [display, setDisplay] = useState<string | null>(message)
   const [visible, setVisible] = useState(false)
