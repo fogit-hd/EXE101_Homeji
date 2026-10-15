@@ -301,6 +301,7 @@ export function MarketplacePage({
   })
   const tabPanelRef = useTabTransition(tab, TAB_MOTION_ORDER, tab === 'food' ? '.food-catalog, .food-rail-desktop' : undefined)
   const [posts, setPosts] = useState<MarketplacePost[]>([])
+  const [detailPost, setDetailPost] = useState<MarketplacePost | null>(null)
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
   const [categorySelection, setCategorySelection] = useState({ tab, value: '' })
   const category = categorySelection.tab === tab ? categorySelection.value : ''
@@ -999,7 +1000,19 @@ export function MarketplacePage({
           selectedMarketplaceId === p.sellerId ? ' is-selected' : ''
         }`}
       >
-        <div className="marketplace-card__main">
+        <div
+          className="marketplace-card__main marketplace-card__main--clickable"
+          role="button"
+          tabIndex={0}
+          aria-label={`Xem chi tiết: ${p.title}`}
+          onClick={() => setDetailPost(p)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setDetailPost(p)
+            }
+          }}
+        >
           {thumb ? (
             <img className="marketplace-card__thumb" src={thumb} alt="" loading="lazy" />
           ) : (
@@ -2159,6 +2172,52 @@ export function MarketplacePage({
           if (error && !disrupted) setHiddenLoadError(error)
         }}
       />
+      {detailPost ? (
+        <div
+          className="marketplace-detail-backdrop"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setDetailPost(null)
+          }}
+        >
+          <section
+            className="marketplace-detail-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="marketplace-detail-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setDetailPost(null)
+            }}
+          >
+            <header className="marketplace-detail-dialog__header">
+              <strong>Chi tiết sản phẩm</strong>
+              <button type="button" className="btn btn-secondary btn-sm" autoFocus onClick={() => setDetailPost(null)} aria-label="Đóng chi tiết">×</button>
+            </header>
+            <div className="marketplace-detail-dialog__content">
+              {postThumb(detailPost) ? <img className="marketplace-detail-dialog__image" src={postThumb(detailPost)!} alt={detailPost.title} /> : null}
+              <div className="marketplace-detail-dialog__summary">
+                <p className="marketplace-detail-dialog__price">{formatPrice(detailPost.price)}{detailPost.unit ? ` / ${detailPost.unit}` : ''}</p>
+                <h2 id="marketplace-detail-title">{detailPost.title}</h2>
+                <p className="marketplace-detail-dialog__meta">{detailPost.condition} · {detailPost.category}</p>
+                <p className="marketplace-detail-dialog__meta">{detailPost.address}</p>
+                <p className="marketplace-detail-dialog__seller">Người đăng: {detailPost.sellerDisplayName}</p>
+                <h3>Mô tả</h3>
+                <p className="marketplace-detail-dialog__description">{detailPost.description || 'Người đăng chưa cung cấp mô tả.'}</p>
+              </div>
+            </div>
+            {detailPost.sellerId !== profile?.id && detailPost.status === MarketplacePostStatus.Active ? (
+              <footer className="marketplace-detail-dialog__actions">
+                <button type="button" className="btn btn-secondary" disabled={contactingPostId !== null} onClick={() => { const post = detailPost; setDetailPost(null); void contactAboutPost(post.id) }}>
+                  Nhắn người bán
+                </button>
+                <button type="button" className="btn btn-primary" disabled={orderingPostId !== null} onClick={() => { const post = detailPost; setDetailPost(null); void handleOrder(post) }}>
+                  Mua bằng số dư
+                </button>
+              </footer>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
     </>
   )
 

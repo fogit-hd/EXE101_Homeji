@@ -10,7 +10,7 @@ function sourceImage(raw: string): string | null {
   try {
     const url = new URL(raw)
     return url.protocol === 'https:' && !url.username && !url.password && !url.port
-      && ['pt123.cdn.static123.com'].includes(url.hostname) ? url.href : null
+      && ['pt123.cdn.static123.com', 'cloud.mogi.vn'].includes(url.hostname) ? url.href : null
   } catch { return null }
 }
 

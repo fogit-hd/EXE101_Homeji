@@ -17,7 +17,7 @@ export function rentalSourceHref(raw: string): string | null {
   try {
     const url = new URL(raw)
     if (url.protocol !== 'https:' || url.username || url.password ||
-      !['phongtro123.com', 'www.phongtro123.com', 'muaban.net', 'www.muaban.net'].includes(url.hostname)) return null
+      !['phongtro123.com', 'www.phongtro123.com', 'muaban.net', 'www.muaban.net', 'mogi.vn', 'www.mogi.vn'].includes(url.hostname)) return null
     return url.href
   } catch { return null }
 }
