@@ -350,7 +350,9 @@ export function GlobalHeader() {
     item.id === 'market' ? { ...item, href: marketplaceHref('browse') } : item
   ))
 
-  const accountLinks: { id: string; label: string; href: string; icon: 'user' | 'card' | 'search' | 'activity' | 'shield' }[] = [
+  const accountLinks: { id: string; label: string; href: string; icon: 'user' | 'card' | 'search' | 'activity' | 'shield' | 'bookmark' }[] = [
+    { id: 'myPosts', label: 'Quản lý tin', href: mapSectionUrl('myPosts'), icon: 'activity' },
+    { id: 'saved', label: 'Tin đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark' },
     { id: 'profile', label: 'Hồ sơ', href: mapSectionUrl('profile'), icon: 'user' as const },
     { id: 'subscription', label: 'Gói đăng ký', href: mapSectionUrl('payments'), icon: 'card' as const },
     { id: 'wanted', label: 'Tin tìm phòng', href: mapSectionUrl('wanted'), icon: 'search' as const },
@@ -409,7 +411,6 @@ export function GlobalHeader() {
         <ContextualSearch />
         <div className="hj-actions">
           <HomejiAiButton />
-          <HeaderLink href={mapSectionUrl('saved')} label="" icon="heart" />
           <div className="hj-notify" ref={notifyRef}>
             <button
               type="button"
@@ -477,7 +478,6 @@ export function GlobalHeader() {
             ) : null}
           </div>
           <HeaderLink href={mapSectionUrl('messages')} label="" icon="message" count={unreadMessages} />
-          <HeaderLink href={mapSectionUrl('myPosts')} label="Quản lý tin" />
           {isAdmin ? <Link to="/admin" className="hj-post-cta hj-admin-cta" aria-current={location.pathname === '/admin' ? 'page' : undefined}>
             <ShellIcon name="shield" /><span>Quản trị</span>
           </Link> : <Link to="/posts/new" className="hj-post-cta">Đăng tin</Link>}

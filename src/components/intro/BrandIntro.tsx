@@ -39,7 +39,7 @@ function warmAssets(): Promise<unknown> {
       jobs.push(fonts.load(f).catch(() => {}))
     }
   }
-  for (const src of ['/landing/bloom-hero-bg.jpg', '/brand/homeji-logo2.png']) {
+  for (const src of ['/landing/bloom-hero-bg.png', '/brand/homeji-logo2.png']) {
     const img = new Image()
     img.decoding = 'async'
     img.src = src

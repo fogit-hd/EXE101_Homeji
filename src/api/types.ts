@@ -343,6 +343,7 @@ export interface RentalPostMedia {
 
 export interface RentalPostSummary {
   id: string
+  isSynthetic?: boolean
   ownerId?: string
   ownerRole?: UserRole | null
   ownerDisplayName?: string | null

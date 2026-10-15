@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -21,16 +20,12 @@ import {
   type ListingQuery,
   type MapListingsView,
 } from './listingAdapters'
-import { isUsefulSearchQuery } from '../../../lib/searchQuery'
-import { useSearch } from '../../../contexts/SearchContext'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { Sk, SkCard } from '../../skeletons/Skeleton'
 import './MapListingsWorkspace.css'
 
-const RECENT_KEY = 'homeji:map-search-recent'
 const PAGE_SIZE = 20
 
-type RecentItem = { title: string; keyword: string; subtitle?: string }
 type RangeDraft = { min: string; max: string }
 
 type Props = {
@@ -51,32 +46,6 @@ type Props = {
   onToggleSave?: (id: string) => void
   onResetFilters: () => void
   onUserSearch?: () => void
-}
-
-function loadRecent(): RecentItem[] {
-  try {
-    const raw = localStorage.getItem(RECENT_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as Array<{ title?: string; keyword?: string; subtitle?: string }>
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .filter((item) => item && typeof item.keyword === 'string' && isUsefulSearchQuery(item.keyword))
-      .slice(0, 6)
-      .map((item) => ({
-        title: item.title?.trim() || item.keyword!.trim(),
-        keyword: item.keyword!.trim(),
-        subtitle: item.subtitle,
-      }))
-  } catch {
-    return []
-  }
-}
-
-function formatRange(label: string, min?: number, max?: number, unit = ''): string | null {
-  if (min == null && max == null) return null
-  if (min != null && max != null) return `${label} ${min}–${max}${unit}`
-  if (min != null) return `${label} ≥ ${min}${unit}`
-  return `${label} ≤ ${max}${unit}`
 }
 
 const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
@@ -102,7 +71,6 @@ export function MapListingsWorkspace({
   onResetFilters,
   onUserSearch,
 }: Props) {
-  const { submit } = useSearch()
   const [searchParams, setSearchParams] = useSearchParams()
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
@@ -125,8 +93,13 @@ export function MapListingsWorkspace({
     if (options?.fit) onUserSearch?.()
   }
 
-  const setView = (view: MapListingsView) => writeQuery({ view })
-  const [openFilter, setOpenFilter] = useState<'price' | 'area' | 'amenities' | null>(null)
+  const setView = (view: MapListingsView) => {
+    setMobilePane(view === 'list' ? 'list' : 'map')
+    setPanelOpen(true)
+    writeQuery({ view })
+  }
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const filterAnchor = useRef<HTMLButtonElement>(null)
   const [priceDraft, setPriceDraft] = useState<RangeDraft>(() => ({
     min: query.minPrice != null ? String(query.minPrice) : '',
     max: query.maxPrice != null ? String(query.maxPrice) : '',
@@ -140,19 +113,19 @@ export function MapListingsWorkspace({
     setPriceDraft({ min: '', max: '' })
     setAreaDraft({ min: '', max: '' })
     setAmenityDraft([])
-    setOpenFilter(null)
+    setFiltersOpen(false)
     onResetFilters()
   }
-  const toggleFilter = (id: 'price' | 'area' | 'amenities') => {
-    setOpenFilter((current) => (current === id ? null : id))
+  const activeFilterCount = Number(query.minPrice != null || query.maxPrice != null)
+    + Number(query.minArea != null || query.maxArea != null) + query.amenities.length
+    + (query.excludedAmenities?.length ?? 0) + Number(query.excludeRoommateShare)
+    + Number(query.minAvailableSlots != null)
+  const openFilters = () => {
+    setPriceDraft({ min: query.minPrice != null ? String(query.minPrice) : '', max: query.maxPrice != null ? String(query.maxPrice) : '' })
+    setAreaDraft({ min: query.minArea != null ? String(query.minArea) : '', max: query.maxArea != null ? String(query.maxArea) : '' })
+    setAmenityDraft(query.amenities)
+    setFiltersOpen(true)
   }
-
-  const resultNoun = marketMode ? 'tin' : 'phòng'
-  const countLabel = loading
-    ? marketMode
-      ? 'Đang tải chợ đồ…'
-      : 'Đang tải phòng…'
-    : `${cards.length} ${resultNoun} trên trang này`
 
   const showMap = query.view !== 'list' && mapNode != null
   const showList = query.view !== 'map'
@@ -168,118 +141,77 @@ export function MapListingsWorkspace({
   return (
     <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}`}>
       <header className="map-listings__header">
-        {mapFirst ? null : (
-          <>
-            <div className="map-listings__title-row">
-              <div className="map-listings__title-block">
-                <p className="map-listings__kicker">Khám phá</p>
-                <h1>{marketMode ? 'Chợ đồ quanh khu bạn đang xem' : 'Tìm một căn phòng hợp nhịp sống'}</h1>
-                <p>{loading ? <Sk w={160} h={12} /> : countLabel}</p>
-              </div>
-            </div>
-            <RecentRow onPick={(keyword) => submit(keyword)} />
-          </>
-        )}
-
-        <div className="map-listings__filters" role="toolbar" aria-label="Bộ lọc tìm phòng">
-          {mapFirst ? <span className="map-listings__place">Bản đồ</span> : null}
-          {mapFirst ? <span className="map-listings__rule" aria-hidden /> : null}
-          <div className="map-listings__sources" role="group" aria-label="Nguồn tin">
+        <div className="map-listings__toolbar" aria-label="Tùy chỉnh kết quả">
+          <div className="map-listings__catalog" role="group" aria-label="Nguồn tin">
             {SOURCE_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className={query.catalog === option.id ? 'is-on' : ''}
+              <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
                 aria-pressed={query.catalog === option.id}
                 onClick={() => {
                   if (query.catalog === option.id) return
-                  setOpenFilter(null)
+                  setFiltersOpen(false)
                   writeQuery({ catalog: option.id, page: 1 }, { fit: true })
-                }}
-              >
+                }}>
                 {option.label}
               </button>
             ))}
           </div>
-          {filterConfig.price ? (
-          <RangeFilter
-            label="Giá"
-            active={query.minPrice != null || query.maxPrice != null}
-            summary={
-              formatRange('', query.minPrice, query.maxPrice)
-                ? `Giá ${formatRange('', query.minPrice, query.maxPrice)}`
-                : 'Giá'
-            }
-            minPlaceholder="Từ (VND)"
-            maxPlaceholder="Đến (VND)"
-            draft={priceDraft}
-            open={openFilter === 'price'}
-            onOpen={() => toggleFilter('price')}
-            onClose={() => setOpenFilter((current) => (current === 'price' ? null : current))}
-            onDraft={setPriceDraft}
-            onApply={(min, max) => {
-              writeQuery({ minPrice: min, maxPrice: max, page: 1 }, { fit: true })
-              setOpenFilter(null)
-            }}
-          />
-          ) : null}
-          {filterConfig.area ? (
-          <RangeFilter
-            label="Diện tích"
-            active={query.minArea != null || query.maxArea != null}
-            summary={formatRange('Diện tích', query.minArea, query.maxArea, ' m²') ?? 'Diện tích'}
-            minPlaceholder="Từ (m²)"
-            maxPlaceholder="Đến (m²)"
-            draft={areaDraft}
-            open={openFilter === 'area'}
-            onOpen={() => toggleFilter('area')}
-            onClose={() => setOpenFilter((current) => (current === 'area' ? null : current))}
-            onDraft={setAreaDraft}
-            onApply={(min, max) => {
-              writeQuery({ minArea: min, maxArea: max, page: 1 }, { fit: true })
-              setOpenFilter(null)
-            }}
-          />
-          ) : null}
-          {filterConfig.amenities.length > 0 ? (
-          <AmenityFilter
-            options={filterConfig.amenities}
-            selected={query.amenities}
-            draft={amenityDraft}
-            open={openFilter === 'amenities'}
-            onOpen={() => toggleFilter('amenities')}
-            onClose={() => setOpenFilter((current) => (current === 'amenities' ? null : current))}
-            onDraft={setAmenityDraft}
-            onApply={(amenities) => {
-              writeQuery({ amenities, page: 1 }, { fit: true })
-              setOpenFilter(null)
-            }}
-          />
-          ) : null}
-          {queryHasActiveFilters(query) ? (
-            <button type="button" className="map-listings__reset" onClick={resetFilters}>
-              Đặt lại
+          <div className="map-listings__tools">
+            <button ref={filterAnchor} type="button"
+              className={`map-listings__filter-trigger${activeFilterCount ? ' is-active' : ''}`}
+              aria-expanded={filtersOpen} aria-haspopup="dialog" onClick={() => filtersOpen ? setFiltersOpen(false) : openFilters()}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <path d="M4 7h9m4 0h3M4 17h3m4 0h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" />
+              </svg>
+              Lọc {activeFilterCount > 0 ? <span className="map-listings__filter-count">{activeFilterCount}</span> : null}
             </button>
-          ) : null}
-          <span className="map-listings__filters-grow" />
-          <div className="map-listings__view-switch map-listings__view-switch--bar" role="group" aria-label="Chế độ xem">
-            {viewChoices.map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                className={query.view === id ? 'is-on' : ''}
-                aria-pressed={query.view === id}
-                onClick={() => setView(id)}
-              >
-                {label}
-              </button>
-            ))}
+            <label className="map-listings__display">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <rect x="3.5" y="4" width="17" height="16" rx="2" /><path d="M10 4v16" />
+              </svg>
+              <span className="map-listings__sr-only">Chế độ xem</span>
+              <select value={query.view} onChange={(event) => setView(event.target.value as MapListingsView)}>
+                {viewChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+              </select>
+            </label>
           </div>
         </div>
+        <FilterPopover anchorRef={filterAnchor} open={filtersOpen} onClose={() => setFiltersOpen(false)}
+          className="map-listings__popover map-listings__filter-sheet"
+          onSubmit={() => {
+            writeQuery({
+              minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max),
+              ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
+              page: 1,
+            }, { fit: true })
+            setFiltersOpen(false)
+          }}>
+          <div className="map-listings__sheet-heading">
+            <div><strong>Bộ lọc</strong><p>Chọn những điều bạn cần.</p></div>
+            <button type="button" className="map-listings__sheet-close" aria-label="Đóng bộ lọc" onClick={() => setFiltersOpen(false)}>×</button>
+          </div>
+          <div className="map-listings__sheet-body">
+            {filterConfig.price ? <FilterRange label="Khoảng giá" unit="đ" draft={priceDraft} onChange={setPriceDraft} /> : null}
+            {filterConfig.area ? <FilterRange label="Diện tích" unit="m²" draft={areaDraft} onChange={setAreaDraft} /> : null}
+            {filterConfig.amenities.length > 0 ? <fieldset className="map-listings__amenity-group">
+              <legend>Tiện ích</legend>
+              <div className="map-listings__amenity-grid">
+                {filterConfig.amenities.map((option) => <label key={option.code}>
+                  <input type="checkbox" checked={amenityDraft.includes(option.code)}
+                    onChange={() => setAmenityDraft(current => current.includes(option.code) ? current.filter(code => code !== option.code) : [...current, option.code])} />
+                  <span>{option.label}</span>
+                </label>)}
+              </div>
+            </fieldset> : null}
+          </div>
+          <div className="map-listings__sheet-footer">
+            <button type="button" className="map-listings__sheet-reset" disabled={!queryHasActiveFilters(query) && !priceDraft.min && !priceDraft.max && !areaDraft.min && !areaDraft.max && !amenityDraft.length} onClick={resetFilters}>Đặt lại</button>
+            <button type="submit" className="map-listings__sheet-apply">Áp dụng</button>
+          </div>
+        </FilterPopover>
       </header>
 
       <div className="map-listings__stage">
-        <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
+        {showMap && showList ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
           <button
             type="button"
             aria-pressed={mobilePane === 'map'}
@@ -296,7 +228,7 @@ export function MapListingsWorkspace({
           >
             Danh sách
           </button>
-        </div>
+        </div> : null}
 
         {showMap ? (
           <section
@@ -345,17 +277,10 @@ export function MapListingsWorkspace({
             className={`map-listings__panel${mobilePane === 'map' && showMap ? ' is-mobile-hidden' : ''}${panelOpen ? '' : ' is-collapsed'}`}
             aria-label="Danh sách kết quả"
           >
-            <div className="map-listings__panel-head">
-              <div>
-                <h2>{loading ? <Sk w={180} h={16} /> : countLabel}</h2>
-                <p>Trang {query.page}</p>
-              </div>
-              {query.view === 'split' ? (
-                <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>
-                  Thu gọn
-                </button>
-              ) : null}
-            </div>
+            {query.view === 'split' ? <div className="map-listings__panel-head">
+              <span className="map-listings__panel-caption">Kết quả tìm kiếm</span>
+              <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>Thu gọn</button>
+            </div> : null}
             <div className="map-listings__panel-body">
               {error ? (
                 <div className="map-listings__state" role="alert">
@@ -484,28 +409,6 @@ export function MapListingsWorkspace({
   )
 }
 
-function RecentRow({ onPick }: { onPick: (keyword: string) => void }) {
-  const [items, setItems] = useState<RecentItem[]>(() => loadRecent())
-  useEffect(() => {
-    const refresh = () => setItems(loadRecent())
-    window.addEventListener('focus', refresh)
-    return () => window.removeEventListener('focus', refresh)
-  }, [])
-  if (items.length === 0) return null
-  return (
-    <ul className="map-listings__recent" aria-label="Tìm gần đây">
-      {items.slice(0, 3).map((item) => (
-        <li key={item.keyword}>
-          <button type="button" onClick={() => onPick(item.keyword)}>
-            <strong>{item.title}</strong>
-            <span>{item.subtitle || 'Tìm gần đây'}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 function readDraft(raw: string) {
   const trimmed = raw.trim()
   if (!trimmed) return undefined
@@ -554,17 +457,23 @@ function FilterPopover({
       pop.style.top = `${top}px`
     }
     place()
+    const form = popRef.current
+    const trigger = anchorRef.current
+    form?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true })
     window.addEventListener('resize', place)
     window.addEventListener('scroll', place, true)
     return () => {
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
+      if (form?.contains(document.activeElement)) trigger?.focus({ preventScroll: true })
     }
   }, [open, anchorRef])
   if (!open || typeof document === 'undefined') return null
   return createPortal(
     <form
       ref={popRef}
+      role="dialog"
+      aria-label="Bộ lọc tìm kiếm"
       className={className}
       onSubmit={(event) => {
         event.preventDefault()
@@ -577,125 +486,19 @@ function FilterPopover({
   )
 }
 
-function RangeFilter({
-  label,
-  summary,
-  active,
-  minPlaceholder,
-  maxPlaceholder,
-  draft,
-  open,
-  onOpen,
-  onClose,
-  onDraft,
-  onApply,
-}: {
-  label: string
-  summary: string
-  active: boolean
-  minPlaceholder: string
-  maxPlaceholder: string
-  draft: RangeDraft
-  open: boolean
-  onOpen: () => void
-  onClose: () => void
-  onDraft: (draft: RangeDraft) => void
-  onApply: (min?: number, max?: number) => void
+function FilterRange({ label, unit, draft, onChange }: {
+  label: string; unit: string; draft: RangeDraft; onChange: (draft: RangeDraft) => void
 }) {
-  const rootRef = useRef<HTMLDivElement>(null)
-  return (
-    <div className={`map-listings__filter${active ? ' is-on' : ''}`} ref={rootRef}>
-      <button type="button" aria-expanded={open} onClick={onOpen}>
-        <span>{summary || label}</span>
-        <img src="/figma/map/chevron-down.svg" alt="" width={13} height={13} />
-      </button>
-      <FilterPopover
-        anchorRef={rootRef}
-        open={open}
-        onClose={onClose}
-        className="map-listings__popover"
-        onSubmit={() => onApply(readDraft(draft.min), readDraft(draft.max))}
-      >
-        <label>
-          Tối thiểu
-          <input
-            inputMode="decimal"
-            value={draft.min}
-            placeholder={minPlaceholder}
-            onChange={(event) => onDraft({ ...draft, min: event.target.value })}
-          />
-        </label>
-        <label>
-          Tối đa
-          <input
-            inputMode="decimal"
-            value={draft.max}
-            placeholder={maxPlaceholder}
-            onChange={(event) => onDraft({ ...draft, max: event.target.value })}
-          />
-        </label>
-        <button type="submit">Áp dụng</button>
-      </FilterPopover>
+  return <fieldset className="map-listings__range-group">
+    <legend>{label}</legend>
+    <div className="map-listings__range-inputs">
+      <label>Từ<div><input type="number" min="0" step="any" inputMode="decimal" aria-label={`${label} tối thiểu`}
+        placeholder="Không giới hạn" value={draft.min} onChange={event => onChange({ ...draft, min: event.target.value })} /><span>{unit}</span></div></label>
+      <span className="map-listings__range-dash" aria-hidden="true">—</span>
+      <label>Đến<div><input type="number" min={draft.min || '0'} step="any" inputMode="decimal" aria-label={`${label} tối đa`}
+        placeholder="Không giới hạn" value={draft.max} onChange={event => onChange({ ...draft, max: event.target.value })} /><span>{unit}</span></div></label>
     </div>
-  )
-}
-
-function AmenityFilter({
-  options,
-  selected,
-  draft,
-  open,
-  onOpen,
-  onClose,
-  onDraft,
-  onApply,
-}: {
-  options: { code: string; label: string }[]
-  selected: string[]
-  draft: string[]
-  open: boolean
-  onOpen: () => void
-  onClose: () => void
-  onDraft: (codes: string[]) => void
-  onApply: (codes: string[]) => void
-}) {
-  const rootRef = useRef<HTMLDivElement>(null)
-  const summary = selected.length ? `Tiện ích ${selected.length}` : 'Tiện ích'
-  return (
-    <div className={`map-listings__filter${selected.length ? ' is-on' : ''}`} ref={rootRef}>
-      <button type="button" aria-expanded={open} onClick={onOpen}>
-        <span>{summary}</span>
-        <img src="/figma/map/chevron-down.svg" alt="" width={13} height={13} />
-      </button>
-      <FilterPopover
-        anchorRef={rootRef}
-        open={open}
-        onClose={onClose}
-        className="map-listings__popover map-listings__popover--list"
-        onSubmit={() => onApply(draft)}
-      >
-        <div className="map-listings__popover-scroll">
-          {options.map((option) => (
-            <label key={option.code}>
-              <input
-                type="checkbox"
-                checked={draft.includes(option.code)}
-                onChange={() =>
-                  onDraft(
-                    draft.includes(option.code)
-                      ? draft.filter((code) => code !== option.code)
-                      : [...draft, option.code],
-                  )
-                }
-              />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-        <button type="submit">Áp dụng</button>
-      </FilterPopover>
-    </div>
-  )
+  </fieldset>
 }
 
 function PreviewCard({

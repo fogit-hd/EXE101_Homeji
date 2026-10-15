@@ -23,7 +23,7 @@ type NavId = (typeof NAV)[number]['id']
 type SectionId = NavId | 'hero'
 
 /** Sections with light paper backgrounds — dark text shows here */
-const LIGHT_SECTION_IDS = ['mission', 'how', 'for', 'start', 'map'] as const
+const LIGHT_SECTION_IDS = ['listings', 'mission', 'how', 'for', 'start', 'map'] as const
 
 /** Above the horizontal journey sticky */
 const ABOVE_JOURNEY: SectionId[] = ['hero', 'mission']
@@ -234,7 +234,7 @@ function useVerticalCoast() {
       if (
         target instanceof Element &&
         target.closest(
-          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style',
+          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style, .guest-preview__rail, .guest-preview-dialog',
         )
       ) {
         stop()
@@ -261,7 +261,7 @@ function useVerticalCoast() {
       if (
         target instanceof Element &&
         target.closest(
-          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style',
+          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style, .guest-preview__rail, .guest-preview-dialog',
         )
       ) {
         stop()

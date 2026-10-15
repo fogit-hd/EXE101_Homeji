@@ -50,6 +50,7 @@ import {
 import { AuthenticatedHub } from '../components/hub/AuthenticatedHub'
 import { GuestChrome } from '../components/landing/GuestChrome'
 import { GuestHero } from '../components/landing/GuestHero'
+import { GuestListingPreview } from '../components/landing/GuestListingPreview'
 import { GuestMapSection } from '../components/landing/GuestMapSection'
 import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
 import { MissionConfetti } from '../components/landing/MissionConfetti'
@@ -959,6 +960,7 @@ function HomePageComponent() {
       <div className="guest-landing">
         <GuestChrome />
         <GuestHero />
+        <GuestListingPreview />
         <section className="guest-mission" id="mission">
           <div className="guest-mission__grid">
             <div className="guest-mission__copy">

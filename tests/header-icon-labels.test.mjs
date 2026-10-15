@@ -24,5 +24,6 @@ test('saved and message icons retain meaningful accessible names without adding 
   const messages = renderToStaticMarkup(createElement(HeaderLink, { href: '/?section=messages', label: '', icon: 'message', count: 3 }))
   assert.match(saved, /aria-label="Tin đã lưu"/)
   assert.match(messages, /aria-label="Tin nhắn, 3 chưa đọc"/)
-  assert.match(saved, /class="hj-action__label"><\/span>/)
+  assert.doesNotMatch(saved, /class="hj-action__label"/)
+  assert.doesNotMatch(messages, /class="hj-action__label"/)
 })

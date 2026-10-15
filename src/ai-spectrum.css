@@ -10,8 +10,7 @@
   --ai-spectrum-surface: var(--surface-elevated);
 }
 
-:is(.hj-search__field.hj-search__field--ai,
-  .map-chatbot__panel.is-visible, .map-chatbot .map-chatbot__fab,
+:is(.map-chatbot__panel.is-visible, .map-chatbot .map-chatbot__fab,
   .map-chatbot .map-chatbot__form, .ai-search-review, .rental-draft-assistant,
   .rental-comparison, .ai-spectrum-button.ai-spectrum-button,
   .map-chatbot .map-chatbot__chip,
@@ -43,8 +42,7 @@
   box-shadow: 0 16px 48px #152a2929, -1px 0 8px #f45b7833, 1px 0 8px #7376f033;
 }
 
-:is(.hj-search__field.hj-search__field--ai:focus-within,
-.ai-spectrum-button.ai-spectrum-button:hover,
+:is(.ai-spectrum-button.ai-spectrum-button:hover,
   .map-chatbot .map-chatbot__fab:hover) {
   box-shadow: -1px 0 9px #f45b7838, 1px 0 9px #7376f038, 0 1px 7px #38bce826;
 }
