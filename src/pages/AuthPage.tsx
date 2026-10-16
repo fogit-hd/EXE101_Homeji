@@ -1,6 +1,7 @@
 import type { CredentialResponse } from '@react-oauth/google'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 import { AuthCityScene } from '../components/auth/AuthCityScene'
+import { AuthCharacterScene } from '../components/auth/AuthCharacterScene'
 import gsap from 'gsap'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -16,6 +17,7 @@ import {
   USER_INPUT_LIMITS,
   validateFullName,
   validateRegistrationEmail,
+  validateRegistrationPassword,
 } from '../lib/userInputValidation'
 import { ConfettiConfirmButton, ConfettiDoneMark, warmConfettiLottie, type ConfettiConfirmHandle } from './AuthPageConfetti'
 import { ConnectHomejiCta, warmConnectLottie } from './AuthPageConnect'
@@ -287,6 +289,10 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const confirmPasswordInput = useRef<HTMLInputElement>(null)
+  const [activeAuthField, setActiveAuthField] = useState<'text' | 'password' | null>(null)
+  const [fieldProgress, setFieldProgress] = useState(0)
   const [draftName, setDraftName] = useState('')
   const [draftEmail, setDraftEmail] = useState('')
   const [draftPassword, setDraftPassword] = useState('')
@@ -294,6 +300,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   const [error, setError] = useState(() => consumeSessionTerminationMessage() ?? '')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const formSubmitLock = useRef(false)
   /** Lỗi API khi bấm Kết nối — ở lại màn hình, hiện Sad + mây chat. */
   const [connectError, setConnectError] = useState('')
   const [helloLine, setHelloLine] = useState('')
@@ -641,10 +648,13 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }
 
   const switchMode = (next: AuthMode) => {
-    if (toggleLocked || next === mode) return
+    if (toggleLocked || formSubmitLock.current || next === mode) return
     armToggleCooldown()
     setError('')
     setMessage('')
+    setShowPassword(false)
+    setConfirmPassword('')
+    setActiveAuthField(null)
     setMode(next)
     navigate(next === 'signup' ? '/register' : '/login', {
       replace: true,
@@ -757,8 +767,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }
 
   const validatePassword = (): boolean => {
-    if (draftPassword.length < 6) {
-      setError('Mật khẩu cần từ 6 ký tự trở lên.')
+    const passwordError = validateRegistrationPassword(draftPassword, confirmPassword)
+    if (passwordError) {
+      setError(passwordError)
       return false
     }
     setError('')
@@ -805,6 +816,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       setDraftEmail(email || draftEmail)
     } else {
       setDraftPassword(password || draftPassword)
+      setConfirmPassword('')
       setShowPassword(false)
     }
   }
@@ -864,7 +876,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }
 
   const finishInlineRegister = useCallback(async () => {
-    if (submitting) return
+    if (formSubmitLock.current) return
     const nextEmail = normalizeEmail(email || draftEmail)
     const nextName = normalizeFullName(displayName || draftName)
     const validationError = validateFullName(nextName) || validateRegistrationEmail(nextEmail)
@@ -872,10 +884,12 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       setConnectError(validationError)
       return
     }
-    if ((password || draftPassword).length < 6) {
-      setConnectError('Mật khẩu cần từ 6 ký tự trở lên.')
+    const passwordError = validateRegistrationPassword(password || draftPassword, confirmPassword)
+    if (passwordError) {
+      setConnectError(passwordError)
       return
     }
+    formSubmitLock.current = true
     setSubmitting(true)
     setConnectError('')
     setError('')
@@ -896,9 +910,10 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     } catch (err) {
       setConnectError(getErrorMessage(err, 'Đăng ký thất bại — thử lại giúp mình nhé.'))
     } finally {
+      formSubmitLock.current = false
       setSubmitting(false)
     }
-  }, [submitting, register, email, draftEmail, password, draftPassword, displayName, draftName, navigate])
+  }, [register, email, draftEmail, password, draftPassword, confirmPassword, displayName, draftName, navigate])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -915,15 +930,18 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   const handleSignUpCard = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (formSubmitLock.current) return
     setError('')
     setMessage('')
     const nextName = normalizeFullName(displayName)
     const nextEmail = normalizeEmail(email)
     const validationError = validateFullName(nextName) || validateRegistrationEmail(nextEmail)
+      || validateRegistrationPassword(password, confirmPassword)
     if (validationError) {
       setError(validationError)
       return
     }
+    formSubmitLock.current = true
     setSubmitting(true)
     try {
       const session = await register(nextEmail, password, nextName)
@@ -935,6 +953,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng ký thất bại'))
     } finally {
+      formSubmitLock.current = false
       setSubmitting(false)
     }
   }
@@ -1097,6 +1116,23 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       className={`auth-cinema${showFormCard ? ' auth-cinema--form' : ''}${connectUiLocked ? ' is-connect-locked is-connecting-hard' : ''}`}
       role="main"
       aria-label={mode === 'signin' ? 'Đăng nhập' : 'Đăng ký'}
+      onFocusCapture={(event) => {
+        const input = event.target
+        if (input instanceof HTMLInputElement) {
+          const secret = input.autocomplete.includes('password') || input.type === 'password'
+          setActiveAuthField(secret ? 'password' : 'text')
+          if (!secret) setFieldProgress(Math.min(input.value.length / 30, 1))
+        }
+      }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setActiveAuthField(null)
+      }}
+      onChangeCapture={(event) => {
+        const input = event.target
+        if (input instanceof HTMLInputElement && !input.autocomplete.includes('password') && input.type !== 'password') {
+          setFieldProgress(Math.min(input.value.length / 30, 1))
+        }
+      }}
     >
       <div className="auth-cinema__video-wrap" aria-hidden="true">
         <div className="auth-cinema__fallback">
@@ -1107,7 +1143,10 @@ export function AuthPage({ initialMode }: AuthPageProps) {
         </div>
         <div className="auth-cinema__overlay" />
       </div>
-      <AuthCityScene mode={mode} />
+      {mode === 'signup' ? <AuthCharacterScene
+        state={activeAuthField === 'password' ? (showPassword ? 'peek' : 'password') : submitting ? 'submitting' : error || connectError ? 'error' : message ? 'success' : activeAuthField ? 'typing' : 'idle'}
+        progress={fieldProgress}
+      /> : <AuthCityScene mode={mode} />}
 
       {/* Chỉ Skip — không logo */}
       <div className="auth-cinema__top auth-cinema__top--skip-only">
@@ -1487,7 +1526,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
-                              passwordConfirmRef.current?.confirm()
+                              confirmPasswordInput.current?.focus()
                             }
                           }}
                           placeholder="Ít nhất 6 ký tự"
@@ -1503,6 +1542,19 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         <PasswordEyeToggle
                           visible={showPassword}
                           onToggle={() => setShowPassword((v) => !v)}
+                        />
+                        <input
+                          ref={confirmPasswordInput}
+                          type={showPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(event) => { setConfirmPassword(event.target.value); setError('') }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') { event.preventDefault(); passwordConfirmRef.current?.confirm() }
+                          }}
+                          autoComplete="new-password"
+                          aria-label="Nhập lại mật khẩu"
+                          placeholder="Nhập lại mật khẩu"
+                          aria-invalid={Boolean(error && confirmPassword !== draftPassword)}
                         />
                         <ConfettiConfirmButton
                           ref={passwordConfirmRef}
@@ -1681,12 +1733,12 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                   <RevealText as="h1" className="auth-cinema__title" text="Đăng ký" />
                   <p className="auth-cinema__subtitle">Tạo tài khoản Homeji miễn phí</p>
                   {error ? (
-                    <div className="auth-cinema__alert auth-cinema__alert--error">{error}</div>
+                    <div id="auth-form-error" className="auth-cinema__alert auth-cinema__alert--error" role="alert">{error}</div>
                   ) : null}
                   {message ? (
-                    <div className="auth-cinema__alert auth-cinema__alert--ok">{message}</div>
+                    <div className="auth-cinema__alert auth-cinema__alert--ok" role="status">{message}</div>
                   ) : null}
-                  <form onSubmit={(e) => void handleSignUpCard(e)}>
+                  <form aria-busy={submitting} aria-describedby={error ? 'auth-form-error' : undefined} onSubmit={(e) => void handleSignUpCard(e)}>
                     <div className="auth-cinema__field">
                       <label htmlFor="auth-name">Họ tên</label>
                       <input
@@ -1716,7 +1768,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                       <label htmlFor="auth-reg-password">Mật khẩu</label>
                       <input
                         id="auth-reg-password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         minLength={6}
@@ -1724,6 +1776,27 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         autoComplete="new-password"
                         placeholder="Ít nhất 6 ký tự"
                       />
+                      <button type="button" className="auth-cinema__password-toggle" aria-controls="auth-reg-password" aria-pressed={showPassword} onClick={() => setShowPassword(visible => !visible)}>
+                        {showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      </button>
+                    </div>
+                    <div className="auth-cinema__field">
+                      <label htmlFor="auth-reg-confirm-password">Xác nhận mật khẩu</label>
+                      <input
+                        id="auth-reg-confirm-password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(event) => { setConfirmPassword(event.target.value); setError('') }}
+                        minLength={6}
+                        required
+                        autoComplete="new-password"
+                        placeholder="Nhập lại mật khẩu"
+                        aria-invalid={Boolean(confirmPassword && password !== confirmPassword)}
+                        aria-describedby={confirmPassword ? 'auth-password-match' : undefined}
+                      />
+                      {confirmPassword ? <p id="auth-password-match" className="auth-password-match" role="status">
+                        {password === confirmPassword ? 'Mật khẩu đã khớp.' : 'Mật khẩu xác nhận chưa khớp.'}
+                      </p> : null}
                     </div>
                     <button type="submit" className="auth-cinema__submit" disabled={submitting}>
                       {submitting ? 'Đang đăng ký...' : 'Đăng ký'}
@@ -1731,7 +1804,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                   </form>
                   <p className="auth-cinema__footer">
                     Đã có tài khoản?{' '}
-                    <button type="button" disabled={toggleLocked} onClick={() => switchMode('signin')}>
+                    <button type="button" disabled={toggleLocked || submitting} onClick={() => switchMode('signin')}>
                       Đăng nhập
                     </button>
                   </p>

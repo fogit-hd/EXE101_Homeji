@@ -1,0 +1,28 @@
+.auth-character { width: 100%; min-width: 0; text-align: center; color: var(--text-heading, #24382d); }
+.auth-character__copy > span { font: 700 11px/1.5 var(--font-ui, sans-serif); letter-spacing: .16em; color: var(--text-accent, #147956); }
+.auth-character__copy h2 { font-size: clamp(26px, 3.2vw, 44px); line-height: 1.2; margin: 16px 0; letter-spacing: -.035em; }
+.auth-character__copy p { max-width: 360px; margin: auto; font-size: 15px; line-height: 1.7; color: var(--text-secondary, #59685f); }
+.auth-character__scene { position: relative; height: clamp(280px, 34vw, 420px); isolation: isolate; }
+.auth-character__canvas { position: absolute; inset: 0; z-index: 1; }
+.auth-character__canvas canvas { width: 100%; height: 100%; display: block; }
+.auth-character__halo { position: absolute; width: 64%; height: 25%; left: 18%; bottom: 3%; border-radius: 50%; background: radial-gradient(ellipse, #529d8630, #529d8600 70%); }
+.auth-character__caption { margin: 12px auto 0; min-height: 3em; max-width: 360px; font-size: 14px; line-height: 1.6; color: var(--text-secondary, #59685f); }
+.auth-character__fallback { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.auth-character__face { width: 140px; height: 110px; background: #edf5ef; border: 8px solid #cfdfd4; border-radius: 38px; box-shadow: 8px 10px 0 #24382d0c; display: flex; justify-content: center; align-items: center; gap: 28px; position: relative; }
+.auth-character__face i { display: block; width: 13px; height: 22px; border-radius: 9px; background: #285547; }
+.auth-character__face b { position: absolute; width: 22px; height: 10px; border-bottom: 3px solid #285547; border-radius: 50%; bottom: 20px; }
+.auth-character__body { width: 100px; height: 90px; margin: 12px auto 0; border-radius: 28px 28px 40px 40px; background: #278b64; }
+.auth-character[data-state="password"] .auth-character__face i, .auth-character[data-state="peek"] .auth-character__face i { height: 3px; }
+.auth-character[data-state="password"] .auth-character__face b, .auth-character[data-state="peek"] .auth-character__face b { height: 15px; width: 12px; border: 3px solid #285547; }
+.auth-password-match { font-size: 12px; color: var(--text-secondary, #59685f); margin: 8px 0 0; line-height: 1.5; }
+@media (max-width: 900px) {
+  .auth-cinema.auth-cinema--form .auth-character { grid-row: 1; }
+  .auth-cinema.auth-cinema--form:has(.auth-character) .auth-cinema__stage { grid-row: 2; }
+  .auth-character__copy h2 { font-size: 26px; margin: 10px 0; }
+  .auth-character__copy p { display: none; }
+  .auth-character__scene { height: 210px; }
+  .auth-character__caption { margin-top: 0; min-height: 0; font-size: 12px; }
+}
+
+.auth-cinema:has(.auth-character) .auth-cinema__password-toggle { display: block; margin-left: auto; min-height: 44px; padding: 8px 0 8px 12px; border: 0; background: transparent; color: var(--text-accent, #147956); font: inherit; font-size: .875rem; cursor: pointer; }
+.auth-cinema:has(.auth-character) .auth-cinema__password-toggle:focus-visible { outline: 3px solid var(--text-accent, #147956); outline-offset: 3px; }

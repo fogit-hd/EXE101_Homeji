@@ -1,0 +1,27 @@
+# Nhân vật 3D tương tác cho đăng ký Homeji
+
+Rà soát nguồn chính thức ngày 16/10/2026. Chọn **RobotExpressive của Tomás Laulhé, bản chỉnh sửa Don McCurdy trong Three.js**: model 3D thật, có skeleton và biểu cảm, tải trực tiếp được, tự host được. README riêng của asset ghi **CC0 1.0**; không suy diễn giấy phép này cho tất cả model Quaternius. [README asset](https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/README.md), [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+## Nguồn có thể tích hợp ngay
+
+- GLB cố định theo commit asset: [RobotExpressive.glb](https://raw.githubusercontent.com/mrdoob/three.js/b924f0cad4058dc4dde71445c796980c3cd5b5ed/examples/models/gltf/RobotExpressive/RobotExpressive.glb).
+- Demo chính thức: [Three.js skinning + morphing](https://threejs.org/examples/webgl_animation_skinning_morph.html); [mã nguồn demo](https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/webgl_animation_skinning_morph.html).
+- Đọc trực tiếp JSON chunk GLB: **463,988 byte**, SHA-256 `047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319`.
+- Đã lưu bản nguyên gốc tại `public/models/auth/RobotExpressive.glb`; README giấy phép và provenance được giữ tại `public/models/auth/LICENSE.md`.
+- Có **14 clip**: `Dance`, `Death`, `Idle`, `Jump`, `No`, `Punch`, `Running`, `Sitting`, `Standing`, `ThumbsUp`, `Walking`, `WalkJump`, `Wave`, `Yes`.
+- Ba morph target: `Angry`, `Surprised`, `Sad`. **Không có clip che mắt hoặc morph nhắm mắt riêng**. Phản ứng nhập mật khẩu cần tự lập trình pose tay, mí mắt và hướng nhìn; dùng `Surprised` cho biểu cảm bất ngờ rồi kiểm tra hình ảnh thực tế.
+- Bone gốc trong glTF: `Head` (node 12), `UpperArm.L` (17), `LowerArm.L` (19), `Palm2.L` (20), `UpperArm.R` (37), `LowerArm.R` (39), `Palm2.R` (40). `Hand.L`/`Hand.R` là skinned mesh, không phải joint cần xoay. Head mesh cùng tên nằm ở node 13, có ba primitive.
+- Three.js loại dấu chấm khỏi tên binding; tìm bone runtime `UpperArmL`, `LowerArmL`, `UpperArmR`, `LowerArmR` thay vì tên glTF nguyên bản. Xem [PropertyBinding.sanitizeNodeName](https://raw.githubusercontent.com/mrdoob/three.js/dev/src/animation/PropertyBinding.js) và [GLTFLoader](https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/loaders/GLTFLoader.js). Các joint có quaternion ban đầu khác nhau; không dùng một Euler chung cho hai tay. Lưu pose nghỉ, tạo quaternion đích, nội suy và kiểm tra vị trí bàn tay bằng ảnh render.
+- Primitive đầu số 2 dùng material `Black` (demo gọi `Head_4`): đọc geometry và ghép vertex trùng tọa độ cho thấy bốn phần tách rời là hai mắt và hai lông mày. Mắt có tọa độ local `abs(x)=0.0033027…0.010897`, `y=-0.0130838…-0.0050987`, `z=-0.0045802…0.0034049`; lông mày nằm ở `z=0.0039232…0.0055696`. Có thể giữ lông mày rồi ép chiều `z` của vertex mắt quanh tâm `-0.00058765` để nhắm mắt, hoặc ẩn primitive và thêm đường cong mí mắt ở `x≈±0.0071`, `y≈-0.0132`, `z≈0`. Đây là tọa độ local mesh, không phải world. Quaternion mesh gần xoay `-90°` theo X, mặt nhìn theo `-Y` local. Phải kiểm tra cả các morph target để tránh mắt mở lại hoặc biến dạng khi phối biểu cảm.
+
+## Các lựa chọn đối chiếu
+
+**Quaternius Universal Base Characters** có humanoid rig, glTF, khoảng 13k tam giác và tương thích thư viện animation; phù hợp khi muốn nhân vật người. Trang pack vẫn ghi CC0, nhưng trang license hiện công bố **Quaternius Asset License v1.0, cập nhật 28/8/2026**, cho phép dùng trong sản phẩm thương mại và cấm phân phối asset độc lập. Vì nguồn có dấu hiệu không nhất quán, không thay RobotExpressive bằng pack này khi chưa giữ lại đúng license của bản tải. Hơn nữa vẫn phải dựng riêng che mắt/biểu cảm. [Trang pack](https://quaternius.com/packs/universalbasecharacters.html), [license hiện tại](https://quaternius.com/license.html).
+
+**Spline Community** có scene 3D remix được và tích hợp web. Tuy nhiên, trang Community docs ghi CC BY 4.0 trong khi Terms đang hiển thị Standard Commercial License; cần kiểm tra từng scene và ngày hiệu lực. Export self-hosted đầy đủ runtime/asset yêu cầu Enterprise. Chưa có scene login cụ thể đã xác minh tải được và đủ rig/animation nên không chọn cho lần triển khai này. [Community docs](https://docs.spline.design/sharing-collaboration-and-workspaces/community-platform), [Terms](https://spline.design/terms), [Self-hosted export](https://docs.spline.design/exporting-your-scene/web/exporting-as-self-hosted-project).
+
+**Rive Teddy Login** là ví dụ có sẵn đúng kiểu theo dõi nhập liệu/che mắt; nhóm Rive dẫn nguồn chính thức tới Teddy trong issue và danh sách mẫu. Đây là hoạt họa 2D, không đáp ứng yêu cầu 3D. Trang asset không đọc được trong phiên này nên chưa xác minh giấy phép artwork; không lấy giấy phép MIT runtime thay cho giấy phép nhân vật. [Issue chính thức Rive](https://github.com/rive-app/rive-flutter/issues/133), [danh sách ví dụ chính thức](https://github.com/rive-app/awesome-rive).
+
+## Ràng buộc triển khai
+
+Đây là model có sẵn được bổ sung tương tác, không phải một mẫu login 3D hoàn chỉnh tải về rồi chạy nguyên trạng. Tự host GLB và giữ README/provenance; lazy-load renderer, giới hạn pixel ratio, tạm dừng khi tab ẩn, dispose tài nguyên và có fallback khi WebGL lỗi. Form phải hoạt động độc lập khi asset tải thất bại. Chỉ chuyển trạng thái focus, trạng thái hiện/ẩn và độ tiến triển nhập liệu; không chuyển nội dung mật khẩu vào scene, log hoặc dịch vụ ngoài. Với reduced motion, giữ pose phản hồi tĩnh. Xác nhận bằng browser rằng cả ô mật khẩu và xác nhận mật khẩu đều kích hoạt đúng phản ứng.

@@ -31,6 +31,13 @@ export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase()
 }
 
+export function validateRegistrationPassword(password: string, confirmation: string): string | null {
+  if (password.length < 6) return 'Mật khẩu cần từ 6 ký tự trở lên.'
+  if (!confirmation) return 'Vui lòng nhập lại mật khẩu.'
+  if (password !== confirmation) return 'Mật khẩu xác nhận chưa khớp.'
+  return null
+}
+
 export function validateRegistrationEmail(value: string): string | null {
   const normalized = normalizeEmail(value)
   if (!EMAIL_FORMAT_RE.test(normalized)) return 'Email chưa đúng định dạng.'
