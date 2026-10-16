@@ -8,6 +8,6 @@ Kiểm tra bản phát hành: build và scoped ESLint đạt; 3 test policy đ�
 
 ## Thông báo deploy thất bại
 
-Ảnh email do chủ dự án cung cấp báo thất bại cho dịch vụ `EXE101_Homeji` với commit `c3c1b34`. Ảnh không có log nguyên nhân và người dùng xác nhận không có quyền xem log FE. Cùng commit build lại tại máy thành công; dịch vụ Render đang truy cập được `srv-davlfje0tbcc73eeag1g` (hostname `exe101-homeji-qlcu.onrender.com`) đã báo Live cho commit đó trong lần kiểm tra trước.
+Ảnh email do chủ dự án cung cấp báo thất bại cho dịch vụ `EXE101_Homeji` với commit `c3c1b34`. Ảnh không có log nguyên nhân và người dùng xác nhận không có quyền xem log FE. Cùng commit build lại tại máy thành công. Website phát hành duy nhất là https://exe101-homeji.onrender.com.
 
-Không xác định nguyên nhân và không khẳng định đã sửa deploy ở hostname gốc `exe101-homeji.onrender.com`. Cần chủ dịch vụ gốc cung cấp build/deploy log hoặc quyền truy cập trước khi sửa cấu hình riêng của dịch vụ; không đổi cấu hình hoặc dependency theo phỏng đoán.
+Sau khi phát hành commit `87f4ccd`, đã xác minh trực tiếp `https://exe101-homeji.onrender.com`: HTTP 200, intro nhanh xuất hiện rồi kết thúc, đăng ký có ô xác nhận mật khẩu và mô hình 3D tải được. Nguyên nhân lần deploy thất bại trước đó vẫn chưa có log để kết luận.

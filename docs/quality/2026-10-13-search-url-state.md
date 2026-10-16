@@ -8,4 +8,4 @@ Verification: the actual local browser reproduced stale housing text before the 
 
 Production deployment verification is recorded separately after release. This change does not alter search endpoints or map viewport requests.
 
-Production verification: https://exe101-homeji.onrender.com served index-CEiUqDQd.js. Authenticated UI checks passed: housing keyword=UEL, roommate roommateQuery=UEL, and marketplace q=bàn each cleared the field on Back and restored it on Forward. The separately visible Render frontend service uses the alternate -qlcu address; no manual action was taken against that service. Production claims above are based on the original requested URL itself.
+Production verification: https://exe101-homeji.onrender.com served index-CEiUqDQd.js. Authenticated UI checks passed: housing keyword=UEL, roommate roommateQuery=UEL, and marketplace q=bàn each cleared the field on Back and restored it on Forward. Production claims above are based on the original requested URL itself.
