@@ -15,6 +15,7 @@ import { ContextualSearch } from './ContextualSearch'
 import { resolveMarketplaceDestination } from '../../lib/marketplaceNavigation'
 import { marketplaceHref, PRIMARY_PILLARS } from './navigation'
 import { ShellIcon } from './ShellIcons'
+import { AccountWalletLink } from './AccountWalletLink'
 
 const CLOSE_DELAY_MS = 180
 const COMPACT_AFTER = 80
@@ -58,6 +59,7 @@ export function GlobalHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [walletMenuVersion, setWalletMenuVersion] = useState(0)
   const { present: accountPresent, ...accountPresence } = useMotionPresence(accountOpen)
   const [notifyOpen, setNotifyOpen] = useState(() => sectionIsNotifications(location.search))
   const { present: notifyPresent, ...notifyPresence } = useMotionPresence(notifyOpen)
@@ -491,6 +493,7 @@ export function GlobalHeader() {
               aria-haspopup="menu"
               onClick={() => {
                 setNotifyOpen(false)
+                if (!accountOpen) setWalletMenuVersion((version) => version + 1)
                 setAccountOpen((open) => !open)
               }}
             >
@@ -501,6 +504,8 @@ export function GlobalHeader() {
               <div {...accountPresence} id={accountId} className="hj-account__menu" role="menu">
                 <p className="hj-account__name">{displayName}</p>
                 <p className="hj-account__role">{isAdmin ? 'Quản trị viên' : 'Tài khoản cá nhân'}</p>
+                <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}
+                  active={accountOpen} ownerId={profile?.id} onNavigate={() => setAccountOpen(false)} />
                 {accountLinks.map((item) => (
                   <Link
                     key={item.id}

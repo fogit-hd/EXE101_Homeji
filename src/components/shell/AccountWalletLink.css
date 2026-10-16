@@ -1,0 +1,8 @@
+.hj-account__wallet { margin: 8px 0; }
+.hj-account__item.hj-account__wallet-link { display: grid; grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto); gap: 10px; min-height: 62px; padding: 10px; background: var(--surface-muted, #f0f8f3); border: 1px solid var(--border, #dce3d9); }
+.hj-account__item.hj-account__wallet-link:hover { background: var(--surface-input, #e8f4ec); }
+.hj-account__wallet-copy { display: grid; gap: 3px; font-weight: 600; }
+.hj-account__wallet-copy small { font-size: 10px; font-weight: 400; line-height: 1.4; color: var(--text-secondary, #59685f); }
+.hj-account__wallet-value { max-width: 120px; font-size: 13px; line-height: 1.5; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; color: var(--text-heading, #24382d); }
+.hj-account__wallet-retry { width: 100%; min-height: 36px; margin-top: 4px; border: 0; border-radius: 8px; background: transparent; color: var(--text-accent, #147956); font: inherit; font-size: 12px; cursor: pointer; }
+.hj-account__wallet :is(a, button):focus-visible { outline: 3px solid var(--text-accent, #147956); outline-offset: 2px; }
