@@ -90,7 +90,6 @@ function App() {
     <ErrorBoundary reloadOnRetry>
       <MotionConfig reducedMotion="never">
       <ThemeSync />
-      <BrandIntro />
       <AiInteractionEffects />
       <InteractionMotion />
       <NetworkStatusProvider>
@@ -98,6 +97,7 @@ function App() {
           <GoogleOAuthRoot>
             <AuthProvider>
             <BrowserRouter>
+              <BrandIntro />
               <WebsiteTrafficTracker />
               <SearchProvider>
               <ToastProvider>

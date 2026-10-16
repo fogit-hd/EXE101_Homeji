@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
+import { useLocation } from 'react-router-dom'
+import { readAuthTokenState } from '../../api/authSession'
+import { brandIntroPlaybackRate, isAuthIntroPage } from '../../lib/brandIntroPlayback'
 import { INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
 import { HOMEJI_MARK_H, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
 import { SLOGAN_BOTTOM, SLOGAN_GLYPHS, SLOGAN_TOP, SLOGAN_WIDTH } from './sloganGlyphs'
@@ -49,7 +52,20 @@ function warmAssets(): Promise<unknown> {
 }
 
 export function BrandIntro() {
+  const { pathname } = useLocation()
+  return isAuthIntroPage(pathname) ? null : <BrandIntroOverlay />
+}
+
+function BrandIntroOverlay() {
   const [active, setActive] = useState(introRequested)
+  const [playback] = useState(() => {
+    let hasSession = false
+    try { hasSession = Boolean(readAuthTokenState().token) } catch { /* Storage can be disabled. */ }
+    return {
+      rate: brandIntroPlaybackRate(window.location.pathname, hasSession),
+      waitForHome: window.location.pathname === '/',
+    }
+  })
   const root = useRef<HTMLDivElement>(null)
   const skipRef = useRef<() => void>(() => {})
 
@@ -184,7 +200,7 @@ export function BrandIntro() {
           if (!ready) node.classList.add('hj-intro--waiting')
           tryLeave()
         },
-      })
+      }).timeScale(playback.rate)
 
       // 1 — The thread tip fades in as the first stroke starts.
       let t = 0.16
@@ -321,7 +337,7 @@ export function BrandIntro() {
         gsap.set(body, { scaleX: 1, scaleY: 1 })
         gsap.set(pen, { opacity: 0 })
         const target = findLogoTarget()
-        const out = gsap.timeline({ onComplete: finish, defaults: { ease: 'power3.inOut' } })
+        const out = gsap.timeline({ onComplete: finish, defaults: { ease: 'power3.inOut' } }).timeScale(playback.rate)
         out.to(q('.hj-intro__status, .hj-intro__skip'), { opacity: 0, duration: 0.2 }, 0)
           .to(slogan, { opacity: 0, y: -14, scale: 0.92, duration: 0.4, ease: 'power2.in' }, 0)
         if (target) {
@@ -348,9 +364,12 @@ export function BrandIntro() {
       skipRef.current = () => { if (!leaving) leave() }
 
       const maxTimer = window.setTimeout(() => leave(), MAX_HOLD_MS)
-      const stopReady = whenHomeReady(() => {
+      const onReady = () => {
         void assets.then(() => { if (!alive) return; ready = true; tryLeave() })
-      })
+      }
+      // Non-home pages cannot emit HomePage readiness; never hold them until the timeout.
+      const stopReady = playback.waitForHome ? whenHomeReady(onReady) : () => {}
+      if (!playback.waitForHome) onReady()
       return () => { alive = false; window.clearTimeout(maxTimer); stopReady() }
     }, node)
     // Outlines are inline vectors — no web-font wait needed; start on the next frame.
@@ -364,8 +383,9 @@ export function BrandIntro() {
       cancelAnimationFrame(raf)
       ctx?.revert()
       if (hiddenTarget) hiddenTarget.style.removeProperty('visibility')
+      delete document.documentElement.dataset.intro
     }
-  }, [active])
+  }, [active, playback])
 
   if (!active) return null
 

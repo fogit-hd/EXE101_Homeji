@@ -23,7 +23,7 @@ export function whenHomeReady(fn: Listener): () => void {
   return () => { listeners.delete(fn) }
 }
 
-/** Decided once by the inline boot script in index.html (session, path, reduced motion). */
+/** Decided once by the inline boot script in index.html; SPA navigation does not replay it. */
 export function introRequested(): boolean {
   return typeof document !== 'undefined' && document.documentElement.dataset.intro === '1'
 }
