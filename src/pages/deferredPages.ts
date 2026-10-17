@@ -1,5 +1,8 @@
 import { lazy } from 'react'
 
+export const VerifySignupPage = lazy(() => import('./VerifySignupPage').then(module => ({ default: module.VerifySignupPage })))
+export const ReceiptsPage = lazy(() => import('./ReceiptsPage').then(module => ({ default: module.ReceiptsPage })))
+
 // Reuse the same lazy identity in standalone routes, map panels and workspaces.
 export const HomePage = lazy(() => import('./HomePage').then(module => ({ default: module.HomePage })))
 export const ExplorePage = lazy(() => import('./ExplorePage').then(module => ({ default: module.ExplorePage })))

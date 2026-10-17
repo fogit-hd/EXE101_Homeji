@@ -23,6 +23,7 @@ import {
   AdminModerationPage, CreateRentalPostPage, EditRentalPostPage, ExplorePage,
   ForgotPasswordPage, HomePage, PaymentWaitingPage, LoginPage, PrivacyPolicyPage,
   TermsOfServicePage, RegisterPage, AuthCallbackPage, ResetPasswordPage,
+  VerifySignupPage, ReceiptsPage,
 } from './pages/deferredPages'
 import './components/layout/footer.css'
 import './pages/HomePage.css'
@@ -39,6 +40,8 @@ function AppRoutes() {
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifySignupPage />} />
+        <Route path="/receipts" element={<ProtectedRoute><ReceiptsPage /></ProtectedRoute>} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />

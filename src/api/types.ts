@@ -202,6 +202,7 @@ export interface AuthSession {
   userId: string | null
   email: string | null
   emailConfirmationRequired: boolean
+  confirmationMethod?: 'otp' | 'link' | null
   message: string
 }
 

@@ -152,6 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (registerEmail: string, password: string, displayName: string) => {
     const redirectTo = `${window.location.origin}/auth/callback`
     const session = await apiRegister({ email: registerEmail, password, displayName, redirectTo })
+    if (session.emailConfirmationRequired && session.confirmationMethod === 'otp') {
+      sessionStorage.setItem('homeji_pending_signup_email', session.email ?? registerEmail)
+    }
     if (session.accessToken && !session.emailConfirmationRequired) {
       applySession(session)
       await refreshProfile()

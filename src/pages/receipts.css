@@ -1,0 +1,14 @@
+.receipts-page { max-width: 1050px; padding-block: 32px; }
+.receipts-page__header, .receipts-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.receipts-list { padding: 0; list-style: none; display: grid; gap: 16px; margin-block: 24px; }
+.receipts-list__item { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px; }
+.receipts-list__item h2 { font-size: 18px; margin: 0; }
+.receipts-list__item p { margin-block: 8px; }
+.receipts-reference { overflow-wrap: anywhere; font-size: 13px; }
+.receipts-preview { padding: 16px; margin-top: 24px; }
+.receipts-preview iframe { width: 100%; min-height: 640px; border: 0; background: white; }
+@media (max-width: 600px) {
+  .receipts-list__item { align-items: stretch; flex-direction: column; padding: 16px; gap: 12px; }
+  .receipts-preview { padding: 4px; }
+  .receipts-page { padding-inline: 12px; }
+}

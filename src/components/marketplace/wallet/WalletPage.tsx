@@ -184,6 +184,7 @@ export function WalletPage({
     <div className="wallet-page">
       <WalletSummary wallet={wallet} loading={loading} />
       <WalletTabNavigation tab={tab} onTabChange={onTabChange} />
+      <Link className="btn" to="/receipts">Lịch sử biên nhận · xem và tải HTML</Link>
       {tab === 'deposit' ? (
         <DepositPanel
           wallet={wallet}

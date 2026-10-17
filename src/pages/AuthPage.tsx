@@ -900,6 +900,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
         nextName,
       )
       if (session.emailConfirmationRequired) {
+        if (session.confirmationMethod === 'otp') { navigate('/verify-email'); return }
         // Ở lại intro — báo qua mây chat (không nhảy form / không Perfect Wrong)
         setConnectError(
           'Đăng ký thành công. Vui lòng xác nhận email trước khi đăng nhập nhé.',
@@ -946,6 +947,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     try {
       const session = await register(nextEmail, password, nextName)
       if (session.emailConfirmationRequired) {
+        if (session.confirmationMethod === 'otp') { navigate('/verify-email'); return }
         setMessage(session.message || 'Vui lòng xác nhận email trước khi đăng nhập.')
       } else {
         navigate('/')
@@ -1726,6 +1728,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                     <Link className="auth-cinema__forgot" to="/forgot-password">
                       Quên mật khẩu?
                     </Link>
+                    <br /><Link className="auth-cinema__forgot" to="/verify-email">Xác thực email đăng ký bằng OTP</Link>
                   </div>
                 </>
               ) : (

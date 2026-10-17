@@ -1,7 +1,7 @@
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { useTabTransition } from '../motion/useTabTransition'
 import { useEffect, useId, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { CredentialResponse } from '@react-oauth/google'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { googleLoginWithIdToken } from '../../api'
@@ -52,6 +52,7 @@ function intentCopy(intent: AuthModalIntent | null): string | null {
 }
 
 export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess }: Props) {
+  const navigate = useNavigate()
   const { login, register, setSessionFromAuth } = useAuth()
   const { present, ...presence } = useMotionPresence(open, 'fade')
   const formRef = useTabTransition(mode, AUTH_MODES)
@@ -112,6 +113,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
     try {
       const session = await register(nextEmail, password, nextName)
       if (session.emailConfirmationRequired) {
+        if (session.confirmationMethod === 'otp') { onClose(); navigate('/verify-email'); return }
         setMessage(session.message || 'Vui lòng xác nhận email trước khi đăng nhập.')
       } else {
         onSuccess()
