@@ -1,0 +1,13 @@
+# Authentication illustration and recovery OTP
+
+The sign-in illustration now uses `public/images/auth/saigon-vietnam-panorama.webp` (1536 × 1024, 380358 bytes), generated with the built-in imagegen tool. A static image replaces the WebGL island and its light/boat/balloon controls. Authentication does not depend on a renderer, animation loop or WebGL support. The image has fixed intrinsic dimensions, responsive sizing and descriptive alternative text. The caption makes the imaginative Vietnam landscape explicit.
+
+Final generation prompt:
+
+> Create a polished premium editorial landscape illustration for the Homeji Vietnamese housing website authentication side panel. Subject is Ho Chi Minh CITY (not a portrait of a person). A beautiful coherent imaginative Vietnam panorama: recognizable Ho Chi Minh City skyline with Landmark 81 and Bitexco Financial Tower, elegant contemporary high-rise buildings, a prominent correctly drawn Vietnamese national flag (red flag with one centered five-point golden yellow star) flying from a realistic flagpole, a winding Saigon river transitioning gently toward a blue sea, green fertile delta fields, distant layered mountains. Clearly artistic geographic montage, not a map. Warm dawn sunlight, serene inviting sense of home, sophisticated painterly architectural illustration with refined detail and soft atmospheric depth. Cool teal river, ivory sky, lush greens and restrained golden sunlight; flag supplies vivid red accent. Landscape 3:2 composition, buildings in middle ground with foreground greenery and river, visually balanced, enough air around skyline. No text, no labels, no logos, no UI, no floating islands, no balloons, no toy low-poly geometry, no impossible intersecting buildings. Generate a finished raster artwork suitable for a large responsive website card.
+
+`/forgot-password` now requests an email OTP, then collects the code and a new password. It shows the resend cooldown, errors, confirmation mismatch and completion state. The recovery session remains on the backend; the frontend receives only a success message. Existing `/reset-password` links remain compatible. Signup still uses `/verify-email`.
+
+Receipt history recognizes wallet purchase and refund events (`6`, `7`) as well as deposits, gateway payments and withdrawals. Each cart line has its own receipt, amount and order reference.
+
+Validation: production build and targeted ESLint passed. Local fixture browser checks covered recovery request, wrong code error and successful completion, with no real account/password changed. At 390px, the form comes first and the entire panorama appears below it without horizontal overflow. The temporary viewport override was reset.

@@ -8,6 +8,7 @@ import './receipts.css'
 const titles: Record<TransactionReceipt['event'], string> = {
   1: 'Nạp tiền thành công', 2: 'Thanh toán thành công', 3: 'Yêu cầu rút tiền',
   4: 'Rút tiền hoàn tất', 5: 'Rút tiền bị từ chối · đã hoàn vào ví',
+  6: 'Thanh toán mua hàng', 7: 'Hoàn tiền mua hàng vào ví',
 }
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 2 })
 const time = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'Asia/Ho_Chi_Minh' })

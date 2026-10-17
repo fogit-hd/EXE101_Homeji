@@ -10,7 +10,7 @@ export const resendSignupOtp = (email: string) =>
 export type TransactionReceipt = {
   id: string
   referenceId: string
-  event: 1 | 2 | 3 | 4 | 5
+  event: 1 | 2 | 3 | 4 | 5 | 6 | 7
   amount: number
   currency: string
   referenceCode: string
