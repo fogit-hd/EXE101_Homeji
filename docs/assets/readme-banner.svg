@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">Homeji — web front end</title>
+  <desc id="desc">Find rooms, roommates and listings on a map.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#1a0f0a"/><stop offset="1" stop-color="#3a1a2a"/></linearGradient>
+    <linearGradient id="accent"><stop stop-color="#fb923c"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#fdba74" stroke-opacity=".07"/></pattern>
+  </defs>
+  <rect width="1200" height="300" rx="24" fill="url(#bg)"/>
+  <rect width="1200" height="300" rx="24" fill="url(#grid)"/>
+  <path d="M0 280H1200" stroke="url(#accent)" stroke-width="4"/>
+  <g font-family="Segoe UI,Arial,sans-serif">
+    <text x="64" y="64" fill="#fb923c" font-size="14" letter-spacing="4">FPT UNIVERSITY  /  EXE101</text>
+    <text x="60" y="140" fill="#f8fafc" font-size="64" font-weight="800">HOMEJI</text>
+    <text x="64" y="186" fill="#f472b6" font-size="30" font-weight="600" letter-spacing="4">WEB APP</text>
+    <text x="65" y="224" fill="#94a3b8" font-size="18">Find rooms, roommates and listings on a map.</text>
+    <g font-size="13" font-weight="600" fill="#e2e8f0">
+      <rect x="64" y="244" width="96" height="26" rx="13" fill="#253049"/><text x="80" y="262">REACT 19</text>
+      <rect x="176" y="244" width="140" height="26" rx="13" fill="#253049"/><text x="192" y="262">TYPESCRIPT 6</text>
+      <rect x="332" y="244" width="86" height="26" rx="13" fill="#253049"/><text x="348" y="262">VITE 8</text>
+    </g>
+    <g transform="translate(922 48)">
+      <rect width="204" height="204" rx="36" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+      <rect x="22" y="22" width="160" height="160" rx="25" fill="none" stroke="url(#accent)" stroke-width="2"/>
+      <text x="102" y="136" text-anchor="middle" fill="#fb923c" font-size="110" font-weight="800">H</text>
+      <circle cx="181" cy="24" r="7" fill="#f472b6"/>
+    </g>
+  </g>
+</svg>
