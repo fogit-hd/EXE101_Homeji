@@ -2,7 +2,7 @@
 # Docs: https://render.com/docs/blueprint-spec
 services:
   - type: web
-    name: exe101-homeji
+    name: homeji
     runtime: node
     plan: free
     buildCommand: npm install && npm run build

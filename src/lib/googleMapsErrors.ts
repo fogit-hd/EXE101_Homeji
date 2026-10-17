@@ -190,7 +190,7 @@ function buildDiagnosis(codes: MapsErrorCode[], googleMessage: string): MapsErro
         add({
           title: 'HTTP referrer chặn domain hiện tại',
           steps: [
-            'Application restrictions → thêm http://localhost:5173/* và https://exe101-homeji.onrender.com/*',
+            'Application restrictions → thêm http://localhost:5173/* và https://homeji.onrender.com/*',
             'Hoặc Don’t restrict key để test.',
           ],
           consoleLinks: baseLinks,
