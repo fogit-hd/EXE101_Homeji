@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useId, useState } from 'react'
 import { calculateRentalCost, type RentalFee, type RentalFeeUnit } from '../../lib/rentalCost'
 import { formatPrice } from '../../lib/labels'
@@ -28,10 +29,10 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
   const feeFields = (label: string, fee: RentalFee, setFee: (next: RentalFee) => void) => <fieldset>
     <legend>{label}</legend>
     <label htmlFor={`${id}-${label}-unit`}>Đơn vị đã hỏi chủ phòng</label>
-    <select id={`${id}-${label}-unit`} value={fee.unit} onChange={event => update(setFee, { ...fee, unit: event.target.value as RentalFeeUnit })}>
+    <ChoicePicker id={`${id}-${label}-unit`} value={fee.unit} onChange={event => update(setFee, { ...fee, unit: event.target.value as RentalFeeUnit })}>
       <option value="unknown">Chưa biết đơn vị</option><option value="monthly">VND / phòng / tháng</option>
       <option value="person">VND / người / tháng</option><option value="usage">{label === 'Điện' ? 'VND / kWh' : 'VND / m³'}</option>
-    </select>
+    </ChoicePicker>
     <label htmlFor={`${id}-${label}-rate`}>Đơn giá (VND)</label>
     <input id={`${id}-${label}-rate`} type="number" min="0" max="1000000000" value={fee.rate ?? ''} onChange={event => update(setFee, { ...fee, rate: amount(event.target.value) })} />
     {fee.unit === 'usage' ? <><label htmlFor={`${id}-${label}-usage`}>{label === 'Điện' ? 'kWh' : 'm³'} dùng mỗi tháng</label>

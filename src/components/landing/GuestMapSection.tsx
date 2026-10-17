@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   getRentalPost,
@@ -251,14 +252,14 @@ export function GuestMapSection() {
           >
             <label className="guest-map__field">
               <span>Tỉnh / Thành phố</span>
-              <select className="guest-map__select" value={GUEST_CITY.id} disabled>
+              <ChoicePicker className="guest-map__select" value={GUEST_CITY.id} disabled>
                 <option value={GUEST_CITY.id}>{GUEST_CITY.label}</option>
-              </select>
+              </ChoicePicker>
             </label>
 
             <label className="guest-map__field">
               <span>Quận / TP Thủ Đức</span>
-              <select
+              <ChoicePicker
                 className="guest-map__select"
                 value={districtId}
                 onChange={(e) => {
@@ -274,12 +275,12 @@ export function GuestMapSection() {
                     {d.label}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </label>
 
             <label className="guest-map__field">
               <span>Phường</span>
-              <select
+              <ChoicePicker
                 className="guest-map__select"
                 value={wardId}
                 onChange={(e) => {
@@ -295,12 +296,12 @@ export function GuestMapSection() {
                     {w.label}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </label>
 
             <label className="guest-map__field">
               <span>Gần trường</span>
-              <select
+              <ChoicePicker
                 className="guest-map__select"
                 value={schoolId}
                 onChange={(e) => {
@@ -315,7 +316,7 @@ export function GuestMapSection() {
                     {s.label}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </label>
 
             <div

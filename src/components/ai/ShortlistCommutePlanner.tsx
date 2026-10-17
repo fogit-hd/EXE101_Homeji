@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { AddressAutocomplete, type PlaceResult } from '../map/AddressAutocomplete'
 import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
@@ -40,9 +41,9 @@ export function ShortlistCommutePlanner({ origins, destinationHint, modeHint, ce
     <AddressAutocomplete id="intent-commute-destination" value={text}
       onChange={value => { invalidate(); setText(value); setDestination(null) }}
       onPlaceSelect={value => { invalidate(); setDestination(value); setText(value.address) }} placeholder="Chọn đúng cơ sở trường / nơi làm việc" />
-    <label htmlFor="intent-commute-mode">Phương tiện</label><select id="intent-commute-mode" value={mode} onChange={event => { invalidate(); setMode(event.target.value as CommuteMode | '') }}>
+    <label htmlFor="intent-commute-mode">Phương tiện</label><ChoicePicker id="intent-commute-mode" value={mode} onChange={event => { invalidate(); setMode(event.target.value as CommuteMode | '') }}>
       <option value="">Chọn phương tiện</option>{Object.entries(labels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-    </select>
+    </ChoicePicker>
     <label htmlFor="intent-commute-ceiling">Thời gian tối đa (phút)</label><input id="intent-commute-ceiling" type="number" min="1" max="240" value={ceiling} onChange={event => { invalidate(); setCeiling(event.target.value) }} placeholder="Ví dụ: 20" />
     <label htmlFor="intent-commute-departure">Giờ đi (bỏ trống: bây giờ)</label><input id="intent-commute-departure" type="datetime-local" value={departure} disabled={mode === 'WALKING'} onChange={event => { invalidate(); setDeparture(event.target.value) }} />
     <p>Khi nhấn tính, tọa độ tối đa {origins.length} tin, điểm đến và giờ đi được gửi Google Maps. Kết quả ô tô không thể dùng để suy ra xe máy.</p>

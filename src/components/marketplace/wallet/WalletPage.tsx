@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../../ui/ChoicePicker'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -931,9 +932,9 @@ function Filter({
       <Icon src={icon} size={15} />
       <span>
         <small>{label}</small>
-        <select value={value} aria-label={label} onChange={(event) => onChange(event.target.value)}>
+        <ChoicePicker value={value} aria-label={label} onChange={(event) => onChange(event.target.value)}>
           {children}
-        </select>
+        </ChoicePicker>
       </span>
       <Icon src={WALLET_ASSETS.chevron} size={13} />
     </label>

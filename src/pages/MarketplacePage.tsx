@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -1676,7 +1677,7 @@ export function MarketplacePage({
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="sale-condition">Tình trạng</label>
-              <select
+              <ChoicePicker
                 id="sale-condition"
                 className="form-select"
                 aria-label="Tình trạng sản phẩm"
@@ -1692,11 +1693,11 @@ export function MarketplacePage({
                     {c}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="sale-category">Danh mục</label>
-              <select
+              <ChoicePicker
                 id="sale-category"
                 className="form-select"
                 aria-label="Danh mục tin bán"
@@ -1709,7 +1710,7 @@ export function MarketplacePage({
                     {c}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="sale-quantity">Số lượng sẵn bán</label>

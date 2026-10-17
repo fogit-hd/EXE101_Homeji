@@ -1,3 +1,4 @@
+import { navigateMenu } from '../ui/menuNavigation'
 import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
@@ -59,6 +60,7 @@ export function GlobalHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const accountFocusEdge = useRef<'first' | 'last' | null>(null)
   const [walletMenuVersion, setWalletMenuVersion] = useState(0)
   const { present: accountPresent, ...accountPresence } = useMotionPresence(accountOpen)
   const [notifyOpen, setNotifyOpen] = useState(() => sectionIsNotifications(location.search))
@@ -274,6 +276,13 @@ export function GlobalHeader() {
   }, [notifyOpen])
 
   useEffect(() => {
+    if (!accountOpen || !accountFocusEdge.current) return
+    const items = accountRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    items?.[accountFocusEdge.current === 'last' ? items.length - 1 : 0]?.focus()
+    accountFocusEdge.current = null
+  }, [accountOpen])
+
+  useEffect(() => {
     if (!menuOpen && !accountOpen && !notifyOpen) return
     const onPointer = (event: MouseEvent) => {
       const target = event.target as Node
@@ -287,6 +296,7 @@ export function GlobalHeader() {
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return
       const notifyWasOpen = notifyOpen
+      const accountWasOpen = accountOpen
       setMenuOpen(false)
       setPinned(false)
       setAccountOpen(false)
@@ -294,6 +304,7 @@ export function GlobalHeader() {
       if (notifyWasOpen) {
         notifyRef.current?.querySelector<HTMLElement>('.hj-notify__trigger')?.focus()
       }
+      if (accountWasOpen) accountRef.current?.querySelector<HTMLElement>('.hj-profile')?.focus()
     }
     document.addEventListener('mousedown', onPointer)
     document.addEventListener('keydown', onKey)
@@ -491,6 +502,20 @@ export function GlobalHeader() {
               aria-expanded={accountOpen}
               aria-controls={accountId}
               aria-haspopup="menu"
+              onKeyDown={event => {
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+                event.preventDefault()
+                accountFocusEdge.current = event.key === 'ArrowUp' ? 'last' : 'first'
+                if (accountOpen) {
+                  const items = accountRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+                  items?.[event.key === 'ArrowUp' ? items.length - 1 : 0]?.focus()
+                  accountFocusEdge.current = null
+                  return
+                }
+                setNotifyOpen(false)
+                setWalletMenuVersion(version => version + 1)
+                setAccountOpen(true)
+              }}
               onClick={() => {
                 setNotifyOpen(false)
                 if (!accountOpen) setWalletMenuVersion((version) => version + 1)
@@ -501,7 +526,11 @@ export function GlobalHeader() {
               <BarGlyph name="chevron" size={14} turned={accountOpen} />
             </button>
             {accountPresent ? (
-              <div {...accountPresence} id={accountId} className="hj-account__menu" role="menu">
+              <div {...accountPresence} id={accountId} className="hj-account__menu" role="menu" aria-label="Tài khoản"
+                onKeyDown={event => navigateMenu(event, () => {
+                  setAccountOpen(false)
+                  accountRef.current?.querySelector<HTMLElement>('.hj-profile')?.focus()
+                })}>
                 <p className="hj-account__name">{displayName}</p>
                 <p className="hj-account__role">{isAdmin ? 'Quản trị viên' : 'Tài khoản cá nhân'}</p>
                 <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}

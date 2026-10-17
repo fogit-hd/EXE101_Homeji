@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { getRentalDecision, type CostScenario, type CommuteDestination, type DecisionResponse } from '../../api/rentalAssistant'
 import { AddressAutocomplete } from '../map/AddressAutocomplete'
@@ -70,10 +71,10 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
         ['occupants', 'Số người', 1, 50], ['electricityKwh', 'Điện dự kiến (kWh/tháng)', 0, 10000], ['waterM3', 'Nước dự kiến (m³/tháng)', 0, 1000],
       ] as const).map(([field, label, min, max]) => <label key={field}>{label}<input type="number" min={min} max={max} value={scenario[field]} onChange={e => setScenario(s => ({ ...s, [field]: Number(e.target.value) }))} /></label>)}
       {(['electricityUnit', 'waterUnit', 'internetUnit'] as const).map((field, i) => <label key={field}>{['Đơn vị điện', 'Đơn vị nước', 'Đơn vị internet'][i]}
-        <select value={scenario[field]} onChange={e => setScenario(s => ({ ...s, [field]: e.target.value }))}>
+        <ChoicePicker value={scenario[field]} onChange={e => setScenario(s => ({ ...s, [field]: e.target.value }))}>
           <option value="unknown">Chưa xác nhận</option><option value="month">đồng/tháng</option><option value="person">đồng/người/tháng</option>
           {field === 'electricityUnit' ? <option value="kwh">đồng/kWh</option> : field === 'waterUnit' ? <option value="m3">đồng/m³</option> : null}
-        </select></label>)}
+        </ChoicePicker></label>)}
       {(['otherMonthlyFees', 'otherInitialFees'] as const).map((field, i) => <label key={field}>{i === 0 ? 'Phí cố định khác / tháng (đồng)' : 'Khoản thu ban đầu khác (đồng)'}<input type="number" min="0" max="100000000" value={scenario[field] ?? ''} placeholder="Chưa xác nhận" onChange={e => setScenario(s => ({ ...s, [field]: e.target.value === '' ? null : Number(e.target.value) }))} /></label>)}
     </div>
     <details><summary>Xác nhận khoản bằng 0 trong kịch bản</summary><p>Chỉ chọn sau khi đã hỏi chủ phòng. Đây là xác nhận của bạn cho kịch bản, không phải Homeji xác minh.</p>
@@ -83,7 +84,7 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
       <p>Chỉ gửi tọa độ các phòng được chọn và điểm đến này tới Google Maps khi nhấn tính. Không sử dụng vị trí thiết bị.</p>
       <AddressAutocomplete value={address} onChange={value => { setAddress(value); setDestination(undefined) }}
         onPlaceSelect={place => { setAddress(place.address); setDestination({ label: place.address, latitude: place.lat, longitude: place.lng, mode }) }} placeholder="Chọn đúng cơ sở trường / điểm đến" />
-      <label>Phương tiện<select value={mode} onChange={e => setMode(e.target.value as 'WALK' | 'DRIVE')}><option value="WALK">Đi bộ</option><option value="DRIVE">Ô tô (không phải xe máy)</option></select></label>
+      <label>Phương tiện<ChoicePicker value={mode} onChange={e => setMode(e.target.value as 'WALK' | 'DRIVE')}><option value="WALK">Đi bộ</option><option value="DRIVE">Ô tô (không phải xe máy)</option></ChoicePicker></label>
       {mode === 'DRIVE' ? <label>Giờ đi dự kiến<input type="datetime-local" value={departure} onChange={e => setDeparture(e.target.value)} /></label> : null}
       <button type="button" onClick={() => { setDestination(undefined); setAddress('') }}>Bỏ điểm đến</button>
       {address && !destination ? <p>Hãy chọn một gợi ý địa điểm để xác nhận tọa độ.</p> : null}

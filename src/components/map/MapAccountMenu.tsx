@@ -26,6 +26,7 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
   const [walletLoading, setWalletLoading] = useState(false)
   const [walletUnavailable, setWalletUnavailable] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!open) return
@@ -33,7 +34,10 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
       if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
     }
     document.addEventListener('mousedown', onDoc)
     window.addEventListener('keydown', onKey)
@@ -94,6 +98,7 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
   return (
     <div className="gmaps-account" ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={`gmaps-account__avatar map-motion-press${open ? ' is-open' : ''}`}
         aria-label="Tài khoản"
@@ -113,6 +118,7 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
         role="dialog"
         aria-label="Thông tin tài khoản"
         aria-hidden={!open}
+        inert={!open}
       >
         <div className="gmaps-account__head">
           <span className="gmaps-account__avatar gmaps-account__avatar--lg" aria-hidden>

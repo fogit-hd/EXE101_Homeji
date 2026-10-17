@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { rentalSourceHref, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
 import { getErrorMessage } from '../../lib/errors'
@@ -37,7 +38,7 @@ export function RentalSourceBrowser() {
     <p>Đây là quảng cáo được thu thập từ website khác. Homeji chưa xác minh phòng còn trống, người cho thuê, địa chỉ hoặc phí. Tin nguồn không được coi là tin phòng đã duyệt để đặt lịch hay đặt cọc.</p>
     <form onSubmit={event => { event.preventDefault(); void load(1) }}>
       <label htmlFor="source-keyword">Từ khóa tin nguồn</label><input id="source-keyword" maxLength={200} value={keyword} onChange={event => { changeFilters(); setKeyword(event.target.value) }} />
-      <label htmlFor="source-district">Khu vực</label><select id="source-district" value={district} onChange={event => { changeFilters(); setDistrict(event.target.value) }}><option value="">Thủ Đức & Quận 9</option><option value="thu-duc">Thủ Đức</option><option value="quan-9">Quận 9</option></select>
+      <label htmlFor="source-district">Khu vực</label><ChoicePicker id="source-district" value={district} onChange={event => { changeFilters(); setDistrict(event.target.value) }}><option value="">Thủ Đức & Quận 9</option><option value="thu-duc">Thủ Đức</option><option value="quan-9">Quận 9</option></ChoicePicker>
       <button type="submit" className="btn btn-secondary btn-sm" disabled={loading}>{loading ? 'Đang tải…' : 'Xem tin nguồn'}</button>
     </form>
     {error ? <p role="alert">{error}</p> : null}

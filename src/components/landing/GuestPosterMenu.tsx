@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { navigateMenu } from '../ui/menuNavigation'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
@@ -20,6 +21,7 @@ export function GuestPosterMenu() {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
+  const keyboardOpen = useRef(false)
 
   const close = useCallback(() => {
     setOpen(false)
@@ -48,6 +50,10 @@ export function GuestPosterMenu() {
   useLayoutEffect(() => {
     if (!open) return
     syncPanelPos()
+    if (keyboardOpen.current) {
+      panelRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+      keyboardOpen.current = false
+    }
   }, [open, syncPanelPos])
 
   useEffect(() => {
@@ -99,11 +105,14 @@ export function GuestPosterMenu() {
   }
 
   const onMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (!open) return
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.target === triggerRef.current && ['ArrowDown', 'ArrowUp'].includes(e.key)) {
       e.preventDefault()
-      runManagePosts()
+      if (open) panelRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+      else { keyboardOpen.current = true; toggle() }
+      return
     }
+    if (!open) return
+    navigateMenu(e, () => { close(); triggerRef.current?.focus() })
   }
 
   const panel = open ? (

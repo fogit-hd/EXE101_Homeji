@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useState } from 'react'
 import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'
@@ -36,7 +37,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
         <label className="form-label" htmlFor="activities-type-filter">
           Lọc loại
         </label>
-        <select
+        <ChoicePicker
           id="activities-type-filter"
           className="form-select"
           value={type === '' ? '' : String(type)}
@@ -48,7 +49,7 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
               {v}
             </option>
           ))}
-        </select>
+        </ChoicePicker>
       </div>
 
       <PageNotice message={error && !disrupted ? error : ''} tone="error" />

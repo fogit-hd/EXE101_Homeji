@@ -6,6 +6,7 @@ import test from 'node:test'
 import ts from 'typescript'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { choicePickerModule } from './helpers/choice-picker-module.mjs'
 
 const require = createRequire(import.meta.url)
 const source = (await readFile(new URL('../src/components/ai/RentalDecisionPanel.tsx', import.meta.url), 'utf8'))
@@ -16,6 +17,7 @@ const javascript = ts.transpileModule(source, { compilerOptions: {
 async function render(commute) {
   const bindings = `
     import React, { useEffect, useRef, useState } from '${pathToFileURL(require.resolve('react')).href}';
+    import { ChoicePicker } from '${choicePickerModule}';
     const aiFeatureFlags = { commute: ${commute} };
     const AddressAutocomplete = () => null;
     const Link = () => null;

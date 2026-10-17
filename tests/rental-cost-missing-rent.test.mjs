@@ -6,6 +6,7 @@ import test from 'node:test'
 import ts from 'typescript'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { choicePickerModule } from './helpers/choice-picker-module.mjs'
 
 const url = source => `data:text/javascript;base64,${Buffer.from(ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React },
@@ -17,6 +18,7 @@ const source = (await readFile(new URL('../src/components/ai/RentalCostCalculato
 const bindings = `
 import React, { useId, useState } from '${pathToFileURL(require.resolve('react')).href}';
 import { calculateRentalCost } from '${cost}';
+import { ChoicePicker } from '${choicePickerModule}';
 const formatPrice = value => String(value);
 `
 const { RentalCostCalculator } = await import(url(bindings + source))

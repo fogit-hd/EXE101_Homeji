@@ -1,3 +1,4 @@
+import { ChoicePicker } from './ui/ChoicePicker'
 import { useMotionPresence } from './motion/useMotionPresence'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
@@ -209,7 +210,7 @@ export function ScheduleDateTimePicker({
 
           <div className="schedule-dt__footer">
             <div className="schedule-dt__time-fields">
-              <select
+              <ChoicePicker
                 className="schedule-dt__select"
                 value={hour}
                 aria-label="Giờ"
@@ -220,9 +221,9 @@ export function ScheduleDateTimePicker({
                     {String(h).padStart(2, '0')}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
               <span className="schedule-dt__time-sep">:</span>
-              <select
+              <ChoicePicker
                 className="schedule-dt__select"
                 value={minute}
                 aria-label="Phút"
@@ -233,7 +234,7 @@ export function ScheduleDateTimePicker({
                     {String(m).padStart(2, '0')}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
 
             <div className="schedule-dt__quick">

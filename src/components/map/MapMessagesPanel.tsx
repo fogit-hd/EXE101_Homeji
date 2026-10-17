@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
@@ -1262,7 +1263,7 @@ export function MapMessagesPanel({
               </div>
               <label>
                 Nội dung ảnh
-                <select
+                <ChoicePicker
                   value={imageContext}
                   disabled={sending}
                   onChange={(event) => setImageContext(Number(event.target.value) as MessageAttachmentContext)}
@@ -1270,7 +1271,7 @@ export function MapMessagesPanel({
                   {Object.entries(attachmentContextLabel).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
-                </select>
+                </ChoicePicker>
               </label>
               <small>Ảnh được kiểm tra, xóa EXIF/GPS và chỉ thành viên cuộc trò chuyện xem được.</small>
             </section>

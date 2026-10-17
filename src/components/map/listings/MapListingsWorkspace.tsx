@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../../ui/ChoicePicker'
 import {
   useLayoutEffect,
   useMemo,
@@ -169,9 +170,9 @@ export function MapListingsWorkspace({
                 <rect x="3.5" y="4" width="17" height="16" rx="2" /><path d="M10 4v16" />
               </svg>
               <span className="map-listings__sr-only">Chế độ xem</span>
-              <select value={query.view} onChange={(event) => setView(event.target.value as MapListingsView)}>
+              <ChoicePicker value={query.view} onChange={(event) => setView(event.target.value as MapListingsView)}>
                 {viewChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </select>
+              </ChoicePicker>
             </label>
           </div>
         </div>

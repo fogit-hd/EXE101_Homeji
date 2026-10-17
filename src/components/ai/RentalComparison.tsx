@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { compareRentalPosts, getRentalPost, RentalPostType, type CompareRentalPostItem } from '../../api'
@@ -88,10 +89,10 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
         <AddressAutocomplete id="compare-destination" value={destinationText}
           onChange={value => { setDestinationText(value); setDestination(null); invalidateRoutes() }}
           onPlaceSelect={place => { setDestination(place); invalidateRoutes() }} placeholder="Chọn địa chỉ điểm đến cụ thể" />
-        <label htmlFor="compare-mode">Phương tiện</label><select id="compare-mode" value={mode} onChange={event => { setMode(event.target.value as CommuteMode | ''); invalidateRoutes() }}>
+        <label htmlFor="compare-mode">Phương tiện</label><ChoicePicker id="compare-mode" value={mode} onChange={event => { setMode(event.target.value as CommuteMode | ''); invalidateRoutes() }}>
           <option value="">Chọn phương tiện</option>
           {Object.entries(modeLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-        </select>
+        </ChoicePicker>
         <label htmlFor="compare-departure">Giờ đi (bỏ trống: bây giờ)</label>
         <input id="compare-departure" type="datetime-local" value={departure} disabled={mode === 'WALKING'} onChange={event => { setDeparture(event.target.value); invalidateRoutes() }} />
         <label htmlFor="compare-ceiling">Mốc thời gian muốn kiểm tra (phút)</label>

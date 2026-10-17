@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -338,7 +339,7 @@ export function EditRentalPostPage() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label" htmlFor="transfer-kind">Hình thức</label>
-                <select
+                <ChoicePicker
                   id="transfer-kind"
                   className="form-select"
                   value={transferKind}
@@ -346,7 +347,7 @@ export function EditRentalPostPage() {
                 >
                   <option value={RoomTransferKind.LeaseAssignment}>Chuyển hợp đồng — rời hẳn</option>
                   <option value={RoomTransferKind.TemporarySublet}>Cho thuê lại tạm thời — sẽ quay lại</option>
-                </select>
+                </ChoicePicker>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="transfer-from">Ngày có thể vào</label>

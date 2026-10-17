@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -458,7 +459,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
               <label className="form-label" htmlFor="profile-school">
                 Trường học
               </label>
-              <select
+              <ChoicePicker
                 id="profile-school"
                 className="form-select"
                 value={school}
@@ -470,20 +471,20 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
                     {name}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-area">
                 Khu vực đang ở
               </label>
-              <select
+              <ChoicePicker
                 id="profile-area"
                 className="form-select"
                 value="Thủ Đức"
                 disabled
               >
                 <option value="Thủ Đức">Thủ Đức</option>
-              </select>
+              </ChoicePicker>
               <small className="profile-field-hint">
                 Hiện tại Homeji chỉ hỗ trợ khu vực Thủ Đức.
               </small>
@@ -563,7 +564,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
               <label className="form-label" htmlFor="profile-sleep">
                 Thói quen ngủ
               </label>
-              <select
+              <ChoicePicker
                 id="profile-sleep"
                 className="form-select"
                 value={sleepHabit}
@@ -574,13 +575,13 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
                     {v}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-pet">
                 Thú cưng
               </label>
-              <select
+              <ChoicePicker
                 id="profile-pet"
                 className="form-select"
                 value={petPreference}
@@ -591,13 +592,13 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
                     {v}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-smoke">
                 Hút thuốc
               </label>
-              <select
+              <ChoicePicker
                 id="profile-smoke"
                 className="form-select"
                 value={smokingPreference}
@@ -608,7 +609,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
                     {v}
                   </option>
                 ))}
-              </select>
+              </ChoicePicker>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="profile-budget">

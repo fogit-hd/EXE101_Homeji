@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { RentalPostSummary, UserProfile } from '../../api/types'
 import { UserRole } from '../../api/types'
@@ -254,16 +254,25 @@ function matchesQuery(item: MapOmniboxSuggestion, q: string) {
 function SuggestionRow({
   item,
   active,
+  listId,
+  keyboardActive,
   onPick,
 }: {
   item: MapOmniboxSuggestion
   active?: boolean
+  listId: string
+  keyboardActive: boolean
   onPick: (item: MapOmniboxSuggestion) => void
 }) {
   return (
     <button
       type="button"
-      className={`gmaps-omnibox__row map-motion-press${active ? ' is-active' : ''}`}
+      id={`${listId}-${item.id}`}
+      role="option"
+      tabIndex={-1}
+      aria-selected={!!active}
+      className={`gmaps-omnibox__row map-motion-press${active || keyboardActive ? ' is-active' : ''}`}
+      onMouseDown={event => event.preventDefault()}
       onClick={() => onPick(item)}
     >
       <span className={`gmaps-omnibox__row-icon is-${item.kind}`} aria-hidden>
@@ -348,6 +357,8 @@ export function MapOmnibox({
   const { profile } = useAuth()
   const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
   const [open, setOpen] = useState(false)
+  const suggestionsId = useId()
+  const [activeSuggestionId, setActiveSuggestionId] = useState('')
   const [navOpen, setNavOpen] = useState(false)
   const [tourDismissed, setTourDismissed] = useState(false)
   const [tourSection, setTourSection] = useState<MapAppSection | null>(null)
@@ -381,10 +392,15 @@ export function MapOmnibox({
 
   useEffect(() => {
     if (!uiCollapsed) return
-    setOpen(false)
-    setNavOpen(false)
-    setAdvancedOpen(false)
     inputRef.current?.blur()
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      setOpen(false)
+      setNavOpen(false)
+      setAdvancedOpen(false)
+    })
+    return () => { cancelled = true }
   }, [uiCollapsed])
 
   useDismissOnOutside(open, [rootRef], () => {
@@ -488,7 +504,10 @@ export function MapOmnibox({
     suggestions.schools.length +
     suggestions.posts.length
 
+  const activeSuggestion = Object.values(suggestions).flat().find(item => item.id === activeSuggestionId)
+
   const pick = (item: MapOmniboxSuggestion) => {
+    setActiveSuggestionId('')
     saveRecent(item)
     setRecent(loadRecent())
     onQueryChange(item.kind === 'place' && item.subtitle ? `${item.title}` : item.title)
@@ -713,11 +732,42 @@ export function MapOmnibox({
                   : 'Tìm kiếm với Homeji...'
               }
               aria-label="Tìm kiếm trên Homeji Maps"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={open}
+              aria-controls={suggestionsId}
+              aria-activedescendant={open && activeSuggestion ? `${suggestionsId}-${activeSuggestion.id}` : undefined}
               autoComplete="off"
               enterKeyHint="search"
               onFocus={() => setOpen(true)}
+              onKeyDown={event => {
+                if (event.nativeEvent.isComposing) return
+                if (event.key === 'Escape') {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  setOpen(false)
+                  setActiveSuggestionId('')
+                } else if (event.key === 'Tab') {
+                  setOpen(false)
+                  setActiveSuggestionId('')
+                } else if (event.key === 'Enter' && open && activeSuggestion) {
+                  event.preventDefault()
+                  pick(activeSuggestion)
+                } else if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+                  event.preventDefault()
+                  const items = Object.values(suggestions).flat()
+                  const index = items.findIndex(item => item.id === activeSuggestion?.id)
+                  const next = event.key === 'ArrowDown' ? (index + 1) % items.length : (index <= 0 ? items.length : index) - 1
+                  if (items[next]) {
+                    setActiveSuggestionId(items[next].id)
+                    requestAnimationFrame(() => document.getElementById(`${suggestionsId}-${items[next].id}`)?.scrollIntoView({ block: 'nearest' }))
+                  }
+                  setOpen(true)
+                }
+              }}
               onChange={(e) => {
                 onQueryChange(e.target.value)
+                setActiveSuggestionId('')
                 setOpen(true)
               }}
             />
@@ -772,9 +822,10 @@ export function MapOmnibox({
 
           <div
             className={`gmaps-omnibox__dropdown${open ? ' is-visible' : ''}`}
-            role="listbox"
             aria-hidden={!open}
+            inert={!open}
           >
+            <div id={suggestionsId} role="listbox" aria-label="Gợi ý tìm kiếm" aria-busy={placesLoading}>
               {totalHits === 0 && !placesLoading ? (
                 <p className="gmaps-omnibox__empty">
                   {schoolsLoading
@@ -787,7 +838,7 @@ export function MapOmnibox({
                 <div className="gmaps-omnibox__section">
                   <p className="gmaps-omnibox__section-title">Gần đây</p>
                   {suggestions.recent.map((item) => (
-                    <SuggestionRow key={item.id} item={item} onPick={pick} />
+                    <SuggestionRow listId={suggestionsId} keyboardActive={activeSuggestionId === item.id} key={item.id} item={item} onPick={pick} />
                   ))}
                 </div>
               ) : null}
@@ -796,7 +847,7 @@ export function MapOmnibox({
                 <div className="gmaps-omnibox__section">
                   <p className="gmaps-omnibox__section-title">Địa điểm</p>
                   {suggestions.places.map((item) => (
-                    <SuggestionRow key={item.id} item={item} onPick={pick} />
+                    <SuggestionRow listId={suggestionsId} keyboardActive={activeSuggestionId === item.id} key={item.id} item={item} onPick={pick} />
                   ))}
                 </div>
               ) : placesLoading && query.trim().length >= 2 ? (
@@ -810,7 +861,7 @@ export function MapOmnibox({
                 <div className="gmaps-omnibox__section">
                   <p className="gmaps-omnibox__section-title">Khu vực</p>
                   {suggestions.districts.map((item) => (
-                    <SuggestionRow
+                    <SuggestionRow listId={suggestionsId} keyboardActive={activeSuggestionId === item.id}
                       key={item.id}
                       item={item}
                       active={item.districtId === districtId && item.kind === 'district' && !wardId && !schoolId}
@@ -824,7 +875,7 @@ export function MapOmnibox({
                 <div className="gmaps-omnibox__section">
                   <p className="gmaps-omnibox__section-title">Phường</p>
                   {suggestions.wards.map((item) => (
-                    <SuggestionRow
+                    <SuggestionRow listId={suggestionsId} keyboardActive={activeSuggestionId === item.id}
                       key={item.id}
                       item={item}
                       active={item.wardId === wardId}
@@ -838,7 +889,7 @@ export function MapOmnibox({
                 <div className="gmaps-omnibox__section">
                   <p className="gmaps-omnibox__section-title">Trường đại học</p>
                   {suggestions.schools.map((item) => (
-                    <SuggestionRow
+                    <SuggestionRow listId={suggestionsId} keyboardActive={activeSuggestionId === item.id}
                       key={item.id}
                       item={item}
                       active={item.schoolId === schoolId}
@@ -852,11 +903,12 @@ export function MapOmnibox({
                 <div className="gmaps-omnibox__section">
                   <p className="gmaps-omnibox__section-title">Tin đăng phù hợp</p>
                   {suggestions.posts.map((item) => (
-                    <SuggestionRow key={item.id} item={item} onPick={pick} />
+                    <SuggestionRow listId={suggestionsId} keyboardActive={activeSuggestionId === item.id} key={item.id} item={item} onPick={pick} />
                   ))}
                 </div>
               ) : null}
 
+            </div>
               <div className="gmaps-omnibox__footer">
                 <button
                   type="button"

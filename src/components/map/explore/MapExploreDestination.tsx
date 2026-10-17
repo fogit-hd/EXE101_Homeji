@@ -1,9 +1,8 @@
+import { ChoicePicker } from '../../ui/ChoicePicker'
 import { memo, useMemo, useState, type ReactNode, type RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import type { RentalPostSummary } from '../../../api/types'
 import { exploreListUrl } from '../../chrome'
-import chevronDownUrl from '../../../assets/figma-map/icons/chevron-down-dark.svg'
-import chevronDownLightUrl from '../../../assets/figma-map/icons/chevron-down.svg'
 import scanUrl from '../../../assets/figma-map/icons/scan.svg'
 import slidersUrl from '../../../assets/figma-map/icons/sliders-horizontal.svg'
 import { HomeListingSkeleton } from '../../HomeListingSkeleton'
@@ -80,13 +79,6 @@ export const MapExploreDestination = memo(function MapExploreDestination({
   onOpenListingDetail,
 }: Props) {
   const [mobileView, setMobileView] = useState<'map' | 'list'>('map')
-  const [priceMenuOpen, setPriceMenuOpen] = useState(false)
-  const [kindMenuOpen, setKindMenuOpen] = useState(false)
-
-  const priceLabel =
-    PRICE_OPTIONS.find((o) => o.id === priceBand)?.label ?? 'Mọi giá'
-  const kindLabel =
-    KIND_OPTIONS.find((o) => o.id === roomKind)?.label ?? 'Mọi loại'
 
   const countLabel = isLoading
     ? 'Đang tải phòng…'
@@ -165,80 +157,16 @@ export const MapExploreDestination = memo(function MapExploreDestination({
 
       <div className="map-explore__filters" role="toolbar" aria-label="Bộ lọc bản đồ">
         <div className="map-explore__filter-wrap">
-          <button
-            type="button"
-            className={`map-explore__filter${priceBand !== 'any' ? ' is-active' : ''}`}
-            aria-haspopup="listbox"
-            aria-expanded={priceMenuOpen}
-            onClick={() => {
-              setPriceMenuOpen((v) => !v)
-              setKindMenuOpen(false)
-            }}
-          >
-            <span>{priceLabel}</span>
-            <img
-              src={priceBand !== 'any' ? chevronDownLightUrl : chevronDownUrl}
-              alt=""
-              width={13}
-              height={13}
-            />
-          </button>
-          {priceMenuOpen ? (
-            <ul className="map-explore__menu" role="listbox" aria-label="Khoảng giá">
-              {PRICE_OPTIONS.map((opt) => (
-                <li key={opt.id}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={priceBand === opt.id}
-                    className={priceBand === opt.id ? 'is-selected' : undefined}
-                    onClick={() => {
-                      onPriceBandChange(opt.id)
-                      setPriceMenuOpen(false)
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <ChoicePicker aria-label="Khoảng giá" className={`map-explore__filter${priceBand !== 'any' ? ' is-active' : ''}`}
+            value={priceBand} onChange={event => onPriceBandChange(event.target.value as MapExplorePriceBand)}>
+            {PRICE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </ChoicePicker>
         </div>
-
         <div className="map-explore__filter-wrap">
-          <button
-            type="button"
-            className={`map-explore__filter${roomKind !== 'any' ? ' is-active' : ''}`}
-            aria-haspopup="listbox"
-            aria-expanded={kindMenuOpen}
-            onClick={() => {
-              setKindMenuOpen((v) => !v)
-              setPriceMenuOpen(false)
-            }}
-          >
-            <span>{kindLabel}</span>
-            <img src={chevronDownUrl} alt="" width={13} height={13} />
-          </button>
-          {kindMenuOpen ? (
-            <ul className="map-explore__menu" role="listbox" aria-label="Loại phòng">
-              {KIND_OPTIONS.map((opt) => (
-                <li key={opt.id}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={roomKind === opt.id}
-                    className={roomKind === opt.id ? 'is-selected' : undefined}
-                    onClick={() => {
-                      onRoomKindChange(opt.id)
-                      setKindMenuOpen(false)
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <ChoicePicker aria-label="Loại phòng" className={`map-explore__filter${roomKind !== 'any' ? ' is-active' : ''}`}
+            value={roomKind} onChange={event => onRoomKindChange(event.target.value as MapExploreRoomKind)}>
+            {KIND_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </ChoicePicker>
         </div>
 
         <div className="map-explore__filter-spacer" aria-hidden />

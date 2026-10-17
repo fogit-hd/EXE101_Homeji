@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -513,7 +514,7 @@ export function AdminModerationPage() {
 
       {tab === 'reports' && (
         <>
-          <select
+          <ChoicePicker
             className="form-select"
             style={{ maxWidth: 240, marginBottom: 16 }}
             value={reportStatus ?? ''}
@@ -523,7 +524,7 @@ export function AdminModerationPage() {
             {Object.entries(reportStatusLabel).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
-          </select>
+          </ChoicePicker>
 
           <div className="admin-list">
             {reports.length === 0 ? (

@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -433,14 +434,14 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 <h2>Lịch sử giao dịch</h2>
                 <label className="pay-filter">
                   <span className="sr-only">Lọc trạng thái giao dịch</span>
-                  <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <ChoicePicker value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                     <option value="all">Tất cả trạng thái</option>
                     <option value={PaymentStatus.Pending}>Chờ thanh toán</option>
                     <option value={PaymentStatus.Completed}>Hoàn tất</option>
                     <option value={PaymentStatus.Cancelled}>Đã hủy</option>
                     <option value={PaymentStatus.Failed}>Thất bại</option>
                     <option value={PaymentStatus.Expired}>Hết hạn</option>
-                  </select>
+                  </ChoicePicker>
                 </label>
               </div>
               {historyError && <p className="payment-inline-error" role="alert">{historyError}</p>}

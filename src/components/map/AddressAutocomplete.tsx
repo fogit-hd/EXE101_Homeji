@@ -159,33 +159,37 @@ export function AddressAutocomplete({
         aria-expanded={showList}
         aria-controls={listId}
         aria-autocomplete="list"
+        aria-activedescendant={showList && activeIndex >= 0 && activeIndex < items.length ? `${listId}-option-${activeIndex}` : undefined}
         onKeyDown={(e) => {
-          if (!showList || items.length === 0) return
+          if (e.nativeEvent.isComposing) return
+          if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setOpen(false); return }
+          if (e.key === 'Tab') { setOpen(false); return }
+          if (items.length === 0) return
           if (e.key === 'ArrowDown') {
             e.preventDefault()
+            setOpen(true)
             setActiveIndex((i) => (i + 1) % items.length)
           } else if (e.key === 'ArrowUp') {
             e.preventDefault()
+            setOpen(true)
             setActiveIndex((i) => (i <= 0 ? items.length - 1 : i - 1))
-          } else if (e.key === 'Enter' && activeIndex >= 0) {
+          } else if (e.key === 'Enter' && showList && activeIndex >= 0) {
             e.preventDefault()
             void pick(items[activeIndex])
-          } else if (e.key === 'Escape') {
-            setOpen(false)
           }
         }}
       />
 
       {showList ? (
-        <ul id={listId} className="address-autocomplete__list" role="listbox">
+        <ul id={listId} className="address-autocomplete__list" role="listbox" aria-label="Gợi ý địa chỉ" aria-busy={loading}>
           {loading && items.length === 0 ? (
-            <li className="address-autocomplete__empty" role="option" aria-disabled>
-              Đang gợi ý địa chỉ…
+            <li className="address-autocomplete__empty" role="presentation">
+              <span role="status">Đang gợi ý địa chỉ…</span>
             </li>
           ) : null}
           {!loading && items.length === 0 ? (
-            <li className="address-autocomplete__empty" role="option" aria-disabled>
-              Không tìm thấy địa chỉ phù hợp
+            <li className="address-autocomplete__empty" role="presentation">
+              <span role="status">Không tìm thấy địa chỉ phù hợp</span>
             </li>
           ) : null}
           {items.map((item, index) => (
@@ -193,6 +197,9 @@ export function AddressAutocomplete({
               <button
                 type="button"
                 role="option"
+                id={`${listId}-option-${index}`}
+                tabIndex={-1}
+                onMouseDown={event => event.preventDefault()}
                 aria-selected={index === activeIndex}
                 className={`address-autocomplete__item${
                   index === activeIndex ? ' is-active' : ''

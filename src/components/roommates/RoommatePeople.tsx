@@ -1,3 +1,4 @@
+import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { getMyInvitations, RoommateInvitationStatus, type RoommateInvitation } from '../../api'
 import {
@@ -123,7 +124,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
       event.preventDefault(); setQuery({ keyword: keyword.trim() || undefined, intent: intent ? Number(intent) as RoommateIntent : undefined, page: 1, pageSize: 12 })
     }}>
       <label>Trường, đường hoặc khu vực<input className="form-input" value={keyword} maxLength={150} placeholder="Ví dụ: UEL, Võ Văn Ngân…" onChange={event => setKeyword(event.target.value)} /></label>
-      <label>Nhu cầu<select className="form-input" value={intent} onChange={event => setIntent(event.target.value)}><option value="">Tất cả</option>{INTENTS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+      <label>Nhu cầu<ChoicePicker className="form-input" value={intent} onChange={event => setIntent(event.target.value)}><option value="">Tất cả</option>{INTENTS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</ChoicePicker></label>
       <button className="btn btn-secondary" type="submit">Tìm bạn</button>
     </form>
     {notice ? <p role="status" className="roommate-people__notice">{notice}</p> : null}
