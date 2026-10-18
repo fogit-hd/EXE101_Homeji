@@ -1,3 +1,4 @@
+import { currentTheme } from './theme'
 import { importMarkerLibrary, importStreetViewLibrary } from './loadGoogleMaps'
 
 /** Trung tâm Thủ Đức / Q.9 — khu Làng Đại học */
@@ -46,7 +47,7 @@ export function getGoogleMapId(): string {
 export function getMapsColorScheme(): google.maps.ColorScheme | undefined {
   if (typeof window === 'undefined' || typeof google === 'undefined') return undefined
   if (!google.maps?.ColorScheme) return undefined
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
+  return currentTheme() === 'dark'
     ? google.maps.ColorScheme.DARK
     : google.maps.ColorScheme.LIGHT
 }

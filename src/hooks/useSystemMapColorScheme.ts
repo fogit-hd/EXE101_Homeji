@@ -1,3 +1,4 @@
+import { currentTheme, THEME_EVENT } from '../lib/theme'
 import { useEffect, useState } from 'react'
 
 export type MapColorSchemeName = 'LIGHT' | 'DARK'
@@ -5,7 +6,7 @@ export type MapColorSchemeName = 'LIGHT' | 'DARK'
 /** Reads OS / browser light-dark preference for Google Maps cloud styles. */
 export function readSystemMapColorScheme(): MapColorSchemeName {
   if (typeof window === 'undefined') return 'LIGHT'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
+  return currentTheme() === 'dark'
     ? 'DARK'
     : 'LIGHT'
 }
@@ -22,7 +23,7 @@ export function useSystemMapColorScheme(): MapColorSchemeName {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
     let timer = 0
     const apply = (immediate: boolean) => {
-      const next: MapColorSchemeName = mq.matches ? 'DARK' : 'LIGHT'
+      const next: MapColorSchemeName = currentTheme() === 'dark' ? 'DARK' : 'LIGHT'
       if (immediate) {
         setScheme(next)
         return
@@ -30,12 +31,13 @@ export function useSystemMapColorScheme(): MapColorSchemeName {
       window.clearTimeout(timer)
       timer = window.setTimeout(() => setScheme(next), 280)
     }
-    apply(true)
     const onChange = () => apply(false)
     mq.addEventListener('change', onChange)
+    window.addEventListener(THEME_EVENT, onChange)
     return () => {
       window.clearTimeout(timer)
       mq.removeEventListener('change', onChange)
+      window.removeEventListener(THEME_EVENT, onChange)
     }
   }, [])
 

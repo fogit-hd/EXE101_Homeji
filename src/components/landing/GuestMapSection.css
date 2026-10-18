@@ -5,22 +5,7 @@
     linear-gradient(180deg, #fff 0%, #eef3f0 100%);
   position: relative;
   z-index: 1;
-  /* Landing map stays light even when OS/app is dark */
-  color-scheme: light;
-  --grab-green: #00b14f;
-  --grab-green-hover: #009241;
-  --grab-blue: #136fd8;
-  --grab-blue-hover: #0e52a3;
-  --text-primary: #242a2e;
-  --text-secondary: #69727d;
-  --text-heading: #1a242c;
-  --border: #d5d8dc;
-  --surface: #ffffff;
-  --surface-muted: #f6f8fa;
-  --surface-input: #eef2f0;
-  --surface-elevated: #ffffff;
-  --shadow-sm: rgba(9, 29, 46, 0.08) 0px 8px 20px 0px;
-  --shadow-md: rgba(9, 29, 46, 0.1) 0px 12px 28px 0px;
+
 }
 
 .guest-map__shell {

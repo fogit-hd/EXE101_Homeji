@@ -92,7 +92,7 @@ function App() {
   return (
     <ErrorBoundary reloadOnRetry>
       <MotionConfig reducedMotion="never">
-      <ThemeSync />
+      <ThemeSync>
       <AiInteractionEffects />
       <InteractionMotion />
       <NetworkStatusProvider>
@@ -118,6 +118,7 @@ function App() {
           </GoogleOAuthRoot>
         </GoogleMapsProvider>
       </NetworkStatusProvider>
+      </ThemeSync>
       </MotionConfig>
     </ErrorBoundary>
   )

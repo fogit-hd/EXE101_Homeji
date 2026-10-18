@@ -1,4 +1,5 @@
 import { navigateMenu } from '../ui/menuNavigation'
+import { ThemeSwitch } from '../theme/ThemeSwitch'
 import { HomejiAiButton } from '../chrome/HomejiAiButton'
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
@@ -563,6 +564,7 @@ export function GlobalHeader() {
               </div>
             ) : null}
           </div>
+          <ThemeSwitch />
         </div>
       </div>
     </header>

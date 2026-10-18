@@ -2,6 +2,15 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function () {
+        var theme;
+        try { theme = localStorage.getItem('homeji_theme') } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })()
+    </script>
     <link rel="icon" type="image/png" href="/brand/homeji-logo2.png" />
     <link rel="apple-touch-icon" href="/brand/homeji-logo2.png" />
     <meta
