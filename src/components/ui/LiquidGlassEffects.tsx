@@ -10,10 +10,10 @@ import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeo
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
 const lensVariants = [
   { variant: 'control', state: 'rest', depth: .10, blur: 0 },
-  { variant: 'tab-rest', state: 'tab-rest', depth: .035, blur: 0 },
-  { variant: 'tab-active', state: 'active', depth: .07, blur: 0 },
+  { variant: 'tab-rest', state: 'tab-rest', depth: .14, blur: 0 },
+  { variant: 'tab-active', state: 'active', depth: .28, blur: 0 },
 ] as const
-const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role="button"], [role="menuitem"], [data-glass-lens]'
+const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, .guest-fixed-cta > span, [role="button"], [role="menuitem"], [data-glass-lens]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
@@ -34,9 +34,10 @@ export function LiquidGlassEffects() {
         pending.forEach(({ width, height }, element) => {
           if (!element.isConnected || !width || !height) return
           const ratio = nearestLensRatio(width, height)
-          const value = `url("#${glassLensId(ratio, element.classList.contains('liquid-tabs__lens') ? 'tab-rest' : 'control')}") saturate(1.08)`
+          const value = `url("#${glassLensId(ratio, element.matches('.liquid-tabs__lens,.theme-switch__thumb') ? 'tab-rest' : 'control')}") saturate(1.08)`
           if (element.style.getPropertyValue('--glass-lens-filter') !== value) element.style.setProperty('--glass-lens-filter', value)
-          if (element.classList.contains('liquid-tabs__lens')) element.style.setProperty('--glass-lens-active-filter', `url("#${glassLensId(ratio, 'tab-active')}") saturate(1.12)`)
+          if (element.hasAttribute('data-glass-face')) element.style.setProperty('--glass-face-filter', `url("#${glassLensId(ratio, 'tab-rest')}")`)
+          if (element.matches('.liquid-tabs__lens,.theme-switch__thumb,[data-glass-face]')) element.style.setProperty('--glass-lens-active-filter', `url("#${glassLensId(ratio, 'tab-active')}") saturate(1.12)`)
         })
         pending.clear()
       })
@@ -45,6 +46,16 @@ export function LiquidGlassEffects() {
       const candidates = root.matches(controls) ? [root, ...root.querySelectorAll(controls)] : root.querySelectorAll(controls)
       candidates.forEach(element => {
         if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map') || observed.has(element)) return
+        // An optical pseudo-face refracts native labels without cloning or wrapping
+        // React children. Reserve an unused pseudo-element; keep existing decoration.
+        if (!element.matches('[data-glass-lens],.theme-switch,input') && !element.closest('.liquid-tabs')) {
+          const free = (pseudo: string) => ['none', 'normal'].includes(getComputedStyle(element, pseudo).content)
+          const face = free('::before') ? 'before' : free('::after') ? 'after' : null
+          if (face) {
+            element.dataset.glassFace = face
+            if (getComputedStyle(element).position === 'static') element.dataset.glassPosition = 'static'
+          }
+        }
         observed.add(element)
         resize.observe(element)
       })
@@ -61,16 +72,25 @@ export function LiquidGlassEffects() {
       cancelAnimationFrame(frame)
       resize.disconnect()
       mutations.disconnect()
-      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter') })
+      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); element.style.removeProperty('--glass-face-filter'); delete element.dataset.glassFace; delete element.dataset.glassPosition })
       pending.clear()
     }
   }, [])
   return <svg className="liquid-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <defs>{GLASS_LENS_RATIOS.flatMap(ratio => lensVariants.map(({ variant, state, depth, blur }) => <filter key={glassLensId(ratio, variant)} id={glassLensId(ratio, variant)} data-glass-state={state} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
+    <defs>{GLASS_LENS_RATIOS.flatMap(ratio => lensVariants.map(({ variant, state, depth, blur }) => <filter key={glassLensId(ratio, variant)} id={glassLensId(ratio, variant)} data-glass-state={state} data-glass-depth={depth} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
       x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
       <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
       <feGaussianBlur in="SourceGraphic" stdDeviation={`${blur / ratio} ${blur}`} result="scene" />
-      <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" />
+      <feDisplacementMap in="scene" in2="lens" data-glass-offset="-0.025" scale={Math.max(0, depth - .025)} xChannelSelector="R" yChannelSelector="G" result="red-warp" />
+      <feColorMatrix in="red-warp" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1" result="red" />
+      <feDisplacementMap in="scene" in2="lens" data-glass-offset="0" scale={depth} xChannelSelector="R" yChannelSelector="G" result="green-warp" />
+      <feColorMatrix in="green-warp" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1" result="green" />
+      <feDisplacementMap in="scene" in2="lens" data-glass-offset="0.025" scale={depth + .025} xChannelSelector="R" yChannelSelector="G" result="blue-warp" />
+      <feColorMatrix in="blue-warp" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0 1" result="blue" />
+      {/* Recombine opaque RGB channels, then restore scene alpha to keep the core clear. */}
+      <feComposite in="red" in2="green" operator="arithmetic" k2="1" k3="1" result="red-green" />
+      <feComposite in="red-green" in2="blue" operator="arithmetic" k2="1" k3="1" result="spectrum" />
+      <feComposite in="spectrum" in2="green-warp" operator="in" />
     </filter>))}</defs>
   </svg>
 }

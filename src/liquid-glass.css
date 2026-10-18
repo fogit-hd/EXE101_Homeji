@@ -1,14 +1,14 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: rgb(255 255 255 / .04);
+  --glass-tint: rgb(255 255 255 / .012);
   --glass-border: rgb(161 187 187 / .48);
   --glass-panel: rgb(249 253 251 / .9);
   --glass-edge: rgb(255 255 255 / .72);
   --glass-shadow: rgb(25 63 61 / .1);
   --glass-ink: #183b46;
   --glass-spring: cubic-bezier(.22,.9,.3,1.06);
-  --glass-action: rgb(8 127 140 / .16);
+  --glass-action: rgb(8 127 140 / .07);
   --glass-danger: rgb(255 220 224 / .8);
   --glass-danger-ink: #a3212e;
 }
@@ -16,21 +16,21 @@
   :root { --glass-spring: linear(0, .23 12%, .65 28%, .91 44%, 1.035 60%, .99 80%, 1); }
 }
 html[data-theme='dark'] {
-  --glass-tint: rgb(207 231 229 / .055);
+  --glass-tint: rgb(207 231 229 / .02);
   --glass-border: rgb(198 227 225 / .23);
   --glass-panel: rgb(18 39 51 / .9);
   --glass-edge: rgb(233 255 251 / .26);
   --glass-shadow: rgb(0 6 15 / .35);
   --glass-ink: #e8f8ff;
-  --glass-action: rgb(83 187 170 / .22);
+  --glass-action: rgb(83 187 170 / .10);
   --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme='light']) {
-    --glass-tint: rgb(207 231 229 / .055); --glass-border: rgb(198 227 225 / .23);
+    --glass-tint: rgb(207 231 229 / .02); --glass-border: rgb(198 227 225 / .23);
     --glass-panel: rgb(18 39 51 / .9); --glass-edge: rgb(233 255 251 / .26);
     --glass-shadow: rgb(0 6 15 / .35); --glass-ink: #e8f8ff;
-    --glass-action: rgb(83 187 170 / .22); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
+    --glass-action: rgb(83 187 170 / .10); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
   }
 }
 .liquid-glass-defs { position: fixed; pointer-events: none; overflow: hidden; }
@@ -170,3 +170,25 @@ html[data-theme='dark'] {
 #root .choice-picker__trigger { min-height: 48px; padding-right: 8px; border-radius: 999px; }
 #root .choice-picker__trigger > svg { box-sizing: content-box; padding: 7px; border-radius: 50%; background: rgb(255 255 255 / .12); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-edge); }
 #root .choice-picker__trigger[aria-expanded='true'] { border-color: var(--hj-accent); --glass-fill: var(--glass-action); }
+
+/* Above-content optics: native text is sampled by the glass, never cloned. */
+[data-glass-position='static'] { position: relative; }
+[data-glass-face] { isolation: isolate; }
+[data-glass-face='before']::before,[data-glass-face='after']::after {
+  content: ''; position: absolute; inset: 0; z-index: 10; pointer-events: none; border-radius: inherit;
+  -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-face-filter,blur(0px)));
+  backdrop-filter: var(--glass-idle-filter,var(--glass-face-filter,blur(0px)));
+  background: radial-gradient(ellipse 12% 1px at 18% 0%,#fcb6a680,transparent),radial-gradient(ellipse 10% 1px at 76% 100%,#a4cfff70,transparent);
+}
+[data-glass-face='before']:active::before,[data-glass-face='after']:active::after {
+  -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(0px)));
+  backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(0px)));
+}
+@media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
+  [data-glass-face='before']::before,[data-glass-face='after']::after { display: none; }
+}
+
+@media(prefers-reduced-motion:no-preference) {
+  [data-glass-face] { transition: scale 300ms var(--glass-spring),background-color 160ms ease,color 160ms ease,border-color 160ms ease,box-shadow 160ms ease; }
+  [data-glass-face]:active:not(:disabled):not([aria-disabled='true']) { scale: .975; }
+}

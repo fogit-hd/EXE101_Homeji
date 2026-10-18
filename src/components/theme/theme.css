@@ -2,7 +2,7 @@ html body #root button.theme-switch {
   position: relative; display: inline-flex; align-items: center; justify-content: space-around;
   flex: 0 0 70px; width: 70px; height: 40px; min-width: 70px; padding: 0 7px;
   border-radius: 999px; border: 1px solid var(--glass-border); cursor: pointer;
-  color: var(--text-heading); background-color: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
+  color: var(--text-heading); background-color: color-mix(in srgb, var(--surface-elevated) 18%, transparent);
   vertical-align: middle; isolation: isolate; touch-action: manipulation;
 }
 .theme-switch__sun, .theme-switch__moon { position: relative; z-index: 2; font: 18px/1 system-ui; width: 22px; text-align: center; }
@@ -62,6 +62,6 @@ html[data-theme='dark'] #hj-boot { background: var(--surface-muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
 /* Clear switch lens rides over the state color; the icons stay above it. */
-#root .theme-switch__thumb { background: rgb(255 255 255 / .1); border: 1px solid rgb(255 255 255 / .66); box-shadow: inset 0 2px 2px -1px #ffffffeb,inset 0 -2px 3px -2px #fff,0 2px 5px #08292140; -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))); backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))); }
+#root .theme-switch__thumb { z-index: 3; background: rgb(255 255 255 / .02); border: 1px solid rgb(255 255 255 / .66); box-shadow: inset 0 2px 2px -1px #ffffffeb,inset 0 -2px 3px -2px #fff,0 2px 5px #08292140; -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))); backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))); }
 html body #root button.theme-switch[aria-checked='true'] { background-color: rgb(33 122 83 / .65); color: #fff; }
 @media(forced-colors:active) { #root .theme-switch__thumb { background: Highlight; border-color: ButtonText; } }
