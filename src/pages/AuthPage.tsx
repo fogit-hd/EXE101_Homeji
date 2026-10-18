@@ -1734,7 +1734,8 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                     </button>
                   </p>
                   <p className="auth-login-verify"><Link to="/verify-email">Xác thực email bằng OTP</Link></p>
-                  <footer className="auth-login-legal"><Link to="/terms">Điều khoản</Link><span>·</span><Link to="/privacy">Quyền riêng tư</Link><span>© {new Date().getFullYear()} Homeji</span></footer>
+                  <p className="auth-account-notice">Khi sử dụng Homeji, vui lòng đọc <Link to="/terms">Điều khoản sử dụng</Link> và <Link to="/privacy">Chính sách quyền riêng tư</Link>.</p>
+                  <footer className="auth-login-legal"><span>© {new Date().getFullYear()} Homeji</span></footer>
                 </>
               ) : (
                 <>
@@ -1748,18 +1749,6 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                   ) : null}
                   <form aria-busy={submitting} aria-describedby={error ? 'auth-form-error' : undefined} onSubmit={(e) => void handleSignUpCard(e)}>
                     <div className="auth-cinema__field">
-                      <label htmlFor="auth-name">Họ tên</label>
-                      <input
-                        id="auth-name"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        required
-                        maxLength={USER_INPUT_LIMITS.fullName}
-                        autoComplete="name"
-                        placeholder="Nguyễn Văn A"
-                      />
-                    </div>
-                    <div className="auth-cinema__field">
                       <label htmlFor="auth-reg-email">Email</label>
                       <input
                         id="auth-reg-email"
@@ -1770,6 +1759,18 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         maxLength={USER_INPUT_LIMITS.email}
                         autoComplete="email"
                         placeholder="ban@gmail.com"
+                      />
+                    </div>
+                    <div className="auth-cinema__field">
+                      <label htmlFor="auth-name">Họ tên</label>
+                      <input
+                        id="auth-name"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        required
+                        maxLength={USER_INPUT_LIMITS.fullName}
+                        autoComplete="name"
+                        placeholder="Nguyễn Văn A"
                       />
                     </div>
                     <div className="auth-cinema__field">
@@ -1816,6 +1817,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                       Đăng nhập
                     </button>
                   </p>
+                  <p className="auth-account-notice">Bằng việc đăng ký Homeji, bạn xác nhận đồng ý với <Link to="/terms">Điều khoản sử dụng</Link> và đã đọc <Link to="/privacy">Chính sách quyền riêng tư</Link>.</p>
                 </>
               )}
             </div>

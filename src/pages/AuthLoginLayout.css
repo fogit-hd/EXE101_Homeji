@@ -44,3 +44,11 @@ html[data-theme='dark'] .auth-login-brand img { filter: brightness(0) invert(1);
   .auth-login-legal { margin-top: 30px; }
 }
 @media(max-width:359px) { .auth-cinema--login .auth-cinema__stage { padding-inline: 20px; } }
+
+/* Account guidance follows the form; legal copy is a quieter, separate tier. */
+.auth-cinema--form .auth-account-notice {
+  margin: 36px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.7; text-align: left;
+}
+.auth-account-notice a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.auth-cinema--login .auth-login-legal { margin-top: 28px; }
+.auth-cinema--form .auth-cinema__footer { text-align: left; }
