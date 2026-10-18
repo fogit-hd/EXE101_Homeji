@@ -52,6 +52,13 @@ try {
   await schoolOption.click()
   assert.match(await school.innerText(), new RegExp(schoolText))
   await open('Trường học')
+  const glassCoverage = await page.locator('button').evaluateAll(elements => {
+    const visible = elements.filter(e => e.getBoundingClientRect().height > 0 && !e.closest('[inert], .gm-style, gmp-map'))
+    return { count: visible.length, untreated: visible.filter(e => !getComputedStyle(e).backgroundImage.includes('radial-gradient')).map(e => e.getAttribute('aria-label') || e.textContent.trim()) }
+  })
+  assert.ok(glassCoverage.count > 10)
+  assert.deepEqual(glassCoverage.untreated, [], 'All visible project buttons, including tabs and option rows, use the material')
+  result.checks.push(`Universal glass covers ${glassCoverage.count} visible buttons including tabs and picker options`)
   await page.screenshot({ path: new URL('app-profile-desktop.png', out).pathname.slice(1), animations: 'disabled' })
   await page.keyboard.press('Escape')
   result.checks.push('Profile school picker changes actual form state')

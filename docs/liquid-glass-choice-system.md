@@ -40,3 +40,11 @@ Chạy lại với Vite ở cổng 5493 và module Playwright đã cài, đặt 
 Bản workspace ban đầu có 33 vị trí trong 17 file. Bản release ghép với production có 29 vị trí ChoicePicker trong 18 file (27 native select và hai menu MapExplore): bộ lọc chợ đồ đã được production chuyển thành MarketplaceFilterPanel, nên giữ nguyên giao diện đó; bổ sung picker chế độ xem tin trên bản đồ. Không chép đè các trang hay stylesheet từ checkout cũ. InteractionMotion giữ engine Motion và các hiệu ứng hiện hữu; chỉ ghép thêm highlight kính có cleanup và tuân thủ reduced-motion riêng.
 
 Build production và ba E2E picker/app/navigation qua trên cổng 5497. Bộ unit test của nhánh release: 227/230 qua; ba lỗi ở admin SSR adapter, hub palette và notification contrast cũng tái hiện nguyên vẹn khi chạy test trên mã origin/main chưa sửa, lưu tại baseline-tests.txt. Không áp dụng con số 232/232 của workspace cũ cho bản release này.
+
+## Kính trong theo ảnh tham chiếu
+
+Ngày 18/10/2026: thay nhiễu fractal bằng normal map thấu kính tĩnh R/G, nền thực tế đi qua feDisplacementMap. Giảm nền nút từ alpha .68 xuống .09, blur nền từ 9px xuống 1.2px fallback, thêm viền phản sáng/inset tạo bề mặt lồi. Không đưa tím/cyan của ảnh mẫu vào giao diện; giữ palette Homeji và màu do nền phía sau cung cấp. Bản đồ màu R/G là dữ liệu dịch chuyển, không tô vào nút. Script generate-liquid-lens-map.mjs tái tạo asset PNG 128px dùng chung.
+
+Theo yêu cầu toàn bộ button: vật liệu áp dụng cho mọi button/input action/summary/role button/menuitem của Homeji, bao gồm portal, option, tab, ô ngày và card; chỉ giữ nguyên control bên thứ ba của Google Maps. Hình dạng của tab, ngày lịch, option và card vẫn do component quyết định. Nút hành động thông thường dùng dạng capsule. Khúc xạ tĩnh có ngay khi đứng yên; không thêm vòng animation nền. Fallback contrast/transparency/forced-colors vẫn hoạt động. Mục giới hạn loại button của phiên bản trước được thay bằng quy tắc này.
+
+Kiểm tra Chrome: thay riêng scale displacement về 0 tạo ảnh khác (xác nhận biến dạng pixel thực); 390px không tràn; forced-colors tắt backdrop. Sweep hồ sơ và bảng chọn xác nhận cả 46 button đang hiển thị có vật liệu mới. E2E lựa chọn/form/reset/keyboard và các trang hồ sơ, menu tài khoản, hoạt động, thanh toán, mobile qua. Safari/Firefox và hiệu năng GPU trên điện thoại thật chưa xác minh.

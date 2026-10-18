@@ -1,71 +1,78 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: rgb(255 255 255 / .68);
-  --glass-border: rgb(161 187 195 / .64);
+  --glass-tint: rgb(255 255 255 / .09);
+  --glass-border: rgb(255 255 255 / .62);
   --glass-panel: rgb(250 254 255 / .88);
   --glass-edge: rgb(255 255 255 / .94);
   --glass-shadow: rgb(25 63 79 / .11);
   --glass-ink: #183b46;
-  --glass-action: rgb(194 235 237 / .8);
+  --glass-action: rgb(8 127 140 / .14);
   --glass-danger: rgb(255 220 224 / .8);
   --glass-danger-ink: #a3212e;
 }
 html[data-theme='dark'] {
-  --glass-tint: rgb(28 55 68 / .7);
-  --glass-border: rgb(154 201 214 / .32);
+  --glass-tint: rgb(18 34 41 / .12);
+  --glass-border: rgb(226 245 246 / .48);
   --glass-panel: rgb(18 39 51 / .9);
-  --glass-edge: rgb(206 241 255 / .34);
+  --glass-edge: rgb(255 255 255 / .8);
   --glass-shadow: rgb(0 6 15 / .35);
   --glass-ink: #e8f8ff;
-  --glass-action: rgb(25 83 95 / .8);
+  --glass-action: rgb(60 155 159 / .16);
   --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme='light']) {
-    --glass-tint: rgb(28 55 68 / .7); --glass-border: rgb(154 201 214 / .32);
-    --glass-panel: rgb(18 39 51 / .9); --glass-edge: rgb(206 241 255 / .34);
+    --glass-tint: rgb(18 34 41 / .12); --glass-border: rgb(226 245 246 / .48);
+    --glass-panel: rgb(18 39 51 / .9); --glass-edge: rgb(255 255 255 / .8);
     --glass-shadow: rgb(0 6 15 / .35); --glass-ink: #e8f8ff;
-    --glass-action: rgb(25 83 95 / .8); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
+    --glass-action: rgb(60 155 159 / .16); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
   }
 }
 .liquid-glass-defs { position: fixed; pointer-events: none; overflow: hidden; }
-/* Card hit areas, thumbnails, tabs, list options and third-party map controls
-   keep their own semantics and layout; glass is applied to action surfaces. */
-:is(#root, .choice-picker-layer) :is(button, .btn, .hj-post-cta, .guest-hero__bloom-cta, [role='button']):not(:where(
-  .gm-style *, [data-glass='off'], [data-glass='off'] *, [role='option'], [role='tab'],
-  [class*='__card'], [class*='__hit'], [class*='__photo'], [class*='__thumbnail'],
-  [class*='__image'], [class*='__person'], .food-card__main, .map-listings__card-hit,
-  .schedule-dt__day, .hj-account__item, .hj-mega__link, .guest-poster-menu__item,
-  .address-autocomplete__item, .gmaps-omnibox__row
-)) {
+/* Every Homeji button, including portal menus and list options, shares the
+   optical material. Vendor-owned Google Maps controls keep their own rendering. */
+:is(#root, .choice-picker-layer, body) :is(button, summary, input[type='button'], input[type='submit'], input[type='reset'],
+  .btn, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
   --glass-fill: var(--glass-tint);
-  border-radius: var(--glass-radius, 14px);
   background-color: var(--glass-fill);
-  background-image: radial-gradient(ellipse at var(--glass-x, 22%) var(--glass-y, 0%), rgb(255 255 255 / .53), transparent 66%),
-    linear-gradient(145deg, rgb(255 255 255 / .18), transparent 46%, rgb(135 201 219 / .13));
+  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .22), transparent 52%),
+    linear-gradient(165deg, rgb(255 255 255 / .24), transparent 30% 68%, rgb(255 255 255 / .18));
   color: var(--glass-ink);
+  text-shadow: 0 1px 1px rgb(255 255 255 / .35);
   border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 -1px 0 rgb(87 139 160 / .14),
-    0 3px 12px var(--glass-shadow);
-  -webkit-backdrop-filter: var(--glass-idle-filter, blur(9px) saturate(1.35));
-  backdrop-filter: var(--glass-idle-filter, blur(9px) saturate(1.35));
+  box-shadow: inset 0 2px 2px -1px var(--glass-edge),
+    inset 2px 0 3px -2px rgb(255 255 255 / .9),
+    inset -2px 0 3px -2px rgb(255 255 255 / .72),
+    inset 0 -3px 5px -3px rgb(255 255 255 / .95),
+    inset 0 0 10px 1px rgb(255 255 255 / .07),
+    0 4px 12px -5px rgb(24 49 55 / .28);
+  -webkit-backdrop-filter: var(--glass-idle-filter, blur(1.2px) saturate(1.15));
+  backdrop-filter: var(--glass-idle-filter, blur(1.2px) saturate(1.15));
   background-clip: padding-box;
 }
-:is(#root, .choice-picker-layer) :is(.btn-primary, .auth-cinema__submit, .hj-post-cta,
-  .map-chatbot__send, .food-checkout__submit, [type='submit'], button[aria-pressed='true'], button.is-active):not(:where([role='option'], [role='tab'], .gm-style *)) {
+/* Material is universal; only ordinary action controls become capsules.
+   Preserve the geometry of tabs, calendar cells, menu rows, cards and hit areas. */
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .pay-btn, .payment-button, .hj-post-cta, [role='button']):not(:where(
+  .gm-style *, gmp-map *, [role='option'], [role='tab'],
+  [class*='__card'], [class*='__hit'], [class*='__photo'], [class*='__thumbnail'],
+  [class*='__image'], [class*='__person'], .food-card__main, .schedule-dt__day,
+  .hj-account__item, .hj-mega__link, .guest-poster-menu__item, .address-autocomplete__item, .gmaps-omnibox__row
+)) { border-radius: var(--glass-radius, 999px); }
+:is(#root, .choice-picker-layer, body) :is(.btn-primary, .auth-cinema__submit, .hj-post-cta,
+  .map-chatbot__send, .food-checkout__submit, [type='submit'], button[aria-pressed='true'], button[aria-selected='true'], button.is-active):not(:where(.gm-style *, gmp-map *)) {
   --glass-fill: var(--glass-action);
   border-color: color-mix(in srgb, var(--hj-accent) 48%, var(--glass-border));
   font-weight: 650;
 }
-:is(#root, .choice-picker-layer) :is(.btn-danger, [class*='--danger']) {
+:is(#root, .choice-picker-layer, body) :is(.btn-danger, [class*='--danger']) {
   --glass-fill: var(--glass-danger); color: var(--glass-danger-ink);
 }
-:is(#root, .choice-picker-layer) :is(button, .btn, .hj-post-cta, .guest-hero__bloom-cta, [role='button']):focus-visible {
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .hj-post-cta, .guest-hero__bloom-cta, [role='button']):focus-visible {
   outline: 3px solid var(--hj-accent); outline-offset: 3px;
 }
-:is(#root, .choice-picker-layer) :is(button, .btn):disabled,
-:is(#root, .choice-picker-layer) [aria-disabled='true'] {
+:is(#root, .choice-picker-layer, body) :is(button, .btn):disabled,
+:is(#root, .choice-picker-layer, body) [aria-disabled='true'] {
   opacity: .48; cursor: not-allowed; box-shadow: none;
 }
 .liquid-surface,
@@ -77,13 +84,11 @@ html[data-theme='dark'] {
   backdrop-filter: var(--glass-panel-filter, blur(22px) saturate(1.3));
   box-shadow: inset 0 1px 0 var(--glass-edge), 0 18px 52px var(--glass-shadow);
 }
-/* Only the hovered/focused control pays for the displacement pass. Never apply
-   filter/transform to an ancestor of the map, fixed panels, or portal. */
+/* Static refraction is visible at rest. The map is shared and has no animation
+   loop; foreground text is never filtered. Unsupported engines keep clear blur. */
 @supports (backdrop-filter: url('#homeji-liquid-lens')) {
-  @media (hover: hover) and (prefers-reduced-motion: no-preference) and (forced-colors: none) and (prefers-contrast: no-preference) and (prefers-reduced-transparency: no-preference) {
-    :is(#root, .choice-picker-layer) :is(.btn, .choice-picker__trigger, button[type='submit']):is(:hover, :focus-visible):not(:disabled) {
-      backdrop-filter: url('#homeji-liquid-lens') blur(1px) saturate(1.25);
-    }
+  @media (forced-colors: none) and (prefers-contrast: no-preference) and (prefers-reduced-transparency: no-preference) {
+    html:root { --glass-idle-filter: url('#homeji-liquid-lens') saturate(1.15); }
   }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
