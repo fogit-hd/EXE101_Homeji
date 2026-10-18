@@ -177,7 +177,7 @@
   border-radius: 999px;
   box-shadow: 0 10px 30px rgba(9, 29, 46, 0.18);
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-  will-change: transform, opacity;
+  will-change: transform;
   pointer-events: none;
   opacity: 0;
 }

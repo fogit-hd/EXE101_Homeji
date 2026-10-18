@@ -1,52 +1,51 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: rgb(255 255 255 / .09);
-  --glass-border: rgb(255 255 255 / .62);
-  --glass-panel: rgb(250 254 255 / .88);
-  --glass-edge: rgb(255 255 255 / .94);
-  --glass-shadow: rgb(25 63 79 / .11);
+  --glass-tint: rgb(255 255 255 / .16);
+  --glass-border: rgb(161 187 187 / .48);
+  --glass-panel: rgb(249 253 251 / .9);
+  --glass-edge: rgb(255 255 255 / .92);
+  --glass-shadow: rgb(25 63 61 / .1);
   --glass-ink: #183b46;
-  --glass-action: rgb(8 127 140 / .14);
+  --glass-action: rgb(8 127 140 / .16);
   --glass-danger: rgb(255 220 224 / .8);
   --glass-danger-ink: #a3212e;
 }
 html[data-theme='dark'] {
-  --glass-tint: rgb(18 34 41 / .12);
-  --glass-border: rgb(226 245 246 / .48);
+  --glass-tint: rgb(207 231 229 / .055);
+  --glass-border: rgb(198 227 225 / .23);
   --glass-panel: rgb(18 39 51 / .9);
-  --glass-edge: rgb(255 255 255 / .8);
+  --glass-edge: rgb(233 255 251 / .26);
   --glass-shadow: rgb(0 6 15 / .35);
   --glass-ink: #e8f8ff;
-  --glass-action: rgb(60 155 159 / .16);
+  --glass-action: rgb(83 187 170 / .22);
   --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme='light']) {
-    --glass-tint: rgb(18 34 41 / .12); --glass-border: rgb(226 245 246 / .48);
-    --glass-panel: rgb(18 39 51 / .9); --glass-edge: rgb(255 255 255 / .8);
+    --glass-tint: rgb(207 231 229 / .055); --glass-border: rgb(198 227 225 / .23);
+    --glass-panel: rgb(18 39 51 / .9); --glass-edge: rgb(233 255 251 / .26);
     --glass-shadow: rgb(0 6 15 / .35); --glass-ink: #e8f8ff;
-    --glass-action: rgb(60 155 159 / .16); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
+    --glass-action: rgb(83 187 170 / .22); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
   }
 }
 .liquid-glass-defs { position: fixed; pointer-events: none; overflow: hidden; }
 /* Every Homeji button, including portal menus and list options, shares the
    optical material. Vendor-owned Google Maps controls keep their own rendering. */
-:is(#root, .choice-picker-layer, body) :is(button, summary, input[type='button'], input[type='submit'], input[type='reset'],
-  .btn, .liquid-action, .guest-fixed-cta > span, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
+:is(#root, .choice-picker-layer, body) :where(button, summary, input[type='button'], input[type='submit'], input[type='reset'],
+  .btn, .liquid-action, :where(.guest-fixed-cta > span), .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
   --glass-fill: var(--glass-tint);
   background-color: var(--glass-fill);
-  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .22), transparent 52%),
-    linear-gradient(165deg, rgb(255 255 255 / .24), transparent 30% 68%, rgb(255 255 255 / .18));
+  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .23), transparent 48%),
+    linear-gradient(165deg, rgb(255 255 255 / .2), transparent 28% 68%, rgb(255 255 255 / .12));
   color: var(--glass-ink);
-  text-shadow: 0 1px 1px rgb(255 255 255 / .35);
+  text-shadow: none;
   border: 1px solid var(--glass-border);
-  box-shadow: inset 0 2px 2px -1px var(--glass-edge),
-    inset 2px 0 3px -2px rgb(255 255 255 / .9),
-    inset -2px 0 3px -2px rgb(255 255 255 / .72),
-    inset 0 -3px 5px -3px rgb(255 255 255 / .95),
-    inset 0 0 10px 1px rgb(255 255 255 / .07),
-    0 4px 12px -5px rgb(24 49 55 / .28);
+  box-shadow: var(--glass-control-shadow, inset 0 2px 2px -1px var(--glass-edge),
+    inset 2px 0 3px -2px rgb(255 255 255 / .65),
+    inset -1px 0 2px -1px rgb(255 255 255 / .4),
+    inset 0 -3px 4px -3px rgb(255 255 255 / .65),
+    0 2px 3px rgb(12 35 35 / .1), 0 7px 16px -8px rgb(12 35 35 / .32));
   -webkit-backdrop-filter: var(--glass-idle-filter, blur(1.2px) saturate(1.15));
   backdrop-filter: var(--glass-idle-filter, blur(1.2px) saturate(1.15));
   background-clip: padding-box;
@@ -74,6 +73,59 @@ html[data-theme='dark'] {
 :is(#root, .choice-picker-layer, body) :is(button, .btn):disabled,
 :is(#root, .choice-picker-layer, body) [aria-disabled='true'] {
   opacity: .48; cursor: not-allowed; box-shadow: none;
+}
+/* Feedback belongs to the control, not to the decorative lens. */
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role='button'], [role='menuitem']):where(:hover):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *)) {
+  background-color: color-mix(in srgb, var(--glass-fill) 90%, var(--glass-ink) 10%);
+  border-color: color-mix(in srgb, var(--glass-border) 70%, var(--glass-ink) 30%);
+}
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .hj-action, .hj-post-cta):where(:active):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *)) {
+  box-shadow: inset 0 1px 3px var(--glass-shadow), inset 0 1px 0 var(--glass-edge);
+}
+/* Dense controls keep the same glass optics with a quiet edge, rather than a
+   pile of independently elevated capsules. */
+:is(#root, .choice-picker-layer, body) :is([role='option'], [role='menuitem'], .hj-mega__link, .schedule-dt__day) {
+  --glass-control-shadow: inset 0 1px 0 rgb(255 255 255 / .08);
+  border-color: transparent;
+}
+:is(#root, .choice-picker-layer, body) :is([role='option'][data-active], [role='menuitem']:focus-visible, [role='option'][aria-selected='true']) {
+  --glass-fill: var(--glass-action);
+  border-color: color-mix(in srgb, var(--hj-accent) 35%, transparent);
+}
+:is(#root, body) :is(.tabs, .map-section-tabs) {
+  padding: 5px; gap: 5px; border: 1px solid var(--glass-border); border-radius: 22px;
+  background: color-mix(in srgb, var(--surface-input) 65%, transparent);
+}
+:is(#root, body) :is(button[role='tab'], button.tab) {
+  --glass-control-shadow: inset 0 1px 0 rgb(255 255 255 / .1);
+  border-color: transparent; border-radius: 999px; margin: 0;
+}
+:is(#root, body) :is(button[role='tab'][aria-selected='true'], button.tab.active) {
+  --glass-fill: var(--glass-action);
+  --glass-control-shadow: inset 0 1px 0 var(--glass-edge), 0 1px 4px var(--glass-shadow);
+  border-color: color-mix(in srgb, var(--hj-accent) 32%, var(--glass-border));
+  color: var(--glass-ink);
+}
+/* Content behind outdoor/photo CTAs supplies the strong lens effect. A dark
+   neutral tint keeps white labels legible when the page beneath turns bright. */
+#root :is(.guest-hero .liquid-action, .guest-fixed-cta) {
+  --glass-ink: #fff; --glass-tint: rgb(12 34 28 / .64);
+  --glass-border: rgb(255 255 255 / .55); --glass-edge: rgb(255 255 255 / .7);
+  --glass-control-shadow: inset 0 2px 2px -1px var(--glass-edge), inset 2px 0 3px -2px #fff, inset 0 -3px 4px -3px #fff, 0 2px 3px rgb(0 20 15 / .16), 0 8px 20px -8px rgb(0 20 15 / .3);
+}
+#root .guest-hero .liquid-action { --glass-tint: rgb(255 255 255 / .08); }
+#root .guest-fixed-cta .guest-fixed-cta__go { --glass-fill: rgb(12 57 36 / .76); }
+/* The food feature has its own permanently dark backdrop in either theme. */
+#root .food-featured { --glass-ink: #fff; --glass-tint: rgb(255 255 255 / .14); --glass-action: rgb(255 255 255 / .2); --glass-border: rgb(255 255 255 / .45); }
+/* Keep the demo's curved rim on action controls without turning small toolbar
+   labels into glowing text. Panels remain calm so the controls carry hierarchy. */
+#root :is(.hj-action--icon, .hj-search__clear, .hj-notify__trigger) { border-radius: 50%; }
+#root .hj-actions { gap: 6px; }
+@media (max-width: 479px) { #root .hj-actions { gap: 3px; } }
+#root .hj-shell { background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);  }
+#root .hj-bar { background: transparent; }
+#root :is(.profile-page, .profile-embed) .profile-hero {
+  background: linear-gradient(115deg, color-mix(in srgb, var(--surface-elevated) 90%, var(--hj-accent) 10%), var(--surface-elevated));
 }
 .liquid-surface,
 :is(#root, body) :is(.hj-account__menu, .hj-notify__pop, .hj-mega, .gmaps-account__popover, .guest-poster-menu__panel,

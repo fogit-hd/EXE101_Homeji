@@ -1160,3 +1160,14 @@
   }
 }
 
+
+/* Keep all header actions reachable without overlapping the brand on phones. */
+@media (max-width: 479px) {
+  #root .hj-logo__word { display: none; }
+  #root .hj-shell .hj-bar { grid-template-columns: 36px minmax(28px, 1fr) 32px auto; column-gap: 4px; padding-inline: 8px; }
+  #root .hj-menu-trigger { width: 36px; height: 40px; padding: 0; justify-content: center; }
+  #root .hj-search-open { width: 32px; height: 40px; padding: 0; }
+  #root .hj-actions :is(.hj-ai-btn, .hj-action--icon) { width: 32px; min-width: 32px; height: 40px; padding: 0; justify-content: center; }
+  #root .hj-actions .hj-profile { width: 36px; padding: 3px; }
+  #root .hj-profile__mark { width: 28px; height: 28px; }
+}

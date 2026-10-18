@@ -51,7 +51,8 @@
   max-width: 1480px;
   margin: 0 auto;
   padding: 30px clamp(24px, 5vw, 72px) 48px;
-  animation: guest-hero-enter 700ms var(--ease-out, ease-out) both;
+  /* Release the opacity animation after entry so CTA lenses can sample the photo. */
+  animation: guest-hero-enter 700ms var(--ease-out, ease-out) backwards;
 }
 .guest-hero__top {
   display: grid;

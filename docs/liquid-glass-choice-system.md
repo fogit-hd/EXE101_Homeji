@@ -54,3 +54,13 @@ Kiểm tra Chrome: thay riêng scale displacement về 0 tạo ảnh khác (xác
 Bổ sung lớp `liquid-action` cho CTA liên kết ở hero, cụm đăng ký cố định, hộp xem phòng, hub, ví và các thao tác bản đồ. Lớp này dùng chung vật liệu, capsule và focus-visible với button, giữ nguyên href và ngữ nghĩa link. Nhãn Miễn phí đăng ký của cụm cố định cũng có kính nhưng vẫn là span, không thêm hành động giả. Không phủ kính lên tất cả liên kết văn bản.
 
 `tests/liquid-glass-cta.e2e.mjs` kiểm tra trang landing thực với API fixture: vật liệu ở cả hai giao diện, mobile 390px, focus bàn phím và Enter chuyển sang đăng ký. Không có pageerror.
+
+## Sửa khúc xạ trên giao diện thật và chiều sâu khối kính
+
+Khung hero dùng animation opacity với fill-mode both đã giữ backdrop root sau khi mở đầu kết thúc. Lúc đó CTA có backdrop-filter đúng trong computed style nhưng không lấy được ảnh ngoài khung để khúc xạ: so sánh pixel scale 0 và .18 giống hệt. Đổi sang backwards giải phóng lớp animation sau khi chạy; phép so sánh ngay trên CTA hero thật sau đó có khác biệt. Cụm CTA cố định bỏ will-change opacity để không giữ backdrop root tương tự. Không giữ backdrop-filter ở cha header khi các nút con cần lấy nền bên ngoài.
+
+Tăng blur nhẹ và displacement .18; các nút hành động có viền phản sáng phía trên/bên, ánh sáng mép dưới, bóng tiếp xúc và bóng rơi tách khối. Không dùng text-shadow làm nhòe chữ. Menu/options giữ kính nhưng bớt bóng đổ từng dòng; tab phân biệt trạng thái. Selector vật liệu dùng :where cho control để không vô tình chặn hover/selected/danger. CTA trên nền sáng cần tint tối riêng cho chữ trắng. Không tạo họa tiết nền giả bên trong nút.
+
+Đã kiểm tra ảnh trang hồ sơ, menu, bảng chọn, thanh toán, marketplace và auth; sáng/tối, desktop và 390px, thêm kiểm tra chồng lấn header ở 320px. Sửa header mobile chồng logo bằng biểu tượng logo và kích thước control vừa viewport; các hành động vẫn truy cập được. Sửa surface trắng mã cứng ở gói thành viên để không tạo chữ sáng trên nền trắng khi dùng dark theme.
+
+Kiểm tra tự động: liquid-glass-context.e2e.mjs bắt text-shadow trên tab thật, phân biệt selected, hover thay đổi thực, header không chồng lấn và surface tối. liquid-glass-cta.e2e.mjs kiểm tra biến dạng pixel trên CTA có ảnh nền thật, đăng ký/đăng nhập ở 1440/390/320px, focus và điều hướng; lens test xác nhận refraction, mobile và forced-colors. API fixture local dùng cho trang cần đăng nhập; ảnh không chứng minh nghiệp vụ backend production hoặc Safari/Firefox. Build production qua.

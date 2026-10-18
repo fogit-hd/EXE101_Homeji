@@ -7,8 +7,8 @@ export function LiquidGlassEffects() {
       <filter id="homeji-liquid-lens" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
         x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
         <feImage href={lensMap} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
-        <feGaussianBlur in="SourceGraphic" stdDeviation="0.003" result="scene" />
-        <feDisplacementMap in="scene" in2="lens" scale="0.12" xChannelSelector="R" yChannelSelector="G" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="0.005 0.018" result="scene" />
+        <feDisplacementMap in="scene" in2="lens" scale="0.18" xChannelSelector="R" yChannelSelector="G" />
       </filter>
     </defs>
   </svg>
