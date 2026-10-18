@@ -6,6 +6,7 @@ import { WebsiteTrafficTracker } from './components/WebsiteTrafficTracker'
 import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
+import { SearchInterestCenter } from './components/ai/SearchInterestCenter'
 import { SearchProvider } from './contexts/SearchContext'
 import { ToastProvider } from './components/toast/ToastProvider'
 import { AuthModalProvider } from './contexts/AuthModalContext'
@@ -101,6 +102,7 @@ function App() {
             <AuthProvider>
             <BrowserRouter>
               <BrandIntro />
+              <SearchInterestCenter />
               <WebsiteTrafficTracker />
               <SearchProvider>
               <ToastProvider>
