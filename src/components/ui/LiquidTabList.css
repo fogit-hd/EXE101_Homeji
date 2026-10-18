@@ -5,7 +5,8 @@
 #root .liquid-tabs {
   --tabs-track: #18685e; --tabs-track-light: #398976; --tabs-ink: #fff;
   position: relative; isolation: isolate; display: flex; align-items: center;
-  gap: 4px; height: auto; min-height: 64px; box-sizing: border-box; width: fit-content; max-width: 100%; padding: 10px 6px;
+  /* The rail starts 10px down: 13px/3px padding gives the lens a 3px inset on every edge. */
+  gap: 4px; height: auto; min-height: 64px; box-sizing: border-box; width: fit-content; max-width: 100%; padding: 13px 3px;
   margin-block: 4px 20px; border: 0; border-radius: 999px;
   background: transparent; box-shadow: none; overflow-x: auto; overflow-y: hidden;
   scrollbar-width: none; flex-shrink: 0;
@@ -35,7 +36,7 @@
 #root .liquid-tabs > button[role='tab']:disabled { opacity: .4; cursor: not-allowed; }
 #root .liquid-tabs > .liquid-tabs__lens {
   position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none;
-  border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff48;
+  box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff48;
   background: radial-gradient(ellipse at var(--lens-light-x,22%) -30%,#ffffff0a,transparent 60%),
     linear-gradient(155deg,#ffffff05,transparent 32% 70%,#ffffff03),transparent;
   box-shadow: inset 0 1px 1px #ffffff78, inset 1px 0 2px -1px #ffffff60,

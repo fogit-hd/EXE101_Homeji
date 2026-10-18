@@ -79,3 +79,10 @@ Tint nền thường giảm 4% xuống 1,2%; lớp mặt trên trong suốt ngo�
 ## Điều chỉnh cuối: tăng 30% và nút AI bảy màu
 
 Depth của control/tab nghỉ/tab tương tác tăng từ 0,10/0,14/0,28 lên 0,13/0,182/0,364, đúng hệ số 1,3. Không tăng blur hay độ đục. Nút Hỏi Homeji AI có phần tử rim riêng, conic gradient bảy màu dùng palette AI sẵn có, mask để lõi còn trong, không chiếm slot pseudo-face quang học. Rim quay 6 giây, 3 giây khi mở; reduced-motion dừng quay, forced-colors dùng viền hệ thống. Test kiểm tra gradient, mask trên CSS tối ưu, pointer-events none và góc thực sự đổi.
+
+
+## Giữ thẻ nội dung rõ và cân viền tab
+
+Thẻ phòng (`map-explore-card`, `map-listing-card`), vùng mở chi tiết hàng hóa (`marketplace-card__main`) và ảnh đồ ăn (`food-card__media`) không dùng material hay pseudo-face khúc xạ. Role button phục vụ thao tác bàn phím, không quyết định vật liệu của cả thẻ. Chỉ loại chính bề mặt thẻ, không loại các nút lưu/mua nằm bên trong; có thể dùng `data-glass-exclude` cho bề mặt tương tự.
+
+Ray bắt đầu cách đỉnh container 10px. Padding container 13px dọc/3px ngang để lens nghỉ cách ray 3px ở cả ba mép ngoài, dùng border-box để border không cộng thêm kích thước đo. Vẫn giữ phóng nhẹ khi nhấn/kéo. `glass-scope.e2e.mjs` kiểm tra card có dữ liệu fixture thực, phạm vi khúc xạ của các bề mặt thẻ và các nút con, cùng tab cuối ở 320/390/1440px.

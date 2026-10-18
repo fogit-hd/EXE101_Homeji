@@ -13,6 +13,8 @@ const lensVariants = [
   { variant: 'tab-rest', state: 'tab-rest', depth: .182, blur: 0 },
   { variant: 'tab-active', state: 'active', depth: .364, blur: 0 },
 ] as const
+// Clickable content surfaces keep clear media/text; their nested actions still get glass.
+const contentSurfaces = '.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,[data-glass-exclude]'
 const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, .guest-fixed-cta > span, [role="button"], [role="menuitem"], [data-glass-lens]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
@@ -45,7 +47,7 @@ export function LiquidGlassEffects() {
     const register = (root: Element) => {
       const candidates = root.matches(controls) ? [root, ...root.querySelectorAll(controls)] : root.querySelectorAll(controls)
       candidates.forEach(element => {
-        if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map') || observed.has(element)) return
+        if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map') || element.matches(contentSurfaces) || observed.has(element)) return
         // An optical pseudo-face refracts native labels without cloning or wrapping
         // React children. Reserve an unused pseudo-element; keep existing decoration.
         if (!element.matches('[data-glass-lens],.theme-switch,input') && !element.closest('.liquid-tabs')) {
