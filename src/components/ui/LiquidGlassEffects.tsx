@@ -31,6 +31,7 @@ export function LiquidGlassEffects() {
           const ratio = nearestLensRatio(width, height)
           const value = `url("#${glassLensId(ratio)}") saturate(1.08)`
           if (element.style.getPropertyValue('--glass-lens-filter') !== value) element.style.setProperty('--glass-lens-filter', value)
+          if (element.classList.contains('liquid-tabs__lens')) element.style.setProperty('--glass-lens-active-filter', `url("#${glassLensId(ratio, true)}") saturate(1.12)`)
         })
         pending.clear()
       })
@@ -55,16 +56,16 @@ export function LiquidGlassEffects() {
       cancelAnimationFrame(frame)
       resize.disconnect()
       mutations.disconnect()
-      observed.forEach(element => element.style.removeProperty('--glass-lens-filter'))
+      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter') })
       pending.clear()
     }
   }, [])
   return <svg className="liquid-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <defs>{GLASS_LENS_RATIOS.map(ratio => <filter key={ratio} id={glassLensId(ratio)} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
+    <defs>{GLASS_LENS_RATIOS.flatMap(ratio => [false, true].map(engaged => <filter key={glassLensId(ratio, engaged)} id={glassLensId(ratio, engaged)} data-glass-state={engaged ? 'active' : 'rest'} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
       x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
       <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
-      <feGaussianBlur in="SourceGraphic" stdDeviation={`${.014 / ratio} .014`} result="scene" />
-      <feDisplacementMap in="scene" in2="lens" scale="0.24" xChannelSelector="R" yChannelSelector="G" />
-    </filter>)}</defs>
+      <feGaussianBlur in="SourceGraphic" stdDeviation={`${(engaged ? .006 : .014) / ratio} ${engaged ? .006 : .014}`} result="scene" />
+      <feDisplacementMap in="scene" in2="lens" scale={engaged ? .42 : .24} xChannelSelector="R" yChannelSelector="G" />
+    </filter>))}</defs>
   </svg>
 }

@@ -79,6 +79,7 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
         top: selected.top - box.top, moved: false, capture: button }
       try { button.setPointerCapture(event.pointerId) }
       catch { drag.current = null; return }
+      lensRef.current?.style.setProperty('--lens-light-x', `${Math.max(12, Math.min(88, (event.clientX - selected.left) / selected.width * 100))}%`)
       engage()
     }}
     onPointerMove={event => {
@@ -91,6 +92,7 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
       if (!current.moved && Math.abs(dx) < 5) return
       current.moved = true
       root.dataset.lensDragging = 'true'
+      lens.style.setProperty('--lens-light-x', `${Math.max(12, Math.min(88, 50 + dx * .25))}%`)
       const tabs = tabsOf(root), first = tabs[0], last = tabs.at(-1)
       if (!first || !last) return
       const left = Math.max(first.offsetLeft, Math.min(last.offsetLeft + last.offsetWidth - current.width, current.left + dx))

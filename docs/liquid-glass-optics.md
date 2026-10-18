@@ -10,11 +10,11 @@ Bản cũ kéo một normal map vuông lên mọi tỷ lệ, khiến nút dài g
 
 Với feDisplacementMap, độ dời là scale nhân giá trị kênh trừ 0.5. Khi dùng objectBoundingBox, trục X nhân chiều rộng và trục Y nhân chiều cao. Kênh R vì thế được chia theo tỷ lệ rộng/cao; blur X cũng được bù tương ứng. Điều này giữ độ sâu mép gần ổn định khi nút kéo dài. Bộ sinh bù kích thước và dùng điểm đầu-cuối thực để tránh giảm cường độ ở đầu capsule hẹp do lấy mẫu.
 
-ResizeObserver chọn map gần nhất theo tỷ lệ thực, gồm khi resize viewport hoặc font đổi. Chỉ xử lý batch khi hình học đổi; không có animation JS mỗi frame hoặc canvas/WebGL riêng cho từng nút. Sáu PNG dùng chung khoảng 54 KB, không tải ảnh từ bên ngoài. Đây vẫn là lượng tử hóa sáu tỷ lệ, không phải map chính xác từng pixel kích thước tùy ý.
+ResizeObserver chọn map gần nhất theo tỷ lệ thực, gồm khi resize viewport hoặc font đổi. Chỉ xử lý batch khi hình học đổi; không có animation JS mỗi frame hoặc canvas/WebGL riêng cho từng nút. Sáu PNG dùng chung khoảng 54 KB, không tải ảnh từ bên ngoài. Mỗi map có filter nghỉ và tương tác dùng chung ảnh: scale displacement 0,24 khi nghỉ và 0,42 riêng cho lens tab đang nhấn/kéo; blur tương tác giảm từ 0,014 xuống 0,006 để lõi giữ trong. Không tăng khúc xạ của các nút khác khi kéo tab. Đây vẫn là lượng tử hóa sáu tỷ lệ, không phải map chính xác từng pixel kích thước tùy ý.
 
 ## Độ trong và chiều sâu
 
-Nền nút thường có tint trắng khoảng 9%; phần phản sáng là lớp gradient riêng, không phủ trắng đục cả lõi. Mép trên có highlight hẹp, hai bên có phản sáng khác cường độ, mép dưới có caustic giả lập và bóng tiếp xúc nhỏ. Bóng rơi mềm hơn ở ngoài giúp phân biệt khối nâng lên với nét viền vẽ phẳng. Không dùng text-shadow để tạo cảm giác kính; icon và chữ không đi qua filter.
+Nền nút thường có tint trắng khoảng 9%; phần phản sáng là lớp gradient riêng, không phủ trắng đục cả lõi. Mép trên có highlight hẹp, hai bên có phản sáng khác cường độ, mép dưới có caustic giả lập và bóng tiếp xúc nhỏ. Bóng rơi mềm hơn ở ngoài giúp phân biệt khối nâng lên với nét viền vẽ phẳng. Không dùng text-shadow để tạo cảm giác kính; icon và chữ không đi qua filter. Lens tab có lớp phản sáng conic ở mép và caustic mỏng phía dưới; vị trí nguồn sáng đổi theo pointer trong thao tác, độc lập với nhãn. Lõi chỉ có tint trắng rất nhẹ, không tô trắng đục.
 
 Một viền trắng đồng đều + blur mạnh thường thành kính mờ hoặc nút nhựa. Khúc xạ chỉ thấy rõ khi nền có chi tiết đi qua vùng nút; trên nền phẳng phải dựa vào phản sáng, bóng và silhouette. Không thêm họa tiết giả vào nút để làm như đang bẻ nền. Không tô tím/cyan theo ảnh minh họa; màu đường ray và state dùng palette Homeji. Lóe giao thoa màu như ảnh 1 được tiết chế, không thêm viền cầu vồng vào mọi control.
 
@@ -47,3 +47,5 @@ Nguồn kỹ thuật chính thức:
 ## Điều chỉnh theo phản hồi về kích thước nghỉ
 
 Không giữ lens phồng thường trực. Ảnh phồng chỉ mô tả trạng thái tương tác, không phải mặc định. Bộ nguồn Figma/Apple và giới hạn asset được ghi trong [nghiên cứu nguồn tương tác](research/liquid-glass-interactive-sources.md). Kiểm tra bổ sung trên trang hồ sơ thật với API fixture: chiều cao nghỉ bằng tab, giữ nhấn nở, kéo không đổi tab trước khi thả, thả chốt mục đích, cancel phục hồi, touch-drag ở 390px và nền ray ở mục cuối 320px.
+
+Kiểm chứng tương tác bổ sung: so sánh hai ảnh khối kính đang nhấn phải ổn định trước; sau đó chỉ đặt displacement của filter tương tác về 0 thì pixel ray thật phải đổi. Việc này tách bằng chứng khúc xạ khỏi animation scale và các lớp phản sáng vẽ bằng CSS. Phản sáng là mô phỏng bề mặt, còn displacement lấy nền DOM thật; trên ray một màu, mép giao với nền là nơi biến dạng dễ thấy nhất.
