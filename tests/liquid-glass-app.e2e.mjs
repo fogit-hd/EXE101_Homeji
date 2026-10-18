@@ -53,7 +53,7 @@ try {
   assert.match(await school.innerText(), new RegExp(schoolText))
   await open('Trường học')
   const glassCoverage = await page.locator('button').evaluateAll(elements => {
-    const visible = elements.filter(e => e.getBoundingClientRect().height > 0 && !e.closest('[inert], .gm-style, gmp-map'))
+    const visible = elements.filter(e => e.getBoundingClientRect().height > 0 && !e.closest('[inert], .gm-style, gmp-map') && !e.matches('.liquid-tabs > [role="tab"]'))
     return { count: visible.length, untreated: visible.filter(e => !getComputedStyle(e).backgroundImage.includes('radial-gradient')).map(e => e.getAttribute('aria-label') || e.textContent.trim()) }
   })
   assert.ok(glassCoverage.count > 10)

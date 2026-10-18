@@ -1149,7 +1149,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       {mode === 'signup' ? <AuthCharacterScene
         state={activeAuthField === 'password' ? (showPassword ? 'peek' : 'password') : submitting ? 'submitting' : error || connectError ? 'error' : message ? 'success' : activeAuthField ? 'typing' : 'idle'}
         progress={fieldProgress}
-      /> : <AuthHomeGallery />}
+      /> : null}
 
       {/* Chỉ Skip — không logo */}
       <div className="auth-cinema__top auth-cinema__top--skip-only">
@@ -1822,6 +1822,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
           </div>
         </div>
       ) : null}
+      {mode === 'signin' ? <AuthHomeGallery /> : null}
     </div>
   )
 }

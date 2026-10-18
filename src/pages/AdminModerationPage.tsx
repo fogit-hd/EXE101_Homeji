@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -303,7 +304,7 @@ export function AdminModerationPage() {
   }
 
   const adminTabs = (
-    <div className="tabs" role="tablist" aria-label="Mục quản trị">
+    <LiquidTabList className="tabs" role="tablist" aria-label="Mục quản trị">
       <button type="button" role="tab" aria-selected={tab === 'overview'} className={`tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
         Tổng quan sản phẩm
       </button>
@@ -337,7 +338,7 @@ export function AdminModerationPage() {
       <button type="button" role="tab" aria-selected={tab === 'maintenance'} className={`tab ${tab === 'maintenance' ? 'active' : ''}`} onClick={() => setTab('maintenance')}>
         Bảo trì
       </button>
-    </div>
+    </LiquidTabList>
   )
 
   return (

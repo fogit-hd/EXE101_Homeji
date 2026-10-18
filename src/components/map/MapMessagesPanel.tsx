@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../ui/LiquidTabList'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -860,7 +861,7 @@ export function MapMessagesPanel({
                 onFocus={() => setInboxFocused(true)}
               />
             </label>
-            <div className="map-messages__inbox-filters" role="tablist" aria-label="Lọc hộp thư">
+            <LiquidTabList className="map-messages__inbox-filters" role="tablist" aria-label="Lọc hộp thư">
               <button
                 type="button"
                 role="tab"
@@ -888,7 +889,7 @@ export function MapMessagesPanel({
               >
                 Phòng thuê
               </button>
-            </div>
+            </LiquidTabList>
           </>
         ) : null}
         {loading ? <ConversationListSkeleton /> : null}

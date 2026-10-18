@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -191,24 +192,24 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const body = (
     <>
       {chromePortals}
-      <div className="tabs" role="tablist" aria-label="Tin tìm phòng">
+      <LiquidTabList className="tabs" role="tablist" aria-label="Tin tìm phòng">
         <button
           type="button"
-          className={`tab ${tab === 'browse' ? 'active' : ''}`}
+          role="tab" aria-selected={tab === 'browse'} className={`tab ${tab === 'browse' ? 'active' : ''}`}
           onClick={() => setTab('browse')}
         >
           Đang tìm
         </button>
         <button
           type="button"
-          className={`tab ${tab === 'create' ? 'active' : ''}`}
+          role="tab" aria-selected={tab === 'create'} className={`tab ${tab === 'create' ? 'active' : ''}`}
           onClick={() => setTab('create')}
           disabled={!isRenter}
           title={!isRenter ? 'Chỉ người thuê mới đăng nhu cầu' : undefined}
         >
           Đăng nhu cầu
         </button>
-      </div>
+      </LiquidTabList>
 
       {embedded && !liftChrome && tab === 'browse' ? (
         <div className="page-frame__actions">{actions}</div>

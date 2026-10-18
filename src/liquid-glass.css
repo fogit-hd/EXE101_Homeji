@@ -1,7 +1,7 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: rgb(255 255 255 / .16);
+  --glass-tint: rgb(255 255 255 / .09);
   --glass-border: rgb(161 187 187 / .48);
   --glass-panel: rgb(249 253 251 / .9);
   --glass-edge: rgb(255 255 255 / .92);
@@ -36,8 +36,8 @@ html[data-theme='dark'] {
   .btn, .liquid-action, :where(.guest-fixed-cta > span), .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
   --glass-fill: var(--glass-tint);
   background-color: var(--glass-fill);
-  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .23), transparent 48%),
-    linear-gradient(165deg, rgb(255 255 255 / .2), transparent 28% 68%, rgb(255 255 255 / .12));
+  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .2), transparent 43%),
+    linear-gradient(155deg, rgb(255 255 255 / .14), transparent 25% 75%, rgb(255 255 255 / .09));
   color: var(--glass-ink);
   text-shadow: none;
   border: 1px solid var(--glass-border);
@@ -46,8 +46,8 @@ html[data-theme='dark'] {
     inset -1px 0 2px -1px rgb(255 255 255 / .4),
     inset 0 -3px 4px -3px rgb(255 255 255 / .65),
     0 2px 3px rgb(12 35 35 / .1), 0 7px 16px -8px rgb(12 35 35 / .32));
-  -webkit-backdrop-filter: var(--glass-idle-filter, blur(1.2px) saturate(1.15));
-  backdrop-filter: var(--glass-idle-filter, blur(1.2px) saturate(1.15));
+  -webkit-backdrop-filter: var(--glass-idle-filter, var(--glass-lens-filter, blur(1.2px) saturate(1.08)));
+  backdrop-filter: var(--glass-idle-filter, var(--glass-lens-filter, blur(1.2px) saturate(1.08)));
   background-clip: padding-box;
 }
 /* Material is universal; only ordinary action controls become capsules.
@@ -140,7 +140,7 @@ html[data-theme='dark'] {
    loop; foreground text is never filtered. Unsupported engines keep clear blur. */
 @supports (backdrop-filter: url('#homeji-liquid-lens')) {
   @media (forced-colors: none) and (prefers-contrast: no-preference) and (prefers-reduced-transparency: no-preference) {
-    html:root { --glass-idle-filter: url('#homeji-liquid-lens') saturate(1.15); }
+    html:root { --glass-idle-filter: initial; }
   }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -161,3 +161,8 @@ html[data-theme='dark'] {
   }
   .liquid-surface { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
 }
+
+/* Select controls are lenses with a compact, separate chevron face. */
+#root .choice-picker__trigger { min-height: 48px; padding-right: 8px; border-radius: 999px; }
+#root .choice-picker__trigger > svg { box-sizing: content-box; padding: 7px; border-radius: 50%; background: rgb(255 255 255 / .12); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-edge); }
+#root .choice-picker__trigger[aria-expanded='true'] { border-color: var(--hj-accent); --glass-fill: var(--glass-action); }

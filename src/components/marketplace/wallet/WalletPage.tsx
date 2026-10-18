@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../../ui/LiquidTabList'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -286,7 +287,7 @@ function WalletTabNavigation({
   onTabChange: (tab: WalletTabId) => void
 }) {
   return (
-    <div
+    <LiquidTabList
       className="wallet-tabs"
       role="tablist"
       aria-label="Quản lý số dư"
@@ -316,7 +317,7 @@ function WalletTabNavigation({
           {item.label}
         </button>
       ))}
-    </div>
+    </LiquidTabList>
   )
 }
 

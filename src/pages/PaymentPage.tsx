@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
@@ -315,7 +316,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         <button type="button" className="pay-btn" onClick={() => void reload()}>Làm mới</button>
       </section>
 
-      <div className="pay-tabs" role="tablist" aria-label="Gói và giao dịch">
+      <LiquidTabList className="pay-tabs" role="tablist" aria-label="Gói và giao dịch">
         {(['plans', 'history'] as const).map((value) => (
           <button
             key={value}
@@ -325,16 +326,13 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             className={tab === value ? 'is-active' : ''}
             onClick={() => setTab(value)}
           >
-            {tab === value ? (
-              <motion.span layoutId="pay-tab-pill" className="pay-tabs__pill" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
-            ) : null}
             <span className="pay-tabs__text">
               {value === 'plans' ? 'Đăng ký gói' : 'Giao dịch'}
               {value === 'history' && pendingCount > 0 ? <em>{pendingCount}</em> : null}
             </span>
           </button>
         ))}
-      </div>
+      </LiquidTabList>
 
       {tab === 'plans' ? (
         <div className="pay-plans">

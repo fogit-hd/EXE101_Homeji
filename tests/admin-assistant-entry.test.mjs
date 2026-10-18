@@ -13,7 +13,7 @@ const stripImports = source => ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.React },
 }).outputText.replace(/^import .*?from ['"].*?['"];?$/gm, '').replace(/^import ['"].*?['"];?$/gm, '')
 const bindings = `
-import React, { useCallback, useEffect, useId, useRef, useState } from '${pathToFileURL(require.resolve('react')).href}';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from '${pathToFileURL(require.resolve('react')).href}';
 const useAuth = () => ({ profile: { role: 3 } });
 const usePersistentLoad = () => ({ showLoader: false, error: '', reload: async () => {} });
 const aiFeatureFlags = { adminSummary: true };
@@ -24,6 +24,7 @@ const PageFrame = ({ children, tabs }) => React.createElement('main', null, tabs
 const Link = ({ children }) => React.createElement('a', null, children);
 `
 const components = await Promise.all([
+  'src/components/ui/LiquidTabList.tsx',
   'src/components/admin/AdminOperationsSummary.tsx',
   'src/components/ai/AdminAssistant.tsx',
   'src/pages/AdminModerationPage.tsx',

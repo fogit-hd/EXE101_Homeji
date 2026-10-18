@@ -8,6 +8,6 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
     onClick={event => toggle(event.currentTarget)}>
     <span className="theme-switch__sun" aria-hidden="true">☀</span>
     <span className="theme-switch__moon" aria-hidden="true">☾</span>
-    <span className="theme-switch__thumb" aria-hidden="true" />
+    <span className="theme-switch__thumb" data-glass-lens="" aria-hidden="true" />
   </button>
 }

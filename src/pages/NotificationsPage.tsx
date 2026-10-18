@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useCallback, useRef, useState } from 'react'
 import {
   getNotifications,
@@ -114,7 +115,7 @@ export function NotificationsPage({
   )
 
   const filterTabs = (
-    <div
+    <LiquidTabList
       className={popup ? 'hj-notify__tabs' : 'tabs map-section-tabs'}
       style={popup ? undefined : { ['--map-tab-cols' as string]: 2 }}
       role="tablist"
@@ -139,7 +140,7 @@ export function NotificationsPage({
         Chưa đọc
         {popup && unreadCount > 0 ? <span className="hj-notify__tab-count">{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
       </button>
-    </div>
+    </LiquidTabList>
   )
 
   const liftChrome = usePageFrameChromeActive()

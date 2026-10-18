@@ -35,19 +35,19 @@ async function headerFits(){
 async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click();await page.locator('.hj-intro').waitFor({state:'hidden'})}
 try{
  await page.goto(base+'/?section=profile');await ready();await page.getByRole('textbox',{name:'Họ tên',exact:true}).waitFor();await shot('profile-light');
- const tabs=page.getByRole('tab');const samples=await tabs.evaluateAll(els=>els.map(e=>{const s=getComputedStyle(e);return{selected:e.getAttribute('aria-selected'),background:s.backgroundColor,shadow:s.boxShadow,textShadow:s.textShadow}}));
+ const tabs=page.getByRole('tab');const samples=await tabs.evaluateAll(els=>els.map(e=>{const s=getComputedStyle(e);return{selected:e.getAttribute('aria-selected'),background:s.color,shadow:s.boxShadow,textShadow:s.textShadow}}));
  await page.getByRole('button',{name:'Menu tài khoản',exact:true}).click();await page.getByRole('menu').waitFor();await shot('account-light');await page.keyboard.press('Escape');
  const picker=page.getByRole('combobox',{name:'Trường học',exact:true});await picker.click();await page.getByRole('dialog',{name:'Trường học',exact:true}).waitFor();await shot('picker-light');await page.keyboard.press('Escape');
  const menu=page.locator('.hj-menu-trigger');await page.mouse.move(0,500);const rest=await menu.evaluate(e=>getComputedStyle(e).backgroundColor);await menu.hover();await page.waitForFunction(({rest})=>getComputedStyle(document.querySelector('.hj-menu-trigger')).backgroundColor!==rest,{rest});await page.mouse.move(0,500);
 
  assert.equal(samples[0].textShadow,'none','Small live labels must stay crisp without a white glow');
- assert.notEqual(samples[0].background,samples[1].background,'Selected and unselected real profile tabs must remain visibly distinct');
+ assert.notEqual(samples[0].background,samples[1].background,'Selected and unselected tab labels must remain distinguishable above the shared lens');
  for(const theme of ['light','dark']){
   if(theme==='dark')await page.getByRole('switch',{name:'Chế độ tối',exact:true}).click()
   for(const section of ['profile','payments','marketplace']){
    await page.setViewportSize({width:1440,height:1000});await page.goto(base+'/?section='+section);await ready();await page.locator('.hj-header').waitFor();
    if(section==='profile')await page.getByRole('textbox',{name:'Họ tên',exact:true}).waitFor()
-   if(section==='payments'){await page.locator('.pay-v2').waitFor();if(theme==='dark'){assert.ok(await page.locator('.pay-current').evaluate(e=>getComputedStyle(e).backgroundColor.match(/[0-9]+/g).slice(0,3).reduce((s,v)=>s+Number(v),0)<255),'Current plan must use an actual dark surface');assert.ok(await page.locator('.pay-tabs__pill').evaluate(e=>getComputedStyle(e).backgroundColor!=='rgb(255, 255, 255)'),'Selected payment tab must not place white text on white');}}
+   if(section==='payments'){await page.locator('.pay-v2').waitFor();if(theme==='dark'){assert.ok(await page.locator('.pay-current').evaluate(e=>getComputedStyle(e).backgroundColor.match(/[0-9]+/g).slice(0,3).reduce((s,v)=>s+Number(v),0)<255),'Current plan must use an actual dark surface');assert.ok(await page.locator('.pay-tabs .liquid-tabs__lens').isVisible(),'Payment selection uses the shared glass lens');}}
    if(section==='marketplace')await page.locator('.marketplace-header').waitFor()
    await shot(section+'-'+theme+'-desktop');await page.setViewportSize({width:390,height:844});await headerFits();await shot(section+'-'+theme+'-mobile');await page.setViewportSize({width:320,height:740});await headerFits();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),section+' mobile overflow');
   }

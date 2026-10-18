@@ -1,6 +1,5 @@
+import { LiquidTabList } from '../ui/LiquidTabList'
 import { useId, useRef } from 'react'
-import { motion } from 'motion/react'
-import { SPRING } from '../../lib/motionTokens'
 import './SegmentedTabs.css'
 
 type Props<T extends string> = {
@@ -13,13 +12,13 @@ type Props<T extends string> = {
   panelId?: string
 }
 
-/** Segmented switch: a white pill springs between options on a mint track (tablist semantics). */
+/** Segmented switch: a raised glass lens moves between options (tablist semantics). */
 export function SegmentedTabs<T extends string>({ items, value, onChange, label, className = '', idPrefix, panelId }: Props<T>) {
   const generated = useId()
   const prefix = idPrefix ?? `segmented-${generated}`
   const ref = useRef<HTMLDivElement>(null)
   return (
-    <div ref={ref} className={`segmented-tabs ${className}`} role="tablist" aria-label={label}>
+    <LiquidTabList containerRef={ref} className={`segmented-tabs ${className}`} role="tablist" aria-label={label}>
       {items.map((item, index) => {
         const on = item.id === value
         return (
@@ -35,11 +34,10 @@ export function SegmentedTabs<T extends string>({ items, value, onChange, label,
               onChange(items[next].id)
               ref.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus({ preventScroll: true })
             }}>
-            {on ? <motion.span layoutId={`${prefix}-pill`} className="segmented-tabs__pill" transition={SPRING.snappy} /> : null}
             <span className="segmented-tabs__label">{item.label}</span>
           </button>
         )
       })}
-    </div>
+    </LiquidTabList>
   )
 }

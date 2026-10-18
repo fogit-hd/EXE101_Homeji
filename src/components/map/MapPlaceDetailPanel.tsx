@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../ui/LiquidTabList'
 import { MotionTabs } from '../motion/MotionTabs'
 import { useTabTransition } from '../motion/useTabTransition'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type WheelEvent } from 'react'
@@ -573,7 +574,7 @@ export function MapPlaceDetailPanel({
       buttonClassName="map-detail-panel__tab" idPrefix="map-detail-tab" panelId="map-detail-content" />
   )
   const renderPhotoTabs = (extraClass?: string) => (
-    <div className={`map-detail-panel__tabs map-detail-photo-tabs${extraClass ? ` ${extraClass}` : ''}`} role="tablist">
+    <LiquidTabList className={`map-detail-panel__tabs map-detail-photo-tabs${extraClass ? ` ${extraClass}` : ''}`} role="tablist" aria-label="Ảnh địa điểm">
       {PLACE_PHOTO_TAB_OPTIONS.map((item) => (
         <button
           key={item.id}
@@ -586,7 +587,7 @@ export function MapPlaceDetailPanel({
           {item.label}
         </button>
       ))}
-    </div>
+    </LiquidTabList>
   )
 
   return (

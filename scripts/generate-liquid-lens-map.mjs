@@ -3,21 +3,6 @@ import { deflateSync } from 'node:zlib'
 
 // Neutral R/G encodes zero displacement. A smooth radial normal field bends
 // the sampled backdrop inward near the rim instead of adding random ripples.
-const size = 128
-const rows = Buffer.alloc((size * 4 + 1) * size)
-for (let y = 0; y < size; y++) {
-  for (let x = 0; x < size; x++) {
-    const u = (x + .5) / size * 2 - 1
-    const v = (y + .5) / size * 2 - 1
-    const radius = Math.hypot(u, v)
-    const rim = Math.min(1, radius) ** 3
-    const offset = y * (size * 4 + 1) + 1 + x * 4
-    rows[offset] = Math.round(128 - u / Math.max(1, radius) * rim * 90)
-    rows[offset + 1] = Math.round(128 - v / Math.max(1, radius) * rim * 90)
-    rows[offset + 2] = 128
-    rows[offset + 3] = 255
-  }
-}
 function crc32(bytes) {
   let crc = -1
   for (const byte of bytes) {
@@ -32,10 +17,37 @@ function chunk(type, data) {
   crc.writeUInt32BE(crc32(Buffer.concat([name, data])))
   return Buffer.concat([length, name, data, crc])
 }
-const header = Buffer.alloc(13)
-header.writeUInt32BE(size, 0); header.writeUInt32BE(size, 4)
-header[8] = 8; header[9] = 6
-writeFileSync(new URL('../src/components/ui/liquid-lens-map.png', import.meta.url), Buffer.concat([
-  Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header),
-  chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0)),
-]))
+
+// R/G normals follow a capsule, not an ellipse stretched to fit each button.
+// Divide horizontal displacement by aspect ratio because SVG objectBoundingBox
+// scales X by width and Y by height. This keeps the rim depth stable in pixels.
+for (const ratio of [1, 2, 3, 4, 6, 10]) {
+  const width = ratio === 1 ? 128 : ratio === 2 ? 160 : 192
+  const height = Math.max(32, Math.round(width / ratio))
+  const rows = Buffer.alloc((width * 4 + 1) * height)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const px = x / (width - 1) * ratio
+      const py = y / (height - 1)
+      const cx = Math.max(.5, Math.min(ratio - .5, px))
+      const dx = px - cx, dy = py - .5
+      const distance = Math.hypot(dx, dy)
+      const radius = Math.min(1, distance / .5)
+      // The center is optically calm. Curvature rises through the outer rim.
+      const rim = radius ** 3.5
+      const offset = y * (width * 4 + 1) + 1 + x * 4
+      rows[offset] = Math.round(127.5 - (distance ? dx / distance : 0) * rim * 98 / ratio)
+      rows[offset + 1] = Math.round(127.5 - (distance ? dy / distance : 0) * rim * 98)
+      rows[offset + 2] = 128
+      rows[offset + 3] = 255
+    }
+  }
+  const header = Buffer.alloc(13)
+  header.writeUInt32BE(width, 0); header.writeUInt32BE(height, 4)
+  header[8] = 8; header[9] = 6
+  const file = ratio === 3 ? 'liquid-lens-map.png' : `liquid-lens-map-${ratio}.png`
+  writeFileSync(new URL(`../src/components/ui/${file}`, import.meta.url), Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header),
+    chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0)),
+  ]))
+}

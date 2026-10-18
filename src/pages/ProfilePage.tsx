@@ -1,3 +1,4 @@
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -362,7 +363,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         </div>
       </section>
 
-      <div
+      <LiquidTabList
         className="tabs map-section-tabs"
         style={{ ['--map-tab-cols' as string]: tabCols }}
         role="tablist"
@@ -397,7 +398,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
             Xác minh
           </button>
         ) : null}
-      </div>
+      </LiquidTabList>
 
       </> : null}
 
