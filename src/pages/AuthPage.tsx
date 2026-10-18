@@ -1,6 +1,6 @@
 import type { CredentialResponse } from '@react-oauth/google'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
-import { AuthCityScene } from '../components/auth/AuthCityScene'
+import { AuthHomeGallery } from '../components/auth/AuthHomeGallery'
 import { AuthCharacterScene } from '../components/auth/AuthCharacterScene'
 import gsap from 'gsap'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -25,6 +25,7 @@ import { AiVoiceFloat, PasswordEyeToggle, voiceTravelDuration } from './AuthPage
 import { layoutWelcomeStrokes, WELCOME_PHRASE } from './authWelcomeHandwrite'
 import './AuthPage.css'
 import './AuthFormLayout.css'
+import './AuthLoginLayout.css'
 import { RevealText } from '../components/motion/RevealText'
 
 const TOGGLE_COOLDOWN_MS = 1000
@@ -1115,7 +1116,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   return (
     <div
-      className={`auth-cinema${showFormCard ? ' auth-cinema--form' : ''}${connectUiLocked ? ' is-connect-locked is-connecting-hard' : ''}`}
+      className={`auth-cinema${mode === 'signin' ? ' auth-cinema--login' : ''}${showFormCard ? ' auth-cinema--form' : ''}${connectUiLocked ? ' is-connect-locked is-connecting-hard' : ''}`}
       role="main"
       aria-label={mode === 'signin' ? 'Đăng nhập' : 'Đăng ký'}
       onFocusCapture={(event) => {
@@ -1148,7 +1149,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       {mode === 'signup' ? <AuthCharacterScene
         state={activeAuthField === 'password' ? (showPassword ? 'peek' : 'password') : submitting ? 'submitting' : error || connectError ? 'error' : message ? 'success' : activeAuthField ? 'typing' : 'idle'}
         progress={fieldProgress}
-      /> : <AuthCityScene mode={mode} />}
+      /> : <AuthHomeGallery />}
 
       {/* Chỉ Skip — không logo */}
       <div className="auth-cinema__top auth-cinema__top--skip-only">
@@ -1673,10 +1674,23 @@ export function AuthPage({ initialMode }: AuthPageProps) {
             <div className="auth-cinema__card">
               {mode === 'signin' ? (
                 <>
-                  <RevealText as="h1" className="auth-cinema__title" text="Đăng nhập" />
+                  <Link to="/" className="auth-login-brand" aria-label="Homeji — Trang chủ"><img src="/brand/homeji-logo2.png" width="28" height="28" alt="" /><span>Homeji</span></Link>
+                  <h1 className="auth-cinema__title">Đăng nhập</h1>
                   <p className="auth-cinema__subtitle">Chào mừng trở lại Homeji</p>
                   {error ? (
-                    <div className="auth-cinema__alert auth-cinema__alert--error">{error}</div>
+                    <div className="auth-cinema__alert auth-cinema__alert--error" role="alert">{error}</div>
+                  ) : null}
+                  {googleOAuthClientId ? (
+                    <>
+                      <div className="auth-modal__google-wrap">
+                        <GoogleSignInButton
+                          maxWidth={380}
+                          onSuccess={handleGoogleSuccess}
+                          onError={() => setError('Đăng nhập Google thất bại')}
+                        />
+                      </div>
+                      <div className="auth-cinema__divider">hoặc đăng nhập bằng email</div>
+                    </>
                   ) : null}
                   <form onSubmit={(e) => void handleSignIn(e)}>
                     <div className="auth-cinema__field">
@@ -1693,43 +1707,34 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                     </div>
                     <div className="auth-cinema__field">
                       <label htmlFor="auth-password">Mật khẩu</label>
+                      <div className="auth-login-password">
                       <input
                         id="auth-password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         autoComplete="current-password"
-                        placeholder="••••••••"
+                        placeholder="Nhập mật khẩu của bạn"
                       />
+                      <button type="button" className="auth-login-password__toggle" aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={showPassword} aria-controls="auth-password" onClick={() => setShowPassword(value => !value)}>
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />{showPassword ? <path d="m3 3 18 18" /> : null}</svg>
+                      </button>
+                      </div>
                     </div>
+                    <Link className="auth-login-forgot" to="/forgot-password">Quên mật khẩu?</Link>
                     <button type="submit" className="auth-cinema__submit" disabled={submitting}>
                       {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                     </button>
                   </form>
-                  {googleOAuthClientId ? (
-                    <>
-                      <div className="auth-cinema__divider">hoặc</div>
-                      <div className="auth-modal__google-wrap">
-                        <GoogleSignInButton
-                          onSuccess={handleGoogleSuccess}
-                          onError={() => setError('Đăng nhập Google thất bại')}
-                        />
-                      </div>
-                    </>
-                  ) : null}
                   <p className="auth-cinema__footer">
                     Chưa có tài khoản?{' '}
                     <button type="button" disabled={toggleLocked} onClick={() => switchMode('signup')}>
                       Đăng ký
                     </button>
                   </p>
-                  <div style={{ textAlign: 'center' }}>
-                    <Link className="auth-cinema__forgot" to="/forgot-password">
-                      Quên mật khẩu?
-                    </Link>
-                    <br /><Link className="auth-cinema__forgot" to="/verify-email">Xác thực email đăng ký bằng OTP</Link>
-                  </div>
+                  <p className="auth-login-verify"><Link to="/verify-email">Xác thực email bằng OTP</Link></p>
+                  <footer className="auth-login-legal"><Link to="/terms">Điều khoản</Link><span>·</span><Link to="/privacy">Quyền riêng tư</Link><span>© {new Date().getFullYear()} Homeji</span></footer>
                 </>
               ) : (
                 <>

@@ -5,10 +5,11 @@ import { googleOAuthClientId } from '../../lib/googleOAuthClient'
 type Props = {
   onSuccess: (response: CredentialResponse) => void
   onError: () => void
+  maxWidth?: number
 }
 
 /** Renders nothing when VITE_GOOGLE_CLIENT_ID is empty so login stays usable. */
-export function GoogleSignInButton({ onSuccess, onError }: Props) {
+export function GoogleSignInButton({ onSuccess, onError, maxWidth = 280 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [buttonWidth, setButtonWidth] = useState(280)
   useEffect(() => {
@@ -17,11 +18,11 @@ export function GoogleSignInButton({ onSuccess, onError }: Props) {
     const observer = new ResizeObserver(() => {
       const style = getComputedStyle(container)
       const availableWidth = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-      setButtonWidth(Math.max(200, Math.min(280, Math.floor(availableWidth))))
+      setButtonWidth(Math.max(200, Math.min(maxWidth, Math.floor(availableWidth))))
     })
     observer.observe(container)
     return () => observer.disconnect()
-  }, [])
+  }, [maxWidth])
   if (!googleOAuthClientId) return null
   return (
     <div ref={containerRef} className="google-signin">
