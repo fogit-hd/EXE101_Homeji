@@ -28,7 +28,7 @@ function OwnedSearchInterestCenter() {
   const [busy, setBusy] = useState(false)
   const [draft, setDraft] = useState<InterestCriteria | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(() => new URLSearchParams(location.search).get('interest') === 'manage')
   const [confirmClear, setConfirmClear] = useState(false)
   const latest = useRef(0)
   const current = state && state.owner === owner ? state.value : null
