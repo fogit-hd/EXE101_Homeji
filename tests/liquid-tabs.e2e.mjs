@@ -98,7 +98,7 @@ try{
    for(const width of [1440,390,320]){
     await page.setViewportSize({width,height:960});for(const list of await lists.all())if(await list.isVisible())await aligned(list)
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),section+' fits '+width)
-    await page.waitForFunction(()=>[...document.querySelectorAll('.profile-hero,.profile-section,.hj-reveal__char')].every(e=>{const r=e.getBoundingClientRect();if(r.top>=innerHeight||r.bottom<=0)return true;const s=getComputedStyle(e);return Number(s.opacity)>.99&&(s.transform==='none'||s.transform==='matrix(1, 0, 0, 1, 0, 0)')&&(s.filter==='none'||s.filter==='blur(0px)')}));await page.screenshot({path:new URL(section+'-'+theme+'-'+width+'.png',out).pathname.slice(1),animations:'disabled'})
+    await page.waitForFunction(()=>[...document.querySelectorAll('.profile-hero,.profile-section,.hj-reveal__char')].every(e=>{const r=e.getBoundingClientRect();if(r.top>=innerHeight||r.bottom<=0)return true;const s=getComputedStyle(e);return Number(s.opacity)>.99&&!e.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity)}));await page.screenshot({path:new URL(section+'-'+theme+'-'+width+'.png',out).pathname.slice(1),animations:'disabled'})
    }
   }
  }

@@ -75,3 +75,7 @@ Bộ SVG tách ba ảnh nền với depth đỏ/lục/lam lệch −0,025 / 0 / 
 Tint nền thường giảm 4% xuống 1,2%; lớp mặt trên trong suốt ngoài glint, màu trạng thái giảm nhẹ để không phủ mờ nội dung. Popover giữ nền đủ đọc chữ; không dùng kính của nút thay cho độ tương phản của panel chứa danh sách.
 
 `glass-dispersion.e2e.mjs` kiểm tra controls thật trên profile/payment/marketplace/admin/login/register/guest và picker portal; so sánh ảnh khi RGB có độ cong khác nhau với khi cả ba cùng depth để tách bằng chứng tán sắc khỏi glint trang trí; kiểm tra blur 0, depth 4x và forced-colors. `liquid-tabs`, `liquid-glass-app`, `auth-login-gallery`, `auth-registration` kiểm tra kéo/chạm/keyboard, lựa chọn form, API fixture và auth. API fixture không phải bằng chứng giao dịch hay phiên đăng nhập production hoàn tất.
+
+## Điều chỉnh cuối: tăng 30% và nút AI bảy màu
+
+Depth của control/tab nghỉ/tab tương tác tăng từ 0,10/0,14/0,28 lên 0,13/0,182/0,364, đúng hệ số 1,3. Không tăng blur hay độ đục. Nút Hỏi Homeji AI có phần tử rim riêng, conic gradient bảy màu dùng palette AI sẵn có, mask để lõi còn trong, không chiếm slot pseudo-face quang học. Rim quay 6 giây, 3 giây khi mở; reduced-motion dừng quay, forced-colors dùng viền hệ thống. Test kiểm tra gradient, mask trên CSS tối ưu, pointer-events none và góc thực sự đổi.
