@@ -10,7 +10,7 @@
 }
 #root .liquid-tabs::-webkit-scrollbar { display: none; }
 #root .liquid-tabs::before {
-  content: ''; position: absolute; top: 10px; bottom: 10px; left: 0; right: 0;
+  content: ''; position: absolute; top: 10px; bottom: 10px; left: 0; width: var(--tabs-track-width,100%);
   z-index: -1; border-radius: 999px;
   background: linear-gradient(115deg,var(--tabs-track-light),var(--tabs-track) 65%);
   box-shadow: inset 0 1px 1px #ffffff45, inset 0 -1px 1px #001d1730;
@@ -24,7 +24,7 @@
   background: transparent; background-image: none; box-shadow: none;
   backdrop-filter: none; -webkit-backdrop-filter: none;
   color: #ffffffb8; text-shadow: none; font: 550 13px/1.5 var(--font-ui);
-  cursor: pointer; transform: none; transition: color 160ms ease;
+  cursor: pointer; touch-action: pan-y; user-select: none; transform: none; transition: color 160ms ease;
 }
 #root .liquid-tabs > button[role='tab'][aria-selected='true'] { color: var(--tabs-ink); font-weight: 650; }
 #root .liquid-tabs > button[role='tab']::after { display: none; }
@@ -33,7 +33,7 @@
 #root .liquid-tabs > button[role='tab']:disabled { opacity: .4; cursor: not-allowed; }
 #root .liquid-tabs > .liquid-tabs__lens {
   position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
-  border-radius: 24px; border: 1px solid #ffffff7a;
+  border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff7a;
   background: linear-gradient(155deg,#ffffff35,transparent 35% 65%,#ffffff1a),#ffffff0d;
   box-shadow: inset 0 2px 2px -1px #ffffffdb, inset 2px 0 3px -2px #fff,
     inset -2px -2px 4px -2px #ffffff85, 0 2px 2px #092c2726, 0 7px 15px -6px #092c2750;
@@ -41,7 +41,7 @@
   -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))) saturate(1.1);
 }
 #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens {
-  transition: transform 420ms cubic-bezier(.2,.8,.2,1),width 420ms cubic-bezier(.2,.8,.2,1),height 220ms ease;
+  transition: transform 420ms cubic-bezier(.2,.8,.2,1),width 420ms cubic-bezier(.2,.8,.2,1),height 220ms ease,scale 220ms cubic-bezier(.2,.8,.2,1);
 }
 #root .liquid-tabs :is(.pay-tabs__pill,.segmented-tabs__pill,.motion-tabs__indicator) { display: none; }
 html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track-light: #397b69; }
@@ -65,4 +65,11 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
   #root .liquid-tabs > .liquid-tabs__lens { background: #124c43; border-color: #fff; box-shadow: none; }
   #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { color: #fff; }
+}
+
+/* The lens only rises above the rail during a press, drag or click pulse. */
+#root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1.035 1.2; }
+#root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { transition: scale 180ms ease; }
+@media(prefers-reduced-motion:reduce) {
+  #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1; }
 }

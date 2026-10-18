@@ -20,9 +20,9 @@ Một viền trắng đồng đều + blur mạnh thường thành kính mờ ho
 
 ## Tab chọn và select
 
-LiquidTabList giữ đúng một phần tử lens, đặt trước nhãn. Lens cao hơn tab 10px, trượt theo vị trí/chiều rộng button trong 420ms; ray màu thấp hơn khối kính. Các tab chưa chọn là nhãn trên ray, không phải nhiều capsule nổi cạnh nhau. Màu chữ tách biệt giữa selected/unselected. Track có khoảng đệm đủ để mép lens không bị clipping; các rail dài cuộn ngang và đưa mục đang chọn vào viewport mà không cuộn cả trang.
+LiquidTabList giữ đúng một phần tử lens, đặt trước nhãn. Khi nghỉ, lens vừa với chiều cao tab/đường ray. Trong lúc nhấn/kéo hoặc nhịp click, lens nở 3,5% ngang và 20% dọc rồi thu về trong 220ms; nhãn không bị scale. Lens vẫn trượt theo vị trí/chiều rộng button trong 420ms khi chọn bằng click/bàn phím; khi kéo thì bám pointer trực tiếp. Các tab chưa chọn là nhãn trên ray, không phải nhiều capsule nổi cạnh nhau. Màu chữ tách biệt giữa selected/unselected. Track có khoảng đệm đủ để mép lens không bị clipping; các rail dài cuộn ngang và đưa mục đang chọn vào viewport mà không cuộn cả trang.
 
-Wrapper giữ onClick, API/filter state, IDs và aria-controls của caller. Phím mũi tên/Home/End chọn được mục không disabled; tabIndex theo lựa chọn. Dùng cho profile, gói/giao dịch, thông báo, quản trị, tin tìm phòng, ví, lọc inbox và các nhóm dùng MotionTabs/SegmentedTabs (chợ/chi tiết địa điểm). Select vẫn là ChoicePicker có native select liên kết, form/change/reset/required giữ nguyên; trigger là capsule kính với chevron riêng. Nút công tắc giao diện dùng thumb kính, màu trạng thái nằm ở ray phía dưới.
+Wrapper giữ onClick, API/filter state, IDs và aria-controls của caller. Phím mũi tên/Home/End chọn được mục không disabled; tabIndex theo lựa chọn. Pointer capture hỗ trợ chuột/chạm/bút; vượt ngưỡng 5px mới là kéo, preview không đổi state nghiệp vụ, thả mới chọn mục gần nhất. Cancel/mất capture khôi phục lựa chọn cũ. Đường ray kéo dài theo toàn bộ nội dung cuộn để tab cuối trên điện thoại không mất nền. Dùng cho profile, gói/giao dịch, thông báo, quản trị, tin tìm phòng, ví, lọc inbox và các nhóm dùng MotionTabs/SegmentedTabs (chợ/chi tiết địa điểm). Select vẫn là ChoicePicker có native select liên kết, form/change/reset/required giữ nguyên; trigger là capsule kính với chevron riêng. Nút công tắc giao diện dùng thumb kính, màu trạng thái nằm ở ray phía dưới.
 
 ## Điều kiện thật để nhìn xuyên
 
@@ -43,3 +43,7 @@ Test gọi API fixture không phải bằng chứng giao dịch hay OAuth produc
 Nguồn kỹ thuật chính thức:
 - https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/backdrop-filter
 - https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feDisplacementMap
+
+## Điều chỉnh theo phản hồi về kích thước nghỉ
+
+Không giữ lens phồng thường trực. Ảnh phồng chỉ mô tả trạng thái tương tác, không phải mặc định. Bộ nguồn Figma/Apple và giới hạn asset được ghi trong [nghiên cứu nguồn tương tác](research/liquid-glass-interactive-sources.md). Kiểm tra bổ sung trên trang hồ sơ thật với API fixture: chiều cao nghỉ bằng tab, giữ nhấn nở, kéo không đổi tab trước khi thả, thả chốt mục đích, cancel phục hồi, touch-drag ở 390px và nền ray ở mục cuối 320px.
