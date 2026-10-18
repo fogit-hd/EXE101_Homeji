@@ -18,7 +18,7 @@ try{
   await page.waitForFunction(t=>document.documentElement.dataset.theme===t,theme)
   await page.locator('#mission').scrollIntoViewIfNeeded()
   await page.waitForFunction(()=>document.querySelector('.guest-fixed-cta')?.getAttribute('aria-hidden')==='false')
-  await page.locator('.guest-fixed-cta').waitFor({state:'visible'})
+  await page.locator('.guest-fixed-cta').waitFor({state:'visible'});await page.waitForFunction(()=>{const e=document.querySelector('.guest-fixed-cta');const r=e.getBoundingClientRect();return Number(getComputedStyle(e).opacity)>.99&&r.bottom<=innerHeight})
   await glass('.guest-fixed-cta > span');await glass('.guest-fixed-cta__go')
   await page.screenshot({path:new URL('landing-'+theme+'.png',out).pathname.slice(1),animations:'disabled'})
  }
