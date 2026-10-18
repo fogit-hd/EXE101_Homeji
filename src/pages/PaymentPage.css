@@ -837,3 +837,6 @@
 .pay-wallet-confirm { padding:14px; border:1px solid #b7dcd3; border-radius:12px; background:var(--surface, #f3faf7); text-align:left; }
 .pay-wallet-confirm p { margin:8px 0; font-size:13px; line-height:1.6; }
 .pay-wallet-confirm .pay-btn { width:100%; }
+
+.pay-plan__methods > .pay-wallet-confirm { display:block; }
+.pay-wallet-confirm { width:100%; box-sizing:border-box; }
