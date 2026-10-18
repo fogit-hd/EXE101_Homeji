@@ -48,3 +48,9 @@ Ngày 18/10/2026: thay nhiễu fractal bằng normal map thấu kính tĩnh R/G,
 Theo yêu cầu toàn bộ button: vật liệu áp dụng cho mọi button/input action/summary/role button/menuitem của Homeji, bao gồm portal, option, tab, ô ngày và card; chỉ giữ nguyên control bên thứ ba của Google Maps. Hình dạng của tab, ngày lịch, option và card vẫn do component quyết định. Nút hành động thông thường dùng dạng capsule. Khúc xạ tĩnh có ngay khi đứng yên; không thêm vòng animation nền. Fallback contrast/transparency/forced-colors vẫn hoạt động. Mục giới hạn loại button của phiên bản trước được thay bằng quy tắc này.
 
 Kiểm tra Chrome: thay riêng scale displacement về 0 tạo ảnh khác (xác nhận biến dạng pixel thực); 390px không tràn; forced-colors tắt backdrop. Sweep hồ sơ và bảng chọn xác nhận cả 46 button đang hiển thị có vật liệu mới. E2E lựa chọn/form/reset/keyboard và các trang hồ sơ, menu tài khoản, hoạt động, thanh toán, mobile qua. Safari/Firefox và hiệu năng GPU trên điện thoại thật chưa xác minh.
+
+## Liên kết có hình thức nút
+
+Bổ sung lớp `liquid-action` cho CTA liên kết ở hero, cụm đăng ký cố định, hộp xem phòng, hub, ví và các thao tác bản đồ. Lớp này dùng chung vật liệu, capsule và focus-visible với button, giữ nguyên href và ngữ nghĩa link. Nhãn Miễn phí đăng ký của cụm cố định cũng có kính nhưng vẫn là span, không thêm hành động giả. Không phủ kính lên tất cả liên kết văn bản.
+
+`tests/liquid-glass-cta.e2e.mjs` kiểm tra trang landing thực với API fixture: vật liệu ở cả hai giao diện, mobile 390px, focus bàn phím và Enter chuyển sang đăng ký. Không có pageerror.

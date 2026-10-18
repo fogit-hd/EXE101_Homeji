@@ -1020,7 +1020,7 @@ export function MapPlaceDetailPanel({
               )}
               {place.googleMapsUri ? (
                 <a
-                  className="map-detail-panel__cta"
+                  className="map-detail-panel__cta liquid-action"
                   href={place.googleMapsUri}
                   target="_blank"
                   rel="noreferrer"
@@ -1155,7 +1155,7 @@ export function MapPlaceDetailPanel({
               )}
               {place.googleMapsUri ? (
                 <a
-                  className="map-detail-panel__cta"
+                  className="map-detail-panel__cta liquid-action"
                   href={place.googleMapsUri}
                   target="_blank"
                   rel="noreferrer"

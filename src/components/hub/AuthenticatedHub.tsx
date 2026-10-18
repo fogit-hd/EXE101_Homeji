@@ -251,7 +251,7 @@ export function AuthenticatedHub() {
           <h1>{greetingPrefix(now.getHours())}, {displayName}</h1>
           <p className="hub-welcome__lead">{lead}</p>
         </div>
-        <Link className="hub-welcome__cta" to="/posts/new">Đăng tin phòng</Link>
+        <Link className="hub-welcome__cta liquid-action" to="/posts/new">Đăng tin phòng</Link>
       </header>
 
       <section className="hub-banner" aria-labelledby="hub-banner-title">
@@ -459,7 +459,7 @@ export function AuthenticatedHub() {
                     </div>
                   )}
                   {bundle.candidates.length === 0 ? (
-                    <Link className="hub-roommates__cta" to={mapSectionUrl('invitations')}>Xem lời mời</Link>
+                    <Link className="hub-roommates__cta liquid-action" to={mapSectionUrl('invitations')}>Xem lời mời</Link>
                   ) : null}
                 </section>
               ) : null}

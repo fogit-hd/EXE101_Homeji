@@ -183,7 +183,7 @@ function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing
         <p className="guest-preview-dialog__description">Đây là tin tham khảo được lưu trong Homeji từ nguồn công khai. Giá, hình ảnh và tình trạng cho thuê do nguồn đăng cung cấp, Homeji chưa xác minh và không thể dùng tin này để đặt lịch xem phòng.</p>
         <footer className="guest-preview-dialog__footer">
           <span>Đã lưu dữ liệu trong Homeji · Cập nhật {new Date(listing.collectedAt).toLocaleDateString('vi-VN')}</span>
-          <Link to="/explore">Tìm phòng trên Homeji <Arrow /></Link>
+          <Link to="/explore" className="liquid-action">Tìm phòng trên Homeji <Arrow /></Link>
         </footer>
       </div>
     </div>
@@ -256,7 +256,7 @@ function GuestRoomPreview({ summary, onClose }: { summary: RentalPostSummary; on
           </div> : null}
           <footer className="guest-preview-dialog__footer">
             <span>Bạn có thể xem phòng mà không cần tài khoản.</span>
-            <Link to="/login">Đăng nhập để liên hệ <Arrow /></Link>
+            <Link to="/login" className="liquid-action">Đăng nhập để liên hệ <Arrow /></Link>
           </footer>
         </div>
       </>}

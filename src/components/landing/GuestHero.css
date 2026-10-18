@@ -88,6 +88,8 @@
 }
 .guest-hero__nav-link:hover, .guest-hero__top-login-link:hover { color: #fff; text-decoration: underline; }
 .guest-hero__top-login-link { justify-self: end; color: #fff; }
+.guest-hero .liquid-action { --glass-ink: #fff; --glass-tint: rgb(9 29 46 / .24); }
+.guest-hero__top-login-link.liquid-action { padding-inline: 14px; }
 .guest-hero__center {
   display: flex;
   flex-direction: column;

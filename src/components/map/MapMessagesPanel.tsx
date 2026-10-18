@@ -342,7 +342,7 @@ function LocationBubble({
       ) : null}
       {hasCoords ? (
         <div className="map-messages__loc-actions">
-          <a className="map-messages__loc-btn" href={directionsUrl(payload.lat!, payload.lng!)} target="_blank" rel="noopener noreferrer">
+          <a className="map-messages__loc-btn liquid-action" href={directionsUrl(payload.lat!, payload.lng!)} target="_blank" rel="noopener noreferrer">
             Chỉ đường
           </a>
       {onOpen ? (
@@ -846,7 +846,7 @@ export function MapMessagesPanel({
           <>
             <header className="map-messages__inbox-head">
               <h1 className="map-messages__inbox-title">Tin nhắn</h1>
-              <a href="/?section=listings" className="map-messages__new-icon" aria-label="Tin nhắn mới" title="Tin nhắn mới">
+              <a href="/?section=listings" className="map-messages__new-icon liquid-action" aria-label="Tin nhắn mới" title="Tin nhắn mới">
                 <svg viewBox="0 0 24 24" aria-hidden><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
               </a>
             </header>

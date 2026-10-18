@@ -368,7 +368,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
           </p>
         </div>
         <div className="map-appointments__page-tools">
-          <a href="/?section=listings" className="map-appointments__add-btn">
+          <a href="/?section=listings" className="map-appointments__add-btn liquid-action">
             + Thêm lịch xem
           </a>
           <div className="map-appointments__view-toggle" role="group" aria-label="Chế độ xem">

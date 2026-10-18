@@ -574,7 +574,7 @@ export function GuestChrome() {
 
       <div className="guest-fixed-cta" ref={ctaRef} aria-hidden="true">
         <span>Miễn phí đăng ký</span>
-        <Link to="/register" className="guest-fixed-cta__go">
+        <Link to="/register" className="guest-fixed-cta__go liquid-action">
           Bắt đầu ngay
         </Link>
       </div>

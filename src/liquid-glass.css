@@ -33,7 +33,7 @@ html[data-theme='dark'] {
 /* Every Homeji button, including portal menus and list options, shares the
    optical material. Vendor-owned Google Maps controls keep their own rendering. */
 :is(#root, .choice-picker-layer, body) :is(button, summary, input[type='button'], input[type='submit'], input[type='reset'],
-  .btn, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
+  .btn, .liquid-action, .guest-fixed-cta > span, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
   --glass-fill: var(--glass-tint);
   background-color: var(--glass-fill);
   background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .22), transparent 52%),
@@ -53,7 +53,7 @@ html[data-theme='dark'] {
 }
 /* Material is universal; only ordinary action controls become capsules.
    Preserve the geometry of tabs, calendar cells, menu rows, cards and hit areas. */
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .pay-btn, .payment-button, .hj-post-cta, [role='button']):not(:where(
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-post-cta, [role='button']):not(:where(
   .gm-style *, gmp-map *, [role='option'], [role='tab'],
   [class*='__card'], [class*='__hit'], [class*='__photo'], [class*='__thumbnail'],
   [class*='__image'], [class*='__person'], .food-card__main, .schedule-dt__day,
@@ -68,7 +68,7 @@ html[data-theme='dark'] {
 :is(#root, .choice-picker-layer, body) :is(.btn-danger, [class*='--danger']) {
   --glass-fill: var(--glass-danger); color: var(--glass-danger-ink);
 }
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .hj-post-cta, .guest-hero__bloom-cta, [role='button']):focus-visible {
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button']):focus-visible {
   outline: 3px solid var(--hj-accent); outline-offset: 3px;
 }
 :is(#root, .choice-picker-layer, body) :is(button, .btn):disabled,

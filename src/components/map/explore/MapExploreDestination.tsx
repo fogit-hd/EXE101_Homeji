@@ -230,7 +230,7 @@ export const MapExploreDestination = memo(function MapExploreDestination({
             {listBody}
           </div>
 
-          <Link to={exploreListUrl()} className="map-explore__view-all">
+          <Link to={exploreListUrl()} className="map-explore__view-all liquid-action">
             {isLoading ? 'Đang tải…' : `Xem ${posts.length} phòng`}
           </Link>
         </aside>

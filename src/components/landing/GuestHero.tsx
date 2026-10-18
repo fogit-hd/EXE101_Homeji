@@ -41,7 +41,7 @@ export function GuestHero() {
             ))}
           </nav>
 
-          <Link to="/login" className="guest-hero__top-login-link">
+          <Link to="/login" className="guest-hero__top-login-link liquid-action">
             Đăng nhập
             <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
               <path d="M4 10h12m-5-5 5 5-5 5" />
@@ -55,7 +55,7 @@ export function GuestHero() {
           </div>
           <p className="guest-hero__sub">Tìm phòng phù hợp. Gặp người cùng nhịp sống.</p>
           <div className="guest-hero__primary-wrap" id="hero-start-cta">
-            <Link to="/register" className="guest-hero__primary">
+            <Link to="/register" className="guest-hero__primary liquid-action">
               <span>Bắt đầu ngay</span>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M5 12h14m-6-6 6 6-6 6" />

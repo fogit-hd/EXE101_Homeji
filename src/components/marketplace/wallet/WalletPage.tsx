@@ -523,7 +523,7 @@ function DepositPanel({
             <small>Dùng mã giao dịch để đối soát nếu số dư chưa cập nhật sau 5 phút.</small>
           </span>
         </div>
-        <Link className="wallet-support" to={mapSectionUrl('messages')}>
+        <Link className="wallet-support liquid-action" to={mapSectionUrl('messages')}>
           Cần hỗ trợ giao dịch?
           <Icon src={WALLET_ASSETS.arrowUpRight} size={15} />
         </Link>
