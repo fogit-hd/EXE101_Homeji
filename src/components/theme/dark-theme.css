@@ -1,0 +1,106 @@
+/* Final semantic appearance layer. Keep media and Maps rendering untouched. */
+html[data-theme='dark'] {
+  --surface-muted: #0e1922;
+  --surface: #172731;
+  --surface-elevated: #1d303c;
+  --surface-input: #223946;
+  --surface-glass: #1d303c;
+  --text-heading: #f0f6fa;
+  --text-primary: #e0eaf0;
+  --text-secondary: #b2c4ce;
+  --border: #405966;
+  --hj-accent: #80d9db;
+  --hj-accent-soft: #193f47;
+  --maps-blue-text: #add0ff;
+  --maps-blue-soft: #223f5b;
+  --glass-panel: var(--surface-elevated);
+  --glass-ink: var(--text-primary);
+  --glass-edge: rgb(220 242 250 / .14);
+  --glass-border: #49616e;
+  --glass-tint: #243c49;
+  --glass-action: #24545d;
+  --glass-control-shadow: inset 0 1px 0 rgb(255 255 255 / .05);
+  --glass-idle-filter: none;
+  --glass-panel-filter: none;
+}
+
+/* Links do not inherit the button material; give them explicit semantic ink. */
+html[data-theme='dark'] #root .hj-mega__link { color: var(--text-primary); }
+html[data-theme='dark'] #root :is(.hj-mega, .hj-account__menu, .hj-notify__pop, .gmaps-account__popover) {
+  color: var(--text-primary);
+  background: var(--surface-elevated);
+  border-color: var(--border);
+  box-shadow: 0 16px 42px rgb(0 0 0 / .35);
+}
+html[data-theme='dark'] #root :is(.hj-mega__link, .hj-account__item):is(:hover, :focus-visible, .is-active) {
+  background: var(--hj-accent-soft);
+  color: var(--text-heading);
+}
+html[data-theme='dark'] #root :is(.hj-mega__group-label, .hj-mega__cluster, .hj-account__role) { color: var(--text-secondary); }
+html[data-theme='dark'] #root .hj-mega__icon { color: var(--hj-accent); }
+html[data-theme='dark'] #root .hj-account__item--danger { color: #ffb9bc; }
+html[data-theme='dark'] #root :is(.hj-shell, .hj-bar) { background: var(--surface); }
+html[data-theme='dark'] #root .hj-search__field { background: var(--surface-input); }
+html[data-theme='dark'] #root .hj-menu-trigger:is(:hover, .is-open) { background: var(--hj-accent-soft); }
+html[data-theme='dark'] #root .hj-logo__mark { padding: 4px; border-radius: 10px; background: #edf5ef; }
+
+/* Status needs its own paired foreground and fill, including non-button badges. */
+html[data-theme='dark'] #root .badge-blue { color: var(--maps-blue-text); background: var(--maps-blue-soft); }
+html[data-theme='dark'] #root .badge-green { color: #b7edce; background: #214c3d; }
+html[data-theme='dark'] #root .badge-gray { color: #c3d1da; background: #2a414f; }
+html[data-theme='dark'] #root .admin-tab-badge { color: #ffd0d2; background: #60323d; }
+html[data-theme='dark'] #root .admin-terminate-panel { color: var(--text-primary); background: #3d2730; border-color: #935260; }
+html[data-theme='dark'] #root .admin-report-target-placeholder { color: #f4d394; background: #423b2c; }
+
+/* Dense review screens need quiet hierarchy rather than reflective capsules. */
+html[data-theme='dark'] #root :is(.admin-item, .admin-analytics__panel, .admin-maintenance-card) {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+html[data-theme='dark'] #root .admin-report-item { border-left-color: #8ebcff; }
+html[data-theme='dark'] #root .admin-workspace .liquid-tabs { border-radius: 14px; background: var(--surface); border: 1px solid var(--border); padding: 5px; min-height: 52px; }
+html[data-theme='dark'] #root .admin-workspace .liquid-tabs::before,
+html[data-theme='dark'] #root .admin-workspace .liquid-tabs__lens { display: none; }
+html[data-theme='dark'] #root .admin-workspace .liquid-tabs > button[role='tab'][aria-selected] { color: var(--text-secondary); border-radius: 9px; }
+html[data-theme='dark'] #root .admin-workspace .liquid-tabs > button[role='tab'][aria-selected='true'] { background: var(--hj-accent-soft); color: #c3f3f4; border-color: #5c9aa3; }
+html[data-theme='dark'] #root .admin-workspace .liquid-tabs > button[role='tab']:focus-visible { outline-color: var(--hj-accent); }
+html[data-theme='dark'] #root :is(.admin-actions, .admin-report-actions, .admin-maintenance-card) :is(button, .btn) {
+  background-image: none;
+  background-color: var(--surface-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+html[data-theme='dark'] #root :is(.admin-actions, .admin-report-actions, .admin-maintenance-card) .btn-primary { background: #23616a; color: #f0ffff; border-color: #67b5bd; }
+html[data-theme='dark'] #root :is(.admin-actions, .admin-report-actions) .btn-danger { background: #61313c; color: #ffd0d2; border-color: #ac6776; }
+html[data-theme='dark'] #root :is(.admin-actions, .admin-report-actions, .admin-maintenance-card) button:hover:not(:disabled) { border-color: var(--hj-accent); }
+html[data-theme='dark'] #root :is(.form-input, .form-select, .form-textarea, .interest-content input:not([type='checkbox'])) {
+  background: var(--surface-input);
+  color: var(--text-primary);
+  border-color: #56717f;
+}
+html[data-theme='dark'] #root :is(input, textarea)::placeholder { color: #afc1cd; opacity: 1; }
+html[data-theme='dark'] #root :is(input, select, textarea, a, button):focus-visible { outline: 2px solid #91e4e6; outline-offset: 3px; }
+html[data-theme='dark'] #root .form-select option { background: var(--surface-elevated); color: var(--text-primary); }
+html[data-theme='dark'] #root :is(.payment-current, .wallet-summary__available) { background: #204f59; color: #effcff; }
+html[data-theme='dark'] #root .payment-current__benefit p { color: #d2e9ef; }
+html[data-theme='dark'] #root .map-messages.is-workspace .map-messages__bubble.is-mine { background: #235861; color: #f0ffff; }
+html[data-theme='dark'] #root .map-messages.is-workspace .map-messages__bubble.is-mine :is(p, time) { color: #f0ffff; }
+
+/* New-room dialog participates in the same theme rather than retaining teal ink. */
+html[data-theme='dark'] #root .interest-launch { color: var(--text-primary); background: var(--surface-elevated); border-color: var(--border); }
+html[data-theme='dark'] #root .interest-launch span { color: #b7edce; background: #214c3d; }
+html[data-theme='dark'] #root .interest-dialog { color: var(--text-primary); border-color: var(--border); }
+html[data-theme='dark'] #root .interest-dialog :is(header, footer, section, article, fieldset) { border-color: var(--border); }
+html[data-theme='dark'] #root .interest-dialog header p { color: var(--hj-accent); }
+html[data-theme='dark'] #root .interest-dialog a { color: #add0ff; }
+html[data-theme='dark'] #root .interest-dialog button { color: var(--text-primary); background-color: var(--surface-input); border-color: var(--border); }
+html[data-theme='dark'] #root :is(.interest-error, .interest-warning) { background: #443422; color: #ffe1b3; }
+
+@media (forced-colors: active) {
+  html[data-theme='dark'] #root :is(.hj-mega__link, .badge-blue, .badge-green, .badge-gray) { color: CanvasText; background: Canvas; }
+  html[data-theme='dark'] #root :is(input, select, textarea, a, button):focus-visible { outline-color: Highlight; }
+}

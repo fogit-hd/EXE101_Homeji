@@ -342,7 +342,7 @@ export function AdminModerationPage() {
   )
 
   return (
-    <PageFrame title="Điều hành Homeji" lead="Theo dõi sản phẩm, thị trường và vận hành trên cùng một màn hình." filters={adminTabs} className="account-surface">
+    <PageFrame title="Điều hành Homeji" lead="Theo dõi sản phẩm, thị trường và vận hành trên cùng một màn hình." filters={adminTabs} className="account-surface admin-workspace">
       <Link to="/?section=listings&view=map">Mở trải nghiệm khách hàng</Link>
       <PageNotice message={error || (loadError && !disrupted ? loadError : '')} tone="error" />
       <PageNotice message={message} tone="success" />
