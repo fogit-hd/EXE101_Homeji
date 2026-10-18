@@ -18,6 +18,7 @@ const fixtureRoute = route => {
   if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/hubs/')) return route.continue()
   if (url.pathname.startsWith('/hubs/')) return route.fulfill({status:503,body:''})
   if(url.pathname==='/api/admin/analytics/product')return route.fulfill({status:503,json:{detail:'Fixture analytics unavailable'}})
+  if(url.pathname==='/api/search-interests')return route.fulfill({json:{settings:{enabled:false,aiEnabled:false,emailEnabled:false},suggestions:[],following:[],rooms:[]}})
   let json = []
   if (url.pathname === '/api/profile/me') json = {id,displayName:'Nguyễn Văn An',role:profileRole,onboardingCompleted:true,isPremium:false}
   if (url.pathname === '/api/wallet') json = {userId:id,balance:350000,isActivated:true}
@@ -27,7 +28,7 @@ const fixtureRoute = route => {
 }
 await context.route('**/*', fixtureRoute)
 const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message))
-async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click();await page.locator('.hj-intro').waitFor({state:'hidden'})}
+async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click({timeout:1500}).catch(async error=>{if(await skip.isVisible())throw error});await page.locator('.hj-intro').waitFor({state:'hidden'})}
 async function aligned(list){await page.waitForFunction(label=>{const root=[...document.querySelectorAll('.liquid-tabs')].find(e=>e.getAttribute('aria-label')===label);const active=root?.querySelector('[aria-selected="true"]');const lens=root?.querySelector('.liquid-tabs__lens');if(!active||!lens||root.dataset.lensEngaged)return false;const a=active.getBoundingClientRect(),l=lens.getBoundingClientRect(),box=root.getBoundingClientRect();return Math.abs(a.x-l.x)<2&&Math.abs(a.width-l.width)<2&&Math.abs(l.height-a.height)<2&&l.top>=box.top-1&&l.bottom<=box.bottom+1},await list.getAttribute('aria-label'))}
 try{
  await page.goto(base+'/?section=profile');await ready();const profile=page.getByRole('tablist',{name:'Phần hồ sơ',exact:true});await aligned(profile);assert.ok(await profile.evaluate(e=>e.scrollWidth<=e.clientWidth),'Two profile tabs must both fit without clipping')
@@ -107,7 +108,7 @@ try{
  await touchContext.addInitScript(id=>{localStorage.setItem('homeji_access_token','theme-fixture');localStorage.setItem('homeji_user_id',id)},id)
  await touchContext.route('**/*',fixtureRoute)
  const touchPage=await touchContext.newPage();touchPage.on('pageerror',error=>errors.push(error.message))
- await touchPage.goto(base+'/?section=profile');await touchPage.getByRole('tablist',{name:'Phần hồ sơ',exact:true}).waitFor();const touchSkip=touchPage.getByRole('button',{name:'Bỏ qua',exact:true});if(await touchSkip.isVisible())await touchSkip.click();await touchPage.locator('.hj-intro').waitFor({state:'hidden'})
+ await touchPage.goto(base+'/?section=profile');await touchPage.getByRole('tablist',{name:'Phần hồ sơ',exact:true}).waitFor();const touchSkip=touchPage.getByRole('button',{name:'Bỏ qua',exact:true});if(await touchSkip.isVisible())await touchSkip.click({timeout:1500}).catch(async error=>{if(await touchSkip.isVisible())throw error});await touchPage.locator('.hj-intro').waitFor({state:'hidden'})
  const touchBasic=touchPage.getByRole('tab',{name:'Cơ bản',exact:true}),touchLife=touchPage.getByRole('tab',{name:'Lối sống',exact:true})
  await touchBasic.scrollIntoViewIfNeeded()
  const from=await touchBasic.boundingBox(),to=await touchLife.boundingBox()
