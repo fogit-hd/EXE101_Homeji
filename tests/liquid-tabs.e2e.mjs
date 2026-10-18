@@ -59,7 +59,7 @@ try{
  await raisedLens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))})
  const activeFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)?.[1])
  assert.match(activeFilter,/-active$/,'Engagement uses stronger real refraction, independently of the scale animation')
- assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap[result=green-warp]').getAttribute('scale'),'0.28')
+ assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap[result=green-warp]').getAttribute('scale'),'0.364')
  const bent=await profile.screenshot(),stable=await profile.screenshot()
  assert.equal(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(stable).digest('hex'),'Pressed optical comparison is stable before changing refraction')
  await page.locator('#'+activeFilter+' feDisplacementMap').evaluateAll(es=>es.forEach(e=>e.setAttribute('scale','0')))

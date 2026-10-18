@@ -25,3 +25,26 @@
   .hj-ai-btn { width: 34px; padding: 0; justify-content: center; }
   .hj-ai-btn__label { display: none; }
 }
+
+/* A clear optical center with seven moving edge lights, not an opaque rainbow fill. */
+#root button.hj-ai-btn {
+  position: relative; isolation: isolate; border-color: transparent;
+  background: rgb(255 255 255 / .025); color: var(--text-heading);
+  box-shadow: inset 0 1px 1px #ffffff90, -1px 0 6px #f45b782e,1px 0 6px #7376f02e,0 2px 5px #102e2420;
+}
+#root .hj-ai-btn__spectrum {
+  position: absolute; inset: -1px; z-index: 12; pointer-events: none; border-radius: inherit; padding: 1.5px;
+  background: conic-gradient(from var(--ai-border-angle),var(--ai-spectrum-colors));
+  -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: ai-spectrum-orbit 6s linear infinite;
+}
+#root button.hj-ai-btn:is(:hover,.is-open) { box-shadow: inset 0 1px 1px #ffffff90,-2px 0 9px #f45b7845,2px 0 9px #7376f045,0 2px 7px #38bce838; }
+#root .hj-ai-btn.is-open .hj-ai-btn__spectrum { animation-duration: 3s; }
+@media(prefers-reduced-motion:reduce) { #root .hj-ai-btn__spectrum { animation: none; } }
+@media(forced-colors:active) {
+  #root .hj-ai-btn__spectrum { display: none; }
+  #root button.hj-ai-btn { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; }
+}
