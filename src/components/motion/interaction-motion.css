@@ -22,7 +22,7 @@
 
 @media all {
   :is(.btn, .auth-cinema__submit, .marketplace-header button, .roommate-people button, [role="tab"]) {
-    transition: scale var(--motion-press) var(--motion-ease), transform 180ms var(--motion-ease), background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    transition: scale 300ms var(--glass-spring,var(--motion-ease)), transform 180ms var(--motion-ease), background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   }
   :is(.btn, .auth-cinema__submit, .marketplace-header button, .roommate-people button, [role="tab"]):active:not(:disabled):not([aria-disabled="true"]) {
     scale: .975;
@@ -107,3 +107,7 @@
 
 /* Scroll reveal pre-state: only for nodes registered below the fold (never above-the-fold content). */
 .hj-pre-reveal { opacity: 0; }
+
+@media(prefers-reduced-motion:reduce) {
+  :is(.btn,.auth-cinema__submit,.marketplace-header button,.roommate-people button,[role="tab"]) { transition-duration: 0s; }
+}

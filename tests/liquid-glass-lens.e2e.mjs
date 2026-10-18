@@ -32,7 +32,7 @@ try {
   await page.evaluate(() => document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0')))
   const flat = await page.locator('.scene').screenshot({ animations: 'disabled' })
   assert.notEqual(createHash('sha256').update(lens).digest('hex'), createHash('sha256').update(flat).digest('hex'), 'Changing only lens displacement must change actual backdrop pixels')
-  await page.evaluate(() => document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0.24')))
+  await page.evaluate(() => document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0.10')))
   await page.setViewportSize({ width: 390, height: 844 })
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
   await page.screenshot({ path: new URL('homeji-clear-glass-mobile.png', out).pathname.slice(1), animations: 'disabled' })

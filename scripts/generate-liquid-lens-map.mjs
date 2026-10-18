@@ -34,7 +34,7 @@ for (const ratio of [1, 2, 3, 4, 6, 10]) {
       const distance = Math.hypot(dx, dy)
       const radius = Math.min(1, distance / .5)
       // The center is optically calm. Curvature rises through the outer rim.
-      const rim = radius ** 3.5
+      const rim = radius ** 5
       const offset = y * (width * 4 + 1) + 1 + x * 4
       rows[offset] = Math.round(127.5 - (distance ? dx / distance : 0) * rim * 98 / ratio)
       rows[offset + 1] = Math.round(127.5 - (distance ? dy / distance : 0) * rim * 98)

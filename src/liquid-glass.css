@@ -1,15 +1,19 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: rgb(255 255 255 / .09);
+  --glass-tint: rgb(255 255 255 / .04);
   --glass-border: rgb(161 187 187 / .48);
   --glass-panel: rgb(249 253 251 / .9);
-  --glass-edge: rgb(255 255 255 / .92);
+  --glass-edge: rgb(255 255 255 / .72);
   --glass-shadow: rgb(25 63 61 / .1);
   --glass-ink: #183b46;
+  --glass-spring: cubic-bezier(.22,.9,.3,1.06);
   --glass-action: rgb(8 127 140 / .16);
   --glass-danger: rgb(255 220 224 / .8);
   --glass-danger-ink: #a3212e;
+}
+@supports (animation-timing-function: linear(0,1)) {
+  :root { --glass-spring: linear(0, .23 12%, .65 28%, .91 44%, 1.035 60%, .99 80%, 1); }
 }
 html[data-theme='dark'] {
   --glass-tint: rgb(207 231 229 / .055);
@@ -36,8 +40,8 @@ html[data-theme='dark'] {
   .btn, .liquid-action, :where(.guest-fixed-cta > span), .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *)) {
   --glass-fill: var(--glass-tint);
   background-color: var(--glass-fill);
-  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .2), transparent 43%),
-    linear-gradient(155deg, rgb(255 255 255 / .14), transparent 25% 75%, rgb(255 255 255 / .09));
+  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .12), transparent 43%),
+    linear-gradient(155deg, rgb(255 255 255 / .08), transparent 25% 75%, rgb(255 255 255 / .04));
   color: var(--glass-ink);
   text-shadow: none;
   border: 1px solid var(--glass-border);
@@ -45,9 +49,9 @@ html[data-theme='dark'] {
     inset 2px 0 3px -2px rgb(255 255 255 / .65),
     inset -1px 0 2px -1px rgb(255 255 255 / .4),
     inset 0 -3px 4px -3px rgb(255 255 255 / .65),
-    0 2px 3px rgb(12 35 35 / .1), 0 7px 16px -8px rgb(12 35 35 / .32));
-  -webkit-backdrop-filter: var(--glass-idle-filter, var(--glass-lens-filter, blur(1.2px) saturate(1.08)));
-  backdrop-filter: var(--glass-idle-filter, var(--glass-lens-filter, blur(1.2px) saturate(1.08)));
+    0 2px 3px rgb(12 35 35 / .1), 0 6px 14px -8px rgb(12 35 35 / .24));
+  -webkit-backdrop-filter: var(--glass-idle-filter, var(--glass-lens-filter, blur(.35px) saturate(1.04)));
+  backdrop-filter: var(--glass-idle-filter, var(--glass-lens-filter, blur(.35px) saturate(1.04)));
   background-clip: padding-box;
 }
 /* Material is universal; only ordinary action controls become capsules.

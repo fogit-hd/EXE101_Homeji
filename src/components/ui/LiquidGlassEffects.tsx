@@ -9,9 +9,9 @@ import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeo
 
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
 const lensVariants = [
-  { variant: 'control', state: 'rest', depth: .24, blur: .014 },
-  { variant: 'tab-rest', state: 'tab-rest', depth: .08, blur: .006 },
-  { variant: 'tab-active', state: 'active', depth: .16, blur: .006 },
+  { variant: 'control', state: 'rest', depth: .10, blur: 0 },
+  { variant: 'tab-rest', state: 'tab-rest', depth: .035, blur: 0 },
+  { variant: 'tab-active', state: 'active', depth: .07, blur: 0 },
 ] as const
 const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role="button"], [role="menuitem"], [data-glass-lens]'
 

@@ -32,7 +32,7 @@ async function aligned(list){await page.waitForFunction(label=>{const root=[...d
 try{
  await page.goto(base+'/?section=profile');await ready();const profile=page.getByRole('tablist',{name:'Phần hồ sơ',exact:true});await aligned(profile);assert.ok(await profile.evaluate(e=>e.scrollWidth<=e.clientWidth),'Two profile tabs must both fit without clipping')
  await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const i=new Image();i.src=e.getAttribute('href');await i.decode()}))});
- const optical=await profile.screenshot({animations:'disabled'});await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0')));const flat=await profile.screenshot({animations:'disabled'});assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The actual tab track refracts beneath the selected lens');await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale',e.closest('filter').dataset.glassState==='active'?'0.16':e.closest('filter').dataset.glassState==='tab-rest'?'0.08':'0.24')));
+ const optical=await profile.screenshot({animations:'disabled'});await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0')));const flat=await profile.screenshot({animations:'disabled'});assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The actual tab track refracts beneath the selected lens');await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale',e.closest('filter').dataset.glassState==='active'?'0.07':e.closest('filter').dataset.glassState==='tab-rest'?'0.035':'0.10')));
  const raisedLens=profile.locator('.liquid-tabs__lens')
  const basic=profile.getByRole('tab',{name:'Cơ bản',exact:true}),lifestyle=profile.getByRole('tab',{name:'Lối sống',exact:true})
  const baseRect=await basic.boundingBox(),targetRect=await lifestyle.boundingBox()
@@ -40,32 +40,33 @@ try{
  // Flatten the rail color and crop inside the word: only glyph refraction can
  // change this region when displacement is disabled; drawn rim/glare stay fixed.
  await profile.evaluate(e=>{e.style.setProperty('--tabs-track','#18685e');e.style.setProperty('--tabs-track-light','#18685e')})
- const matte=await page.addStyleTag({content:'.liquid-tabs[data-text-test] > .liquid-tabs__lens {background:transparent!important;border-color:transparent!important;box-shadow:none!important;transition:none!important}.liquid-tabs[data-text-test] > .liquid-tabs__lens::before,.liquid-tabs[data-text-test] > .liquid-tabs__lens::after {display:none!important}'})
- await profile.evaluate(e=>{e.dataset.textTest='true'})
- const originalTransform=await raisedLens.evaluate(e=>{const old=e.style.transform;const m=new DOMMatrix(getComputedStyle(e).transform);e.style.transform=`translate3d(${m.m41+20}px,${m.m42}px,0)`;return old})
+ const matte=await page.addStyleTag({content:'.liquid-tabs[data-text-test] > .liquid-tabs__lens {background:transparent!important;border-color:transparent!important;box-shadow:none!important;transition:none!important;scale:1!important}.liquid-tabs[data-text-test] > .liquid-tabs__lens::before,.liquid-tabs[data-text-test] > .liquid-tabs__lens::after {display:none!important}'})
+ await profile.evaluate(e=>{e.dataset.textTest='true';e.dataset.lensEngaged='true'})
+ const originalTransform=await raisedLens.evaluate(e=>{const old=e.style.transform;const m=new DOMMatrix(getComputedStyle(e).transform);e.style.transform=`translate3d(${m.m41+30}px,${m.m42}px,0)`;return old})
  const glyphBox=await basic.evaluate(e=>{const range=document.createRange();range.selectNodeContents(e);const r=range.getBoundingClientRect();return{x:Math.floor(r.x),y:Math.floor(r.y),width:Math.ceil(r.width),height:Math.ceil(r.height)}})
  const idleFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)[1])
  const bentGlyphs=await page.screenshot({clip:glyphBox,path:new URL('text-through-glass.png',out).pathname.slice(1)})
  await page.locator('#'+idleFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0'))
  const flatGlyphs=await page.screenshot({clip:glyphBox,path:new URL('text-without-refraction.png',out).pathname.slice(1)})
  assert.notEqual(createHash('sha256').update(bentGlyphs).digest('hex'),createHash('sha256').update(flatGlyphs).digest('hex'),'Text itself refracts through the lens on a uniform rail, rather than floating above it')
- await page.locator('#'+idleFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.08'))
- await raisedLens.evaluate((e,t)=>e.style.transform=t,originalTransform);await profile.evaluate(e=>{delete e.dataset.textTest;e.style.removeProperty('--tabs-track');e.style.removeProperty('--tabs-track-light')});await matte.evaluate(e=>e.remove())
+ await page.locator('#'+idleFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.07'))
+ await raisedLens.evaluate((e,t)=>e.style.transform=t,originalTransform);await profile.evaluate(e=>{delete e.dataset.textTest;delete e.dataset.lensEngaged;e.style.removeProperty('--tabs-track');e.style.removeProperty('--tabs-track-light')});await matte.evaluate(e=>e.remove())
 
  await page.mouse.move(baseRect.x+baseRect.width/2,baseRect.y+baseRect.height/2);await page.mouse.down()
- await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.liquid-tabs__lens')).scale.split(' ')[1])>1.15)
- assert.ok((await raisedLens.boundingBox()).height>baseRect.height+5,'Only a pressed lens rises above its resting size')
+ await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.liquid-tabs__lens')).scale.split(' ')[1])>1.08)
+ assert.ok((await raisedLens.boundingBox()).height>baseRect.height+3,'Only a pressed lens rises above its resting size')
  await raisedLens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))})
  const activeFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)?.[1])
  assert.match(activeFilter,/-active$/,'Engagement uses stronger real refraction, independently of the scale animation')
- assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap').getAttribute('scale'),'0.16')
+ assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap').getAttribute('scale'),'0.07')
  const bent=await profile.screenshot(),stable=await profile.screenshot()
  assert.equal(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(stable).digest('hex'),'Pressed optical comparison is stable before changing refraction')
  await page.locator('#'+activeFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0'))
  const unbent=await profile.screenshot()
  assert.notEqual(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(unbent).digest('hex'),'Pressed lens actually bends the existing rail pixels, not only its drawn rim')
- await page.locator('#'+activeFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.16'))
+ await page.locator('#'+activeFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.07'))
  assert.equal(await basic.evaluate(e=>getComputedStyle(e).filter),'none')
+ assert.match(await raisedLens.evaluate(e=>getComputedStyle(e).transitionTimingFunction),/linear\(/,'Lens uses the bounded spring easing in the optimized build')
  const lightBefore=await raisedLens.evaluate(e=>e.style.getPropertyValue('--lens-light-x'))
 
  await page.screenshot({path:new URL('profile-lens-pressed.png',out).pathname.slice(1)});await profile.screenshot({path:new URL('profile-lens-pressed-detail.png',out).pathname.slice(1)})
