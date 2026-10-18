@@ -52,8 +52,8 @@ export function ForgotPasswordPage() {
           <input id="recovery-email" className="form-input" type="email" autoComplete="email" maxLength={254} required value={email} readOnly={sent} disabled={loading} onChange={event => setEmail(event.target.value)} />
         </div>
         {sent && <>
-          <div className="form-group"><label className="form-label" htmlFor="recovery-code">Mã OTP</label>
-            <input ref={codeInput} id="recovery-code" className="form-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,10}" minLength={6} maxLength={10} required value={code} disabled={loading} onChange={event => setCode(event.target.value.replace(/\D/g, ''))} />
+          <div className="form-group"><label className="form-label" htmlFor="recovery-code">Mã OTP (6 chữ số)</label>
+            <input ref={codeInput} id="recovery-code" className="form-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required value={code} disabled={loading} onChange={event => setCode(event.target.value.replace(/\D/g, ''))} />
           </div>
           <div className="form-group"><label className="form-label" htmlFor="recovery-password">Mật khẩu mới</label>
             <input id="recovery-password" className="form-input" type="password" autoComplete="new-password" minLength={6} maxLength={128} required value={password} disabled={loading} onChange={event => setPassword(event.target.value)} />

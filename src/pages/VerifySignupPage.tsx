@@ -69,9 +69,9 @@ export function VerifySignupPage() {
     <form onSubmit={submit} style={{ display: 'grid', gap: 16 }}>
       <label className="form-label">Email đăng ký<input className="form-input" type="email" autoComplete="email" required maxLength={254} value={email} disabled={busy}
         onChange={event => { setEmail(event.target.value); setCode(''); setError(''); setMessage('') }} /></label>
-      <label className="form-label">Mã OTP<input className="form-input" type="text" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6,10}"
+      <label className="form-label">Mã OTP (6 chữ số)<input className="form-input" type="text" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}"
         aria-describedby={error ? 'signup-otp-error' : undefined}
-        minLength={6} maxLength={10} value={code} disabled={busy} onChange={event => setCode(event.target.value.replace(/\D/g, ''))} /></label>
+        minLength={6} maxLength={6} value={code} disabled={busy} onChange={event => setCode(event.target.value.replace(/\D/g, ''))} /></label>
       <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : 'Xác thực email'}</button>
       <button className="btn" type="button" disabled={busy || remaining > 0 || !email.trim()} onClick={() => void resend()}>
         {remaining > 0 ? `Gửi lại sau ${remaining}s` : 'Gửi lại mã OTP'}
