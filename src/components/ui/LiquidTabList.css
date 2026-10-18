@@ -1,4 +1,6 @@
-/* One translucent lens rides above a colored track, as in the reference.
+/* Keep the standard backdrop-filter AFTER its WebKit fallback: the production
+   optimizer can otherwise retain only the prefixed property, which Chrome ignores.
+   One translucent lens rides above a colored track, as in the reference.
    The labels are foreground siblings and are never blurred or displaced. */
 #root .liquid-tabs {
   --tabs-track: #18685e; --tabs-track-light: #398976; --tabs-ink: #fff;
@@ -22,7 +24,7 @@
   min-height: 42px; height: auto; width: auto; min-width: 80px; white-space: nowrap; padding: 9px 22px;
   margin: 0; border: 1px solid transparent; border-radius: 999px;
   background: transparent; background-image: none; box-shadow: none;
-  backdrop-filter: none; -webkit-backdrop-filter: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   color: #ffffffb8; text-shadow: none; font: 550 13px/1.5 var(--font-ui);
   cursor: pointer; touch-action: pan-y; user-select: none; transform: none; transition: color 160ms ease;
 }
@@ -38,8 +40,8 @@
     linear-gradient(155deg,#ffffff14,transparent 32% 70%,#ffffff0a),#ffffff06;
   box-shadow: inset 0 2px 2px -1px #ffffffdb, inset 2px 0 3px -2px #fff,
     inset -2px -2px 4px -2px #ffffff85, 0 2px 2px #092c2726, 0 7px 15px -6px #092c2750;
-  backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))) saturate(1.1);
   -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))) saturate(1.1);
+  backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))) saturate(1.1);
 }
 #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens {
   transition: transform 420ms cubic-bezier(.2,.8,.2,1),width 420ms cubic-bezier(.2,.8,.2,1),height 220ms ease,scale 220ms cubic-bezier(.2,.8,.2,1);
@@ -71,8 +73,8 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 /* The lens only rises above the rail during a press, drag or click pulse. */
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens {
   scale: 1.035 1.2;
-  backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(.6px) saturate(1.15)));
   -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(.6px) saturate(1.15)));
+  backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(.6px) saturate(1.15)));
   box-shadow: inset 0 2px 3px -1px #ffffffc9,inset -2px -3px 6px -3px #ffffff8c,
     0 2px 2px #092c2730,0 9px 17px -7px #092c2770;
 }

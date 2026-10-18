@@ -49,3 +49,7 @@ Nguồn kỹ thuật chính thức:
 Không giữ lens phồng thường trực. Ảnh phồng chỉ mô tả trạng thái tương tác, không phải mặc định. Bộ nguồn Figma/Apple và giới hạn asset được ghi trong [nghiên cứu nguồn tương tác](research/liquid-glass-interactive-sources.md). Kiểm tra bổ sung trên trang hồ sơ thật với API fixture: chiều cao nghỉ bằng tab, giữ nhấn nở, kéo không đổi tab trước khi thả, thả chốt mục đích, cancel phục hồi, touch-drag ở 390px và nền ray ở mục cuối 320px.
 
 Kiểm chứng tương tác bổ sung: so sánh hai ảnh khối kính đang nhấn phải ổn định trước; sau đó chỉ đặt displacement của filter tương tác về 0 thì pixel ray thật phải đổi. Việc này tách bằng chứng khúc xạ khỏi animation scale và các lớp phản sáng vẽ bằng CSS. Phản sáng là mô phỏng bề mặt, còn displacement lấy nền DOM thật; trên ray một màu, mép giao với nền là nơi biến dạng dễ thấy nhất.
+
+### Bẫy tối ưu CSS của bản production
+
+Khai báo `-webkit-backdrop-filter` trước và `backdrop-filter` chuẩn sau. Thứ tự ngược khiến bản CSS tối ưu giữ riêng tiền tố WebKit; Chrome bỏ qua nên tab/switch chỉ còn viền sáng dù Vite dev vẫn có khúc xạ. Kiểm tra dev không đủ: sau `npm run build`, chạy `npm run preview -- --host 127.0.0.1 --port 5500 --strictPort`, đặt `HOMEJI_THEME_TEST_URL=http://127.0.0.1:5500` rồi chạy `node tests/liquid-tabs.e2e.mjs`. Bộ này kiểm tra filter tính toán, pixel khúc xạ thật và trạng thái tương tác trên CSS đã tối ưu. Cũng kiểm tra lại filter tính toán trên URL đã deploy.
