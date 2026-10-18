@@ -43,6 +43,13 @@ html[data-theme='dark'] #root :is(.hj-shell, .hj-bar) { background: var(--surfac
 html[data-theme='dark'] #root .hj-search__field { background: var(--surface-input); }
 html[data-theme='dark'] #root .hj-menu-trigger:is(:hover, .is-open) { background: var(--hj-accent-soft); }
 html[data-theme='dark'] #root .hj-logo__mark { padding: 4px; border-radius: 10px; background: #edf5ef; }
+html[data-theme='dark'] #root .hj-nrow.is-unread .hj-nrow__main { background: var(--hj-accent-soft); }
+html[data-theme='dark'] #root .hj-nrow__main:hover { background: var(--surface-input); }
+html[data-theme='dark'] #root :is(.hj-nrow__icon, .hj-nrow__read) { background: var(--surface-input); color: var(--text-primary); }
+html[data-theme='dark'] #root .hj-nrow__time { color: var(--text-secondary); }
+html[data-theme='dark'] #root .hj-nrow__sev { border-color: var(--surface-elevated); }
+html[data-theme='dark'] #root :is(.hj-notify__mark-all, .hj-notify__tabs button.is-active) { color: var(--hj-accent); }
+html[data-theme='dark'] #root :is(.hj-notify__empty-icon, .hj-notify__mark-all:hover:not(:disabled)) { color: var(--hj-accent); background: var(--hj-accent-soft); }
 
 /* Status needs its own paired foreground and fill, including non-button badges. */
 html[data-theme='dark'] #root .badge-blue { color: var(--maps-blue-text); background: var(--maps-blue-soft); }

@@ -49,6 +49,11 @@ test('secondary copy and input placeholders remain readable on elevated dark sur
   assert.ok(contrast(resolve(tokens['--text-secondary']),resolve(tokens['--surface-elevated']))>=4.5)
   assert.ok(contrast('#afc1cd',resolve(tokens['--surface-input']))>=4.5)
 })
+test('unread notification text is paired with a dark fill',()=>{
+  const fill=value(['.hj-nrow.is-unread .hj-nrow__main',"html[data-theme='dark'] #root .hj-nrow.is-unread .hj-nrow__main"],'background')
+  assert.ok(contrast(resolve(tokens['--text-primary']),fill)>=4.5)
+  assert.ok(contrast(resolve(tokens['--text-secondary']),fill)>=4.5)
+})
 test('final appearance layer is dark scoped and loaded after the shared glass material',()=>{
   const root=postcss.parse(fs.readFileSync('src/components/theme/dark-theme.css','utf8'))
   root.walkRules(rule=>assert.ok(rule.selectors.every(selector=>selector.startsWith("html[data-theme='dark']")),rule.selector))
