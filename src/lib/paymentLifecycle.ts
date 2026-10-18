@@ -1,15 +1,16 @@
-import type { Payment } from '../api/types'
+import { PaymentMethod, type Payment } from '../api/types.ts'
 
 export const PAYMENT_LIFETIME_MS = 15 * 60 * 1000
 
-export function paymentDeadline(payment: Pick<Payment, 'createdAt' | 'expiresAt'>): number | null {
+export function paymentDeadline(payment: Pick<Payment, 'createdAt' | 'expiresAt'> & Partial<Pick<Payment, 'method'>>): number | null {
+  if (payment.method === PaymentMethod.Wallet) return null
   const deadline = payment.expiresAt
     ? Date.parse(payment.expiresAt)
     : Date.parse(payment.createdAt) + PAYMENT_LIFETIME_MS
   return Number.isFinite(deadline) ? deadline : null
 }
 
-export function paymentSecondsLeft(payment: Pick<Payment, 'createdAt' | 'expiresAt'>, now: number): number | null {
+export function paymentSecondsLeft(payment: Pick<Payment, 'createdAt' | 'expiresAt'> & Partial<Pick<Payment, 'method'>>, now: number): number | null {
   const deadline = paymentDeadline(payment)
   return deadline === null ? null : Math.max(0, Math.ceil((deadline - now) / 1000))
 }

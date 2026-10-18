@@ -9,3 +9,8 @@ Sau thành công: số dư, lịch sử, quyền Premium và hồ sơ được t
 Backend: một transaction lưu debit, ledger, payment Paid, subscription và receipt/outbox; lỗi ở bất cứ bước nào rollback toàn bộ. Khóa theo người dùng và wallet Version bảo vệ yêu cầu đồng thời. Không có schema mới vì enum đã lưu dạng số nguyên.
 
 Kiểm tra PostgreSQL cục bộ: replay đồng thời, hai giao dịch tranh số dư, giá sai/thiếu tiền, rollback khi receipt lỗi, gia hạn và replay sau đổi giá. Tổng 462 unit + 188 integration, không lỗi/skip. Chưa kiểm tra UI thực tế trong lượt này do trình duyệt cục bộ bị tắt; chưa thực hiện thanh toán tiền thật production.
+
+
+Xác minh production 18/10/2026: API mới từ chối request ID rỗng và ví 0 đồng (400, trường wallet); lịch sử vẫn rỗng, tài khoản chưa có Premium. Tài khoản thử đã xóa. Tệp JS đang phục vụ có lựa chọn ví, bước xác nhận và cơ chế giữ request ID. Bundle intro đã có quy tắc 1x/3x.
+
+Bộ frontend tổng quát: 228/231 đạt; ba lỗi admin-assistant-entry, hub-palette, notification-popup tái hiện y hệt trên bản trước thay đổi này. Kiểm tra riêng intro/payment lifecycle: 9/9 đạt. Giao dịch ví thanh toán ngay không hiển thị hạn chờ cổng thanh toán 15 phút.

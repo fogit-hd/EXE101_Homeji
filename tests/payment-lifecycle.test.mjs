@@ -32,3 +32,8 @@ test('checkout rejects executable URLs, plain HTTP and embedded credentials', ()
   }
   assert.equal(safeCheckoutUrl('https://pay.payos.vn/test'), 'https://pay.payos.vn/test')
 })
+
+test('immediate wallet purchases have no gateway payment deadline', () => {
+  assert.equal(paymentDeadline({ createdAt, method: 3 }), null)
+  assert.equal(paymentSecondsLeft({ createdAt, method: 3 }, start), null)
+})
