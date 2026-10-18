@@ -10,8 +10,9 @@ test('lens shape follows round, capsule and wide controls',()=>{
  assert.equal(nearestLensRatio(720,48),10)
  assert.equal(glassLensId(3),'homeji-liquid-lens')
  assert.equal(glassLensId(1),'homeji-liquid-lens-1')
- assert.equal(glassLensId(3,true),'homeji-liquid-lens-active')
- assert.equal(glassLensId(2,true),'homeji-liquid-lens-2-active')
+ assert.equal(glassLensId(3,'tab-active'),'homeji-liquid-lens-active')
+ assert.equal(glassLensId(2,'tab-active'),'homeji-liquid-lens-2-active')
+ assert.equal(glassLensId(2,'tab-rest'),'homeji-liquid-lens-2-tab')
 })
 
 test('capsule maps leave the center calm and compensate horizontal width',async()=>{

@@ -8,6 +8,11 @@ import rowMap from './liquid-lens-map-10.png'
 import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeometry'
 
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
+const lensVariants = [
+  { variant: 'control', state: 'rest', depth: .24, blur: .014 },
+  { variant: 'tab-rest', state: 'tab-rest', depth: .08, blur: .006 },
+  { variant: 'tab-active', state: 'active', depth: .16, blur: .006 },
+] as const
 const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role="button"], [role="menuitem"], [data-glass-lens]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
@@ -29,9 +34,9 @@ export function LiquidGlassEffects() {
         pending.forEach(({ width, height }, element) => {
           if (!element.isConnected || !width || !height) return
           const ratio = nearestLensRatio(width, height)
-          const value = `url("#${glassLensId(ratio)}") saturate(1.08)`
+          const value = `url("#${glassLensId(ratio, element.classList.contains('liquid-tabs__lens') ? 'tab-rest' : 'control')}") saturate(1.08)`
           if (element.style.getPropertyValue('--glass-lens-filter') !== value) element.style.setProperty('--glass-lens-filter', value)
-          if (element.classList.contains('liquid-tabs__lens')) element.style.setProperty('--glass-lens-active-filter', `url("#${glassLensId(ratio, true)}") saturate(1.12)`)
+          if (element.classList.contains('liquid-tabs__lens')) element.style.setProperty('--glass-lens-active-filter', `url("#${glassLensId(ratio, 'tab-active')}") saturate(1.12)`)
         })
         pending.clear()
       })
@@ -61,11 +66,11 @@ export function LiquidGlassEffects() {
     }
   }, [])
   return <svg className="liquid-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <defs>{GLASS_LENS_RATIOS.flatMap(ratio => [false, true].map(engaged => <filter key={glassLensId(ratio, engaged)} id={glassLensId(ratio, engaged)} data-glass-state={engaged ? 'active' : 'rest'} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
+    <defs>{GLASS_LENS_RATIOS.flatMap(ratio => lensVariants.map(({ variant, state, depth, blur }) => <filter key={glassLensId(ratio, variant)} id={glassLensId(ratio, variant)} data-glass-state={state} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
       x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
       <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
-      <feGaussianBlur in="SourceGraphic" stdDeviation={`${(engaged ? .006 : .014) / ratio} ${engaged ? .006 : .014}`} result="scene" />
-      <feDisplacementMap in="scene" in2="lens" scale={engaged ? .42 : .24} xChannelSelector="R" yChannelSelector="G" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation={`${blur / ratio} ${blur}`} result="scene" />
+      <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" />
     </filter>))}</defs>
   </svg>
 }

@@ -11,13 +11,15 @@ const browser = await chromium.launch({ headless: true, executablePath: 'C:/Prog
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', reducedMotion: 'no-preference' })
 const id = '11111111-1111-4111-8111-111111111111'
 await context.addInitScript(id => { localStorage.setItem('homeji_access_token','theme-fixture');localStorage.setItem('homeji_user_id',id) }, id)
+let profileRole=1
 const fixtureRoute = route => {
   const url = new URL(route.request().url())
   if (url.origin !== new URL(base).origin) return route.abort()
   if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/hubs/')) return route.continue()
   if (url.pathname.startsWith('/hubs/')) return route.fulfill({status:503,body:''})
+  if(url.pathname==='/api/admin/analytics/product')return route.fulfill({status:503,json:{detail:'Fixture analytics unavailable'}})
   let json = []
-  if (url.pathname === '/api/profile/me') json = {id,displayName:'Nguyễn Văn An',role:1,onboardingCompleted:true,isPremium:false}
+  if (url.pathname === '/api/profile/me') json = {id,displayName:'Nguyễn Văn An',role:profileRole,onboardingCompleted:true,isPremium:false}
   if (url.pathname === '/api/wallet') json = {userId:id,balance:350000,isActivated:true}
   if (url.pathname === '/api/chatbot/popup-config') json = {enabled:false}
   if (url.pathname === '/api/subscriptions/me') json = {tier:1,isPremium:false,packageCode:'free'}
@@ -30,23 +32,39 @@ async function aligned(list){await page.waitForFunction(label=>{const root=[...d
 try{
  await page.goto(base+'/?section=profile');await ready();const profile=page.getByRole('tablist',{name:'Phần hồ sơ',exact:true});await aligned(profile);assert.ok(await profile.evaluate(e=>e.scrollWidth<=e.clientWidth),'Two profile tabs must both fit without clipping')
  await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const i=new Image();i.src=e.getAttribute('href');await i.decode()}))});
- const optical=await profile.screenshot({animations:'disabled'});await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0')));const flat=await profile.screenshot({animations:'disabled'});assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The actual tab track refracts beneath the selected lens');await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale',e.closest('filter').dataset.glassState==='active'?'0.42':'0.24')));
+ const optical=await profile.screenshot({animations:'disabled'});await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0')));const flat=await profile.screenshot({animations:'disabled'});assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The actual tab track refracts beneath the selected lens');await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale',e.closest('filter').dataset.glassState==='active'?'0.16':e.closest('filter').dataset.glassState==='tab-rest'?'0.08':'0.24')));
  const raisedLens=profile.locator('.liquid-tabs__lens')
  const basic=profile.getByRole('tab',{name:'Cơ bản',exact:true}),lifestyle=profile.getByRole('tab',{name:'Lối sống',exact:true})
  const baseRect=await basic.boundingBox(),targetRect=await lifestyle.boundingBox()
+ assert.ok(await raisedLens.evaluate(e=>Number(getComputedStyle(e).zIndex)>Number(getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex)),'The optical face is painted above real labels')
+ // Flatten the rail color and crop inside the word: only glyph refraction can
+ // change this region when displacement is disabled; drawn rim/glare stay fixed.
+ await profile.evaluate(e=>{e.style.setProperty('--tabs-track','#18685e');e.style.setProperty('--tabs-track-light','#18685e')})
+ const matte=await page.addStyleTag({content:'.liquid-tabs[data-text-test] > .liquid-tabs__lens {background:transparent!important;border-color:transparent!important;box-shadow:none!important;transition:none!important}.liquid-tabs[data-text-test] > .liquid-tabs__lens::before,.liquid-tabs[data-text-test] > .liquid-tabs__lens::after {display:none!important}'})
+ await profile.evaluate(e=>{e.dataset.textTest='true'})
+ const originalTransform=await raisedLens.evaluate(e=>{const old=e.style.transform;const m=new DOMMatrix(getComputedStyle(e).transform);e.style.transform=`translate3d(${m.m41+20}px,${m.m42}px,0)`;return old})
+ const glyphBox=await basic.evaluate(e=>{const range=document.createRange();range.selectNodeContents(e);const r=range.getBoundingClientRect();return{x:Math.floor(r.x),y:Math.floor(r.y),width:Math.ceil(r.width),height:Math.ceil(r.height)}})
+ const idleFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)[1])
+ const bentGlyphs=await page.screenshot({clip:glyphBox,path:new URL('text-through-glass.png',out).pathname.slice(1)})
+ await page.locator('#'+idleFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0'))
+ const flatGlyphs=await page.screenshot({clip:glyphBox,path:new URL('text-without-refraction.png',out).pathname.slice(1)})
+ assert.notEqual(createHash('sha256').update(bentGlyphs).digest('hex'),createHash('sha256').update(flatGlyphs).digest('hex'),'Text itself refracts through the lens on a uniform rail, rather than floating above it')
+ await page.locator('#'+idleFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.08'))
+ await raisedLens.evaluate((e,t)=>e.style.transform=t,originalTransform);await profile.evaluate(e=>{delete e.dataset.textTest;e.style.removeProperty('--tabs-track');e.style.removeProperty('--tabs-track-light')});await matte.evaluate(e=>e.remove())
+
  await page.mouse.move(baseRect.x+baseRect.width/2,baseRect.y+baseRect.height/2);await page.mouse.down()
  await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.liquid-tabs__lens')).scale.split(' ')[1])>1.15)
  assert.ok((await raisedLens.boundingBox()).height>baseRect.height+5,'Only a pressed lens rises above its resting size')
  await raisedLens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))})
  const activeFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)?.[1])
  assert.match(activeFilter,/-active$/,'Engagement uses stronger real refraction, independently of the scale animation')
- assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap').getAttribute('scale'),'0.42')
+ assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap').getAttribute('scale'),'0.16')
  const bent=await profile.screenshot(),stable=await profile.screenshot()
  assert.equal(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(stable).digest('hex'),'Pressed optical comparison is stable before changing refraction')
  await page.locator('#'+activeFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0'))
  const unbent=await profile.screenshot()
  assert.notEqual(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(unbent).digest('hex'),'Pressed lens actually bends the existing rail pixels, not only its drawn rim')
- await page.locator('#'+activeFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.42'))
+ await page.locator('#'+activeFilter+' feDisplacementMap').evaluate(e=>e.setAttribute('scale','0.16'))
  assert.equal(await basic.evaluate(e=>getComputedStyle(e).filter),'none')
  const lightBefore=await raisedLens.evaluate(e=>e.style.getPropertyValue('--lens-light-x'))
 
@@ -101,5 +119,23 @@ try{
  await touchPage.waitForFunction(()=>!document.querySelector('.liquid-tabs').dataset.lensEngaged)
  await touchPage.screenshot({path:new URL('touch-drag-settled-390.png',out).pathname.slice(1),fullPage:true})
  await touchContext.close()
- assert.deepEqual(errors,[]);console.log('PASS: resting lens fits rail, press grows, drag commits on release, cancellation restores, same lens follows selection and keyboard, correct geometry at 320/390/1440, actual profile/payment/market tabs and select, forced-colors/reduced-motion')
+ await page.emulateMedia({forcedColors:'none',reducedMotion:'no-preference'});await page.setViewportSize({width:1280,height:800});profileRole=3
+ await page.goto(base+'/admin');await ready()
+ const admin=page.getByRole('tablist',{name:'Mục quản trị',exact:true});await admin.waitFor()
+ const pending=admin.getByRole('tab',{name:'Tin chờ duyệt (0)',exact:true}),verification=admin.getByRole('tab',{name:'Xác minh chủ nhà (0)',exact:true}),withdraw=admin.getByRole('tab',{name:'Rút tiền (0)',exact:true})
+ await pending.click();await aligned(admin);await admin.screenshot({path:new URL('admin-pending-rest.png',out).pathname.slice(1)})
+ const pa=await pending.boundingBox(),ve=await verification.boundingBox()
+ await page.mouse.move(pa.x+pa.width/2,pa.y+pa.height/2);await page.mouse.down();await page.mouse.move(ve.x+ve.width*.25,ve.y+ve.height/2,{steps:8})
+ await admin.locator('.liquid-tabs__lens').evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))})
+ await admin.screenshot({path:new URL('admin-labels-through-glass.png',out).pathname.slice(1)});await page.mouse.up();await aligned(admin)
+ await withdraw.click();await aligned(admin);await admin.screenshot({path:new URL('admin-withdraw-rest.png',out).pathname.slice(1)})
+ await page.screenshot({path:new URL('admin-context.png',out).pathname.slice(1)})
+ for(const width of [390,320]){
+  await page.setViewportSize({width,height:844})
+  for(const target of [pending,verification,withdraw]){await target.click();await aligned(admin)}
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Admin tabs fit '+width)
+  await admin.screenshot({path:new URL('admin-withdraw-'+width+'.png',out).pathname.slice(1)})
+ }
+
+ assert.deepEqual(errors,[]);console.log('PASS: actual text refracts beneath lens, long admin labels at 320/390/1280, resting lens fits rail, press grows, drag commits on release, cancellation restores, same lens follows selection and keyboard, correct geometry at 320/390/1440, actual profile/payment/market tabs and select, forced-colors/reduced-motion')
 }finally{await browser.close()}

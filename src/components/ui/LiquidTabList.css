@@ -1,7 +1,7 @@
 /* Keep the standard backdrop-filter AFTER its WebKit fallback: the production
    optimizer can otherwise retain only the prefixed property, which Chrome ignores.
    One translucent lens rides above a colored track, as in the reference.
-   The labels are foreground siblings and are never blurred or displaced. */
+   Labels are painted beneath the optical face so the lens refracts the text it passes over. */
 #root .liquid-tabs {
   --tabs-track: #18685e; --tabs-track-light: #398976; --tabs-ink: #fff;
   position: relative; isolation: isolate; display: flex; align-items: center;
@@ -34,12 +34,12 @@
 #root .liquid-tabs > button[role='tab']:focus-visible { outline: 2px solid var(--tabs-ink); outline-offset: -4px; }
 #root .liquid-tabs > button[role='tab']:disabled { opacity: .4; cursor: not-allowed; }
 #root .liquid-tabs > .liquid-tabs__lens {
-  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none;
   border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff48;
-  background: radial-gradient(ellipse at var(--lens-light-x,22%) -30%,#ffffff4d,transparent 60%),
-    linear-gradient(155deg,#ffffff14,transparent 32% 70%,#ffffff0a),#ffffff06;
-  box-shadow: inset 0 2px 2px -1px #ffffffdb, inset 2px 0 3px -2px #fff,
-    inset -2px -2px 4px -2px #ffffff85, 0 2px 2px #092c2726, 0 7px 15px -6px #092c2750;
+  background: radial-gradient(ellipse at var(--lens-light-x,22%) -30%,#ffffff1f,transparent 60%),
+    linear-gradient(155deg,#ffffff0a,transparent 32% 70%,#ffffff05),#ffffff03;
+  box-shadow: inset 0 1px 1px #ffffff78, inset 1px 0 2px -1px #ffffff60,
+    inset -1px -1px 2px -1px #ffffff48, 0 2px 2px #092c2726, 0 7px 15px -6px #092c2750;
   -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))) saturate(1.1);
   backdrop-filter: var(--glass-idle-filter,var(--glass-lens-filter,blur(1px))) saturate(1.1);
 }
@@ -75,7 +75,7 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
   scale: 1.035 1.2;
   -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(.6px) saturate(1.15)));
   backdrop-filter: var(--glass-idle-filter,var(--glass-lens-active-filter,blur(.6px) saturate(1.15)));
-  box-shadow: inset 0 2px 3px -1px #ffffffc9,inset -2px -3px 6px -3px #ffffff8c,
+  box-shadow: inset 0 1px 2px #ffffff80,inset -1px -2px 3px -2px #ffffff70,
     0 2px 2px #092c2730,0 9px 17px -7px #092c2770;
 }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { transition: scale 180ms ease; }
@@ -83,10 +83,10 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
   #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1; }
 }
 
-/* Reflections sit on the optical face, below the untouched sibling labels. */
+/* Reflections are restrained so refracted glyphs stay readable through the clear core. */
 #root .liquid-tabs__lens::before {
-  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1.4px; pointer-events: none;
-  background: conic-gradient(from 215deg at var(--lens-light-x,22%) 50%,transparent 0deg,#ffffffeb 50deg,transparent 120deg 210deg,#ffffff9c 260deg,transparent 310deg);
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: conic-gradient(from 215deg at var(--lens-light-x,22%) 50%,transparent 0deg,#ffffffa0 50deg,transparent 120deg 210deg,#ffffff60 260deg,transparent 310deg);
   mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   mask-composite: exclude;
   -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
@@ -94,7 +94,7 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 }
 #root .liquid-tabs__lens::after {
   content: ''; position: absolute; left: 12%; right: 12%; bottom: 1px; height: 6px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(ellipse at var(--lens-light-x,22%) 100%,#ffffff85,transparent 70%);
+  background: radial-gradient(ellipse at var(--lens-light-x,22%) 100%,#ffffff38,transparent 70%);
   opacity: .45; transition: opacity 180ms ease;
 }
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens::after { opacity: 1; }
