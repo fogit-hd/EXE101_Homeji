@@ -38,6 +38,7 @@ const KIND_LABEL: Record<number, string> = {
   [WalletTransactionKind.SaleProceeds]: 'Tiền bán món',
   [WalletTransactionKind.PlatformFee]: 'Phí nền tảng',
   [WalletTransactionKind.LegacyServicePurchase]: 'Dịch vụ trước đây',
+  [WalletTransactionKind.SubscriptionPurchase]: 'Mua gói Premium',
   [WalletTransactionKind.Withdrawal]: 'Rút tiền',
   [WalletTransactionKind.WithdrawalRefund]: 'Hoàn tiền rút',
 }
@@ -88,7 +89,7 @@ function kindIcon(kind: number): string {
   if (kind === WalletTransactionKind.Refund || kind === WalletTransactionKind.WithdrawalRefund) {
     return WALLET_ASSETS.refund
   }
-  if (kind === WalletTransactionKind.Purchase || kind === WalletTransactionKind.LegacyServicePurchase) {
+  if (kind === WalletTransactionKind.Purchase || kind === WalletTransactionKind.LegacyServicePurchase || kind === WalletTransactionKind.SubscriptionPurchase) {
     return WALLET_ASSETS.bag
   }
   if (kind === WalletTransactionKind.SaleProceeds) return FOOD_ASSETS.icons.chefHat
@@ -115,7 +116,7 @@ function matchesKind(kind: number, filter: KindFilter): boolean {
   if (filter === 'withdraw') return kind === WalletTransactionKind.Withdrawal
   if (filter === 'purchase') {
     return kind === WalletTransactionKind.Purchase
-      || kind === WalletTransactionKind.LegacyServicePurchase
+      || kind === WalletTransactionKind.LegacyServicePurchase || kind === WalletTransactionKind.SubscriptionPurchase
       || kind === WalletTransactionKind.PlatformFee
   }
   if (filter === 'refund') {

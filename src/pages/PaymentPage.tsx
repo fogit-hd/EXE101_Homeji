@@ -1,9 +1,11 @@
 import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   createPremiumMomoPayment,
+  createPremiumWalletPayment,
+  getMyWallet,
   createPremiumPayOsPayment,
   getMySubscription,
   getPayment,
@@ -21,6 +23,7 @@ import { MapToast } from '../components/map/MapToast'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
 import { ShellIcon } from '../components/shell/ShellIcons'
 import { useAuth } from '../contexts/AuthContext'
+import { ApiRequestError } from '../api/client'
 import { getErrorMessage } from '../lib/errors'
 import {
   formatDate,
@@ -29,6 +32,7 @@ import {
 } from '../lib/labels'
 import { getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
+import { marketplaceHref } from '../components/shell/navigation'
 import { currentSubscription } from '../lib/currentSubscription'
 import './MarketplacePage.css'
 import './PaymentPage.css'
@@ -53,7 +57,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [payPickerCode, setPayPickerCode] = useState<string | null>(null)
   const [busyCode, setBusyCode] = useState<string | null>(null)
-  const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | null>(null)
+  const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | 'wallet' | null>(null)
+  const checkoutGuard = useRef(false)
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
+  const [walletError, setWalletError] = useState('')
+  const [walletConfirmCode, setWalletConfirmCode] = useState<string | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [checking, setChecking] = useState(false)
@@ -67,10 +75,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     searchParams.get('orderCode') ?? searchParams.get('orderId')
 
   const loadFn = useCallback(async () => {
-    const [catalog, current, history] = await Promise.allSettled([
+    const [catalog, current, history, wallet] = await Promise.allSettled([
       getSubscriptionPackages(),
       getMySubscription(),
       getPayments({ take: 30 }),
+      getMyWallet(),
     ])
     if (catalog.status === 'fulfilled') {
       setPackages(catalog.value)
@@ -89,6 +98,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       setHistoryError('')
     }
     else setHistoryError('Chưa tải được lịch sử thanh toán. Gói hiện tại vẫn được kiểm tra riêng.')
+    if (wallet.status === 'fulfilled') { setWalletBalance(wallet.value.balance); setWalletError('') }
+    else { setWalletBalance(null); setWalletError('Chưa tải được số dư ví. Vui lòng làm mới.') }
     if (catalog.status === 'rejected') throw catalog.reason
   }, [])
 
@@ -181,6 +192,37 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     } finally {
       setBusyCode(null)
       setBusyMethod(null)
+    }
+  }
+
+  const checkoutWithWallet = async (plan: SubscriptionPackage) => {
+    if (checkoutGuard.current) return
+    checkoutGuard.current = true
+    setBusyCode(plan.code)
+    setBusyMethod('wallet')
+    let paid = false
+    try {
+      // Keep this ID across retries, including an ambiguous network timeout.
+      const storageKey = `homeji-premium-wallet:${plan.code}`
+      let requestId = sessionStorage.getItem(storageKey)
+      if (!requestId) { requestId = crypto.randomUUID(); sessionStorage.setItem(storageKey, requestId) }
+      await createPremiumWalletPayment(plan.code, requestId, plan.price)
+      paid = true
+      try { sessionStorage.removeItem(storageKey) } catch { /* A retained key remains safe to replay. */ }
+      setPayPickerCode(null)
+      setWalletConfirmCode(null)
+      showToast('Thanh toán bằng ví thành công. Gói Premium đã được kích hoạt.', 'success')
+    } catch (err) {
+      const uncertain = err instanceof ApiRequestError && (err.status === 0 || err.status === 408 || err.status >= 500)
+      showToast(uncertain ? 'Chưa xác nhận được kết quả. Kiểm tra lịch sử hoặc thử lại; hệ thống giữ cùng mã yêu cầu để tránh trừ tiền hai lần.' : getErrorMessage(err, 'Không thể thanh toán bằng ví.'), 'error')
+      if (err instanceof ApiRequestError && err.status === 400) {
+        void getMyWallet().then(wallet => setWalletBalance(wallet.balance)).catch(() => setWalletBalance(null))
+      }
+    } finally {
+      if (paid) await Promise.allSettled([loadFn(), refreshProfile()])
+      setBusyCode(null)
+      setBusyMethod(null)
+      checkoutGuard.current = false
     }
   }
 
@@ -357,6 +399,22 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         role="group"
                         aria-label="Chọn hình thức thanh toán"
                       >
+                        {walletConfirmCode === plan.code ? <div className="pay-wallet-confirm" aria-live="polite">
+                          <strong>Xác nhận thanh toán bằng ví</strong>
+                          <p>{plan.name} · {plan.durationDays} ngày</p>
+                          <p>Trừ {formatPrice(plan.price)} từ ví Homeji.</p>
+                          <p>Số dư sau thanh toán: {walletBalance === null ? 'Chưa kiểm tra được' : formatPrice(Math.max(0, walletBalance - plan.price))}</p>
+                          <button type="button" className="pay-btn pay-btn--primary" disabled={busy || walletBalance === null || walletBalance < plan.price} onClick={() => void checkoutWithWallet(plan)}>
+                            {busy && busyMethod === 'wallet' ? 'Đang thanh toán…' : `Xác nhận trả ${formatPrice(plan.price)}`}
+                          </button>
+                          <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => setWalletConfirmCode(null)}>Quay lại</button>
+                        </div> : <>
+                        <button type="button" className="pay-method pay-wallet-method" disabled={busy || walletBalance === null || walletBalance < plan.price} onClick={() => setWalletConfirmCode(plan.code)}>
+                          Số dư ví Homeji
+                          <small>{walletBalance === null ? 'Chưa tải được số dư' : `${formatPrice(walletBalance)}${walletBalance < plan.price ? ' · Không đủ số dư' : ''}`}</small>
+                        </button>
+                        {walletError && <p className="pay-wallet-note" role="status">{walletError}</p>}
+                        {walletBalance !== null && walletBalance < plan.price && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp tiền vào ví</Link>}
                         <div>
                           <button type="button" className="pay-method is-momo" disabled={busy} onClick={() => void startCheckout(plan.code, 'momo')}>
                             {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
@@ -365,7 +423,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                             {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
                           </button>
                         </div>
-                        <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => setPayPickerCode(null)}>
+                        </>}
+                        <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setPayPickerCode(null); setWalletConfirmCode(null) }}>
                           Hủy
                         </button>
                       </motion.div>
@@ -405,7 +464,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               </tbody>
             </table>
           </section>
-          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán qua MoMo hoặc PayOS · Đơn chưa thanh toán tự hủy sau 15 phút</p>
+          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo hoặc PayOS · Đơn chờ MoMo/PayOS tự hủy sau 15 phút</p>
         </div>
       ) : null}
 

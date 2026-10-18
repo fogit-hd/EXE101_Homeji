@@ -131,6 +131,7 @@ export const reportTargetLabel: Record<number, string> = {
 export const paymentMethodLabel: Record<PaymentMethod, string> = {
   [PaymentMethod.Momo]: 'MoMo',
   [PaymentMethod.PayOs]: 'PayOS',
+  [PaymentMethod.Wallet]: 'Số dư ví Homeji',
 }
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {

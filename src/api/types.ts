@@ -139,6 +139,7 @@ export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
 export const PaymentMethod = {
   Momo: 1,
   PayOs: 2,
+  Wallet: 3,
 } as const
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
@@ -791,6 +792,7 @@ export const WalletTransactionKind = {
   LegacyServicePurchase: 6,
   Withdrawal: 7,
   WithdrawalRefund: 8,
+  SubscriptionPurchase: 9,
 } as const
 export type WalletTransactionKind =
   (typeof WalletTransactionKind)[keyof typeof WalletTransactionKind]

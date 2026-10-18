@@ -373,6 +373,11 @@ export const getSubscriptionPackages = () =>
 
 export const getMySubscription = () => apiRequest<MySubscription>('/api/subscriptions/me')
 
+export const createPremiumWalletPayment = (packageCode: string, requestId: string, expectedAmount: number) =>
+  apiRequest<Payment>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/wallet`, {
+    method: 'POST', body: { requestId, expectedAmount },
+  })
+
 export const createPremiumMomoPayment = (packageCode: string) =>
   apiRequest<MomoPaymentResponse>(`/api/subscriptions/premium/${packageCode}/momo/create`, {
     method: 'POST',

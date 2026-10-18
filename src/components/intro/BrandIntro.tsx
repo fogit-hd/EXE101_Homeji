@@ -60,10 +60,12 @@ function BrandIntroOverlay() {
   const [active, setActive] = useState(introRequested)
   const [playback] = useState(() => {
     let hasSession = false
+    let hasSeenIntro = false
     try { hasSession = Boolean(readAuthTokenState().token) } catch { /* Storage can be disabled. */ }
+    try { hasSeenIntro = sessionStorage.getItem(INTRO_SESSION_KEY) === '1' } catch { /* Storage can be disabled. */ }
     return {
-      rate: brandIntroPlaybackRate(window.location.pathname, hasSession),
-      waitForHome: window.location.pathname === '/',
+      rate: brandIntroPlaybackRate(window.location.pathname, hasSession, hasSeenIntro),
+      waitForHome: window.location.pathname === '/' && !hasSession && !hasSeenIntro,
     }
   })
   const root = useRef<HTMLDivElement>(null)
@@ -363,7 +365,7 @@ function BrandIntroOverlay() {
 
       skipRef.current = () => { if (!leaving) leave() }
 
-      const maxTimer = window.setTimeout(() => leave(), MAX_HOLD_MS)
+      const maxTimer = window.setTimeout(() => leave(), MAX_HOLD_MS / playback.rate)
       const onReady = () => {
         void assets.then(() => { if (!alive) return; ready = true; tryLeave() })
       }
@@ -390,7 +392,7 @@ function BrandIntroOverlay() {
   if (!active) return null
 
   return createPortal(
-    <div ref={root} className="hj-intro" role="dialog" aria-modal="true" aria-label="Homeji — giới thiệu">
+    <div ref={root} className="hj-intro" data-playback-rate={playback.rate} role="dialog" aria-modal="true" aria-label="Homeji — giới thiệu">
       <div className="hj-intro__backdrop" />
       <svg className="hj-intro__ink" aria-hidden="true">
         <path className="hj-intro__tail" fill="none" stroke="#00b14f" strokeLinecap="round" />

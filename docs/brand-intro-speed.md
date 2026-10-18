@@ -11,3 +11,10 @@ Kiểm tra bản phát hành: build và scoped ESLint đạt; 3 test policy đ�
 Ảnh email do chủ dự án cung cấp báo thất bại cho dịch vụ `EXE101_Homeji` với commit `c3c1b34`. Ảnh không có log nguyên nhân và người dùng xác nhận không có quyền xem log FE. Cùng commit build lại tại máy thành công. Website hiện tại là https://homeji.onrender.com; các kết quả phát hành cũ bên dưới là bằng chứng lịch sử trước khi đổi hostname.
 
 Sau khi phát hành commit `87f4ccd`, đã xác minh trực tiếp `https://exe101-homeji.onrender.com`: HTTP 200, intro nhanh xuất hiện rồi kết thúc, đăng ký có ô xác nhận mật khẩu và mô hình 3D tải được. Nguyên nhân lần deploy thất bại trước đó vẫn chưa có log để kết luận.
+
+
+## Cập nhật 18/10/2026: 3x
+
+Chỉ intro trang chủ khách lần đầu trong tab giữ 1x. Sau khi intro đã hoàn tất, trang chủ khách cũng chạy 3x; các trang ứng dụng và trang chủ có đăng nhập chạy 3x. Timeline vẽ logo, chữ slogan và timeline rời màn hình dùng cùng playback rate. Các lần phát nhanh không chờ tín hiệu HomePage; giới hạn chờ được chia theo playback rate. Điều hướng SPA không phát lại intro; login/register vẫn có trải nghiệm riêng.
+
+4 kiểm tra policy đạt. Chưa đo lại thời gian hiển thị bằng trình duyệt vì local browser use đang bị tắt trong Work settings; số đo 2x bên trên chỉ là lịch sử.

@@ -3,8 +3,8 @@ export function isAuthIntroPage(pathname: string): boolean {
   return path === '/login' || path === '/register'
 }
 
-/** Guest landing keeps its original pace; application reloads run twice as fast. */
-export function brandIntroPlaybackRate(pathname: string, hasSession: boolean): number {
+/** Only the first guest landing keeps its original pace; subsequent intros run at 3x. */
+export function brandIntroPlaybackRate(pathname: string, hasSession: boolean, hasSeenIntro = false): number {
   const path = pathname.replace(/\/+$/, '') || '/'
-  return isAuthIntroPage(path) || (path === '/' && !hasSession) ? 1 : 2
+  return isAuthIntroPage(path) || (path === '/' && !hasSession && !hasSeenIntro) ? 1 : 3
 }
