@@ -1,0 +1,4 @@
+.analytics-choice { position: fixed; z-index: 9000; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); max-width: min(440px, calc(100vw - 32px)); }
+.analytics-choice__panel { padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface, Canvas); color: var(--text, CanvasText); }
+.analytics-choice__panel p { margin: 10px 0; font-size: .9rem; line-height: 1.5; }
+.analytics-choice__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }

@@ -1,4 +1,6 @@
 import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload } from './client'
+import { trackFunnelEvent, trackVerifiedPremiumPurchase, trackVerifiedMarketplacePurchase } from '../lib/ga4'
+import { resultCountBucket } from '../lib/analyticsPolicy'
 import {
   getDefaultNotifications,
   isDefaultNotificationId,
@@ -85,6 +87,7 @@ export const getGoogleLoginUrl = (redirectTo?: string) =>
 
 export const googleLoginWithIdToken = (data: { idToken: string }) =>
   apiRequest<AuthSession>('/api/account/google/id-token', { method: 'POST', body: data, auth: false })
+    .then(session => { if (session.accessToken) trackFunnelEvent('login'); return session })
 
 export const checkEmail = (data: { email: string }) =>
   apiRequest<EmailAvailabilityResult>('/api/account/email-availability', {
@@ -215,13 +218,18 @@ export const deleteMyRentalReview = (rentalPostId: string) =>
   apiRequest<void>(`/api/rental-posts/${rentalPostId}/reviews/mine`, { method: 'DELETE' })
 
 // Saved Posts
-export const getSavedPosts = () => apiRequest<RentalPostSummary[]>('/api/saved-posts')
+export const getSavedPosts = (signal?: AbortSignal) => apiRequest<RentalPostSummary[]>('/api/saved-posts', { signal })
 
 export const savePost = (postId: string) =>
-  apiRequest<void>(`/api/saved-posts/${postId}`, { method: 'PUT' })
+  apiRequest<void>(`/api/saved-posts/${postId}`, { method: 'PUT' }).then(() => {
+    trackFunnelEvent('rental_saved')
+    window.dispatchEvent(new Event('homeji:saved-posts-changed'))
+  })
 
 export const unsavePost = (postId: string) =>
-  apiRequest<void>(`/api/saved-posts/${postId}`, { method: 'DELETE' })
+  apiRequest<void>(`/api/saved-posts/${postId}`, { method: 'DELETE' }).then(() => {
+    window.dispatchEvent(new Event('homeji:saved-posts-changed'))
+  })
 
 export const getRoommateCandidates = (postId: string) =>
   apiRequest<RoommateCandidate[]>(`/api/saved-posts/${postId}/roommate-candidates`)
@@ -294,7 +302,7 @@ export const createViewingAppointment = (
   apiRequest<ViewingAppointment>(`/api/rental-posts/${rentalPostId}/viewing-appointments`, {
     method: 'POST',
     body: data,
-  })
+  }).then(appointment => { trackFunnelEvent('viewing_requested'); return appointment })
 
 export const confirmViewingAppointment = (id: string) =>
   apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/confirm`, { method: 'POST' })
@@ -331,7 +339,7 @@ export const highlightRentalPosts = (data: { text?: string; maxResults?: number;
     method: 'POST',
     body: { text: data.text, maxResults: data.maxResults ?? 5, previousCriteria: data.previousCriteria },
     signal,
-  })
+  }).then(result => { trackFunnelEvent('rental_search', { search_mode: 'ai', result_count_bucket: resultCountBucket(result.posts.length) }); return result })
 
 // Chatbot
 export const deleteChatbotConversation = (id: string) =>
@@ -376,7 +384,7 @@ export const getMySubscription = () => apiRequest<MySubscription>('/api/subscrip
 export const createPremiumWalletPayment = (packageCode: string, requestId: string, expectedAmount: number) =>
   apiRequest<Payment>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/wallet`, {
     method: 'POST', body: { requestId, expectedAmount },
-  })
+  }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
 export const createPremiumMomoPayment = (packageCode: string) =>
   apiRequest<MomoPaymentResponse>(`/api/subscriptions/premium/${packageCode}/momo/create`, {
@@ -423,10 +431,10 @@ export const getPayments = (params?: { status?: number; take?: number }) =>
   apiRequest<Payment[]>('/api/payments', { params })
 
 export const getPayment = (paymentId: string) =>
-  apiRequest<Payment>(`/api/payments/${encodeURIComponent(paymentId)}`)
+  apiRequest<Payment>(`/api/payments/${encodeURIComponent(paymentId)}`).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
 export const getPaymentByOrderCode = (orderCode: string) =>
-  apiRequest<Payment>(`/api/payments/orders/${encodeURIComponent(orderCode)}`)
+  apiRequest<Payment>(`/api/payments/orders/${encodeURIComponent(orderCode)}`).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
 export const createMomoPayment = (amount: number, description?: string) =>
   apiRequest<MomoPaymentResponse>('/api/payments/momo/create', {
@@ -561,7 +569,7 @@ export const createMarketplaceOrder = (
   apiRequest<MarketplaceOrder>(`/api/marketplace-posts/${postId}/orders`, {
     method: 'POST',
     body: data,
-  })
+  }).then(order => { trackVerifiedMarketplacePurchase([order]); return order })
 
 export const acceptMarketplaceOrder = (id: string) =>
   apiRequest<MarketplaceOrder>(`/api/marketplace-orders/${id}/accept`, { method: 'POST' })
@@ -615,7 +623,7 @@ export const createMarketplaceCartOrder = (data: {
   apiRequest<MarketplaceOrder[]>('/api/marketplace-orders/cart', {
     method: 'POST',
     body: data,
-  })
+  }).then(orders => { trackVerifiedMarketplacePurchase(orders); return orders })
 
 export const rejectWalletWithdrawal = (id: string, note?: string) =>
   apiRequest<WalletWithdrawal>(`/api/admin/wallet-withdrawals/${id}/reject`, {

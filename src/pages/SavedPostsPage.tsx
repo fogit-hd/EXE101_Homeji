@@ -1,17 +1,18 @@
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   createInvitation,
+  ApiRequestError,
   getRoommateCandidates,
   getSavedPosts,
   unsavePost,
-  type RentalPostSummary,
   type RoommateCandidate,
 } from '../api'
 import { RentalPostType, UserRole } from '../api/types'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
+import { savedPostsKey } from '../lib/queryKeys'
 import { PageNotice } from '../components/toast/PageNotice'
-import { RoommateCandidatesSkeleton, SavedSkeleton } from '../components/skeletons/PageSkeletons'
+import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
 import { RentalDecisionPanel } from '../components/ai/RentalDecisionPanel'
 import { RentalComparison } from '../components/ai/RentalComparison'
@@ -23,8 +24,21 @@ import './SavedPostsPage.css'
 
 export function SavedPostsPage({ embedded = false, roommateOnly = false }: { embedded?: boolean; roommateOnly?: boolean }) {
   const { profile } = useAuth()
+  return <OwnedSavedPostsPage key={profile?.id ?? 'guest'} embedded={embedded} roommateOnly={roommateOnly} />
+}
+
+function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; roommateOnly: boolean }) {
+  const { profile, isAuthenticated } = useAuth()
+  const queryClient = useQueryClient()
   const isRenter = profile?.role === UserRole.Renter
-  const [posts, setPosts] = useState<RentalPostSummary[]>([])
+  const queryKey = savedPostsKey(profile?.id ?? null)
+  const savedQuery = useQuery({
+    queryKey,
+    queryFn: ({ signal }) => getSavedPosts(signal),
+    enabled: isAuthenticated && Boolean(profile?.id),
+  })
+  const accessDenied = savedQuery.error instanceof ApiRequestError && [401, 403].includes(savedQuery.error.status)
+  const posts = (accessDenied ? [] : savedQuery.data ?? []).filter(post => !roommateOnly || post.type === RentalPostType.RoommateShare)
   const [candidatesFor, setCandidatesFor] = useState<string | null>(null)
   const [candidates, setCandidates] = useState<RoommateCandidate[]>([])
   const [candLoading, setCandLoading] = useState(false)
@@ -38,13 +52,6 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [comparison, setComparison] = useState<string[] | null>(null)
 
-  const loadFn = useCallback(async () => {
-    const saved = await getSavedPosts()
-    setPosts(roommateOnly ? saved.filter(post => post.type === RentalPostType.RoommateShare) : saved)
-  }, [roommateOnly])
-
-  const { showLoader, onIntroComplete, error, disrupted } = usePersistentLoad(loadFn)
-
   const handleUnsave = async (postId: string) => {
     if (unsaveLock.current) return
     unsaveLock.current = true
@@ -52,7 +59,7 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
     setActionError('')
     try {
       await unsavePost(postId)
-      setPosts((prev) => prev.filter((p) => p.id !== postId))
+      queryClient.setQueryData<typeof savedQuery.data>(queryKey, previous => previous?.filter(post => post.id !== postId))
       setCompareIds(prev => prev.filter(id => id !== postId))
       setComparison(null)
       if (candidatesFor === postId) {
@@ -113,19 +120,18 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
 
   const body = (
     <>
-      <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      <PageNotice message={actionError || (savedQuery.error ? getErrorMessage(savedQuery.error, 'Không tải được phòng đã lưu.') : '')} tone="error" />
+      {savedQuery.isError ? <button type="button" className="btn btn-secondary" onClick={() => void savedQuery.refetch()} disabled={savedQuery.isFetching}>Thử tải lại</button> : null}
       <PageNotice message={actionMsg} tone="success" />
       {aiFeatureFlags.decisionTools && posts.length > 1 ? <div className="saved-compare-controls">
         <span>Chọn 2–3 tin để so sánh · {compareIds.length}/3</span>
         <button type="button" className="btn btn-secondary btn-sm" disabled={compareIds.length < 2} onClick={() => setComparison([...compareIds])}>So sánh tin đã chọn</button>
       </div> : null}
-      {comparison ? <><RentalComparison postIds={comparison} onClose={() => setComparison(null)} /><RentalDecisionPanel postIds={comparison} onUnavailable={ids => { setCompareIds(current => current.filter(id => !ids.includes(id))); setComparison(current => current ? current.filter(id => !ids.includes(id)) : null) }} /></> : null}
+      {!accessDenied && comparison ? <><RentalComparison postIds={comparison} onClose={() => setComparison(null)} /><RentalDecisionPanel postIds={comparison} onUnavailable={ids => { setCompareIds(current => current.filter(id => !ids.includes(id))); setComparison(current => current ? current.filter(id => !ids.includes(id)) : null) }} /></> : null}
 
-      {showLoader ? (
-        disrupted
-          ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
-          : <SavedSkeleton />
-      ) : posts.length === 0 ? (
+      {savedQuery.isPending && !savedQuery.isError ? (
+        <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
+      ) : savedQuery.isError && (!savedQuery.data || accessDenied) ? null : posts.length === 0 ? (
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
           <p>{roommateOnly ? 'Lưu phòng quan tâm ở tab Tìm phòng để xem gợi ý người cùng ở.' : 'Lưu tin phòng từ Khám phá để xem lại tại đây.'}</p>
@@ -160,7 +166,7 @@ export function SavedPostsPage({ embedded = false, roommateOnly = false }: { emb
                   </button>
                   {candidatesFor === post.id ? (
                     candLoading ? (
-                      <RoommateCandidatesSkeleton />
+                      <ContentSkeleton compact count={2} label="Đang tải gợi ý người ở ghép…" />
                     ) : candidates.length === 0 ? (
                       <p className="map-appointments__empty">Chưa có ứng viên phù hợp.</p>
                     ) : (

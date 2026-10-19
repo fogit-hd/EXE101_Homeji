@@ -38,6 +38,7 @@ export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, save
           </p>
         </div>
       </Link>
+      <a className="post-card-public-link" href={`/rentals/${encodeURIComponent(post.id)}`}>Thông tin công khai</a>
       {showSave && (
         <div className="post-card-actions">
           {isSaved ? (

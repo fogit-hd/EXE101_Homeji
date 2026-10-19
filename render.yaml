@@ -8,6 +8,14 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
+      - key: PUBLIC_SITE_URL
+        value: https://homeji.onrender.com
+      - key: VITE_GA4_MEASUREMENT_ID
+        value: G-VKPWYMZY40
+      - key: VITE_GA4_MANUAL_PAGEVIEWS_READY
+        value: "true"
+      - key: VITE_GA4_DEBUG
+        value: "false"
       - key: API_PROXY_TARGET
         value: https://homeji-be.onrender.com
       # Public OAuth client id used by Google Identity Services in the browser.

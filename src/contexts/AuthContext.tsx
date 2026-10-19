@@ -24,6 +24,7 @@ import { SERVICE_RETRY_MS } from '../components/HomejiLoader'
 import { isServiceDisruption } from '../lib/errors'
 import { useOnReconnect } from './NetworkStatusContext'
 import { shouldBlockProtectedRoutes } from './authLoadingState'
+import { resetAnalyticsSearchMode, trackFunnelEvent } from '../lib/ga4'
 
 type AuthContextValue = {
   isAuthenticated: boolean
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshInFlight = useRef(false)
 
   const resetAuthState = useCallback(() => {
+    resetAnalyticsSearchMode()
     setHasToken(false)
     setProfile(null)
     setNeedsProfileSetup(false)
@@ -64,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applySession = useCallback((session: AuthSession) => {
     if (!session.accessToken) return
+    if (getStoredSession()?.userId !== session.userId) resetAnalyticsSearchMode()
     persistSession(session.accessToken, session.userId, session.email)
     setHasToken(true)
     if (session.email) setEmail(session.email)
@@ -146,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const session = await apiLogin({ email: loginEmail, password })
     applySession(session)
     await refreshProfile()
+    trackFunnelEvent('login')
     return session
   }, [applySession, refreshProfile])
 
@@ -158,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session.accessToken && !session.emailConfirmationRequired) {
       applySession(session)
       await refreshProfile()
+      trackFunnelEvent('sign_up')
     }
     return session
   }, [applySession, refreshProfile])

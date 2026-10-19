@@ -1,4 +1,5 @@
 import { ChoicePicker } from '../components/ui/ChoicePicker'
+import { trackFunnelEvent } from '../lib/ga4'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -636,6 +637,7 @@ export function MarketplacePage({
     })
     if (requestId !== inventoryRequest.current) return
     setPosts(list)
+    if (tab === 'browse' || tab === 'food') trackFunnelEvent('view_item_list', { item_category: 'marketplace' })
 
     if (tab === 'browse' || tab === 'food') {
       const forMap = list.filter(
@@ -907,6 +909,7 @@ export function MarketplacePage({
     setOrderQuantities((current) => ({ ...current, [post.id]: 1 }))
     setActionError('')
     setActionMsg(`Đã thêm ${post.title} vào giỏ.`)
+    trackFunnelEvent('add_to_cart', { item_category: 'marketplace' })
   }
 
   const updateCartQuantity = (postId: string, quantity: number) => {
@@ -924,6 +927,7 @@ export function MarketplacePage({
   const checkoutCart = async () => {
     if (!checkoutConfirmationOpen || tab !== 'food') return
     if (cartItems.length === 0 || cartBusy) return
+    trackFunnelEvent('begin_checkout', { item_category: 'marketplace' })
     setCartBusy(true)
     setActionError('')
     try {

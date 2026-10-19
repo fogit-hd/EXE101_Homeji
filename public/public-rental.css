@@ -1,0 +1,11 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.6; }
+body { margin: 0; background: Canvas; color: CanvasText; }
+main { max-width: 760px; padding: 24px; margin: auto; }
+article { padding: 24px 0; }
+h1 { font-size: clamp(1.5rem, 4vw, 2.3rem); line-height: 1.25; }
+a { color: LinkText; }
+.description { white-space: pre-wrap; overflow-wrap: anywhere; }
+.action { display: inline-block; padding: 12px 18px; border: 1px solid currentColor; border-radius: 10px; }
+.note, footer { font-size: .9rem; }
+.analytics-public { position: fixed; bottom: 16px; right: 16px; max-width: min(440px, calc(100vw - 64px)); padding: 16px; background: Canvas; color: CanvasText; border: 1px solid; border-radius: 12px; }
+.analytics-public button { font: inherit; padding: 8px 12px; margin: 8px 4px 0 0; cursor: pointer; }

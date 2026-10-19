@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { trackFunnelEvent } from '../lib/ga4'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { AiSearchReview } from '../components/ai/AiSearchReview'
 import {
@@ -755,6 +756,7 @@ function HomePageComponent() {
     (raw: string) => {
       const nextKeyword = raw.trim()
       if (!nextKeyword) return
+        trackFunnelEvent('rental_search', { search_mode: 'filter' })
 
       void (async () => {
         // Always try to resolve a map location first (Places / text / geocode).
@@ -809,6 +811,7 @@ function HomePageComponent() {
   )
 
   const handleApplyPrice = useCallback(() => {
+    trackFunnelEvent('rental_search', { search_mode: 'filter' })
     filtersRef.current = {
       ...filtersRef.current,
       minPrice,

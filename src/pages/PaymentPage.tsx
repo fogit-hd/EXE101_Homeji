@@ -1,4 +1,5 @@
 import { LiquidTabList } from '../components/ui/LiquidTabList'
+import { trackFunnelEvent } from '../lib/ga4'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
@@ -180,6 +181,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
   const startCheckout = async (packageCode: string, method: 'momo' | 'payos') => {
     if (busyCode) return
+    trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     setBusyCode(packageCode)
     setBusyMethod(method)
     try {
@@ -198,6 +200,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
   const checkoutWithWallet = async (plan: SubscriptionPackage) => {
     if (checkoutGuard.current) return
+    trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     checkoutGuard.current = true
     setBusyCode(plan.code)
     setBusyMethod('wallet')

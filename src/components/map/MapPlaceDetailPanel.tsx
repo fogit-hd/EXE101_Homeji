@@ -21,7 +21,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, rentalPostTypeLabel, amenityLabel } from '../../lib/labels'
 import { maneuverGlyph, type MapRouteStep } from '../../lib/mapRoutes'
-import { mapPostUrl } from '../../lib/mapDeepLinks'
+import { trackFunnelEvent } from '../../lib/ga4'
 import { type MapPlaceDetails } from '../../lib/mapPlace'
 import { streetViewStaticUrl } from '../../lib/mapStaticMedia'
 import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
@@ -276,6 +276,7 @@ export function MapPlaceDetailPanel({
 
   useEffect(() => {
     if (!open || !isListing || !post?.id) return
+    trackFunnelEvent('rental_view')
 
     let cancelled = false
     void getRentalPostReviews(post.id)
@@ -445,7 +446,7 @@ export function MapPlaceDetailPanel({
       : `${place?.name || ''} — ${place?.address || ''}`
     const url =
       isListing && post
-        ? `${window.location.origin}${mapPostUrl(post.id)}`
+        ? `${window.location.origin}/rentals/${encodeURIComponent(post.id)}`
         : window.location.href
     try {
       if (navigator.share) {

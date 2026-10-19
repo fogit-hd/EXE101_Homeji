@@ -25,11 +25,13 @@ function session() {
       setTimeout: (callback, delay) => { timers.set(++id, { callback, delay }); return id },
       clearTimeout: id => timers.delete(id) },
     fetch: (_url, { signal }) => new Promise((resolve, reject) => {
-      finish = () => resolve({ ok: true, status: 200, text: async () => '{"ok":true}' })
+      finish = () => resolve({ ok: true, status: 200, text: async () => '{"ok":true,"posts":[]}' })
       signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
     }),
   })
-  const api = module(apiSource, name => name === './client' ? client : {})
+  const api = module(apiSource, name => name === './client' ? client
+    : name === '../lib/ga4' ? { trackFunnelEvent: () => {} }
+    : name === '../lib/analyticsPolicy' ? { resultCountBucket: () => '0' } : {})
   return { client, api, timers, finish: () => finish(), advance: ms => {
     for (const timer of [...timers.values()]) if (timer.delay <= ms) timer.callback()
   } }

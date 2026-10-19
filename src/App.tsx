@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WebsiteTrafficTracker } from './components/WebsiteTrafficTracker'
+import { AccountQueryProvider } from './contexts/AccountQueryProvider'
+import { AnalyticsConsent } from './components/AnalyticsConsent'
 import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
@@ -100,10 +102,11 @@ function App() {
         <GoogleMapsProvider>
           <GoogleOAuthRoot>
             <AuthProvider>
-            <BrowserRouter>
+            <AccountQueryProvider><BrowserRouter>
               <BrandIntro />
               <SearchInterestCenter />
               <WebsiteTrafficTracker />
+              <AnalyticsConsent />
               <SearchProvider>
               <ToastProvider>
               <AuthModalProvider>
@@ -115,7 +118,7 @@ function App() {
               </AuthModalProvider>
               </ToastProvider>
               </SearchProvider>
-            </BrowserRouter>
+            </BrowserRouter></AccountQueryProvider>
           </AuthProvider>
           </GoogleOAuthRoot>
         </GoogleMapsProvider>

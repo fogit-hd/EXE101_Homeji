@@ -43,6 +43,7 @@ function searchSession(initialUrl) {
     './GoogleMapsProvider': { useGoogleMaps: () => ({ isLoaded: false }) },
     '../lib/searchQuery': { isUsefulSearchQuery: value => value.trim().length >= 2 },
     '../lib/localPlaceSearch': { relevantRecentLocations: items => items },
+    '../lib/ga4': { trackFunnelEvent: () => {} },
   }
   vm.runInNewContext(javascript, {
     exports,

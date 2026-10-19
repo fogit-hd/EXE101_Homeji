@@ -8,10 +8,15 @@ import https from 'node:https'
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { handlePublicRental, publicOrigin, escapeHtml } from './public-rentals.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
 const PORT = Number(process.env.PORT || 3000)
+const PUBLIC_ORIGIN = publicOrigin(process.env.PUBLIC_SITE_URL || 'https://homeji.onrender.com')
+const verificationCode = process.env.GOOGLE_SITE_VERIFICATION || ''
+const VERIFICATION_META = /^[a-z0-9_-]{10,200}$/i.test(verificationCode)
+  ? `<meta name="google-site-verification" content="${escapeHtml(verificationCode)}">` : ''
 const API_TARGET = (process.env.API_PROXY_TARGET || 'https://homeji-be.onrender.com').replace(
   /\/$/,
   '',
@@ -39,12 +44,21 @@ const MIME = {
 
 function sendFile(res, filePath) {
   const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream'
+  if (extname(filePath).toLowerCase() === '.html' && VERIFICATION_META) {
+    import('node:fs/promises').then(({ readFile }) => readFile(filePath, 'utf8')).then(html => {
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' })
+      res.end(html.replace('</head>', `${VERIFICATION_META}</head>`))
+    }).catch(() => { res.writeHead(503); res.end('Unavailable') })
+    return
+  }
   res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'public, max-age=0' })
   createReadStream(filePath).pipe(res)
 }
 
 function safeDistPath(urlPath) {
-  const decoded = decodeURIComponent(urlPath.split('?')[0])
+  let decoded
+  try { decoded = decodeURIComponent(urlPath.split('?')[0]) }
+  catch { return null }
   const rel = normalize(decoded).replace(/^(\.\.[/\\])+/, '')
   const full = join(DIST, rel)
   if (!full.startsWith(DIST)) return null
@@ -205,12 +219,22 @@ function serveStatic(req, res) {
   res.end('Not Found')
 }
 
-const server = http.createServer((req, res) => {
-  if (req.url?.startsWith('/api') || req.url?.startsWith('/hubs')) {
-    proxyApi(req, res)
-    return
+const server = http.createServer(async (req, res) => {
+  try {
+    if (req.url?.startsWith('/api') || req.url?.startsWith('/hubs')) {
+      proxyApi(req, res)
+      return
+    }
+    if (await handlePublicRental(req, res, { apiTarget: API_TARGET, origin: PUBLIC_ORIGIN, verification: VERIFICATION_META })) return
+    serveStatic(req, res)
+  } catch {
+    // Async request handlers must terminate failed responses explicitly.
+    if (res.headersSent) res.destroy()
+    else {
+      res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' })
+      res.end('Service unavailable')
+    }
   }
-  serveStatic(req, res)
 })
 
 server.on('upgrade', (req, socket, head) => {

@@ -32,10 +32,10 @@ test('new listings and room modal coexist with automatic Google nearby discovery
 test('actual new header place pick routes to its Google ID without losing area filters', () => {
   const body = search.match(/const pickSuggestion = useCallback\(\(item: SearchSuggestion\) => \{([\s\S]*?)\n  \}, /)[1]
   let href, queries
-  new Function('item', 'location', 'navigate', 'setQueryByContext', compile(body))(
+  new Function('item', 'location', 'navigate', 'setQueryByContext', 'trackFunnelEvent', compile(body))(
     { id: 'google-place', title: 'Quán cà phê', subtitle: 'Thủ Đức' },
     { search: '?section=listings&view=list&district=quan-9&post=old-room&keyword=old&page=3' },
-    value => { href = value }, value => { queries = value({ food: 'cơm' }) },
+    value => { href = value }, value => { queries = value({ food: 'cơm' }) }, () => {},
   )
   const url = new URL(href, 'https://homeji.example')
   assert.equal(url.searchParams.get('placeId'), 'google-place')

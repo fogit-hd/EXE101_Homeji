@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { trackFunnelEvent } from '../lib/ga4'
 import { fetchPlacePredictions, searchNearbyPlaces, type NearbyPlaceCategory } from '../lib/placeAutocomplete'
 import { useGoogleMaps } from './GoogleMapsProvider'
 import type { NearbyAnchor } from '../components/map/MapNearbyPanel'
@@ -280,6 +281,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     const href = destinationFor(context, next, location.search)
     if (!href) return
     if (`${location.pathname}${location.search}` === href) return
+    if (context === 'map' || context === 'housing') trackFunnelEvent('rental_search', { search_mode: 'filter' })
     navigate(href)
   }, [context, location.pathname, location.search, navigate, query])
 
@@ -291,6 +293,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   }, [context, location.pathname, location.search, navigate])
 
   const pickSuggestion = useCallback((item: SearchSuggestion) => {
+    trackFunnelEvent('rental_search', { search_mode: 'filter' })
     const params = new URLSearchParams(location.search)
     params.set('section', 'listings')
     params.set('view', 'map')

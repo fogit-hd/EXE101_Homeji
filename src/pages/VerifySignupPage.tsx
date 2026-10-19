@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { resendSignupOtp, verifySignupOtp } from '../api/receipts'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
+import { trackFunnelEvent } from '../lib/ga4'
 
 export function VerifySignupPage() {
   const navigate = useNavigate()
@@ -30,6 +31,7 @@ export function VerifySignupPage() {
     try {
       const session = await verifySignupOtp(email.trim(), code.trim())
       await setSessionFromAuth(session)
+      trackFunnelEvent('sign_up')
       sessionStorage.removeItem('homeji_pending_signup_email')
       navigate('/', { replace: true })
     } catch (err) {
