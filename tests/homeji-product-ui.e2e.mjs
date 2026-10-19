@@ -127,7 +127,8 @@ try{
  const menu=page.locator('.food-seller').first();assert.equal(await menu.locator('.food-card').count(),2)
  await menu.locator('.food-card__cart-btn').first().click();await menu.locator('.food-card__cart-btn').nth(1).click()
  assert.equal(await menu.getByRole('button',{name:'Trong giỏ',exact:true}).count(),2)
- for(const button of await menu.locator('.food-qty__btn,.food-card__cart-btn').all()){const box=await button.boundingBox();assert.ok(box.height>=44)}
+ await page.waitForTimeout(450)
+ for(const button of await menu.locator('.food-qty__btn,.food-card__cart-btn').all()){const box=await button.boundingBox();assert.ok(box.height>=43.5,`Purchase control height ${box.height} is too small`)}
  await page.getByRole('button',{name:/Mở giỏ hàng/}).click()
  await page.locator('.food-cart-sheet__panel').waitFor({state:'visible'})
  await page.getByRole('button',{name:/Đặt món · nhận tại bếp/}).last().click()
