@@ -46,7 +46,8 @@ try {
  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.down();
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  assert.match(await lens.evaluate(e=>getComputedStyle(e).backdropFilter),/-active/);
- assert.equal(await lens.evaluate(e=>{const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];return !!document.getElementById(id)?.querySelector('feColorMatrix')}),true,'Dragging uses RGB dispersion');
+ assert.match(await lens.evaluate(e=>getComputedStyle(e,'::before').backgroundImage),/linear-gradient/,'Interaction adds a separate spectrum reflection');
+ assert.equal(await lens.evaluate(e=>{const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];return !!id?.endsWith('-active')}),true,'Dragging uses interactive refraction rim reflections');
 
  await page.mouse.move(rect.x+rect.width*.85,rect.y+rect.height/2,{steps:5});
  const crop=await list.screenshot({path:new URL('drag.png',out).pathname.slice(1)});
@@ -61,7 +62,7 @@ try {
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  console.log('stage: settle complete');
  await page.waitForFunction(()=>!document.querySelector('.liquid-tabs__lens')?.hasAttribute('data-glass-interacting'));
- assert.equal(await lens.evaluate(e=>{const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];return !!document.getElementById(id)?.querySelector('feColorMatrix')}),false,'Settled tab lens has no RGB split');
+ assert.equal(await lens.evaluate(e=>{const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];return !!id?.endsWith('-active')}),false,'Settled tab lens has no interactive refraction split');
  const gaps=await list.evaluate(e=>{const r=e.getBoundingClientRect(),l=e.querySelector('.liquid-tabs__lens').getBoundingClientRect(),a=e.querySelector('[aria-selected="true"]').getBoundingClientRect();return {right:r.right-l.right,dx:l.x-a.x,dy:l.y-a.y}});
  assert.ok(Math.abs(gaps.dx)<1&&Math.abs(gaps.dy)<1&&gaps.right>=2&&gaps.right<=5,JSON.stringify(gaps));
  for(const width of [390,1440]){ console.log('stage: width',width);
@@ -76,6 +77,28 @@ try {
   }
  }
  await page.getByRole('tablist',{name:'Mua sắm',exact:true}).getByRole('tab',{name:'Chợ đồ',exact:true}).click(); await page.locator('.marketplace-card__main').first().waitFor(); assert.equal(await page.locator('.marketplace-card__main').first().evaluate(e=>getComputedStyle(e).backdropFilter),'none');
- assert.deepEqual(errors,[]);console.log('PASS actual tab lens: SVG refraction, dispersion, active depth, alignment, mobile/desktop, light/dark, clear cards',JSON.stringify({state,gaps}));
+
+ const filterCount=await page.locator('.liquid-glass-defs filter').count();
+ await page.evaluate(()=>{
+  const stage=document.createElement('section');stage.id='optical-proof';stage.className='liquid-tabs';
+  stage.style.cssText='position:fixed;left:40px;top:160px;width:640px;height:160px;z-index:999999;background:repeating-linear-gradient(90deg,#245443 0 39px,#9aba9b 39px 40px);border-radius:24px;overflow:hidden;color:white';
+  stage.innerHTML='<span style="position:absolute;left:20px;top:65px;font:24px sans-serif;white-space:nowrap">HOMEJI · Phòng mới · Số dư Homeji</span><span class="liquid-tabs__lens" data-glass-interacting style="left:0;top:36px;width:180px;height:84px"></span>';
+  document.querySelector('#root').append(stage);
+ });
+ const proof=page.locator('#optical-proof .liquid-tabs__lens');
+ await page.waitForFunction(()=>document.querySelector('#optical-proof .liquid-tabs__lens')?.style.getPropertyValue('--glass-lens-filter'));
+ const physical=await proof.evaluate(e=>{
+  const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];const f=document.getElementById(id);
+  return {units:f.getAttribute('primitiveUnits'),scale:+f.querySelector('feDisplacementMap').getAttribute('scale'),height:e.offsetHeight,warps:f.querySelectorAll('feDisplacementMap').length,composites:f.querySelectorAll('feComposite,feColorMatrix').length};
+ });
+ assert.equal(physical.units,'userSpaceOnUse');assert.equal(physical.warps,1);assert.equal(physical.composites,0);
+ assert.ok(physical.scale/physical.height<.1,'Typography uses a bounded pixel displacement');
+ for(const left of [15,130,255]){
+  await proof.evaluate((e,left)=>e.style.left=left+'px',left);
+  await page.locator('#optical-proof').screenshot({path:new URL('text-crossing-'+left+'.png',out).pathname.slice(1)});
+ }
+ await page.locator('#optical-proof').evaluate(e=>e.remove());
+ await page.waitForFunction(count=>document.querySelectorAll('.liquid-glass-defs filter').length===count,filterCount);
+ assert.deepEqual(errors,[]);console.log('PASS actual tab lens: SVG refraction, rim reflections, active depth, alignment, mobile/desktop, light/dark, clear cards',JSON.stringify({state,gaps}));
 }catch(error){console.log(await listState());await page.screenshot({path:new URL('failure.png',out).pathname.slice(1)});throw error}finally{await browser.close()}
 async function listState(){return page.locator('.liquid-tabs').evaluateAll(es=>es.map(e=>({label:e.getAttribute('aria-label'),selected:e.querySelector('[aria-selected=true]')?.textContent,engaged:e.dataset.lensEngaged}))) }

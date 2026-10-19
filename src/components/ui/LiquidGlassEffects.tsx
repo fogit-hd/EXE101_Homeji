@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import lensMap from './liquid-lens-map.png'
 import circleMap from './liquid-lens-map-1.png'
 import shortMap from './liquid-lens-map-2.png'
@@ -6,17 +6,10 @@ import longMap from './liquid-lens-map-4.png'
 import wideMap from './liquid-lens-map-6.png'
 import rowMap from './liquid-lens-map-10.png'
 import { observeGlassActivity } from './glassActivity'
-import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeometry'
+import { nearestLensRatio } from './glassLensGeometry'
+import { createGlassLensFilters } from './glassLensFilters'
 
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
-const lensVariants = [
-  { variant: 'control', state: 'rest', depth: .05, blur: 0 },
-  { variant: 'control-face', state: 'face', depth: .018, blur: 0 },
-  { variant: 'tab-rest', state: 'tab-rest', depth: .075, blur: 0 },
-  { variant: 'control-active', state: 'interacting', depth: .075, blur: 0 },
-  { variant: 'control-face-active', state: 'face-interacting', depth: .045, blur: 0 },
-  { variant: 'tab-active', state: 'active', depth: .15, blur: 0 },
-] as const
 // Backdrops and optional transparent caps sample real pixels. Foreground
 // refraction stays within each control; content cards never become lenses.
 const controls = '[data-glass-optics],.liquid-tabs__lens,.theme-switch__thumb,button,summary,input[type="button"],input[type="submit"],input[type="reset"],.btn,.liquid-action,.pay-btn,.payment-button,.hj-action,.hj-post-cta,[role="button"],[role="menuitem"],select'
@@ -24,9 +17,17 @@ const contentControls = '.pay-table__row,.map-explore-card,.map-listing-card,.ma
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
+  const defsRef = useRef<SVGDefsElement>(null)
   useEffect(() => {
     if (!window.ResizeObserver || typeof CSS === 'undefined' || typeof CSS.supports !== 'function'
       || !CSS.supports('backdrop-filter', 'url("#homeji-liquid-lens")')) return
+    if (!defsRef.current) return
+    const bank = createGlassLensFilters(defsRef.current, maps)
+    const leases = new Map<HTMLElement, string[]>()
+    const release = (element: HTMLElement) => {
+      leases.get(element)?.forEach(bank.release)
+      leases.delete(element)
+    }
     const observed = new Set<HTMLElement>()
     const pending = new Map<HTMLElement, { width: number; height: number }>()
     let frame = 0
@@ -42,11 +43,22 @@ export function LiquidGlassEffects() {
         pending.forEach(({ width, height }, element) => {
           if (!element.isConnected || !width || !height) return
           const ratio = nearestLensRatio(width, height)
-          const value = `url("#${glassLensId(ratio, element.matches('.liquid-tabs__lens,.theme-switch__thumb') ? 'tab-rest' : 'control')}") saturate(1.08)`
-          if (element.style.getPropertyValue('--glass-lens-filter') !== value) element.style.setProperty('--glass-lens-filter', value)
-          if (element.hasAttribute('data-glass-face')) element.style.setProperty('--glass-face-filter', `url("#${glassLensId(ratio, 'control-face')}")`)
-          element.style.setProperty('--glass-lens-active-filter', `url("#${glassLensId(ratio, element.matches('.liquid-tabs__lens,.theme-switch__thumb') ? 'tab-active' : 'control-active')}") saturate(1.12)`)
-          if (element.hasAttribute('data-glass-face')) element.style.setProperty('--glass-face-active-filter', `url("#${glassLensId(ratio, 'control-face-active')}")`)
+          const w = Math.round(width * 100) / 100, h = Math.round(height * 100) / 100
+          const lens = element.matches('.liquid-tabs__lens,.theme-switch__thumb')
+          const rest = bank.acquire(w, h, ratio, lens ? 'tab-rest' : 'control')
+          const active = bank.acquire(w, h, ratio, lens ? 'tab-active' : 'control-active')
+          const ids = [rest, active]
+          element.style.setProperty('--glass-lens-filter', `url("#${rest}")`)
+          element.style.setProperty('--glass-lens-active-filter', `url("#${active}")`)
+          if (element.hasAttribute('data-glass-face')) {
+            const face = bank.acquire(w, h, ratio, 'control-face')
+            const faceActive = bank.acquire(w, h, ratio, 'control-face-active')
+            ids.push(face, faceActive)
+            element.style.setProperty('--glass-face-filter', `url("#${face}")`)
+            element.style.setProperty('--glass-face-active-filter', `url("#${faceActive}")`)
+          }
+          release(element)
+          leases.set(element, ids)
         })
         pending.clear()
       })
@@ -80,7 +92,7 @@ export function LiquidGlassEffects() {
     const mutations = new MutationObserver(records => {
       records.forEach(record => record.addedNodes.forEach(node => { if (node instanceof Element) register(node) }))
       observed.forEach(element => {
-        if (!element.isConnected) { resize.unobserve(element); pending.delete(element); observed.delete(element) }
+        if (!element.isConnected) { resize.unobserve(element); pending.delete(element); observed.delete(element); release(element) }
       })
     })
     mutations.observe(document.body, { childList: true, subtree: true })
@@ -91,23 +103,11 @@ export function LiquidGlassEffects() {
       mutations.disconnect()
       observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); element.style.removeProperty('--glass-face-filter'); element.style.removeProperty('--glass-face-active-filter'); delete element.dataset.glassControl; delete element.dataset.glassFace; delete element.dataset.glassPosition })
       pending.clear()
+      leases.clear()
+      bank.clear()
     }
   }, [])
   return <svg className="liquid-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <defs>{GLASS_LENS_RATIOS.flatMap(ratio => lensVariants.map(({ variant, state, depth, blur }) => <filter key={glassLensId(ratio, variant)} id={glassLensId(ratio, variant)} data-glass-state={state} data-glass-depth={depth} filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
-      x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
-      <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
-      <feGaussianBlur in="SourceGraphic" stdDeviation={`${blur / ratio} ${blur}`} result="scene" />
-      {variant.endsWith('active') ? <>
-        <feDisplacementMap in="scene" in2="lens" scale={depth + (variant.startsWith('control') ? .006 : .009)} xChannelSelector="R" yChannelSelector="G" result="red-warp" />
-        <feColorMatrix in="red-warp" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="red" />
-        <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" result="green-warp" />
-        <feColorMatrix in="green-warp" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="green" />
-        <feDisplacementMap in="scene" in2="lens" scale={depth - (variant.startsWith('control') ? .006 : .009)} xChannelSelector="R" yChannelSelector="G" result="blue-warp" />
-        <feColorMatrix in="blue-warp" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="blue" />
-        <feComposite in="red" in2="green" operator="arithmetic" k2="1" k3="1" result="red-green" />
-        <feComposite in="red-green" in2="blue" operator="arithmetic" k2="1" k3="1" />
-      </> : <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" />}
-    </filter>))}</defs>
+    <defs ref={defsRef} />
   </svg>
 }

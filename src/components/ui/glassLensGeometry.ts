@@ -8,3 +8,8 @@ export function nearestLensRatio(width: number, height: number) {
   const aspect = width / Math.max(1, height)
   return GLASS_LENS_RATIOS.reduce((best, candidate) => Math.abs(Math.log(aspect / candidate)) < Math.abs(Math.log(aspect / best)) ? candidate : best, 3 as typeof GLASS_LENS_RATIOS[number])
 }
+
+export const GLASS_LENS_DEPTHS: Record<GlassLensVariant, number> = {
+  control: .04, 'control-face': .012, 'tab-rest': .045,
+  'control-active': .065, 'control-face-active': .065, 'tab-active': .09,
+}

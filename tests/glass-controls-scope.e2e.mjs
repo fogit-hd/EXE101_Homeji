@@ -89,32 +89,32 @@ try {
  const optics=locator=>locator.evaluate(e=>{
   const style=getComputedStyle(e,e.hasAttribute('data-glass-face')?'::after':null);
   const id=/url\(["']?#([^"')]+)/.exec(style.backdropFilter)?.[1];
-  return {rgb:!!(id&&document.getElementById(id)?.querySelector('feColorMatrix')),filter:style.backdropFilter};
+  return {active:!!id?.endsWith('-active'),filter:style.backdropFilter};
  });
  const settled=locator=>locator.evaluate(e=>new Promise(resolve=>{
   const check=()=>!e.hasAttribute('data-glass-interacting')?resolve():requestAnimationFrame(check);check();
  }));
- await settled(action);assert.equal((await optics(action)).rgb,false);
- await action.hover();assert.equal((await optics(action)).rgb,true);
+ await settled(action);assert.equal((await optics(action)).active,false);
+ await action.hover();assert.equal((await optics(action)).active,true);
  await action.screenshot({path:new URL('transient-active.png',out).pathname.slice(1)});
- await settled(action);assert.equal((await optics(action)).rgb,false,'Stationary hover returns to neutral optics');
+ await settled(action);assert.equal((await optics(action)).active,false,'Stationary hover returns to neutral optics');
  await action.screenshot({path:new URL('transient-idle-hover.png',out).pathname.slice(1)});
  await action.hover();await page.mouse.down();await page.waitForTimeout(240);
- assert.equal((await optics(action)).rgb,true,'A held press retains dispersion');
- await page.mouse.up();await settled(action);assert.equal((await optics(action)).rgb,false);
- await action.focus();await page.keyboard.down(' ');assert.equal((await optics(action)).rgb,true);
- await page.keyboard.up(' ');await settled(action);assert.equal((await optics(action)).rgb,false,'Focus alone does not retain RGB');
+ assert.equal((await optics(action)).active,true,'A held press retains rim reflections');
+ await page.mouse.up();await settled(action);assert.equal((await optics(action)).active,false);
+ await action.focus();await page.keyboard.down(' ');assert.equal((await optics(action)).active,true);
+ await page.keyboard.up(' ');await settled(action);assert.equal((await optics(action)).active,false,'Focus alone does not retain interactive refraction');
  await action.dispatchEvent('pointerdown',{pointerId:72});await action.dispatchEvent('pointercancel',{pointerId:72});
- await settled(action);assert.equal((await optics(action)).rgb,false,'Canceled pointer restores idle optics');
+ await settled(action);assert.equal((await optics(action)).active,false,'Canceled pointer restores idle optics');
  await action.dispatchEvent('pointerdown',{pointerId:73});await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
  assert.equal(await action.getAttribute('data-glass-interacting'),null);
  await page.evaluate(()=>document.querySelector('#scope-fixture').insertAdjacentHTML('beforeend','<details class="rental-draft-assistant"><summary>Trợ lý soạn tin · xem trước rồi xác nhận</summary><button class="ai-spectrum-button">Tạo bản gợi ý bằng Gemini</button></details><button role="listitem" class="pay-table__row"><strong>Nạp số dư Homeji</strong><small>500.000 đ</small></button>'));
  const summary=page.locator('#scope-fixture summary');await summary.waitFor();
  await page.waitForFunction(()=>document.querySelector('#scope-fixture summary')?.hasAttribute('data-glass-face'));
- assert.equal((await optics(summary)).rgb,false);
+ assert.equal((await optics(summary)).active,false);
  const aiPanel=page.locator('#scope-fixture .rental-draft-assistant');
  assert.ok(!(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage)).includes('conic-gradient'));
- await summary.hover();assert.equal((await optics(summary)).rgb,true);
+ await summary.hover();assert.equal((await optics(summary)).active,true);
  assert.match(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage),/conic-gradient/);
  await settled(summary);await settled(aiPanel);
  assert.ok(!(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage)).includes('conic-gradient'));
@@ -127,12 +127,12 @@ try {
 
  assert.equal(await page.locator('#scope-fixture .pay-table__row').getAttribute('data-glass-control'),null);
  const nativeSelect=page.locator('select[aria-label="Chế độ xem"]');
- await nativeSelect.hover();assert.equal((await optics(nativeSelect)).rgb,true);
- await settled(nativeSelect);assert.equal((await optics(nativeSelect)).rgb,false);
+ await nativeSelect.hover();assert.equal((await optics(nativeSelect)).active,true);
+ await settled(nativeSelect);assert.equal((await optics(nativeSelect)).active,false);
  for(const theme of ['light','dark']){
   await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
-  await category.hover();assert.equal((await optics(category)).rgb,true);
-  await settled(category);assert.equal((await optics(category)).rgb,false);
+  await category.hover();assert.equal((await optics(category)).active,true);
+  await settled(category);assert.equal((await optics(category)).active,false);
   assert.match(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/url\(/);
   const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:e.hasAttribute('data-glass-face')?getComputedStyle(e,'::after').backdropFilter:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
   assert.match(bg,/rgba|color\(/,'Control surface remains translucent in '+theme);
@@ -145,12 +145,12 @@ try {
  await page.mouse.move(0,0);await settled(category);
  const touchBox=await category.boundingBox();
  await page.touchscreen.tap(touchBox.x+touchBox.width/2,touchBox.y+touchBox.height/2);
- assert.equal((await optics(category)).rgb,true,'Touch activates RGB');
- await settled(category);assert.equal((await optics(category)).rgb,false,'Touch settles to neutral');
+ assert.equal((await optics(category)).active,true,'Touch activates interactive refraction');
+ await settled(category);assert.equal((await optics(category)).active,false,'Touch settles to neutral');
  await page.keyboard.press('Escape');
  await page.emulateMedia({reducedMotion:'reduce'});
- await category.focus();await page.keyboard.down('Enter');assert.equal((await optics(category)).rgb,true);
- await page.keyboard.up('Enter');await settled(category);assert.equal((await optics(category)).rgb,false);
+ await category.focus();await page.keyboard.down('Enter');assert.equal((await optics(category)).active,true);
+ await page.keyboard.up('Enter');await settled(category);assert.equal((await optics(category)).active,false);
  await page.keyboard.press('Escape');
  await page.emulateMedia({reducedMotion:'no-preference'});
 

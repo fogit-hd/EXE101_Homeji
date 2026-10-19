@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
+import { capsuleLensField } from './lib/liquid-lens-field.mjs'
 
 // Neutral R/G encodes zero displacement. A smooth radial normal field bends
 // the sampled backdrop inward near the rim instead of adding random ripples.
@@ -18,26 +19,20 @@ function chunk(type, data) {
   return Buffer.concat([length, name, data, crc])
 }
 
-// R/G normals follow a capsule, not an ellipse stretched to fit each button.
-// Divide horizontal displacement by aspect ratio because SVG objectBoundingBox
-// scales X by width and Y by height. This keeps the rim depth stable in pixels.
+// Encode equal physical units for both axes. Runtime filters use pixel scales
+// based on control height; width never amplifies the vertical displacement.
 for (const ratio of [1, 2, 3, 4, 6, 10]) {
-  const width = ratio === 1 ? 128 : ratio === 2 ? 160 : 192
-  const height = Math.max(32, Math.round(width / ratio))
+  const height = 128
+  const width = ratio * height
   const rows = Buffer.alloc((width * 4 + 1) * height)
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const px = x / (width - 1) * ratio
       const py = y / (height - 1)
-      const cx = Math.max(.5, Math.min(ratio - .5, px))
-      const dx = px - cx, dy = py - .5
-      const distance = Math.hypot(dx, dy)
-      const radius = Math.min(1, distance / .5)
-      // The center is optically calm. Curvature rises through the outer rim.
-      const rim = radius ** 5
+      const field = capsuleLensField(px, py, ratio)
       const offset = y * (width * 4 + 1) + 1 + x * 4
-      rows[offset] = Math.round(127.5 - (distance ? dx / distance : 0) * rim * 98 / ratio)
-      rows[offset + 1] = Math.round(127.5 - (distance ? dy / distance : 0) * rim * 98)
+      rows[offset] = Math.round((.5 + field.x) * 255)
+      rows[offset + 1] = Math.round((.5 + field.y) * 255)
       rows[offset + 2] = 128
       rows[offset + 3] = 255
     }

@@ -37,10 +37,10 @@
   position: absolute; left: 0; top: 0; pointer-events: none;
   z-index: 3;
   box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff9c;
-  background: radial-gradient(ellipse at var(--lens-light-x,22%) -40%,#ffffff36,transparent 63%),
-    linear-gradient(165deg,#ffffff0d,transparent 42% 74%,#ffffff12);
-  box-shadow: inset 0 2px 2px -1px #ffffffeb, inset 2px 0 3px -2px #e1fffae6,
-    inset -2px -2px 3px -2px #ffffffa6, inset 0 -5px 7px -6px #ffffffd9,
+  background: radial-gradient(ellipse at var(--lens-light-x,22%) -40%,#ffffff10,transparent 63%),
+    linear-gradient(165deg,#ffffff04,transparent 42% 82%,#ffffff08);
+  box-shadow: inset 0 1px 1px #ffffffb8, inset 1px 0 2px -1px #e1fffaa0,
+    inset -1px -1px 2px -1px #ffffff85, inset 0 -3px 4px -3px #ffffff90,
     0 2px 2px #082e273d, 0 5px 9px -4px #082e2766;
   -webkit-backdrop-filter: var(--glass-lens-filter,blur(.35px) saturate(1.08));
   backdrop-filter: var(--glass-lens-filter,blur(.35px) saturate(1.08));
@@ -77,7 +77,7 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
   scale: 1.025 1.1;
   -webkit-backdrop-filter: var(--glass-lens-active-filter,blur(.5px) saturate(1.12));
   backdrop-filter: var(--glass-lens-active-filter,blur(.5px) saturate(1.12));
-  box-shadow: inset 0 2px 3px -1px #ffffffed,inset -2px -3px 4px -2px #ffffffb0,
+  box-shadow: inset 0 1px 2px #ffffffb8,inset -1px -2px 3px -2px #ffffff90,
     0 3px 3px #092c2738,0 8px 16px -6px #092c2760;
 }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { transition: scale 180ms ease; }
@@ -107,8 +107,8 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 }
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens::before,
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting]::before {
-  background: linear-gradient(90deg,#f45b7880,#ff9b4580,#f3d34880,#55c99580,#38bce880,#7376f080,#c969e580) center top / 76% 1px no-repeat,
-    linear-gradient(90deg,#c969e560,#7376f060,#38bce860,#55c99560,#f3d34860,#ff9b4560,#f45b7860) center bottom / 65% 1px no-repeat;
+  background: linear-gradient(90deg,#f45b78c0,#ff9b45c0,#f3d348c0,#55c995c0,#38bce8c0,#7376f0c0,#c969e5c0) center 1px / 76% 1.5px no-repeat,
+    linear-gradient(90deg,#c969e5a0,#7376f0a0,#38bce8a0,#55c995a0,#f3d348a0,#ff9b45a0,#f45b78a0) center bottom 1px / 65% 1.5px no-repeat;
 }
 @media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
   #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting],
