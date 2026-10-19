@@ -38,3 +38,15 @@ PUBLIC_SITE_URL=https://homeji.onrender.com
 ```
 
 Sau đó kiểm tra consent trước/sau, không trùng pageview và Realtime/DebugView. Search Console vẫn cần nhấn Verify, gửi sitemap và kiểm tra URL Inspection. Quyền điều khiển trình duyệt bị tắt trong Work settings ở lượt kiểm tra này nên chưa thao tác được Google/Render. Đã hỏi dashboard URL của dịch vụ domain chính; không cần gửi mật khẩu hoặc API secret.
+
+## Cập nhật kiểm chứng thực tế sau khi người dùng sửa cấu hình
+
+Ngày 19/10/2026, bundle domain chính đã có `G-VKPWYMZY40`, readiness true. Trong trình duyệt tích hợp, trước consent không có tag; sau khi bấm Đồng ý thống kê, gtag.js trả 200 và hai request `page_view`, `rental_view` tới `www.google-analytics.com/g/collect` đều trả 204. Page location gửi là `https://homeji.onrender.com/analytics/rental-public`, không chứa ID tin hoặc query người dùng. Đây là sự kiện qua giao diện thật, không gọi Measurement Protocol hoặc bơm purchase giả.
+
+Google Analytics property Homeji Web / `559520332`: Realtime hiển thị 3 active users, 5 page_view và 1 rental_view; có màn hình `Homeji | rental-public` với 1 lượt xem. Các số này chỉ là snapshot kiểm thử, không đại diện tăng trưởng hoặc conversion. Rút consent gỡ tag; reload sau từ chối không quan sát request Google Analytics/Tag Manager. Không suy luận xóa lịch sử trên Google từ việc rút consent.
+
+Search Console đã tự động xác minh quyền sở hữu URL-prefix bằng Thẻ HTML. Đã gửi `/sitemap.xml` và `/sitemaps/rentals-1.xml`; sau xử lý cả hai hiển thị Thành công, sitemap con khám phá 8 trang. Trạng thái ban đầu Không thể tìm nạp đã chuyển Thành công, không cần sửa XML. URL Inspection nhận diện tin mẫu qua cả hai sitemap nhưng chưa lập chỉ mục; đang kiểm tra bản live để phân biệt khả năng crawl với quyết định đưa vào chỉ mục của Google.
+
+Bằng chứng được lưu ngoài Git tại `C:/EXE101_Homeji/output/technology-rollout/`: `ga4-production-browser-proof.json` (chỉ trường đã lọc, không cookie/client ID), `ga4-realtime-production.png`, `ga4-realtime-events-production.png`, `search-console-ownership-verified.png`, `search-console-sitemap-success.png`.
+
+Giới hạn vẫn giữ nguyên: đơn hàng/hoàn tiền đối soát bằng DB; chưa bổ sung backend Measurement Protocol/refund producer; không tạo giao dịch khách thật để thử analytics. Hiệu năng index đã đo trên mẫu 30.000 dòng cục bộ và kiểm tra recall trong test; không công bố tỷ lệ tăng tốc production. Full frontend vẫn có 3 lỗi baseline ngoài thay đổi, đã ghi ở phần kiểm thử.
