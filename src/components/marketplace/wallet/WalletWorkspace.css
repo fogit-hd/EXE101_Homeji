@@ -159,3 +159,17 @@ html[data-theme='dark'] .wallet-workspace .is-out { color: #ffb9ab; }
 .wallet-load-error button { flex-shrink: 0; min-height: 42px; padding: 8px 14px; font-size: 12px; }
 html[data-theme='dark'] .wallet-load-error { background: #382f22; border-color: #8b7149; color: #f3d6a6; }
 @media(max-width:600px) { .wallet-load-error { flex-direction: column; align-items: stretch; } }
+
+/* Withdrawal is the primary action here, with an opaque readable fill. */
+#root .wallet-submit .wallet-withdraw-submit {
+  --glass-fill: #175c57; --glass-ink: #fff; --glass-border: #175c57;
+  background: #175c57; background-image: none; color: #fff;
+  border: 1px solid #175c57; min-height: 52px; height: auto; padding: 16px 22px;
+  box-shadow: 0 5px 14px rgb(23 92 87 / .2); backdrop-filter: none;
+}
+#root .wallet-submit .wallet-withdraw-submit:hover:not(:disabled) { background: #104741; border-color: #104741; }
+#root .wallet-submit .wallet-withdraw-submit img { filter: brightness(0) invert(1); }
+#root .wallet-submit .wallet-withdraw-submit:disabled { opacity: .5; box-shadow: none; }
+html[data-theme='dark'] #root .wallet-submit .wallet-withdraw-submit { background: #80d9db; border-color: #80d9db; color: #102a30; }
+html[data-theme='dark'] #root .wallet-submit .wallet-withdraw-submit:hover:not(:disabled) { background: #a5e7e8; }
+html[data-theme='dark'] #root .wallet-submit .wallet-withdraw-submit img { filter: brightness(0); }

@@ -1,3 +1,4 @@
+import { BankNameInput } from './BankNameInput'
 import { LiquidTabList } from '../../ui/LiquidTabList'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { useMemo, useState, type ReactNode } from 'react'
@@ -657,19 +658,7 @@ function WithdrawPanel({
         ) : null}
 
         <div className="wallet-grid">
-          <label className="wallet-field">
-            <span>Tên ngân hàng</span>
-            <span className="wallet-input">
-              <Icon src={WALLET_ASSETS.landmark} />
-              <input
-                value={bankName}
-                maxLength={120}
-                aria-invalid={Boolean(fieldError.bankName)}
-                onChange={(event) => setBankName(event.target.value)}
-              />
-            </span>
-            {fieldError.bankName ? <small className="is-error">{fieldError.bankName}</small> : null}
-          </label>
+          <BankNameInput value={bankName} onChange={setBankName} error={fieldError.bankName} />
           <label className="wallet-field">
             <span>Số tài khoản</span>
             <span className="wallet-input">
@@ -739,7 +728,7 @@ function WithdrawPanel({
             <span>Số dư dự kiến còn lại</span>
             <strong>{remaining == null || remaining < 0 ? '—' : formatWalletAmount(remaining)}</strong>
           </div>
-          <button type="button" disabled={busy || loading || withdrawalsUnavailable || balance == null} onClick={() => void submit()}>
+          <button type="button" className="wallet-withdraw-submit" disabled={busy || loading || withdrawalsUnavailable || balance == null} onClick={() => void submit()}>
             {busy ? 'Đang gửi yêu cầu…' : 'Gửi yêu cầu rút tiền'}
             <Icon src={WALLET_ASSETS.send} size={17} />
           </button>
