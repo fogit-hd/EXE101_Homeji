@@ -56,3 +56,14 @@ html:root #root select[data-glass-control]:not([data-glass-exclude]) option { ba
     box-shadow: none; border-color: var(--text-secondary);
   }
 }
+
+/* Dense report filters use an ordinary surface so labels stay undistorted. */
+html:root #root .choice-picker__trigger[data-glass-exclude] {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  filter: none;
+}

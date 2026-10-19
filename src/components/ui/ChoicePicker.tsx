@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import './ChoicePicker.css'
 
 type Option = { value: string; label: string; disabled: boolean; group: string }
-type Props = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple' | 'size'>
+type Props = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple' | 'size'> & { disableGlass?: boolean }
 
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
@@ -36,7 +36,7 @@ function associatedLabel(button: HTMLButtonElement | null) {
 }
 
 /** Keeps a real select for form submission, validation and existing change handlers. */
-export function ChoicePicker({ children, className = '', id: suppliedId, value, defaultValue, disabled, onChange, onInvalid, ...props }: Props) {
+export function ChoicePicker({ children, className = '', id: suppliedId, value, defaultValue, disabled, onChange, onInvalid, disableGlass = false, ...props }: Props) {
   const generatedId = useId()
   const id = suppliedId ?? `choice-${generatedId}`
   const ariaLabel = props['aria-label']
@@ -224,9 +224,9 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
     document.getElementById(activeId)?.scrollIntoView({ block: 'nearest' })
   }, [activeId, expanded])
 
-  return <span className="choice-picker" data-disabled={disabled || undefined}>
+  return <span className="choice-picker" data-disabled={disabled || undefined} data-glass-exclude={disableGlass || undefined}>
     <button ref={trigger} id={id} type="button" role="combobox" className={`choice-picker__trigger ${className}`}
-      disabled={disabled} aria-expanded={expanded} aria-haspopup="dialog" aria-controls={expanded ? panelId : undefined}
+      data-glass-exclude={disableGlass || undefined} disabled={disabled} aria-expanded={expanded} aria-haspopup="dialog" aria-controls={expanded ? panelId : undefined}
       aria-label={props['aria-label']} aria-labelledby={props['aria-labelledby']} aria-describedby={props['aria-describedby']}
       aria-required={props.required} aria-invalid={invalid || props['aria-invalid']} title={props.title}
       onClick={() => expanded ? close() : show()}

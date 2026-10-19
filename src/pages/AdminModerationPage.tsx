@@ -516,6 +516,8 @@ export function AdminModerationPage() {
       {tab === 'reports' && (
         <>
           <ChoicePicker
+            disableGlass
+            aria-label="Trạng thái báo cáo"
             className="form-select"
             style={{ maxWidth: 240, marginBottom: 16 }}
             value={reportStatus ?? ''}

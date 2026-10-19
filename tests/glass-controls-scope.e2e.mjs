@@ -81,5 +81,24 @@ try {
  }
  await page.setViewportSize({width:390,height:900});await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:new URL('mobile.png',out).pathname.slice(1)});
+ // The report-status picker is explicitly flat; other admin controls retain optics.
+ profileRole=3;
+ await page.setViewportSize({width:1440,height:1000});
+ await page.goto(base+'/admin');await ready();
+ await page.getByRole('tab',{name:/^Báo cáo/}).click();
+ const status=page.getByRole('combobox',{name:'Trạng thái báo cáo'});
+ await status.waitFor();
+ for(const theme of ['light','dark']){
+  await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+  assert.equal(await status.getAttribute('data-glass-control'),null);
+  assert.equal(await status.getAttribute('data-glass-face'),null);
+  assert.equal(await status.evaluate(e=>getComputedStyle(e).backdropFilter),'none');
+  assert.equal(await status.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
+  await status.screenshot({path:new URL('report-status-'+theme+'.png',out).pathname.slice(1)});
+ }
+ await status.click();
+ await page.getByRole('option',{name:'Tất cả',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[aria-label="Trạng thái báo cáo"]')?.textContent.includes('Tất cả'));
+ assert.match(await page.locator('.liquid-tabs__lens').first().evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  assert.deepEqual(errors,[]);console.log('PASS glass scope: actions/selects/icons light+dark; real backdrop refraction; product and user-information blocks excluded; nested buy action retains glass');
 }finally{await browser.close()}
