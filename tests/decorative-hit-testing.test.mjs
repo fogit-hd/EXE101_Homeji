@@ -23,3 +23,13 @@ test('unsupported backdrop filters keep opaque semantic surfaces',()=>{
   })
   assert.ok(fallback)
 })
+
+test('optical faces refract behind labels instead of sampling the text',()=>{
+  const levels=[]
+  roots[0].walkRules(rule=>{
+    if(rule.selectors.includes("[data-glass-face='before']::before"))
+      rule.walkDecls('z-index',declaration=>levels.push(Number(declaration.value)))
+  })
+  assert.ok(levels.length)
+  assert.ok(levels.every(level=>level<0),'Above-label refraction produces duplicate colored glyphs')
+})

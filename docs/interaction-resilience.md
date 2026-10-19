@@ -39,7 +39,7 @@ privacy, hardware restrictions or intentional business/authentication restrictio
 ## Evidence and limits
 
 The original modal containment defect was reproduced using the actual React
-component in a DOM test, then verified after repair. The focused suite passes 33
+component in a DOM test, then verified after repair. The focused suite passes 34
 tests across real component DOM interactions, capability failures, decorative
 hit-testing declarations, lens geometry, dark contrast and search capture.
 Production build passes. New/changed shared component lint passes. The touched
@@ -58,6 +58,8 @@ Browser QA exposed two additional defects: returning focus while the native laye
 was still modal silently failed, and per-option optical faces produced colored
 text artifacts. Closing the native layer before restoring focus fixes the first;
 keeping refraction on the enclosing panel and clear option rows fixes the second.
+All control optical faces also render behind labels to prevent colored duplicate
+glyphs on triggers and buttons while retaining background refraction.
 The DOM regression now models native modal focus exclusion. Production dark-mode
 inspection also found the guest map empty state paired light backgrounds with
 light text; its list and map frame now use semantic dark surfaces.

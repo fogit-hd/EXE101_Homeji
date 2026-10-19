@@ -171,11 +171,11 @@ html[data-theme='dark'] {
 #root .choice-picker__trigger > svg { box-sizing: content-box; padding: 7px; border-radius: 50%; background: rgb(255 255 255 / .12); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-edge); }
 #root .choice-picker__trigger[aria-expanded='true'] { border-color: var(--hj-accent); --glass-fill: var(--glass-action); }
 
-/* Above-content optics: native text is sampled by the glass, never cloned. */
+/* Refract the background inside the isolated control, keeping labels above the optics. */
 [data-glass-position='static'] { position: relative; }
 [data-glass-face] { isolation: isolate; }
 [data-glass-face='before']::before,[data-glass-face='after']::after {
-  content: ''; position: absolute; inset: 0; z-index: 10; pointer-events: none; border-radius: inherit;
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
   -webkit-backdrop-filter: var(--glass-idle-filter,var(--glass-face-filter,blur(0px)));
   backdrop-filter: var(--glass-idle-filter,var(--glass-face-filter,blur(0px)));
   background: radial-gradient(ellipse 12% 1px at 18% 0%,#fcb6a680,transparent),radial-gradient(ellipse 10% 1px at 76% 100%,#a4cfff70,transparent);
