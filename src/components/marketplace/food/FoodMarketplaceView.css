@@ -293,6 +293,33 @@
   text-decoration: underline;
 }
 
+/* Each seller owns one menu; individual dishes keep their own purchase controls. */
+.food-seller-list { display: grid; gap: 20px; }
+.food-seller {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--food-line);
+  border-radius: 16px;
+  background: var(--surface-elevated);
+}
+.food-seller__header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.food-seller__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--text-heading);
+  font-weight: 700;
+}
+.food-seller__info { min-width: 0; overflow-wrap: anywhere; }
+.food-seller__info h3 { margin: 0 0 5px; color: var(--text-heading); font-size: 18px; }
+.food-seller__info p { margin: 3px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+@media (max-width: 720px) {
+  .food-seller { padding: 12px; }
+}
+
 /* ── Food cards ── */
 .food-card-grid {
   display: grid;

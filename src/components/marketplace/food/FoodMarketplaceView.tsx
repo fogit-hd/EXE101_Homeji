@@ -14,6 +14,7 @@ import {
 
 type Props = {
   posts: MarketplacePost[]
+  sellerGroups: (Omit<NearbyKitchen, 'postsCount'> & { posts: MarketplacePost[] })[]
   kitchens: NearbyKitchen[]
   quantities: Record<string, number>
   cartItems: FoodCartLine[]
@@ -59,6 +60,7 @@ function estimatedEtaFromCart(cartItems: FoodCartLine[], posts: MarketplacePost[
 
 export function FoodMarketplaceView({
   posts,
+  sellerGroups,
   kitchens,
   quantities,
   cartItems,
@@ -225,23 +227,36 @@ export function FoodMarketplaceView({
             <p>Thử đổi bộ lọc, từ khóa, hoặc bật định vị để xem bếp gần bạn.</p>
           </div>
         ) : (
-          <div className="food-card-grid">
-            {posts.map((post) => {
-              const inCart = cartItems.some((item) => item.postId === post.id)
-              return (
-                <FoodCard
-                  key={post.id}
-                  post={post}
-                  quantity={quantities[post.id] ?? 1}
-                  inCart={inCart}
-                  locating={locating}
-                  hasUserLocation={hasUserLocation}
-                  onQuantityChange={(next) => onQuantityChange(post.id, next)}
-                  onAddToCart={() => onAddToCart(post)}
-                  onShowOnMap={() => onShowOnMap(post)}
-                />
-              )
-            })}
+          <div className="food-seller-list">
+            {sellerGroups.map((seller) => (
+              <section key={seller.sellerId} className="food-seller" aria-label={`Thực đơn ${seller.sellerName}`}>
+                <header className="food-seller__header">
+                  <span className="food-seller__avatar" aria-hidden="true">
+                    {seller.sellerName.slice(0, 1).toUpperCase()}
+                  </span>
+                  <div className="food-seller__info">
+                    <h3>{seller.sellerName}</h3>
+                    <p>{seller.posts.length} món · {seller.distanceKm == null
+                      ? locating ? 'Đang định vị…' : hasUserLocation ? 'Chưa rõ khoảng cách' : 'Chưa có vị trí'
+                      : formatDistanceMeters(seller.distanceKm)}</p>
+                    {seller.address ? <p>{seller.address}</p> : null}
+                  </div>
+                </header>
+                <div className="food-card-grid">
+                  {seller.posts.map((post) => (
+                    <FoodCard
+                      key={post.id}
+                      post={post}
+                      quantity={quantities[post.id] ?? 1}
+                      inCart={cartItems.some((item) => item.postId === post.id)}
+                      onQuantityChange={(next) => onQuantityChange(post.id, next)}
+                      onAddToCart={() => onAddToCart(post)}
+                      onShowOnMap={() => onShowOnMap(post)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         )}
 

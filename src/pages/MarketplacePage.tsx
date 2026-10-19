@@ -1521,6 +1521,7 @@ export function MarketplacePage({
         <>
         <FoodMarketplaceView
           posts={listForTab}
+          sellerGroups={foodSellerGroups}
           kitchens={foodKitchens}
           quantities={orderQuantities}
           cartItems={cartItems.map((item) => ({
