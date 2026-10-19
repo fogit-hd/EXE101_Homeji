@@ -14,7 +14,7 @@ const lensVariants = [
   { variant: 'tab-active', state: 'active', depth: .364, blur: 0 },
 ] as const
 // Clickable content surfaces keep clear media/text; their nested actions still get glass.
-const contentSurfaces = '.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,[data-glass-exclude]'
+const contentSurfaces = '.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,[role="option"],[data-glass-exclude]'
 const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, .guest-fixed-cta > span, [role="button"], [role="menuitem"], [data-glass-lens]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */

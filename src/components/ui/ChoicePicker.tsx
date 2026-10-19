@@ -66,6 +66,11 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
   const expanded = open && !disabled
 
   const close = (restore = true) => {
+    // Release native modal inertness before returning keyboard focus to the owner.
+    const surface = layer.current
+    if (surface?.open) {
+      try { surface.close() } catch { surface.removeAttribute('open') }
+    }
     setOpen(false)
     if (restore) trigger.current?.focus({ preventScroll: true })
   }

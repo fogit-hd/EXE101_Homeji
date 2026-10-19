@@ -36,6 +36,13 @@ test('option panel remains inside its owning modal and commits the real select v
     assert.ok(owner.contains(panel),'Options escaped their modal and can become inert behind it')
     assert.equal(panel.parentElement.tagName,'DIALOG')
     assert.equal(panel.parentElement.open,true)
+    // jsdom does not implement native modal inertness; model the browser's focus
+    // restriction so returning focus before closing the layer fails this test.
+    const focus = window.HTMLElement.prototype.focus
+    window.HTMLElement.prototype.focus = function (...args) {
+      const modal = document.querySelector('.choice-picker-layer[open]')
+      if (!modal || modal.contains(this)) focus.apply(this, args)
+    }
     await click([...panel.querySelectorAll('[role=option]')].find(node=>node.textContent.includes('Bình Thạnh')))
     assert.equal(selected,'b')
     assert.equal(new window.FormData(document.querySelector('form')).get('area'),'b')

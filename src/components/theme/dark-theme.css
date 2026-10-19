@@ -111,3 +111,12 @@ html[data-theme='dark'] #root :is(.interest-error, .interest-warning) { backgrou
   html[data-theme='dark'] #root :is(.hj-mega__link, .badge-blue, .badge-green, .badge-gray) { color: CanvasText; background: Canvas; }
   html[data-theme='dark'] #root :is(input, select, textarea, a, button):focus-visible { outline-color: Highlight; }
 }
+
+/* Guest map empty/loading states need the same surface pairing as signed-in views. */
+html[data-theme='dark'] :is(.guest-map__list, .guest-map__map-frame) {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 12px 28px rgb(0 0 0 / .16);
+}
+html[data-theme='dark'] :is(.guest-map__status, .guest-map__count, .guest-map__more) { color: var(--text-secondary); }
+html[data-theme='dark'] .guest-map__more-link { color: var(--hj-accent); }
