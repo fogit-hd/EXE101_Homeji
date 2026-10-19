@@ -20,17 +20,17 @@ html[data-theme='dark'] { --control-glass-fill: rgb(32 60 70 / .12); --control-g
   -webkit-backdrop-filter: var(--glass-lens-filter,blur(1px) saturate(1.08));
   backdrop-filter: var(--glass-lens-filter,blur(1px) saturate(1.08));
 }
-/* A transparent optical cap samples the actual label below it. Its neutral
-   center preserves glyphs; only the curved rim separates RGB and bends them. */
+/* Refraction belongs to the backdrop. Keep idle text out of the sampling pass;
+   a shallow optical cap is only visible during direct interaction. */
 html:root #root [data-glass-position='relative'] { position: relative; }
 html:root #root [data-glass-control][data-glass-face] {
-  -webkit-backdrop-filter: none; backdrop-filter: none; isolation: isolate;
+  isolation: isolate;
 }
 html:root #root [data-glass-control][data-glass-face]::after {
   content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit;
   pointer-events: none; background: transparent; border: 0;
-  -webkit-backdrop-filter: var(--glass-face-filter,none);
-  backdrop-filter: var(--glass-face-filter,none);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 html:root #root [data-glass-control][data-glass-face]:disabled::after { display: none; }
 :is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):disabled { box-shadow: none; }
@@ -106,16 +106,42 @@ html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exc
   backdrop-filter: var(--glass-lens-active-filter,none);
 }
 html:root #root [data-glass-control][data-glass-face][data-glass-interacting] {
-  -webkit-backdrop-filter: none; backdrop-filter: none;
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
+  backdrop-filter: var(--glass-lens-active-filter,none);
 }
 html:root #root [data-glass-control][data-glass-face][data-glass-interacting]::after {
   -webkit-backdrop-filter: var(--glass-face-active-filter,none);
   backdrop-filter: var(--glass-face-active-filter,none);
-  background: linear-gradient(90deg,#f45b78c0,#ff9b45c0,#f3d348c0,#55c995c0,#38bce8c0,#7376f0c0,#c969e5c0) center 1px / 76% 1.5px no-repeat,
-    linear-gradient(90deg,#c969e5a0,#7376f0a0,#38bce8a0,#55c995a0,#f3d348a0,#ff9b45a0,#f45b78a0) center bottom 1px / 65% 1.5px no-repeat;
+  background: radial-gradient(ellipse at 14% 12%,rgb(155 215 229 / .12),transparent 35%),
+    radial-gradient(ellipse at 88% 92%,rgb(239 200 172 / .10),transparent 32%);
 }
+/* Transaction actions need a stable contrast pair even when the common glass
+   material loads after wallet styles. Their labels never pass through a lens. */
+html:root #root .wallet-workspace .wallet-submit button[data-glass-control]:not([data-glass-exclude]) {
+  --glass-ink: #fff;
+  --control-glass-fill: #175c57;
+  --glass-border: #175c57;
+  background-color: #175c57;
+  color: #fff;
+}
+html:root #root .wallet-workspace .wallet-submit button[data-glass-control]:hover:not(:disabled) { background-color: #104741; }
+html:root #root .wallet-workspace .wallet-submit button[data-glass-face]::after {
+  -webkit-backdrop-filter: none; backdrop-filter: none; background: none;
+}
+html:root #root .wallet-workspace .wallet-submit button[data-glass-control] img { filter: brightness(0) invert(1); }
+html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control]:not([data-glass-exclude]) {
+  --glass-ink: #102a30; --control-glass-fill: #80d9db; --glass-border: #80d9db;
+  background-color: #80d9db; color: #102a30;
+}
+html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control]:hover:not(:disabled) { background-color: #a5e7e8; }
+html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control] img { filter: brightness(0); }
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
   html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
     -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+@media (forced-colors:active) {
+  html:root #root .wallet-workspace .wallet-submit button[data-glass-control]:not([data-glass-exclude]) {
+    background: ButtonFace; color: ButtonText; border-color: ButtonText;
   }
 }

@@ -10,6 +10,6 @@ export function nearestLensRatio(width: number, height: number) {
 }
 
 export const GLASS_LENS_DEPTHS: Record<GlassLensVariant, number> = {
-  control: .04, 'control-face': .012, 'tab-rest': .045,
-  'control-active': .065, 'control-face-active': .065, 'tab-active': .09,
+  control: .04, 'control-face': 0, 'tab-rest': 0,
+  'control-active': .065, 'control-face-active': .012, 'tab-active': .02,
 }
