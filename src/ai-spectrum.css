@@ -90,3 +90,14 @@
   .map-chatbot__panel { transition: none; }
   .ai-interaction-waves { display: none; }
 }
+
+/* AI identity remains visible, while rainbow reflections wait for real input. */
+html:root #root :is(.map-chatbot__panel.is-visible,.map-chatbot__fab,.map-chatbot__form,
+  .ai-search-review,.rental-draft-assistant,.rental-comparison,.ai-spectrum-button,
+  .map-chatbot__chip,.map-chatbot__action,.map-chatbot__send):not([data-glass-interacting]):not(:has([data-glass-interacting])):not(.is-thinking) {
+  --ai-spectrum-fill: linear-gradient(var(--ai-spectrum-surface),var(--ai-spectrum-surface)) padding-box,
+    linear-gradient(160deg,rgb(226 242 239 / .9),rgb(166 199 194 / .6)) border-box;
+  background: var(--ai-spectrum-fill);
+  animation-play-state: paused;
+  box-shadow: 0 2px 6px rgb(20 54 67 / .12),inset 0 1px 0 rgb(255 255 255 / .6);
+}

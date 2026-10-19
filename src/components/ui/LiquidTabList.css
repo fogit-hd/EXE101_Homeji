@@ -89,7 +89,7 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 #root .liquid-tabs__lens::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   border: 1px solid transparent; border-top-color: #ffffff9c; border-left-color: #ffffff3d; border-right-color: #ffffff20;
-  background: radial-gradient(ellipse 10% 1.5px at 18% 0%,#ffb4a878,transparent),radial-gradient(ellipse 10% 1.5px at 76% 100%,#a8cfff78,transparent),radial-gradient(ellipse 40% 2px at var(--lens-light-x,22%) 0%,#ffffff60,transparent);
+  background: radial-gradient(ellipse 40% 2px at var(--lens-light-x,22%) 0%,#ffffff60,transparent);
 }
 #root .liquid-tabs__lens::after {
   content: ''; position: absolute; left: 12%; right: 12%; bottom: 1px; height: 6px; border-radius: 50%; pointer-events: none;
@@ -99,4 +99,20 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens::after { opacity: 1; }
 @media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
   #root .liquid-tabs__lens::before,#root .liquid-tabs__lens::after { display: none; }
+}
+
+#root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
+  backdrop-filter: var(--glass-lens-active-filter,none);
+}
+#root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens::before,
+#root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting]::before {
+  background: linear-gradient(90deg,#f45b7880,#ff9b4580,#f3d34880,#55c99580,#38bce880,#7376f080,#c969e580) center top / 76% 1px no-repeat,
+    linear-gradient(90deg,#c969e560,#7376f060,#38bce860,#55c99560,#f3d34860,#ff9b4560,#f45b7860) center bottom / 65% 1px no-repeat;
+}
+@media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
+  #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting],
+  #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
 }

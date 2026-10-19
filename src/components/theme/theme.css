@@ -67,3 +67,17 @@ html[data-theme='dark'] #hj-boot { background: var(--surface-muted); }
 #root .theme-switch__thumb { z-index: 1; background: rgb(255 255 255 / .02); border: 1px solid rgb(255 255 255 / .66); box-shadow: inset 0 2px 2px -1px #ffffffeb,inset 0 -2px 3px -2px #fff,0 2px 5px #08292140; -webkit-backdrop-filter: var(--glass-idle-filter,blur(8px)); backdrop-filter: var(--glass-idle-filter,blur(8px)); }
 html body #root button.theme-switch[aria-checked='true'] { background-color: rgb(33 122 83 / .65); color: #fff; }
 @media(forced-colors:active) { #root .theme-switch__thumb { background: Highlight; border-color: ButtonText; } }
+
+#root .theme-switch__thumb {
+  -webkit-backdrop-filter: var(--glass-lens-filter,none);
+  backdrop-filter: var(--glass-lens-filter,none);
+}
+#root .theme-switch__thumb[data-glass-interacting] {
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
+  backdrop-filter: var(--glass-lens-active-filter,none);
+}
+@media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
+  #root .theme-switch__thumb,#root .theme-switch__thumb[data-glass-interacting] {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}

@@ -127,7 +127,7 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
     }}
     onClick={event => {
       onClick?.(event)
-      if (!event.defaultPrevented && (event.target as Element).closest('button[role="tab"]')) { engage(); relax(180) }
+      if (!event.defaultPrevented && (event.target as Element).closest('button[role="tab"]')) { engage(); relax(480) }
     }}
     onKeyUp={event => { onKeyUp?.(event); if (event.key === ' ' || event.key === 'Enter') relax(140) }}
     onKeyDown={event => {

@@ -99,3 +99,23 @@ html[data-theme='dark']:root #root .hj-menu-trigger[data-glass-control] {
     box-shadow: none;
   }
 }
+
+/* RGB splitting and colored rim light are transient; the idle lens stays clear. */
+html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
+  backdrop-filter: var(--glass-lens-active-filter,none);
+}
+html:root #root [data-glass-control][data-glass-face][data-glass-interacting] {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html:root #root [data-glass-control][data-glass-face][data-glass-interacting]::after {
+  -webkit-backdrop-filter: var(--glass-face-active-filter,none);
+  backdrop-filter: var(--glass-face-active-filter,none);
+  background: linear-gradient(90deg,#f45b7880,#ff9b4580,#f3d34880,#55c99580,#38bce880,#7376f080,#c969e580) center top / 76% 1px no-repeat,
+    linear-gradient(90deg,#c969e560,#7376f060,#38bce860,#55c99560,#f3d34860,#ff9b4560,#f45b7860) center bottom / 65% 1px no-repeat;
+}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
+  html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}

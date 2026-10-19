@@ -8,7 +8,7 @@ if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw Error('Lo
 const out = new URL('../output/verification/glass-controls/', import.meta.url)
 await mkdir(out, { recursive: true })
 const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', reducedMotion: 'no-preference' })
+const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', hasTouch: true, reducedMotion: 'no-preference' })
 const id = '11111111-1111-4111-8111-111111111111'
 await context.addInitScript(id => { localStorage.setItem('homeji_access_token','theme-fixture');localStorage.setItem('homeji_user_id',id) }, id)
 let profileRole=1
@@ -85,8 +85,48 @@ try {
  const glyphsFlat=await action.screenshot({path:new URL('glyphs-without-glass.png',out).pathname.slice(1)});
  assert.notEqual(createHash('sha256').update(refracted).digest('hex'),createHash('sha256').update(glyphsFlat).digest('hex'),'Actual button glyphs refract under the optical cap');
  await hide.evaluate(e=>e.remove());await isolate.evaluate(e=>e.remove());
+ // The same stationary hover/focus must settle back to a neutral lens.
+ const optics=locator=>locator.evaluate(e=>{
+  const style=getComputedStyle(e,e.hasAttribute('data-glass-face')?'::after':null);
+  const id=/url\(["']?#([^"')]+)/.exec(style.backdropFilter)?.[1];
+  return {rgb:!!(id&&document.getElementById(id)?.querySelector('feColorMatrix')),filter:style.backdropFilter};
+ });
+ const settled=locator=>locator.evaluate(e=>new Promise(resolve=>{
+  const check=()=>!e.hasAttribute('data-glass-interacting')?resolve():requestAnimationFrame(check);check();
+ }));
+ await settled(action);assert.equal((await optics(action)).rgb,false);
+ await action.hover();assert.equal((await optics(action)).rgb,true);
+ await action.screenshot({path:new URL('transient-active.png',out).pathname.slice(1)});
+ await settled(action);assert.equal((await optics(action)).rgb,false,'Stationary hover returns to neutral optics');
+ await action.screenshot({path:new URL('transient-idle-hover.png',out).pathname.slice(1)});
+ await action.hover();await page.mouse.down();await page.waitForTimeout(240);
+ assert.equal((await optics(action)).rgb,true,'A held press retains dispersion');
+ await page.mouse.up();await settled(action);assert.equal((await optics(action)).rgb,false);
+ await action.focus();await page.keyboard.down(' ');assert.equal((await optics(action)).rgb,true);
+ await page.keyboard.up(' ');await settled(action);assert.equal((await optics(action)).rgb,false,'Focus alone does not retain RGB');
+ await action.dispatchEvent('pointerdown',{pointerId:72});await action.dispatchEvent('pointercancel',{pointerId:72});
+ await settled(action);assert.equal((await optics(action)).rgb,false,'Canceled pointer restores idle optics');
+ await action.dispatchEvent('pointerdown',{pointerId:73});await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+ assert.equal(await action.getAttribute('data-glass-interacting'),null);
+ await page.evaluate(()=>document.querySelector('#scope-fixture').insertAdjacentHTML('beforeend','<details class="rental-draft-assistant"><summary>Trợ lý soạn tin · xem trước rồi xác nhận</summary><button class="ai-spectrum-button">Tạo bản gợi ý bằng Gemini</button></details><button role="listitem" class="pay-table__row"><strong>Nạp số dư Homeji</strong><small>500.000 đ</small></button>'));
+ const summary=page.locator('#scope-fixture summary');await summary.waitFor();
+ await page.waitForFunction(()=>document.querySelector('#scope-fixture summary')?.hasAttribute('data-glass-face'));
+ assert.equal((await optics(summary)).rgb,false);
+ const aiPanel=page.locator('#scope-fixture .rental-draft-assistant');
+ assert.ok(!(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage)).includes('conic-gradient'));
+ await summary.hover();assert.equal((await optics(summary)).rgb,true);
+ assert.match(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage),/conic-gradient/);
+ await settled(summary);await settled(aiPanel);
+ assert.ok(!(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage)).includes('conic-gradient'));
+ await summary.screenshot({path:new URL('summary-idle.png',out).pathname.slice(1)});
+ assert.equal(await page.locator('#scope-fixture .pay-table__row').getAttribute('data-glass-control'),null);
+ const nativeSelect=page.locator('select[aria-label="Chế độ xem"]');
+ await nativeSelect.hover();assert.equal((await optics(nativeSelect)).rgb,true);
+ await settled(nativeSelect);assert.equal((await optics(nativeSelect)).rgb,false);
  for(const theme of ['light','dark']){
   await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+  await category.hover();assert.equal((await optics(category)).rgb,true);
+  await settled(category);assert.equal((await optics(category)).rgb,false);
   assert.match(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/url\(/);
   const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:e.hasAttribute('data-glass-face')?getComputedStyle(e,'::after').backdropFilter:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
   assert.match(bg,/rgba|color\(/,'Control surface remains translucent in '+theme);
@@ -96,6 +136,18 @@ try {
  }
  await page.setViewportSize({width:390,height:900});await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:new URL('mobile.png',out).pathname.slice(1)});
+ await page.mouse.move(0,0);await settled(category);
+ const touchBox=await category.boundingBox();
+ await page.touchscreen.tap(touchBox.x+touchBox.width/2,touchBox.y+touchBox.height/2);
+ assert.equal((await optics(category)).rgb,true,'Touch activates RGB');
+ await settled(category);assert.equal((await optics(category)).rgb,false,'Touch settles to neutral');
+ await page.keyboard.press('Escape');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await category.focus();await page.keyboard.down('Enter');assert.equal((await optics(category)).rgb,true);
+ await page.keyboard.up('Enter');await settled(category);assert.equal((await optics(category)).rgb,false);
+ await page.keyboard.press('Escape');
+ await page.emulateMedia({reducedMotion:'no-preference'});
+
  // The report-status picker is explicitly flat; other admin controls retain optics.
  profileRole=3;
  await page.setViewportSize({width:1440,height:1000});
@@ -115,5 +167,5 @@ try {
  await page.getByRole('option',{name:'Tất cả',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('[aria-label="Trạng thái báo cáo"]')?.textContent.includes('Tất cả'));
  assert.match(await page.locator('.liquid-tabs__lens').first().evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
- assert.deepEqual(errors,[]);console.log('PASS glass scope: actions/selects/icons light+dark; real backdrop refraction; product and user-information blocks excluded; nested buy action retains glass');
+ assert.deepEqual(errors,[]);console.log('PASS idle/motion/held-press/cancel/keyboard/blur/touch optics, neutral AI rims, light/dark; glass scope: actions/selects/icons light+dark; real backdrop refraction; product and user-information blocks excluded; nested buy action retains glass');
 }finally{await browser.close()}

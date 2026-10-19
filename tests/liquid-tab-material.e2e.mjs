@@ -46,6 +46,8 @@ try {
  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.down();
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  assert.match(await lens.evaluate(e=>getComputedStyle(e).backdropFilter),/-active/);
+ assert.equal(await lens.evaluate(e=>{const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];return !!document.getElementById(id)?.querySelector('feColorMatrix')}),true,'Dragging uses RGB dispersion');
+
  await page.mouse.move(rect.x+rect.width*.85,rect.y+rect.height/2,{steps:5});
  const crop=await list.screenshot({path:new URL('drag.png',out).pathname.slice(1)});
  const filters=await page.locator('feDisplacementMap').evaluateAll(es=>es.map(e=>e.getAttribute('scale')));
@@ -57,7 +59,10 @@ try {
  await list.getByRole('tab',{name:'Mua sắm',exact:true}).focus(); await page.keyboard.press('End'); console.log('stage: End',await listState()); await page.waitForFunction(()=>[...document.querySelectorAll('[role=tab][aria-selected=true]')].some(e=>e.textContent.includes('Số dư'))); 
  await page.waitForFunction(()=>![...document.querySelectorAll('.liquid-tabs')].some(e=>e.dataset.lensEngaged));
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
- console.log('stage: settle complete'); const gaps=await list.evaluate(e=>{const r=e.getBoundingClientRect(),l=e.querySelector('.liquid-tabs__lens').getBoundingClientRect(),a=e.querySelector('[aria-selected="true"]').getBoundingClientRect();return {right:r.right-l.right,dx:l.x-a.x,dy:l.y-a.y}});
+ console.log('stage: settle complete');
+ await page.waitForFunction(()=>!document.querySelector('.liquid-tabs__lens')?.hasAttribute('data-glass-interacting'));
+ assert.equal(await lens.evaluate(e=>{const id=/url\(["']?#([^"')]+)/.exec(getComputedStyle(e).backdropFilter)?.[1];return !!document.getElementById(id)?.querySelector('feColorMatrix')}),false,'Settled tab lens has no RGB split');
+ const gaps=await list.evaluate(e=>{const r=e.getBoundingClientRect(),l=e.querySelector('.liquid-tabs__lens').getBoundingClientRect(),a=e.querySelector('[aria-selected="true"]').getBoundingClientRect();return {right:r.right-l.right,dx:l.x-a.x,dy:l.y-a.y}});
  assert.ok(Math.abs(gaps.dx)<1&&Math.abs(gaps.dy)<1&&gaps.right>=2&&gaps.right<=5,JSON.stringify(gaps));
  for(const width of [390,1440]){ console.log('stage: width',width);
   await page.setViewportSize({width,height:1000});
