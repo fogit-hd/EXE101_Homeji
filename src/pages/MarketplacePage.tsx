@@ -60,6 +60,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
+import { withdrawalAttempt } from '../lib/withdrawalRequest'
 import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
@@ -294,6 +295,7 @@ export function MarketplacePage({
   onCartOpenChange,
 }: Props) {
   const { profile } = useAuth()
+  const withdrawalSubmitting = useRef(false)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedMarketplaceId = searchParams.get('seller')?.trim() || selectedMarketplaceIdProp
@@ -691,7 +693,7 @@ export function MarketplacePage({
 
   const walletDetailsRequest = useRef(0)
   const walletDetailsScope = useRef('')
-  useEffect(() => {
+  useLayoutEffect(() => {
     walletDetailsScope.current = isWalletPage ? myUserId ?? '' : ''
     return () => { walletDetailsScope.current = ''; walletDetailsRequest.current += 1 }
   }, [isWalletPage, myUserId])
@@ -1044,21 +1046,33 @@ export function MarketplacePage({
     accountNumber: string
     accountHolder: string
   }) => {
-    const reserve = wallet?.minimumWithdrawalReserve ?? 20_000
-    if (!wallet || wallet.balance - input.amount < reserve) {
-      return {
-        ok: false as const,
-        message: `Ví phải còn tối thiểu ${formatWalletAmount(reserve)} sau khi rút.`,
-      }
-    }
+    if (withdrawalSubmitting.current) return { ok: false as const, message: 'Yêu cầu đang được xử lý.' }
+    if (!wallet) return { ok: false as const, message: 'Chưa tải được số dư ví.' }
+    withdrawalSubmitting.current = true
+    const accessToken = getStoredSession()?.accessToken
+    const reserve = wallet.minimumWithdrawalReserve ?? 20_000
     setWalletBusy('withdraw')
     try {
-      await createWalletWithdrawal(input)
-      await reload()
+      const attempt = await withdrawalAttempt(wallet.userId, input)
+      if (!accessToken || getStoredSession()?.accessToken !== accessToken) {
+        return { ok: false as const, message: 'Phiên đăng nhập đã thay đổi. Vui lòng tải lại ví.' }
+      }
+      if (!attempt.reused && wallet.balance - input.amount < reserve) {
+        attempt.complete()
+        return {
+          ok: false as const,
+          message: `Ví phải còn tối thiểu ${formatWalletAmount(reserve)} sau khi rút.`,
+        }
+      }
+      await createWalletWithdrawal({ ...input, requestId: attempt.requestId })
+      attempt.complete()
+      // Creation succeeded even if refreshing the screen fails afterwards.
+      await reload().catch(() => setActionError('Yêu cầu rút tiền đã được nhận. Vui lòng tải lại số dư.'))
       return { ok: true as const }
     } catch (err) {
       return { ok: false as const, message: getErrorMessage(err, 'Không thể tạo yêu cầu rút tiền.') }
     } finally {
+      withdrawalSubmitting.current = false
       setWalletBusy('')
     }
   }

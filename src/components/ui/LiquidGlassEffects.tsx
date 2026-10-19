@@ -10,12 +10,12 @@ import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeo
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
 const lensVariants = [
   { variant: 'control', state: 'rest', depth: .012, blur: 0 },
-  { variant: 'tab-rest', state: 'tab-rest', depth: .018, blur: 0 },
-  { variant: 'tab-active', state: 'active', depth: .026, blur: 0 },
+  { variant: 'tab-rest', state: 'tab-rest', depth: .065, blur: 0 },
+  { variant: 'tab-active', state: 'active', depth: .095, blur: 0 },
 ] as const
-// Optics are explicitly reserved for decorative backgrounds. Never attach an
-// optical face to controls, labels, cards, images or third-party UI.
-const controls = '[data-glass-optics]'
+// Optics belong only to explicit backgrounds and the one moving tab lens.
+// Cards, images and ordinary labels never become optical surfaces.
+const controls = '[data-glass-optics],.liquid-tabs__lens'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
@@ -74,7 +74,16 @@ export function LiquidGlassEffects() {
       x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
       <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
       <feGaussianBlur in="SourceGraphic" stdDeviation={`${blur / ratio} ${blur}`} result="scene" />
-      <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" />
+      {variant === 'control' ? <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" /> : <>
+        <feDisplacementMap in="scene" in2="lens" scale={depth + .004} xChannelSelector="R" yChannelSelector="G" result="red-warp" />
+        <feColorMatrix in="red-warp" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="red" />
+        <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" result="green-warp" />
+        <feColorMatrix in="green-warp" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="green" />
+        <feDisplacementMap in="scene" in2="lens" scale={depth - .004} xChannelSelector="R" yChannelSelector="G" result="blue-warp" />
+        <feColorMatrix in="blue-warp" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="blue" />
+        <feComposite in="red" in2="green" operator="arithmetic" k2="1" k3="1" result="red-green" />
+        <feComposite in="red-green" in2="blue" operator="arithmetic" k2="1" k3="1" />
+      </>}
     </filter>))}</defs>
   </svg>
 }

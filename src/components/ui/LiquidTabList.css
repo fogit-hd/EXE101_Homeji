@@ -1,6 +1,6 @@
 /* Keep the standard backdrop-filter AFTER its WebKit fallback: the production
    optimizer can otherwise retain only the prefixed property, which Chrome ignores.
-   The selection surface stays below labels so text is never refracted. */
+   Only the moving lens samples real pixels underneath; the clear center keeps labels sharp. */
 #root .liquid-tabs {
   --tabs-track: #14574f; --tabs-track-light: #246d60; --tabs-ink: #fff;
   position: relative; isolation: isolate; display: flex; align-items: center;
@@ -34,14 +34,16 @@
 #root .liquid-tabs > button[role='tab']:focus-visible { outline: 2px solid var(--tabs-ink); outline-offset: -4px; }
 #root .liquid-tabs > button[role='tab']:disabled { opacity: .4; cursor: not-allowed; }
 #root .liquid-tabs > .liquid-tabs__lens {
-  position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none;
-  box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff48;
-  background: radial-gradient(ellipse at var(--lens-light-x,22%) -30%,#ffffff0a,transparent 60%),
-    linear-gradient(155deg,#ffffff30,#ffffff12),transparent;
-  box-shadow: inset 0 1px 1px #ffffff78, inset 1px 0 2px -1px #ffffff60,
-    inset -1px -1px 2px -1px #ffffff48, 0 2px 2px #092c2726, 0 7px 15px -6px #092c2750;
-  -webkit-backdrop-filter: var(--glass-idle-filter,blur(10px) saturate(1.04));
-  backdrop-filter: var(--glass-idle-filter,blur(10px) saturate(1.04));
+  position: absolute; left: 0; top: 0; pointer-events: none;
+  z-index: 3;
+  box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff9c;
+  background: radial-gradient(ellipse at var(--lens-light-x,22%) -40%,#ffffff36,transparent 63%),
+    linear-gradient(165deg,#ffffff0d,transparent 42% 74%,#ffffff12);
+  box-shadow: inset 0 2px 2px -1px #ffffffeb, inset 2px 0 3px -2px #e1fffae6,
+    inset -2px -2px 3px -2px #ffffffa6, inset 0 -5px 7px -6px #ffffffd9,
+    0 2px 2px #082e273d, 0 5px 9px -4px #082e2766;
+  -webkit-backdrop-filter: var(--glass-lens-filter,blur(.35px) saturate(1.08));
+  backdrop-filter: var(--glass-lens-filter,blur(.35px) saturate(1.08));
 }
 #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens {
   transition: transform 460ms var(--glass-spring,cubic-bezier(.2,.8,.2,1)),width 460ms var(--glass-spring,cubic-bezier(.2,.8,.2,1)),height 260ms ease,scale 300ms var(--glass-spring,cubic-bezier(.2,.8,.2,1));
@@ -73,10 +75,10 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 /* The lens only rises above the rail during a press, drag or click pulse. */
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens {
   scale: 1.025 1.1;
-  -webkit-backdrop-filter: var(--glass-idle-filter,blur(10px) saturate(1.06));
-  backdrop-filter: var(--glass-idle-filter,blur(10px) saturate(1.06));
-  box-shadow: inset 0 1px 2px #ffffff80,inset -1px -2px 3px -2px #ffffff70,
-    0 2px 2px #092c2730,0 7px 15px -7px #092c2745;
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,blur(.5px) saturate(1.12));
+  backdrop-filter: var(--glass-lens-active-filter,blur(.5px) saturate(1.12));
+  box-shadow: inset 0 2px 3px -1px #ffffffed,inset -2px -3px 4px -2px #ffffffb0,
+    0 3px 3px #092c2738,0 8px 16px -6px #092c2760;
 }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { transition: scale 180ms ease; }
 @media(prefers-reduced-motion:reduce) {

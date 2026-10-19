@@ -617,9 +617,6 @@ function WithdrawPanel({
     if (!accountHolder.trim()) next.accountHolder = 'Nhập tên chủ tài khoản.'
     if (!Number.isInteger(amount) || amount <= 0) next.amount = 'Số tiền rút phải là số nguyên dương.'
     else if (balance == null) next.amount = 'Chưa có số dư để kiểm tra hạn mức.'
-    else if (balance - amount < reserve) {
-      next.amount = `Sau khi rút, ví phải còn ít nhất ${formatWalletAmount(reserve)}. Quy tắc này được kiểm trên form; máy chủ cũng từ chối nếu vi phạm.`
-    }
     setFieldError(next)
     if (Object.keys(next).length > 0) {
       setFormError('Kiểm tra lại các trường được đánh dấu.')

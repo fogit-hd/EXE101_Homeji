@@ -599,6 +599,7 @@ export const getMyWalletWithdrawals = () =>
   apiRequest<WalletWithdrawal[]>('/api/wallet/withdrawals')
 
 export const createWalletWithdrawal = (data: {
+  requestId: string
   amount: number
   bankName: string
   accountNumber: string

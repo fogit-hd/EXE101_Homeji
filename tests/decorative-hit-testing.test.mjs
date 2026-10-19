@@ -24,12 +24,8 @@ test('unsupported backdrop filters keep opaque semantic surfaces',()=>{
   assert.ok(fallback)
 })
 
-test('selection surface paints below labels and controls have no optical pseudo-face',()=>{
-  const levels=[]
+test('ordinary controls have no optical pseudo-face; refraction is scoped to the moving tab lens',()=>{
   roots[0].walkRules(rule=>assert.ok(!rule.selector.includes('data-glass-face')))
-  roots[1].walkRules(rule=>{
-    if(rule.selectors.includes('#root .liquid-tabs > .liquid-tabs__lens'))
-      rule.walkDecls('z-index',d=>levels.push(Number(d.value)))
-  })
-  assert.deepEqual(levels,[1])
+  const effect=fs.readFileSync('src/components/ui/LiquidGlassEffects.tsx','utf8')
+  assert.match(effect,/const controls = '\[data-glass-optics\],\.liquid-tabs__lens'/)
 })
