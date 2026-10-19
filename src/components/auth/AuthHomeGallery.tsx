@@ -12,14 +12,13 @@ const columns = [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1]]
 
 /** Seamless slow photo wall; CSS moves three tracks, never the form. */
 export function AuthHomeGallery() {
-  const [paused, setPaused] = useState(false)
   const [hidden, setHidden] = useState(() => document.hidden)
   useEffect(() => {
     const onVisibility = () => setHidden(document.hidden)
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
-  return <aside className="auth-home-gallery" aria-label="Những mái nhà Homeji" data-paused={paused || hidden || undefined}>
+  return <aside className="auth-home-gallery" aria-label="Những mái nhà Homeji" data-paused={hidden || undefined}>
     <div className="auth-home-gallery__wall" aria-hidden="true">
       {columns.map((column, index) => <div className="auth-home-gallery__column" key={index}>
         <div className="auth-home-gallery__track">
@@ -34,8 +33,5 @@ export function AuthHomeGallery() {
       </div>)}
     </div>
     <div className="auth-home-gallery__caption"><span>MỘT NƠI ĐỂ THUỘC VỀ</span><p>Mỗi mái nhà,<br />một khởi đầu mới.</p></div>
-    <button type="button" className="auth-home-gallery__pause" aria-pressed={paused} onClick={() => setPaused(value => !value)}>
-      <span aria-hidden="true">{paused ? '▶' : 'Ⅱ'}</span>{paused ? 'Tiếp tục chuyển động' : 'Tạm dừng chuyển động'}
-    </button>
   </aside>
 }

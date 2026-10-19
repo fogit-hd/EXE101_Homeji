@@ -18,7 +18,7 @@ try{
  const initial=await page.locator('.auth-home-gallery__track').first().evaluate(e=>{const s=getComputedStyle(e);return{transform:s.transform,duration:parseFloat(s.animationDuration)}})
  assert.ok(initial.duration>=80,'Photo drift is intentionally slow')
  await page.waitForFunction(t=>getComputedStyle(document.querySelector('.auth-home-gallery__track')).transform!==t,initial.transform)
- await page.getByRole('button',{name:'Tạm dừng chuyển động',exact:true}).click();assert.equal(await page.locator('.auth-home-gallery__track').first().evaluate(e=>getComputedStyle(e).animationPlayState),'paused');await page.getByRole('button',{name:'Tiếp tục chuyển động',exact:true}).click()
+ assert.equal(await page.locator('.auth-home-gallery button').count(),0,'Decorative gallery has no pause button');
  for(const theme of ['light','dark']){
   if(theme==='dark')await page.getByRole('switch',{name:'Chế độ tối',exact:true}).click()
   await page.waitForFunction(t=>document.documentElement.dataset.theme===t&&!document.documentElement.dataset.themeTransition,theme)
@@ -31,5 +31,5 @@ try{
  await page.goto(base+'/login');await page.getByRole('button',{name:'Đăng ký',exact:true}).click();await page.waitForURL('**/register');await page.getByLabel('Xác nhận mật khẩu',{exact:true}).waitFor();assert.equal(await page.locator('.auth-home-gallery').count(),0)
  assert.equal(await page.locator('.auth-cinema__card form input').first().getAttribute('id'),'auth-reg-email');assert.equal(await page.locator('.auth-account-notice a').first().getAttribute('href'),'/terms');assert.equal(await page.locator('.auth-account-notice a').last().getAttribute('href'),'/privacy');assert.ok(await page.locator('.auth-account-notice').evaluate(e=>Boolean(e.previousElementSibling?.classList.contains('auth-cinema__footer'))))
  await page.emulateMedia({reducedMotion:'reduce'});await page.goto(base+'/login');await page.getByLabel('Email',{exact:true}).waitFor();assert.equal(await page.locator('.auth-home-gallery__track').first().evaluate(e=>getComputedStyle(e).animationName),'none')
- assert.deepEqual(errors,[]);await writeFile(new URL('results.json',out),JSON.stringify({checks:['split layout','existing local images decoded','slow continuous motion','pause/resume','light/dark at five widths','password reveal','login payload and error','forgot-password and register routes','reduced motion'],shots,errors},null,2));console.log('PASS: Gamma-style actual login, slow local house gallery, pause/reduced motion, responsive 320–1440, password reveal, login failure contract and navigation')
+ assert.deepEqual(errors,[]);await writeFile(new URL('results.json',out),JSON.stringify({checks:['split layout','existing local images decoded','slow continuous motion','no pause control','light/dark at five widths','password reveal','login payload and error','forgot-password and register routes','reduced motion'],shots,errors},null,2));console.log('PASS: Gamma-style actual login, slow local house gallery, no pause control/reduced motion, responsive 320–1440, password reveal, login failure contract and navigation')
 }finally{await browser.close()}
