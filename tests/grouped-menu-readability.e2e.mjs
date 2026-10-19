@@ -43,6 +43,9 @@ try {
    await page.waitForTimeout(250)
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${theme}/${width}: horizontal overflow`)
    assert.equal(await page.locator('[data-glass-face]').count(),0)
+   const adjacent = await page.locator('.marketplace-header__subtabs-lead > *').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}}))
+   for(let i=1;i<adjacent.length;i++){const a=adjacent[i-1],b=adjacent[i];assert.ok(Math.min(a.right,b.right)-Math.max(a.left,b.left)<=1||Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)<=1,'Shopping tabs and filters must not overlap')}
+
    const lenses=await page.locator('.liquid-tabs').evaluateAll(es=>es.map(e=>({label:Number(getComputedStyle(e.querySelector('[role="tab"]')).zIndex),surface:Number(getComputedStyle(e.querySelector('.liquid-tabs__lens')).zIndex)})))
    assert.ok(lenses.every(e=>e.label>e.surface),'Tab labels must paint above glass')
    const surfaces=await page.locator('.marketplace-header,.food-rail-desktop .liquid-surface').evaluateAll(es=>es.map(e=>({background:getComputedStyle(e).backgroundColor,filter:getComputedStyle(e).backdropFilter})))
