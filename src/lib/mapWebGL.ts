@@ -1,4 +1,5 @@
 /** Helpers for Google Maps Vector / WebGL readiness. */
+import { observeElementResize } from './observeElementResize'
 
 /** Vector WebGL needs a non-zero container — never create Map at 0×0. */
 export function waitForMapHostSize(
@@ -14,15 +15,14 @@ export function waitForMapHostSize(
     const finish = () => {
       if (settled) return
       settled = true
-      ro.disconnect()
+      stopObserving()
       window.clearTimeout(timer)
       resolve(read())
     }
-    const ro = new ResizeObserver(() => {
+    const stopObserving = observeElementResize([el], () => {
       const s = read()
       if (s.width > 0 && s.height > 0) finish()
     })
-    ro.observe(el)
     const timer = window.setTimeout(finish, timeoutMs)
   })
 }

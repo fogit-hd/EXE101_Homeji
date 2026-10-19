@@ -115,7 +115,7 @@ export function InteractionMotion() {
         if (seen.has(node)) return
         seen.add(node)
         // Pre-hide only what starts below the fold, so it can rise in from nothing when reached.
-        if (node instanceof HTMLElement && node.getBoundingClientRect().top > window.innerHeight) node.classList.add('hj-pre-reveal')
+        if (intersection && node instanceof HTMLElement && node.getBoundingClientRect().top > window.innerHeight) node.classList.add('hj-pre-reveal')
         intersection?.observe(node)
       })
     }

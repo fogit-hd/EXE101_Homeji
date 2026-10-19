@@ -1,3 +1,4 @@
+import { observeElementResize } from '../../lib/observeElementResize'
 import {
   memo,
   useCallback,
@@ -778,11 +779,10 @@ function RentalMapComponent({
       }, 320)
     }
 
-    const ro = new ResizeObserver(scheduleResize)
-    ro.observe(host)
+    const stopObserving = observeElementResize([host], scheduleResize)
     return () => {
       window.clearTimeout(timer)
-      ro.disconnect()
+      stopObserving()
     }
   }, [mapReady])
 

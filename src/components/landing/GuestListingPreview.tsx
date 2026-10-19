@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { observeElementResize } from '../../lib/observeElementResize'
 import { Link } from 'react-router-dom'
 import { getRentalPost, MediaType, searchRentalPosts, type RentalPost, type RentalPostSummary } from '../../api'
 import { rentalPriceBasis, rentalPriceLabel } from '../ai/rentalPriceBasis'
@@ -55,12 +56,11 @@ export function GuestListingPreview() {
       next: element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
     })
     const frame = requestAnimationFrame(update)
-    const observer = new ResizeObserver(update)
-    observer.observe(element)
+    const stopObserving = observeElementResize([element], update)
     element.addEventListener('scroll', update, { passive: true })
     return () => {
       cancelAnimationFrame(frame)
-      observer.disconnect()
+      stopObserving()
       element.removeEventListener('scroll', update)
     }
   }, [posts.length, sourceListings.length, loading, error])

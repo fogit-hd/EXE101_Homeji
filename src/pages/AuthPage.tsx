@@ -1,4 +1,5 @@
 import type { CredentialResponse } from '@react-oauth/google'
+import { observeElementResize } from '../lib/observeElementResize'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 import { AuthHomeGallery } from '../components/auth/AuthHomeGallery'
 import { AuthCharacterScene } from '../components/auth/AuthCharacterScene'
@@ -253,17 +254,13 @@ function VoiceParkSlot({
     })
     const delay = window.setTimeout(report, 80)
 
-    const ro = new ResizeObserver(report)
-    ro.observe(el)
     const cascade = el.closest('.auth-cinema__cascade')
-    if (cascade) ro.observe(cascade)
-    window.addEventListener('resize', report)
+    const stopObserving = observeElementResize(cascade ? [el, cascade] : [el], report)
     return () => {
       cancelled = true
       window.cancelAnimationFrame(raf)
       window.clearTimeout(delay)
-      ro.disconnect()
-      window.removeEventListener('resize', report)
+      stopObserving()
     }
   }, [active, onPark])
 

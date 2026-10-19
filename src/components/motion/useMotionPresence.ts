@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { animate, type DOMKeyframesDefinition } from 'motion/react'
+import { animate, type AnimationPlaybackControlsWithThen, type DOMKeyframesDefinition } from 'motion/react'
 import { DURATION, EASE } from '../../lib/motionTokens'
 
 /**
@@ -35,13 +35,22 @@ export function useMotionPresence(open: boolean, kind: 'popup' | 'collapse' | 'f
       node.style.overflow = previousOverflow
       for (const prop of ['height', 'opacity', 'transform']) node.style.removeProperty(prop)
     }
-    const controls = animate(node, keyframes, open
-      ? { duration: DURATION.panel, ease: EASE.out }
-      : { duration: DURATION.exit, ease: EASE.in })
+    let controls: AnimationPlaybackControlsWithThen
+    const complete = () => { if (!cancelled) { if (open) restore(); settle() } }
+    try {
+      controls = animate(node, keyframes, open
+        ? { duration: DURATION.panel, ease: EASE.out }
+        : { duration: DURATION.exit, ease: EASE.in })
+    } catch {
+      restore(); settle(); return
+    }
+    // Browser throttling or a rejected animation must never retain a dead popup.
+    const deadline = window.setTimeout(() => { controls.stop(); restore(); complete() }, (open ? DURATION.panel : DURATION.exit) * 1000 + 150)
     // On close, keep the hidden end-state until unmount so nothing flashes back for a frame.
-    void controls.then(() => { if (!cancelled) { if (open) restore(); settle() } })
+    void controls.then(() => { clearTimeout(deadline); complete() }, () => { clearTimeout(deadline); if (!cancelled) { restore(); complete() } })
     return () => {
       cancelled = true
+      clearTimeout(deadline)
       controls.stop()
       restore()
     }

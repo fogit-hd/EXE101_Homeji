@@ -46,6 +46,8 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
   const native = useRef<HTMLSelectElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLElement>(null)
+  const layer = useRef<HTMLDialogElement>(null)
+  const [portalHost, setPortalHost] = useState<Element | null>(null)
   const search = useRef<HTMLInputElement>(null)
   const controlledValue = useRef(value)
   const options = useMemo(() => collectOptions(children), [children])
@@ -75,6 +77,7 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
     setTitle(props['aria-label'] || labelledBy || label || props.title || 'Chọn một mục')
     setQuery('')
     setActive(selected)
+    setPortalHost(trigger.current?.closest('dialog[open], [role="dialog"][aria-modal="true"]') ?? document.body)
     setOpen(true)
   }
 
@@ -143,6 +146,21 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
 
   useLayoutEffect(() => {
     if (!expanded) return
+    const surface = layer.current
+    if (!surface) return
+    // Native modal top layer escapes glass/transform stacking contexts. Keep the
+    // DOM inside its owner as well, so custom focus traps recognise the options.
+    try {
+      if (typeof surface.showModal === 'function') surface.showModal()
+      else surface.setAttribute('open', '')
+    } catch { surface.setAttribute('open', '') }
+    const dismissWithOwner = () => setOpen(false)
+    portalHost?.addEventListener('close', dismissWithOwner)
+    const ownerVisibility = new MutationObserver(() => {
+      if (trigger.current?.matches(':disabled') || trigger.current?.closest('[inert], [hidden], [aria-hidden="true"]') || (portalHost instanceof HTMLDialogElement && !portalHost.open)) setOpen(false)
+    })
+    for (let owner = trigger.current?.parentElement; owner && owner !== document.body; owner = owner.parentElement)
+      ownerVisibility.observe(owner, { attributes: true, attributeFilter: ['inert', 'hidden', 'aria-hidden', 'open', 'disabled'] })
     const position = () => {
       if (!trigger.current || !panel.current) return
       const rect = trigger.current.getBoundingClientRect()
@@ -155,16 +173,21 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
       const below = height + offsetTop - rect.bottom - 16
       const above = rect.top - offsetTop - 16
       const upward = !mobile && below < 280 && above > below
-      const available = Math.max(120, Math.min(430, upward ? above : below))
+      const viewportHeight = Math.max(0, height - 24)
+      const room = Math.max(0, Math.min(430, viewportHeight, upward ? above : below))
+      const floating = !mobile && room < 180
+      const available = mobile || floating ? viewportHeight : room
+      panel.current.style.minHeight = `${Math.min(120, available)}px`
+      panel.current.dataset.compact = String(available < 300)
       Object.assign(panel.current.style, mobile ? {
-        width: `${width - 24}px`, left: `${offsetLeft + 12}px`, top: `${offsetTop + height - 12}px`,
-        transform: 'translateY(-100%)', maxHeight: `${Math.max(160, height - 32)}px`,
+        width: `${Math.max(0, width - 24)}px`, left: `${offsetLeft + 12}px`, top: `${offsetTop + height - 12}px`,
+        transform: 'translateY(-100%)', maxHeight: `${available}px`,
       } : {
         width: `${Math.min(Math.max(rect.width, 320), width - 24)}px`,
         left: `${Math.max(offsetLeft + 12, Math.min(rect.left, offsetLeft + width - Math.min(Math.max(rect.width, 320), width - 24) - 12))}px`,
-        top: `${upward ? rect.top - 8 : rect.bottom + 8}px`, transform: upward ? 'translateY(-100%)' : 'none', maxHeight: `${available}px`,
+        top: `${floating ? offsetTop + 12 : upward ? rect.top - 8 : rect.bottom + 8}px`, transform: upward && !floating ? 'translateY(-100%)' : 'none', maxHeight: `${available}px`,
       })
-      panel.current.dataset.placement = mobile ? 'sheet' : upward ? 'above' : 'below'
+      panel.current.dataset.placement = mobile ? 'sheet' : floating ? 'viewport' : upward ? 'above' : 'below'
     }
     position()
     search.current?.focus({ preventScroll: true })
@@ -177,13 +200,18 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
     window.visualViewport?.addEventListener('resize', position)
     window.visualViewport?.addEventListener('scroll', position)
     return () => {
+      portalHost?.removeEventListener('close', dismissWithOwner)
+      ownerVisibility.disconnect()
+      if (surface.open) {
+        try { surface.close() } catch { surface.removeAttribute('open') }
+      }
       document.removeEventListener('focusin', dismiss)
       window.removeEventListener('resize', position)
       window.removeEventListener('scroll', position, true)
       window.visualViewport?.removeEventListener('resize', position)
       window.visualViewport?.removeEventListener('scroll', position)
     }
-  }, [expanded])
+  }, [expanded, portalHost])
 
   useEffect(() => {
     if (!expanded || !activeId) return
@@ -207,9 +235,11 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
       {children}
     </select>
     {invalid && <span className="choice-picker__error" role="alert">Vui lòng chọn một mục hợp lệ.</span>}
-    {expanded && createPortal(<div className="choice-picker-layer">
+    {expanded && portalHost && createPortal(<dialog ref={layer} id={panelId} className="choice-picker-layer" aria-label={title}
+      onCancel={event => { event.preventDefault(); event.stopPropagation(); close() }}
+      onClose={event => { event.stopPropagation(); setOpen(false) }}>
       <div className="choice-picker__scrim" onPointerDown={() => close()} aria-hidden="true" />
-      <section ref={panel} id={panelId} className="choice-picker__panel liquid-surface" role="dialog" aria-label={title}
+      <section ref={panel} className="choice-picker__panel liquid-surface" aria-label={title}
         onPointerDown={event => event.stopPropagation()} onMouseDown={event => event.stopPropagation()}
         onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close() } }}>
         <div className="choice-picker__handle" aria-hidden="true" />
@@ -238,6 +268,6 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
         </div>
         <footer className="choice-picker__foot"><span role="status">{visible.length} lựa chọn{query ? ' phù hợp' : ''}</span><span>↑ ↓ để duyệt · Enter để chọn</span></footer>
       </section>
-    </div>, document.body)}
+    </dialog>, portalHost)}
   </span>
 }

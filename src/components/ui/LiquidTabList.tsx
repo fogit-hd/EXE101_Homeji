@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type RefObject } from 'react'
+import { observeElementResize } from '../../lib/observeElementResize'
 import './LiquidTabList.css'
 
 type Drag = { pointerId: number; x: number; y: number; left: number; width: number; height: number; top: number; moved: boolean; capture: HTMLButtonElement }
@@ -60,11 +61,9 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
     }
     restore.current = measure
     measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(root)
-    root.querySelectorAll(':scope > [role="tab"]').forEach(button => observer.observe(button))
+    const stopObserving = observeElementResize([root, ...root.querySelectorAll(':scope > [role="tab"]')], measure)
     void document.fonts?.ready.then(measure)
-    return () => { disposed = true; cancelAnimationFrame(frame); observer.disconnect() }
+    return () => { disposed = true; cancelAnimationFrame(frame); stopObserving() }
   }, [children, rootRef])
   return <div {...props} ref={rootRef} className={`liquid-tabs ${className}`} role="tablist"
     onPointerDown={event => {

@@ -107,6 +107,7 @@
 
 /* Scroll reveal pre-state: only for nodes registered below the fold (never above-the-fold content). */
 .hj-pre-reveal { opacity: 0; }
+.hj-pre-reveal:focus-within { opacity: 1; }
 
 @media(prefers-reduced-motion:reduce) {
   :is(.btn,.auth-cinema__submit,.marketplace-header button,.roommate-people button,[role="tab"]) { transition-duration: 0s; }

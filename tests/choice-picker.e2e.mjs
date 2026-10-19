@@ -45,7 +45,7 @@ const results = { checks: [], responsive: [], errors: [] }
 page.on('pageerror', error => results.errors.push(error.message))
 await context.route('**/*', route => new URL(route.request().url()).origin === new URL(base).origin ? route.continue() : route.abort())
 const check = name => results.checks.push(name)
-const dialog = () => page.locator('.choice-picker__panel[role=dialog]')
+const dialog = () => page.locator('.choice-picker-layer[open] .choice-picker__panel')
 const open = async name => { await page.getByRole('combobox', { name, exact: true }).click(); await dialog().waitFor() }
 try {
   await page.goto(base + '/output/verification/liquid-glass/fixture.html')

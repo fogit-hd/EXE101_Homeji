@@ -1,6 +1,7 @@
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import { useEffect, useRef, useState } from 'react'
 import { googleOAuthClientId } from '../../lib/googleOAuthClient'
+import { observeElementResize } from '../../lib/observeElementResize'
 
 type Props = {
   onSuccess: (response: CredentialResponse) => void
@@ -15,13 +16,13 @@ export function GoogleSignInButton({ onSuccess, onError, maxWidth = 280 }: Props
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const observer = new ResizeObserver(() => {
+    const measure = () => {
       const style = getComputedStyle(container)
       const availableWidth = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
       setButtonWidth(Math.max(200, Math.min(maxWidth, Math.floor(availableWidth))))
-    })
-    observer.observe(container)
-    return () => observer.disconnect()
+    }
+    measure()
+    return observeElementResize([container], measure)
   }, [maxWidth])
   if (!googleOAuthClientId) return null
   return (

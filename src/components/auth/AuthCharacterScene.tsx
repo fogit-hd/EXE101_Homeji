@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { observeElementResize } from '../../lib/observeElementResize'
 import type { Mesh, Object3D, Quaternion, SkinnedMesh } from 'three'
 import './AuthCharacterScene.css'
 
@@ -84,8 +85,7 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
         camera.updateProjectionMatrix()
         draw()
       }
-      const observer = new ResizeObserver(resize)
-      observer.observe(host)
+      const stopObserving = observeElementResize([host], resize)
       const visibility = () => {
         renderer.setAnimationLoop(document.hidden || reduced.matches ? null : draw)
         if (!document.hidden) draw()
@@ -102,7 +102,7 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
       renderer.domElement.addEventListener('webglcontextlost', contextLost)
       cleanup = () => {
         renderer.setAnimationLoop(null)
-        observer.disconnect()
+        stopObserving()
         document.removeEventListener('visibilitychange', visibility)
         document.removeEventListener('pointermove', followPointer)
         window.removeEventListener('blur', resetPointer)

@@ -20,14 +20,15 @@ const controls = 'button, summary, input[type="button"], input[type="submit"], i
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
   useEffect(() => {
-    if (!window.ResizeObserver || !CSS.supports('backdrop-filter', 'url("#homeji-liquid-lens")')) return
+    if (!window.ResizeObserver || typeof CSS === 'undefined' || typeof CSS.supports !== 'function'
+      || !CSS.supports('backdrop-filter', 'url("#homeji-liquid-lens")')) return
     const observed = new Set<HTMLElement>()
     const pending = new Map<HTMLElement, { width: number; height: number }>()
     let frame = 0
     const resize = new ResizeObserver(entries => {
       for (const entry of entries) {
         const element = entry.target as HTMLElement
-        const box = entry.borderBoxSize[0]
+        const box = entry.borderBoxSize?.[0]
         pending.set(element, { width: box?.inlineSize ?? entry.contentRect.width, height: box?.blockSize ?? entry.contentRect.height })
       }
       if (frame) return
