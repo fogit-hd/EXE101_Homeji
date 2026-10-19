@@ -1,8 +1,8 @@
 export const GLASS_LENS_RATIOS = [1, 2, 3, 4, 6, 10] as const
-export type GlassLensVariant = 'control' | 'tab-rest' | 'tab-active'
+export type GlassLensVariant = 'control' | 'control-face' | 'tab-rest' | 'tab-active'
 export function glassLensId(ratio: number, variant: GlassLensVariant = 'control') {
   const base = ratio === 3 ? 'homeji-liquid-lens' : `homeji-liquid-lens-${ratio}`
-  return variant === 'tab-rest' ? `${base}-tab` : variant === 'tab-active' ? `${base}-active` : base
+  return variant === 'tab-rest' ? `${base}-tab` : variant === 'tab-active' ? `${base}-active` : variant === 'control-face' ? `${base}-face` : base
 }
 export function nearestLensRatio(width: number, height: number) {
   const aspect = width / Math.max(1, height)

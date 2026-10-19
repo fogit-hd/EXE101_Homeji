@@ -39,8 +39,8 @@ try {
  assert.equal(await card.getAttribute('data-glass-control'),null);
  assert.equal(await card.evaluate(e=>getComputedStyle(e).backdropFilter),'none');
  await page.waitForFunction(()=>document.querySelector('.hj-post-cta')?.hasAttribute('data-glass-control'));
- const headerAction=page.locator('.hj-post-cta').first();
- assert.match(await headerAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
+ await page.screenshot({path:new URL('initial.png',out).pathname.slice(1)}); const headerAction=page.locator('.hj-post-cta').first();
+ assert.match(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/url\(/);
  assert.equal(await headerAction.evaluate(e=>getComputedStyle(e).filter),'none');
  await page.evaluate(()=>{
   const host=document.createElement('section');host.id='scope-fixture';host.style.cssText='margin:24px;padding:24px;background:repeating-linear-gradient(90deg,#245443 0 28px,#99b78a 28px 30px);display:flex;gap:16px;flex-wrap:wrap';
@@ -55,15 +55,25 @@ try {
  assert.match(await page.locator('select[aria-label="Chế độ xem"]').evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  const action=page.locator('#scope-action');await action.scrollIntoViewIfNeeded();
  await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const image=new Image();image.src=e.getAttribute('href');await image.decode()}))});
- const optical=await action.screenshot({path:new URL('action-optical.png',out).pathname.slice(1)});
- await action.evaluate(e=>e.style.setProperty('backdrop-filter','none','important'));
+ const originalFace=await action.evaluate(e=>e.style.getPropertyValue('--glass-face-filter')); const optical=await action.screenshot({path:new URL('action-optical.png',out).pathname.slice(1)});
+ await action.evaluate(e=>e.style.setProperty('--glass-face-filter','none','important'));
  const flat=await action.screenshot({path:new URL('action-flat.png',out).pathname.slice(1)});
  assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The action actually refracts background pixels');
- await action.evaluate(e=>e.style.removeProperty('backdrop-filter'));
+ await action.evaluate((e,value)=>e.style.setProperty('--glass-face-filter',value),originalFace);
+ // Uniform backing and no border/shadow isolate refraction of the actual glyphs.
+ const isolate=await page.addStyleTag({content:'#scope-fixture{background:#245443!important}#scope-action{background:transparent!important;border:0!important;box-shadow:none!important;font-size:24px!important;padding:8px!important;color:white!important}'});
+ await page.waitForFunction(()=>document.querySelector('#scope-action').style.getPropertyValue('--glass-face-filter').includes('-face'));
+ const cap=await action.evaluate(e=>({face:e.hasAttribute('data-glass-face'),filter:getComputedStyle(e,'::after').backdropFilter,pointer:getComputedStyle(e,'::after').pointerEvents}));
+ assert.ok(cap.face);assert.match(cap.filter,/-face/);assert.equal(cap.pointer,'none');
+ const refracted=await action.screenshot({path:new URL('glyphs-through-glass.png',out).pathname.slice(1)});
+ const hide=await page.addStyleTag({content:'#scope-action::after{display:none!important}'});
+ const glyphsFlat=await action.screenshot({path:new URL('glyphs-without-glass.png',out).pathname.slice(1)});
+ assert.notEqual(createHash('sha256').update(refracted).digest('hex'),createHash('sha256').update(glyphsFlat).digest('hex'),'Actual button glyphs refract under the optical cap');
+ await hide.evaluate(e=>e.remove());await isolate.evaluate(e=>e.remove());
  for(const theme of ['light','dark']){
   await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
-  assert.match(await headerAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
-  const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
+  assert.match(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/url\(/);
+  const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:e.hasAttribute('data-glass-face')?getComputedStyle(e,'::after').backdropFilter:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
   assert.match(bg,/rgba|color\(/,'Control surface remains translucent in '+theme);
   await page.locator('#scope-fixture').screenshot({path:new URL('scope-'+theme+'.png',out).pathname.slice(1)});
   await page.evaluate(()=>window.scrollTo(0,0));

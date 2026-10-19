@@ -24,7 +24,7 @@ test('unsupported backdrop filters keep opaque semantic surfaces',()=>{
   assert.ok(fallback)
 })
 
-test('controls have no foreground optical overlay and content exclusions stay explicit',()=>{
+test('optical faces stay separate from the base material and content exclusions stay explicit',()=>{
   roots[0].walkRules(rule=>assert.ok(!rule.selector.includes('data-glass-face')))
   const effect=fs.readFileSync('src/components/ui/LiquidGlassEffects.tsx','utf8')
   assert.match(effect,/const contentControls = /)
