@@ -49,3 +49,8 @@ Commit UI `bebae40428d95017a378c4ead35b91aeea7ae318` đã push lên main và ph�
 Đã chạy lại kiểm tra trình duyệt trên bundle live: menu phân nhóm, focus bàn phím, đóng/mở, tab Đồ ăn/Chợ đồ, light/dark ở 320/390/1024/1440px; không tràn ngang hoặc pageerror. Đã xem ảnh menu tài khoản và đồ ăn mobile từ host live. API trong kiểm tra này được giả lập, mọi traffic ngoài host bị chặn; không đăng nhập tài khoản thật, tạo đơn hoặc thực hiện thanh toán. Đây là bằng chứng UI đã phát hành, không phải bằng chứng nghiệp vụ backend production.
 
 Kết quả/ảnh live trong worktree phát hành: `output/deploy-readable-glass/release.json` và `output/deploy-readable-glass/live-ui-fixtures/`.
+
+
+## Điều chỉnh theo phản hồi trực tiếp
+
+Người dùng yêu cầu menu Danh mục dễ nhìn như trước sau khi xem bản accordion. Trả riêng Danh mục về mega menu bốn cột trên desktop và cách nhóm mobile ban đầu; giữ sửa kính/độ rõ của chữ và menu tài khoản. Kiểm tra mới xác nhận bốn cột desktop, bàn phím và light/dark/mobile. Bộ lọc inline giữ bố cục production, không áp CSS grid của thanh lọc cũ.

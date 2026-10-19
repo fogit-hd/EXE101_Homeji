@@ -407,39 +407,27 @@
   top: calc(100% + 4px);
   left: 0;
   z-index: 60;
-  width: min(440px, calc(100vw - 32px));
+  width: min(992px, calc(100vw - 32px));
   padding: 16px 20px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-elevated);
   box-shadow: 0 8px 24px rgba(20, 39, 31, 0.06);
-  max-height: calc(100dvh - var(--hj-header-h, 88px) - 24px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .hj-mega__title {
-  margin: 0 4px 12px;
-  font-size: 16px;
-  font-weight: 700;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 
 .hj-mega__groups {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 18px;
 }
-
-.hj-mega__group + .hj-mega__group { border-top: 1px solid var(--border); padding-top: 8px; }
-#root .hj-mega__group-toggle { min-height: 48px; margin: 0; padding: 8px 10px; border-radius: 10px; color: var(--text-heading); font-size: 13px; background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
-#root .hj-mega__group-toggle:is(:hover,:focus-visible) { background: var(--hj-accent-soft); }
-.hj-mega__group-toggle small { margin-left: 6px; color: var(--text-secondary); font-size: 12px; font-weight: 500; }
-#root .hj-mega__link { min-height: 44px; padding-inline: 12px; font-weight: 500; }
-#root .hj-mega__link:is(:hover,:focus-visible,.is-active) { background: var(--hj-accent-soft); }
-.hj-mega__link[aria-current='page'] { border-inline-start: 3px solid var(--hj-accent); }
-
-/* Floating shortcuts must not cover navigation rows in the mobile drawer. */
-body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab) { visibility: hidden; }
 
 .hj-mega__group-label,
 .hj-mega__group-toggle {
@@ -490,7 +478,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab) { visibility: hid
   min-height: 40px;
   padding: 0 8px;
   border-radius: 10px;
-  color: var(--text-heading);
+  color: #243028;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -524,6 +512,9 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab) { visibility: hid
 .hj-mega--drawer .hj-mega__groups {
   grid-template-columns: 1fr;
 }
+
+/* Floating shortcuts stay below an open mobile navigation drawer. */
+body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab) { visibility: hidden; }
 
 .hj-search-slot {
   position: relative;
