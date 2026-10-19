@@ -19,21 +19,21 @@ export function CategoryMegaMenu({ open, drawer, menuId, onNavigate }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const labelId = useId()
   const [expanded, setExpanded] = useState<Record<NavGroupId, boolean>>({
-    housing: true,
-    community: true,
-    market: true,
-    account: true,
+    housing: new URLSearchParams(location.search).get('section') !== 'marketplace',
+    community: false,
+    market: new URLSearchParams(location.search).get('section') === 'marketplace',
+    account: false,
   })
 
   useEffect(() => {
     if (!open) return
     const root = panelRef.current
     if (!root) return
-    const links = () => Array.from(root.querySelectorAll<HTMLAnchorElement>('a[href]'))
+    const links = () => Array.from(root.querySelectorAll<HTMLElement>('a[href],button'))
     const onKey = (event: KeyboardEvent) => {
       const nodes = links()
       if (nodes.length === 0) return
-      const index = nodes.indexOf(document.activeElement as HTMLAnchorElement)
+      const index = nodes.indexOf(document.activeElement as HTMLElement)
       if (event.key === 'ArrowDown') {
         event.preventDefault()
         nodes[index < 0 ? 0 : Math.min(nodes.length - 1, index + 1)]?.focus()
@@ -76,26 +76,23 @@ export function CategoryMegaMenu({ open, drawer, menuId, onNavigate }: Props) {
       </p>
       <div className="hj-mega__groups">
         {navigationGroups.map((group) => {
-          const isOpen = !drawer || expanded[group.id]
+          const isOpen = expanded[group.id]
           return (
             <section key={group.id} className="hj-mega__group">
-              {drawer ? (
                 <button
                   type="button"
                   className="hj-mega__group-toggle"
                   aria-expanded={isOpen}
+                  aria-controls={`${menuId}-${group.id}`}
                   onClick={() =>
                     setExpanded((current) => ({ ...current, [group.id]: !current[group.id] }))
                   }
                 >
-                  <span>{group.label}</span>
+                  <span>{group.label} <small>{group.items.length}</small></span>
                   <span aria-hidden>{isOpen ? '−' : '+'}</span>
                 </button>
-              ) : (
-                <h2 className="hj-mega__group-label">{group.label}</h2>
-              )}
               {isOpen ? (
-                <ul className="hj-mega__list">
+                <ul id={`${menuId}-${group.id}`} className="hj-mega__list">
                   {group.items.map((item, index) => {
                     const active = isNavigationItemActive(item, location.pathname, location.search)
                     const showCluster = Boolean(item.cluster) && item.cluster !== group.items[index - 1]?.cluster

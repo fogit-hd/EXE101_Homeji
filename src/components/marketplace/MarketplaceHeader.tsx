@@ -92,7 +92,7 @@ export function MarketplaceHeader({
   }
 
   return (
-    <header className={`marketplace-header${tab === 'wallet' ? ' marketplace-header--wallet' : ''}`}>
+    <header className={`marketplace-header liquid-surface${tab === 'wallet' ? ' marketplace-header--wallet' : ''}`}>
       <div className="marketplace-header__summary">
         <div className="marketplace-header__title-group">
           <p className="marketplace-header__eyebrow">{headline.eyebrow}</p>

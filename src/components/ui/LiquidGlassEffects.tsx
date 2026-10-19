@@ -9,13 +9,13 @@ import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeo
 
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
 const lensVariants = [
-  { variant: 'control', state: 'rest', depth: .13, blur: 0 },
-  { variant: 'tab-rest', state: 'tab-rest', depth: .182, blur: 0 },
-  { variant: 'tab-active', state: 'active', depth: .364, blur: 0 },
+  { variant: 'control', state: 'rest', depth: .012, blur: 0 },
+  { variant: 'tab-rest', state: 'tab-rest', depth: .018, blur: 0 },
+  { variant: 'tab-active', state: 'active', depth: .026, blur: 0 },
 ] as const
-// Clickable content surfaces keep clear media/text; their nested actions still get glass.
-const contentSurfaces = '.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,[role="option"],[data-glass-exclude]'
-const controls = 'button, summary, input[type="button"], input[type="submit"], input[type="reset"], .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, .guest-fixed-cta > span, [role="button"], [role="menuitem"], [data-glass-lens]'
+// Optics are explicitly reserved for decorative backgrounds. Never attach an
+// optical face to controls, labels, cards, images or third-party UI.
+const controls = '[data-glass-optics]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
@@ -48,17 +48,7 @@ export function LiquidGlassEffects() {
     const register = (root: Element) => {
       const candidates = root.matches(controls) ? [root, ...root.querySelectorAll(controls)] : root.querySelectorAll(controls)
       candidates.forEach(element => {
-        if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map') || element.matches(contentSurfaces) || observed.has(element)) return
-        // An optical pseudo-face refracts native labels without cloning or wrapping
-        // React children. Reserve an unused pseudo-element; keep existing decoration.
-        if (!element.matches('[data-glass-lens],.theme-switch,input') && !element.closest('.liquid-tabs')) {
-          const free = (pseudo: string) => ['none', 'normal'].includes(getComputedStyle(element, pseudo).content)
-          const face = free('::before') ? 'before' : free('::after') ? 'after' : null
-          if (face) {
-            element.dataset.glassFace = face
-            if (getComputedStyle(element).position === 'static') element.dataset.glassPosition = 'static'
-          }
-        }
+        if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map') || observed.has(element)) return
         observed.add(element)
         resize.observe(element)
       })
@@ -84,16 +74,7 @@ export function LiquidGlassEffects() {
       x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
       <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
       <feGaussianBlur in="SourceGraphic" stdDeviation={`${blur / ratio} ${blur}`} result="scene" />
-      <feDisplacementMap in="scene" in2="lens" data-glass-offset="-0.025" scale={Math.max(0, depth - .025)} xChannelSelector="R" yChannelSelector="G" result="red-warp" />
-      <feColorMatrix in="red-warp" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1" result="red" />
-      <feDisplacementMap in="scene" in2="lens" data-glass-offset="0" scale={depth} xChannelSelector="R" yChannelSelector="G" result="green-warp" />
-      <feColorMatrix in="green-warp" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1" result="green" />
-      <feDisplacementMap in="scene" in2="lens" data-glass-offset="0.025" scale={depth + .025} xChannelSelector="R" yChannelSelector="G" result="blue-warp" />
-      <feColorMatrix in="blue-warp" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0 1" result="blue" />
-      {/* Recombine opaque RGB channels, then restore scene alpha to keep the core clear. */}
-      <feComposite in="red" in2="green" operator="arithmetic" k2="1" k3="1" result="red-green" />
-      <feComposite in="red-green" in2="blue" operator="arithmetic" k2="1" k3="1" result="spectrum" />
-      <feComposite in="spectrum" in2="green-warp" operator="in" />
+      <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" />
     </filter>))}</defs>
   </svg>
 }

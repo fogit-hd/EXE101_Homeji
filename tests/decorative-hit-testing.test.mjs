@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import postcss from 'postcss'
 
 const roots=['src/liquid-glass.css','src/components/ui/LiquidTabList.css','src/components/motion/interaction-motion.css','src/ai-spectrum.css','src/components/theme/theme.css'].map(file=>postcss.parse(fs.readFileSync(file,'utf8')))
-for(const selector of ['.liquid-glass-defs','.interaction-feedback','.interaction-pulse','.ai-interaction-waves','.theme-water-layer','html[data-theme-transition]::view-transition',"[data-glass-face='before']::before",'#root .liquid-tabs > .liquid-tabs__lens']) {
+for(const selector of ['.liquid-glass-defs','.interaction-feedback','.interaction-pulse','.ai-interaction-waves','.theme-water-layer','html[data-theme-transition]::view-transition','#root .liquid-tabs > .liquid-tabs__lens']) {
   test(`${selector} never captures pointer input`,()=>{
     const declarations=[]
     for(const root of roots)root.walkRules(rule=>{
@@ -24,12 +24,12 @@ test('unsupported backdrop filters keep opaque semantic surfaces',()=>{
   assert.ok(fallback)
 })
 
-test('optical faces refract behind labels instead of sampling the text',()=>{
+test('selection surface paints below labels and controls have no optical pseudo-face',()=>{
   const levels=[]
-  roots[0].walkRules(rule=>{
-    if(rule.selectors.includes("[data-glass-face='before']::before"))
-      rule.walkDecls('z-index',declaration=>levels.push(Number(declaration.value)))
+  roots[0].walkRules(rule=>assert.ok(!rule.selector.includes('data-glass-face')))
+  roots[1].walkRules(rule=>{
+    if(rule.selectors.includes('#root .liquid-tabs > .liquid-tabs__lens'))
+      rule.walkDecls('z-index',d=>levels.push(Number(d.value)))
   })
-  assert.ok(levels.length)
-  assert.ok(levels.every(level=>level<0),'Above-label refraction produces duplicate colored glyphs')
+  assert.deepEqual(levels,[1])
 })

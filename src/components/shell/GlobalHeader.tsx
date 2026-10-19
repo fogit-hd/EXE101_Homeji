@@ -59,6 +59,7 @@ export function GlobalHeader() {
   const notifyRef = useRef<HTMLDivElement>(null)
   const closeTimer = useRef<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const categoryKeyboardOpen = useRef(false)
   const [pinned, setPinned] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountFocusEdge = useRef<'first' | 'last' | null>(null)
@@ -284,6 +285,12 @@ export function GlobalHeader() {
   }, [accountOpen])
 
   useEffect(() => {
+    if (!menuOpen || !categoryKeyboardOpen.current) return
+    anchorRef.current?.querySelector<HTMLElement>('.hj-mega button, .hj-mega a[href]')?.focus()
+    categoryKeyboardOpen.current = false
+  }, [menuOpen])
+
+  useEffect(() => {
     if (!menuOpen && !accountOpen && !notifyOpen) return
     const onPointer = (event: MouseEvent) => {
       const target = event.target as Node
@@ -306,6 +313,7 @@ export function GlobalHeader() {
         notifyRef.current?.querySelector<HTMLElement>('.hj-notify__trigger')?.focus()
       }
       if (accountWasOpen) accountRef.current?.querySelector<HTMLElement>('.hj-profile')?.focus()
+      if (menuOpen && !notifyWasOpen && !accountWasOpen) anchorRef.current?.querySelector<HTMLElement>('.hj-menu-trigger')?.focus()
     }
     document.addEventListener('mousedown', onPointer)
     document.addEventListener('keydown', onKey)
@@ -330,11 +338,13 @@ export function GlobalHeader() {
     if (drawer) return
     clearCloseTimer()
     setNotifyOpen(false)
+    setAccountOpen(false)
     setMenuOpen(true)
   }
 
   const toggleMenu = () => {
     setNotifyOpen(false)
+    setAccountOpen(false)
     if (drawer) {
       setPinned(false)
       setMenuOpen((open) => !open)
@@ -350,10 +360,14 @@ export function GlobalHeader() {
   }
 
   const onTriggerKey = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'ArrowDown' && menuOpen) {
+    if (event.key === 'ArrowDown') {
       event.preventDefault()
-      const first = anchorRef.current?.querySelector<HTMLAnchorElement>('.hj-mega a[href]')
-      first?.focus()
+      setMenuOpen(true)
+      setPinned(true)
+      setNotifyOpen(false)
+      setAccountOpen(false)
+      if (menuOpen) anchorRef.current?.querySelector<HTMLElement>('.hj-mega button, .hj-mega a[href]')?.focus()
+      else categoryKeyboardOpen.current = true
     }
   }
 
@@ -375,6 +389,10 @@ export function GlobalHeader() {
   if (isAdmin) {
     accountLinks.unshift({ id: 'admin', label: 'Quản trị', href: '/admin', icon: 'shield' })
   }
+  const accountGroups = [
+    { label: 'Tài khoản & dịch vụ', items: accountLinks.filter(item => ['profile', 'subscription'].includes(item.id)) },
+    { label: 'Hoạt động của bạn', items: accountLinks.filter(item => ['myPosts', 'saved', 'wanted', 'activities', 'admin'].includes(item.id)) },
+  ]
 
   return (
     <header className="hj-header">
@@ -384,6 +402,12 @@ export function GlobalHeader() {
           ref={anchorRef}
           onMouseEnter={hoverOpen}
           onMouseLeave={scheduleClose}
+          onBlur={event => {
+            if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+              setMenuOpen(false)
+              setPinned(false)
+            }
+          }}
         >
           <button
             type="button"
@@ -495,7 +519,9 @@ export function GlobalHeader() {
           {isAdmin ? <Link to="/admin" className="hj-post-cta hj-admin-cta" aria-current={location.pathname === '/admin' ? 'page' : undefined}>
             <ShellIcon name="shield" /><span>Quản trị</span>
           </Link> : <Link to="/posts/new" className="hj-post-cta">Đăng tin</Link>}
-          <div className="hj-account" ref={accountRef}>
+          <div className="hj-account" ref={accountRef} onBlur={event => {
+            if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setAccountOpen(false)
+          }}>
             <button
               type="button"
               className={`hj-profile${accountOpen ? ' is-open' : ''}`}
@@ -514,11 +540,15 @@ export function GlobalHeader() {
                   return
                 }
                 setNotifyOpen(false)
+                setMenuOpen(false)
+                setPinned(false)
                 setWalletMenuVersion(version => version + 1)
                 setAccountOpen(true)
               }}
               onClick={() => {
                 setNotifyOpen(false)
+                setMenuOpen(false)
+                setPinned(false)
                 if (!accountOpen) setWalletMenuVersion((version) => version + 1)
                 setAccountOpen((open) => !open)
               }}
@@ -534,9 +564,14 @@ export function GlobalHeader() {
                 })}>
                 <p className="hj-account__name">{displayName}</p>
                 <p className="hj-account__role">{isAdmin ? 'Quản trị viên' : 'Tài khoản cá nhân'}</p>
-                <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}
-                  active={accountOpen} ownerId={profile?.id} onNavigate={() => setAccountOpen(false)} />
-                {accountLinks.map((item) => (
+                <div role="group" aria-label="Ví & thanh toán" className="hj-account__group">
+                  <p className="hj-account__group-label">Ví & thanh toán</p>
+                  <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}
+                    active={accountOpen} ownerId={profile?.id} onNavigate={() => setAccountOpen(false)} />
+                </div>
+                {accountGroups.map(group => <div key={group.label} role="group" aria-label={group.label} className="hj-account__group">
+                  <p className="hj-account__group-label">{group.label}</p>
+                  {group.items.map((item) => (
                   <Link
                     key={item.id}
                     to={item.href}
@@ -547,7 +582,8 @@ export function GlobalHeader() {
                     <ShellIcon name={item.icon} />
                     <span>{item.label}</span>
                   </Link>
-                ))}
+                  ))}
+                </div>)}
                 <button
                   type="button"
                   role="menuitem"

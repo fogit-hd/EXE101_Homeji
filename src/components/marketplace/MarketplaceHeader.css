@@ -385,3 +385,14 @@
   .marketplace-header__subtabs-lead .marketplace-toolbar--inline { flex-wrap: nowrap; }
   .marketplace-header__subtabs-lead .marketplace-distance-sort { display: none; }
 }
+
+/* Keep both navigation levels close to the title without stacking blank rails. */
+#root .marketplace-header.liquid-surface {
+  background: var(--glass-panel);
+  border-bottom: 1px solid var(--glass-border);
+}
+#root .marketplace-header > .liquid-tabs { margin-block: 0 4px; }
+#root .marketplace-header__subtabs { padding-block: 0 8px; background: transparent; }
+#root .marketplace-header__subtabs .liquid-tabs { margin-block: 0; }
+#root .marketplace-header__topup { min-height: 44px; padding-inline: 6px; box-shadow: none; background: transparent; border: 0; border-radius: 6px; }
+

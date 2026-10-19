@@ -84,7 +84,7 @@ export function FoodUtilityRail({
       className={`food-rail${compact ? ' food-rail--compact' : ''}`}
       aria-label="Vị trí, bếp gần và giỏ hàng"
     >
-      <section className="food-rail__location" aria-labelledby="food-rail-location-title">
+      <section className="food-rail__location liquid-surface" aria-labelledby="food-rail-location-title">
         <div className="food-rail__location-head">
           <h2 id="food-rail-location-title">Giao đến đâu?</h2>
           <button
@@ -116,7 +116,7 @@ export function FoodUtilityRail({
         </div>
       </section>
 
-      <section className="food-rail__kitchens" aria-labelledby="food-rail-kitchens-title">
+      <section className="food-rail__kitchens liquid-surface" aria-labelledby="food-rail-kitchens-title">
         <div className="food-rail__kitchens-head">
           <h3 id="food-rail-kitchens-title">Bếp đang mở gần bạn</h3>
           <span>{loading ? <Sk w={44} h={10} /> : `${kitchens.length} bếp`}</span>
@@ -160,7 +160,7 @@ export function FoodUtilityRail({
         </ul>
       </section>
 
-      <section className="food-rail__cart" aria-labelledby="food-rail-cart-title">
+      <section className="food-rail__cart liquid-surface" aria-labelledby="food-rail-cart-title">
         <header className="food-rail__cart-head">
           <div className="food-rail__cart-title">
             <img src={FOOD_ASSETS.icons.shoppingBagDark} alt="" width={18} height={18} />
