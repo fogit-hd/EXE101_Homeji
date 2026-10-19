@@ -1,3 +1,4 @@
+import { ensureFreshSession } from './sessionRefresh'
 import type { ApiError } from './types'
 import { NetworkError } from '../lib/errors'
 import {
@@ -92,7 +93,9 @@ export function getStoredSession(): { accessToken: string; userId: string | null
   }
 }
 
-export function persistSession(accessToken: string, userId?: string | null, email?: string | null) {
+export function persistSession(accessToken: string, userId?: string | null, email?: string | null, refreshToken?: string | null) {
+  clearStoredAuth()
+  if (refreshToken) { localStorage.setItem('homeji_refresh_token', refreshToken); localStorage.setItem('homeji_session_anchor', accessToken) }
   setStoredToken(accessToken)
   if (userId) localStorage.setItem('homeji_user_id', userId)
   if (email) localStorage.setItem('homeji_email', email)
@@ -113,6 +116,7 @@ type RequestOptions = {
   params?: Record<string, string | number | boolean | string[] | undefined>
   signal?: AbortSignal
   timeoutMs?: number
+  sessionRetried?: boolean
 }
 
 function buildUrl(path: string, params?: RequestOptions['params']): string {
@@ -144,6 +148,7 @@ function parseErrorBody(text: string, statusText: string): ApiError {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true, params, signal, timeoutMs = API_TIMEOUT_MS } = options
+  if (auth) await ensureFreshSession()
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
@@ -202,6 +207,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     if (auth && tokenState.token && response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
+      const renewed = options.sessionRetried ? null : await ensureFreshSession(tokenState.token)
+      if (renewed && renewed !== tokenState.token) return apiRequest<T>(path, { ...options, sessionRetried: true })
       expireStoredAuth()
     }
     throw new ApiRequestError(
@@ -218,9 +225,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 export async function apiUpload<T>(
   path: string,
   formData: FormData,
-  options?: { auth?: boolean; params?: RequestOptions['params'] },
+  options?: { auth?: boolean; params?: RequestOptions['params']; sessionRetried?: boolean },
 ): Promise<T> {
   const auth = options?.auth !== false
+  if (auth) await ensureFreshSession()
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
@@ -262,6 +270,8 @@ export async function apiUpload<T>(
 
   if (!response.ok) {
     if (auth && tokenState.token && response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
+      const renewed = options?.sessionRetried ? null : await ensureFreshSession(tokenState.token)
+      if (renewed && renewed !== tokenState.token) return apiUpload<T>(path, formData, { ...options, sessionRetried: true })
       expireStoredAuth()
     }
     throw new ApiRequestError(
@@ -275,7 +285,8 @@ export async function apiUpload<T>(
 }
 
 /** Authenticated binary download, used for private chat attachments. */
-export async function apiDownload(path: string): Promise<Blob> {
+export async function apiDownload(path: string, sessionRetried = false): Promise<Blob> {
+  await ensureFreshSession()
   const tokenState = getTokenState()
   if (!tokenState.token) {
     throw new ApiRequestError(401, {
@@ -299,7 +310,11 @@ export async function apiDownload(path: string): Promise<Blob> {
   }
 
   if (!response.ok) {
-    if (response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) expireStoredAuth()
+    if (response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
+      const renewed = sessionRetried ? null : await ensureFreshSession(tokenState.token ?? undefined)
+      if (renewed && renewed !== tokenState.token && !sessionRetried) return apiDownload(path, true)
+      expireStoredAuth()
+    }
     const text = await response.text()
     throw new ApiRequestError(response.status, parseErrorBody(text, response.statusText))
   }

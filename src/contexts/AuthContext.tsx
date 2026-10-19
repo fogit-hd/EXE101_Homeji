@@ -1,3 +1,4 @@
+import { AUTH_REFRESHED_EVENT, ensureFreshSession } from '../api/sessionRefresh'
 import {
   createContext,
   useCallback,
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthDisrupted(false)
     }
     if (getStoredSession()?.userId !== session.userId) resetAnalyticsSearchMode()
-    persistSession(session.accessToken, session.userId, session.email)
+    persistSession(session.accessToken, session.userId, session.email, session.refreshToken)
     setHasToken(true)
     setEmail(session.email ?? null)
   }, [])
@@ -156,6 +157,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const t = window.setInterval(() => void refreshProfile(), SERVICE_RETRY_MS)
     return () => window.clearInterval(t)
   }, [authDisrupted, hasToken, refreshProfile])
+
+  useEffect(() => {
+    const sync = () => {
+      const token = localStorage.getItem('homeji_access_token')
+      if (!token) { resetAuthState(); return }
+      setHasToken(true)
+      setEmail(localStorage.getItem('homeji_email'))
+      void refreshProfile()
+    }
+    const storage = (event: StorageEvent) => { if (event.key === 'homeji_access_token' || event.key === null) sync() }
+    const renew = () => { void ensureFreshSession().catch(() => { /* Retry later without deleting the session. */ }) }
+    window.addEventListener(AUTH_REFRESHED_EVENT, sync)
+    window.addEventListener('storage', storage)
+    window.addEventListener('focus', renew)
+    window.addEventListener('online', renew)
+    const timer = window.setInterval(renew, 30_000)
+    return () => {
+      window.removeEventListener(AUTH_REFRESHED_EVENT, sync)
+      window.removeEventListener('storage', storage)
+      window.removeEventListener('focus', renew)
+      window.removeEventListener('online', renew)
+      window.clearInterval(timer)
+    }
+  }, [refreshProfile, resetAuthState])
 
   const setSessionFromAuth = useCallback(async (session: AuthSession) => {
     applySession(session)

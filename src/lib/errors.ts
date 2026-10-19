@@ -1,3 +1,4 @@
+import { SessionRefreshUnavailable } from '../api/sessionRefresh'
 import { ApiRequestError } from '../api/client'
 import { localizeApiMessage } from './apiMessagesVi'
 
@@ -61,7 +62,7 @@ export function isSystemApiError(err: unknown): boolean {
  * (mất mạng / server down / 5xx…) — không hiện trang trống.
  */
 export function isServiceDisruption(err: unknown): boolean {
-  return isNetworkLike(err) || isSystemApiError(err)
+  return err instanceof SessionRefreshUnavailable || isNetworkLike(err) || isSystemApiError(err)
 }
 
 export const PROFILE_INCOMPLETE_MESSAGE =

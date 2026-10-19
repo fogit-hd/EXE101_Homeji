@@ -1,3 +1,4 @@
+import { ensureFreshSession } from '../api/sessionRefresh'
 import { useEffect, useRef } from 'react'
 import {
   HubConnection,
@@ -60,10 +61,13 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
     let cancelled = false
     const isCurrent = () => !cancelled && getStoredSession()?.accessToken === accessToken
     const getAccessToken = () => isCurrent() ? accessToken : null
-    const expireCurrentSession = () => { if (isCurrent()) expireStoredAuth() }
+    const expireCurrentSession = () => { if (isCurrent()) {
+      if (localStorage.getItem('homeji_refresh_token')) void ensureFreshSession(accessToken).catch(() => {})
+      else expireStoredAuth()
+    } }
     const connection = new HubConnectionBuilder()
       .withUrl(resolveHubUrl(), {
-        accessTokenFactory: () => requireNotificationHubAccessToken(getAccessToken),
+        accessTokenFactory: async () => { await ensureFreshSession(); return requireNotificationHubAccessToken(() => getStoredSession()?.accessToken ?? null) },
       })
       .withAutomaticReconnect(createNotificationHubRetryPolicy({
         getAccessToken,

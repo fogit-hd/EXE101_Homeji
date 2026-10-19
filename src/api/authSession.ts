@@ -9,13 +9,15 @@ type SessionStorage = Pick<Storage, 'getItem' | 'removeItem'>
 type WritableSessionStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>
 
 const SESSION_KEYS = [
+  'homeji_refresh_token',
+  'homeji_session_anchor',
   'homeji_access_token',
   'homeji_user_id',
   'homeji_email',
 ] as const
 const SESSION_TERMINATION_KEY = 'homeji_session_termination_message'
 
-function decodeJwtExpiry(token: string): number | null {
+export function decodeJwtExpiry(token: string): number | null {
   const payload = token.split('.')[1]
   if (!payload) return null
 
@@ -71,7 +73,7 @@ export function readAuthTokenState(
   if (!token) return { token: null, expired: false }
 
   const expiresAt = decodeJwtExpiry(token)
-  if (expiresAt != null && expiresAt <= now) {
+  if (expiresAt != null && expiresAt <= now && !storage.getItem('homeji_refresh_token')) {
     expireStoredAuth(storage, eventTarget)
     return { token: null, expired: true }
   }

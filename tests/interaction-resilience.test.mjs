@@ -57,7 +57,7 @@ test('picker Escape closes its own layer, disabled options stay disabled and the
     await act(()=>env.root.render(React.createElement('dialog',{open:true,'data-owner':'true'},React.createElement(ChoicePicker,{'aria-label':'Khu vực'},option('a','A'),option('b','B',true)))))
     await click(document.querySelector('.choice-picker__trigger'))
     assert.equal(document.querySelector('[role=option][aria-disabled=true]').disabled,true)
-    await act(()=>document.querySelector('.choice-picker__search-wrap input').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})))
+    await act(()=>document.querySelector('.choice-picker__options').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})))
     assert.equal(document.querySelector('.choice-picker__panel'),null)
     assert.equal(document.querySelector('[data-owner]').open,true)
   }finally {await env.cleanup()}

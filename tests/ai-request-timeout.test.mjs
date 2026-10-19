@@ -17,7 +17,7 @@ function session() {
   const timers = new Map()
   let id = 0
   let finish
-  const client = module(clientSource, name => name === './authSession' ? {
+  const client = module(clientSource, name => name === './sessionRefresh' ? {ensureFreshSession:async()=> 'fixture'} : name === './authSession' ? {
     readAuthTokenState: () => ({ token: 'fixture', expired: false }),
   } : {}, {
     AbortController, DOMException, URL,
@@ -45,6 +45,7 @@ for (const [name, args] of [
   test(`${name} can complete after the ordinary 20-second deadline`, async () => {
     const s = session()
     const result = s.api[name](...args)
+    await new Promise(resolve => setImmediate(resolve))
     s.advance(25_000)
     s.finish()
     assert.equal((await result).ok, true)
@@ -54,6 +55,7 @@ for (const [name, args] of [
 test('ordinary requests still time out after 20 seconds', async () => {
   const s = session()
   const result = s.client.apiRequest('/api/profile')
+    await new Promise(resolve => setImmediate(resolve))
   s.advance(20_000)
   await assert.rejects(result, error => error.status === 408)
   assert.equal(s.timers.size, 0)
@@ -61,6 +63,7 @@ test('ordinary requests still time out after 20 seconds', async () => {
 test('AI requests remain bounded and release their timer', async () => {
   const s = session()
   const result = s.api.sendChatbotMessage({ message: 'Explain HTTPS' })
+    await new Promise(resolve => setImmediate(resolve))
   s.advance(40_000)
   await assert.rejects(result, error => error.status === 408)
   assert.equal(s.timers.size, 0)
@@ -69,6 +72,7 @@ test('abandoning an AI search cancels immediately without a timeout error', asyn
   const s = session()
   const controller = new AbortController()
   const result = s.api.highlightRentalPosts({ text: 'Phòng' }, controller.signal)
+    await new Promise(resolve => setImmediate(resolve))
   controller.abort()
   await assert.rejects(result, error => error.name === 'AbortError' && error.status === undefined)
   assert.equal(s.timers.size, 0)
