@@ -111,3 +111,7 @@ html[data-theme='dark'] #root .wallet-summary__available { background: linear-gr
  #root .wallet-deposit__card .wallet-methods button { min-height: 64px; }
  .wallet-deposit__card .wallet-methods small { display: none; }
 }
+.wallet-deposit .wallet-status { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); line-height: 1.6; }
+.wallet-deposit .wallet-status.is-processing { color: var(--text-heading); background: var(--surface-muted); }
+.wallet-deposit .wallet-status.is-failed { color: #a12d2b; background: #fff1ef; border-color: #e7b3ae; }
+html[data-theme='dark'] .wallet-deposit .wallet-status.is-failed { color: #ffc6be; background: #3d252d; border-color: #8e5257; }

@@ -494,49 +494,49 @@ function DepositPanel({
       </section>
 
       <div className="wallet-deposit__details">
-      <details className="wallet-disclosure">
-        <summary data-glass-exclude=""><span>Giao dịch gần nhất</span><span aria-hidden="true">+</span></summary>
-        {recent ? (
-          <article className="wallet-recent">
-            <header>
-              <span><Icon src={WALLET_ASSETS.check} size={17} />{KIND_LABEL[recent.kind] ?? recent.description}</span>
-              <b>Thành công</b>
-            </header>
-            <p className={recent.amount >= 0 ? 'is-in' : 'is-out'}>
-              <span className="sr-only">{recent.amount >= 0 ? 'Tiền vào' : 'Tiền ra'}</span>
-              {formatWalletSigned(recent.amount)}
-            </p>
-            <dl>
-              <div><dt>Thời gian</dt><dd>{formatWalletLedgerTime(recent.createdAt)}</dd></div>
-              <div><dt>Mã tham chiếu</dt><dd>{recent.referenceId || recent.id}</dd></div>
-            </dl>
-          </article>
-        ) : (
-          <WalletEmptyState title="Chưa có giao dịch gần nhất" detail="Khi ví ghi sổ, giao dịch mới sẽ hiện ở đây." />
-        )}
-      </details>
-      <details className="wallet-disclosure">
-        <summary data-glass-exclude=""><span>Hướng dẫn & lưu ý khi nạp</span><span aria-hidden="true">+</span></summary>
-        <p className="wallet-disclosure__intro">Tiền chỉ được cộng sau khi cổng thanh toán xác nhận thành công. Không đóng trang xác nhận quá sớm.</p>
-        <div className="wallet-notice wallet-notice--mint">
-          <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.shield} /></span>
-          <span>
-            <strong>Xác nhận đúng tên Homeji</strong>
-            <small>Không chuyển khoản tới tài khoản cá nhân hoặc mã QR được gửi qua tin nhắn.</small>
-          </span>
-        </div>
-        <div className="wallet-notice wallet-notice--paper">
-          <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.receipt} /></span>
-          <span>
-            <strong>Giữ mã tham chiếu</strong>
-            <small>Dùng mã giao dịch để đối soát nếu số dư chưa cập nhật sau 5 phút.</small>
-          </span>
-        </div>
-        <Link className="wallet-support liquid-action" to={mapSectionUrl('messages')}>
-          Cần hỗ trợ giao dịch?
-          <Icon src={WALLET_ASSETS.arrowUpRight} size={15} />
-        </Link>
-      </details>
+        <details className="wallet-disclosure">
+          <summary data-glass-exclude=""><span>Giao dịch gần nhất</span><span aria-hidden="true">+</span></summary>
+          {recent ? (
+            <article className="wallet-recent">
+              <header>
+                <span><Icon src={WALLET_ASSETS.check} size={17} />{KIND_LABEL[recent.kind] ?? recent.description}</span>
+                <b>Thành công</b>
+              </header>
+              <p className={recent.amount >= 0 ? 'is-in' : 'is-out'}>
+                <span className="sr-only">{recent.amount >= 0 ? 'Tiền vào' : 'Tiền ra'}</span>
+                {formatWalletSigned(recent.amount)}
+              </p>
+              <dl>
+                <div><dt>Thời gian</dt><dd>{formatWalletLedgerTime(recent.createdAt)}</dd></div>
+                <div><dt>Mã tham chiếu</dt><dd>{recent.referenceId || recent.id}</dd></div>
+              </dl>
+            </article>
+          ) : (
+            <WalletEmptyState title="Chưa có giao dịch gần nhất" detail="Khi ví ghi sổ, giao dịch mới sẽ hiện ở đây." />
+          )}
+        </details>
+        <details className="wallet-disclosure">
+          <summary data-glass-exclude=""><span>Hướng dẫn & lưu ý khi nạp</span><span aria-hidden="true">+</span></summary>
+          <p className="wallet-disclosure__intro">Tiền chỉ được cộng sau khi cổng thanh toán xác nhận thành công. Không đóng trang xác nhận quá sớm.</p>
+          <div className="wallet-notice wallet-notice--mint">
+            <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.shield} /></span>
+            <span>
+              <strong>Xác nhận đúng tên Homeji</strong>
+              <small>Không chuyển khoản tới tài khoản cá nhân hoặc mã QR được gửi qua tin nhắn.</small>
+            </span>
+          </div>
+          <div className="wallet-notice wallet-notice--paper">
+            <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.receipt} /></span>
+            <span>
+              <strong>Giữ mã tham chiếu</strong>
+              <small>Dùng mã giao dịch để đối soát nếu số dư chưa cập nhật sau 5 phút.</small>
+            </span>
+          </div>
+          <Link className="wallet-support liquid-action" to={mapSectionUrl('messages')}>
+            Cần hỗ trợ giao dịch?
+            <Icon src={WALLET_ASSETS.arrowUpRight} size={15} />
+          </Link>
+        </details>
       </div>
     </div>
   )
