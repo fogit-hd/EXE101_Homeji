@@ -40,3 +40,12 @@ Các kiểm thử dùng Chrome và API fixture local. Đã xem ảnh desktop/mob
 Bản phát hành dựa trên `cd35ef0` của `origin/main`, giữ nút Homeji AI, liên kết Quản lý tin/Tin đã lưu, menu món theo bếp, skeleton và cách tải ví độc lập. Chỉ ghép thay đổi menu/kính; không thay toàn bộ thư mục đang làm việc.
 
 Build và ESLint phần sửa qua. Bộ test trên nhánh phát hành: 274/277 qua; ba lỗi cũng tái hiện trên bản `origin/main` chưa sửa: adapter test admin thiếu AdminAnalyticsSkeleton, test màu hub cũ, test màu thông báo cũ không còn khớp selector. Không tính ba lỗi này là hồi quy của bản sửa. Kiểm tra Chrome trên production build local qua hai theme và 4 kích thước, menu bàn phím và chuyển tab đồ ăn/chợ đồ; không có pageerror. Ảnh trong worktree phát hành là bằng chứng của chính mã được deploy.
+
+
+## Xác minh sau deploy
+
+Commit UI `bebae40428d95017a378c4ead35b91aeea7ae318` đã push lên main và phát hành tại **https://homeji.onrender.com**. Kiểm tra lúc 10:40 ngày 19/10/2026 (Asia/Saigon): HTTP 200, CSS `/assets/main-DNBfbkhz.css`, JavaScript `/assets/main-DUHkXBFs.js`. CSS có nhóm menu mới; bundle JavaScript có nhóm tài khoản và logic focus mới, không còn cơ chế tự gắn optical face.
+
+Đã chạy lại kiểm tra trình duyệt trên bundle live: menu phân nhóm, focus bàn phím, đóng/mở, tab Đồ ăn/Chợ đồ, light/dark ở 320/390/1024/1440px; không tràn ngang hoặc pageerror. Đã xem ảnh menu tài khoản và đồ ăn mobile từ host live. API trong kiểm tra này được giả lập, mọi traffic ngoài host bị chặn; không đăng nhập tài khoản thật, tạo đơn hoặc thực hiện thanh toán. Đây là bằng chứng UI đã phát hành, không phải bằng chứng nghiệp vụ backend production.
+
+Kết quả/ảnh live trong worktree phát hành: `output/deploy-readable-glass/release.json` và `output/deploy-readable-glass/live-ui-fixtures/`.
