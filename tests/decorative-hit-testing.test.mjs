@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import postcss from 'postcss'
 
 const roots=['src/liquid-glass.css','src/components/ui/LiquidTabList.css','src/components/motion/interaction-motion.css','src/ai-spectrum.css','src/components/theme/theme.css'].map(file=>postcss.parse(fs.readFileSync(file,'utf8')))
-for(const selector of ['.liquid-glass-defs','.interaction-feedback','.interaction-pulse','.ai-interaction-waves','.theme-water-layer',"[data-glass-face='before']::before",'#root .liquid-tabs > .liquid-tabs__lens']) {
+for(const selector of ['.liquid-glass-defs','.interaction-feedback','.interaction-pulse','.ai-interaction-waves','.theme-water-layer','html[data-theme-transition]::view-transition',"[data-glass-face='before']::before",'#root .liquid-tabs > .liquid-tabs__lens']) {
   test(`${selector} never captures pointer input`,()=>{
     const declarations=[]
     for(const root of roots)root.walkRules(rule=>{

@@ -17,6 +17,8 @@ body:has(.hj-header) #root .theme-switch--floating { display: none; }
 .theme-water-drop { position: absolute; top: 0; width: 26px; height: 29px; border-radius: 48% 48% 50% 50%; background: var(--drop-color); box-shadow: inset 3px 2px 5px #ffffff50, 0 2px 8px #0002; will-change: transform; }
 .theme-water-drop::after { content: ''; position: absolute; left: 6px; top: 5px; width: 4px; height: 9px; border-radius: 50%; background: #ffffff70; rotate: 25deg; }
 .theme-water-wave { position: absolute; border-radius: 50%; background: var(--drop-color); transform-origin: center; will-change: transform, opacity; }
+/* The browser's snapshot overlay is decorative too; controls remain clickable. */
+html[data-theme-transition]::view-transition { pointer-events: none; }
 html[data-theme-transition]::view-transition-old(root), html[data-theme-transition]::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 html[data-theme-transition]::view-transition-image-pair(root) { isolation: auto; }
 html[data-theme-transition]::view-transition-old(root) { z-index: 1; }

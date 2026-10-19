@@ -21,6 +21,8 @@ disabling or closing an owner also closes its picker, preventing orphaned overla
 Glass pseudo-faces, lens reflections, click waves and theme decorations have
 `pointer-events: none`. Filter support is optional. Opaque semantic surfaces remain
 when backdrop filtering is unsupported. SVG definitions do not capture input.
+The browser-generated View Transition snapshot overlay is also explicitly
+non-interactive during theme changes, so it cannot consume page clicks.
 
 `observeElementResize` centralizes optional measurement for Google sign-in sizing,
 auth layout/character, guest listing rail, liquid tabs and map sizing/readiness.
@@ -37,7 +39,7 @@ privacy, hardware restrictions or intentional business/authentication restrictio
 ## Evidence and limits
 
 The original modal containment defect was reproduced using the actual React
-component in a DOM test, then verified after repair. The focused suite passes 32
+component in a DOM test, then verified after repair. The focused suite passes 33
 tests across real component DOM interactions, capability failures, decorative
 hit-testing declarations, lens geometry, dark contrast and search capture.
 Production build passes. New/changed shared component lint passes. The touched
