@@ -1536,6 +1536,20 @@
 .map-messages.map-messages .map-messages__loc { align-content: start; }
 .map-messages.map-messages .map-messages__inbox-filters { flex-wrap: nowrap; }
 .map-messages.map-messages .map-messages__inbox-filters button { white-space: nowrap; padding: 0 10px; }
+/* Three inbox filters share the available rail instead of sizing to content. */
+html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs {
+  width: 100%; max-width: 100%; box-sizing: border-box;
+  padding: 13px 3px; gap: 2px;
+}
+html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs > button[role='tab'] {
+  flex: 1 1 0; min-width: 0; width: 0; padding: 9px 4px;
+  gap: 4px; font-size: 12px; white-space: nowrap;
+}
+html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs > button[role='tab']:first-of-type { flex-grow: .65; }
+html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs > button[role='tab']:nth-of-type(2) { flex-grow: 1.35; }
+html:root #root .map-messages .map-messages__inbox-filters .map-messages__filter-count {
+  flex-shrink: 0; min-width: 16px; height: 16px; padding: 0 3px; font-size: 10px;
+}
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble time { color: var(--mm-faint); }
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-address,
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-coords { color: var(--mm-muted); }

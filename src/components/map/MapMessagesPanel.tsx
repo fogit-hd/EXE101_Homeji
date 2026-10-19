@@ -878,7 +878,7 @@ export function MapMessagesPanel({
                 className={inboxFilter === 'unread' ? 'is-active' : ''}
                 onClick={() => setInboxFilter('unread')}
               >
-                Chưa đọc{unreadTotal > 0 ? <span className="map-messages__filter-count">{unreadTotal}</span> : null}
+                Chưa đọc{unreadTotal > 0 ? <span className="map-messages__filter-count" aria-label={`${unreadTotal} tin chưa đọc`}>{unreadTotal > 99 ? '99+' : unreadTotal}</span> : null}
               </button>
               <button
                 type="button"
