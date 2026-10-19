@@ -5,6 +5,7 @@ import {
   HubConnectionState,
   LogLevel,
 } from '@microsoft/signalr'
+import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../lib/sellerOrderAlerts'
 import type { Notification } from '../api/types'
 import { getApiBaseUrl, getStoredSession } from '../api/client'
 import { AUTH_EXPIRED_EVENT, expireStoredAuth, terminateStoredAuth } from '../api/authSession'
@@ -75,8 +76,12 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
     connectionRef.current = connection
 
     connection.on('notificationReceived', (payload: Notification) => {
-      if (isCurrent()) handlerRef.current?.(payload)
+      if (isCurrent()) {
+        handlerRef.current?.(payload)
+        window.dispatchEvent(new CustomEvent(NOTIFICATION_RECEIVED, { detail: { ownerId: getStoredSession()?.userId, notification: payload } }))
+      }
     })
+    connection.onreconnected(() => { if (isCurrent()) window.dispatchEvent(new Event(NOTIFICATION_CONNECTED)) })
     connection.on('sessionTerminated', (payload: { reason?: string }) => {
       if (!isCurrent()) return
       terminateStoredAuth(payload?.reason || 'Phiên đăng nhập đã được kết thúc bởi quản trị viên.')
@@ -92,6 +97,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
       try {
         if (cancelled) return
         await connection.start()
+        if (isCurrent()) window.dispatchEvent(new Event(NOTIFICATION_CONNECTED))
       } catch (err) {
         if (isUnauthorizedHubError(err)) expireCurrentSession()
         if (cancelled || isBenignHubError(err)) return

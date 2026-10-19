@@ -1,0 +1,17 @@
+# Seller order alerts
+
+Seller alerts are built from persisted marketplace orders, not the unread notification count. This covers food cart lines and individual second-hand orders using the existing order API and states.
+
+- Global, account-scoped monitoring is mounted under the shared navigation. Requested orders need confirmation; accepted orders need preparation/handoff. Cart lines are grouped by checkout, buyer and seller. Terminal/delivered states leave the action queue.
+- Existing SignalR connections announce current-session notifications and reconnects to a local event bridge. No extra hub connection is opened. Marketplace updates trigger a coalesced refresh; a 30-second polling fallback, focus, visibility and online events reconcile persisted orders after missed realtime delivery. The seller dashboard consumes the same authoritative snapshots.
+- A failed refresh preserves the last queue and explicitly marks it stale. Reading or dismissing a bell notification does not clear the work queue.
+- Sound is explicitly enabled and tested from a user gesture using Web Audio. Reloading requires arming again when the browser has not allowed audio. The UI never claims sound is enabled if `AudioContext` is suspended. Short three-tone reminders repeat at most once per minute for unacknowledged work. Web Locks plus a per-account timestamp/fingerprint suppress duplicated automatic chimes across tabs when supported.
+- Acknowledgement silences only that order stage; it does not accept, reject or mark an order delivered. A stage change re-arms the reminder. Acknowledgements and sound preference are account-scoped, bounded, and tolerate unavailable storage. Account/token changes invalidate late responses and close audio/desktop alerts.
+- The queue links to `market=sales&sale=<orderId>`, highlights the order even if a status filter was selected, and retains the existing explicit seller acceptance/handoff actions.
+- Optional system notifications are requested only by a user click. They are used when the tab is hidden and permitted; unsupported/denied cases keep in-page alerts available.
+
+Browser restrictions: no service worker or Web Push subscription was added. The browser must stay open for live sound; a sleeping device, muted OS/tab, closed browser, or blocked permission cannot be guaranteed to sound. Persisted pending orders are reconciled when Homeji reopens. See MDN's Web Audio autoplay guide: https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay .
+
+Validation includes seller-only/cart grouping and stage acknowledgement unit tests; current-session/reconnect event bridge tests; browser fixtures for food and second-hand alerts, real Web Audio oscillator scheduling, duplicate suppression, reload acknowledgement, seller acceptance/handoff, stale-state preservation, polling recovery, one-minute reminders, and queue layout at 320/390/1440 in both themes. API writes in these tests are intercepted fixtures; no real order or customer notification is created.
+
+Pre-release checks: production build and focused ESLint passed; all 299 unit/contract tests passed. Browser fixture checks passed the seller food-cart and second-hand lifecycle, audio scheduling/reminders, reconnect/poll fallback, failure retention and 320/390/1440 layouts in light/dark. Evidence: `output/verification/seller-alerts/`. Physical speaker volume and a real customer order are not verified by oscillator scheduling.

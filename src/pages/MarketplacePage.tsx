@@ -1,3 +1,4 @@
+import { announceSellerOrdersChanged, SELLER_ORDERS_SNAPSHOT } from '../lib/sellerOrderAlerts'
 import { MarketplaceSellerCatalog } from '../components/marketplace/MarketplaceSellerCatalog'
 import { marketplaceItemUrl, marketplaceStoreUrl } from '../lib/marketplaceSellers'
 import { QuantityStepper } from '../components/marketplace/food/QuantityStepper'
@@ -330,6 +331,15 @@ export function MarketplacePage({
 
 
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
+  useEffect(() => {
+    if (tab !== 'sales' || !myUserId) return
+    const sync = (event: Event) => {
+      const payload = (event as CustomEvent<{ ownerId: string; orders: MarketplaceOrder[] }>).detail
+      if (payload?.ownerId === myUserId && Array.isArray(payload.orders)) setOrders(payload.orders)
+    }
+    window.addEventListener(SELLER_ORDERS_SNAPSHOT, sync)
+    return () => window.removeEventListener(SELLER_ORDERS_SNAPSHOT, sync)
+  }, [tab, myUserId])
   const [categorySelection, setCategorySelection] = useState({ tab, value: '' })
   const category = categorySelection.tab === tab ? categorySelection.value : ''
   const setCategory = (value: string) => setCategorySelection({ tab, value })
@@ -883,6 +893,7 @@ export function MarketplacePage({
 
   const rememberCreatedPurchase = async (orderId: string, message: string) => {
     setPurchaseReceipt({ message, orderId })
+    if (myUserId) announceSellerOrdersChanged(myUserId)
     void refreshPurchaseBalance()
     try {
       setOrders(await getMyMarketplaceOrders())
@@ -1372,9 +1383,9 @@ export function MarketplacePage({
   )
   const selectedOrderGroups = tab === 'sales' ? sellingOrderGroups : buyingOrderGroups
   const filteredOrderGroups = selectedOrderGroups.filter((group) =>
-    matchesOrderStatusFilter(group, orderStatusFilter),
+    group.orders.some(order => order.id === searchParams.get(tab === 'sales' ? 'sale' : 'purchase')) || matchesOrderStatusFilter(group, orderStatusFilter),
   )
-  const purchaseFocusId = searchParams.get('purchase')
+  const purchaseFocusId = searchParams.get(tab === 'sales' ? 'sale' : 'purchase')
   const buyerPurchasePostIds = useMemo(() => {
     if (!myUserId) return [] as string[]
     return [...new Set(
@@ -1401,7 +1412,7 @@ export function MarketplacePage({
   }, [filteredOrderGroups, purchaseKinds, failedPurchaseIdSet])
 
   useEffect(() => {
-    if (tab !== 'purchases' || !purchaseFocusId || !purchaseKindsReady) return
+    if (!['purchases', 'sales'].includes(tab) || !purchaseFocusId || (tab === 'purchases' && !purchaseKindsReady)) return
     document.querySelector('.marketplace-order-group.is-purchase-focus')
       ?.scrollIntoView({ block: 'nearest' })
   }, [tab, purchaseFocusId, purchaseKindsReady, orders, orderStatusFilter])
@@ -1418,6 +1429,7 @@ export function MarketplacePage({
     try {
       await action()
       setActionMsg(successMessage)
+      if (myUserId) announceSellerOrdersChanged(myUserId)
       await reload()
     } catch (err) {
       setActionError(getErrorMessage(err, 'Không thể cập nhật đơn hàng'))

@@ -1,3 +1,4 @@
+import { SellerOrderAlerts } from '../marketplace/SellerOrderAlerts'
 import { Suspense, useLayoutEffect } from 'react'
 import { useAnimate } from 'motion/react'
 import { transitions } from '../../lib/motionTokens'
@@ -62,6 +63,7 @@ export function AppLayout() {
         .join(' ')}
     >
       {isAuthedApp ? <AppShell /> : <Navbar />}
+      {isAuthenticated && !isAuthCinema ? <SellerOrderAlerts /> : null}
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
         <div
           ref={outletRef}
