@@ -138,6 +138,7 @@ export function FoodUtilityRail({
               <button
                 type="button"
                 className="food-rail__kitchen-row"
+                data-glass-exclude=""
                 onClick={() => onSelectKitchen?.(kitchen.sellerId)}
               >
                 <span className="food-rail__kitchen-avatar" aria-hidden="true">
