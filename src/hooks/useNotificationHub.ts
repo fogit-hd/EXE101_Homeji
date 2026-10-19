@@ -44,6 +44,7 @@ function isBenignHubError(err: unknown): boolean {
  * Tolerates React Strict Mode / Vite HMR remounts (start/stop race).
  */
 export function useNotificationHub({ enabled = true, onNotification }: Options) {
+  const accessToken = enabled ? getStoredSession()?.accessToken ?? null : null
   const handlerRef = useRef(onNotification)
   const connectionRef = useRef<HubConnection | null>(null)
 
@@ -53,18 +54,19 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
 
   useEffect(() => {
     if (!enabled) return
-    const session = getStoredSession()
-    if (!session?.accessToken) return
+    if (!accessToken) return
 
     let cancelled = false
-    const getAccessToken = () => getStoredSession()?.accessToken ?? null
+    const isCurrent = () => !cancelled && getStoredSession()?.accessToken === accessToken
+    const getAccessToken = () => isCurrent() ? accessToken : null
+    const expireCurrentSession = () => { if (isCurrent()) expireStoredAuth() }
     const connection = new HubConnectionBuilder()
       .withUrl(resolveHubUrl(), {
         accessTokenFactory: () => requireNotificationHubAccessToken(getAccessToken),
       })
       .withAutomaticReconnect(createNotificationHubRetryPolicy({
         getAccessToken,
-        onUnauthorized: expireStoredAuth,
+        onUnauthorized: expireCurrentSession,
       }))
       // Page-freeze / tab-sleep warnings are expected in Chrome — keep console quiet.
       .configureLogging(LogLevel.None)
@@ -73,9 +75,10 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
     connectionRef.current = connection
 
     connection.on('notificationReceived', (payload: Notification) => {
-      handlerRef.current?.(payload)
+      if (isCurrent()) handlerRef.current?.(payload)
     })
     connection.on('sessionTerminated', (payload: { reason?: string }) => {
+      if (!isCurrent()) return
       terminateStoredAuth(payload?.reason || 'Phiên đăng nhập đã được kết thúc bởi quản trị viên.')
     })
 
@@ -90,7 +93,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
         if (cancelled) return
         await connection.start()
       } catch (err) {
-        if (isUnauthorizedHubError(err)) expireStoredAuth()
+        if (isUnauthorizedHubError(err)) expireCurrentSession()
         if (cancelled || isBenignHubError(err)) return
         /* hub may be unavailable offline / CORS — silent */
       }
@@ -113,5 +116,5 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
         }
       })()
     }
-  }, [enabled])
+  }, [enabled, accessToken])
 }

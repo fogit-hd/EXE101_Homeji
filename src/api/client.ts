@@ -186,6 +186,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (response.status === 204) {
+    if (auth && getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
     return undefined as T
   }
 
@@ -200,7 +201,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
-    if (auth && tokenState.token && response.status === 401) {
+    if (auth && tokenState.token && response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
       expireStoredAuth()
     }
     throw new ApiRequestError(
@@ -209,6 +210,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     )
   }
 
+  if (auth && getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
   return data as T
 }
 
@@ -259,7 +261,7 @@ export async function apiUpload<T>(
   }
 
   if (!response.ok) {
-    if (auth && tokenState.token && response.status === 401) {
+    if (auth && tokenState.token && response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
       expireStoredAuth()
     }
     throw new ApiRequestError(
@@ -268,6 +270,7 @@ export async function apiUpload<T>(
     )
   }
 
+  if (auth && getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
   return data as T
 }
 
@@ -296,11 +299,13 @@ export async function apiDownload(path: string): Promise<Blob> {
   }
 
   if (!response.ok) {
-    if (response.status === 401) expireStoredAuth()
+    if (response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) expireStoredAuth()
     const text = await response.text()
     throw new ApiRequestError(response.status, parseErrorBody(text, response.statusText))
   }
 
-  return response.blob()
+  const blob = await response.blob()
+  if (getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
+  return blob
 }
 

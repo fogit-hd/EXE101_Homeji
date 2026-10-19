@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const css = readFileSync(new URL('../src/components/shell/shell.css', import.meta.url), 'utf8')
+const notificationCss = readFileSync(new URL('../src/pages/pages.css', import.meta.url), 'utf8')
 const luminance = hex => {
   const channels = hex.match(/[\da-f]{2}/gi).map(value => {
     const channel = Number.parseInt(value, 16) / 255
@@ -17,9 +18,10 @@ const contrast = (first, second) => {
 
 test('notification accent labels and white icons meet normal-text contrast', () => {
   for (const severity of ['critical', 'attention']) {
-    const block = css.match(new RegExp(`\\.hj-notify \\.notification-item--${severity} \\{([^}]+)\\}`))[1]
+    const block = notificationCss.match(new RegExp(`\\.notification-item--${severity} \\{([^}]+)\\}`))[1]
     const accent = block.match(/--notification-accent:\s*(#[\da-f]{6})/i)[1]
-    const soft = block.match(/--notification-soft:\s*(#[\da-f]{6})/i)[1]
+    const percent = Number(block.match(/--notification-soft:[^;]+? (\d+)%/)[1]) / 100
+    const soft = '#' + accent.slice(1).match(/../g).map(channel => Math.round(parseInt(channel, 16) * percent + 255 * (1 - percent)).toString(16).padStart(2, '0')).join('')
     assert.ok(contrast(accent, soft) >= 4.5, `${severity} label contrast`)
     assert.ok(contrast('#ffffff', accent) >= 4.5, `${severity} icon contrast`)
   }

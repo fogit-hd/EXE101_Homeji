@@ -24,6 +24,6 @@ test('hub accents remain readable on cream cards and colored actions', () => {
 
 test('room section captions and links do not inherit the global page palette', () => {
   assert.ok(/\.hub-rooms header p\s*\{[^}]*color:\s*var\(--hub-muted\)/.test(css))
-  assert.ok(/\.hub-rooms header > a\s*\{[^}]*color:\s*var\(--hub-coral\)/.test(css))
-  assert.ok(/\.hub-rooms \.hub-photo\s*\{[^}]*color:\s*var\(--hub-muted\)/.test(css))
+  assert.ok(/\.hub-rooms header a,\s*\.hub-side header a\s*\{[^}]*color:\s*var\(--hub-coral\)/.test(css))
+  assert.ok(/\.hub-room__nophoto\s*\{[^}]*color:\s*var\(--hub-muted\)/.test(css))
 })

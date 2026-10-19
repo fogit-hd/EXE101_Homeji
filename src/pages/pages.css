@@ -89,13 +89,13 @@
 }
 
 .notification-item--critical {
-  --notification-accent: #dc2626;
-  --notification-soft: color-mix(in srgb, #dc2626 10%, var(--surface-elevated));
+  --notification-accent: #b91c1c;
+  --notification-soft: color-mix(in srgb, #b91c1c 10%, var(--surface-elevated));
 }
 
 .notification-item--attention {
-  --notification-accent: #d97706;
-  --notification-soft: color-mix(in srgb, #d97706 11%, var(--surface-elevated));
+  --notification-accent: #92400e;
+  --notification-soft: color-mix(in srgb, #92400e 11%, var(--surface-elevated));
 }
 
 .notification-item--success {

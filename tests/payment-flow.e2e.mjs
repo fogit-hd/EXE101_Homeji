@@ -32,6 +32,7 @@ await context.route('**/*', async (route) => {
   if (url.origin !== baseUrl) return route.abort()
   if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/hubs/')) return route.continue()
   let body = []
+  if (url.pathname === '/api/search-interests') return route.fulfill({json:{settings:{enabled:false,aiEnabled:false,emailEnabled:false},suggestions:[],following:[],rooms:[]}})
   if (url.pathname === '/api/profile/me') { body = profile; profileCalls++ }
   else if (url.pathname === '/api/subscriptions/packages') body = packages
   else if (url.pathname === '/api/subscriptions/me') body = subscription
@@ -52,6 +53,7 @@ await page.clock.install({ time: now })
 await mkdir('output/verification', { recursive: true })
 try {
   await page.goto(`${baseUrl}/?section=payments&tab=history`)
+  await page.clock.runFor(800);const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible())await skip.click();await page.clock.runFor(800)
   await page.getByRole('heading', { name: 'Lịch sử giao dịch' }).waitFor()
   await page.locator('.pay-table__row').first().waitFor()
   await page.clock.runFor(800)
@@ -127,6 +129,6 @@ try {
   await page.getByRole('heading', { name: 'Chưa có đơn thanh toán' }).waitFor()
   assert.deepEqual(pageErrors, [], 'no React/browser runtime errors')
   console.log('PASS: history/filter/mobile, waiting/reload, return URL, polling/success, expiration/cancellation, MoMo/PayOS checkout, errors/retry/missing order')
-} finally {
+} catch(error){console.log('Payment fixture page errors:',pageErrors);await page.screenshot({path:'output/verification/payment-audit-failure.png',fullPage:true});throw error} finally {
   await browser.close()
 }

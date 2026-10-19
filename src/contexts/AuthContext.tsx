@@ -48,9 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
   const [email, setEmail] = useState<string | null>(() => getStoredSession()?.email ?? null)
   const [authDisrupted, setAuthDisrupted] = useState(false)
-  const refreshInFlight = useRef(false)
+  const sessionVersion = useRef(0)
+  const refreshInFlight = useRef<{ token: string; promise: Promise<void> } | null>(null)
 
   const resetAuthState = useCallback(() => {
+    sessionVersion.current += 1
+    refreshInFlight.current = null
     resetAnalyticsSearchMode()
     setHasToken(false)
     setProfile(null)
@@ -66,10 +69,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applySession = useCallback((session: AuthSession) => {
     if (!session.accessToken) return
+    if (getStoredSession()?.accessToken !== session.accessToken) {
+      sessionVersion.current += 1
+      refreshInFlight.current = null
+      setProfile(null)
+      setNeedsProfileSetup(false)
+      setAuthDisrupted(false)
+    }
     if (getStoredSession()?.userId !== session.userId) resetAnalyticsSearchMode()
     persistSession(session.accessToken, session.userId, session.email)
     setHasToken(true)
-    if (session.email) setEmail(session.email)
+    setEmail(session.email ?? null)
   }, [])
 
   const refreshProfile = useCallback(async () => {
@@ -81,41 +91,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    if (refreshInFlight.current) return
-    refreshInFlight.current = true
-
-    try {
-      const data = await getMyProfile()
-      setProfile(data)
-      setNeedsProfileSetup(false)
-      setAuthDisrupted(false)
-    } catch (err) {
-      // User mới đăng ký chưa có row profile trong DB — vẫn giữ session
-      if (err instanceof ApiRequestError && err.status === 404) {
-        setProfile(null)
-        setNeedsProfileSetup(true)
+    if (refreshInFlight.current?.token === session.accessToken) return refreshInFlight.current.promise
+    const version = sessionVersion.current
+    const isCurrent = () => sessionVersion.current === version && getStoredSession()?.accessToken === session.accessToken
+    const promise = (async () => {
+      try {
+        const data = await getMyProfile()
+        if (!isCurrent()) return
+        setProfile(data)
+        setNeedsProfileSetup(false)
         setAuthDisrupted(false)
-        return
-      }
+      } catch (err) {
+        if (!isCurrent()) return
+        // User mới đăng ký chưa có row profile trong DB — vẫn giữ session
+        if (err instanceof ApiRequestError && err.status === 404) {
+          setProfile(null)
+          setNeedsProfileSetup(true)
+          setAuthDisrupted(false)
+          return
+        }
 
-      // Token hết hạn / không hợp lệ
-      if (err instanceof ApiRequestError && err.status === 401) {
-        clearSession()
-        resetAuthState()
-        return
-      }
+        // Token hết hạn / không hợp lệ
+        if (err instanceof ApiRequestError && err.status === 401) {
+          clearSession()
+          resetAuthState()
+          return
+        }
 
-      // Mạng / server sự cố → giữ loading + retry, không logout
-      if (isServiceDisruption(err)) {
-        setAuthDisrupted(true)
-        return
-      }
+        // Mạng / server sự cố → giữ loading + retry, không logout
+        if (isServiceDisruption(err)) {
+          setAuthDisrupted(true)
+          return
+        }
 
-      setProfile(null)
-      setNeedsProfileSetup(false)
-      setAuthDisrupted(false)
-    } finally {
-      refreshInFlight.current = false
+        setProfile(null)
+        setNeedsProfileSetup(false)
+        setAuthDisrupted(false)
+      }
+    })()
+    const flight = { token: session.accessToken, promise }
+    refreshInFlight.current = flight
+    try { await promise } finally {
+      if (refreshInFlight.current === flight) refreshInFlight.current = null
     }
   }, [resetAuthState])
 
@@ -203,6 +220,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// The provider and hook intentionally share this context singleton.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

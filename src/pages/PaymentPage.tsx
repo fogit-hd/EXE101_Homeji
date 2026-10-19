@@ -63,6 +63,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const checkoutGuard = useRef(false)
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
   const [walletError, setWalletError] = useState('')
+  const [walletLoading, setWalletLoading] = useState(true)
+  const [historyLoading, setHistoryLoading] = useState(true)
   const [walletConfirmCode, setWalletConfirmCode] = useState<string | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('all')
@@ -77,11 +79,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     searchParams.get('orderCode') ?? searchParams.get('orderId')
 
   const loadFn = useCallback(async () => {
-    const [catalog, current, history, wallet] = await Promise.allSettled([
+    const [catalog, current] = await Promise.allSettled([
       getSubscriptionPackages(),
       getMySubscription(),
-      getPayments({ take: 30 }),
-      getMyWallet(),
     ])
     if (catalog.status === 'fulfilled') {
       setPackages(catalog.value)
@@ -95,13 +95,6 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       setMine(null)
       setSubscriptionError('Chưa kiểm tra được gói hiện tại. Vui lòng làm mới; hệ thống không tự coi tài khoản là Free.')
     }
-    if (history.status === 'fulfilled') {
-      setPayments(history.value)
-      setHistoryError('')
-    }
-    else setHistoryError('Chưa tải được lịch sử thanh toán. Gói hiện tại vẫn được kiểm tra riêng.')
-    if (wallet.status === 'fulfilled') { setWalletBalance(wallet.value.balance); setWalletError('') }
-    else { setWalletBalance(null); setWalletError('Chưa tải được số dư ví. Vui lòng làm mới.') }
     if (catalog.status === 'rejected') throw catalog.reason
   }, [])
 
@@ -127,7 +120,27 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     return () => { disposed = true; window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check) }
   }, [refreshProfile])
 
-  const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn, [])
+  const { showLoader, onIntroComplete, error, disrupted, reload: reloadMain } = usePersistentLoad(loadFn, [])
+  const loadExtras = useCallback(async () => {
+    setHistoryLoading(true)
+    setWalletLoading(true)
+    await Promise.allSettled([
+      getPayments({ take: 30 }).then(history => {
+        setPayments(history)
+        setHistoryError('')
+      }).catch(() => setHistoryError('Chưa tải được lịch sử thanh toán. Gói hiện tại vẫn được kiểm tra riêng.'))
+        .finally(() => setHistoryLoading(false)),
+      getMyWallet().then(wallet => {
+        setWalletBalance(wallet.balance)
+        setWalletError('')
+      }).catch(() => { setWalletBalance(null); setWalletError('Chưa tải được số dư ví. Vui lòng làm mới.') })
+        .finally(() => setWalletLoading(false)),
+    ])
+  }, [])
+  const { reload: reloadExtras } = usePersistentLoad(loadExtras, [])
+  const reload = useCallback(async () => {
+    await Promise.all([reloadMain(), reloadExtras()])
+  }, [reloadMain, reloadExtras])
 
   useEffect(() => {
     if (!toast) return
@@ -223,7 +236,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         void getMyWallet().then(wallet => setWalletBalance(wallet.balance)).catch(() => setWalletBalance(null))
       }
     } finally {
-      if (paid) await Promise.allSettled([loadFn(), refreshProfile()])
+      if (paid) await Promise.allSettled([reload(), refreshProfile()])
       setBusyCode(null)
       setBusyMethod(null)
       checkoutGuard.current = false
@@ -405,14 +418,14 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           <p>{plan.name} · {plan.durationDays} ngày</p>
                           <p>Trừ {formatPrice(plan.price)} từ ví Homeji.</p>
                           <p>Số dư sau thanh toán: {walletBalance === null ? 'Chưa kiểm tra được' : formatPrice(Math.max(0, walletBalance - plan.price))}</p>
-                          <button type="button" className="pay-btn pay-btn--primary" disabled={busy || walletBalance === null || walletBalance < plan.price} onClick={() => void checkoutWithWallet(plan)}>
+                          <button type="button" className="pay-btn pay-btn--primary" disabled={busy || walletLoading || walletBalance === null || walletBalance < plan.price} onClick={() => void checkoutWithWallet(plan)}>
                             {busy && busyMethod === 'wallet' ? 'Đang thanh toán…' : `Xác nhận trả ${formatPrice(plan.price)}`}
                           </button>
                           <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => setWalletConfirmCode(null)}>Quay lại</button>
                         </div> : <>
-                        <button type="button" className="pay-method pay-wallet-method" disabled={busy || walletBalance === null || walletBalance < plan.price} onClick={() => setWalletConfirmCode(plan.code)}>
+                        <button type="button" className="pay-method pay-wallet-method" disabled={busy || walletLoading || walletBalance === null || walletBalance < plan.price} onClick={() => setWalletConfirmCode(plan.code)}>
                           Số dư ví Homeji
-                          <small>{walletBalance === null ? 'Chưa tải được số dư' : `${formatPrice(walletBalance)}${walletBalance < plan.price ? ' · Không đủ số dư' : ''}`}</small>
+                          <small>{walletBalance === null ? (walletLoading ? 'Đang tải số dư…' : 'Chưa tải được số dư') : `${formatPrice(walletBalance)}${walletBalance < plan.price ? ' · Không đủ số dư' : ''}`}</small>
                         </button>
                         {walletError && <p className="pay-wallet-note" role="status">{walletError}</p>}
                         {walletBalance !== null && walletBalance < plan.price && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp tiền vào ví</Link>}
@@ -482,10 +495,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             </div>
           ) : null}
 
+          {historyLoading ? <p role="status">Đang tải lịch sử thanh toán…</p> : null}
           <div className="pay-stats">
-            <div><span className="pay-label">Đã thanh toán</span><strong>{historyError ? '—' : formatPrice(paidTotal)}</strong><small>{historyError ? 'Chưa cập nhật được dữ liệu' : `${paidPayments.length} giao dịch hoàn tất`}</small></div>
-            <div><span className="pay-label">Chờ thanh toán</span><strong>{historyError ? '—' : String(pendingCount)}</strong><small>Tự hủy sau 15 phút</small></div>
-            <div><span className="pay-label">Gần đây</span><strong>{historyError ? '—' : String(payments.length)}</strong><small>Tối đa 30 giao dịch mới nhất</small></div>
+            <div><span className="pay-label">Đã thanh toán</span><strong>{historyError || historyLoading ? '—' : formatPrice(paidTotal)}</strong><small>{historyError || historyLoading ? (historyLoading ? 'Đang tải giao dịch…' : 'Chưa cập nhật được dữ liệu') : `${paidPayments.length} giao dịch hoàn tất`}</small></div>
+            <div><span className="pay-label">Chờ thanh toán</span><strong>{historyError || historyLoading ? '—' : String(pendingCount)}</strong><small>Tự hủy sau 15 phút</small></div>
+            <div><span className="pay-label">Gần đây</span><strong>{historyError || historyLoading ? '—' : String(payments.length)}</strong><small>Tối đa 30 giao dịch mới nhất</small></div>
           </div>
 
           <div className={`pay-history__layout${activePayment ? '' : ' is-single'}`}>
@@ -505,7 +519,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 </label>
               </div>
               {historyError && <p className="payment-inline-error" role="alert">{historyError}</p>}
-              {historyError && payments.length === 0 ? (
+              {historyLoading && payments.length === 0 ? <p role="status">Đang tải giao dịch…</p> : historyError && payments.length === 0 ? (
                 <div className="pay-empty"><ShellIcon name="receipt" /><h3>Chưa thể tải giao dịch</h3><p>Không thể xác định lịch sử trong lần kiểm tra này.</p><button type="button" className="pay-btn pay-btn--primary" onClick={() => void reload()}>Thử lại</button></div>
               ) : filteredPayments.length === 0 ? (
                 <div className="pay-empty"><ShellIcon name="receipt" /><h3>{payments.length === 0 ? 'Chưa có giao dịch' : 'Không có giao dịch phù hợp'}</h3><p>{payments.length === 0 ? 'Giao dịch sẽ xuất hiện tại đây khi bạn đăng ký gói.' : 'Thử chọn một trạng thái khác để xem giao dịch.'}</p>{payments.length === 0 && <button type="button" className="pay-btn pay-btn--primary" onClick={() => setTab('plans')}>Khám phá các gói</button>}</div>

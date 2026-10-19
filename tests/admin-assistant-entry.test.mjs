@@ -20,6 +20,7 @@ const aiFeatureFlags = { adminSummary: true };
 const ReportStatus = { Pending: 1 };
 const PageNotice = () => null;
 const ContentSkeleton = () => null;
+const AdminAnalyticsSkeleton = () => null;
 const PageFrame = ({ children, tabs }) => React.createElement('main', null, tabs, children);
 const Link = ({ children }) => React.createElement('a', null, children);
 `
