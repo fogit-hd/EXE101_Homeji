@@ -1,0 +1,75 @@
+import assert from 'node:assert/strict'
+import {createHash} from 'node:crypto'
+import { createRequire } from 'node:module'
+import { mkdir, writeFile } from 'node:fs/promises'
+const { chromium } = createRequire(import.meta.url)(process.env.HOMEJI_PLAYWRIGHT_MODULE || 'playwright')
+const base = process.env.HOMEJI_THEME_TEST_URL || 'http://127.0.0.1:5510'
+if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw Error('Local fixtures only')
+const out = new URL('../output/verification/glass-controls/', import.meta.url)
+await mkdir(out, { recursive: true })
+const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', reducedMotion: 'no-preference' })
+const id = '11111111-1111-4111-8111-111111111111'
+await context.addInitScript(id => { localStorage.setItem('homeji_access_token','theme-fixture');localStorage.setItem('homeji_user_id',id) }, id)
+let profileRole=1
+const fixtureRoute = route => {
+  const url = new URL(route.request().url())
+  if (url.origin !== new URL(base).origin) return route.abort()
+  if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/hubs/')) return route.continue()
+  if (url.pathname.startsWith('/hubs/')) return route.fulfill({status:503,body:''})
+  if(url.pathname==='/api/admin/analytics/product')return route.fulfill({status:503,json:{detail:'Fixture analytics unavailable'}})
+  if(url.pathname==='/api/search-interests')return route.fulfill({json:{settings:{enabled:false,aiEnabled:false,emailEnabled:false},suggestions:[],following:[],rooms:[]}})
+  if(url.pathname==='/api/marketplace-posts')return route.fulfill({json:[{id:'22222222-2222-4222-8222-222222222222',sellerId:'33333333-3333-4333-8333-333333333333',sellerDisplayName:'Homeji',status:1,title:'Ghế làm việc — giữ nguyên ảnh và chữ',description:'Đồ dùng',price:150000,condition:'Đã sử dụng',category:'Nội thất',address:'Thủ Đức',latitude:10.84,longitude:106.8,mediaUrls:['/brand/homeji-logo2.png'],listingType:1,availableQuantity:1,reservedQuantity:0,unit:'món',createdAt:'2026-10-19T00:00:00Z'}]})
+  let json = []
+  if (url.pathname === '/api/profile/me') json = {id,displayName:'Nguyễn Văn An',role:profileRole,onboardingCompleted:true,isPremium:false}
+  if (url.pathname === '/api/wallet') json = {userId:id,balance:350000,isActivated:true}
+  if (url.pathname === '/api/chatbot/popup-config') json = {enabled:false}
+  if (url.pathname === '/api/subscriptions/me') json = {tier:1,isPremium:false,packageCode:'free'}
+  return route.fulfill({json})
+}
+await context.route('**/*', fixtureRoute)
+const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message))
+async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click({timeout:1500}).catch(async error=>{if(await skip.isVisible())throw error});await page.locator('.hj-intro').waitFor({state:'hidden'})}
+
+
+try {
+ await page.goto(base+'/?section=marketplace&market=browse');await ready();
+ const shop=page.getByRole('tablist',{name:'Mua sắm',exact:true});await shop.getByRole('tab',{name:'Chợ đồ',exact:true}).click();
+ const card=page.locator('.marketplace-card__main').first();await card.waitFor();
+ assert.equal(await card.getAttribute('data-glass-control'),null);
+ assert.equal(await card.evaluate(e=>getComputedStyle(e).backdropFilter),'none');
+ await page.waitForFunction(()=>document.querySelector('.hj-post-cta')?.hasAttribute('data-glass-control'));
+ const headerAction=page.locator('.hj-post-cta').first();
+ assert.match(await headerAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
+ assert.equal(await headerAction.evaluate(e=>getComputedStyle(e).filter),'none');
+ await page.evaluate(()=>{
+  const host=document.createElement('section');host.id='scope-fixture';host.style.cssText='margin:24px;padding:24px;background:repeating-linear-gradient(90deg,#245443 0 28px,#99b78a 28px 30px);display:flex;gap:16px;flex-wrap:wrap';
+  host.innerHTML='<button id="scope-action" style="padding:12px 24px">Xem trên bản đồ</button><select aria-label="Chế độ xem"><option>Danh sách</option></select><article role="button" class="marketplace-card__main" style="background:white;padding:20px"><h3>Sản phẩm và mô tả phải rõ</h3><p>Nhiều chữ để đọc, không phải một tấm kính.</p><button>Mua bằng số dư</button></article><button role="button" id="scope-user"><h3>Thông tin người dùng</h3><p>Địa chỉ và thông tin hồ sơ nhiều dòng.</p></button>';
+  document.querySelector('#root').append(host);
+ });
+ await page.waitForFunction(()=>document.querySelector('#scope-action').style.getPropertyValue('--glass-lens-filter').includes('url('));
+ assert.equal(await page.locator('#scope-user').getAttribute('data-glass-control'),null);
+ assert.equal(await page.locator('#scope-user').evaluate(e=>getComputedStyle(e).backdropFilter),'none');
+ assert.equal(await page.locator('#scope-fixture article').getAttribute('data-glass-control'),null);
+ assert.notEqual(await page.locator('#scope-fixture article button').getAttribute('data-glass-control'),null);
+ assert.match(await page.locator('select[aria-label="Chế độ xem"]').evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
+ const action=page.locator('#scope-action');await action.scrollIntoViewIfNeeded();
+ await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const image=new Image();image.src=e.getAttribute('href');await image.decode()}))});
+ const optical=await action.screenshot({path:new URL('action-optical.png',out).pathname.slice(1)});
+ await action.evaluate(e=>e.style.setProperty('backdrop-filter','none','important'));
+ const flat=await action.screenshot({path:new URL('action-flat.png',out).pathname.slice(1)});
+ assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The action actually refracts background pixels');
+ await action.evaluate(e=>e.style.removeProperty('backdrop-filter'));
+ for(const theme of ['light','dark']){
+  await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+  assert.match(await headerAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
+  const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
+  assert.match(bg,/rgba|color\(/,'Control surface remains translucent in '+theme);
+  await page.locator('#scope-fixture').screenshot({path:new URL('scope-'+theme+'.png',out).pathname.slice(1)});
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:new URL('page-'+theme+'.png',out).pathname.slice(1)});
+ }
+ await page.setViewportSize({width:390,height:900});await page.evaluate(()=>window.scrollTo(0,0));
+ await page.screenshot({path:new URL('mobile.png',out).pathname.slice(1)});
+ assert.deepEqual(errors,[]);console.log('PASS glass scope: actions/selects/icons light+dark; real backdrop refraction; product and user-information blocks excluded; nested buy action retains glass');
+}finally{await browser.close()}

@@ -9,13 +9,14 @@ import { GLASS_LENS_RATIOS, glassLensId, nearestLensRatio } from './glassLensGeo
 
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
 const lensVariants = [
-  { variant: 'control', state: 'rest', depth: .012, blur: 0 },
+  { variant: 'control', state: 'rest', depth: .045, blur: 0 },
   { variant: 'tab-rest', state: 'tab-rest', depth: .065, blur: 0 },
   { variant: 'tab-active', state: 'active', depth: .095, blur: 0 },
 ] as const
-// Optics belong only to explicit backgrounds and the one moving tab lens.
-// Cards, images and ordinary labels never become optical surfaces.
-const controls = '[data-glass-optics],.liquid-tabs__lens'
+// A control's BACKDROP bends; its own label stays outside the filter. Never
+// turn clickable product cards or information rows into large optical lenses.
+const controls = '[data-glass-optics],.liquid-tabs__lens,.theme-switch__thumb,button,summary,input[type="button"],input[type="submit"],input[type="reset"],.btn,.liquid-action,.pay-btn,.payment-button,.hj-action,.hj-post-cta,[role="button"],[role="menuitem"],select'
+const contentControls = '.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,.food-card__main,.food-kitchen-row,.food-kitchen-card,.marketplace-seller-card,.hj-account__item,.hj-mega__link,[role="menuitem"],[role="option"],.schedule-dt__day,[class*="__card"],[class*="__hit"],[class*="__photo"],[class*="__thumbnail"],[class*="__image"],[class*="__person"],[role="tab"]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
@@ -48,7 +49,14 @@ export function LiquidGlassEffects() {
     const register = (root: Element) => {
       const candidates = root.matches(controls) ? [root, ...root.querySelectorAll(controls)] : root.querySelectorAll(controls)
       candidates.forEach(element => {
-        if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map') || observed.has(element)) return
+        if (!(element instanceof HTMLElement) || element.closest('.gm-style, gmp-map,[data-glass-exclude]') || observed.has(element)) return
+        const lens = element.matches('.liquid-tabs__lens,.theme-switch__thumb,[data-glass-optics]')
+        if (!lens && (element.matches(contentControls) || (element.textContent?.trim().length ?? 0) > 120
+          || element.querySelector('h1,h2,h3,h4,p,article,section,table'))) {
+          element.dataset.glassContent = ''
+          return
+        }
+        if (!lens) element.dataset.glassControl = ''
         observed.add(element)
         resize.observe(element)
       })
@@ -65,7 +73,7 @@ export function LiquidGlassEffects() {
       cancelAnimationFrame(frame)
       resize.disconnect()
       mutations.disconnect()
-      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); element.style.removeProperty('--glass-face-filter'); delete element.dataset.glassFace; delete element.dataset.glassPosition })
+      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); element.style.removeProperty('--glass-face-filter'); delete element.dataset.glassControl; delete element.dataset.glassFace; delete element.dataset.glassPosition })
       pending.clear()
     }
   }, [])
@@ -74,16 +82,16 @@ export function LiquidGlassEffects() {
       x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
       <feImage href={maps[ratio]} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="lens" />
       <feGaussianBlur in="SourceGraphic" stdDeviation={`${blur / ratio} ${blur}`} result="scene" />
-      {variant === 'control' ? <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" /> : <>
-        <feDisplacementMap in="scene" in2="lens" scale={depth + .004} xChannelSelector="R" yChannelSelector="G" result="red-warp" />
+      <>
+        <feDisplacementMap in="scene" in2="lens" scale={depth + (variant === 'control' ? .002 : .004)} xChannelSelector="R" yChannelSelector="G" result="red-warp" />
         <feColorMatrix in="red-warp" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="red" />
         <feDisplacementMap in="scene" in2="lens" scale={depth} xChannelSelector="R" yChannelSelector="G" result="green-warp" />
         <feColorMatrix in="green-warp" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="green" />
-        <feDisplacementMap in="scene" in2="lens" scale={depth - .004} xChannelSelector="R" yChannelSelector="G" result="blue-warp" />
+        <feDisplacementMap in="scene" in2="lens" scale={depth - (variant === 'control' ? .002 : .004)} xChannelSelector="R" yChannelSelector="G" result="blue-warp" />
         <feColorMatrix in="blue-warp" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="blue" />
         <feComposite in="red" in2="green" operator="arithmetic" k2="1" k3="1" result="red-green" />
         <feComposite in="red-green" in2="blue" operator="arithmetic" k2="1" k3="1" />
-      </>}
+      </>
     </filter>))}</defs>
   </svg>
 }

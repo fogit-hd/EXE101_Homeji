@@ -1,0 +1,44 @@
+/* Last material layer: restore optical controls in either theme without
+   filtering foreground text or creating overlays on information cards. */
+:root { --control-glass-fill: rgb(250 255 253 / .3); --control-glass-edge: rgb(255 255 255 / .88); }
+html[data-theme='dark'] { --control-glass-fill: rgb(32 60 70 / .38); --control-glass-edge: rgb(224 255 248 / .55); }
+:is(html:root #root,body .choice-picker-layer) [data-glass-content] {
+  -webkit-backdrop-filter: none; backdrop-filter: none; filter: none;
+  background-image: none; box-shadow: none;
+}
+:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]) {
+  color: var(--glass-ink);
+  border-radius: var(--control-glass-radius,999px);
+  background-color: var(--control-glass-fill);
+  background-image: radial-gradient(ellipse at 24% -40%,rgb(255 255 255 / .34),transparent 64%),
+    linear-gradient(165deg,rgb(255 255 255 / .12),transparent 40% 76%,rgb(255 255 255 / .08));
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 2px 2px -1px var(--control-glass-edge),
+    inset 2px 0 3px -2px var(--control-glass-edge),
+    inset -1px -2px 3px -2px var(--control-glass-edge),
+    0 2px 3px rgb(12 35 35 / .14),0 6px 12px -7px rgb(12 35 35 / .3);
+  -webkit-backdrop-filter: var(--glass-lens-filter,blur(1px) saturate(1.08));
+  backdrop-filter: var(--glass-lens-filter,blur(1px) saturate(1.08));
+}
+:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):disabled { box-shadow: none; }
+:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):is(.btn-primary,.hj-post-cta,[type='submit'],.wallet-submit button,.wallet-submit__primary) {
+  background-color: color-mix(in srgb,var(--hj-accent) 18%,var(--control-glass-fill));
+}
+:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):is(.btn-danger,[class*='--danger']) { background-color: var(--glass-danger); }
+:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):active:not(:disabled) {
+  box-shadow: inset 0 1px 3px var(--glass-shadow),inset 0 1px 0 var(--control-glass-edge),0 1px 2px var(--glass-shadow);
+}
+/* AI keeps its existing spectrum edge; glass sits inside that edge. */
+html:root #root [data-glass-control]:not([data-glass-exclude]).ai-spectrum-button {
+  --ai-spectrum-surface: var(--control-glass-fill);
+  background: var(--ai-spectrum-fill);
+  border-color: transparent;
+}
+/* Native options and dense popover rows need solid, readable text surfaces. */
+html:root #root select[data-glass-control]:not([data-glass-exclude]) option { background: var(--surface-elevated); color: var(--text-primary); }
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
+  :is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]) {
+    background: var(--surface-elevated); -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: none; border-color: var(--text-secondary);
+  }
+}
