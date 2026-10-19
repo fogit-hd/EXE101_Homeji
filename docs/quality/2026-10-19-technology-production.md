@@ -50,3 +50,12 @@ Search Console đã tự động xác minh quyền sở hữu URL-prefix bằng 
 Bằng chứng được lưu ngoài Git tại `C:/EXE101_Homeji/output/technology-rollout/`: `ga4-production-browser-proof.json` (chỉ trường đã lọc, không cookie/client ID), `ga4-realtime-production.png`, `ga4-realtime-events-production.png`, `search-console-ownership-verified.png`, `search-console-sitemap-success.png`.
 
 Giới hạn vẫn giữ nguyên: đơn hàng/hoàn tiền đối soát bằng DB; chưa bổ sung backend Measurement Protocol/refund producer; không tạo giao dịch khách thật để thử analytics. Hiệu năng index đã đo trên mẫu 30.000 dòng cục bộ và kiểm tra recall trong test; không công bố tỷ lệ tăng tốc production. Full frontend vẫn có 3 lỗi baseline ngoài thay đổi, đã ghi ở phần kiểm thử.
+
+Kết quả URL live lúc 16:30 ngày 19/10/2026 (giờ Việt Nam) từ Search Console: **Google có thể lập chỉ mục URL này / Trang có thể lập chỉ mục**. Đây là xác minh khả năng Google truy cập và đánh giá trang đang hoạt động; trạng thái indexed thực tế vẫn chưa có. Không cam kết thời gian hoặc vị trí xuất hiện trong tìm kiếm. Ảnh: `search-console-live-url-indexable.png` trong thư mục bằng chứng trên.
+
+## Đối chiếu mục tiêu
+
+- PostgreSQL: migration/generated columns/GIN và predicates trước pagination đã phát hành; kiểm thử trên DB thật cục bộ chứng minh chuẩn hóa tiếng Việt, wildcard literal, cập nhật SQL, recall/ranking và planner chọn trigram mà không ép. Endpoint public production đọc được mô hình sau migration.
+- Query pilot: phòng đã lưu có query key/client theo tài khoản, cancellation, invalidation, retry giới hạn; Chrome fixture kiểm chứng logout/login không lẫn dữ liệu, 403 che cache. Không dùng Query để xác nhận thanh toán.
+- SEO: HTML public có nội dung không cần JS, canonical theo domain chính, sitemap/robots và 404/noindex đã kiểm chứng production; ownership, sitemap discovery và Google live URL test đã xác minh.
+- GA4: config production đúng mã và manual gate; basic consent/rút consent quan sát qua browser network; Google Realtime thực sự có page_view/rental_view. Payload màn hình tổng hợp và tests giới hạn tham số; các purchase chỉ gắn vào phản hồi API đã xác nhận, không top-up/success URL. Không bổ sung server Measurement Protocol vì mục tiêu chỉ đặt làm hướng mở rộng về sau.
