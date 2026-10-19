@@ -33,6 +33,6 @@ export function AnalyticsConsent() {
         <button type="button" className="btn btn-secondary" onClick={() => setAnalyticsConsent('rejected')}>Từ chối thống kê</button>
         <button type="button" className="btn btn-primary" disabled={privacySignalEnabled()} onClick={() => setAnalyticsConsent('accepted')}>Đồng ý thống kê</button>
       </div>
-    </div> : <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}>Tùy chọn thống kê</button>}
+    </div> : <button type="button" className="btn btn-secondary btn-sm analytics-choice__trigger" data-glass-exclude="" onClick={() => setEditing(true)}>Tùy chọn thống kê</button>}
   </aside>
 }

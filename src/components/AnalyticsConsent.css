@@ -2,3 +2,18 @@
 .analytics-choice__panel { padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface, Canvas); color: var(--text, CanvasText); }
 .analytics-choice__panel p { margin: 10px 0; font-size: .9rem; line-height: 1.5; }
 .analytics-choice__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+/* This persistent privacy action must stay readable over photos and maps. */
+html:root #root .analytics-choice > .analytics-choice__trigger {
+  background: var(--surface-elevated, #fff);
+  color: var(--text-heading, #183b46);
+  border: 1px solid var(--control-border, #93a8b4);
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-weight: 650;
+  box-shadow: 0 2px 8px rgb(20 54 67 / .16);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  filter: none;
+}
