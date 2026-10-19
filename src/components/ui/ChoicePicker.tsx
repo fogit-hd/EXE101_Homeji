@@ -49,6 +49,7 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
   const layer = useRef<HTMLDialogElement>(null)
   const [portalHost, setPortalHost] = useState<Element | null>(null)
   const search = useRef<HTMLInputElement>(null)
+  const listbox = useRef<HTMLDivElement>(null)
   const controlledValue = useRef(value)
   const options = useMemo(() => collectOptions(children), [children])
   const [uncontrolled, setUncontrolled] = useState(() => String(defaultValue ?? options[0]?.value ?? ''))
@@ -59,7 +60,8 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
   const [invalid, setInvalid] = useState(false)
   const selected = String(value ?? (options.some(option => option.value === uncontrolled) ? uncontrolled : options[0]?.value ?? ''))
   const selectedOption = options.find(option => option.value === selected)
-  const visible = options.filter(option => normalize(`${option.label} ${option.group}`).includes(normalize(query)))
+  const searchable = options.length > 6
+  const visible = !searchable ? options : options.filter(option => normalize(`${option.label} ${option.group}`).includes(normalize(query)))
   const enabled = visible.filter(option => !option.disabled)
   const activeOption = enabled.find(option => option.value === active) ?? enabled[0]
   const activeId = activeOption ? `${listId}-${options.findIndex(option => option.value === activeOption.value)}` : undefined
@@ -95,7 +97,7 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
     close()
   }
 
-  const onSearchKey = (event: KeyboardEvent<HTMLInputElement>) => {
+  const onSearchKey = (event: KeyboardEvent<HTMLElement>) => {
     if (event.nativeEvent.isComposing) return
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return }
     if (event.key === 'Tab') { close(); return }
@@ -196,7 +198,8 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
       panel.current.dataset.placement = mobile ? 'sheet' : floating ? 'viewport' : upward ? 'above' : 'below'
     }
     position()
-    search.current?.focus({ preventScroll: true })
+    const initialFocus = searchable ? search.current : listbox.current
+    initialFocus?.focus({ preventScroll: true })
     const dismiss = (event: FocusEvent) => {
       if (!panel.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) setOpen(false)
     }
@@ -217,7 +220,7 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
       window.visualViewport?.removeEventListener('resize', position)
       window.visualViewport?.removeEventListener('scroll', position)
     }
-  }, [expanded, portalHost])
+  }, [expanded, portalHost, searchable])
 
   useEffect(() => {
     if (!expanded || !activeId) return
@@ -252,14 +255,15 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
         <header className="choice-picker__heading"><div><span className="choice-picker__eyebrow">LỰA CHỌN CỦA BẠN</span><strong>{title}</strong></div>
           <button className="choice-picker__close" type="button" aria-label="Đóng bảng chọn" onClick={() => close()}>×</button>
         </header>
-        <div className="choice-picker__search-wrap"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.6" /><path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.6" /></svg>
+        {searchable && <div className="choice-picker__search-wrap"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.6" /><path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.6" /></svg>
           <input ref={search} type="search" role="combobox" aria-label={`Tìm trong ${title}`} placeholder="Gõ để tìm lựa chọn…"
             value={query} onChange={event => { setQuery(event.target.value); setActive('') }} onKeyDown={onSearchKey}
             aria-expanded="true" aria-controls={listId} aria-autocomplete="list"
             aria-activedescendant={activeId} />
           <kbd aria-hidden="true">Esc</kbd>
-        </div>
-        <div id={listId} role="listbox" aria-label={title} className="choice-picker__options">
+        </div>}
+        <div ref={listbox} id={listId} role="listbox" tabIndex={searchable ? undefined : 0}
+          aria-activedescendant={searchable ? undefined : activeId} onKeyDown={searchable ? undefined : onSearchKey} aria-label={title} className="choice-picker__options">
           {visible.map((option, index) => <Fragment key={`${option.group}:${option.value}`}>
             {option.group && option.group !== visible[index - 1]?.group && <div className="choice-picker__group" role="presentation">{option.group}</div>}
             <button type="button" role="option" tabIndex={-1} id={`${listId}-${options.indexOf(option)}`}

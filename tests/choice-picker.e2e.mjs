@@ -17,6 +17,7 @@ import {InteractionMotion} from '/src/components/motion/InteractionMotion.tsx'
 import {ScheduleDateTimePicker} from '/src/components/ScheduleDateTimePicker.tsx'
 import '/src/index.css'
 import '/src/liquid-glass.css'
+import '/src/glass-controls.css'
 function Fixture(){
  const [value,setValue]=useState(''),[disabled,setDisabled]=useState(false),[changes,setChanges]=useState(0),[submitted,setSubmitted]=useState(''),[date,setDate]=useState('')
  return <><LiquidGlassEffects/><InteractionMotion/><main style={{maxWidth:940,margin:'auto',padding:24}}>
@@ -31,6 +32,7 @@ function Fixture(){
  <output data-testid="state">{value}|{changes}|{submitted}</output>
  </form>
  <form style={{maxWidth:400,marginTop:24}}><label>Khoảng giá<ChoicePicker name="price" defaultValue="2"><option value="1">Dưới 2 triệu</option><option value="2">2–5 triệu</option><option value="3">Trên 5 triệu</option></ChoicePicker></label><button type="reset" className="btn btn-secondary" style={{marginTop:12}}>Khôi phục</button></form>
+ <div style={{maxWidth:400,marginTop:24}}><label htmlFor="view">Chế độ xem</label><ChoicePicker id="view" name="view" defaultValue="map"><option value="map">Bản đồ</option><option value="split">Chia đôi</option><option value="list">Danh sách</option></ChoicePicker></div>
  <div style={{maxWidth:400,marginTop:24}}><ScheduleDateTimePicker label="Lịch xem phòng" value={date} onChange={setDate}/></div>
  <div style={{height:460}}/><label htmlFor="edge">Lựa chọn sát cuối trang</label><div style={{maxWidth:400,overflow:'hidden',transform:'translateZ(0)'}}><ChoicePicker id="edge" defaultValue="a"><option value="a">A</option><option value="b">B</option></ChoicePicker></div>
  </main></>
@@ -88,11 +90,29 @@ try {
   assert.equal(await page.getByRole('combobox', { name: 'Trường học', exact: true }).isDisabled(), true)
   await page.getByRole('button', { name: 'Bật / tắt', exact: true }).click()
   await open('Khoảng giá')
+  assert.equal(await dialog().getByRole('combobox').count(),0,'Three choices do not need a search field')
+  const priceList=dialog().getByRole('listbox')
+  assert.equal(await priceList.evaluate(e=>e===document.activeElement),true)
+  await priceList.press('ArrowDown');await priceList.press('Enter')
+  assert.equal(await page.locator('select[name="price"]').inputValue(),'3')
+  await open('Khoảng giá')
+
   await dialog().getByRole('option', { name: 'Trên 5 triệu', exact: true }).click()
   assert.match(await page.locator('select[name="price"]').inputValue(), /3/)
   await page.getByRole('button', { name: 'Khôi phục', exact: true }).click()
-  assert.equal(await page.locator('select[name="price"]').inputValue(), '2')
+  await page.waitForFunction(()=>document.querySelector('select[name="price"]').value==='2')
   check('Disabled trigger and uncontrolled form reset preserve native behavior')
+  await open('Chế độ xem')
+  assert.equal(await dialog().getByRole('combobox').count(),0)
+  assert.equal(await dialog().getByRole('option').count(),3)
+  await dialog().screenshot({path:new URL('picker-short-view.png',out).pathname.slice(1)})
+  await dialog().getByRole('listbox').press('ArrowDown')
+  await dialog().getByRole('listbox').press('Enter')
+  assert.equal(await page.locator('select[name="view"]').inputValue(),'split')
+  await open('Chế độ xem');await page.keyboard.press('Escape')
+  assert.equal(await page.getByRole('combobox',{name:'Chế độ xem',exact:true}).evaluate(e=>e===document.activeElement),true)
+  check('Three view modes have no search; arrow/Enter select and Escape restores focus')
+
 
   await page.getByRole('button', { name: /Chọn ngày|Lịch xem phòng/ }).first().click()
   await open('Giờ')
@@ -115,7 +135,7 @@ try {
   await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).scrollIntoViewIfNeeded()
   await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).hover()
   await page.waitForFunction(() => !!document.querySelector('button[type="submit"]').style.getPropertyValue('--glass-x'))
-  const optical = await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).evaluate(e => getComputedStyle(e).backdropFilter)
+  const optical = await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).evaluate(e => getComputedStyle(e,e.hasAttribute('data-glass-face')?'::after':null).backdropFilter)
   assert.match(optical, /homeji-liquid-lens/)
   check('Hovered action uses the local SVG optical filter and pointer highlight')
 
