@@ -119,6 +119,12 @@ try {
  await settled(summary);await settled(aiPanel);
  assert.ok(!(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage)).includes('conic-gradient'));
  await summary.screenshot({path:new URL('summary-idle.png',out).pathname.slice(1)});
+ await aiPanel.evaluate(e=>{e.open=true;e.insertAdjacentHTML('beforeend','<input aria-label="Gợi ý thử nghiệm">')});
+ const draftInput=page.getByRole('textbox',{name:'Gợi ý thử nghiệm'});
+ await draftInput.focus();await page.keyboard.type('a');
+ assert.notEqual(await aiPanel.getAttribute('data-glass-interacting'),null,'Typing activates AI reflections');
+ await settled(aiPanel);assert.ok(!(await aiPanel.evaluate(e=>getComputedStyle(e).backgroundImage)).includes('conic-gradient'));
+
  assert.equal(await page.locator('#scope-fixture .pay-table__row').getAttribute('data-glass-control'),null);
  const nativeSelect=page.locator('select[aria-label="Chế độ xem"]');
  await nativeSelect.hover();assert.equal((await optics(nativeSelect)).rgb,true);

@@ -55,7 +55,11 @@ export function observeGlassActivity(doc: Document) {
   doc.addEventListener('pointercancel', releasePointer, options)
   doc.addEventListener('lostpointercapture', releasePointer, options)
   doc.addEventListener('keydown', event => {
-    if (!['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
+    if (['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'Escape'].includes(event.key)) return
+    if (!['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+      pulse(targets(event.target))
+      return
+    }
     const elements = targets(event.target)
     keys.set(event.key, elements)
     elements.forEach(element => pressed.add(element))
@@ -67,6 +71,7 @@ export function observeGlassActivity(doc: Document) {
     release(elements)
   }, options)
   doc.addEventListener('click', event => pulse(targets(event.target)), options)
+  doc.addEventListener('input', event => pulse(targets(event.target)), options)
   doc.addEventListener('visibilitychange', () => { if (doc.hidden) reset() }, options)
   doc.defaultView?.addEventListener('blur', event => { if (event.target === doc.defaultView) reset() }, options)
   return () => { controller.abort(); reset() }
