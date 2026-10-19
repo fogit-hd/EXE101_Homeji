@@ -1,3 +1,4 @@
+import { useId, useLayoutEffect, useRef } from 'react'
 import { Sk } from '../../skeletons/Skeleton'
 import type { MarketplacePost } from '../../../api'
 import { formatPrice } from '../../../lib/labels'
@@ -88,6 +89,21 @@ export function FoodMarketplaceView({
   onCartOpenChange,
   onSelectKitchen,
 }: Props) {
+  const cartDialogRef = useRef<HTMLDialogElement>(null)
+  const cartTitleId = useId()
+  const cartDialogId = useId()
+  useLayoutEffect(() => {
+    const dialog = cartDialogRef.current
+    if (!dialog || !cartOpen) return
+    const previousOverflow = document.body.style.overflow
+    dialog.showModal()
+    dialog.scrollTop = 0
+    document.body.style.overflow = 'hidden'
+    return () => {
+      dialog.close()
+      document.body.style.overflow = previousOverflow
+    }
+  }, [cartOpen])
   const featured = posts[0] ?? null
   const featuredDistance = formatDistanceMeters(featured?.distanceKm ?? null)
   const featuredPrice = featured ? formatPrice(featured.price) : ''
@@ -299,28 +315,43 @@ export function FoodMarketplaceView({
         className="food-cart-fab"
         onClick={() => onCartOpenChange(true)}
         aria-label={`Mở giỏ hàng, ${cartItemCount} món`}
+        aria-haspopup="dialog"
+        aria-expanded={cartOpen}
+        aria-controls={cartDialogId}
       >
         <img src={FOOD_ASSETS.icons.shoppingBagDark} alt="" width={18} height={18} />
         <span>Giỏ</span>
         {cartItemCount > 0 ? <strong>{cartItemCount}</strong> : null}
       </button>
 
-      {cartOpen ? (
-        <div
-          className="food-cart-sheet"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !cartBusy) {
-              onCartOpenChange(false)
-            }
-          }}
-        >
-          <div
-            className="food-cart-sheet__panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="food-mobile-cart-title"
-          >
+      <dialog
+        ref={cartDialogRef}
+        id={cartDialogId}
+        className="food-cart-sheet__panel"
+        aria-labelledby={cartTitleId}
+        tabIndex={-1}
+        onKeyDown={event => {
+          if (event.key !== 'Tab') return
+          const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
+          )).filter(element => element.getClientRects().length > 0
+            && !element.matches(':disabled, [aria-disabled="true"]') && !element.closest('[inert]'))
+          event.preventDefault()
+          if (!controls.length) { event.currentTarget.focus(); return }
+          const current = controls.indexOf(document.activeElement as HTMLElement)
+          const next = event.shiftKey ? (current <= 0 ? controls.length - 1 : current - 1) : (current + 1) % controls.length
+          controls[next].focus()
+        }}
+        onCancel={event => {
+          event.preventDefault()
+          if (!cartBusy) onCartOpenChange(false)
+        }}
+        onClick={event => {
+          if (event.target !== event.currentTarget || cartBusy) return
+          const rect = event.currentTarget.getBoundingClientRect()
+          if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onCartOpenChange(false)
+        }}
+      >
             <div className="food-cart-sheet__grab" aria-hidden="true" />
             <button
               type="button"
@@ -331,13 +362,11 @@ export function FoodMarketplaceView({
             >
               <img src={FOOD_ASSETS.icons.x} alt="" width={14} height={14} />
             </button>
-            <span id="food-mobile-cart-title" className="sr-only">
+            <span id={cartTitleId} className="sr-only">
               Giỏ hàng
             </span>
             <FoodUtilityRail {...railProps} compact />
-          </div>
-        </div>
-      ) : null}
+      </dialog>
     </div>
   )
 }

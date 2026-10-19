@@ -1138,9 +1138,20 @@
   display: none;
 }
 
-.food-cart-sheet {
-  display: none;
+.food-cart-sheet__panel {
+  width: min(480px, calc(100% - 24px));
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 10px 0 0;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--food-paper);
+  color: var(--text-heading);
 }
+.food-cart-sheet__panel:not([open]) { display: none; }
+.food-cart-sheet__panel::backdrop { background: rgb(12 27 32 / .48); }
+.food-cart-sheet__panel .food-rail__cart { order: -1; }
 
 /* Non-food tabs keep chrome but use content shell */
 .marketplace-page--food .marketplace-shell--legacy {
@@ -1207,21 +1218,12 @@
     font-size: 11px;
   }
 
-  .food-cart-sheet {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    background: rgba(23, 51, 42, 0.42);
-  }
-
   .food-cart-sheet__panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    max-height: min(88vh, 760px);
-    overflow: auto;
+    position: fixed;
+    inset: auto 0 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
     border-radius: 24px 24px 0 0;
     background: var(--food-paper);
     padding-top: 10px;
@@ -1242,8 +1244,8 @@
     z-index: 2;
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border: 0;
     border-radius: 999px;
     background: #fff;

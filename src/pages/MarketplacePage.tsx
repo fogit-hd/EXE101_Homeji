@@ -1,6 +1,6 @@
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { trackFunnelEvent } from '../lib/ga4'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   acceptMarketplaceOrder,
@@ -343,6 +343,13 @@ export function MarketplacePage({
   const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
   const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
+  const checkoutDialogRef = useRef<HTMLDialogElement>(null)
+  useLayoutEffect(() => {
+    const dialog = checkoutDialogRef.current
+    if (!dialog || !checkoutConfirmationOpen || tab !== 'food') return
+    dialog.showModal()
+    return () => dialog.close()
+  }, [checkoutConfirmationOpen, tab])
   const [cartNote, setCartNote] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [inventoryBusy, setInventoryBusy] = useState(false)
@@ -491,11 +498,11 @@ export function MarketplacePage({
   useEffect(() => {
     if (!cartOpen) return
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !cartBusy) setCartOpen(false)
+      if (event.key === 'Escape' && !cartBusy && !checkoutConfirmationOpen) setCartOpen(false)
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [cartBusy, cartOpen])
+  }, [cartBusy, cartOpen, checkoutConfirmationOpen])
 
   useEffect(() => {
     onCartOpenChange?.(cartOpen)
@@ -1517,12 +1524,18 @@ export function MarketplacePage({
         </div>
       ) : null}
 
-      {tab === 'food' && checkoutConfirmationOpen ? (
-        <div className="food-checkout-confirmation-backdrop">
-        <div className="food-checkout-confirmation" role="alertdialog" aria-modal="true" aria-labelledby="checkout-confirmation-title" onKeyDown={(event) => {
-          if (event.key === 'Escape' && !cartBusy) setCheckoutConfirmationOpen(false)
+      {tab === 'food' ? (
+        <dialog ref={checkoutDialogRef} className="food-checkout-confirmation" role="alertdialog" aria-modal="true" aria-labelledby="checkout-confirmation-title" tabIndex={-1}
+          onCancel={event => { event.preventDefault(); if (!cartBusy) setCheckoutConfirmationOpen(false) }}
+          onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            if (!cartBusy) setCheckoutConfirmationOpen(false)
+          }
           if (event.key === 'Tab') {
             const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
+            if (!buttons.length) { event.preventDefault(); event.currentTarget.focus(); return }
             const first = buttons[0], last = buttons.at(-1)
             if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
             if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
@@ -1531,10 +1544,11 @@ export function MarketplacePage({
           <h2 id="checkout-confirmation-title">Xác nhận đặt món</h2>
           <p>{cartItemCount} món · Tổng cộng {formatPrice(cartTotal)}</p>
           <p>Nhận tại {cartItems[0]?.sellerAddress || 'bếp Homeji'}. Chỉ xác nhận khi đã kiểm tra món và tổng tiền.</p>
+          <div className="food-checkout-confirmation__actions">
           <button type="button" className="btn btn-secondary" autoFocus disabled={cartBusy} onClick={() => setCheckoutConfirmationOpen(false)}>Quay lại giỏ</button>
           <button type="button" className="btn btn-primary" disabled={cartBusy || cartItems.length === 0} onClick={() => void checkoutCart()}>{cartBusy ? 'Đang đặt…' : 'Xác nhận đặt món'}</button>
-        </div>
-        </div>
+          </div>
+        </dialog>
       ) : null}
 
       <div ref={tabPanelRef} className="marketplace-tab-panel" id="marketplace-panel" role="tabpanel"

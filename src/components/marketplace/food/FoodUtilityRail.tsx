@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { Sk } from '../../skeletons/Skeleton'
 import { FOOD_ASSETS } from './foodAssets'
 import { QuantityStepper } from './QuantityStepper'
@@ -76,6 +77,9 @@ export function FoodUtilityRail({
   compact = false,
   loading = false,
 }: Props) {
+  const locationTitleId = useId()
+  const kitchensTitleId = useId()
+  const cartTitleId = useId()
   const canCheckout =
     !cartBusy && cartItems.length > 0 && cartTotal >= minimumCartTotal
 
@@ -84,9 +88,9 @@ export function FoodUtilityRail({
       className={`food-rail${compact ? ' food-rail--compact' : ''}`}
       aria-label="Vị trí, bếp gần và giỏ hàng"
     >
-      <section className="food-rail__location liquid-surface" aria-labelledby="food-rail-location-title">
+      <section className="food-rail__location liquid-surface" aria-labelledby={locationTitleId}>
         <div className="food-rail__location-head">
-          <h2 id="food-rail-location-title">Giao đến đâu?</h2>
+          <h2 id={locationTitleId}>Giao đến đâu?</h2>
           <button
             type="button"
             className="food-rail__locate"
@@ -116,9 +120,9 @@ export function FoodUtilityRail({
         </div>
       </section>
 
-      <section className="food-rail__kitchens liquid-surface" aria-labelledby="food-rail-kitchens-title">
+      <section className="food-rail__kitchens liquid-surface" aria-labelledby={kitchensTitleId}>
         <div className="food-rail__kitchens-head">
-          <h3 id="food-rail-kitchens-title">Bếp đang mở gần bạn</h3>
+          <h3 id={kitchensTitleId}>Bếp đang mở gần bạn</h3>
           <span>{loading ? <Sk w={44} h={10} /> : `${kitchens.length} bếp`}</span>
         </div>
         <ul className="food-rail__kitchen-list" aria-busy={loading || undefined}>
@@ -160,11 +164,11 @@ export function FoodUtilityRail({
         </ul>
       </section>
 
-      <section className="food-rail__cart liquid-surface" aria-labelledby="food-rail-cart-title">
+      <section className="food-rail__cart liquid-surface" aria-labelledby={cartTitleId}>
         <header className="food-rail__cart-head">
           <div className="food-rail__cart-title">
             <img src={FOOD_ASSETS.icons.shoppingBagDark} alt="" width={18} height={18} />
-            <h2 id="food-rail-cart-title">Giỏ hàng</h2>
+            <h2 id={cartTitleId}>Giỏ hàng</h2>
             {cartItemCount > 0 ? (
               <span className="food-rail__cart-count" aria-label={`${cartItemCount} món`}>
                 {cartItemCount}
