@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+
 import { Link, useLocation } from 'react-router-dom'
 import { getMyMarketplaceOrders, getStoredSession, MarketplaceOrderStatus, NotificationType, type MarketplaceOrder, type Notification as OrderNotification } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -13,13 +15,29 @@ function readStored<T>(key: string, fallback: T): T {
 }
 function writeStored(key: string, value: unknown) { try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* In-memory feedback remains available. */ } }
 
-export function SellerOrderAlerts() {
-  const { profile, isAuthenticated } = useAuth()
-  const token = isAuthenticated ? getStoredSession()?.accessToken : null
-  return profile && token ? <SellerOrderMonitor key={`${profile.id}:${token}`} ownerId={profile.id} token={token} /> : null
+
+const SellerOrderSlotContext = createContext<((element: HTMLSpanElement | null) => void) | null>(null)
+
+export function SellerOrderAlertsProvider({ children, enabled }: { children: ReactNode; enabled: boolean }) {
+  const [host, setHost] = useState<HTMLSpanElement | null>(null)
+  return <SellerOrderSlotContext.Provider value={setHost}>
+    {children}
+    {enabled ? <SellerOrderAlerts host={host} /> : null}
+  </SellerOrderSlotContext.Provider>
 }
 
-function SellerOrderMonitor({ ownerId, token }: { ownerId: string; token: string }) {
+export function SellerOrderAlertsSlot() {
+  const register = useContext(SellerOrderSlotContext)
+  return <span ref={register} className="seller-watch-slot" />
+}
+
+function SellerOrderAlerts({ host }: { host: HTMLSpanElement | null }) {
+  const { profile, isAuthenticated } = useAuth()
+  const token = isAuthenticated ? getStoredSession()?.accessToken : null
+  return profile && token ? <SellerOrderMonitor key={`${profile.id}:${token}`} ownerId={profile.id} token={token} host={host} /> : null
+}
+
+function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: string; host: HTMLSpanElement | null }) {
   const location = useLocation()
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
   const [hasLoaded, setHasLoaded] = useState(false)
@@ -36,6 +54,7 @@ function SellerOrderMonitor({ ownerId, token }: { ownerId: string; token: string
   const [desktop, setDesktop] = useState(() => 'Notification' in window && Notification.permission === 'granted')
   const [desktopError, setDesktopError] = useState('')
   const sound = useMemo(() => new SellerOrderSound(), [])
+  const dialogId = useId()
   const dialog = useRef<HTMLDialogElement>(null)
   const refreshRef = useRef<() => void>(() => {})
   const lastChime = useRef(0)
@@ -184,21 +203,31 @@ function SellerOrderMonitor({ ownerId, token }: { ownerId: string; token: string
   }
   if (!visible) return null
 
-  return <section className={`seller-watch${alerts.length ? ' has-orders' : ''}`} aria-label="Theo dõi đơn bán">
-    <div className="seller-watch__summary">
-      <strong role="status" aria-live="polite" aria-atomic="true">{alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'}</strong>
-      <span>{error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có đơn mới chờ xác nhận' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và pass đồ'}</span>
-    </div>
-    <div className="seller-watch__actions">
-      <button type="button" className="btn btn-secondary" onClick={soundState === 'ready' ? muteSound : () => void armSound()} aria-pressed={soundState === 'ready'}>
-        {soundState === 'ready' ? 'Âm đơn: Bật' : soundState === 'blocked' ? 'Chạm để bật lại âm' : 'Bật âm báo đơn'}
-      </button>
-      <button type="button" className={alerts.length ? 'btn btn-primary' : 'btn btn-secondary'} onClick={() => setOpen(true)} aria-haspopup="dialog">{alerts.length ? 'Theo dõi / xử lý' : 'Cài đặt báo đơn'}</button>
-    </div>
-    <dialog ref={dialog} className="seller-watch__dialog" aria-labelledby="seller-watch-title" onCancel={() => setOpen(false)}>
+  const status = alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'
+  const detail = error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có đơn mới chờ xác nhận' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và pass đồ'
+  return <>
+    <span className="seller-watch__live" role="status" aria-live="polite" aria-atomic="true">{status}. {detail}</span>
+    {host ? createPortal(<button type="button" className={`hj-action seller-watch__trigger${alerts.length ? ' has-orders' : ''}`}
+      onClick={() => setOpen(true)} aria-label={alerts.length ? `Đơn bán, ${alerts.length} cần xử lý` : 'Đơn bán'}
+      aria-haspopup="dialog" aria-expanded={open} aria-controls={dialogId} title={error ? 'Đơn bán · mất đồng bộ, đang thử lại' : status}>
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 7h14l1 14H4L5 7Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M8 8V6a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>
+      <span className="seller-watch__label">Đơn bán</span>
+      {alerts.length > 0 ? <span className="seller-watch__count" aria-hidden="true">{alerts.length > 99 ? '99+' : alerts.length}</span> : null}
+      {error ? <span className="seller-watch__sync-dot" aria-hidden="true" /> : null}
+    </button>, host) : null}
+    <dialog ref={dialog} id={dialogId} className="seller-watch__dialog" aria-labelledby="seller-watch-title" onCancel={() => setOpen(false)}>
       <header><div><h2 id="seller-watch-title">Đơn bán cần xử lý</h2><p>Thông báo trực tiếp cho đồ ăn và pass đồ</p></div>
         <button type="button" className="btn btn-secondary" aria-label="Đóng theo dõi đơn bán" onClick={() => setOpen(false)}>×</button></header>
       <div className="seller-watch__content">
+    <div className="seller-watch__summary">
+      <strong>{alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'}</strong>
+      <span>{detail}</span>
+    </div>
+        <div className="seller-watch__actions">
+          <button type="button" className="btn btn-secondary" onClick={soundState === 'ready' ? muteSound : () => void armSound()} aria-pressed={soundState === 'ready'}>
+            {soundState === 'ready' ? 'Âm đơn: Bật' : soundState === 'blocked' ? 'Chạm để bật lại âm' : 'Bật âm báo đơn'}
+          </button>
+        </div>
         <details className="seller-watch__settings" open={alerts.length === 0 || undefined}>
           <summary data-glass-exclude="">Âm thanh và đồng bộ</summary>
           <p>{soundState === 'ready' ? 'Âm báo đang bật. Đơn chưa ghi nhận sẽ được nhắc lại mỗi phút.' : soundState === 'blocked' ? 'Cần chạm để cho phép âm thanh trong lần mở web này.' : 'Âm báo đang tắt. Bật để nghe khi có đơn mới hoặc đơn cần giao.'}</p>
@@ -225,5 +254,5 @@ function SellerOrderMonitor({ ownerId, token }: { ownerId: string; token: string
         </li>)}</ul>
       </div>
     </dialog>
-  </section>
+  </>
 }

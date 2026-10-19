@@ -1,3 +1,4 @@
+import { SellerOrderAlertsSlot } from '../marketplace/SellerOrderAlerts'
 import { navigateMenu } from '../ui/menuNavigation'
 import { ThemeSwitch } from '../theme/ThemeSwitch'
 import { HomejiAiButton } from '../chrome/HomejiAiButton'
@@ -450,6 +451,7 @@ export function GlobalHeader() {
         <ContextualSearch />
         <div className="hj-actions">
           <HomejiAiButton />
+          <SellerOrderAlertsSlot />
           <div className="hj-notify" ref={notifyRef}>
             <button
               type="button"

@@ -1,3 +1,4 @@
+import { SellerOrderAlertsSlot } from '../marketplace/SellerOrderAlerts'
 import { useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -80,6 +81,7 @@ export function Navbar() {
           )}
         </div>
 
+        {isAuthenticated ? <SellerOrderAlertsSlot /> : null}
         <button
           type="button"
           className={`navbar-menu-btn${menuOpen ? ' is-open' : ''}`}
