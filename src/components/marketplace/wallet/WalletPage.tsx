@@ -609,7 +609,7 @@ function WithdrawPanel({
       <section className="wallet-card">
         <header className="wallet-card__head">
           <p className="wallet-card__eyebrow">Rút về ngân hàng</p>
-          <h2>Đưa tiền từ căn bếp về đúng tài khoản của bạn.</h2>
+          <h2>Rút tiền về ngân hàng</h2>
           <p>Thông tin người nhận phải trùng với hồ sơ đã từng rút thành công, nếu ví đã có tài khoản xác minh.</p>
         </header>
 
@@ -790,7 +790,7 @@ function HistoryPanel({
       <section className="wallet-card">
         <header className="wallet-card__head">
           <p className="wallet-card__eyebrow">Sổ giao dịch</p>
-          <h2>Mỗi thay đổi đều có dấu vết rõ ràng.</h2>
+          <h2>Lịch sử giao dịch</h2>
           <p>Theo dõi tiền vào, tiền ra và số dư sau từng giao dịch.</p>
         </header>
         <div className="wallet-filters">
@@ -879,8 +879,8 @@ function HistoryPanel({
         )}
       </section>
 
-      <aside className="wallet-rail" aria-label="Tổng kết dòng tiền">
-        <h2>Tổng kết dòng tiền</h2>
+      <details className="wallet-rail wallet-history-summary">
+        <summary data-glass-exclude="">Tổng kết dòng tiền <span aria-hidden="true">+</span></summary>
         <article className="wallet-flow">
           <span>Theo bộ lọc đang chọn</span>
           <p>Dòng tiền ròng</p>
@@ -916,7 +916,7 @@ function HistoryPanel({
           <Icon src={WALLET_ASSETS.info} size={15} />
           <span>Số dư sau giao dịch phản ánh thứ tự ghi sổ, có thể khác thời điểm bạn nhận thông báo.</span>
         </p>
-      </aside>
+      </details>
     </div>
   )
 }
@@ -939,16 +939,12 @@ function Filter({
   children: ReactNode
 }) {
   return (
-    <label className="wallet-filter">
-      <Icon src={icon} size={15} />
-      <span>
-        <small>{label}</small>
-        <ChoicePicker value={value} aria-label={label} onChange={(event) => onChange(event.target.value)}>
-          {children}
-        </ChoicePicker>
-      </span>
-      <Icon src={WALLET_ASSETS.chevron} size={13} />
-    </label>
+    <div className="wallet-filter">
+      <span className="wallet-filter__label"><Icon src={icon} size={15} />{label}</span>
+      <ChoicePicker value={value} aria-label={label} onChange={(event) => onChange(event.target.value)}>
+        {children}
+      </ChoicePicker>
+    </div>
   )
 }
 

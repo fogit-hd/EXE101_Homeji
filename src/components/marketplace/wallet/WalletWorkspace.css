@@ -115,3 +115,41 @@ html[data-theme='dark'] #root .wallet-summary__available { background: linear-gr
 .wallet-deposit .wallet-status.is-processing { color: var(--text-heading); background: var(--surface-muted); }
 .wallet-deposit .wallet-status.is-failed { color: #a12d2b; background: #fff1ef; border-color: #e7b3ae; }
 html[data-theme='dark'] .wallet-deposit .wallet-status.is-failed { color: #ffc6be; background: #3d252d; border-color: #8e5257; }
+/* Withdrawal and ledger share the same quiet, readable workspace. */
+.wallet-workspace .wallet-card,.wallet-workspace .wallet-rail { --glass-idle-filter: none; min-width: 0; border-color: var(--border); background: var(--surface-elevated); }
+.wallet-workspace .wallet-card__head h2 { font-weight: 650; letter-spacing: -.025em; }
+.wallet-workspace :is(.wallet-card__head p:last-child,.wallet-policy,.wallet-fee-note,.wallet-ledger-note,.wallet-aside-note,.wallet-field small,.wallet-lines dt,.wallet-recent dt,.wallet-tx small,.wallet-empty p,.wallet-rail h3) { color: var(--text-secondary); }
+.wallet-workspace :is(.wallet-field,.wallet-field legend,.wallet-filter__label) { color: var(--text-heading); }
+.wallet-workspace :is(.wallet-input,.wallet-recent,.wallet-verified,.wallet-empty,.wallet-notice) { background: var(--surface-muted); border-color: var(--border); }
+.wallet-workspace .wallet-card__eyebrow { color: var(--text-secondary); }
+.wallet-workspace :is(.wallet-notice small,.wallet-methods small,.wallet-verified small) { color: var(--text-secondary); line-height: 1.6; }
+.wallet-workspace :is(.wallet-notice strong,.wallet-empty strong,.wallet-verified strong) { color: var(--text-heading); }
+.wallet-workspace .wallet-input input { min-width: 0; min-height: 40px; }
+.wallet-workspace .wallet-input:focus-within { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
+.wallet-workspace .wallet-card > .wallet-submit button { min-height: 48px; height: auto; padding: 14px 18px; }
+.wallet-workspace .wallet-card > .wallet-submit > div { min-width: 0; }
+.wallet-workspace .wallet-status.is-processing { color: var(--text-heading); }
+.wallet-workspace .wallet-filters { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-top: 22px; }
+.wallet-workspace .wallet-filter { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 0; gap: 8px; border: 0; background: transparent; }
+.wallet-filter__label { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; }
+.wallet-filter .choice-picker { width: 100%; min-width: 0; }
+#root .wallet-filter .choice-picker__trigger { width: 100%; min-height: 44px; padding-left: 12px; font-size: 12px; }
+.wallet-workspace :is(.wallet-table th,.wallet-cards small) { color: var(--text-secondary); }
+.wallet-workspace :is(.wallet-table td,.wallet-cards li) { border-color: var(--border); overflow-wrap: anywhere; }
+.wallet-workspace .wallet-flow { background: #193d3d; }
+.wallet-history-summary > summary { display: flex; align-items: center; justify-content: space-between; list-style: none; cursor: pointer; gap: 16px; color: var(--text-heading); font-size: 14px; font-weight: 600; }
+.wallet-history-summary > summary::-webkit-details-marker { display: none; }
+.wallet-history-summary > summary:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 4px; }
+.wallet-history-summary > summary > span { font-size: 20px; color: var(--text-secondary); }
+.wallet-history-summary[open] > summary > span { transform: rotate(45deg); }
+html[data-theme='dark'] .wallet-workspace :is(.wallet-field small.is-error,.wallet-status.is-failed) { color: #ffc6be; }
+html[data-theme='dark'] .wallet-workspace .is-in { color: #9be3be; }
+html[data-theme='dark'] .wallet-workspace .is-out { color: #ffb9ab; }
+@media(max-width:720px) { .wallet-workspace .wallet-filters { grid-template-columns: 1fr; } }
+.wallet-workspace .wallet-filter { height: auto; }
+.wallet-workspace .wallet-filter > .wallet-filter__label { flex: 0 0 auto; flex-direction: row; }
+.wallet-workspace .wallet-filter > .choice-picker { display: inline-grid; flex: 0 0 auto; }
+.wallet-workspace .wallet-filter .choice-picker__value { display: block; }
+#root .wallet-filter .choice-picker__trigger { padding-block: 8px; }
+#root .wallet-filter .choice-picker__trigger > svg { padding: 4px; }
+.wallet-workspace .wallet-submit span { color: var(--text-secondary); }

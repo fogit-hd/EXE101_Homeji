@@ -7,7 +7,7 @@ if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Loca
 const out=new URL('../output/verification/wallet-workspace/',import.meta.url);await mkdir(out,{recursive:true})
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'})
 const context=await browser.newContext({viewport:{width:1440,height:1100},colorScheme:'light',reducedMotion:'reduce'})
-const id='11111111-1111-4111-8111-111111111111',calls=[],errors=[];let failGateway=false,balance=350000
+const id='11111111-1111-4111-8111-111111111111',calls=[],errors=[];let failGateway=false,failWallet=false,balance=350000
 await context.addInitScript(id=>{localStorage.setItem('homeji_access_token','wallet-ui-fixture');localStorage.setItem('homeji_user_id',id);localStorage.setItem('homeji-theme','light')},id)
 await context.route('**/*',async route=>{
  const u=new URL(route.request().url());if(u.origin!==new URL(base).origin)return route.abort()
@@ -16,6 +16,7 @@ await context.route('**/*',async route=>{
  if(u.pathname==='/api/search-interests')return route.fulfill({json:{settings:{enabled:false,aiEnabled:false,emailEnabled:false},suggestions:[],following:[],rooms:[]}})
  if(u.pathname==='/api/profile/me')return route.fulfill({json:{id,displayName:'Nguyễn Văn An',role:1,onboardingCompleted:true,isPremium:false}})
  if(u.pathname==='/api/subscriptions/me')return route.fulfill({json:{tier:1,isPremium:false,packageCode:'free'}})
+ if(u.pathname==='/api/wallet'&&failWallet)return route.fulfill({status:503,json:{message:'Fixture wallet unavailable'}})
  if(u.pathname==='/api/wallet')return route.fulfill({json:{userId:id,balance,totalDeposited:600000,totalSpent:250000,totalEarned:0,isActivated:true,minimumTopUp:10000,maximumTopUp:10000000,minimumWithdrawalReserve:20000,updatedAt:'2026-10-19T01:00:00Z'}})
  if(u.pathname==='/api/wallet/transactions')return route.fulfill({json:[{id:'tx-fixture',userId:id,kind:1,amount:200000,balanceAfter:350000,description:'Nạp qua MoMo',referenceId:'HOMEJI-123',createdAt:'2026-10-19T01:00:00Z'}]})
  if(u.pathname.startsWith('/api/payments/')&&u.pathname.endsWith('/create')){calls.push({path:u.pathname,...route.request().postDataJSON()});await new Promise(r=>setTimeout(r,400));return failGateway?route.fulfill({status:503,json:{message:'Cổng thanh toán tạm thời không khả dụng'}}):route.fulfill({json:{payUrl:base+'/fixture-gateway',checkoutUrl:base+'/fixture-gateway'}})}
@@ -46,6 +47,21 @@ try{
  await page.goto(url);await ready();failGateway=true;await page.locator('.wallet-submit button').click();await page.getByRole('alert').filter({hasText:'thử lại sau'}).waitFor();assert.equal(calls.at(-1).path,'/api/payments/momo/create');assert.equal(calls.at(-1).amount,200000);await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:new URL('dark-payment-error.png',out).pathname.slice(1),fullPage:true})
  await page.getByRole('tab',{name:'Lịch sử',exact:true}).click();await page.locator('#wallet-panel-history').waitFor();assert.match(page.url(),/wallet=history/)
  await page.getByRole('tab',{name:'Rút tiền',exact:true}).click();await page.locator('#wallet-panel-withdraw').waitFor();assert.match(page.url(),/wallet=withdraw/)
+ for(const tab of ['withdraw','history']){
+  await page.goto(url.replace('wallet=deposit','wallet='+tab));await page.locator('#wallet-panel-'+tab).waitFor();const skipTab=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skipTab.isVisible())await skipTab.click().catch(()=>{});await page.locator('.hj-intro').waitFor({state:'hidden'});
+  for(const theme of ['light','dark'])for(const width of [1440,390,320]){
+   await page.setViewportSize({width,height:1100});await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),tab+' fits '+theme+' '+width);
+   if(tab==='withdraw'&&theme==='dark')assert.ok(await page.locator('.wallet-input').first().evaluate(e=>getComputedStyle(e).backgroundColor!=='rgb(255, 255, 255)'),'Withdrawal inputs follow dark surfaces');
+   if(tab==='history'){
+    const filter=page.getByRole('combobox',{name:'Loại giao dịch',exact:true});assert.ok(await filter.evaluate(e=>{const b=e.getBoundingClientRect(),r=e.closest('.wallet-filter').getBoundingClientRect();return b.top>=r.top-1&&b.bottom<=r.bottom+1&&b.right<=r.right+1}),'Filter stays inside its own boundary');
+    assert.equal(await page.locator('.wallet-history-summary').getAttribute('open'),null,'Secondary totals start collapsed');
+   }
+   await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({fullPage:true,path:new URL(tab+'-'+theme+'-'+width+'.png',out).pathname.slice(1),animations:'disabled'});
+  }
+ }
+ const kindFilter=page.getByRole('combobox',{name:'Loại giao dịch',exact:true});await kindFilter.click();await page.getByRole('option',{name:'Thanh toán đơn',exact:true}).click();await page.getByText('Không có giao dịch trong bộ lọc này',{exact:true}).waitFor();await kindFilter.click();await page.getByRole('option',{name:'Tất cả giao dịch',exact:true}).click();await page.locator('.wallet-cards li').first().waitFor();await page.locator('.wallet-history-summary > summary').click();await page.locator('.wallet-history-summary .wallet-flow').waitFor();await page.locator('.wallet-history-summary > summary').click();
  balance=0;await page.goto(url+'&status=paid');await ready();assert.match(await page.locator('.wallet-summary__balance').innerText(),/^0/);await page.getByRole('status').filter({hasText:'Đang chờ xác nhận'}).waitFor()
- assert.deepEqual(errors,[]);await writeFile(new URL('results.json',out),JSON.stringify({checks:['responsive light/dark 320/390/768/1440','secondary disclosure','quick/custom amounts and limits','PayOS/MoMo payload preserved','busy state','gateway failure','no optimistic credit','withdraw/history deep links'],calls,errors},null,2));console.log('PASS wallet workspace: responsive, disclosures, amounts/limits, payment methods, pending/failure, no optimistic credit, withdrawal/history',JSON.stringify({calls,errors}))
+ const unavailableResponse=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/wallet'&&r.status()===503);failWallet=true;await page.goto(url);await unavailableResponse;await ready();assert.match(await page.locator('.wallet-summary__balance').innerText(),/Đang tải|Chưa có số dư/,'Unknown balance is never shown as zero');assert.equal(await page.locator('.wallet-submit button').isDisabled(),true,'No funding action when wallet data is unavailable');
+ assert.deepEqual(errors,[]);await writeFile(new URL('results.json',out),JSON.stringify({checks:['responsive light/dark 320/390/768/1440','secondary disclosure','quick/custom amounts and limits','PayOS/MoMo payload preserved','busy state','gateway failure','no optimistic credit','withdraw/history deep links and responsive layouts','history filters and totals disclosure'],calls,errors},null,2));console.log('PASS wallet workspace: responsive, disclosures, amounts/limits, payment methods, pending/failure, no optimistic credit, withdrawal/history',JSON.stringify({calls,errors}))
 }catch(error){await page.screenshot({path:new URL('failure.png',out).pathname.slice(1),fullPage:true});console.log(await page.locator('.wallet-page').innerText());throw error}finally{await browser.close()}
