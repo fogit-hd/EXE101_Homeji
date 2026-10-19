@@ -157,7 +157,8 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
     const dismissWithOwner = () => setOpen(false)
     portalHost?.addEventListener('close', dismissWithOwner)
     const ownerVisibility = new MutationObserver(() => {
-      if (trigger.current?.matches(':disabled') || trigger.current?.closest('[inert], [hidden], [aria-hidden="true"]') || (portalHost instanceof HTMLDialogElement && !portalHost.open)) setOpen(false)
+      if (trigger.current?.matches(':disabled') || trigger.current?.closest('[inert], [hidden], [aria-hidden="true"]')
+        || (typeof HTMLDialogElement === 'function' && portalHost instanceof HTMLDialogElement && !portalHost.open)) setOpen(false)
     })
     for (let owner = trigger.current?.parentElement; owner && owner !== document.body; owner = owner.parentElement)
       ownerVisibility.observe(owner, { attributes: true, attributeFilter: ['inert', 'hidden', 'aria-hidden', 'open', 'disabled'] })
