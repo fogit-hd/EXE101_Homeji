@@ -248,7 +248,7 @@ export function FoodUtilityRail({
             type="text"
             value={cartNote}
             onChange={(event) => onCartNoteChange(event.target.value)}
-            placeholder="Thêm ghi chú cho các bếp..."
+            placeholder="Ghi chú món ăn cho bếp…"
             aria-label="Ghi chú cho bếp"
             disabled={cartBusy}
           />
@@ -260,6 +260,7 @@ export function FoodUtilityRail({
             <strong>Nhận món tại bếp</strong>
           </div>
           <p>Mỗi lần thanh toán gồm món của một bếp. Bạn nhận tại địa chỉ bếp sau khi người bán xác nhận.</p>
+          <p>Thời gian chuẩn bị dự kiến: {estimatedEtaLabel}.</p>
         </div>
 
         <footer className="food-rail__footer">
@@ -294,7 +295,7 @@ export function FoodUtilityRail({
             <img src={FOOD_ASSETS.icons.arrowRight} alt="" width={16} height={16} />
             {cartBusy
               ? 'Đang đặt món…'
-              : `Đặt món · giao ${estimatedEtaLabel}`}
+              : `Đặt món · nhận tại bếp`}
           </button>
         </footer>
       </section>

@@ -105,7 +105,7 @@ export function FoodMarketplaceView({
     }
   }, [cartOpen])
   const featured = posts[0] ?? null
-  const featuredDistance = formatDistanceMeters(featured?.distanceKm ?? null)
+  const featuredDistance = featured?.distanceKm != null ? formatDistanceMeters(featured.distanceKm) : 'Món đang mở bán'
   const featuredPrice = featured ? formatPrice(featured.price) : ''
   const featuredPortions = featured?.availableQuantity
   const featuredEta = featured?.preparationMinutes
@@ -144,7 +144,6 @@ export function FoodMarketplaceView({
   return (
     <div className="food-market-body">
       <div className="food-catalog">
-        <FoodSourceDirectory />
         {loading ? (
         <section className="food-featured food-featured--loading" aria-busy="true" aria-label="Đang tải gợi ý hôm nay">
           <div className="food-featured__copy sk-stack">
@@ -181,7 +180,7 @@ export function FoodMarketplaceView({
                 disabled={!featured}
                 onClick={() => featured && onShowOnMap(featured)}
               >
-                Xem mâm hôm nay
+                Xem vị trí nhận món
               </button>
               <span className="food-featured__price">
                 {featured ? `Từ ${featuredPrice}` : featuredPrice}
@@ -206,7 +205,7 @@ export function FoodMarketplaceView({
 
         <div className="food-nearby-head">
           <div>
-            <h2>Gần bạn hôm nay</h2>
+            <h2>Chọn bếp, chọn món</h2>
             <p className="food-nearby-head__note">
               {loading ? <Sk w={150} h={10} /> : kitchens.length > 0
                 ? `${kitchens.length} bếp trong danh sách này`
@@ -276,6 +275,8 @@ export function FoodMarketplaceView({
           </div>
         )}
 
+        <FoodSourceDirectory />
+
         {kitchens.length > 3 ? (
           <div className="food-discovery-bar">
             <div className="food-discovery-bar__intro">
@@ -314,13 +315,13 @@ export function FoodMarketplaceView({
         type="button"
         className="food-cart-fab"
         onClick={() => onCartOpenChange(true)}
-        aria-label={`Mở giỏ hàng, ${cartItemCount} món`}
+        aria-label={`Mở giỏ hàng, ${cartItemCount} món, ${formatPrice(cartTotal)}`}
         aria-haspopup="dialog"
         aria-expanded={cartOpen}
         aria-controls={cartDialogId}
       >
         <img src={FOOD_ASSETS.icons.shoppingBagDark} alt="" width={18} height={18} />
-        <span>Giỏ</span>
+        <span>{cartItemCount > 0 ? `Xem giỏ · ${formatPrice(cartTotal)}` : 'Giỏ hàng'}</span>
         {cartItemCount > 0 ? <strong>{cartItemCount}</strong> : null}
       </button>
 

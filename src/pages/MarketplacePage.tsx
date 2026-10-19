@@ -1,3 +1,6 @@
+import { MarketplaceSellerCatalog } from '../components/marketplace/MarketplaceSellerCatalog'
+import { marketplaceItemUrl, marketplaceStoreUrl } from '../lib/marketplaceSellers'
+import { QuantityStepper } from '../components/marketplace/food/QuantityStepper'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { trackFunnelEvent } from '../lib/ga4'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -12,6 +15,7 @@ import {
   createMarketplacePost,
   createMomoPayment,
   createPayOsPayment,
+  getMarketplacePost,
   getMyMarketplaceOrders,
   getMyMarketplacePosts,
   getMyWallet,
@@ -282,7 +286,7 @@ export function MarketplacePage({
   embedded = false,
   onPostsForMap,
   onFocusMap,
-  selectedMarketplaceId = null,
+  selectedMarketplaceId: selectedMarketplaceIdProp = null,
   onSelectMarketplaceId,
   userLocation = null,
   onRequestLocation,
@@ -292,6 +296,10 @@ export function MarketplacePage({
   const { profile } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const selectedMarketplaceId = searchParams.get('seller')?.trim() || selectedMarketplaceIdProp
+  const storePageValue = Number(searchParams.get('storePage') ?? '1')
+  const storePage = Number.isSafeInteger(storePageValue) && storePageValue > 0 ? storePageValue : 1
+  const requestedItemId = searchParams.get('item')
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
   const cartStorageKey = `homeji:marketplace-cart:v1:${myUserId ?? 'guest'}`
 
@@ -303,7 +311,22 @@ export function MarketplacePage({
   })
   const tabPanelRef = useTabTransition(tab, TAB_MOTION_ORDER, tab === 'food' ? '.food-catalog, .food-rail-desktop' : undefined)
   const [posts, setPosts] = useState<MarketplacePost[]>([])
-  const [detailPost, setDetailPost] = useState<MarketplacePost | null>(null)
+  const [detailPostState, setDetailPost] = useState<MarketplacePost | null>(null)
+  const detailPost = detailPostState?.id === requestedItemId ? detailPostState : null
+  const [purchaseConfirmation, setPurchaseConfirmation] = useState<string | null>(null)
+  const confirmItemPurchase = requestedItemId !== null && purchaseConfirmation === requestedItemId
+  const singlePurchaseLock = useRef(false)
+  const closeProductDetails = () => {
+    setDetailPost(null)
+    setPurchaseConfirmation(null)
+    if (searchParams.has('item')) {
+      const params = new URLSearchParams(searchParams)
+      params.delete('item')
+      setSearchParams(params, { replace: true })
+    }
+  }
+
+
   const [orders, setOrders] = useState<MarketplaceOrder[]>([])
   const [categorySelection, setCategorySelection] = useState({ tab, value: '' })
   const category = categorySelection.tab === tab ? categorySelection.value : ''
@@ -314,6 +337,14 @@ export function MarketplacePage({
   const [catalogSort, setCatalogSort] = useState('default')
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
+  useEffect(() => {
+    if (!requestedItemId) return
+    let active = true
+    void getMarketplacePost(requestedItemId).then(post => {
+      if (active && (!selectedMarketplaceId || post.sellerId === selectedMarketplaceId)) setDetailPost(post)
+    }).catch(err => { if (active) setActionError(getErrorMessage(err, 'Chưa mở được sản phẩm. Thử lại từ cửa hàng.')) })
+    return () => { active = false }
+  }, [requestedItemId, selectedMarketplaceId])
   const [orderingPostId, setOrderingPostId] = useState<string | null>(null)
   const [contactingPostId, setContactingPostId] = useState<string | null>(null)
   const [purchaseReceipt, setPurchaseReceipt] = useState<{ message: string; orderId: string } | null>(null)
@@ -404,7 +435,8 @@ export function MarketplacePage({
     const params = new URLSearchParams(searchParams)
     if (!params.get('section')) params.set('section', 'marketplace')
     const nextPurchase = next === 'purchases' ? (options?.purchaseId ?? '') : ''
-    const unchanged = params.get('market') === next
+    params.delete('seller'); params.delete('item'); params.delete('storePage')
+    const unchanged = !searchParams.has('seller') && !searchParams.has('item') && params.get('market') === next
       && !params.get('order')
       && !params.get('side')
       && !params.get('role')
@@ -533,6 +565,7 @@ export function MarketplacePage({
   const lngNum = sellerLocationPost?.longitude ?? (longitude.trim() ? Number(longitude) : Number.NaN)
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('seller')) return
     if (!selectedMarketplaceId) {
       handledMarketplaceSelectionRef.current = null
       return
@@ -619,6 +652,8 @@ export function MarketplacePage({
       return
     }
     const list = await searchMarketplacePosts({
+      sellerId: selectedMarketplaceId || undefined,
+      page: selectedMarketplaceId ? storePage : undefined,
       keyword: keyword.trim() || undefined,
       category: category.trim() || undefined,
       minPrice: priceFilter === '100to500' ? 100_000 : priceFilter === 'over500' ? 500_001 : undefined,
@@ -629,9 +664,9 @@ export function MarketplacePage({
           : tab === 'browse'
             ? MarketplaceListingType.SecondHand
             : undefined,
-      latitude: userLocation?.lat,
-      longitude: userLocation?.lng,
-      radiusKm: userLocation ? 50 : undefined,
+      latitude: selectedMarketplaceId ? undefined : userLocation?.lat,
+      longitude: selectedMarketplaceId ? undefined : userLocation?.lng,
+      radiusKm: !selectedMarketplaceId && userLocation ? 50 : undefined,
       pageSize: 50,
     })
     if (requestId !== inventoryRequest.current) return
@@ -646,17 +681,20 @@ export function MarketplacePage({
       )
       onPostsForMap?.(marketplacePostsToSellerPins(forMap))
     }
-  }, [tab, keyword, category, priceFilter, onPostsForMap, userLocation])
+  }, [tab, keyword, category, priceFilter, onPostsForMap, userLocation, selectedMarketplaceId, storePage])
 
   const { showLoader, onIntroComplete, error, disrupted, reload: reloadMain } = usePersistentLoad(
     loadFn,
-    [tab, keyword, category, priceFilter, myUserId],
+    [tab, keyword, category, priceFilter, myUserId, selectedMarketplaceId, storePage],
     { holdForIntro: false },
   )
 
   const walletDetailsRequest = useRef(0)
   const walletDetailsScope = useRef('')
-  walletDetailsScope.current = isWalletPage ? myUserId ?? '' : ''
+  useEffect(() => {
+    walletDetailsScope.current = isWalletPage ? myUserId ?? '' : ''
+    return () => { walletDetailsScope.current = ''; walletDetailsRequest.current += 1 }
+  }, [isWalletPage, myUserId])
   const loadWalletDetails = useCallback(async () => {
     const scope = walletDetailsScope.current
     if (!scope) return
@@ -835,8 +873,15 @@ export function MarketplacePage({
     }
   }
 
+  const refreshPurchaseBalance = () => {
+    setWalletHeaderStatus('loading')
+    return getMyWallet().then(fresh => { setWallet(fresh); setWalletHeaderStatus('ready') })
+      .catch(() => { setWallet(null); setWalletHeaderStatus('error') })
+  }
+
   const rememberCreatedPurchase = async (orderId: string, message: string) => {
     setPurchaseReceipt({ message, orderId })
+    void refreshPurchaseBalance()
     try {
       setOrders(await getMyMarketplaceOrders())
     } catch {
@@ -845,7 +890,8 @@ export function MarketplacePage({
   }
 
   const handleOrder = async (post: MarketplacePost) => {
-    if (orderingPostId) return
+    if (singlePurchaseLock.current || orderingPostId) return false
+    singlePurchaseLock.current = true
     setOrderingPostId(post.id)
     setActionError('')
     try {
@@ -858,9 +904,12 @@ export function MarketplacePage({
         quantity,
       })
       await rememberCreatedPurchase(created.id, 'Đã gửi yêu cầu mua.')
+      return true
     } catch (err) {
       setActionError(getErrorMessage(err, 'Đặt mua thất bại'))
+      return false
     } finally {
+      singlePurchaseLock.current = false
       setOrderingPostId(null)
     }
   }
@@ -1039,11 +1088,11 @@ export function MarketplacePage({
           role="button"
           tabIndex={0}
           aria-label={`Xem chi tiết: ${p.title}`}
-          onClick={() => setDetailPost(p)}
+          onClick={() => navigate(marketplaceItemUrl(p))}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault()
-              setDetailPost(p)
+              navigate(marketplaceItemUrl(p))
             }
           }}
         >
@@ -1161,9 +1210,9 @@ export function MarketplacePage({
                 type="button"
                 className="btn btn-primary btn-sm"
                 disabled={orderingPostId != null}
-                onClick={() => void handleOrder(p)}
+                onClick={() => navigate(marketplaceItemUrl(p))}
               >
-                {orderingPostId === p.id ? 'Đang đặt…' : 'Mua bằng số dư'}
+                Xem và mua
               </button>
             </>
           ) : null}
@@ -1551,6 +1600,20 @@ export function MarketplacePage({
         </dialog>
       ) : null}
 
+      {selectedMarketplaceId && (tab === 'browse' || tab === 'food') ? (
+        <header className="seller-store-header" aria-label="Cửa hàng người bán">
+          <div><button type="button" className="btn btn-secondary" onClick={() => openLeaf(tab)}>← Tất cả người bán</button>
+            <h2>{posts.find(post => post.sellerId === selectedMarketplaceId)?.sellerDisplayName || 'Cửa hàng người bán'}</h2>
+            <p>Chọn sản phẩm để xem chi tiết, nhắn người bán hoặc mua bằng ví Homeji.</p>
+          </div>
+          <p>{listForTab.length} sản phẩm trên trang {storePage}</p>
+          {storePage > 1 || posts.length >= 50 ? <nav aria-label="Trang sản phẩm cửa hàng">
+            {storePage > 1 ? <button type="button" className="btn btn-secondary" onClick={() => { const params = new URLSearchParams(searchParams); params.set('storePage', String(storePage - 1)); setSearchParams(params) }}>Trang trước</button> : null}
+            {posts.length >= 50 ? <button type="button" className="btn btn-secondary" onClick={() => { const params = new URLSearchParams(searchParams); params.set('storePage', String(storePage + 1)); setSearchParams(params) }}>Trang sau</button> : null}
+          </nav> : null}
+        </header>
+      ) : null}
+
       <div ref={tabPanelRef} className="marketplace-tab-panel" id="marketplace-panel" role="tabpanel"
         aria-labelledby={`marketplace-${tab === 'purchases' || tab === 'wallet' ? 'primary' : 'subtab'}-${tab === 'purchases' || tab === 'wallet' ? primaryOf(tab) : tab}`}>
       {tab === 'food' ? (
@@ -1599,7 +1662,7 @@ export function MarketplacePage({
           onCheckout={() => setCheckoutConfirmationOpen(true)}
           onCartNoteChange={setCartNote}
           onCartOpenChange={setCartOpen}
-          onSelectKitchen={(sellerId) => onSelectMarketplaceId?.(sellerId)}
+          onSelectKitchen={(sellerId) => navigate(marketplaceStoreUrl(sellerId, true))}
         />
         </>
       ) : tab === 'wallet' ? (
@@ -2201,7 +2264,9 @@ export function MarketplacePage({
           </p>
         </div>
       ) : (
-        <div className={`marketplace-list${tab === 'browse' ? ' marketplace-list--grid' : ''}${tab === 'mine' ? ' marketplace-list--rows' : ''}`}>
+        tab === 'browse' ? <MarketplaceSellerCatalog posts={listForTab} selectedSellerId={selectedMarketplaceId}
+          renderItem={post => renderPostCard(post, 'browse')} /> :
+        <div className={`marketplace-list${tab === 'mine' ? ' marketplace-list--rows' : ''}`}>
           {listForTab.map((p) => renderPostCard(p, tab === 'mine' ? 'mine' : 'browse'))}
         </div>
       )}
@@ -2224,7 +2289,7 @@ export function MarketplacePage({
           className="marketplace-detail-backdrop"
           role="presentation"
           onClick={(event) => {
-            if (event.target === event.currentTarget) setDetailPost(null)
+            if (event.target === event.currentTarget && !orderingPostId) closeProductDetails()
           }}
         >
           <section
@@ -2233,12 +2298,18 @@ export function MarketplacePage({
             aria-modal="true"
             aria-labelledby="marketplace-detail-title"
             onKeyDown={(event) => {
-              if (event.key === 'Escape') setDetailPost(null)
+              if (event.key === 'Escape' && !orderingPostId) closeProductDetails()
+              if (event.key === 'Tab') {
+                const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), textarea:not(:disabled), [tabindex="0"]')]
+                const first = controls[0], last = controls.at(-1)
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+                if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+              }
             }}
           >
             <header className="marketplace-detail-dialog__header">
               <strong>Chi tiết sản phẩm</strong>
-              <button type="button" className="btn btn-secondary btn-sm" autoFocus onClick={() => setDetailPost(null)} aria-label="Đóng chi tiết">×</button>
+              <button type="button" className="btn btn-secondary btn-sm" autoFocus disabled={Boolean(orderingPostId)} onClick={() => closeProductDetails()} aria-label="Đóng chi tiết">×</button>
             </header>
             <div className="marketplace-detail-dialog__content">
               {postThumb(detailPost) ? <img className="marketplace-detail-dialog__image" src={postThumb(detailPost)!} alt={detailPost.title} /> : null}
@@ -2248,17 +2319,32 @@ export function MarketplacePage({
                 <p className="marketplace-detail-dialog__meta">{detailPost.condition} · {detailPost.category}</p>
                 <p className="marketplace-detail-dialog__meta">{detailPost.address}</p>
                 <p className="marketplace-detail-dialog__seller">Người đăng: {detailPost.sellerDisplayName}</p>
+                <p>Còn {detailPost.availableQuantity} {detailPost.unit || 'sản phẩm'}</p>
+                <QuantityStepper value={orderQuantities[detailPost.id] ?? 1} max={Math.max(1, detailPost.availableQuantity)} disabled={Boolean(orderingPostId) || detailPost.availableQuantity <= 0}
+                  label={`Số lượng ${detailPost.title}`} onChange={quantity => { setOrderQuantities(current => ({ ...current, [detailPost.id]: quantity })); setPurchaseConfirmation(null) }} />
+                {confirmItemPurchase ? <div className="marketplace-item-confirmation" role="status">
+                  <strong>Xác nhận mua {orderQuantities[detailPost.id] ?? 1} {detailPost.unit || 'sản phẩm'} · {formatPrice(detailPost.price * (orderQuantities[detailPost.id] ?? 1))}</strong>
+                  <p>Thanh toán bằng số dư Homeji. Hẹn nhận hàng với người bán qua tin nhắn.</p>
+                  <p>Số dư hiện tại: {walletHeaderStatus === 'loading' ? 'Đang kiểm tra…' : wallet ? formatPrice(wallet.balance) : 'Chưa tải được số dư'}</p>
+                  {wallet && wallet.balance < detailPost.price * (orderQuantities[detailPost.id] ?? 1) ? <Link className="btn btn-secondary" to="/?section=marketplace&market=wallet&wallet=deposit">Số dư chưa đủ · Nạp tiền</Link> : null}
+                  {walletHeaderStatus === 'error' ? <button type="button" className="btn btn-secondary" onClick={() => void refreshPurchaseBalance()}>Tải lại số dư</button> : null}
+                </div> : null}
+                {actionError ? <p className="form-error" role="alert">{actionError}</p> : null}
                 <h3>Mô tả</h3>
                 <p className="marketplace-detail-dialog__description">{detailPost.description || 'Người đăng chưa cung cấp mô tả.'}</p>
               </div>
             </div>
             {detailPost.sellerId !== profile?.id && detailPost.status === MarketplacePostStatus.Active ? (
               <footer className="marketplace-detail-dialog__actions">
-                <button type="button" className="btn btn-secondary" disabled={contactingPostId !== null} onClick={() => { const post = detailPost; setDetailPost(null); void contactAboutPost(post.id) }}>
+                <button type="button" className="btn btn-secondary" disabled={contactingPostId !== null || orderingPostId !== null} onClick={() => { const post = detailPost; closeProductDetails(); void contactAboutPost(post.id) }}>
                   Nhắn người bán
                 </button>
-                <button type="button" className="btn btn-primary" disabled={orderingPostId !== null} onClick={() => { const post = detailPost; setDetailPost(null); void handleOrder(post) }}>
-                  Mua bằng số dư
+                <button type="button" className="btn btn-primary" disabled={orderingPostId !== null || detailPost.availableQuantity <= 0 || (orderQuantities[detailPost.id] ?? 1) > detailPost.availableQuantity || (confirmItemPurchase && (walletHeaderStatus !== 'ready' || !wallet || wallet.balance < detailPost.price * (orderQuantities[detailPost.id] ?? 1)))} onClick={() => {
+                  if (!confirmItemPurchase) { setActionError(''); setPurchaseConfirmation(detailPost.id); void refreshPurchaseBalance(); return }
+                  const post = detailPost
+                  void handleOrder(post).then(success => { if (success) closeProductDetails() })
+                }}>
+                  {orderingPostId ? 'Đang đặt mua…' : detailPost.availableQuantity <= 0 ? 'Đã hết hàng' : confirmItemPurchase ? `Xác nhận mua · ${formatPrice(detailPost.price * (orderQuantities[detailPost.id] ?? 1))}` : 'Mua bằng số dư'}
                 </button>
               </footer>
             ) : null}

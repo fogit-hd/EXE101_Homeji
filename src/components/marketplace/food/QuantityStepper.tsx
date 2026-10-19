@@ -1,4 +1,3 @@
-import { FOOD_ASSETS } from './foodAssets'
 
 type Props = {
   value: number
@@ -26,7 +25,7 @@ export function QuantityStepper({
         disabled={disabled || value <= min}
         onClick={() => onChange(Math.max(min, value - 1))}
       >
-        <img src={FOOD_ASSETS.icons.minus} alt="" width={13} height={13} />
+        <span aria-hidden="true">−</span>
       </button>
       <output className="food-qty__value" aria-live="polite">
         {value}
@@ -38,7 +37,7 @@ export function QuantityStepper({
         disabled={disabled || value >= max}
         onClick={() => onChange(Math.min(max, value + 1))}
       >
-        <img src={FOOD_ASSETS.icons.plus} alt="" width={13} height={13} />
+        <span aria-hidden="true">+</span>
       </button>
     </div>
   )

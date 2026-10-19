@@ -8,7 +8,9 @@ import {
   type RefObject,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
+import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import {
   mapBackendListingToListingViewModel,
@@ -73,6 +75,7 @@ export function MapListingsWorkspace({
   onUserSearch,
 }: Props) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
@@ -138,6 +141,82 @@ export function MapListingsWorkspace({
     ['split', 'Chia đôi'],
     ['list', 'Danh sách'],
   ] as const
+
+  const renderListingCard = (id: string, view: ReturnType<typeof mapMarketplacePostToListingViewModel>) => {
+    const selectedCard = selectedListingId === id
+    const hovered = hoveredListingId === id
+    return (
+        <article
+          className={`map-listings__card${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
+        >
+          <button
+            type="button"
+            className="map-listings__card-hit"
+            aria-pressed={selectedCard}
+            onMouseEnter={() => onHoverListing(id)}
+            onMouseLeave={onLeaveListing}
+            onFocus={() => onHoverListing(id)}
+            onBlur={onLeaveListing}
+            onClick={() => {
+              if (!marketMode && query.view === 'list' && onOpenRoomDetail) {
+                onOpenRoomDetail(id)
+                return
+              }
+              if (marketMode && query.view === 'list') {
+                const post = marketPosts.find(item => item.id === id)
+                if (post) navigate(marketplaceItemUrl(post))
+                return
+              }
+              onSelectListing(id)
+            }}
+          >
+            <span className="map-listings__card-photo">
+              <span className="map-listings__card-photo-empty">Chưa có ảnh</span>
+              {view.thumbnailUrl ? (
+                <img
+                  src={view.thumbnailUrl}
+                  alt=""
+                  onError={(event) => {
+                    event.currentTarget.hidden = true
+                  }}
+                />
+              ) : null}
+              {selectedCard ? <span className="map-listings__badge">Đang chọn</span> : null}
+            </span>
+            <span className="map-listings__card-copy">
+              <span className="map-listings__price">{view.priceLabel}</span>
+              <span className="map-listings__name">{view.title}</span>
+                <span className="map-listings__address">
+                  <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
+                  <span className="map-listings__address-text">{view.address || 'Chưa có địa chỉ'}</span>
+                </span>
+              <span className="map-listings__meta">
+                {view.areaLabel ? <span>{view.areaLabel}</span> : null}
+                {view.typeLabel ? <span>{view.typeLabel}</span> : null}
+                {view.highlightTag ? <span>{view.highlightTag}</span> : null}
+                {!marketMode && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
+              </span>
+            </span>
+          </button>
+          {!marketMode && onToggleSave ? (
+            <button
+              type="button"
+              className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`}
+              aria-pressed={Boolean(savedIds?.has(id))}
+              aria-label={savedIds?.has(id) ? 'Bỏ lưu phòng' : 'Lưu phòng'}
+              disabled={saveBusy && selectedListingId === id}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggleSave(id)
+              }}
+            >
+              <img src="/figma/map/bookmark.svg" alt="" width={15} height={15} />
+            </button>
+          ) : null}
+        </article>
+    )
+  }
+
 
   return (
     <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}`}>
@@ -266,6 +345,7 @@ export function MapListingsWorkspace({
                 onToggleSave={!marketMode && onToggleSave ? () => onToggleSave(selected.id) : undefined}
                 onOpen={() => {
                   if (!marketMode && onOpenRoomDetail) onOpenRoomDetail(selected.id)
+                  else if (marketMode) { const post = marketPosts.find(item => item.id === selected.id); if (post) navigate(marketplaceItemUrl(post)) }
                   else onSelectListing(selected.id)
                 }}
               />
@@ -314,78 +394,10 @@ export function MapListingsWorkspace({
                   </button>
                 </div>
               ) : (
+                marketMode ? <MarketplaceSellerCatalog posts={marketPosts}
+                  renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 <ul className="map-listings__cards">
-                  {cards.map(({ id, view }) => {
-                    const selectedCard = selectedListingId === id
-                    const hovered = hoveredListingId === id
-                    return (
-                      <li key={id}>
-                        <article
-                          className={`map-listings__card${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
-                        >
-                          <button
-                            type="button"
-                            className="map-listings__card-hit"
-                            aria-pressed={selectedCard}
-                            onMouseEnter={() => onHoverListing(id)}
-                            onMouseLeave={onLeaveListing}
-                            onFocus={() => onHoverListing(id)}
-                            onBlur={onLeaveListing}
-                            onClick={() => {
-                              if (!marketMode && query.view === 'list' && onOpenRoomDetail) {
-                                onOpenRoomDetail(id)
-                                return
-                              }
-                              onSelectListing(id)
-                            }}
-                          >
-                            <span className="map-listings__card-photo">
-                              <span className="map-listings__card-photo-empty">Chưa có ảnh</span>
-                              {view.thumbnailUrl ? (
-                                <img
-                                  src={view.thumbnailUrl}
-                                  alt=""
-                                  onError={(event) => {
-                                    event.currentTarget.hidden = true
-                                  }}
-                                />
-                              ) : null}
-                              {selectedCard ? <span className="map-listings__badge">Đang chọn</span> : null}
-                            </span>
-                            <span className="map-listings__card-copy">
-                              <span className="map-listings__price">{view.priceLabel}</span>
-                              <span className="map-listings__name">{view.title}</span>
-                                <span className="map-listings__address">
-                                  <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
-                                  <span className="map-listings__address-text">{view.address || 'Chưa có địa chỉ'}</span>
-                                </span>
-                              <span className="map-listings__meta">
-                                {view.areaLabel ? <span>{view.areaLabel}</span> : null}
-                                {view.typeLabel ? <span>{view.typeLabel}</span> : null}
-                                {view.highlightTag ? <span>{view.highlightTag}</span> : null}
-                                {view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
-                              </span>
-                            </span>
-                          </button>
-                          {!marketMode && onToggleSave ? (
-                            <button
-                              type="button"
-                              className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`}
-                              aria-pressed={Boolean(savedIds?.has(id))}
-                              aria-label={savedIds?.has(id) ? 'Bỏ lưu phòng' : 'Lưu phòng'}
-                              disabled={saveBusy && selectedListingId === id}
-                              onClick={(event) => {
-                                event.stopPropagation()
-                                onToggleSave(id)
-                              }}
-                            >
-                              <img src="/figma/map/bookmark.svg" alt="" width={15} height={15} />
-                            </button>
-                          ) : null}
-                        </article>
-                      </li>
-                    )
-                  })}
+                  {cards.map(({ id, view }) => <li key={id}>{renderListingCard(id, view)}</li>)}
                 </ul>
               )}
               {query.page > 1 || cards.length >= PAGE_SIZE ? (

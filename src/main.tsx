@@ -6,6 +6,7 @@ import './ui-consistency.css'
 import './ai-spectrum.css'
 import './liquid-glass.css'
 import './components/theme/dark-theme.css'
+import './product-ui.css'
 import { LiquidGlassEffects } from './components/ui/LiquidGlassEffects'
 
 /**

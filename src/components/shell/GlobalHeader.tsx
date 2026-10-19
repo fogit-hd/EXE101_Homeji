@@ -381,6 +381,7 @@ export function GlobalHeader() {
   const accountLinks: { id: string; label: string; href: string; icon: 'user' | 'card' | 'search' | 'activity' | 'shield' | 'bookmark' }[] = [
     { id: 'myPosts', label: 'Quản lý tin', href: mapSectionUrl('myPosts'), icon: 'activity' },
     { id: 'saved', label: 'Tin đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark' },
+    { id: 'interests', label: 'Phòng mới phù hợp', href: '/?section=listings&view=list&interest=manage', icon: 'search' },
     { id: 'profile', label: 'Hồ sơ', href: mapSectionUrl('profile'), icon: 'user' as const },
     { id: 'subscription', label: 'Gói đăng ký', href: mapSectionUrl('payments'), icon: 'card' as const },
     { id: 'wanted', label: 'Tin tìm phòng', href: mapSectionUrl('wanted'), icon: 'search' as const },
@@ -391,7 +392,7 @@ export function GlobalHeader() {
   }
   const accountGroups = [
     { label: 'Tài khoản & dịch vụ', items: accountLinks.filter(item => ['profile', 'subscription'].includes(item.id)) },
-    { label: 'Hoạt động của bạn', items: accountLinks.filter(item => ['myPosts', 'saved', 'wanted', 'activities', 'admin'].includes(item.id)) },
+    { label: 'Hoạt động của bạn', items: accountLinks.filter(item => ['myPosts', 'saved', 'interests', 'wanted', 'activities', 'admin'].includes(item.id)) },
   ]
 
   return (

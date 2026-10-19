@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { UserRole } from '../../api'
 import { getErrorMessage } from '../../lib/errors'
 import { AddressAutocomplete } from '../map/AddressAutocomplete'
 import { AMENITY_OPTIONS, amenityLabel, formatPrice } from '../../lib/labels'
@@ -97,11 +98,13 @@ function OwnedSearchInterestCenter() {
     if (await action(() => followSearchInterest(draft))) { setDraft(null); setNotice('Đã theo dõi. Homeji sẽ kiểm tra tin mới phù hợp theo bộ lọc bạn xác nhận.') }
   }
   if (!isAuthenticated || !owner) return null
+  const section = new URLSearchParams(location.search).get('section')
+  const showLauncher = location.pathname === '/' && (!section || section === 'listings' || section === 'saved') && profile?.role !== UserRole.Admin
   const changeNumber = (key: keyof InterestCriteria, raw: string) => setDraft(value => value ? { ...value, [key]: raw === '' ? null : Number(raw) } : value)
   return <>
-    <button type="button" className="interest-launch" onClick={() => setOpen(true)} aria-haspopup="dialog">
+    {showLauncher && <button type="button" className="interest-launch" onClick={() => setOpen(true)} aria-haspopup="dialog">
       Phòng mới {current && current.rooms.length > 0 ? <span>{current.rooms.length}</span> : current && current.suggestions.length > 0 ? <span>Gợi ý</span> : null}
-    </button>
+    </button>}
     <dialog ref={dialog} className="interest-dialog" aria-labelledby={titleId} onCancel={closePanel} onClose={closePanel}>
       <header><div><p>THEO NHU CẦU CỦA BẠN</p><h2 id={titleId}>Phòng mới phù hợp với bạn</h2></div><button type="button" aria-label="Đóng gợi ý phòng mới" onClick={closePanel}>×</button></header>
       <div className="interest-content" aria-busy={busy}>
