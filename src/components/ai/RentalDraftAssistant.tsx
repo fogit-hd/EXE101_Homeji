@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { generateRentalDraft } from '../../api'
 import { getErrorMessage } from '../../lib/errors'
 import { type RentalDraftFacts } from '../../lib/rentalDraft'
@@ -8,6 +8,8 @@ export function RentalDraftAssistant({ facts, title, description, disabled, onAp
   facts: RentalDraftFacts; title: string; description: string; disabled: boolean
   onApply: (draft: { title: string; description: string }) => void
 }) {
+  const panelId = useId()
+  const [expanded, setExpanded] = useState(false)
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof generateRentalDraft>> | null>(null)
   const [snapshot, setSnapshot] = useState('')
   const [busy, setBusy] = useState(false)
@@ -37,8 +39,23 @@ export function RentalDraftAssistant({ facts, title, description, disabled, onAp
       if (requestId.current === current) setError(getErrorMessage(reason, 'Gemini chưa tạo được bản nháp. Vui lòng thử lại.'))
     } finally { if (requestId.current === current) { pending.current = null; setBusy(false) } }
   }
-  return <details className="rental-draft-assistant" onToggle={event => { if (!event.currentTarget.open) cancel() }}>
-    <summary>Trợ lý soạn tin · xem trước rồi xác nhận</summary>
+  return <section className="rental-draft-tool" aria-labelledby={`${panelId}-title`}>
+    <header className="rental-draft-tool__header">
+      <span className="rental-draft-tool__icon" aria-hidden="true">✦</span>
+      <div className="rental-draft-tool__intro">
+        <h3 id={`${panelId}-title`}>Trợ lý soạn tin</h3>
+        <p>Gợi ý tiêu đề và mô tả từ thông tin bạn đã điền. Bạn xem trước rồi quyết định áp dụng.</p>
+      </div>
+      <button type="button" className="rental-draft-tool__toggle" data-glass-exclude=""
+        aria-expanded={expanded} aria-controls={panelId} onClick={() => {
+          if (expanded) cancel()
+          setExpanded(!expanded)
+        }}>
+        {expanded ? 'Thu gọn' : 'Mở trợ lý'}
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d={expanded ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+    </header>
+    <div id={panelId} className="rental-draft-tool__body" hidden={!expanded}>
     <p>Gemini gợi ý cách trình bày từ thông tin bạn đã điền. Bản nháp không xác minh giá, tiện ích hay tình trạng phòng. Ảnh không được dùng để đo diện tích hoặc suy ra tiện ích. Bạn kiểm tra lại trước khi áp dụng.</p>
     <button type="button" className="btn btn-secondary btn-sm ai-spectrum-button" disabled={disabled || busy} aria-busy={busy} onClick={() => void generate()}>{busy ? 'Gemini đang soạn…' : 'Tạo bản gợi ý bằng Gemini'}</button>
     {busy ? <button type="button" className="btn btn-ghost btn-sm" onClick={cancel}>Hủy soạn</button> : null}
@@ -54,5 +71,6 @@ export function RentalDraftAssistant({ facts, title, description, disabled, onAp
       <button type="button" className="btn btn-primary btn-sm ai-spectrum-button" disabled={disabled || stale} onClick={() => { onApply(preview); setPreview(null) }}>Xác nhận thay tiêu đề và mô tả trong biểu mẫu</button>
       <p>Bạn vẫn cần nhấn Lưu hoặc Gửi duyệt để cập nhật tin.</p>
     </> : null}
-  </details>
+    </div>
+  </section>
 }
