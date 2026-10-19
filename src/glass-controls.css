@@ -67,3 +67,35 @@ html:root #root .choice-picker__trigger[data-glass-exclude] {
   backdrop-filter: none;
   filter: none;
 }
+
+/* The category opener is a clear raised capsule, including its open state. */
+html:root #root .hj-menu-trigger[data-glass-control] {
+  position: relative;
+  --control-glass-fill: rgb(250 255 253 / .09);
+  background-color: var(--control-glass-fill);
+  border-color: rgb(210 233 231 / .7);
+  box-shadow: inset 0 2px 2px -1px var(--control-glass-edge),
+    inset 1px 0 2px rgb(255 255 255 / .5),
+    inset -1px -2px 3px -2px rgb(145 196 190 / .65),
+    0 2px 3px rgb(12 35 35 / .16), 0 7px 14px -7px rgb(12 35 35 / .32);
+  transition: scale 420ms cubic-bezier(.2,1.5,.35,1), box-shadow 200ms ease;
+}
+html:root #root .hj-menu-trigger[data-glass-control]:is(:hover,.is-open) {
+  background-color: var(--control-glass-fill);
+}
+html:root #root .hj-menu-trigger[data-glass-control]:active {
+  scale: 1.035 1.06;
+}
+html[data-theme='dark']:root #root .hj-menu-trigger[data-glass-control] {
+  --control-glass-fill: rgb(32 60 70 / .12);
+}
+@media (prefers-reduced-motion:reduce) {
+  html:root #root .hj-menu-trigger[data-glass-control] { transition: none; }
+  html:root #root .hj-menu-trigger[data-glass-control]:active { scale: 1; }
+}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
+  html:root #root .hj-menu-trigger[data-glass-control] {
+    --control-glass-fill: var(--surface-elevated);
+    box-shadow: none;
+  }
+}
