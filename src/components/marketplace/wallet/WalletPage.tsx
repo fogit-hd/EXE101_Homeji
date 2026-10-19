@@ -73,6 +73,9 @@ type Props = {
   loading: boolean
   loadError?: string
   onRetry: () => Promise<void>
+  detailsLoading: boolean
+  detailsError?: string
+  onRetryDetails: () => Promise<void>
   busy: boolean
   depositReturn: DepositReturn
   onTabChange: (tab: WalletTabId) => void
@@ -176,6 +179,9 @@ export function WalletPage({
   loading,
   loadError,
   onRetry,
+  detailsLoading,
+  detailsError,
+  onRetryDetails,
   busy,
   depositReturn,
   onTabChange,
@@ -218,6 +224,12 @@ export function WalletPage({
             </button>
           </section>
         ) : null}
+        {detailsError && !loadError ? (
+          <section className="wallet-load-error" aria-label="Lịch sử ví">
+            <div role="alert"><strong>Chưa tải được lịch sử ví</strong><p>Số dư vẫn được cập nhật riêng. Tải lại lịch sử trước khi rút tiền.</p></div>
+            <button type="button" disabled={detailsLoading && !detailsError} onClick={() => void onRetryDetails()}>Tải lại lịch sử</button>
+          </section>
+        ) : null}
         {tab === 'deposit' ? (
           <DepositPanel
             wallet={wallet}
@@ -225,6 +237,7 @@ export function WalletPage({
             minTopUp={minTopUp}
             maxTopUp={maxTopUp}
             transactions={transactions}
+            detailsLoading={detailsLoading}
             loading={actionsUnavailable}
             busy={busy}
             depositReturn={depositReturn}
@@ -237,8 +250,8 @@ export function WalletPage({
             balance={balance}
             reserve={reserve}
             verifiedAccount={verifiedAccount}
-            withdrawalsUnavailable={withdrawalsUnavailable}
-            loading={actionsUnavailable}
+            withdrawalsUnavailable={withdrawalsUnavailable || Boolean(detailsError)}
+            loading={actionsUnavailable || detailsLoading}
             busy={busy}
             onWithdraw={onWithdraw}
           />
@@ -248,7 +261,7 @@ export function WalletPage({
             transactions={transactions}
             withdrawals={withdrawals}
             walletUpdatedAt={wallet?.updatedAt ?? null}
-            loading={loading && !loadError}
+            loading={detailsLoading && !detailsError}
           />
         ) : null}
       </div>
@@ -356,6 +369,7 @@ function DepositPanel({
   minTopUp,
   maxTopUp,
   transactions,
+  detailsLoading,
   loading,
   busy,
   depositReturn,
@@ -366,6 +380,7 @@ function DepositPanel({
   minTopUp: number | undefined
   maxTopUp: number | undefined
   transactions: WalletTransaction[]
+  detailsLoading: boolean
   loading: boolean
   busy: boolean
   depositReturn: DepositReturn
@@ -518,7 +533,7 @@ function DepositPanel({
       <div className="wallet-deposit__details">
         <details className="wallet-disclosure">
           <summary data-glass-exclude=""><span>Giao dịch gần nhất</span><span aria-hidden="true">+</span></summary>
-          {recent ? (
+          {detailsLoading ? <p className="wallet-status" role="status">Đang tải giao dịch…</p> : recent ? (
             <article className="wallet-recent">
               <header>
                 <span><Icon src={WALLET_ASSETS.check} size={17} />{KIND_LABEL[recent.kind] ?? recent.description}</span>

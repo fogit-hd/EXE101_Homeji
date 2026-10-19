@@ -365,8 +365,10 @@ export function MarketplacePage({
     setSearchParams(params, { replace: true })
   }, [searchParams, setSearchParams])
 
+  const isWalletPage = tab === 'wallet'
   useEffect(() => {
-    if (!myUserId) return
+    // The wallet route owns its fresh balance load; only other tabs need this header request.
+    if (!myUserId || isWalletPage) return
     let active = true
     void getMyWallet()
       .then((next) => {
@@ -381,7 +383,7 @@ export function MarketplacePage({
     return () => {
       active = false
     }
-  }, [myUserId])
+  }, [myUserId, isWalletPage])
 
   const keyword = searchParams.get('q') ?? ''
   const destination = resolveMarketplaceDestination(searchParams)
@@ -594,20 +596,10 @@ export function MarketplacePage({
   const loadFn = useCallback(async () => {
     const requestId = ++inventoryRequest.current
     if (tab === 'wallet') {
-      const [nextWallet, transactions, marketplaceOrders, withdrawalResult] = await Promise.all([
-        getMyWallet(),
-        getMyWalletTransactions(50),
-        getMyMarketplaceOrders(),
-        getMyWalletWithdrawals()
-          .then((items) => ({ items, unavailable: false }))
-          .catch(() => ({ items: [] as WalletWithdrawal[], unavailable: true })),
-      ])
+      const nextWallet = await getMyWallet()
+      if (requestId !== inventoryRequest.current) return
       setWallet(nextWallet)
       setWalletHeaderStatus('ready')
-      setWalletTransactions(transactions)
-      setOrders(marketplaceOrders)
-      setWithdrawals(withdrawalResult.items)
-      setWithdrawalsUnavailable(withdrawalResult.unavailable)
       return
     }
     if (tab === 'purchases' || tab === 'sales') {
@@ -649,11 +641,41 @@ export function MarketplacePage({
     }
   }, [tab, keyword, category, priceFilter, onPostsForMap, userLocation])
 
-  const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(
+  const { showLoader, onIntroComplete, error, disrupted, reload: reloadMain } = usePersistentLoad(
     loadFn,
     [tab, keyword, category, priceFilter, myUserId],
     { holdForIntro: false },
   )
+
+  const walletDetailsRequest = useRef(0)
+  const walletDetailsScope = useRef('')
+  walletDetailsScope.current = isWalletPage ? myUserId ?? '' : ''
+  const loadWalletDetails = useCallback(async () => {
+    const scope = walletDetailsScope.current
+    if (!scope) return
+    const requestId = ++walletDetailsRequest.current
+    const [transactions, marketplaceOrders, withdrawalResult] = await Promise.all([
+      getMyWalletTransactions(50),
+      getMyMarketplaceOrders(),
+      getMyWalletWithdrawals()
+        .then((items) => ({ items, unavailable: false }))
+        .catch(() => ({ items: [] as WalletWithdrawal[], unavailable: true })),
+    ])
+    if (requestId !== walletDetailsRequest.current || scope !== walletDetailsScope.current) return
+    setWalletTransactions(transactions)
+    setOrders(marketplaceOrders)
+    setWithdrawals(withdrawalResult.items)
+    setWithdrawalsUnavailable(withdrawalResult.unavailable)
+  }, [])
+  const { showLoader: walletDetailsLoading, error: walletDetailsError, reload: reloadWalletDetails } = usePersistentLoad(
+    loadWalletDetails,
+    [myUserId],
+    { enabled: isWalletPage, holdForIntro: false },
+  )
+  // Existing purchase/withdrawal refreshes still refresh both balance and ledger.
+  const reload = useCallback(async () => {
+    await Promise.all([reloadMain(), ...(isWalletPage ? [reloadWalletDetails()] : [])])
+  }, [isWalletPage, reloadMain, reloadWalletDetails])
 
   const depositReturn = readDepositReturn(searchParams)
   const refreshedGatewayReturn = useRef(false)
@@ -1575,7 +1597,10 @@ export function MarketplacePage({
           withdrawalsUnavailable={withdrawalsUnavailable}
           loading={Boolean(showLoader) && !error}
           loadError={error}
-          onRetry={reload}
+          onRetry={reloadMain}
+          detailsLoading={Boolean(walletDetailsLoading)}
+          detailsError={walletDetailsError}
+          onRetryDetails={reloadWalletDetails}
           busy={Boolean(walletBusy)}
           depositReturn={depositReturn}
           onTabChange={setWalletTab}
