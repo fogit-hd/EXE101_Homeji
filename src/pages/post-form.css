@@ -8,12 +8,13 @@
 .type-card {
   text-align: left;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 2px solid var(--border);
+  background: var(--surface-elevated);
 }
 
 .type-card.selected {
-  border-color: var(--grab-blue);
-  background: #f3f6fb;
+  border-color: var(--action-primary, var(--grab-blue));
+  background: var(--action-soft, #f3f6fb);
 }
 
 .type-card h3 {
@@ -115,3 +116,13 @@
   color: var(--text-heading);
   font-size: 0.86rem;
 }
+
+.type-card__state {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.type-card.selected .type-card__state { color: var(--action-on-soft, var(--grab-blue)); }
+.type-card:disabled { cursor: wait; }

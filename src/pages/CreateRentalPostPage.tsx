@@ -74,14 +74,18 @@ export function CreateRentalPostPage() {
 
       <PageNotice message={error} tone="error" />
 
-      <div className="type-selector">
+      <div className="type-selector" role="group" aria-label="Loại tin đăng">
         {availableTypes.map((t) => (
           <button
             key={t}
             type="button"
             className={`type-card card ${selectedType === t ? 'selected' : ''}`}
+            data-glass-exclude=""
+            aria-pressed={selectedType === t}
+            disabled={loading}
             onClick={() => setType(t)}
           >
+            <span className="type-card__state" aria-hidden="true">{selectedType === t ? '✓ Đã chọn' : 'Chọn loại tin'}</span>
             <h3>{rentalPostTypeLabel[t]}</h3>
             {t === RentalPostType.RoomTransfer ? (
               <p>Chuyển hợp đồng hoặc cho thuê lại có xác nhận của chủ nhà</p>
