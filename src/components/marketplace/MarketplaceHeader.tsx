@@ -31,8 +31,8 @@ const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
     title: 'Theo dõi đơn bán, xác nhận và giao hàng.',
   },
   wallet: {
-    eyebrow: 'Số dư Homeji',
-    title: 'Ví Homeji, rõ ràng từng khoản.',
+    eyebrow: 'TÀI KHOẢN CỦA BẠN',
+    title: 'Ví Homeji',
   },
 }
 
@@ -92,7 +92,7 @@ export function MarketplaceHeader({
   }
 
   return (
-    <header className="marketplace-header">
+    <header className={`marketplace-header${tab === 'wallet' ? ' marketplace-header--wallet' : ''}`}>
       <div className="marketplace-header__summary">
         <div className="marketplace-header__title-group">
           <p className="marketplace-header__eyebrow">{headline.eyebrow}</p>

@@ -22,6 +22,7 @@ import {
 import { FOOD_ASSETS } from '../food/foodAssets'
 import { WALLET_ASSETS } from './walletAssets'
 import './WalletPage.css'
+import './WalletWorkspace.css'
 
 export type DepositMethod = 'momo' | 'payos'
 
@@ -185,42 +186,50 @@ export function WalletPage({
 
   return (
     <div className="wallet-page">
-      <WalletSummary wallet={wallet} loading={loading} />
-      <WalletTabNavigation tab={tab} onTabChange={onTabChange} />
-      <Link className="btn" to="/receipts">Lịch sử biên nhận · xem và tải HTML</Link>
-      {tab === 'deposit' ? (
-        <DepositPanel
-          wallet={wallet}
-          balance={balance}
-          minTopUp={minTopUp}
-          maxTopUp={maxTopUp}
-          transactions={transactions}
-          loading={loading}
-          busy={busy}
-          depositReturn={depositReturn}
-          onDeposit={onDeposit}
-        />
-      ) : null}
-      {tab === 'withdraw' ? (
-        <WithdrawPanel
-          key={verifiedAccount?.id ?? 'no-verified-account'}
-          balance={balance}
-          reserve={reserve}
-          verifiedAccount={verifiedAccount}
-          withdrawalsUnavailable={withdrawalsUnavailable}
-          loading={loading}
-          busy={busy}
-          onWithdraw={onWithdraw}
-        />
-      ) : null}
-      {tab === 'history' ? (
-        <HistoryPanel
-          transactions={transactions}
-          withdrawals={withdrawals}
-          walletUpdatedAt={wallet?.updatedAt ?? null}
-          loading={loading}
-        />
-      ) : null}
+      <aside className="wallet-overview">
+        <WalletSummary wallet={wallet} loading={loading} />
+        <details className="wallet-overview__links">
+          <summary data-glass-exclude="">Biên nhận & hỗ trợ<span aria-hidden="true">+</span></summary>
+          <Link to="/receipts"><Icon src={WALLET_ASSETS.receipt} />Biên nhận giao dịch<span aria-hidden="true">↗</span></Link>
+          <Link to={mapSectionUrl('messages')}><Icon src={WALLET_ASSETS.shield} />Hỗ trợ về ví<span aria-hidden="true">↗</span></Link>
+        </details>
+      </aside>
+      <div className="wallet-workspace">
+        <WalletTabNavigation tab={tab} onTabChange={onTabChange} />
+        {tab === 'deposit' ? (
+          <DepositPanel
+            wallet={wallet}
+            balance={balance}
+            minTopUp={minTopUp}
+            maxTopUp={maxTopUp}
+            transactions={transactions}
+            loading={loading}
+            busy={busy}
+            depositReturn={depositReturn}
+            onDeposit={onDeposit}
+          />
+        ) : null}
+        {tab === 'withdraw' ? (
+          <WithdrawPanel
+            key={verifiedAccount?.id ?? 'no-verified-account'}
+            balance={balance}
+            reserve={reserve}
+            verifiedAccount={verifiedAccount}
+            withdrawalsUnavailable={withdrawalsUnavailable}
+            loading={loading}
+            busy={busy}
+            onWithdraw={onWithdraw}
+          />
+        ) : null}
+        {tab === 'history' ? (
+          <HistoryPanel
+            transactions={transactions}
+            withdrawals={withdrawals}
+            walletUpdatedAt={wallet?.updatedAt ?? null}
+            loading={loading}
+          />
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -240,7 +249,7 @@ function WalletSummary({ wallet, loading }: { wallet: Wallet | null; loading: bo
           {wallet?.isActivated ? (
             <span className="wallet-summary__badge">
               <Icon src={WALLET_ASSETS.shield} size={13} />
-              Đã bảo vệ
+              Đã kích hoạt
             </span>
           ) : null}
         </div>
@@ -249,23 +258,21 @@ function WalletSummary({ wallet, loading }: { wallet: Wallet | null; loading: bo
         </p>
         <p className="wallet-summary__note">
           {wallet
-            ? 'Sẵn sàng để mua món ngon hoặc rút về ngân hàng'
+            ? 'Dùng để mua sắm và thanh toán trên Homeji.'
             : missing
               ? 'Không đọc được số dư từ ví.'
               : 'Đang lấy số dư từ ví Homeji.'}
         </p>
       </div>
-      <div className="wallet-summary__statement">
-        <div className="wallet-summary__heading">
-          <h2>Tóm tắt dòng tiền</h2>
-          <span>Tất cả thời gian</span>
-        </div>
+      <details className="wallet-summary__statement">
+        <summary data-glass-exclude="">Thống kê dòng tiền <span aria-hidden="true">+</span></summary>
+        <p className="wallet-summary__period">Tất cả thời gian</p>
         <dl className="wallet-summary__metrics">
           <Metric label="Đã nạp" value={wallet ? formatWalletAmount(wallet.totalDeposited) : null} />
           <Metric label="Đã mua" value={wallet ? formatWalletAmount(wallet.totalSpent) : null} />
           <Metric label="Đã kiếm" value={wallet ? formatWalletAmount(wallet.totalEarned) : null} earned />
         </dl>
-      </div>
+      </details>
     </section>
   )
 }
@@ -343,6 +350,7 @@ function DepositPanel({
   onDeposit: Props['onDeposit']
 }) {
   const [amountText, setAmountText] = useState('200000')
+  const [editingAmount, setEditingAmount] = useState(false)
   const [method, setMethod] = useState<DepositMethod | ''>('momo')
   const [error, setError] = useState('')
   const [phase, setPhase] = useState<'idle' | 'processing' | 'failed'>('idle')
@@ -377,16 +385,41 @@ function DepositPanel({
   const shownPhase = busy ? 'submitting' : gatewayPhase
 
   return (
-    <div className="wallet-split" id="wallet-panel-deposit" role="tabpanel" aria-labelledby="wallet-tab-deposit">
-      <section className="wallet-card">
+    <div className="wallet-deposit" id="wallet-panel-deposit" role="tabpanel" aria-labelledby="wallet-tab-deposit">
+      <section className="wallet-card wallet-deposit__card">
         <header className="wallet-card__head">
-          <p className="wallet-card__eyebrow">Nạp vào ví</p>
-          <h2>Chọn một khoản vừa đủ cho những bữa ngon sắp tới.</h2>
-          <p>Số tiền sẽ được chuyển qua cổng thanh toán bảo mật trước khi cộng vào ví Homeji.</p>
+          <p className="wallet-card__eyebrow">NẠP TIỀN</p>
+          <h2>Thêm tiền. Sẵn sàng mua sắm.</h2>
+          <p>Chọn số tiền và phương thức thanh toán của bạn.</p>
         </header>
 
-        <fieldset className="wallet-field">
-          <legend>Chọn nhanh</legend>
+        <label className="wallet-field">
+          <span>Bạn muốn nạp bao nhiêu?</span>
+          <span className="wallet-input wallet-deposit__amount">
+            <input
+              inputMode="numeric"
+              autoComplete="off"
+              value={editingAmount ? amountText : amountText.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+              onFocus={() => setEditingAmount(true)}
+              onBlur={() => setEditingAmount(false)}
+              onChange={(event) => {
+                setAmountText(event.target.value.replace(/[^\d]/g, ''))
+                setError('')
+              }}
+              aria-invalid={Boolean(error)}
+              aria-describedby="wallet-deposit-hint"
+            />
+            <span className="wallet-deposit__currency" aria-hidden="true">VND</span>
+          </span>
+          <small id="wallet-deposit-hint">
+            {minTopUp != null && maxTopUp != null
+              ? `Tối thiểu ${formatWalletAmount(minTopUp)} · Tối đa ${formatWalletAmount(maxTopUp)} mỗi lần`
+              : 'Hạn mức nạp sẽ hiện khi ví tải xong.'}
+          </small>
+        </label>
+
+        <fieldset className="wallet-field wallet-deposit__presets">
+          <legend className="sr-only">Chọn nhanh số tiền</legend>
           <div className="wallet-amounts">
             {QUICK_AMOUNTS.map((value) => (
               <button
@@ -405,30 +438,8 @@ function DepositPanel({
           </div>
         </fieldset>
 
-        <label className="wallet-field">
-          <span>Hoặc nhập số tiền khác</span>
-          <span className="wallet-input">
-            <Icon src={WALLET_ASSETS.banknote} />
-            <input
-              inputMode="numeric"
-              value={amountText}
-              onChange={(event) => {
-                setAmountText(event.target.value.replace(/[^\d]/g, ''))
-                setError('')
-              }}
-              aria-invalid={Boolean(error)}
-              aria-describedby="wallet-deposit-hint"
-            />
-          </span>
-          <small id="wallet-deposit-hint">
-            {minTopUp != null && maxTopUp != null
-              ? `Tối thiểu ${formatWalletAmount(minTopUp)} · Tối đa ${formatWalletAmount(maxTopUp)} mỗi lần`
-              : 'Hạn mức nạp sẽ hiện khi ví tải xong.'}
-          </small>
-        </label>
-
         <fieldset className="wallet-field">
-          <legend>Phương thức thanh toán</legend>
+          <legend>Thanh toán qua</legend>
           <div className="wallet-methods">
             <button
               type="button"
@@ -452,24 +463,16 @@ function DepositPanel({
               <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.qr} size={20} /></span>
               <span>
                 <strong>PayOS</strong>
-                <small>QR ngân hàng · Miễn phí</small>
+                <small>Quét QR bằng ứng dụng ngân hàng</small>
               </span>
               <span className="wallet-radio" aria-hidden="true" />
             </button>
           </div>
         </fieldset>
 
-        <div className="wallet-notice wallet-notice--warm">
-          <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.webhook} /></span>
-          <span>
-            <strong>Chỉ ghi nhận sau khi xác thực</strong>
-            <small>Tiền chỉ được cộng vào số dư khi Homeji nhận webhook thành công từ đối tác thanh toán. Không đóng trang xác nhận quá sớm.</small>
-          </span>
-        </div>
-
         {shownPhase === 'processing' ? (
           <p className="wallet-status is-processing" role="status">
-            Đang chờ webhook. Số dư trên trang này chỉ đổi sau khi ví được tải lại từ máy chủ, không cộng theo trang chuyển hướng.
+            Đang chờ xác nhận thanh toán. Số dư sẽ được cập nhật sau khi Homeji nhận được xác nhận từ cổng thanh toán.
           </p>
         ) : null}
         {shownPhase === 'failed' || error ? (
@@ -482,15 +485,17 @@ function DepositPanel({
             <strong>{Number.isFinite(amount) && amount > 0 ? formatWalletAmount(amount) : '—'}</strong>
           </div>
           <button type="button" disabled={busy || !wallet || loading} onClick={() => void submit()}>
-            {busy ? 'Đang tạo giao dịch…' : `Nạp ${Number.isFinite(amount) && amount > 0 ? formatWalletAmount(amount) : ''}`.trim()}
+            {busy ? 'Đang tạo giao dịch…' : `Tiếp tục · ${Number.isFinite(amount) && amount > 0 ? formatWalletAmount(amount) : ''}`.trim()}
             <Icon src={WALLET_ASSETS.arrowUpRight} size={17} />
           </button>
         </footer>
-        <p className="wallet-aside-note">Số dư khả dụng hiện tại: {balance == null ? '—' : formatWalletAmount(balance)}</p>
+        <p className="wallet-deposit__after">Số dư dự kiến sau khi nạp <strong>{balance == null || !Number.isSafeInteger(amount) || amount <= 0 ? '—' : formatWalletAmount(balance + amount)}</strong></p>
+        <p className="wallet-deposit__confirmation"><Icon src={WALLET_ASSETS.shield} size={14} />Bạn sẽ xác nhận thanh toán trên MoMo hoặc PayOS.</p>
       </section>
 
-      <aside className="wallet-rail" aria-label="Giao dịch gần nhất">
-        <h2>Giao dịch gần nhất</h2>
+      <div className="wallet-deposit__details">
+      <details className="wallet-disclosure">
+        <summary data-glass-exclude=""><span>Giao dịch gần nhất</span><span aria-hidden="true">+</span></summary>
         {recent ? (
           <article className="wallet-recent">
             <header>
@@ -509,7 +514,10 @@ function DepositPanel({
         ) : (
           <WalletEmptyState title="Chưa có giao dịch gần nhất" detail="Khi ví ghi sổ, giao dịch mới sẽ hiện ở đây." />
         )}
-        <h3>Nạp tiền an toàn</h3>
+      </details>
+      <details className="wallet-disclosure">
+        <summary data-glass-exclude=""><span>Hướng dẫn & lưu ý khi nạp</span><span aria-hidden="true">+</span></summary>
+        <p className="wallet-disclosure__intro">Tiền chỉ được cộng sau khi cổng thanh toán xác nhận thành công. Không đóng trang xác nhận quá sớm.</p>
         <div className="wallet-notice wallet-notice--mint">
           <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.shield} /></span>
           <span>
@@ -528,7 +536,8 @@ function DepositPanel({
           Cần hỗ trợ giao dịch?
           <Icon src={WALLET_ASSETS.arrowUpRight} size={15} />
         </Link>
-      </aside>
+      </details>
+      </div>
     </div>
   )
 }
