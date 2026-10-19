@@ -1540,3 +1540,55 @@
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-address,
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-coords { color: var(--mm-muted); }
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-title { color: var(--mm-text); }
+
+/* Inbox rows are readable information surfaces, independent of action glass. */
+html:root #root .map-messages .map-messages__conv-list { gap: 0; padding: 0; }
+html:root #root .map-messages .map-messages__conv-list > li { border-bottom: 1px solid var(--border); }
+html:root #root .map-messages .map-messages__conv-list > li:last-child { border-bottom: 0; }
+html:root #root .map-messages .map-messages__row {
+  position: relative; display: flex; align-items: flex-start; gap: 12px;
+  min-height: 94px; padding: 15px 12px; margin: 0;
+  border: 0; border-left: 3px solid transparent; border-radius: 0;
+  background: var(--surface-elevated); color: var(--text-heading);
+  box-shadow: none; text-shadow: none; filter: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+html:root #root .map-messages .map-messages__row::before,
+html:root #root .map-messages .map-messages__row::after { display: none; }
+html:root #root .map-messages .map-messages__row:hover { background: var(--surface-muted); }
+html:root #root .map-messages .map-messages__row.is-active {
+  background: color-mix(in srgb,var(--hj-accent) 9%,var(--surface-elevated));
+  border-left-color: var(--hj-accent);
+}
+html:root #root .map-messages .map-messages__row:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: -3px; }
+html:root #root .map-messages .map-messages__row .map-messages__avatar {
+  width: 42px; height: 42px; border-radius: 13px;
+  color: var(--text-heading); font-size: 13px; font-weight: 650;
+  background: color-mix(in srgb,var(--hj-accent) 12%,var(--surface-elevated));
+}
+html:root #root .map-messages .map-messages__row .map-messages__meta { padding: 0; gap: 6px; }
+html:root #root .map-messages .map-messages__row .map-messages__meta-top { gap: 8px; }
+html:root #root .map-messages .map-messages__row .map-messages__meta-top strong {
+  color: var(--text-heading); font: 600 14px/1.4 var(--font-ui);
+}
+html:root #root .map-messages .map-messages__row .map-messages__time { color: var(--text-secondary); font-size: 11px; }
+html:root #root .map-messages .map-messages__row .map-messages__preview {
+  color: var(--text-secondary); font: 400 13px/1.4 var(--font-ui);
+}
+html:root #root .map-messages .map-messages__row.is-unread .map-messages__meta-top strong,
+html:root #root .map-messages .map-messages__row.is-unread .map-messages__preview { color: var(--text-heading); font-weight: 700; }
+html:root #root .map-messages .map-messages__row .map-messages__tag {
+  padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent;
+  color: var(--text-secondary); font: 500 10px/1.4 var(--font-ui); letter-spacing: .035em;
+  gap: 5px;
+}
+html:root #root .map-messages .map-messages__row .map-messages__tag::before {
+  content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--hj-accent);
+}
+html:root #root .map-messages .map-messages__row .map-messages__unread-badge {
+  background: var(--hj-accent); color: #fff; min-width: 18px; height: 18px;
+}
+@media (prefers-reduced-motion:reduce) {
+  html:root #root .map-messages .map-messages__row { transition: none; }
+}

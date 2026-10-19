@@ -230,9 +230,9 @@ function initialsOf(name: string) {
   return (name.slice(0, 2) || '?').toUpperCase()
 }
 
-function Avatar({ name, seed, small = false }: { name: string; seed: string; small?: boolean }) {
+function Avatar({ name, seed, small = false, subdued = false }: { name: string; seed: string; small?: boolean; subdued?: boolean }) {
   return (
-    <span className={`map-messages__avatar${small ? ' is-small' : ''}`} style={{ background: avatarColor(seed) }} aria-hidden>
+    <span className={`map-messages__avatar${small ? ' is-small' : ''}`} style={{ background: subdued ? undefined : avatarColor(seed) }} aria-hidden>
       {initialsOf(name)}
     </span>
   )
@@ -905,15 +905,17 @@ export function MapMessagesPanel({
             <li key={c.id} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
               <button
                 type="button"
-                className={`map-messages__row map-motion-press${activeId === c.id ? ' is-active' : ''}${
+                data-glass-exclude=""
+                aria-current={activeId === c.id ? 'true' : undefined}
+                className={`map-messages__row${activeId === c.id ? ' is-active' : ''}${
                   (c.unreadCount ?? 0) > 0 ? ' is-unread' : ''
                 }`}
                 onClick={() => openThread(c.id)}
               >
-                <Avatar name={c.otherParticipantName || '?'} seed={c.otherParticipantId || c.id} />
+                <Avatar name={c.otherParticipantName || '?'} seed={c.otherParticipantId || c.id} subdued />
                 <span className="map-messages__meta">
                   <span className="map-messages__meta-top">
-                    <strong>{c.otherParticipantName || 'Người dùng'}</strong>
+                    <strong title={c.otherParticipantName || 'Người dùng'}>{c.otherParticipantName || 'Người dùng'}</strong>
                     <time className="map-messages__time" dateTime={c.updatedAt}>
                       {relativeTime(c.updatedAt)}
                     </time>
