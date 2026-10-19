@@ -71,6 +71,8 @@ type Props = {
   withdrawals: WalletWithdrawal[]
   withdrawalsUnavailable: boolean
   loading: boolean
+  loadError?: string
+  onRetry: () => Promise<void>
   busy: boolean
   depositReturn: DepositReturn
   onTabChange: (tab: WalletTabId) => void
@@ -172,12 +174,21 @@ export function WalletPage({
   withdrawals,
   withdrawalsUnavailable,
   loading,
+  loadError,
+  onRetry,
   busy,
   depositReturn,
   onTabChange,
   onDeposit,
   onWithdraw,
 }: Props) {
+  const [retrying, setRetrying] = useState(false)
+  const retry = async () => {
+    if (retrying) return
+    setRetrying(true)
+    try { await onRetry() } finally { setRetrying(false) }
+  }
+  const actionsUnavailable = loading || Boolean(loadError) || retrying
   const balance = wallet?.balance
   const reserve = wallet?.minimumWithdrawalReserve ?? 20_000
   const minTopUp = wallet?.minimumTopUp
@@ -187,7 +198,7 @@ export function WalletPage({
   return (
     <div className="wallet-page">
       <aside className="wallet-overview">
-        <WalletSummary wallet={wallet} loading={loading} />
+        <WalletSummary wallet={wallet} loading={loading && !loadError} />
         <details className="wallet-overview__links">
           <summary data-glass-exclude="">Biên nhận & hỗ trợ<span aria-hidden="true">+</span></summary>
           <Link to="/receipts"><Icon src={WALLET_ASSETS.receipt} />Biên nhận giao dịch<span aria-hidden="true">↗</span></Link>
@@ -196,6 +207,17 @@ export function WalletPage({
       </aside>
       <div className="wallet-workspace">
         <WalletTabNavigation tab={tab} onTabChange={onTabChange} />
+        {loadError ? (
+          <section className="wallet-load-error" aria-label="Kết nối ví">
+            <div role="alert">
+              <strong>Không tải được ví</strong>
+              <p>{wallet ? 'Số dư đang hiển thị là lần tải trước. Tải lại để cập nhật trước khi giao dịch.' : 'Chưa lấy được số dư và giao dịch mới nhất. Vui lòng thử lại.'}</p>
+            </div>
+            <button type="button" disabled={retrying} onClick={() => void retry()}>
+              {retrying ? 'Đang tải lại…' : 'Thử tải lại ví'}
+            </button>
+          </section>
+        ) : null}
         {tab === 'deposit' ? (
           <DepositPanel
             wallet={wallet}
@@ -203,7 +225,7 @@ export function WalletPage({
             minTopUp={minTopUp}
             maxTopUp={maxTopUp}
             transactions={transactions}
-            loading={loading}
+            loading={actionsUnavailable}
             busy={busy}
             depositReturn={depositReturn}
             onDeposit={onDeposit}
@@ -216,7 +238,7 @@ export function WalletPage({
             reserve={reserve}
             verifiedAccount={verifiedAccount}
             withdrawalsUnavailable={withdrawalsUnavailable}
-            loading={loading}
+            loading={actionsUnavailable}
             busy={busy}
             onWithdraw={onWithdraw}
           />
@@ -226,7 +248,7 @@ export function WalletPage({
             transactions={transactions}
             withdrawals={withdrawals}
             walletUpdatedAt={wallet?.updatedAt ?? null}
-            loading={loading}
+            loading={loading && !loadError}
           />
         ) : null}
       </div>

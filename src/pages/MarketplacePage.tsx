@@ -1572,7 +1572,9 @@ export function MarketplacePage({
           transactions={displayedWalletTransactions}
           withdrawals={withdrawals}
           withdrawalsUnavailable={withdrawalsUnavailable}
-          loading={Boolean(showLoader)}
+          loading={Boolean(showLoader) && !error}
+          loadError={error}
+          onRetry={reload}
           busy={Boolean(walletBusy)}
           depositReturn={depositReturn}
           onTabChange={setWalletTab}
