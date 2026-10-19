@@ -63,8 +63,9 @@ export function VerifySignupPage() {
   }
 
   return <div className="container page auth-page"><section className="auth-card card" style={{ maxWidth: 540, width: '100%' }}>
-    <h1 className="page-title">Xác thực email</h1>
-    <p>Nhập mã OTP trong email đăng ký Homeji. Mã có hiệu lực tối đa 10 phút và được thử tối đa 5 lần.</p>
+    <h1 className="page-title">Xác thực email đăng ký</h1>
+    <p>Hoàn tất đăng ký Homeji bằng mã 6 chữ số đã gửi tới email của bạn.</p>
+    <p>Mã có hiệu lực tối đa 10 phút và được thử tối đa 5 lần.</p>
     <p>Kiểm tra cả thư rác nếu chưa thấy email.</p>
     {error && <p id="signup-otp-error" className="auth-card__error" role="alert">{error}</p>}
     {message && <p className="auth-card__message" role="status">{message}</p>}
@@ -74,11 +75,12 @@ export function VerifySignupPage() {
       <label className="form-label">Mã OTP (6 chữ số)<input className="form-input" type="text" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}"
         aria-describedby={error ? 'signup-otp-error' : undefined}
         minLength={6} maxLength={6} value={code} disabled={busy} onChange={event => setCode(event.target.value.replace(/\D/g, ''))} /></label>
-      <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : 'Xác thực email'}</button>
+      <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : 'Xác thực và hoàn tất đăng ký'}</button>
       <button className="btn" type="button" disabled={busy || remaining > 0 || !email.trim()} onClick={() => void resend()}>
         {remaining > 0 ? `Gửi lại sau ${remaining}s` : 'Gửi lại mã OTP'}
       </button>
     </form>
+    <p>Chưa tạo tài khoản? <Link to="/register">Đăng ký Homeji</Link></p>
     <p><Link to="/login">Quay lại đăng nhập</Link></p>
   </section></div>
 }

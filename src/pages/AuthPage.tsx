@@ -1730,7 +1730,6 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                       Đăng ký
                     </button>
                   </p>
-                  <p className="auth-login-verify"><Link to="/verify-email">Xác thực email bằng OTP</Link></p>
                   <p className="auth-account-notice">Khi sử dụng Homeji, vui lòng đọc <Link to="/terms">Điều khoản sử dụng</Link> và <Link to="/privacy">Chính sách quyền riêng tư</Link>.</p>
                   <footer className="auth-login-legal"><span>© {new Date().getFullYear()} Homeji</span></footer>
                 </>
