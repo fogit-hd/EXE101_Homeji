@@ -146,10 +146,16 @@ function parseErrorBody(text: string, statusText: string): ApiError {
   }
 }
 
+function sessionStillCurrent(token: string | null, anchor: string | null) {
+  const current = localStorage.getItem('homeji_access_token')
+  return current === token || Boolean(current && anchor && localStorage.getItem('homeji_session_anchor') === anchor)
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true, params, signal, timeoutMs = API_TIMEOUT_MS } = options
   if (auth) await ensureFreshSession()
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
+  const sessionAnchor = localStorage.getItem('homeji_session_anchor')
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
       detail: tokenState.expired
@@ -191,7 +197,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (response.status === 204) {
-    if (auth && getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
+    if (auth && !sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
     return undefined as T
   }
 
@@ -217,7 +223,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     )
   }
 
-  if (auth && getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
+  if (auth && !sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
   return data as T
 }
 
@@ -230,6 +236,7 @@ export async function apiUpload<T>(
   const auth = options?.auth !== false
   if (auth) await ensureFreshSession()
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
+  const sessionAnchor = localStorage.getItem('homeji_session_anchor')
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
       detail: tokenState.expired
@@ -280,7 +287,7 @@ export async function apiUpload<T>(
     )
   }
 
-  if (auth && getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
+  if (auth && !sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
   return data as T
 }
 
@@ -288,6 +295,7 @@ export async function apiUpload<T>(
 export async function apiDownload(path: string, sessionRetried = false): Promise<Blob> {
   await ensureFreshSession()
   const tokenState = getTokenState()
+  const sessionAnchor = localStorage.getItem('homeji_session_anchor')
   if (!tokenState.token) {
     throw new ApiRequestError(401, {
       detail: tokenState.expired
@@ -320,7 +328,7 @@ export async function apiDownload(path: string, sessionRetried = false): Promise
   }
 
   const blob = await response.blob()
-  if (getTokenState().token !== tokenState.token) throw new DOMException('Session changed', 'AbortError')
+  if (!sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
   return blob
 }
 

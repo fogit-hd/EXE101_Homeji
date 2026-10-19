@@ -61,6 +61,15 @@ try{
   await page.evaluate(()=>window.auditAuth.logout());
   assert.equal(await page.evaluate(()=>localStorage.getItem('homeji_refresh_token')),null);
  })
+ await scenario('successful in-flight API survives rotation in the same session',async({page})=>{
+  await page.evaluate(token=>localStorage.setItem('homeji_access_token',token),fresh);
+  let release,received=false;
+  await page.route('**/api/test/slow',async route=>{received=true;await new Promise(resolve=>release=resolve);return route.fulfill({json:{ok:true}})});
+  const request=page.evaluate(async()=>await(await import('/src/api/client.ts')).apiRequest('/api/test/slow'));
+  while(!received)await new Promise(resolve=>setTimeout(resolve,10));
+  await page.evaluate(token=>localStorage.setItem('homeji_access_token',token),jwt(Math.floor(Date.now()/1000)+3700));
+  release();assert.equal((await request).ok,true);
+ })
  await scenario('invalid refresh clears session once',async({page,setMode})=>{
   setMode('invalid');await page.evaluate(async()=>{try{await(await import('/src/api/client.ts')).apiRequest('/api/test')}catch{}})
   assert.equal(await page.evaluate(()=>localStorage.getItem('homeji_access_token')),null)
