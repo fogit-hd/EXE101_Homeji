@@ -553,7 +553,9 @@ export function GlobalHeader() {
                 setAccountOpen((open) => !open)
               }}
             >
-              <span className="hj-profile__mark">{mark}</span>
+              <span className="hj-profile__mark">
+                <HeaderAvatar key={`${profile?.id ?? 'account'}:${profile?.avatarPath ?? ''}`} src={profile?.avatarPath} initials={mark} />
+              </span>
               <BarGlyph name="chevron" size={14} turned={accountOpen} />
             </button>
             {accountPresent ? (
@@ -605,6 +607,13 @@ export function GlobalHeader() {
       </div>
     </header>
   )
+}
+
+function HeaderAvatar({ src, initials }: { src?: string | null; initials: string }) {
+  const [failed, setFailed] = useState(false)
+  return src && !failed
+    ? <img className="hj-profile__image" src={src} alt="" onError={() => setFailed(true)} />
+    : <span aria-hidden="true">{initials}</span>
 }
 
 function sectionIsNotifications(search: string): boolean {
