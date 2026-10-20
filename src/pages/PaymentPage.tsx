@@ -1,4 +1,5 @@
 import { LiquidTabList } from '../components/ui/LiquidTabList'
+import { paymentReturnUrl } from '../lib/paymentReturn'
 import { trackFunnelEvent } from '../lib/ga4'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -150,12 +151,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
   useEffect(() => {
     if (lookupId || lookupOrder) {
-      const params = new URLSearchParams()
-      if (lookupId) params.set('paymentId', lookupId)
-      else if (lookupOrder) params.set('orderCode', lookupOrder)
-      navigate(`/payments/wait?${params.toString()}`, { replace: true })
+      navigate(paymentReturnUrl(searchParams), { replace: true })
     }
-  }, [lookupId, lookupOrder, navigate])
+  }, [lookupId, lookupOrder, navigate, searchParams])
 
   const hasPending = payments.some((payment) => payment.status === PaymentStatus.Pending)
   useEffect(() => {

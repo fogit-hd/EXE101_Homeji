@@ -70,23 +70,27 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'mobile history must not overflow')
   await page.screenshot({ path: 'output/verification/payment-history-mobile.png', fullPage: true })
   await page.getByRole('link', { name: /Tiếp tục thanh toán/ }).first().click()
-  await page.getByRole('heading', { name: 'Chờ bạn hoàn tất thanh toán' }).waitFor()
+  await page.getByRole('heading', { name: 'Chờ bạn thanh toán' }).waitFor()
   assert.match(await page.getByRole('timer').innerText(), /^(10:00|09:5\d)$/)
   await page.screenshot({ path: 'output/verification/payment-wait-mobile.png', fullPage: true })
+  const beforeReload = await page.getByRole('timer').innerText()
   await page.reload()
   await page.getByRole('timer').waitFor()
-  assert.match(await page.getByRole('timer').innerText(), /^(10:00|09:5\d)$/, 'reload must not reset deadline')
+  const toSeconds = (value) => value.split(':').reduce((total, part) => total * 60 + Number(part), 0)
+  const afterReload = await page.getByRole('timer').innerText()
+  assert.ok(toSeconds(afterReload) <= toSeconds(beforeReload) && toSeconds(afterReload) > 0, 'reload must preserve the existing deadline')
   await page.setViewportSize({ width: 1440, height: 1100 })
   await page.screenshot({ path: 'output/verification/payment-wait-desktop.png', fullPage: true })
 
   // Redirect query values must never mark an order as paid.
   await page.goto(`${baseUrl}/payments?orderId=${active.orderCode}&resultCode=0`)
-  await page.getByRole('heading', { name: 'Chờ bạn hoàn tất thanh toán' }).waitFor()
-  assert.match(page.url(), /\/payments\/wait\?orderCode=/)
+  await page.getByRole('heading', { name: 'Đang xác minh thanh toán' }).waitFor()
+  assert.equal(new URL(page.url()).pathname, '/payments/wait')
+  assert.equal(new URL(page.url()).searchParams.get('orderId'), active.orderCode)
   const profileCountBeforePaid = profileCalls
   active = { ...active, status: 2, paidAt: now.toISOString() }
   await page.clock.fastForward(6000)
-  await page.getByRole('heading', { name: 'Thanh toán thành công!' }).waitFor()
+  await page.getByRole('heading', { name: 'Thanh toán thành công' }).waitFor()
   assert.ok(profileCalls > profileCountBeforePaid, 'confirmed payment refreshes profile')
   await page.screenshot({ path: 'output/verification/payment-success-desktop.png', fullPage: true })
   const finalCalls = paymentCalls
@@ -97,24 +101,24 @@ try {
   await page.goto(`${baseUrl}/payments/wait?paymentId=${active.id}`)
   await page.getByRole('heading', { name: 'Đã hết thời gian thanh toán' }).waitFor()
   assert.equal(await page.getByRole('link', { name: /Thanh toán qua/ }).count(), 0)
-  assert.equal(await page.getByRole('timer').innerText(), '00:00')
+  assert.equal(await page.getByRole('timer').count(), 0)
   active = { ...active, status: 4 }
   await page.clock.fastForward(6000)
-  await page.getByRole('heading', { name: 'Đơn thanh toán đã hủy' }).waitFor()
+  await page.getByRole('heading', { name: 'Thanh toán đã hủy' }).waitFor()
   await page.screenshot({ path: 'output/verification/payment-cancelled-desktop.png', fullPage: true })
 
   active = { ...active, status: 1, createdAt: now.toISOString(), expiresAt: '2026-10-03T12:15:00Z' }
   await page.goto(`${baseUrl}/?section=payments`)
   await page.getByRole('button', { name: 'Chọn gói', exact: true }).first().click()
   await page.getByRole('button', { name: 'MoMo', exact: true }).click()
-  await page.getByRole('heading', { name: 'Chờ bạn hoàn tất thanh toán' }).waitFor()
+  await page.getByRole('heading', { name: 'Chờ bạn thanh toán' }).waitFor()
   assert.equal(createCalls, 1)
   assert.match(page.url(), /\/payments\/wait\?paymentId=/)
 
   await page.goto(`${baseUrl}/?section=payments`)
   await page.getByRole('button', { name: 'Chọn gói', exact: true }).first().click()
   await page.getByRole('button', { name: 'PayOS', exact: true }).click()
-  await page.getByRole('heading', { name: 'Chờ bạn hoàn tất thanh toán' }).waitFor()
+  await page.getByRole('heading', { name: 'Chờ bạn thanh toán' }).waitFor()
   assert.equal(createCalls, 2)
 
   paymentOutage = true
@@ -122,7 +126,7 @@ try {
   await page.getByRole('heading', { name: 'Chưa tải được giao dịch' }).waitFor()
   paymentOutage = false
   await page.getByRole('button', { name: 'Thử lại', exact: true }).click()
-  await page.getByRole('heading', { name: 'Chờ bạn hoàn tất thanh toán' }).waitFor()
+  await page.getByRole('heading', { name: 'Chờ bạn thanh toán' }).waitFor()
   await page.setViewportSize({ width: 320, height: 720 })
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'waiting page fits 320px')
   await page.goto(`${baseUrl}/payments/wait`)
