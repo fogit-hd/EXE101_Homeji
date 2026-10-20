@@ -31,6 +31,29 @@ html[data-theme='dark'] { --control-glass-fill: rgb(24 40 45 / .14); --control-g
   backdrop-filter: none;
 }
 :is(html:root #root,html:root body) [data-glass-control][data-glass-face]:disabled::after { display: none; }
+/* A moving switch bead is a clear raised lip. The dark side rim and local
+   shading reveal its thickness without a milky white coat over the state. */
+:is(html:root #root,html:root body) [data-glass-profile='bead']:not([data-glass-exclude]) {
+  background: radial-gradient(ellipse at 100% 50%,rgb(25 35 30 / .08),transparent 70%),rgb(255 255 255 / .015);
+  border: 1px solid rgb(25 45 35 / .22);
+  border-top-color: rgb(255 255 255 / .8); border-bottom-color: rgb(255 255 255 / .75);
+  box-shadow: inset .5px 0 0 rgb(15 45 25 / .12),inset -1px 0 1px rgb(255 255 255 / .65),
+    0 2px 4px -1px rgb(20 35 25 / .18);
+}
+html[data-theme='dark'] :is(#root,body) [data-glass-profile='bead']:not([data-glass-exclude]) {
+  background-color: rgb(195 230 218 / .025); border-inline-color: rgb(220 255 240 / .35);
+}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
+  :is(html:root #root,html:root body) [data-glass-profile='bead']:not([data-glass-exclude]) {
+    background: var(--surface-elevated); border-color: var(--text-primary);
+    box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+@media (forced-colors:active) {
+  :is(html:root #root,html:root body) [data-glass-profile='bead']:not([data-glass-exclude]) {
+    background: Highlight; border-color: ButtonText;
+  }
+}
 :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):disabled { box-shadow: none; }
 :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):is(.btn-primary,.hj-post-cta,[type='submit'],.wallet-submit button,.wallet-submit__primary) {
   background-color: color-mix(in srgb,var(--hj-accent) 18%,var(--control-glass-fill));

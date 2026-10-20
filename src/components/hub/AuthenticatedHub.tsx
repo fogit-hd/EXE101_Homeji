@@ -260,7 +260,7 @@ export function AuthenticatedHub() {
           <h2 id="hub-banner-title">Ở đúng nơi, sống đúng gu.</h2>
           <p>Tìm phòng vừa túi tiền, khám phá tiện ích quanh nhà và kết nối với bạn ở ghép.</p>
         </div>
-        <Link to={exploreListUrl()}>Khám phá phòng <span aria-hidden="true">→</span></Link>
+        <Link className="hub-banner__cta liquid-action" to={exploreListUrl()}>Khám phá phòng <span aria-hidden="true">→</span></Link>
       </section>
 
       <section className="hub-search" aria-label="Tìm kiếm gần đây">
@@ -268,7 +268,7 @@ export function AuthenticatedHub() {
         {recentSearches.length > 0 ? (
           <>
             <p>{recentSearches[0]}</p>
-            <Link to={exploreListUrl(new URLSearchParams({ keyword: recentSearches[0]! }))}>Tiếp tục</Link>
+            <Link className="liquid-action" to={exploreListUrl(new URLSearchParams({ keyword: recentSearches[0]! }))}>Tiếp tục</Link>
           </>
         ) : (
           <p>Chưa có tìm kiếm để tiếp tục.</p>

@@ -62,7 +62,7 @@ export function LiquidGlassEffects() {
     const clearMarkers = (element: HTMLElement) => {
       element.style.removeProperty('--glass-lens-filter')
       element.style.removeProperty('--glass-lens-active-filter')
-      for (const key of ['glassControl', 'glassFace', 'glassPosition', 'glassSearch', 'glassField', 'glassToggle', 'glassSurface', 'glassContent']) delete element.dataset[key]
+      for (const key of ['glassControl', 'glassFace', 'glassPosition', 'glassSearch', 'glassField', 'glassToggle', 'glassSurface', 'glassContent', 'glassProfile']) delete element.dataset[key]
     }
     const forget = (element: HTMLElement) => {
       resize.unobserve(element); pending.delete(element); observed.delete(element)
@@ -79,6 +79,7 @@ export function LiquidGlassEffects() {
       kinds.set(element, kind)
       profiles.set(element, profile)
       if (kind === 'content') { element.dataset.glassContent = ''; return }
+      element.dataset.glassProfile = profile
       if (kind !== 'lens') {
         element.dataset.glassControl = ''
         if (kind === 'search') element.dataset.glassSearch = ''

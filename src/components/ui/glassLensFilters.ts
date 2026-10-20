@@ -5,9 +5,18 @@ const svg = 'http://www.w3.org/2000/svg'
 /** Share pixel-sized filters; release them when the last matching control leaves. */
 type LensMapSet = { circle: string; vertical: string; horizontal: string }
 export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: LensMapSet; bead: LensMapSet }) {
-  const filters = new Map<string, { node: SVGFilterElement; users: number; illumination?: SVGFEColorMatrixElement }>()
+  const filters = new Map<string, { node: SVGFilterElement; users: number; illumination?: SVGFEColorMatrixElement; illuminationCap?: SVGFEFuncAElement }>()
   let dark = document.documentElement.dataset.theme === 'dark'
-  const illuminationValues = () => `${dark ? '0 0 0 0 .06 0 0 0 0 .1 0 0 0 0 .12' : '1 0 0 0 .04 0 1 0 0 .04 0 0 1 0 .04'} .19134 .64368 .06498 0 .06`
+  const illuminationValues = () => dark
+    ? '0 0 0 0 .06 0 0 0 0 .1 0 0 0 0 .12 .19134 .64368 .06498 0 .06'
+    : [
+      // Neutral scenes lift towards a light reflection. Subtracting luminance
+      // preserves local chroma, so blue and pink backdrops do not turn gray.
+      '.7874 -.7152 -.0722 0 .92',
+      '-.2126 .2848 -.0722 0 .92',
+      '-.2126 -.7152 .9278 0 .92',
+      '.455571 1.532571 .154714 0 -.214286',
+    ].join(' ')
   const acquire = (width: number, height: number, ratio: number, variant: GlassLensVariant) => {
     const id = `size-${width}x${height}-${glassLensId(ratio, variant)}`
     const existing = filters.get(id)
@@ -56,6 +65,7 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
       xChannelSelector: 'R', yChannelSelector: 'G', result: 'refracted-scene' }).forEach(([key, value]) => warp.setAttribute(key, value))
     filter.append(normals, warp)
     let illumination: SVGFEColorMatrixElement | undefined
+    let illuminationCap: SVGFEFuncAElement | undefined
     if (variant !== 'bead' && variant !== 'bead-active' && variant !== 'surface' && variant !== 'surface-active') {
       // Mix a broad local scene color into bright text backdrops. This softens
       // contrast without painting every scene white; dark mode protects ink
@@ -65,13 +75,18 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
         .forEach(([key, value]) => light.setAttribute(key, value))
       illumination = document.createElementNS(svg, 'feColorMatrix')
       illumination.setAttribute('in', 'scene-light'); illumination.setAttribute('type', 'matrix')
-      illumination.setAttribute('values', illuminationValues()); illumination.setAttribute('result', 'glass-light')
+      illumination.setAttribute('values', illuminationValues()); illumination.setAttribute('result', 'uncapped-glass-light')
+      const transmission = document.createElementNS(svg, 'feComponentTransfer')
+      transmission.setAttribute('in', 'uncapped-glass-light'); transmission.setAttribute('result', 'glass-light')
+      illuminationCap = document.createElementNS(svg, 'feFuncA')
+      illuminationCap.setAttribute('type', 'linear'); illuminationCap.setAttribute('slope', dark ? '1' : '.7')
+      transmission.append(illuminationCap)
       const material = document.createElementNS(svg, 'feMerge')
       material.setAttribute('result', 'material-scene')
       for (const input of ['refracted-scene', 'glass-light']) {
         const node = document.createElementNS(svg, 'feMergeNode'); node.setAttribute('in', input); material.append(node)
       }
-      filter.append(light, illumination, material)
+      filter.append(light, illumination, transmission, material)
     }
     const reflection = document.createElementNS(svg, 'feColorMatrix')
     Object.entries({ in: 'lens-normal', type: 'matrix', values: '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 .5 0 0', result: 'bezel-reflection' })
@@ -82,7 +97,7 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
     reflected.setAttribute('in', 'bezel-reflection'); finish.append(transmitted, reflected)
     filter.append(reflection, finish)
     defs.append(filter)
-    filters.set(id, { node: filter, users: 1, illumination })
+    filters.set(id, { node: filter, users: 1, illumination, illuminationCap })
     return id
   }
   const release = (id: string) => {
@@ -90,6 +105,13 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
     if (filter && --filter.users === 0) { filter.node.remove(); filters.delete(id) }
   }
   return { acquire, release,
-    setTheme: (nextDark: boolean) => { if (nextDark === dark) return; dark = nextDark; filters.forEach(filter => filter.illumination?.setAttribute('values', illuminationValues())) },
+    setTheme: (nextDark: boolean) => {
+      if (nextDark === dark) return
+      dark = nextDark
+      filters.forEach(filter => {
+        filter.illumination?.setAttribute('values', illuminationValues())
+        filter.illuminationCap?.setAttribute('slope', dark ? '1' : '.7')
+      })
+    },
     clear: () => { filters.forEach(filter => filter.node.remove()); filters.clear() } }
 }

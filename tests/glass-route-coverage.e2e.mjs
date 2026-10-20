@@ -15,7 +15,10 @@ try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' })
     await context.addInitScript(({ id, authenticated }) => {
       localStorage.setItem('hj-intro-seen', '1')
-      if (authenticated) { localStorage.setItem('homeji_access_token', 'glass-coverage-fixture'); localStorage.setItem('homeji_user_id', id) }
+      if (authenticated) {
+        localStorage.setItem('homeji_access_token', 'glass-coverage-fixture'); localStorage.setItem('homeji_user_id', id)
+        localStorage.setItem('homeji:map-search-recent', JSON.stringify([{ keyword: 'Thủ Đức' }]))
+      }
     }, { id, authenticated })
     await context.route('**/*', route => {
       const url = new URL(route.request().url())
@@ -32,7 +35,7 @@ try {
       return route.fulfill({ json })
     })
     const routes = authenticated
-      ? ['listings', 'saved', 'invitations', 'notifications', 'messages', 'appointments', 'payments', 'profile', 'marketplace', 'wanted', 'activities', 'myPosts'].map(section => `/?section=${section}`).concat(['/?section=marketplace&market=wallet&wallet=deposit', '/?section=marketplace&market=wallet&wallet=withdraw', '/receipts', '/admin'])
+      ? ['/', ...['listings', 'saved', 'invitations', 'notifications', 'messages', 'appointments', 'payments', 'profile', 'marketplace', 'wanted', 'activities', 'myPosts'].map(section => `/?section=${section}`), '/?section=marketplace&market=wallet&wallet=deposit', '/?section=marketplace&market=wallet&wallet=withdraw', '/receipts', '/admin']
       : ['/login', '/register', '/forgot-password', '/verify-email', '/terms', '/privacy']
     const page = await context.newPage()
     for (const path of routes) {
@@ -45,6 +48,15 @@ try {
       await page.locator('.hj-intro').waitFor({ state: 'hidden' })
       await page.waitForFunction(() => document.querySelector('[data-glass-control]'))
       await page.locator('.screen-pending').waitFor({ state: 'hidden' })
+      if (authenticated && path === '/') {
+        await page.locator('.hub-banner__cta[data-glass-control]').waitFor()
+        await page.locator('.hub-search a[data-glass-control]').waitFor()
+      }
+      if (path === '/?section=notifications') {
+        const trigger = page.locator('.hj-notify__trigger')
+        if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click()
+        await page.locator('.hj-notify__pop[data-glass-surface]').waitFor()
+      }
       const state = await page.evaluate(() => ({
         controls: document.querySelectorAll('[data-glass-control]').length,
         fields: document.querySelectorAll('[data-glass-field]').length,
@@ -58,7 +70,7 @@ try {
       assert.ok(state.bodyText > 50, path)
       assert.deepEqual(errors, [], path)
       results.push({ path, ...state })
-      if (['/login', '/?section=profile', '/?section=marketplace&market=wallet&wallet=withdraw'].includes(path)) {
+      if (['/', '/login', '/?section=profile', '/?section=marketplace&market=wallet&wallet=withdraw'].includes(path)) {
         await page.screenshot({ path: `${out}/route-${results.length}.png`, fullPage: true })
       }
       page.off('pageerror', onError)

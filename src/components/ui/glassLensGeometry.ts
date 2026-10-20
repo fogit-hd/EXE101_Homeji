@@ -11,7 +11,7 @@ export function nearestLensRatio(width: number, height: number) {
 
 export const GLASS_LENS_DEPTHS: Record<GlassLensVariant, number> = {
   surface: .06, 'surface-active': .08,
-  bead: .75, 'bead-active': .8,
-  control: .85, 'tab-rest': .85,
-  'control-active': .9, 'tab-active': .9,
+  bead: .6, 'bead-active': .65,
+  control: .75, 'tab-rest': .75,
+  'control-active': .8, 'tab-active': .8,
 }

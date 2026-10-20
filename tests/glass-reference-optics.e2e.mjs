@@ -37,6 +37,25 @@ const page = await browser.newPage({ viewport: { width: 1024, height: 1250 } })
 const errors = []
 page.on('pageerror', error => errors.push(error.message))
 const hash = bytes => createHash('sha256').update(bytes).digest('hex')
+async function assertInkPreserved(ink, before, after) {
+  const color = await ink.evaluate(e => getComputedStyle(e).color.match(/[\d.]+/g).slice(0, 3).map(Number))
+  const result = await page.evaluate(async ({ images, color }) => {
+    const masks = []
+    for (const data of images) {
+      const image = new Image(); image.src = 'data:image/png;base64,' + data; await image.decode()
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height
+      const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0)
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+      masks.push(Array.from({ length: pixels.length / 4 }, (_, i) => color.every((v, c) => Math.abs(pixels[i * 4 + c] - v) <= 1)))
+    }
+    let union = 0, same = 0
+    masks[0].forEach((v, i) => { if (v || masks[1][i]) { union++; if (v && masks[1][i]) same++ } })
+    return { opaqueInkPixels: union, overlap: same / union }
+  }, { images: [before.toString('base64'), after.toString('base64')], color })
+  // Reflection may change background pixels inside the span's rectangle. Check
+  // the actual glyph interiors; blurring or warping the label changes this mask.
+  assert.ok(result.opaqueInkPixels > 100 && result.overlap >= .995, `Foreground glyphs changed: ${JSON.stringify(result)}`)
+}
 try {
   await page.goto(`${base}/${out}/index.html`)
   await page.locator('#color-glass[data-glass-control]').waitFor()
@@ -54,7 +73,10 @@ try {
   const before = await ink.screenshot()
   await proof.evaluate(e => e.style.setProperty('--glass-lens-filter', 'saturate(1)'))
   const after = await ink.screenshot()
-  assert.equal(hash(before), hash(after), 'Optics must not resample foreground ink on a uniform background')
+  await assertInkPreserved(ink, before, after)
+  await proof.evaluate(e => e.style.filter = 'blur(1px)')
+  await assert.rejects(assertInkPreserved(ink, before, await ink.screenshot()), /Foreground glyphs changed/, 'The ink check must detect a blurred label')
+  await proof.evaluate(e => e.style.removeProperty('filter'))
   await proof.evaluate(e => e.style.removeProperty('--glass-lens-filter'))
   await proof.hover()
   await page.mouse.down()
@@ -62,7 +84,7 @@ try {
   await page.waitForTimeout(300)
   const pressed = await ink.screenshot()
   await proof.evaluate(e => e.style.setProperty('--glass-lens-active-filter', 'saturate(1)'))
-  assert.equal(hash(pressed), hash(await ink.screenshot()), 'Pressed optics must also preserve foreground ink')
+  await assertInkPreserved(ink, pressed, await ink.screenshot())
   await proof.evaluate(e => e.style.removeProperty('--glass-lens-active-filter'))
   await page.mouse.up()
   const tabs = page.getByRole('tablist')
@@ -90,6 +112,6 @@ try {
   await page.emulateMedia({ forcedColors: 'active' })
   assert.equal(await tabs.locator('.liquid-tabs__lens').evaluate(e => getComputedStyle(e).backdropFilter), 'none')
   assert.deepEqual(errors, [])
-  await writeFile(`${out}/results.json`, JSON.stringify({ checks: ['actual backdrop pixel displacement', 'identical foreground ink pixels', 'label plane above lens', 'click and arrow navigation', '1024/390 fit', 'forced-color fallback'], errors }, null, 2))
-  console.log('PASS: real refracted backdrop, identical foreground ink, layered tabs, native interaction and accessibility fallback')
+  await writeFile(`${out}/results.json`, JSON.stringify({ checks: ['actual backdrop pixel displacement', 'preserved opaque foreground glyphs', 'ink check rejects a blurred label', 'label plane above lens', 'click and arrow navigation', '1024/390 fit', 'forced-color fallback'], errors }, null, 2))
+  console.log('PASS: real refracted backdrop, preserved foreground glyphs, layered tabs, native interaction and accessibility fallback')
 } finally { await browser.close() }
