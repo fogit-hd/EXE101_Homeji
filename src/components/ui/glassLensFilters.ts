@@ -17,11 +17,16 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: Record<number
     const image = document.createElementNS(svg, 'feImage')
     Object.entries({ href: maps[ratio], x: '0', y: '0', width: String(width), height: String(height),
       preserveAspectRatio: 'none', result: 'lens' }).forEach(([key, value]) => image.setAttribute(key, value))
+    // Smooth the encoded normal field, not foreground ink. This avoids stepping
+    // from 8-bit PNG quantization when a long capsule stretches the map.
+    const normals = document.createElementNS(svg, 'feGaussianBlur')
+    Object.entries({ in: 'lens', stdDeviation: '.8', edgeMode: 'duplicate', result: 'lens-normal' })
+      .forEach(([key, value]) => normals.setAttribute(key, value))
     const warp = document.createElementNS(svg, 'feDisplacementMap')
     // Equal pixel units on X and Y avoid aspect-dependent vertical stretching.
-    Object.entries({ in: 'SourceGraphic', in2: 'lens', scale: String(GLASS_LENS_DEPTHS[variant] * height),
+    Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(GLASS_LENS_DEPTHS[variant] * height),
       xChannelSelector: 'R', yChannelSelector: 'G' }).forEach(([key, value]) => warp.setAttribute(key, value))
-    filter.append(image, warp)
+    filter.append(image, normals, warp)
     defs.append(filter)
     filters.set(id, { node: filter, users: 1 })
     return id

@@ -35,15 +35,14 @@
 #root .liquid-tabs > button[role='tab']:disabled { opacity: .4; cursor: not-allowed; }
 #root .liquid-tabs > .liquid-tabs__lens {
   position: absolute; left: 0; top: 0; pointer-events: none;
-  z-index: 3;
+  z-index: 1;
   box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1; border: 1px solid #ffffff9c;
   background: radial-gradient(ellipse at var(--lens-light-x,22%) -40%,#ffffff10,transparent 63%),
     linear-gradient(165deg,#ffffff04,transparent 42% 82%,#ffffff08);
-  box-shadow: inset 0 1px 1px #ffffffb8, inset 1px 0 2px -1px #e1fffaa0,
-    inset -1px -1px 2px -1px #ffffff85, inset 0 -3px 4px -3px #ffffff90,
-    0 2px 2px #082e273d, 0 5px 9px -4px #082e2766;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  box-shadow: inset 0 1px 1px #ffffffcc,inset 1px 0 1px #ffffff50,
+    inset 0 -1px 1px #082e2724,0 3px 8px -4px #082e2738;
+  -webkit-backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
+  backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
 #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens {
   transition: transform 460ms var(--glass-spring,cubic-bezier(.2,.8,.2,1)),width 460ms var(--glass-spring,cubic-bezier(.2,.8,.2,1)),height 260ms ease,scale 300ms var(--glass-spring,cubic-bezier(.2,.8,.2,1));
@@ -75,17 +74,16 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 /* The lens only rises above the rail during a press, drag or click pulse. */
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens {
   scale: 1.025 1.1;
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1.08));
-  backdrop-filter: var(--glass-lens-active-filter,saturate(1.08));
-  box-shadow: inset 0 1px 2px #ffffffb8,inset -1px -2px 3px -2px #ffffff90,
-    0 3px 3px #092c2738,0 8px 16px -6px #092c2760;
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
+  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
+  box-shadow: inset 0 1px 1px #ffffffdd,inset 0 -1px 1px #082e2730,0 5px 12px -5px #092c2745;
 }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { transition: scale 180ms ease; }
 @media(prefers-reduced-motion:reduce) {
   #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1; }
 }
 
-/* Reflections are restrained so refracted glyphs stay readable through the clear core. */
+/* Neutral rim glints follow the curved surface, below the label plane. */
 #root .liquid-tabs__lens::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   border: 1px solid transparent; border-top-color: #ffffff9c; border-left-color: #ffffff3d; border-right-color: #ffffff20;
@@ -102,15 +100,16 @@ html[data-theme='dark'] #root .liquid-tabs { --tabs-track: #214a43; --tabs-track
 }
 
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
-  backdrop-filter: var(--glass-lens-active-filter,none);
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
+  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens::before,
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting]::before {
-  background: radial-gradient(ellipse 44% 3px at var(--lens-light-x,22%) 0%,#d9f6ff70,transparent),
-    radial-gradient(ellipse 35% 3px at 78% 100%,#ffe6cd40,transparent);
+  background: radial-gradient(ellipse 44% 3px at var(--lens-light-x,22%) 0%,#ffffff90,transparent),
+    radial-gradient(ellipse 35% 3px at 78% 100%,#ffffff38,transparent);
 }
 @media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
+  #root .liquid-tabs > .liquid-tabs__lens,
   #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting],
   #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens {
     -webkit-backdrop-filter: none; backdrop-filter: none;

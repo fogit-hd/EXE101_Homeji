@@ -1,7 +1,6 @@
-/* Last material layer: optical controls in either theme, with independently
-   bounded caps for glyph refraction. Information cards never get overlays. */
-:root { --control-glass-fill: rgb(250 255 253 / .07); --control-glass-edge: rgb(255 255 255 / .96); }
-html[data-theme='dark'] { --control-glass-fill: rgb(32 60 70 / .12); --control-glass-edge: rgb(224 255 248 / .72); }
+/* Clear convex material: the scene bends behind the surface; ink stays above it. */
+:root { --control-glass-fill: rgb(255 255 255 / .08); --control-glass-edge: rgb(255 255 255 / .85); }
+html[data-theme='dark'] { --control-glass-fill: rgb(24 40 45 / .14); --control-glass-edge: rgb(245 255 252 / .6); }
 :is(html:root #root,body .choice-picker-layer) [data-glass-content] {
   -webkit-backdrop-filter: none; backdrop-filter: none; filter: none;
   background-image: none; box-shadow: none;
@@ -10,18 +9,15 @@ html[data-theme='dark'] { --control-glass-fill: rgb(32 60 70 / .12); --control-g
   color: var(--glass-ink);
   border-radius: var(--control-glass-radius,999px);
   background-color: var(--control-glass-fill);
-  background-image: radial-gradient(ellipse at 24% -40%,rgb(255 255 255 / .16),transparent 64%),
-    linear-gradient(165deg,rgb(255 255 255 / .06),transparent 40% 76%,rgb(255 255 255 / .05));
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 2px 2px -1px var(--control-glass-edge),
-    inset 2px 0 3px -2px var(--control-glass-edge),
-    inset -1px -2px 3px -2px var(--control-glass-edge),inset 0 -5px 6px -5px var(--control-glass-edge),
-    0 2px 2px rgb(12 35 35 / .2),0 7px 13px -6px rgb(12 35 35 / .35);
-  -webkit-backdrop-filter: var(--glass-lens-filter,blur(1px) saturate(1.08));
-  backdrop-filter: var(--glass-lens-filter,blur(1px) saturate(1.08));
+  background-image: linear-gradient(165deg,rgb(255 255 255 / .16),rgb(255 255 255 / .025) 38% 70%,rgb(255 255 255 / .1));
+  border: 1px solid color-mix(in srgb,var(--control-glass-edge) 65%,var(--glass-border));
+  box-shadow: inset 0 1px 1px var(--control-glass-edge),
+    inset 1px 0 1px rgb(255 255 255 / .3),inset 0 -1px 1px rgb(15 36 37 / .14),
+    0 1px 2px rgb(12 35 35 / .06),0 5px 12px -6px rgb(12 35 35 / .22);
+  -webkit-backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
+  backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
-/* Refraction belongs to the backdrop. Keep idle text out of the sampling pass;
-   a shallow optical cap is only visible during direct interaction. */
+/* A reflection may cross the surface, but no optical overlay samples the label. */
 html:root #root [data-glass-position='relative'] { position: relative; }
 html:root #root [data-glass-control][data-glass-face] {
   isolation: isolate;
@@ -74,10 +70,9 @@ html:root #root .hj-menu-trigger[data-glass-control] {
   --control-glass-fill: rgb(250 255 253 / .09);
   background-color: var(--control-glass-fill);
   border-color: rgb(210 233 231 / .7);
-  box-shadow: inset 0 2px 2px -1px var(--control-glass-edge),
-    inset 1px 0 2px rgb(255 255 255 / .5),
-    inset -1px -2px 3px -2px rgb(145 196 190 / .65),
-    0 2px 3px rgb(12 35 35 / .16), 0 7px 14px -7px rgb(12 35 35 / .32);
+  box-shadow: inset 0 1px 1px var(--control-glass-edge),
+    inset 1px 0 1px rgb(255 255 255 / .3),inset 0 -1px 1px rgb(15 36 37 / .14),
+    0 1px 2px rgb(12 35 35 / .06),0 5px 12px -6px rgb(12 35 35 / .22);
   transition: scale 420ms cubic-bezier(.2,1.5,.35,1), box-shadow 200ms ease;
 }
 html:root #root .hj-menu-trigger[data-glass-control]:is(:hover,.is-open) {
@@ -100,20 +95,19 @@ html[data-theme='dark']:root #root .hj-menu-trigger[data-glass-control] {
   }
 }
 
-/* RGB splitting and colored rim light are transient; the idle lens stays clear. */
+/* Input deepens background refraction; the light stays neutral like clear glass. */
 html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
-  backdrop-filter: var(--glass-lens-active-filter,none);
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
+  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
 html:root #root [data-glass-control][data-glass-face][data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
-  backdrop-filter: var(--glass-lens-active-filter,none);
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
+  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
 html:root #root [data-glass-control][data-glass-face][data-glass-interacting]::after {
-  -webkit-backdrop-filter: var(--glass-face-active-filter,none);
-  backdrop-filter: var(--glass-face-active-filter,none);
-  background: radial-gradient(ellipse at 14% 12%,rgb(155 215 229 / .12),transparent 35%),
-    radial-gradient(ellipse at 88% 92%,rgb(239 200 172 / .10),transparent 32%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: radial-gradient(ellipse at 24% -15%,rgb(255 255 255 / .06),transparent 60%);
 }
 /* Transaction actions need a stable contrast pair even when the common glass
    material loads after wallet styles. Their labels never pass through a lens. */

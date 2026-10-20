@@ -15,7 +15,7 @@ test('lens shape follows round, capsule and wide controls',()=>{
  assert.equal(glassLensId(2,'tab-rest'),'homeji-liquid-lens-2-tab')
 })
 
-test('encoded lens maps bend opposite sides continuously without folding glyphs',async()=>{
+test('encoded lens maps bend opposite sides continuously without folding the backdrop',async()=>{
  const maximumDepth=Math.max(...Object.values(GLASS_LENS_DEPTHS))
  for(const ratio of [1,2,3,4,6,10]){
   const file=ratio===3?'liquid-lens-map.png':`liquid-lens-map-${ratio}.png`
@@ -41,7 +41,9 @@ test('encoded lens maps bend opposite sides continuously without folding glyphs'
    const ry=maximumDepth*(pixel(x,y+1,0)-pixel(x,y,0))/255/dy
    const gx=maximumDepth*(pixel(x+1,y,1)-pixel(x,y,1))/255/dx
    const gy=maximumDepth*(pixel(x,y+1,1)-pixel(x,y,1))/255/dy
-   assert.ok(1+rx>.5&&1+gy>.5&&(1+rx)*(1+gy)-ry*gx>.45,`folded sample at ratio ${ratio}, ${x},${y}`)
+   // Foreground ink is above the lens. Stronger backdrop magnification is valid
+   // while the sampling Jacobian stays positive, including PNG quantization.
+   assert.ok(1+rx>.3&&1+gy>.3&&(1+rx)*(1+gy)-ry*gx>.05,`folded sample at ratio ${ratio}, ${x},${y}`)
   }
  }
 })

@@ -1,8 +1,8 @@
 export const GLASS_LENS_RATIOS = [1, 2, 3, 4, 6, 10] as const
-export type GlassLensVariant = 'control' | 'control-face' | 'control-active' | 'control-face-active' | 'tab-rest' | 'tab-active'
+export type GlassLensVariant = 'control' | 'control-active' | 'tab-rest' | 'tab-active'
 export function glassLensId(ratio: number, variant: GlassLensVariant = 'control') {
   const base = ratio === 3 ? 'homeji-liquid-lens' : `homeji-liquid-lens-${ratio}`
-  return variant === 'control-active' ? `${base}-control-active` : variant === 'control-face-active' ? `${base}-face-active` : variant === 'tab-rest' ? `${base}-tab` : variant === 'tab-active' ? `${base}-active` : variant === 'control-face' ? `${base}-face` : base
+  return variant === 'control-active' ? `${base}-control-active` : variant === 'tab-rest' ? `${base}-tab` : variant === 'tab-active' ? `${base}-active` : base
 }
 export function nearestLensRatio(width: number, height: number) {
   const aspect = width / Math.max(1, height)
@@ -10,6 +10,6 @@ export function nearestLensRatio(width: number, height: number) {
 }
 
 export const GLASS_LENS_DEPTHS: Record<GlassLensVariant, number> = {
-  control: .04, 'control-face': 0, 'tab-rest': 0,
-  'control-active': .065, 'control-face-active': .012, 'tab-active': .02,
+  control: .4, 'tab-rest': .4,
+  'control-active': .44, 'tab-active': .44,
 }

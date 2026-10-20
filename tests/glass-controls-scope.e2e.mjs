@@ -41,7 +41,8 @@ try {
  await page.waitForFunction(()=>document.querySelector('.hj-post-cta')?.hasAttribute('data-glass-control'));
  const category=page.locator('.hj-menu-trigger');
  await page.waitForFunction(()=>document.querySelector('.hj-menu-trigger')?.hasAttribute('data-glass-face'));
- assert.match(await category.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/-face/);
+ assert.equal(await category.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
+ assert.match(await category.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  await category.screenshot({path:new URL('category-rest.png',out).pathname.slice(1)});
  const categoryBox=await category.boundingBox();
  await page.mouse.move(categoryBox.x+categoryBox.width/2,categoryBox.y+categoryBox.height/2);
@@ -51,11 +52,13 @@ try {
  await category.screenshot({path:new URL('category-pressed.png',out).pathname.slice(1)});
  await page.mouse.up();
  await page.waitForFunction(()=>document.querySelector('.hj-menu-trigger')?.getAttribute('aria-expanded')==='true');
- assert.match(await category.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/-face/);
+ assert.equal(await category.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
+ assert.match(await category.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  await page.keyboard.press('Escape');
  await page.waitForFunction(()=>document.querySelector('.hj-menu-trigger')?.getAttribute('aria-expanded')==='false');
  await page.screenshot({path:new URL('initial.png',out).pathname.slice(1)}); const headerAction=page.locator('.hj-post-cta').first();
- assert.match(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/url\(/);
+ assert.equal(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
+ assert.match(await headerAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  assert.equal(await headerAction.evaluate(e=>getComputedStyle(e).filter),'none');
  await page.evaluate(()=>{
   const host=document.createElement('section');host.id='scope-fixture';host.style.cssText='margin:24px;padding:24px;background:repeating-linear-gradient(90deg,#245443 0 28px,#99b78a 28px 30px);display:flex;gap:16px;flex-wrap:wrap';
@@ -70,24 +73,24 @@ try {
  assert.match(await page.locator('select[aria-label="Chế độ xem"]').evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  const action=page.locator('#scope-action');await action.scrollIntoViewIfNeeded();
  await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const image=new Image();image.src=e.getAttribute('href');await image.decode()}))});
- const originalFace=await action.evaluate(e=>e.style.getPropertyValue('--glass-face-filter')); const optical=await action.screenshot({path:new URL('action-optical.png',out).pathname.slice(1)});
- await action.evaluate(e=>e.style.setProperty('--glass-face-filter','none','important'));
+ const originalFace=await action.evaluate(e=>e.style.getPropertyValue('--glass-lens-filter')); const optical=await action.screenshot({path:new URL('action-optical.png',out).pathname.slice(1)});
+ await action.evaluate(e=>e.style.setProperty('--glass-lens-filter','none','important'));
  const flat=await action.screenshot({path:new URL('action-flat.png',out).pathname.slice(1)});
  assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The action actually refracts background pixels');
- await action.evaluate((e,value)=>e.style.setProperty('--glass-face-filter',value),originalFace);
- // Uniform backing and no border/shadow isolate refraction of the actual glyphs.
+ await action.evaluate((e,value)=>e.style.setProperty('--glass-lens-filter',value),originalFace);
+ // Uniform backing and no border/shadow isolate foreground glyph preservation.
  const isolate=await page.addStyleTag({content:'#scope-fixture{background:#245443!important}#scope-action{background:transparent!important;border:0!important;box-shadow:none!important;font-size:24px!important;padding:8px!important;color:white!important}'});
- await page.waitForFunction(()=>document.querySelector('#scope-action').style.getPropertyValue('--glass-face-filter').includes('-face'));
+ await page.waitForFunction(()=>document.querySelector('#scope-action').style.getPropertyValue('--glass-lens-filter').includes('url('));
  const cap=await action.evaluate(e=>({face:e.hasAttribute('data-glass-face'),filter:getComputedStyle(e,'::after').backdropFilter,pointer:getComputedStyle(e,'::after').pointerEvents}));
- assert.ok(cap.face);assert.match(cap.filter,/-face/);assert.equal(cap.pointer,'none');
+ assert.ok(cap.face);assert.equal(cap.filter,'none');assert.equal(cap.pointer,'none');
  const refracted=await action.screenshot({path:new URL('glyphs-through-glass.png',out).pathname.slice(1)});
  const hide=await page.addStyleTag({content:'#scope-action::after{display:none!important}'});
  const glyphsFlat=await action.screenshot({path:new URL('glyphs-without-glass.png',out).pathname.slice(1)});
- assert.notEqual(createHash('sha256').update(refracted).digest('hex'),createHash('sha256').update(glyphsFlat).digest('hex'),'Actual button glyphs refract under the optical cap');
+ assert.equal(createHash('sha256').update(refracted).digest('hex'),createHash('sha256').update(glyphsFlat).digest('hex'),'The surface reflection never resamples button glyphs');
  await hide.evaluate(e=>e.remove());await isolate.evaluate(e=>e.remove());
  // The same stationary hover/focus must settle back to a neutral lens.
  const optics=locator=>locator.evaluate(e=>{
-  const style=getComputedStyle(e,e.hasAttribute('data-glass-face')?'::after':null);
+  const style=getComputedStyle(e);
   const id=/url\(["']?#([^"')]+)/.exec(style.backdropFilter)?.[1];
   return {active:!!id?.endsWith('-active'),filter:style.backdropFilter};
  });
@@ -133,8 +136,9 @@ try {
   await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
   await category.hover();assert.equal((await optics(category)).active,true);
   await settled(category);assert.equal((await optics(category)).active,false);
-  assert.match(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),/url\(/);
-  const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:e.hasAttribute('data-glass-face')?getComputedStyle(e,'::after').backdropFilter:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
+  assert.equal(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
+ assert.match(await headerAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
+  const controlsState=await page.locator('.btn:not(:disabled),.hj-post-cta').evaluateAll(es=>es.map(e=>({text:e.textContent,filter:getComputedStyle(e).filter,backdrop:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor}))); for(const c of controlsState){assert.equal(c.filter,'none',c.text);assert.match(c.backdrop,/url\(/,c.text);assert.ok(!c.bg.startsWith('rgb('),c.text+' must remain translucent');} const bg=await headerAction.evaluate(e=>getComputedStyle(e).backgroundColor);
   assert.match(bg,/rgba|color\(/,'Control surface remains translucent in '+theme);
   await page.locator('#scope-fixture').screenshot({path:new URL('scope-'+theme+'.png',out).pathname.slice(1)});
   await page.evaluate(()=>window.scrollTo(0,0));

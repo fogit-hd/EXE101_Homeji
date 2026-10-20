@@ -10,8 +10,8 @@ import { nearestLensRatio } from './glassLensGeometry'
 import { createGlassLensFilters } from './glassLensFilters'
 
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
-// Backdrops and optional transparent caps sample real pixels. Foreground
-// refraction stays within each control; content cards never become lenses.
+// Only the backdrop samples the scene. Labels/icons sit above that plane;
+// information cards and conversation rows never become lenses.
 const controls = '[data-glass-optics],.liquid-tabs__lens,.theme-switch__thumb,button,summary,input[type="button"],input[type="submit"],input[type="reset"],.btn,.liquid-action,.pay-btn,.payment-button,.hj-action,.hj-post-cta,[role="button"],[role="menuitem"],select'
 const contentControls = '.pay-table__row,.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,.food-card__main,.food-kitchen-row,.food-kitchen-card,.marketplace-seller-card,.hj-account__item,.hj-mega__link,[role="menuitem"],[role="option"],.schedule-dt__day,[class*="__card"],[class*="__hit"],[class*="__photo"],[class*="__thumbnail"],[class*="__image"],[class*="__person"],[role="tab"]'
 
@@ -50,13 +50,6 @@ export function LiquidGlassEffects() {
           const ids = [rest, active]
           element.style.setProperty('--glass-lens-filter', `url("#${rest}")`)
           element.style.setProperty('--glass-lens-active-filter', `url("#${active}")`)
-          if (element.hasAttribute('data-glass-face')) {
-            const face = bank.acquire(w, h, ratio, 'control-face')
-            const faceActive = bank.acquire(w, h, ratio, 'control-face-active')
-            ids.push(face, faceActive)
-            element.style.setProperty('--glass-face-filter', `url("#${face}")`)
-            element.style.setProperty('--glass-face-active-filter', `url("#${faceActive}")`)
-          }
           release(element)
           leases.set(element, ids)
         })
@@ -75,8 +68,8 @@ export function LiquidGlassEffects() {
         }
         if (!lens) {
           element.dataset.glassControl = ''
-          // Keep existing icon/AI pseudo-elements intact. Replaced controls
-          // (select/input) cannot host an optical face.
+          // Keep existing icon/AI pseudo-elements intact. This face is a faint
+          // reflection only; it never filters or samples foreground labels.
           if (element.matches('button,a,summary') && !element.matches('.ai-spectrum-button')
             && ['none', 'normal'].includes(getComputedStyle(element, '::after').content)) {
             element.dataset.glassFace = ''
@@ -101,7 +94,7 @@ export function LiquidGlassEffects() {
       cancelAnimationFrame(frame)
       resize.disconnect()
       mutations.disconnect()
-      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); element.style.removeProperty('--glass-face-filter'); element.style.removeProperty('--glass-face-active-filter'); delete element.dataset.glassControl; delete element.dataset.glassFace; delete element.dataset.glassPosition })
+      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); delete element.dataset.glassControl; delete element.dataset.glassFace; delete element.dataset.glassPosition })
       pending.clear()
       leases.clear()
       bank.clear()
