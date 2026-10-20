@@ -43,31 +43,32 @@ export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryCh
   return (
     <aside className="map-nearby-panel" aria-labelledby="nearby-panel-title">
       <header>
-        <div><span>Khám phá quanh phòng</span><h2 id="nearby-panel-title">Ăn uống & tiện ích gần đây</h2></div>
+        <div><span>KHÁM PHÁ QUANH PHÒNG</span><h2 id="nearby-panel-title">Tiện ích quanh đây</h2></div>
         <button type="button" className="map-nearby-panel__close" onClick={onClose} aria-label="Đóng tiện ích gần đây">×</button>
       </header>
-      <p className="map-nearby-panel__anchor">Quanh {anchor.label}<br />Địa điểm từ Google Maps, không cần có tin trên Homeji.</p>
+      <p className="map-nearby-panel__anchor" title={anchor.label}>Quanh <strong>{anchor.label}</strong></p>
       <div className="map-nearby-panel__categories" role="group" aria-label="Loại tiện ích">
         {NEARBY_PLACE_CATEGORY_OPTIONS.map((option) => (
           <button type="button" key={option.id} aria-pressed={category === option.id}
-            onClick={() => onCategoryChange(option.id)}>{option.label}</button>
+            onClick={() => onCategoryChange(option.id)}><span aria-hidden="true">{category === option.id ? '✓' : ''}</span>{option.label}</button>
         ))}
       </div>
-      {category === 'studyCafe' ? <p>Nhóm cà phê trên Google Maps; chưa có bằng chứng về độ yên tĩnh, ổ cắm hoặc chỗ ngồi học.</p> : null}
+      {category === 'studyCafe' ? <p className="map-nearby-panel__notice">Cà phê trên Google Maps; chưa xác minh độ yên tĩnh, ổ cắm và chỗ học.</p> : null}
+      <div className="map-nearby-panel__result-heading"><strong>{current && !error ? `${current.items.length} địa điểm` : 'Địa điểm gần bạn'}</strong><span>Trong bán kính 1,8 km</span></div>
       <div className="map-nearby-panel__results" aria-live="polite" aria-busy={!current && !error}>
         {error ? <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}>Thử lại</button></div>
           : !current ? <p>Đang tìm tiện ích trong bán kính 1,8 km…</p>
             : current.items.length === 0 ? <p>Chưa tìm thấy địa điểm thuộc nhóm này. Hãy thử loại tiện ích khác.</p>
               : current.items.map((place) => (
                 <article key={place.placeId}>
-                  <span className="map-nearby-panel__distance">{place.distanceMeters < 1000 ? `${place.distanceMeters} m` : `${(place.distanceMeters / 1000).toFixed(1)} km`}</span>
-                  <h3>{place.title}</h3><small>{place.typeLabel}</small><p>{place.address}</p>
-                  <div><button type="button" onClick={() => onPick(place)}>Xem trên bản đồ</button>
+                  <div className="map-nearby-panel__place-heading"><h3>{place.title}</h3><span className="map-nearby-panel__distance">{place.distanceMeters < 1000 ? `${place.distanceMeters} m` : `${(place.distanceMeters / 1000).toFixed(1)} km`}</span></div>
+                  <small>{place.typeLabel}</small><p>{place.address}</p>
+                  <div className="map-nearby-panel__actions"><button type="button" onClick={() => onPick(place)} aria-label={`Xem vị trí ${place.title}`}>Xem vị trí</button>
                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(place.placeId)}`} target="_blank" rel="noopener noreferrer">Google Maps ↗</a></div>
                 </article>
               ))}
       </div>
-      <footer>Dữ liệu Google Maps / Google Places · Khoảng cách đường thẳng, không phải quãng đường đi bộ. Homeji chưa xác minh các địa điểm này.</footer>
+      <footer data-glass-exclude><details><summary>Nguồn & cách tính khoảng cách</summary><p>Dữ liệu Google Maps / Google Places, không cần có tin trên Homeji. Khoảng cách đường thẳng, không phải quãng đường đi bộ. Homeji chưa xác minh các địa điểm này.</p></details></footer>
     </aside>
   )
 }
