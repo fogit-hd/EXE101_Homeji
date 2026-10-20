@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import './LegalPage.css'
 import { RevealText } from '../components/motion/RevealText'
+import { AnalyticsPreferencesButton } from '../components/AnalyticsConsent'
 
 const UPDATED_AT = '19/10/2026'
 
@@ -54,6 +55,7 @@ export function PrivacyPolicyPage() {
 
       <section>
         <h2>Mục đích sử dụng</h2>
+        <p><AnalyticsPreferencesButton /></p>
         <p>Khi bạn đồng ý thống kê Google Analytics 4, Homeji gửi nhóm màn hình, loại thao tác tìm/lưu/đặt lịch và giao dịch đã được máy chủ xác nhận, gồm mã giao dịch không chứa thông tin liên hệ và số tiền. Google có thể dùng cookie, thông tin trình duyệt và mạng để đo phiên truy cập và nguồn khách. Homeji không gửi email, số điện thoại, nội dung chat, câu hỏi AI, OTP, token hoặc vị trí nhập vào các sự kiện này. GA4 được tắt trước khi đồng ý và khi có tín hiệu DNT/GPC.</p>
         <p>Bạn có thể mở “Tùy chọn thống kê” để từ chối hoặc rút đồng ý. Lựa chọn được lưu trên thiết bị; rút lại ngừng sự kiện mới và xóa cookie GA mà Homeji truy cập được, không tự xóa lịch sử đã gửi. Google xử lý dữ liệu trên hạ tầng của mình; xem <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noreferrer">cách Google sử dụng dữ liệu từ các trang đối tác</a>. Số liệu giao dịch được đối soát bằng hệ thống Homeji.</p>
         <p>Homeji đo số lượt xem trang và phiên ghé website bằng mã ngẫu nhiên lưu trong phiên trình duyệt. Thống kê chỉ gửi nhóm trang và thời điểm đến máy chủ Homeji, không gửi email, IP, nội dung tìm kiếm hoặc mã tin phòng vào dữ liệu thống kê. Phiên mới bắt đầu sau 30 phút không chuyển trang. Homeji tôn trọng tín hiệu Do Not Track và Global Privacy Control của trình duyệt.</p>

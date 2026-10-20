@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict'
+import { createRequire } from 'node:module'
+import { mkdir, writeFile } from 'node:fs/promises'
+
+const { chromium } = createRequire(import.meta.url)(process.env.HOMEJI_PLAYWRIGHT_MODULE || 'playwright')
+const base = process.env.HOMEJI_TEST_BASE_URL || 'http://127.0.0.1:5516'
+if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('Local fixtures only')
+const out = 'output/verification/analytics-consent-visibility'
+await mkdir(out, { recursive: true })
+await writeFile(`${out}/public.html`, '<!doctype html><html lang="vi"><meta charset="utf-8"><link rel="stylesheet" href="/public-rental.css"><h1>Trang tin công khai thử nghiệm</h1><a href="/privacy">Quyền riêng tư</a><script type="module" src="/src/publicRentalAnalytics.ts"></script></html>')
+const browser = await chromium.launch({ headless: true, executablePath: process.env.HOMEJI_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
+await context.route('**/*', route => {
+  const url = new URL(route.request().url())
+  if (url.origin !== new URL(base).origin) return route.abort()
+  if (url.pathname.startsWith('/api/')) return route.fulfill({ json: url.pathname === '/api/chatbot/popup-config' ? { enabled: false } : [] })
+  if (url.pathname.startsWith('/hubs/')) return route.abort()
+  return route.continue()
+})
+const page = await context.newPage(), key = 'homeji_analytics_consent_v1'
+const errors = []; page.on('pageerror', e => errors.push(e.message))
+try {
+  await page.goto(base + '/login')
+  await page.getByRole('button', { name: 'Đồng ý thống kê', exact: true }).click()
+  await page.locator('.analytics-choice').waitFor({ state: 'detached' })
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), 'accepted')
+  await page.reload(); await page.locator('#auth-email').waitFor()
+  assert.equal(await page.locator('.analytics-choice').count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Tùy chọn thống kê', exact: true }).count(), 0)
+  await page.goto(base + '/privacy')
+  const preferences = page.getByRole('button', { name: 'Tùy chọn thống kê', exact: true })
+  await preferences.click(); await page.getByRole('region', { name: 'Đồng ý thống kê tùy chọn' }).waitFor()
+  await page.keyboard.press('Escape'); await page.locator('.analytics-choice').waitFor({ state: 'detached' })
+  assert.ok(await preferences.evaluate(e => e === document.activeElement))
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), 'accepted')
+  await preferences.click(); await page.getByRole('button', { name: 'Từ chối thống kê', exact: true }).click()
+  await page.locator('.analytics-choice').waitFor({ state: 'detached' })
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), 'rejected')
+  await page.reload(); await preferences.waitFor(); assert.equal(await page.locator('.analytics-choice').count(), 0)
+  await page.goto(base + `/${out}/public.html`)
+  await page.locator('.analytics-public').waitFor({ state: 'attached' })
+  assert.equal(await page.locator('.analytics-public').isVisible(), false)
+  await page.evaluate(key => localStorage.removeItem(key), key); await page.reload()
+  await page.getByRole('button', { name: 'Đồng ý thống kê', exact: true }).click()
+  await page.locator('.analytics-public').waitFor({ state: 'hidden' })
+  await page.reload(); assert.equal(await page.getByRole('button', { name: 'Tùy chọn thống kê', exact: true }).count(), 0)
+  await page.goto(base + '/login'); await page.locator('#auth-email').waitFor()
+  assert.equal(await page.locator('.analytics-choice').count(), 0)
+  await page.screenshot({ path: `${out}/accepted-without-floating-button.png` })
+  await page.evaluate(key => localStorage.removeItem(key), key); await page.reload()
+  await page.getByRole('button', { name: 'Từ chối thống kê', exact: true }).click()
+  await page.locator('.analytics-choice').waitFor({ state: 'detached' })
+  await page.reload(); await page.locator('#auth-email').waitFor()
+  assert.equal(await page.locator('.analytics-choice').count(), 0)
+  assert.deepEqual(errors, [])
+  console.log('PASS accepted/rejected choices remove floating UI, survive reload and public rentals; privacy page reopens settings, Escape preserves consent and returns focus. Google/provider traffic blocked.')
+} finally { await browser.close() }

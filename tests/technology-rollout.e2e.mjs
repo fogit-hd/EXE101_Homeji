@@ -94,9 +94,12 @@ try {
   savedFailureStatus = 0
   await page.getByRole('button', { name: 'Thử tải lại', exact: true }).click()
   await page.getByRole('heading', { name: 'Tin mới được lưu từ bản đồ' }).waitFor()
+  assert.equal(await page.locator('.analytics-choice').count(), 0, 'Consent choice removes the floating UI')
+  await page.goto(base + '/privacy')
   await page.getByRole('button', { name: 'Tùy chọn thống kê', exact: true }).click()
   await page.getByRole('button', { name: 'Từ chối thống kê', exact: true }).click()
   assert.equal(await page.evaluate(() => localStorage.getItem('homeji_analytics_consent_v1')), 'rejected')
+  await page.goto(base + '/?section=saved')
   await page.screenshot({ path: `${output}/saved-withdrawn.png`, fullPage: true })
 
   // Exercise the real module in a browser, retaining consent gating and data minimization.
