@@ -16,6 +16,7 @@ import { getErrorMessage } from '../../../lib/errors'
 import { gallerySwipeDirection } from '../../../lib/gallerySwipe'
 import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
+import { rentalPriceBasis, rentalPriceLabel } from '../../ai/rentalPriceBasis'
 import houseUrl from '../../../assets/room-detail/house.svg'
 import mapPinUrl from '../../../assets/room-detail/map-pin.svg'
 import messageCircleUrl from '../../../assets/room-detail/message-circle.svg'
@@ -102,6 +103,7 @@ export function RoomDetailModal({
   const loadState: LoadState = matched?.state ?? 'loading'
   const post = matched?.state === 'ready' ? matched.post : null
   const isStudentShare = post?.type === RentalPostType.RoommateShare && post.ownerRole === UserRole.Renter
+  const priceBasis = post ? rentalPriceBasis(post) : 'unknown'
   const actionMessage = notice && notice.id === listingId ? notice.message : null
   const actionTone = notice?.tone ?? 'ok'
   const scheduleOpen = scheduleListingId != null && scheduleListingId === listingId
@@ -148,7 +150,7 @@ export function RoomDetailModal({
     const focusable = () =>
       [...(root?.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ) ?? [])]
+      ) ?? [])].filter(node => node.getClientRects().length > 0)
 
     const onKey = (event: KeyboardEvent) => {
       // The image viewer owns keyboard navigation while its native dialog is open.
@@ -260,6 +262,8 @@ export function RoomDetailModal({
       ].filter((item): item is string => Boolean(item))
     : []
   const areaMissing = !post || !(post.area > 0)
+  const phone = post?.ownerPhone?.trim().replace(/[\s().-]/g, '') ?? ''
+  const phoneHref = /^\+?\d{8,15}$/.test(phone) ? `tel:${phone}` : null
 
   const onBackdrop = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onClose()
@@ -341,8 +345,8 @@ export function RoomDetailModal({
           <>
             <div className="room-detail__body">
               <div className="room-detail__main">
-                <PhotoGallery urls={listingPhotos(post)} />
                 <div className="room-detail__summary">
+                  <p className="room-detail__eyebrow">{isStudentShare ? 'TÌM BẠN Ở GHÉP' : 'THÔNG TIN CHO THUÊ'}</p>
                   <h3>{post.title?.trim() || 'Tin đăng'}</h3>
                   {isStudentShare ? <p className="room-detail__muted">
                     {post.ownerDisplayName || 'Người đăng'}{post.ownerSchool ? ` · ${post.ownerSchool}` : ''}
@@ -367,14 +371,15 @@ export function RoomDetailModal({
                     </ul>
                   ) : null}
                 </div>
+                <PhotoGallery urls={listingPhotos(post)} />
                 {description ? (
-                  <section className="room-detail__section">
-                    <h4>{isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Về căn phòng'}</h4>
+                  <details className="room-detail__section room-detail__disclosure" data-glass-exclude>
+                    <summary data-glass-exclude>{isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Mô tả căn phòng'}<span aria-hidden="true">+</span></summary>
                     <p>{description}</p>
-                  </section>
+                  </details>
                 ) : null}
-                <section className="room-detail__section">
-                  <h4>Tiện ích trong tin đăng</h4>
+                <details className="room-detail__section room-detail__disclosure" data-glass-exclude>
+                  <summary data-glass-exclude>Tiện ích trong phòng<span>{amenities.length ? `${amenities.length} tiện ích` : 'Chưa cập nhật'} <span aria-hidden="true">+</span></span></summary>
                   {amenities.length > 0 ? (
                     <ul className="room-detail__facts">
                       {amenities.map((label) => (
@@ -384,18 +389,28 @@ export function RoomDetailModal({
                   ) : (
                     <p className="room-detail__muted">Các tiện ích khác: chưa cung cấp</p>
                   )}
-                </section>
+                </details>
               </div>
               <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ">
                 <div className="room-detail__price">
-                  <p className="room-detail__kicker">{isStudentShare ? 'Chi phí dự kiến/người/tháng' : 'Giá thuê phòng'}</p>
+                  <p className="room-detail__kicker">{rentalPriceLabel(priceBasis)}</p>
                   <p className="room-detail__amount">{rentLabel ?? 'Chưa cung cấp'}</p>
-                  <p className="room-detail__muted">{isStudentShare ? 'Người đang ở đăng tìm thêm bạn ghép. Trao đổi để xác nhận cách chia các khoản phí.' : 'Giá thuê theo tin đăng'}</p>
+                  <p className="room-detail__muted">{priceBasis === 'unknown' ? 'Hỏi người đăng giá theo người hay cả phòng trước khi so chi phí.' : isStudentShare ? 'Trao đổi để xác nhận cách chia các khoản phí.' : 'Giá thuê theo tin đăng'}</p>
                 </div>
                 <hr />
-                <div className="room-detail__costs">
-                  <h4>{isStudentShare ? 'Chi phí được người đăng cung cấp' : 'Chi phí thuê phòng'}</h4>
-                  <CostRow label={isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
+                <div className="room-detail__contact">
+                  <p className="room-detail__kicker">LIÊN HỆ NGƯỜI ĐĂNG</p>
+                  <div className="room-detail__person">
+                    <span className="room-detail__avatar" aria-hidden="true">{(post.ownerDisplayName?.trim() || 'H').slice(0, 1).toUpperCase()}</span>
+                    <div><strong>{post.ownerDisplayName?.trim() || 'Người đăng phòng'}</strong><p className="room-detail__muted">{post.isOwnerVerified ? 'Đã xác minh danh tính' : 'Trao đổi trực tiếp trên Homeji'}</p></div>
+                  </div>
+                  <p>{isStudentShare ? 'Hỏi về chỗ trống, lối sống và cách chia chi phí.' : 'Hỏi tình trạng phòng, chi phí hoặc hẹn một buổi xem.'}</p>
+                  {!phoneHref ? <p className="room-detail__muted">Chưa có số điện thoại. Bạn có thể liên hệ qua tin nhắn.</p> : null}
+                  {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
+                </div>
+                <details className="room-detail__costs room-detail__disclosure" data-glass-exclude>
+                  <summary data-glass-exclude>Chi phí thuê & tiền cọc<span aria-hidden="true">+</span></summary>
+                  <CostRow label={priceBasis === 'unknown' ? 'Giá chưa rõ đơn vị' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
                   <CostRow label="Tiền cọc" value={depositLabel ?? 'Chưa cung cấp'} muted={!depositLabel} />
                   <CostRow label="Điện, nước" value={utilities} muted={utilities === 'Chưa cung cấp'} />
                   <CostRow label="Phí khác" value={otherFee ?? 'Chưa cung cấp'} muted={!otherFee} />
@@ -404,27 +419,14 @@ export function RoomDetailModal({
                       Chưa có đủ thông tin để tính tổng chi phí. Hãy xác nhận các khoản phí với người đăng.
                     </p>
                   ) : null}
-                </div>
-                <hr />
-                <div className="room-detail__contact">
-                  <h4>
-                    <img src={messageCircleUrl} alt="" width={20} height={20} />
-                    Liên hệ người đăng
-                  </h4>
-                  <p>{isStudentShare ? 'Nhắn người đang ở để trao đổi lối sống, chỗ trống và cách chia chi phí.' : 'Bạn quan tâm căn phòng này? Nhắn tin để hỏi thêm hoặc đặt lịch xem phòng.'}</p>
-                  {areaMissing ? (
-                    <p className="room-detail__muted">
-                      Diện tích và tình trạng phòng chưa được cung cấp. Bạn có thể hỏi thêm khi liên hệ.
-                    </p>
-                  ) : null}
-                </div>
+                </details>
                 <div className="room-detail__note">
                   <strong>Xem phòng trước khi quyết định</strong>
                   <p>{isStudentShare ? 'Thống nhất chi phí và quy tắc ở chung trước khi quyết định.' : 'Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.'}</p>
                 </div>
               </aside>
             </div>
-            <footer className="room-detail__footer">
+            <footer className="room-detail__footer" data-scheduling={scheduleOpen || undefined}>
               <div className="room-detail__footer-copy">
                 {scheduleOpen ? (
                   <div className="room-detail__schedule">
@@ -451,8 +453,8 @@ export function RoomDetailModal({
                   </div>
                 ) : (
                   <>
-                    <strong>Căn phòng bạn muốn tìm hiểu thêm</strong>
-                    <p>Hỏi thông tin hoặc hẹn một buổi xem phòng.</p>
+                    <strong className="room-detail__footer-price">{rentLabel ?? 'Giá cần trao đổi'}{rentLabel ? <small>{priceBasis === 'unknown' ? ' · cần hỏi đơn vị' : priceBasis === 'person' ? ' / người/tháng' : ' / tháng'}</small> : null}</strong>
+                    <p>{post.ownerDisplayName?.trim() || 'Liên hệ người đăng phòng'}</p>
                   </>
                 )}
                 {actionMessage ? (
@@ -462,25 +464,25 @@ export function RoomDetailModal({
                 ) : null}
               </div>
               <div className="room-detail__footer-actions">
+                <button type="button" className="room-detail__message" disabled={actionBusy} onClick={() => void handleMessage()}>
+                  <img src={messageCircleUrl} alt="" width={19} height={19} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin ngay'}
+                </button>
+                {phoneHref ? <a className="room-detail__call liquid-action" href={phoneHref}>
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>Gọi điện
+                </a> : null}
                 <button
                   type="button"
                   className="room-detail__book"
+                  data-glass-exclude
                   disabled={actionBusy}
+                  aria-expanded={scheduleOpen}
                   onClick={() => {
                     setScheduleAt('')
                     setScheduleNote('')
                     setScheduleListingId((current) => (current === listingId ? null : listingId))
                   }}
                 >
-                  Đặt lịch xem phòng
-                </button>
-                <button
-                  type="button"
-                  className="room-detail__message"
-                  disabled={actionBusy}
-                  onClick={() => void handleMessage()}
-                >
-                  Nhắn tin
+                  {scheduleOpen ? 'Hủy đặt lịch' : 'Đặt lịch xem phòng'}
                 </button>
               </div>
             </footer>
@@ -566,8 +568,8 @@ function PhotoGallery({ urls }: { urls: string[] }) {
 
   return (
     <div className="room-detail__gallery">
-      <div className={`room-detail__photos${thumbs.length === 0 ? ' is-single' : ''}`}>
-        <button type="button" className="room-detail__photo-main" aria-label="Mở ảnh lớn" onClick={() => openPhoto(safeIndex)}>
+      <div className={`room-detail__photos${thumbs.length === 0 ? ' is-single' : ''}`} data-glass-exclude>
+        <button type="button" className="room-detail__photo-main" data-glass-exclude aria-label="Mở ảnh lớn" onClick={() => openPhoto(safeIndex)}>
           <img
             src={current}
             alt=""
@@ -583,6 +585,7 @@ function PhotoGallery({ urls }: { urls: string[] }) {
               <button
                 key={url}
                 type="button"
+                data-glass-exclude
                 aria-label={`Xem ảnh ${visible.indexOf(url) + 1}`}
                 onClick={() => openPhoto(visible.indexOf(url))}
               >

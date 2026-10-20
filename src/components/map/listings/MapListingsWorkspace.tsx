@@ -24,6 +24,7 @@ import {
   type MapListingsView,
 } from './listingAdapters'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
+import { shortListingAddress } from '../../MapListingCard'
 import { Sk, SkCard } from '../../skeletons/Skeleton'
 import './MapListingsWorkspace.css'
 
@@ -152,6 +153,7 @@ export function MapListingsWorkspace({
           <button
             type="button"
             className="map-listings__card-hit"
+            data-glass-exclude
             aria-pressed={selectedCard}
             onMouseEnter={() => onHoverListing(id)}
             onMouseLeave={onLeaveListing}
@@ -181,14 +183,13 @@ export function MapListingsWorkspace({
                   }}
                 />
               ) : null}
-              {selectedCard ? <span className="map-listings__badge">Đang chọn</span> : null}
             </span>
             <span className="map-listings__card-copy">
-              <span className="map-listings__price">{view.priceLabel}</span>
+              <span className="map-listings__price">{view.priceLabel}{!marketMode ? <small> / tháng</small> : null}</span>
               <span className="map-listings__name">{view.title}</span>
                 <span className="map-listings__address">
                   <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
-                  <span className="map-listings__address-text">{view.address || 'Chưa có địa chỉ'}</span>
+                  <span className="map-listings__address-text" title={view.address}>{shortListingAddress(view.address) || 'Chưa có địa chỉ'}</span>
                 </span>
               <span className="map-listings__meta">
                 {view.areaLabel ? <span>{view.areaLabel}</span> : null}
@@ -198,6 +199,7 @@ export function MapListingsWorkspace({
               </span>
             </span>
           </button>
+          {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></button> : null}
           {!marketMode && onToggleSave ? (
             <button
               type="button"
@@ -340,6 +342,7 @@ export function MapListingsWorkspace({
             {selected && query.view !== 'list' ? (
               <PreviewCard
                 view={selected.view}
+                monthly={!marketMode}
                 saved={savedIds?.has(selected.id)}
                 saveBusy={saveBusy}
                 onToggleSave={!marketMode && onToggleSave ? () => onToggleSave(selected.id) : undefined}
@@ -359,7 +362,7 @@ export function MapListingsWorkspace({
             aria-label="Danh sách kết quả"
           >
             {query.view === 'split' ? <div className="map-listings__panel-head">
-              <span className="map-listings__panel-caption">Kết quả tìm kiếm</span>
+              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : 'Phòng trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : `${cards.length} tin đang hiển thị`}</p></div>
               <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>Thu gọn</button>
             </div> : null}
             <div className="map-listings__panel-body">
@@ -516,12 +519,14 @@ function FilterRange({ label, unit, draft, onChange }: {
 
 function PreviewCard({
   view,
+  monthly,
   saved,
   saveBusy,
   onToggleSave,
   onOpen,
 }: {
   view: ReturnType<typeof mapBackendListingToListingViewModel>
+  monthly: boolean
   saved?: boolean
   saveBusy?: boolean
   onToggleSave?: () => void
@@ -535,7 +540,7 @@ function PreviewCard({
         </div>
         <div>
           <div className="map-listings__preview-price">
-            <strong>{view.priceLabel}</strong>
+            <strong>{view.priceLabel}{monthly ? <small> / tháng</small> : null}</strong>
             {onToggleSave ? (
               <button
                 type="button"
@@ -553,17 +558,18 @@ function PreviewCard({
           </div>
           <p>{view.title}</p>
           <p className="map-listings__preview-sub">
-            {[view.address, view.areaLabel].filter(Boolean).join(' · ')}
+            {shortListingAddress(view.address)}
           </p>
         </div>
       </div>
       <div className="map-listings__preview-tags">
+        {view.areaLabel ? <span>{view.areaLabel}</span> : null}
         {view.typeLabel ? <span>{view.typeLabel}</span> : null}
         {view.highlightTag ? <span>{view.highlightTag}</span> : null}
         {view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
       </div>
       <button type="button" className="map-listings__preview-open" onClick={onOpen}>
-        Xem chi tiết
+        {monthly ? 'Xem phòng & liên hệ' : 'Xem chi tiết'}
         <img src="/figma/map/arrow-right.svg" alt="" width={13} height={13} />
       </button>
     </article>

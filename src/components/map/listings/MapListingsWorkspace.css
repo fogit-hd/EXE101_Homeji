@@ -94,7 +94,8 @@
 .map-listings__display { padding-right: 9px; background: transparent; border-color: transparent; }
 .map-listings__display select { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; max-width: 114px; }
 .map-listings__sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.map-listings__panel-caption { font-size: 13px; font-weight: 500; color: var(--ml-muted); }
+.map-listings__panel-caption { font-size: 16px; font-weight: 650; color: var(--ml-ink); }
+.map-listings__result-count { margin: 4px 0 0; font-size: 11px; color: var(--ml-muted); }
 
 .map-listings__popover.map-listings__filter-sheet {
   width: 420px;
@@ -838,13 +839,13 @@
 .map-listings__preview {
   left: 18px;
   bottom: 18px;
-  width: min(314px, calc(100% - 36px));
+  width: min(340px, calc(100% - 36px));
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 10px;
-  border-radius: 18px;
-  border: 2px solid var(--ml-coral);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--ml-line);
   background: var(--ml-card);
   box-shadow: 0 10px 28px rgba(23, 38, 31, 0.14);
 }
@@ -853,11 +854,12 @@
   display: flex;
   gap: 10px;
 }
+.map-listings__preview-top > div:last-child { min-width: 0; flex: 1; }
 
 .map-listings__preview-photo {
-  width: 122px;
-  height: 96px;
-  border-radius: 12px;
+  width: 88px;
+  height: 88px;
+  border-radius: 8px;
   overflow: hidden;
   background: #efe6d8;
   flex: 0 0 auto;
@@ -889,7 +891,13 @@
   margin: 4px 0 0;
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
+.map-listings__preview-price small,.map-listings__price small { color: var(--ml-muted); font: 400 10px/1.4 var(--font-ui); }
 
 .map-listings__preview-sub {
   font-weight: 400 !important;
@@ -1015,21 +1023,20 @@
 
 .map-listings__card {
   position: relative;
-  border-radius: 18px;
+  border-radius: 8px;
   background: var(--ml-card);
-  border: 1px solid transparent;
-  transition: transform 180ms ease, filter 180ms ease;
+  border: 1px solid var(--ml-line);
+  border-left: 3px solid transparent;
+  transition: border-color 180ms ease;
 }
 
 .map-listings__card.is-selected {
   border-color: var(--ml-coral);
-  background: #fff8f2;
-  box-shadow: 0 3px 12px rgb(233 94 67 / 12%);
+  background: color-mix(in srgb,var(--ml-coral) 4%,var(--ml-card));
 }
 
 .map-listings__card.is-hot {
-  transform: translateY(-3px);
-  filter: brightness(1.035);
+  border-color: var(--ml-coral);
 }
 
 @media not all /* reduced-motion ignored: Homeji always animates */ {
@@ -1044,15 +1051,15 @@
 
 .map-listings__card-hit {
   display: grid;
-  grid-template-columns: 108px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 12px;
   width: 100%;
-  padding: 10px 44px 10px 10px;
+  padding: 14px 14px 8px;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  border-radius: 18px;
+  border-radius: 8px;
 }
 
 .map-listings__card-hit:focus-visible {
@@ -1062,8 +1069,8 @@
 
 .map-listings__card-photo {
   position: relative;
-  height: 112px;
-  border-radius: 10px;
+  height: 100px;
+  border-radius: 6px;
   overflow: hidden;
   background: #efe6d8;
 }
@@ -1094,11 +1101,12 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  padding-right: 24px;
 }
 
 .map-listings__name {
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.45;
 }
@@ -1137,6 +1145,10 @@
 .map-listings__save.is-on {
   background: #f8d9ce;
 }
+.map-listings__card-open { display: flex; justify-content: space-between; align-items: center; width: calc(100% - 134px); min-height: 32px; margin: 0 14px 10px 118px; padding: 0; border: 0; background: transparent; color: var(--ml-coral); font: 600 12px/1.4 var(--font-ui); cursor: pointer; text-align: left; }
+.map-listings__card-open:focus-visible { outline: 2px solid var(--ml-coral); outline-offset: 2px; }
+.map-listings--list .map-listings__card-open { width: calc(100% - 24px); margin: 0 12px 12px; }
+.map-listings:not(.map-listings--list) .map-listings__address-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 1.5; }
 
 .map-listings__state {
   padding: 24px 8px;

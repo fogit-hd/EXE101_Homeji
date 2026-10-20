@@ -43,7 +43,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryCh
   return (
     <aside className="map-nearby-panel" aria-labelledby="nearby-panel-title">
       <header>
-        <div><span>KHÁM PHÁ QUANH PHÒNG</span><h2 id="nearby-panel-title">Tiện ích quanh đây</h2></div>
+        <div><span>KHÁM PHÁ KHU VỰC</span><h2 id="nearby-panel-title">Quanh phòng có gì?</h2></div>
         <button type="button" className="map-nearby-panel__close" onClick={onClose} aria-label="Đóng tiện ích gần đây">×</button>
       </header>
       <p className="map-nearby-panel__anchor" title={anchor.label}>Quanh <strong>{anchor.label}</strong></p>
@@ -61,10 +61,12 @@ export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryCh
             : current.items.length === 0 ? <p>Chưa tìm thấy địa điểm thuộc nhóm này. Hãy thử loại tiện ích khác.</p>
               : current.items.map((place) => (
                 <article key={place.placeId}>
-                  <div className="map-nearby-panel__place-heading"><h3>{place.title}</h3><span className="map-nearby-panel__distance">{place.distanceMeters < 1000 ? `${place.distanceMeters} m` : `${(place.distanceMeters / 1000).toFixed(1)} km`}</span></div>
-                  <small>{place.typeLabel}</small><p>{place.address}</p>
-                  <div className="map-nearby-panel__actions"><button type="button" onClick={() => onPick(place)} aria-label={`Xem vị trí ${place.title}`}>Xem vị trí</button>
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(place.placeId)}`} target="_blank" rel="noopener noreferrer">Google Maps ↗</a></div>
+                  <h3 className="map-nearby-panel__place-heading"><button type="button" className="map-nearby-panel__place-main" data-glass-exclude onClick={() => onPick(place)} aria-label={`Xem vị trí ${place.title}`}>
+                    <span className="map-nearby-panel__distance">{place.distanceMeters < 1000 ? `${place.distanceMeters} m` : `${(place.distanceMeters / 1000).toFixed(1)} km`}</span>
+                    <span className="map-nearby-panel__place-copy"><strong>{place.title}</strong><small>{place.typeLabel}</small></span><span aria-hidden="true">↗</span>
+                  </button></h3>
+                  <details className="map-nearby-panel__place-details" data-glass-exclude><summary data-glass-exclude>Địa chỉ & bản đồ</summary><p>{place.address}</p>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(place.placeId)}`} target="_blank" rel="noopener noreferrer">Mở Google Maps ↗</a></details>
                 </article>
               ))}
       </div>
