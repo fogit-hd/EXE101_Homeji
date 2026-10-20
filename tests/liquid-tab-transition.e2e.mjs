@@ -20,6 +20,8 @@ try{
  const rail=page.getByRole('tablist'), lens=rail.locator('.liquid-tabs__lens')
  await page.waitForFunction(()=>document.querySelector('.liquid-tabs')?.hasAttribute('data-lens-ready'))
  await page.evaluate(()=>document.fonts.ready)
+ // Exercise the seconds unit emitted by the production CSS optimizer.
+ await page.evaluate(()=>document.documentElement.style.setProperty('--glass-settle-duration','.62s'))
  const identity=await lens.elementHandle()
  const frames=await rail.evaluate(async root=>{
   const lens=root.querySelector('.liquid-tabs__lens'), target=root.querySelectorAll('button')[2]
