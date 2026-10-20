@@ -34,6 +34,25 @@ async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact
 
 try {
  await page.goto(base+'/?section=marketplace&market=browse');await ready();
+ await page.evaluate(()=>{
+  const dialog=document.createElement('dialog');dialog.id='portal-glass-fixture';
+  dialog.style.cssText='padding:32px;background:repeating-linear-gradient(90deg,#e5efec 0 30px,#92b7ac 30px 32px);border:0';
+  dialog.innerHTML='<button type="button" class="btn" id="portal-glass-action">Đóng chi tiết phòng</button>';
+  dialog.querySelector('button').onclick=()=>{document.body.dataset.portalAction='clicked';dialog.close()};
+  document.body.append(dialog);dialog.showModal();
+ });
+ const portalAction=page.locator('#portal-glass-action');
+ await page.waitForFunction(()=>document.querySelector('#portal-glass-action')?.style.getPropertyValue('--glass-lens-filter').includes('url('));
+ assert.match(await portalAction.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/,'Body portal actions share the new refractive material');
+ assert.equal(await portalAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
+ const portalOptical=await portalAction.screenshot({path:new URL('portal-action.png',out).pathname.slice(1)});
+ await portalAction.evaluate(e=>e.style.setProperty('--glass-lens-filter','saturate(1)'));
+ const portalFlat=await portalAction.screenshot();
+ assert.notEqual(createHash('sha256').update(portalOptical).digest('hex'),createHash('sha256').update(portalFlat).digest('hex'),'Top-layer dialog must render actual refracted backdrop pixels');
+ await portalAction.evaluate(e=>e.style.removeProperty('--glass-lens-filter'));
+ await portalAction.click();assert.equal(await page.locator('body').getAttribute('data-portal-action'),'clicked');
+ await page.evaluate(()=>document.querySelector('#portal-glass-fixture').remove());
+ await page.goto(base+'/?section=marketplace&market=browse');await ready();
  const shop=page.getByRole('tablist',{name:'Mua sắm',exact:true});await shop.getByRole('tab',{name:'Chợ đồ',exact:true}).click();
  const card=page.locator('.marketplace-card__main').first();await card.waitFor();
  assert.equal(await card.getAttribute('data-glass-control'),null);

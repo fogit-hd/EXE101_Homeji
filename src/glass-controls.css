@@ -1,11 +1,13 @@
+/* Registered controls include body portals; vendor/content exclusions are
+   enforced by LiquidGlassEffects before an element receives these markers. */
 /* Clear convex material: the scene bends behind the surface; ink stays above it. */
 :root { --control-glass-fill: rgb(255 255 255 / .08); --control-glass-edge: rgb(255 255 255 / .85); }
 html[data-theme='dark'] { --control-glass-fill: rgb(24 40 45 / .14); --control-glass-edge: rgb(245 255 252 / .6); }
-:is(html:root #root,body .choice-picker-layer) [data-glass-content] {
+:is(html:root #root,html:root body) [data-glass-content] {
   -webkit-backdrop-filter: none; backdrop-filter: none; filter: none;
   background-image: none; box-shadow: none;
 }
-:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]) {
+:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {
   color: var(--glass-ink);
   border-radius: var(--control-glass-radius,999px);
   background-color: var(--control-glass-fill);
@@ -18,36 +20,36 @@ html[data-theme='dark'] { --control-glass-fill: rgb(24 40 45 / .14); --control-g
   backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
 /* A reflection may cross the surface, but no optical overlay samples the label. */
-html:root #root [data-glass-position='relative'] { position: relative; }
-html:root #root [data-glass-control][data-glass-face] {
+:is(html:root #root,html:root body) [data-glass-position='relative'] { position: relative; }
+:is(html:root #root,html:root body) [data-glass-control][data-glass-face] {
   isolation: isolate;
 }
-html:root #root [data-glass-control][data-glass-face]::after {
+:is(html:root #root,html:root body) [data-glass-control][data-glass-face]::after {
   content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit;
   pointer-events: none; background: transparent; border: 0;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-html:root #root [data-glass-control][data-glass-face]:disabled::after { display: none; }
-:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):disabled { box-shadow: none; }
-:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):is(.btn-primary,.hj-post-cta,[type='submit'],.wallet-submit button,.wallet-submit__primary) {
+:is(html:root #root,html:root body) [data-glass-control][data-glass-face]:disabled::after { display: none; }
+:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):disabled { box-shadow: none; }
+:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):is(.btn-primary,.hj-post-cta,[type='submit'],.wallet-submit button,.wallet-submit__primary) {
   background-color: color-mix(in srgb,var(--hj-accent) 18%,var(--control-glass-fill));
 }
-:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):is(.btn-danger,[class*='--danger']) { background-color: var(--glass-danger); }
-:is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]):active:not(:disabled) {
+:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):is(.btn-danger,[class*='--danger']) { background-color: var(--glass-danger); }
+:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):active:not(:disabled) {
   box-shadow: inset 0 1px 3px var(--glass-shadow),inset 0 1px 0 var(--control-glass-edge),0 1px 2px var(--glass-shadow);
 }
 /* AI keeps its existing spectrum edge; glass sits inside that edge. */
-html:root #root [data-glass-control]:not([data-glass-exclude]).ai-spectrum-button {
+:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]).ai-spectrum-button {
   --ai-spectrum-surface: var(--control-glass-fill);
   background: var(--ai-spectrum-fill);
   border-color: transparent;
 }
 /* Native options and dense popover rows need solid, readable text surfaces. */
-html:root #root select[data-glass-control]:not([data-glass-exclude]) option { background: var(--surface-elevated); color: var(--text-primary); }
+:is(html:root #root,html:root body) select[data-glass-control]:not([data-glass-exclude]) option { background: var(--surface-elevated); color: var(--text-primary); }
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
-  html:root #root [data-glass-face]::after { display: none; }
-  :is(html:root #root,body .choice-picker-layer) [data-glass-control]:not([data-glass-exclude]) {
+  :is(html:root #root,html:root body) [data-glass-face]::after { display: none; }
+  :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {
     background: var(--surface-elevated); -webkit-backdrop-filter: none; backdrop-filter: none;
     box-shadow: none; border-color: var(--text-secondary);
   }
@@ -96,15 +98,15 @@ html[data-theme='dark']:root #root .hj-menu-trigger[data-glass-control] {
 }
 
 /* Input deepens background refraction; the light stays neutral like clear glass. */
-html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
+:is(html:root #root,html:root body) [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
   -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
   backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
-html:root #root [data-glass-control][data-glass-face][data-glass-interacting] {
+:is(html:root #root,html:root body) [data-glass-control][data-glass-face][data-glass-interacting] {
   -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
   backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
-html:root #root [data-glass-control][data-glass-face][data-glass-interacting]::after {
+:is(html:root #root,html:root body) [data-glass-control][data-glass-face][data-glass-interacting]::after {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   background: radial-gradient(ellipse at 24% -15%,rgb(255 255 255 / .06),transparent 60%);
@@ -130,7 +132,7 @@ html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-
 html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control]:hover:not(:disabled) { background-color: #a5e7e8; }
 html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control] img { filter: brightness(0); }
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
-  html:root #root [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
+  :is(html:root #root,html:root body) [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
 }

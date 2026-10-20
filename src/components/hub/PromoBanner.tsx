@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
@@ -102,15 +102,15 @@ export function PromoBanner() {
             </h2>
             <p className="hub-promo__sub">{slide.sub}</p>
             {slide.to ? (
-              <Link className="hub-promo__cta" to={slide.to} style={{ background: slide.accent }}>
+              <Link className="hub-promo__cta liquid-action" to={slide.to} style={{ '--promo-accent': slide.accent } as CSSProperties}>
                 {ctaLabel}
               </Link>
             ) : (
               <button
                 ref={ctaRef}
                 type="button"
-                className="hub-promo__cta"
-                style={{ background: slide.accent }}
+                className="hub-promo__cta liquid-action"
+                style={{ '--promo-accent': slide.accent } as CSSProperties}
                 onClick={() => toggleHomejiAi(ctaRef.current, true)}
               >
                 {ctaLabel}
@@ -126,6 +126,7 @@ export function PromoBanner() {
             key={s.eyebrow + s.keyword}
             type="button"
             className={i === index ? 'is-on' : undefined}
+            data-glass-exclude=""
             aria-label={`Banner ${i + 1}`}
             aria-current={i === index}
             onClick={() => jump(i)}
