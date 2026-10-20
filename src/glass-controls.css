@@ -47,6 +47,26 @@ html[data-theme='dark'] { --control-glass-fill: rgb(24 40 45 / .14); --control-g
 }
 /* Native options and dense popover rows need solid, readable text surfaces. */
 :is(html:root #root,html:root body) select[data-glass-control]:not([data-glass-exclude]) option { background: var(--surface-elevated); color: var(--text-primary); }
+/* Search uses one optical shell, with editable ink/icons on an unfiltered plane. */
+:is(html:root #root,html:root body) [data-glass-search][data-glass-control] {
+  --glass-ink: var(--text-heading);
+  --control-glass-fill: rgb(255 255 255 / .16);
+  position: relative;
+}
+html[data-theme='dark'] [data-glass-search][data-glass-control] { --control-glass-fill: rgb(24 40 45 / .24); }
+:is(html:root #root,html:root body) [data-glass-search] > input {
+  min-width: 0; background: transparent; border: 0; border-radius: 0;
+  color: var(--text-heading); box-shadow: none; filter: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:is(html:root #root,html:root body) [data-glass-search] > input::placeholder { color: var(--text-secondary); opacity: 1; }
+:is(html:root #root,html:root body) [data-glass-search] > input:is(:focus,:focus-visible) { outline: none; box-shadow: none; }
+:is(html:root #root,html:root body) [data-glass-search]:focus-within { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
+/* The closed map card must not paint an opaque backing over the map. Its open
+   suggestion panel keeps its existing readable surface and mobile geometry. */
+html:root #root .gmaps-omnibox__card:not(.is-open):has(> [data-glass-search]) {
+  background: transparent; box-shadow: none;
+}
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
   :is(html:root #root,html:root body) [data-glass-face]::after { display: none; }
   :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {

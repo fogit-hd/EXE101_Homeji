@@ -12,7 +12,8 @@ import { createGlassLensFilters } from './glassLensFilters'
 const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
 // Only the backdrop samples the scene. Labels/icons sit above that plane;
 // information cards and conversation rows never become lenses.
-const controls = '[data-glass-optics],.liquid-tabs__lens,.theme-switch__thumb,button,summary,input[type="button"],input[type="submit"],input[type="reset"],.btn,.liquid-action,.pay-btn,.payment-button,.hj-action,.hj-post-cta,[role="button"],[role="menuitem"],select'
+const searchSurfaces = '.hj-search__field,.gmaps-omnibox__bar,.map-messages__inbox-search,.map-messages__search-bar,.choice-picker__search-wrap'
+const controls = `[data-glass-optics],.liquid-tabs__lens,.theme-switch__thumb,button,summary,input[type="button"],input[type="submit"],input[type="reset"],.btn,.liquid-action,.pay-btn,.payment-button,.hj-action,.hj-post-cta,[role="button"],[role="menuitem"],select,${searchSurfaces}`
 const contentControls = '.pay-table__row,.map-explore-card,.map-listing-card,.marketplace-card__main,.food-card__media,.food-card__main,.food-kitchen-row,.food-kitchen-card,.marketplace-seller-card,.hj-account__item,.hj-mega__link,[role="menuitem"],[role="option"],.schedule-dt__day,[class*="__card"],[class*="__hit"],[class*="__photo"],[class*="__thumbnail"],[class*="__image"],[class*="__person"],[role="tab"]'
 
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
@@ -68,6 +69,8 @@ export function LiquidGlassEffects() {
         }
         if (!lens) {
           element.dataset.glassControl = ''
+          // The container refracts the scene; its editable text stays above it.
+          if (element.matches(searchSurfaces)) element.dataset.glassSearch = ''
           // Keep existing icon/AI pseudo-elements intact. This face is a faint
           // reflection only; it never filters or samples foreground labels.
           if (element.matches('button,a,summary') && !element.matches('.ai-spectrum-button')
@@ -94,7 +97,7 @@ export function LiquidGlassEffects() {
       cancelAnimationFrame(frame)
       resize.disconnect()
       mutations.disconnect()
-      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); delete element.dataset.glassControl; delete element.dataset.glassFace; delete element.dataset.glassPosition })
+      observed.forEach(element => { element.style.removeProperty('--glass-lens-filter'); element.style.removeProperty('--glass-lens-active-filter'); delete element.dataset.glassControl; delete element.dataset.glassFace; delete element.dataset.glassPosition; delete element.dataset.glassSearch })
       pending.clear()
       leases.clear()
       bank.clear()
