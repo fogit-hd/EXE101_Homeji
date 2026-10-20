@@ -67,6 +67,60 @@ html[data-theme='dark'] [data-glass-search][data-glass-control] { --control-glas
 html:root #root .gmaps-omnibox__card:not(.is-open):has(> [data-glass-search]) {
   background: transparent; box-shadow: none;
 }
+/* Editing surfaces have a quieter tint than action buttons. Values, selection,
+   password masking and validation remain native browser behavior. */
+:is(html:root #root,html:root body) [data-glass-field][data-glass-control] {
+  --control-glass-radius: var(--glass-field-radius,14px);
+  --control-glass-fill: color-mix(in srgb,var(--surface-elevated) 88%,transparent);
+  --glass-ink: var(--text-primary);
+}
+:is(html:root #root,html:root body) [data-glass-field]:focus-visible {
+  outline: 2px solid var(--hj-accent); outline-offset: 2px;
+}
+:is(html:root #root,html:root body) [data-glass-field]:is([aria-invalid='true'],:user-invalid) {
+  border-color: #c84436; outline-color: #c84436;
+}
+:is(html:root #root,html:root body) [data-glass-surface][data-glass-control] {
+  --control-glass-radius: var(--glass-surface-radius,20px);
+  --control-glass-fill: color-mix(in srgb,var(--surface-elevated) 90%,transparent);
+  --glass-ink: var(--text-primary);
+  box-shadow: inset 0 1px 1px var(--control-glass-edge),0 12px 28px -12px rgb(12 35 35 / .2);
+}
+/* Only the small native input receives glass, never the surrounding consent or
+   information row. Checked, required, disabled and radio grouping stay native. */
+:root {
+  --glass-check-ink: #fff;
+  --glass-check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+html[data-theme='dark'] {
+  --glass-check-ink: #14343b;
+  --glass-check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='%2314343b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+:is(html:root #root,html:root body) input[data-glass-toggle][data-glass-control] {
+  appearance: none; -webkit-appearance: none; box-sizing: border-box;
+  width: 18px; height: 18px; min-width: 18px; min-height: 18px; padding: 0;
+  --control-glass-radius: 5px; vertical-align: middle; cursor: pointer;
+  border-color: var(--text-secondary);
+}
+:is(html:root #root,html:root body) input[data-glass-toggle][type='radio'] { --control-glass-radius: 50%; }
+:is(html:root #root,html:root body) input[data-glass-toggle][data-glass-control]:checked {
+  --glass-ink: var(--glass-check-ink);
+  background-color: var(--hj-accent); border-color: var(--hj-accent);
+  background-image: var(--glass-check-mark); background-size: 14px 14px;
+  background-position: center; background-repeat: no-repeat;
+}
+:is(html:root #root,html:root body) input[data-glass-toggle][type='radio']:checked {
+  background-image: radial-gradient(circle,var(--glass-check-ink) 0 3px,transparent 3.5px);
+  background-size: auto;
+}
+:is(html:root #root,html:root body) input[data-glass-toggle]:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
+:is(html:root #root,html:root body) input[data-glass-toggle]:disabled { cursor: not-allowed; }
+@media (forced-colors:active) {
+  :is(html:root #root,html:root body) input[data-glass-toggle][data-glass-control] {
+    appearance: auto; -webkit-appearance: auto; background: none; box-shadow: none;
+    accent-color: auto; border: revert;
+  }
+}
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
   :is(html:root #root,html:root body) [data-glass-face]::after { display: none; }
   :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {

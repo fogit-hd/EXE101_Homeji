@@ -26,7 +26,7 @@ test('unsupported backdrop filters keep opaque semantic surfaces',()=>{
 
 test('optical faces stay separate from the base material and content exclusions stay explicit',()=>{
   roots[0].walkRules(rule=>assert.ok(!rule.selector.includes('data-glass-face')))
-  const effect=fs.readFileSync('src/components/ui/LiquidGlassEffects.tsx','utf8')
-  assert.match(effect,/const contentControls = /)
-  assert.ok(effect.includes("element.matches(contentControls)"))
+  const scope=fs.readFileSync('src/components/ui/glassControlScope.ts','utf8')
+  assert.match(scope,/export const GLASS_CONTENT_CONTROLS = /)
+  assert.ok(scope.includes('element.matches(GLASS_CONTENT_CONTROLS)'))
 })
