@@ -373,13 +373,13 @@ export function RoomDetailModal({
                 </div>
                 <PhotoGallery urls={listingPhotos(post)} />
                 {description ? (
-                  <details className="room-detail__section room-detail__disclosure" data-glass-exclude>
-                    <summary data-glass-exclude>{isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Mô tả căn phòng'}<span aria-hidden="true">+</span></summary>
+                  <section className="room-detail__section" data-glass-exclude>
+                    <h4>{isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Mô tả căn phòng'}</h4>
                     <p>{description}</p>
-                  </details>
+                  </section>
                 ) : null}
-                <details className="room-detail__section room-detail__disclosure" data-glass-exclude>
-                  <summary data-glass-exclude>Tiện ích trong phòng<span>{amenities.length ? `${amenities.length} tiện ích` : 'Chưa cập nhật'} <span aria-hidden="true">+</span></span></summary>
+                <section className="room-detail__section" data-glass-exclude>
+                  <h4>Tiện ích trong phòng</h4>
                   {amenities.length > 0 ? (
                     <ul className="room-detail__facts">
                       {amenities.map((label) => (
@@ -389,7 +389,7 @@ export function RoomDetailModal({
                   ) : (
                     <p className="room-detail__muted">Các tiện ích khác: chưa cung cấp</p>
                   )}
-                </details>
+                </section>
               </div>
               <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ">
                 <div className="room-detail__price">
@@ -397,6 +397,18 @@ export function RoomDetailModal({
                   <p className="room-detail__amount">{rentLabel ?? 'Chưa cung cấp'}</p>
                   <p className="room-detail__muted">{priceBasis === 'unknown' ? 'Hỏi người đăng giá theo người hay cả phòng trước khi so chi phí.' : isStudentShare ? 'Trao đổi để xác nhận cách chia các khoản phí.' : 'Giá thuê theo tin đăng'}</p>
                 </div>
+                <section className="room-detail__costs" data-glass-exclude>
+                  <h4>Chi phí thuê & tiền cọc</h4>
+                  <CostRow label={priceBasis === 'unknown' ? 'Giá chưa rõ đơn vị' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
+                  <CostRow label="Tiền cọc" value={depositLabel ?? 'Chưa cung cấp'} muted={!depositLabel} />
+                  <CostRow label="Điện, nước" value={utilities} muted={utilities === 'Chưa cung cấp'} />
+                  <CostRow label="Phí khác" value={otherFee ?? 'Chưa cung cấp'} muted={!otherFee} />
+                  {costsIncomplete ? (
+                    <p className="room-detail__muted">
+                      Chưa có đủ thông tin để tính tổng chi phí. Hãy xác nhận các khoản phí với người đăng.
+                    </p>
+                  ) : null}
+                </section>
                 <hr />
                 <div className="room-detail__contact">
                   <p className="room-detail__kicker">LIÊN HỆ NGƯỜI ĐĂNG</p>
@@ -408,18 +420,6 @@ export function RoomDetailModal({
                   {!phoneHref ? <p className="room-detail__muted">Chưa có số điện thoại. Bạn có thể liên hệ qua tin nhắn.</p> : null}
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
                 </div>
-                <details className="room-detail__costs room-detail__disclosure" data-glass-exclude>
-                  <summary data-glass-exclude>Chi phí thuê & tiền cọc<span aria-hidden="true">+</span></summary>
-                  <CostRow label={priceBasis === 'unknown' ? 'Giá chưa rõ đơn vị' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
-                  <CostRow label="Tiền cọc" value={depositLabel ?? 'Chưa cung cấp'} muted={!depositLabel} />
-                  <CostRow label="Điện, nước" value={utilities} muted={utilities === 'Chưa cung cấp'} />
-                  <CostRow label="Phí khác" value={otherFee ?? 'Chưa cung cấp'} muted={!otherFee} />
-                  {costsIncomplete ? (
-                    <p className="room-detail__muted">
-                      Chưa có đủ thông tin để tính tổng chi phí. Hãy xác nhận các khoản phí với người đăng.
-                    </p>
-                  ) : null}
-                </details>
                 <div className="room-detail__note">
                   <strong>Xem phòng trước khi quyết định</strong>
                   <p>{isStudentShare ? 'Thống nhất chi phí và quy tắc ở chung trước khi quyết định.' : 'Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.'}</p>

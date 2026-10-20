@@ -1069,11 +1069,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
                 <div className="home-map-frame">
                   {mapStage}
                   {selectedPlace || placeLoading ? placeDetail : null}
-                  {nearbyPanel}
                 </div>
               </DeferredMapBlock>
             ) : null
           }
+          contextPanel={nearbyPanel}
           onHoverListing={handleCardHover}
           onLeaveListing={handleCardLeave}
           onSelectListing={handleSelectPost}

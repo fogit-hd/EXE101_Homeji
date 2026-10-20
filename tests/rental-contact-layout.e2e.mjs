@@ -47,7 +47,11 @@ try {
       assert.ok(box && box.y >= 0 && box.y + box.height <= height && box.width >= 44 && box.height >= 44, `${width}: contact action must stay visible and usable`)
     }
     assert.equal(await call.getAttribute('href'), 'tel:+84901234567')
-    assert.equal(await modal.locator('.room-detail__disclosure[open]').count(), 0)
+    assert.equal(await modal.locator('details').count(), 0, 'Essential room information must not require expanding a disclosure')
+    await modal.getByRole('heading', { name: 'Mô tả căn phòng', exact: true }).waitFor()
+    assert.ok(await modal.getByText('Căn hộ thoáng sáng, bếp riêng và ban công.', { exact: false }).isVisible())
+    assert.ok(await modal.locator('.room-detail__costs').getByText('Tiền cọc', { exact: true }).isVisible())
+    assert.ok(await modal.getByRole('heading', { name: 'Tiện ích trong phòng', exact: true }).isVisible())
     assert.ok(await modal.locator('.room-detail__summary').evaluate(e => e.getBoundingClientRect().top < document.querySelector('.room-detail__gallery').getBoundingClientRect().top))
     assert.ok(await modal.locator('.room-detail__thumbs button').first().evaluate(e => parseFloat(getComputedStyle(e).borderRadius) <= 12 && !e.hasAttribute('data-glass-control')))
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector('.room-detail').scrollWidth <= document.querySelector('.room-detail').clientWidth))
@@ -56,8 +60,6 @@ try {
     await modal.getByRole('button', { name: 'Đặt lịch xem phòng', exact: true }).click()
     await modal.locator('.room-detail__schedule').waitFor()
     await modal.getByRole('button', { name: 'Hủy đặt lịch', exact: true }).click()
-    const description = modal.locator('details').filter({ hasText: 'Mô tả căn phòng' })
-    await description.locator('summary').click(); assert.ok(await description.evaluate(e => e.open))
     await modal.getByRole('button', { name: 'Mở ảnh lớn', exact: true }).click()
     await page.getByRole('dialog', { name: 'Xem ảnh phòng', exact: true }).waitFor()
     await page.keyboard.press('Escape'); assert.ok(await modal.isVisible())
@@ -79,5 +81,5 @@ try {
   }
   assert.ok(conversationRequests >= 8)
   assert.deepEqual(errors, [])
-  console.log('PASS: prioritized contact actions at 320/390/1024/1440 in both themes; sanitized/missing phone, message callback, booking toggle, photo viewer, disclosures, detail links and error/retry. API and map are fixtures.')
+  console.log('PASS: visible room information and prioritized contact at 320/390/1024/1440 in both themes; sanitized/missing phone, message callback, booking toggle, photo viewer, detail links and error/retry. API and map are fixtures.')
 } finally { if (errors.length) console.error(errors); await browser.close() }

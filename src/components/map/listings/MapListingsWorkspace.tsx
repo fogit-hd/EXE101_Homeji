@@ -42,6 +42,8 @@ type Props = {
   savedIds?: Set<string>
   saveBusy?: boolean
   mapNode: ReactNode | null
+  /** Contextual map content shares the results slot, outside the map's isolated layer. */
+  contextPanel?: ReactNode
   unreadNotifications?: number
   onHoverListing: (id: string) => void
   onLeaveListing: () => void
@@ -67,6 +69,7 @@ export function MapListingsWorkspace({
   savedIds,
   saveBusy,
   mapNode,
+  contextPanel,
   onHoverListing,
   onLeaveListing,
   onSelectListing,
@@ -134,6 +137,7 @@ export function MapListingsWorkspace({
 
   const showMap = query.view !== 'list' && mapNode != null
   const showList = query.view !== 'map'
+  const contextPanelOpen = showMap && Boolean(contextPanel)
   const mapFirst = query.view !== 'list'
   const [panelOpen, setPanelOpen] = useState(true)
   const [mobilePane, setMobilePane] = useState<'map' | 'list'>(query.view === 'list' ? 'list' : 'map')
@@ -292,8 +296,8 @@ export function MapListingsWorkspace({
         </FilterPopover>
       </header>
 
-      <div className="map-listings__stage">
-        {showMap && showList ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
+      <div className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
+        {showMap && showList && !contextPanelOpen ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
           <button
             type="button"
             aria-pressed={mobilePane === 'map'}
@@ -314,11 +318,11 @@ export function MapListingsWorkspace({
 
         {showMap ? (
           <section
-            className={`map-listings__map${mobilePane === 'list' ? ' is-mobile-hidden' : ''}`}
+            className={`map-listings__map${mobilePane === 'list' && !contextPanelOpen ? ' is-mobile-hidden' : ''}`}
             aria-label="Bản đồ khu vực"
           >
             {mapNode}
-            {query.view === 'split' && !panelOpen ? (
+            {query.view === 'split' && !panelOpen && !contextPanelOpen ? (
               <button type="button" className="map-listings__panel-open" onClick={() => setPanelOpen(true)}>
                 Danh sách
               </button>
@@ -356,7 +360,9 @@ export function MapListingsWorkspace({
           </section>
         ) : null}
 
-        {showList ? (
+        {contextPanelOpen ? <div className="map-listings__context-panel">{contextPanel}</div> : null}
+
+        {showList && !contextPanelOpen ? (
           <aside
             className={`map-listings__panel${mobilePane === 'map' && showMap ? ' is-mobile-hidden' : ''}${panelOpen ? '' : ' is-collapsed'}`}
             aria-label="Danh sách kết quả"
