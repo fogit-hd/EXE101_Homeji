@@ -1,16 +1,19 @@
 import { useEffect, useRef } from 'react'
-import lensMap from './liquid-lens-map.png'
 import circleMap from './liquid-lens-map-1.png'
-import shortMap from './liquid-lens-map-2.png'
-import longMap from './liquid-lens-map-4.png'
-import wideMap from './liquid-lens-map-6.png'
-import rowMap from './liquid-lens-map-10.png'
+import stemMap from './liquid-lens-map-stem.png'
+import horizontalStemMap from './liquid-lens-map-stem-horizontal.png'
+import beadMap from './liquid-lens-bead-map.png'
+import beadStemMap from './liquid-lens-bead-map-stem.png'
+import beadHorizontalStemMap from './liquid-lens-bead-map-stem-horizontal.png'
 import { observeGlassActivity } from './glassActivity'
 import { nearestLensRatio } from './glassLensGeometry'
 import { createGlassLensFilters } from './glassLensFilters'
 import { GLASS_CANDIDATES, glassControlKind, type GlassControlKind } from './glassControlScope'
 
-const maps = { 1: circleMap, 2: shortMap, 3: lensMap, 4: longMap, 6: wideMap, 10: rowMap }
+const maps = {
+  capsule: { circle: circleMap, vertical: stemMap, horizontal: horizontalStemMap },
+  bead: { circle: beadMap, vertical: beadStemMap, horizontal: beadHorizontalStemMap },
+}
 /** Shared shape-aware lens filters. Only geometry changes trigger measurements. */
 export function LiquidGlassEffects() {
   const defsRef = useRef<SVGDefsElement>(null)
@@ -26,6 +29,7 @@ export function LiquidGlassEffects() {
     }
     const observed = new Set<HTMLElement>()
     const kinds = new Map<HTMLElement, GlassControlKind>()
+    const profiles = new Map<HTMLElement, 'surface' | 'bead' | 'control'>()
     const pending = new Map<HTMLElement, { width: number; height: number }>()
     let frame = 0
     const resize = new ResizeObserver(entries => {
@@ -42,9 +46,10 @@ export function LiquidGlassEffects() {
           const ratio = nearestLensRatio(width, height)
           const w = Math.round(width * 100) / 100, h = Math.round(height * 100) / 100
           const lens = kinds.get(element) === 'lens'
-          const surface = kinds.get(element) === 'surface'
-          const rest = bank.acquire(w, h, ratio, surface ? 'surface' : lens ? 'tab-rest' : 'control')
-          const active = bank.acquire(w, h, ratio, surface ? 'surface-active' : lens ? 'tab-active' : 'control-active')
+          const surface = profiles.get(element) === 'surface'
+          const bead = profiles.get(element) === 'bead'
+          const rest = bank.acquire(w, h, ratio, surface ? 'surface' : bead ? 'bead' : lens ? 'tab-rest' : 'control')
+          const active = bank.acquire(w, h, ratio, surface ? 'surface-active' : bead ? 'bead-active' : lens ? 'tab-active' : 'control-active')
           const ids = [rest, active]
           element.style.setProperty('--glass-lens-filter', `url("#${rest}")`)
           element.style.setProperty('--glass-lens-active-filter', `url("#${active}")`)
@@ -61,15 +66,18 @@ export function LiquidGlassEffects() {
     }
     const forget = (element: HTMLElement) => {
       resize.unobserve(element); pending.delete(element); observed.delete(element)
-      kinds.delete(element); release(element); clearMarkers(element)
+      kinds.delete(element); profiles.delete(element); release(element); clearMarkers(element)
     }
     const reconcile = (element: HTMLElement) => {
       const kind = glassControlKind(element)
-      if (kinds.get(element) === kind) return
+      const profile = kind === 'surface' || kind === 'field' || kind === 'toggle' || element.matches('.theme-switch')
+        ? 'surface' : element.matches('[role="switch"],.theme-switch__thumb') ? 'bead' : 'control'
+      if (kinds.get(element) === kind && profiles.get(element) === profile) return
       if (observed.has(element)) forget(element)
-      else { kinds.delete(element); clearMarkers(element) }
+      else { kinds.delete(element); profiles.delete(element); clearMarkers(element) }
       if (kind === 'skip') return
       kinds.set(element, kind)
+      profiles.set(element, profile)
       if (kind === 'content') { element.dataset.glassContent = ''; return }
       if (kind !== 'lens') {
         element.dataset.glassControl = ''
@@ -95,6 +103,7 @@ export function LiquidGlassEffects() {
     const mutations = new MutationObserver(records => {
       const removals = new Set<Element>()
       for (const record of records) {
+        if (record.target === document.documentElement) { bank.setTheme(document.documentElement.dataset.theme === 'dark'); continue }
         if (record.type === 'attributes' && record.target instanceof Element) register(record.target)
         if (record.type === 'childList') {
           record.addedNodes.forEach(node => { if (node instanceof Element) register(node) })
@@ -112,6 +121,7 @@ export function LiquidGlassEffects() {
     })
     mutations.observe(document.body, { childList: true, subtree: true, attributes: true,
       attributeFilter: ['class', 'role', 'type', 'readonly', 'hidden', 'aria-hidden', 'data-glass-exclude', 'data-glass-optics', 'data-glass-panel'] })
+    mutations.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => {
       stopActivity()
       cancelAnimationFrame(frame)
@@ -119,6 +129,7 @@ export function LiquidGlassEffects() {
       mutations.disconnect()
       kinds.forEach((_, element) => clearMarkers(element))
       kinds.clear()
+      profiles.clear()
       pending.clear()
       leases.clear()
       bank.clear()

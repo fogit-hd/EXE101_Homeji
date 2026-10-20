@@ -30,6 +30,7 @@ page.on('pageerror', e => errors.push(e.message))
 async function ready() {
   await page.locator('.hj-header').waitFor()
   const skip = page.getByRole('button', { name: 'Bỏ qua', exact: true })
+  await skip.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {})
   if (await skip.isVisible()) await skip.click()
   await page.locator('.hj-intro').waitFor({ state: 'hidden' })
 }
