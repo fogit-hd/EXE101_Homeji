@@ -45,6 +45,16 @@ try {
   for (const theme of ['light', 'dark']) for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1100 })
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+    for (const rail of await page.locator('.liquid-tabs').all()) {
+      const opacity = await rail.evaluate(e => {
+        const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = getComputedStyle(e).getPropertyValue('--tabs-track').trim()
+        ctx.fillRect(0, 0, 1, 1)
+        return ctx.getImageData(0, 0, 1, 1).data[3] / 255
+      })
+      assert.ok(opacity < .35, 'Tab rail must transmit the backdrop, rather than hide the lens behind an opaque green track')
+    }
     for (const tab of ['Nạp tiền', 'Rút tiền']) {
       await page.getByRole('tab', { name: tab, exact: true }).click()
       await page.locator(tab === 'Nạp tiền' ? '.wallet-deposit__amount input' : '#wallet-panel-withdraw').waitFor()

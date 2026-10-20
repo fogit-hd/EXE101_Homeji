@@ -153,6 +153,7 @@ try {
  await settled(nativeSelect);assert.equal((await optics(nativeSelect)).active,false);
  for(const theme of ['light','dark']){
   await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+  await page.mouse.move(0,0);
   await category.hover();assert.equal((await optics(category)).active,true);
   await settled(category);assert.equal((await optics(category)).active,false);
   assert.equal(await headerAction.evaluate(e=>getComputedStyle(e,'::after').backdropFilter),'none');
