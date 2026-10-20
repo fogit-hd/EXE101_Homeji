@@ -26,12 +26,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <script>
-      /* Decide before first paint. Auth screens keep their own opening experience;
-         the React intro picks the playback rate for landing and application pages. */
+      /* Only opening the bare home URL starts the intro. Decide before paint so
+         deep links never flash the boot layer or lock scrolling while JS loads. */
       (function () {
         try {
-          var path = location.pathname.replace(/\/+$/, '') || '/'
-          if (path !== '/login' && path !== '/register') document.documentElement.dataset.intro = '1'
+          if (location.pathname === '/' && !location.search && !location.hash) document.documentElement.dataset.intro = '1'
         } catch (e) {}
       })()
     </script>

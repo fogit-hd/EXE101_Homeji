@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
 import { useLocation } from 'react-router-dom'
 import { readAuthTokenState } from '../../api/authSession'
-import { brandIntroPlaybackRate, isAuthIntroPage } from '../../lib/brandIntroPlayback'
+import { brandIntroPlaybackRate, isBrandIntroLanding } from '../../lib/brandIntroPlayback'
 import { INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
 import { HOMEJI_MARK_H, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
 import { SLOGAN_BOTTOM, SLOGAN_GLYPHS, SLOGAN_TOP, SLOGAN_WIDTH } from './sloganGlyphs'
@@ -52,8 +52,15 @@ function warmAssets(): Promise<unknown> {
 }
 
 export function BrandIntro() {
-  const { pathname } = useLocation()
-  return isAuthIntroPage(pathname) ? null : <BrandIntroOverlay />
+  const location = useLocation()
+  const allowed = isBrandIntroLanding(location)
+  useLayoutEffect(() => {
+    if (!allowed) {
+      document.getElementById('hj-boot')?.remove()
+      delete document.documentElement.dataset.intro
+    }
+  }, [allowed])
+  return allowed ? <BrandIntroOverlay /> : null
 }
 
 function BrandIntroOverlay() {

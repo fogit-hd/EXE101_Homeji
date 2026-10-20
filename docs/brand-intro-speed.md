@@ -1,5 +1,11 @@
 # Tốc độ logo ngôi nhà và slogan khi reload
 
+## Quy tắc hiện tại — 21/10/2026
+
+Chỉ mở trực tiếp URL gốc `/` (không query/hash) mới phát intro logo/slogan, cho cả khách và người đã đăng nhập. Các URL có `?section=...`, ví, lịch sử, bản đồ, chi tiết tin, các đường dẫn con và callback thanh toán mở ngay, không có boot overlay và không khóa cuộn. Chuyển mục hoặc quay về trang chủ bằng điều hướng SPA không phát lại intro. Boot script kiểm tra trước khi React tải; React kiểm tra lại và dọn trạng thái nếu rời trang chủ giữa lúc intro đang chạy.
+
+Nhịp phát trên trang chủ vẫn là 1x cho khách lần đầu trong tab và 3x cho những lần tiếp theo/người đã đăng nhập. Quy tắc này thay thế phạm vi phát trên các trang ứng dụng trong ghi chú lịch sử bên dưới.
+
 Ngày 17/10/2026. Theo yêu cầu, intro giữ nhịp 1x ở trang mở đầu `/` cho khách; `/login` và `/register` không chạy intro này. Những trang còn lại và trang chủ có phiên đăng nhập chạy timeline vẽ logo/slogan và timeline chuyển về header ở 2x. Không tăng tốc animation loading ngôi sao/HOMEJI hoặc cảnh đăng ký.
 
 Boot script quyết định trước khi React tải; chỉ mount lại ở lần tải trang, không phát lại khi điều hướng SPA. Redirect về đăng nhập hủy overlay và mở lại cuộn trang. Trang không phải home không chờ tín hiệu `markHomeReady()` của HomePage; vẫn giữ giới hạn chờ 10 giây và cơ chế tải dữ liệu hiện hành cho home.
