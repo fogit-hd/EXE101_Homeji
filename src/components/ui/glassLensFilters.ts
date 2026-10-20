@@ -1,4 +1,4 @@
-import { GLASS_LENS_DEPTHS, glassLensId, type GlassLensVariant } from './glassLensGeometry'
+import { GLASS_LENS_DEPTHS, glassLensHasSceneReflection, glassLensId, type GlassLensVariant } from './glassLensGeometry'
 
 const svg = 'http://www.w3.org/2000/svg'
 
@@ -66,7 +66,7 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
     filter.append(normals, warp)
     let illumination: SVGFEColorMatrixElement | undefined
     let illuminationCap: SVGFEFuncAElement | undefined
-    if (variant !== 'bead' && variant !== 'bead-active' && variant !== 'surface' && variant !== 'surface-active') {
+    if (glassLensHasSceneReflection(variant)) {
       // Mix a broad local scene color into bright text backdrops. This softens
       // contrast without painting every scene white; dark mode protects ink
       // with a dark tint instead. The foreground is never input.

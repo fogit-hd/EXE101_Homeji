@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type RefObject } from 'react'
 import { observeElementResize } from '../../lib/observeElementResize'
+import { createTabLensMotion } from './tabLensMotion'
 import './LiquidTabList.css'
 
 type Drag = { pointerId: number; x: number; y: number; left: number; width: number; height: number; top: number; moved: boolean; capture: HTMLButtonElement }
@@ -12,6 +13,7 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
   const localRef = useRef<HTMLDivElement>(null)
   const rootRef = containerRef ?? localRef
   const lensRef = useRef<HTMLSpanElement>(null)
+  const motionRef = useRef<ReturnType<typeof createTabLensMotion> | null>(null)
   const drag = useRef<Drag | null>(null)
   const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const suppressClickUntil = useRef(0)
@@ -37,6 +39,13 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
   useLayoutEffect(() => {
     const root = rootRef.current, lens = lensRef.current
     if (!root || !lens) return
+    const motion = createTabLensMotion(root, lens)
+    motionRef.current = motion
+    return () => { motion.dispose(); motionRef.current = null }
+  }, [rootRef])
+  useLayoutEffect(() => {
+    const root = rootRef.current, lens = lensRef.current
+    if (!root || !lens) return
     let disposed = false
     let frame = 0
     const measure = () => {
@@ -50,9 +59,11 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
       root.style.setProperty('--tabs-track-width', `${Math.max(root.clientWidth, ...tabs.map(tab => tab.offsetLeft + tab.offsetWidth + padding))}px`)
       if (drag.current?.moved) return
       // At rest the lens fits the track; only engagement enlarges its optical face.
-      lens.style.width = `${selected.width}px`
-      lens.style.height = `${selected.height}px`
-      lens.style.transform = `translate3d(${selected.left - box.left + root.scrollLeft - root.clientLeft}px,${selected.top - box.top + root.scrollTop - root.clientTop}px,0)`
+      motionRef.current?.moveTo(active, {
+        width: selected.width, height: selected.height,
+        x: selected.left - box.left + root.scrollLeft - root.clientLeft,
+        y: selected.top - box.top + root.scrollTop - root.clientTop,
+      })
       // Reveal a selected item inside an overflowing rail without scrolling the page.
       if (selected.right > box.right - 6) root.scrollLeft += selected.right - box.right + 6
       else if (selected.left < box.left + 6) root.scrollLeft -= box.left + 6 - selected.left
@@ -78,6 +89,8 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
         top: selected.top - box.top, moved: false, capture: button }
       try { button.setPointerCapture(event.pointerId) }
       catch { drag.current = null; return }
+      motionRef.current?.stop()
+      if (lensRef.current) lensRef.current.style.transformOrigin = 'center'
       lensRef.current?.style.setProperty('--lens-light-x', `${Math.max(12, Math.min(88, (event.clientX - selected.left) / selected.width * 100))}%`)
       engage()
     }}

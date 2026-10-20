@@ -80,7 +80,7 @@ try {
     await page.mouse.down()
     assert.ok(!(await tabs.locator('.liquid-tabs__lens').evaluate(e => getComputedStyle(e, '::before').backgroundImage)).includes('linear-gradient'), 'Pressed lens uses curved reflections')
     await page.mouse.up()
-    await page.waitForTimeout(600)
+    await page.waitForFunction(e => !e.hasAttribute('data-lens-travel') && !e.hasAttribute('data-lens-engaged'), await tabs.elementHandle())
     assert.ok(await tabs.evaluate(e => Number(getComputedStyle(e.querySelector('button')).zIndex) > Number(getComputedStyle(e.querySelector('.liquid-tabs__lens')).zIndex)), 'Tab labels sit above the optical backdrop')
     await tabs.screenshot({ path: `${out}/${theme}-${width}-tabs.png` })
   }

@@ -1,3 +1,5 @@
+@import './glass-material.css';
+
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
@@ -37,7 +39,7 @@ html[data-theme='dark'] {
 /* Every Homeji button, including portal menus and list options, shares the
    optical material. Content cards and media keep their own rendering, along with vendor controls. */
 :is(#root, .choice-picker-layer, body) :where(button, summary, input[type='button'], input[type='submit'], input[type='reset'],
-  .btn, .liquid-action, :where(.guest-fixed-cta > span), .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude])) {
+  .btn, .liquid-action, :where(.guest-fixed-cta > span), .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude], [data-glass-exclude] *)) {
   --glass-fill: var(--glass-tint);
   background-color: var(--glass-fill);
   background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .12), transparent 43%),
@@ -57,13 +59,13 @@ html[data-theme='dark'] {
 /* Material is universal; only ordinary action controls become capsules.
    Preserve the geometry of tabs, calendar cells, menu rows, cards and hit areas. */
 :is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-post-cta, [role='button']):not(:where(
-  .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude], [role='option'], [role='tab'],
+  .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude], [data-glass-exclude] *, [role='option'], [role='tab'],
   [class*='__card'], [class*='__hit'], [class*='__photo'], [class*='__thumbnail'],
   [class*='__image'], [class*='__person'], .food-card__main, .schedule-dt__day,
   .hj-account__item, .hj-mega__link, .guest-poster-menu__item, .address-autocomplete__item, .gmaps-omnibox__row
 )) { border-radius: var(--glass-radius, 999px); }
 :is(#root, .choice-picker-layer, body) :is(.btn-primary, .auth-cinema__submit, .hj-post-cta,
-  .map-chatbot__send, .food-checkout__submit, [type='submit'], button[aria-pressed='true'], button[aria-selected='true'], button.is-active):not(:where(.gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude])) {
+  .map-chatbot__send, .food-checkout__submit, [type='submit'], button[aria-pressed='true'], button[aria-selected='true'], button.is-active):not(:where(.gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude], [data-glass-exclude] *)) {
   --glass-fill: var(--glass-action);
   border-color: color-mix(in srgb, var(--hj-accent) 48%, var(--glass-border));
   font-weight: 650;
@@ -79,11 +81,11 @@ html[data-theme='dark'] {
   opacity: .48; cursor: not-allowed; box-shadow: none;
 }
 /* Feedback belongs to the control, not to the decorative lens. */
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role='button'], [role='menuitem']):where(:hover):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude])) {
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role='button'], [role='menuitem']):where(:hover):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude], [data-glass-exclude] *)) {
   background-color: color-mix(in srgb, var(--glass-fill) 90%, var(--glass-ink) 10%);
   border-color: color-mix(in srgb, var(--glass-border) 70%, var(--glass-ink) 30%);
 }
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .hj-action, .hj-post-cta):where(:active):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude])) {
+:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .hj-action, .hj-post-cta):where(:active):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, [data-glass-exclude], [data-glass-exclude] *)) {
   box-shadow: inset 0 1px 3px var(--glass-shadow), inset 0 1px 0 var(--glass-edge);
 }
 /* Dense controls keep the same glass optics with a quiet edge, rather than a

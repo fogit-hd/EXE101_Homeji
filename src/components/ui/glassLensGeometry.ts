@@ -15,3 +15,9 @@ export const GLASS_LENS_DEPTHS: Record<GlassLensVariant, number> = {
   control: .75, 'tab-rest': .75,
   'control-active': .8, 'tab-active': .8,
 }
+
+/** Search/action faces soften high-contrast scenery. A tab face crossing its
+ * own labels must transmit that ink without a broad white reflection. */
+export function glassLensHasSceneReflection(variant: GlassLensVariant) {
+  return variant === 'control' || variant === 'control-active'
+}
