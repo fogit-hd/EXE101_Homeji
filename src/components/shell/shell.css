@@ -528,7 +528,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab) { visibility: hid
   padding: 12px 32px 20px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: var(--surface-elevated);
+  background: transparent;
 }
 
 .hj-shell.is-compact .hj-search-slot {

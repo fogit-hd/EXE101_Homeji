@@ -73,10 +73,10 @@ html[data-theme='dark'] :is(#root,body) [data-glass-profile='bead']:not([data-gl
 /* Search uses one optical shell, with editable ink/icons on an unfiltered plane. */
 :is(html:root #root,html:root body) [data-glass-search][data-glass-control] {
   --glass-ink: var(--text-heading);
-  --control-glass-fill: rgb(255 255 255 / .16);
+  --control-glass-fill: rgb(255 255 255 / .035);
   position: relative;
 }
-html[data-theme='dark'] [data-glass-search][data-glass-control] { --control-glass-fill: rgb(24 40 45 / .24); }
+html[data-theme='dark']:root :is(#root,body) [data-glass-search][data-glass-control] { --control-glass-fill: rgb(24 40 45 / .05); }
 :is(html:root #root,html:root body) [data-glass-search] > input {
   min-width: 0; background: transparent; border: 0; border-radius: 0;
   color: var(--text-heading); box-shadow: none; filter: none;

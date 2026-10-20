@@ -2,9 +2,9 @@
    optimizer can otherwise retain only the prefixed property, which Chrome ignores.
    Only the moving lens samples real pixels underneath; the clear center keeps labels sharp. */
 #root .liquid-tabs {
-  --tabs-track: rgb(28 111 96 / .08); --tabs-track-light: rgb(255 255 255 / .28);
+  --tabs-track: rgb(28 111 96 / .08); --tabs-track-light: rgb(255 255 255 / .04);
   --tabs-ink: #123e39; --tabs-muted-ink: #355a55;
-  --tabs-lens-tint: rgb(79 160 140 / .16); --tabs-rim: rgb(255 255 255 / .8);
+  --tabs-lens-tint: rgb(255 255 255 / .025); --tabs-rim: rgb(255 255 255 / .9);
   position: relative; isolation: isolate; display: flex; align-items: center;
   /* The rail starts 10px down: 13px/3px padding gives the lens a 3px inset on every edge. */
   gap: 4px; height: auto; min-height: 64px; box-sizing: border-box; width: fit-content; max-width: 100%; padding: 13px 3px;
@@ -41,11 +41,11 @@
   z-index: 1;
   box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1;
   border: 1px solid var(--tabs-rim);
-  background: radial-gradient(ellipse at var(--lens-light-x,22%) -40%,#ffffff70,transparent 63%),
-    linear-gradient(165deg,#ffffff18,transparent 42% 78%,#ffffff30),var(--tabs-lens-tint);
-  box-shadow: inset 0 1px 1px #ffffffed,inset 1px 0 2px #ffffff70,
-    inset -1px 0 2px #123a3020,inset 0 -2px 3px #123a3024,
-    0 1px 2px #123a3020,0 5px 10px -5px #123a3040;
+  background: radial-gradient(ellipse 50% 3px at var(--lens-light-x,22%) 0%,#ffffff90,transparent),
+    radial-gradient(ellipse 45% 3px at 80% 100%,#ffffff60,transparent),var(--tabs-lens-tint);
+  box-shadow: inset 0 1px 1px #ffffffed,inset 1px 0 1px #ffffffa0,
+    inset -1px 0 1px #123a3040,inset 0 -1px 1px #123a3030,
+    0 1px 2px #123a3030,0 5px 9px -4px #123a3050;
   -webkit-backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
   backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.65px) saturate(1.04);
 }
@@ -56,7 +56,7 @@
 html[data-theme='dark'] #root .liquid-tabs {
   --tabs-track: rgb(104 194 166 / .1); --tabs-track-light: rgb(192 238 224 / .06);
   --tabs-ink: #effff8; --tabs-muted-ink: #c0d9d1;
-  --tabs-lens-tint: rgb(140 221 196 / .14); --tabs-rim: rgb(222 255 244 / .48);
+  --tabs-lens-tint: rgb(222 255 244 / .035); --tabs-rim: rgb(222 255 244 / .6);
 }
 @media(max-width:600px) { #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 72px; padding-inline: 16px; font-size: 12px; } }
 @media(prefers-reduced-motion:reduce) { #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens { transition: none; } }

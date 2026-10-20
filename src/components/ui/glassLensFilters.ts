@@ -77,16 +77,29 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
       illumination.setAttribute('in', 'scene-light'); illumination.setAttribute('type', 'matrix')
       illumination.setAttribute('values', illuminationValues()); illumination.setAttribute('result', 'uncapped-glass-light')
       const transmission = document.createElementNS(svg, 'feComponentTransfer')
-      transmission.setAttribute('in', 'uncapped-glass-light'); transmission.setAttribute('result', 'glass-light')
+      transmission.setAttribute('in', 'uncapped-glass-light'); transmission.setAttribute('result', 'capped-glass-light')
       illuminationCap = document.createElementNS(svg, 'feFuncA')
       illuminationCap.setAttribute('type', 'linear'); illuminationCap.setAttribute('slope', dark ? '1' : '.7')
       transmission.append(illuminationCap)
+      // Reflection lifts background lettering near contrasting edges. A flat
+      // scene must pass through unchanged instead of receiving a gray veil.
+      const contrast = document.createElementNS(svg, 'feBlend')
+      Object.entries({ in: 'SourceGraphic', in2: 'scene-light', mode: 'difference', result: 'scene-contrast' })
+        .forEach(([key, value]) => contrast.setAttribute(key, value))
+      const contrastMask = document.createElementNS(svg, 'feColorMatrix')
+      // Alpha = clamp(8 * luminance(abs(scene - local average)) - .08).
+      Object.entries({ in: 'scene-contrast', type: 'matrix',
+        values: '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1.7008 5.7216 .5776 0 -.08', result: 'reflection-mask' })
+        .forEach(([key, value]) => contrastMask.setAttribute(key, value))
+      const reflectedLight = document.createElementNS(svg, 'feComposite')
+      Object.entries({ in: 'capped-glass-light', in2: 'reflection-mask', operator: 'in', result: 'glass-light' })
+        .forEach(([key, value]) => reflectedLight.setAttribute(key, value))
       const material = document.createElementNS(svg, 'feMerge')
       material.setAttribute('result', 'material-scene')
       for (const input of ['refracted-scene', 'glass-light']) {
         const node = document.createElementNS(svg, 'feMergeNode'); node.setAttribute('in', input); material.append(node)
       }
-      filter.append(light, illumination, transmission, material)
+      filter.append(light, illumination, transmission, contrast, contrastMask, reflectedLight, material)
     }
     const reflection = document.createElementNS(svg, 'feColorMatrix')
     Object.entries({ in: 'lens-normal', type: 'matrix', values: '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 .5 0 0', result: 'bezel-reflection' })
