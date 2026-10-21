@@ -32,7 +32,7 @@ const SLIDES: Slide[] = [
 const INTERVAL_MS = 5000
 const EASE = [0.22, 1, 0.36, 1] as const
 
-/** Promo carousel beside "Hành trình tìm nhà" on the signed-in home. */
+/** Eight-slide promo carousel on the signed-in home. */
 export function PromoBanner() {
   const [[index, dir], setState] = useState<[number, number]>([0, 1])
   const [paused, setPaused] = useState(false)

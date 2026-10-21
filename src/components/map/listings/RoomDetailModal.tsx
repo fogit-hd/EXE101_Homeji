@@ -411,14 +411,8 @@ export function RoomDetailModal({
                   ) : null}
                 </section>
                 <hr />
-                <div className="room-detail__contact">
-                  <p className="room-detail__kicker">LIÊN HỆ NGƯỜI ĐĂNG</p>
-                  <div className="room-detail__person">
-                    <span className="room-detail__avatar" aria-hidden="true">{(post.ownerDisplayName?.trim() || 'H').slice(0, 1).toUpperCase()}</span>
-                    <div><strong>{post.ownerDisplayName?.trim() || 'Người đăng phòng'}</strong><p className="room-detail__muted">{post.isOwnerVerified ? 'Đã xác minh danh tính' : 'Trao đổi trực tiếp trên Homeji'}</p></div>
-                  </div>
-                  <p>{isStudentShare ? 'Hỏi về chỗ trống, lối sống và cách chia chi phí.' : 'Hỏi tình trạng phòng, chi phí hoặc hẹn một buổi xem.'}</p>
-                  {!phoneHref ? <p className="room-detail__muted">Chưa có số điện thoại. Bạn có thể liên hệ qua tin nhắn.</p> : null}
+                <div className="room-detail__contact" data-glass-exclude>
+                  <OwnerProfile key={`${post.id}:${phone}`} post={post} phone={phoneHref ? phone : ''} isStudentShare={isStudentShare} />
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
                 </div>
                 <div className="room-detail__note">
@@ -492,6 +486,59 @@ export function RoomDetailModal({
       </div>
     </div>,
     document.body,
+  )
+}
+
+function OwnerProfile({ post, phone, isStudentShare }: { post: RentalPost; phone: string; isStudentShare: boolean }) {
+  const [revealed, setRevealed] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
+  const phoneId = useId()
+  const name = post.ownerDisplayName?.trim() || 'Chưa cập nhật'
+  const digits = phone.replace(/\D/g, '')
+  const maskedPhone = `${phone.startsWith('+') ? '+' : ''}${digits.slice(0, 3)}${'•'.repeat(Math.max(0, digits.length - 3))}`
+
+  return (
+    <section className="room-detail__owner-profile" aria-label={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'}>
+      <h4>{isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'}</h4>
+      <div className="room-detail__person">
+        <span className="room-detail__avatar" aria-hidden="true">
+          {post.ownerAvatarPath && !avatarFailed
+            ? <img src={post.ownerAvatarPath} alt="" onError={() => setAvatarFailed(true)} />
+            : name.slice(0, 1).toUpperCase()}
+        </span>
+        <div>
+          <span className="room-detail__owner-label">Họ và tên</span>
+          <strong>{name}</strong>
+          {post.isOwnerVerified ? <span className="room-detail__owner-verified">✓ Đã xác minh danh tính</span> : null}
+        </div>
+      </div>
+      <div className={`room-detail__owner-phone${revealed ? ' is-revealed' : ''}`}>
+        <div>
+          <span className="room-detail__owner-label">Số điện thoại</span>
+          <span id={phoneId} className="room-detail__phone-value" aria-live="polite" aria-atomic="true">
+            {!phone ? 'Chưa cập nhật' : revealed
+              ? <a href={`tel:${phone}`}>{phone}</a>
+              : <span aria-label={`Số điện thoại bắt đầu bằng ${digits.slice(0, 3)}, các số còn lại đang ẩn`}>{maskedPhone}</span>}
+          </span>
+        </div>
+        {phone ? <button
+          type="button"
+          className={`room-detail__flashlight${revealed ? ' is-lit' : ''}`}
+          aria-label={revealed ? 'Tắt đèn pin, ẩn số điện thoại' : 'Bật đèn pin, hiện số điện thoại'}
+          aria-pressed={revealed}
+          aria-controls={phoneId}
+          onClick={() => setRevealed(value => !value)}
+        >
+          <svg width="26" height="30" viewBox="0 0 28 34" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path className="room-detail__flashlight-beam" d="M8 11 4 2h20l-4 9" stroke="none" fill="currentColor" />
+            <path d="M8 12h12v5l-3 4v9a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-9l-3-4zM8 16h12M14 23v3" />
+            <path className="room-detail__flashlight-rays" d="M14 3V1M5 8 3 6M23 8l2-2" />
+          </svg>
+        </button> : null}
+      </div>
+      {phone ? <p className="room-detail__phone-hint">{revealed ? 'Nhấp vào số để gọi · Tắt đèn để ẩn' : 'Bật đèn pin để xem số liên hệ'}</p>
+        : <p className="room-detail__phone-hint">Liên hệ qua tin nhắn trên Homeji.</p>}
+    </section>
   )
 }
 

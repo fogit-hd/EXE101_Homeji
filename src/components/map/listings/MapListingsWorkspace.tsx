@@ -523,7 +523,7 @@ function FilterRange({ label, unit, draft, onChange }: {
   </fieldset>
 }
 
-function BookmarkIcon({ saved = false }: { saved?: boolean }) { return <svg width="16" height="20" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z" /></svg> }
+function BookmarkIcon({ saved = false }: { saved?: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z" /></svg> }
 
 function PreviewCard({
   view,

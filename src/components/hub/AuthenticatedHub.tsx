@@ -26,6 +26,7 @@ import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
+import { PromoBanner } from './PromoBanner'
 import './AuthenticatedHub.css'
 import { HubBodySkeleton } from '../skeletons/PageSkeletons'
 
@@ -229,14 +230,7 @@ export function AuthenticatedHub() {
         </div>
       </header>
 
-      <section className="hub-banner" aria-labelledby="hub-banner-title">
-        <div>
-          <span>KHÔNG GIAN CHO BẠN</span>
-          <h2 id="hub-banner-title">Ở đúng nơi, sống đúng gu.</h2>
-          <p>Tìm một nơi ở vừa ý. Bắt đầu nhịp sống của riêng bạn.</p>
-        </div>
-        <Link className="hub-banner__cta" to={exploreListUrl()}>Khám phá phòng <span aria-hidden="true">→</span></Link>
-      </section>
+      <PromoBanner />
 
       {recentSearches.length > 0 ? (
         <section className="hub-search" aria-label="Tìm kiếm gần đây">
