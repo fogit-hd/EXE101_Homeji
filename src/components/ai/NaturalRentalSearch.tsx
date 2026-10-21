@@ -67,7 +67,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
   const startOver = () => { cancelSearch(); previous.current = undefined; setResult(null); setText(''); setAsked(''); setError(''); requestAnimationFrame(() => queryInput.current?.focus()) }
   const form = <form className="natural-rental-search__form" onSubmit={event => { event.preventDefault(); void submit() }}>
     <label htmlFor="natural-rental-query" className="natural-rental-search__sr">{asked ? 'Thêm hoặc sửa yêu cầu' : 'Mô tả nhu cầu của bạn'}</label>
-    <textarea ref={queryInput} id="natural-rental-query" autoFocus maxLength={1000} value={text} disabled={loading} rows={1}
+    <textarea data-glass-exclude ref={queryInput} id="natural-rental-query" autoFocus maxLength={1000} value={text} disabled={loading} rows={1}
       onChange={event => setText(event.target.value)}
       onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void submit() } }}
       placeholder={asked ? 'Thêm yêu cầu, VD: gần Làng ĐH, có máy giặt…' : 'VD: 2 người, dưới 4 triệu, có bếp, không ở ghép'} />

@@ -35,7 +35,7 @@
 
 .natural-rental-search__form { display: flex; align-items: flex-end; gap: 8px; margin: 0 16px; padding: 6px 6px 6px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated); transition: border-color .15s ease, box-shadow .15s ease; }
 .natural-rental-search__panel > .natural-rental-search__form:last-child, .ai-suggest-review + .natural-rental-search__form { margin-top: 12px; }
-.natural-rental-search__form:focus-within { border-color: #00b14f; box-shadow: 0 0 0 3px rgba(0, 177, 79, .14); }
+.natural-rental-search__form:focus-within { border-color: var(--text-primary); box-shadow: none; }
 .natural-rental-search__form textarea { flex: 1; min-width: 0; min-height: 32px; max-height: 120px; padding: 6px 0; border: 0; outline: none; resize: none; background: transparent; color: var(--text-primary); font: inherit; font-size: 14px; line-height: 20px; field-sizing: content; }
 .natural-rental-search__form textarea:focus, .natural-rental-search__form textarea:focus-visible { outline: none; }
 .natural-rental-search__form textarea::placeholder { color: #8a939c; }
@@ -98,3 +98,13 @@
 .natural-rental-search__panel .rental-source-browser { margin: 12px 16px 0; padding-top: 10px; border-top: 1px solid #eef0f2; color: var(--text-secondary); font-size: 12.5px; }
 .natural-rental-search__panel .rental-source-browser summary { cursor: pointer; font-weight: 600; }
 .natural-rental-search__panel .rental-source-browser summary:hover { color: var(--text-heading); }
+
+/* The form owns one border; editable text must not gain a second glass shell. */
+:is(html:root #root,html:root body) .natural-rental-search__form textarea[data-glass-exclude],
+:is(html:root #root,html:root body) .natural-rental-search__form textarea[data-glass-exclude]:is(:focus,:focus-visible) {
+  border: 0; border-radius: 0; outline: none; box-shadow: none; background: transparent;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:is(html:root #root,html:root body) .natural-rental-search__form:focus-within { border-color: var(--text-primary); box-shadow: none; }
+.natural-rental-search__form textarea::placeholder { color: var(--text-secondary); opacity: 1; }
+@media(forced-colors:active) { .natural-rental-search__form:focus-within { border-color: Highlight; } }

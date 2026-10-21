@@ -1426,3 +1426,11 @@
     inset: auto;
   }
 }
+
+/* Units and values share the existing field boundary, including body portals. */
+:is(html:root #root,html:root body) .map-listings__range-inputs[data-glass-exclude] input,
+:is(html:root #root,html:root body) .map-listings__range-inputs[data-glass-exclude] input:is(:focus,:focus-visible) {
+  border: 0; border-radius: 0; outline: none; box-shadow: none; background: transparent;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+@media(forced-colors:active) { .map-listings__range-inputs label > div:focus-within { border-color: Highlight; } }

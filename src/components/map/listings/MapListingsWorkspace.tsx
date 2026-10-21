@@ -513,7 +513,7 @@ function FilterRange({ label, unit, draft, onChange }: {
 }) {
   return <fieldset className="map-listings__range-group">
     <legend>{label}</legend>
-    <div className="map-listings__range-inputs">
+    <div className="map-listings__range-inputs" data-glass-exclude>
       <label>Từ<div><input type="number" min="0" step="any" inputMode="decimal" aria-label={`${label} tối thiểu`}
         placeholder="Không giới hạn" value={draft.min} onChange={event => onChange({ ...draft, min: event.target.value })} /><span>{unit}</span></div></label>
       <span className="map-listings__range-dash" aria-hidden="true">—</span>
