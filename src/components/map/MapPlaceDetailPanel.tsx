@@ -1,3 +1,4 @@
+import { PhoneAction } from '../ui/PhoneAction'
 import { LiquidTabList } from '../ui/LiquidTabList'
 import { MotionTabs } from '../motion/MotionTabs'
 import { useTabTransition } from '../motion/useTabTransition'
@@ -990,7 +991,7 @@ export function MapPlaceDetailPanel({
               ) : null}
               {place.address ? <InfoRow icon="📍"><p>{place.address}</p></InfoRow> : null}
               {place.phone ? (
-                <InfoRow icon="📞"><a href={`tel:${place.phone}`}>{place.phone}</a></InfoRow>
+                <InfoRow icon="📞"><PhoneAction phone={place.phone}>{place.phone}</PhoneAction></InfoRow>
               ) : null}
             </div>
           ) : null}

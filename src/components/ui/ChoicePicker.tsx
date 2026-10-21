@@ -244,15 +244,15 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
       {children}
     </select>
     {invalid && <span className="choice-picker__error" role="alert">Vui lòng chọn một mục hợp lệ.</span>}
-    {expanded && portalHost && createPortal(<dialog ref={layer} id={panelId} className="choice-picker-layer" aria-label={title}
+    {expanded && portalHost && createPortal(<dialog ref={layer} id={panelId} className="choice-picker-layer" data-glass-exclude aria-label={title}
       onCancel={event => { event.preventDefault(); event.stopPropagation(); close() }}
       onClose={event => { event.stopPropagation(); setOpen(false) }}>
       <div className="choice-picker__scrim" onPointerDown={() => close()} aria-hidden="true" />
-      <section ref={panel} className="choice-picker__panel liquid-surface" aria-label={title}
+      <section ref={panel} className="choice-picker__panel" aria-label={title}
         onPointerDown={event => event.stopPropagation()} onMouseDown={event => event.stopPropagation()}
         onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close() } }}>
         <div className="choice-picker__handle" aria-hidden="true" />
-        <header className="choice-picker__heading"><div><span className="choice-picker__eyebrow">LỰA CHỌN CỦA BẠN</span><strong>{title}</strong></div>
+        <header className="choice-picker__heading"><div><strong>{title}</strong></div>
           <button className="choice-picker__close" type="button" aria-label="Đóng bảng chọn" onClick={() => close()}>×</button>
         </header>
         {searchable && <div className="choice-picker__search-wrap"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.6" /><path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.6" /></svg>

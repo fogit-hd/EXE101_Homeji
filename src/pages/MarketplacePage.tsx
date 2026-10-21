@@ -1780,7 +1780,7 @@ export function MarketplacePage({
                 <h3 id="food-preset-heading">Món phổ biến cho sinh viên</h3>
                 <p>Chọn để điền nhanh giá gợi ý. Ảnh chỉ là mẫu có giấy phép; hãy thay bằng ảnh món thật trước khi bán.</p>
               </div>
-              <div className="food-preset-grid">
+              <div className="food-preset-grid" data-glass-exclude>
                 {FOOD_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
@@ -1895,7 +1895,7 @@ export function MarketplacePage({
             {sellerLocationPost ? (
               <div className="seller-location-lock">
                 <strong>{sellerLocationPost.address}</strong>
-                <span>Mọi tin bán của bạn dùng chung điểm này để người mua dễ nhận hàng.</span>
+
               </div>
             ) : (
               <AddressAutocomplete

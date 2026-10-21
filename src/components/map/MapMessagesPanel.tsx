@@ -1,3 +1,5 @@
+import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
+import { createAsyncActionGate } from '../../lib/asyncActionGate'
 import { LiquidTabList } from '../ui/LiquidTabList'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -423,6 +425,8 @@ export function MapMessagesPanel({
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const sendGate = useRef(createAsyncActionGate())
+  const gpsGate = useRef(createAsyncActionGate())
   const [error, setError] = useState<string | null>(null)
   const [threadVisible, setThreadVisible] = useState(
     isFloatingThread || Boolean(initialConversationId),
@@ -562,7 +566,7 @@ export function MapMessagesPanel({
         title: post.title,
         price: post.price,
         thumb: post.mediaUrls?.find((url) => url.trim()) ?? null,
-        href: `/?section=marketplace&market=${post.listingType === 2 ? 'food' : 'browse'}`,
+        href: marketplaceItemUrl(post),
       })).catch(() => undefined)
     }
     return () => { cancelled = true }
@@ -664,7 +668,7 @@ export function MapMessagesPanel({
   }
 
   const appendSentMessage = (msg: PostMessage) => {
-    setMessages((prev) => [...prev, msg])
+    setMessages((prev) => prev.some(item => item.id === msg.id) ? prev : [...prev, msg])
     setConversations((prev) => {
       const next = prev.map((c) =>
         c.id === activeId
@@ -682,7 +686,7 @@ export function MapMessagesPanel({
     })
   }
 
-  const sendBody = async (body: string) => {
+  const sendBody = async (body: string) => sendGate.current(async () => {
     if (!activeId || !body.trim() || sending) return
     setSending(true)
     setError(null)
@@ -697,7 +701,7 @@ export function MapMessagesPanel({
     } finally {
       setSending(false)
     }
-  }
+  })
 
   const handleSend = async () => {
     await sendBody(draft)
@@ -722,7 +726,7 @@ export function MapMessagesPanel({
     setAttachMode(null)
   }
 
-  const handleSendImages = async () => {
+  const handleSendImages = async () => sendGate.current(async () => {
     if (!activeId || imageFiles.length === 0 || sending) return
     setSending(true)
     setError(null)
@@ -737,13 +741,13 @@ export function MapMessagesPanel({
     } finally {
       setSending(false)
     }
-  }
+  })
 
   const sendLocation = async (payload: ChatLocationPayload) => {
     await sendBody(encodeChatLocation(payload))
   }
 
-  const handleSendGps = async () => {
+  const handleSendGps = async () => gpsGate.current(async () => {
     let loc = userLocation
     if (!loc) {
       try {
@@ -761,7 +765,7 @@ export function MapMessagesPanel({
       lat: loc.lat,
       lng: loc.lng,
     })
-  }
+  })
 
   const handleSendAddress = async () => {
     if (!addressPlace) {
@@ -806,7 +810,7 @@ export function MapMessagesPanel({
 
 
   return (
-    <div
+    <div data-glass-exclude
       className={`map-messages${embedded ? ' is-embedded' : ''}${
         isWorkspace ? ' is-workspace' : ''
       }${isFloating ? ' is-floating' : ''}${isFloatingInbox ? ' is-floating-inbox' : ''}${

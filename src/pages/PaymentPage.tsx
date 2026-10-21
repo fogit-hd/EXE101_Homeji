@@ -400,8 +400,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <div className="pay-plan__actions">
                     {!isPremium ? (
                       <span className="pay-btn pay-btn--current">{isCurrent ? '✓ Gói hiện tại' : 'Gói miễn phí'}</span>
-                    ) : isCurrent ? (
-                      <span className="pay-btn pay-btn--current">✓ Đang dùng</span>
+                    ) : isCurrent && !pickingPay ? (
+                      <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={() => { setSelectedCode(plan.code); setPayPickerCode(plan.code) }}>Gia hạn gói</button>
                     ) : pickingPay ? (
                       <motion.div
                         initial={{ opacity: 0, y: 4 }}

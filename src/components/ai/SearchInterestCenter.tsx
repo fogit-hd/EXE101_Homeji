@@ -57,6 +57,30 @@ function OwnedSearchInterestCenter() {
     }, 700)
     return () => { cancelled = true; window.clearTimeout(capture) }
   }, [isAuthenticated, owner, current?.settings.enabled, location.search, apply])
+  const rankedRooms = useRef('')
+  useEffect(() => {
+    if (!owner || !current?.settings.enabled || busy) return
+    let cancelled = false
+    const generation = latest.current
+    const refresh = async () => {
+      if (document.hidden) return
+      try { const value = await getSearchInterests(); if (!cancelled && latest.current === generation) apply(value) } catch { /* Keep the last successful snapshot. */ }
+    }
+    const timer = window.setInterval(() => void refresh(), 60000)
+    window.addEventListener('focus', refresh)
+    return () => { cancelled = true; window.clearInterval(timer); window.removeEventListener('focus', refresh) }
+  }, [owner, current?.settings.enabled, busy, apply])
+  const roomSignature = current?.rooms.map(room => room.post.id).sort().join(',') ?? ''
+  useEffect(() => {
+    if (!owner || !current?.settings.enabled || !current.settings.aiEnabled || !roomSignature || busy) return
+    const signature = owner + ':' + roomSignature
+    if (rankedRooms.current === signature) return
+    rankedRooms.current = signature
+    let cancelled = false
+    const generation = latest.current
+    void rankInterestRooms().then(value => { if (!cancelled && latest.current === generation) apply(value) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [owner, current?.settings.enabled, current?.settings.aiEnabled, roomSignature, busy, apply])
   const closePanel = () => {
     setOpen(false)
     const params = new URLSearchParams(location.search)

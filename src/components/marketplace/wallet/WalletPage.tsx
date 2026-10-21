@@ -427,13 +427,13 @@ function DepositPanel({
       <section className="wallet-card wallet-deposit__card">
         <header className="wallet-card__head">
           <p className="wallet-card__eyebrow">NẠP TIỀN</p>
-          <h2>Thêm tiền. Sẵn sàng mua sắm.</h2>
+          <h2>Nạp tiền vào ví</h2>
           <p>Chọn số tiền và phương thức thanh toán của bạn.</p>
         </header>
 
         <label className="wallet-field">
           <span>Bạn muốn nạp bao nhiêu?</span>
-          <span className="wallet-input wallet-deposit__amount">
+          <span data-glass-exclude className="wallet-input wallet-deposit__amount">
             <input
               inputMode="numeric"
               autoComplete="off"
@@ -458,7 +458,7 @@ function DepositPanel({
 
         <fieldset className="wallet-field wallet-deposit__presets">
           <legend className="sr-only">Chọn nhanh số tiền</legend>
-          <div className="wallet-amounts">
+          <div className="wallet-amounts" data-glass-exclude>
             {QUICK_AMOUNTS.map((value) => (
               <button
                 key={value}
@@ -478,7 +478,7 @@ function DepositPanel({
 
         <fieldset className="wallet-field">
           <legend>Thanh toán qua</legend>
-          <div className="wallet-methods">
+          <div className="wallet-methods" data-glass-exclude>
             <button
               type="button"
               className={method === 'momo' ? 'is-active' : ''}
@@ -658,7 +658,7 @@ function WithdrawPanel({
           <BankNameInput value={bankName} onChange={setBankName} error={fieldError.bankName} />
           <label className="wallet-field">
             <span>Số tài khoản</span>
-            <span className="wallet-input">
+            <span data-glass-exclude className="wallet-input">
               <Icon src={WALLET_ASSETS.card} />
               <input
                 inputMode="numeric"
@@ -672,7 +672,7 @@ function WithdrawPanel({
           </label>
           <label className="wallet-field">
             <span>Tên chủ tài khoản</span>
-            <span className="wallet-input">
+            <span data-glass-exclude className="wallet-input">
               <Icon src={WALLET_ASSETS.userCheck} />
               <input
                 value={accountHolder}
@@ -685,7 +685,7 @@ function WithdrawPanel({
           </label>
           <label className="wallet-field">
             <span>Số tiền muốn rút</span>
-            <span className="wallet-input">
+            <span data-glass-exclude className="wallet-input">
               <Icon src={WALLET_ASSETS.banknote} />
               <input
                 inputMode="numeric"

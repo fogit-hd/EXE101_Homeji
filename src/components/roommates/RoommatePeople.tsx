@@ -98,8 +98,8 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
   }
 
   return <section className="roommate-people" aria-label="Tìm bạn theo nhu cầu và lối sống">
-    <header><h2>Tìm người cùng ở</h2><p>Kết nối trước khi chọn phòng, hoặc tìm bạn ghép vào chỗ đang ở.</p></header>
-    <form className="roommate-people__profile" onSubmit={event => void savePreferences(event)}>
+    <header><h2>Tìm người cùng ở</h2><a href="#roommate-discovery-settings">Hồ sơ tìm bạn của tôi</a><p>Kết nối trước khi chọn phòng, hoặc tìm bạn ghép vào chỗ đang ở.</p></header>
+    <form className="roommate-people__profile" id="roommate-discovery-settings" data-glass-exclude onSubmit={event => void savePreferences(event)}>
       <fieldset disabled={!profileReady || saving}>
         <legend>Nhu cầu của bạn</legend>
         <div className="roommate-people__intents">{INTENTS.map(option => <label key={option.value}>

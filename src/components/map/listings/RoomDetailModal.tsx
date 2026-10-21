@@ -1,3 +1,4 @@
+import { PhoneAction } from '../../ui/PhoneAction'
 import { useMotionPresence } from '../../motion/useMotionPresence'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
@@ -467,9 +468,9 @@ export function RoomDetailModal({
                 <button type="button" className="room-detail__message" disabled={actionBusy} onClick={() => void handleMessage()}>
                   <img src={messageCircleUrl} alt="" width={19} height={19} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin ngay'}
                 </button>
-                {phoneHref ? <a className="room-detail__call liquid-action" href={phoneHref}>
+                {phoneHref ? <PhoneAction className="room-detail__call" phone={phone}>
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>Gọi điện
-                </a> : null}
+                </PhoneAction> : null}
                 <button
                   type="button"
                   className="room-detail__book"

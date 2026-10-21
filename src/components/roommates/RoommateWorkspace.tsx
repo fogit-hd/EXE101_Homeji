@@ -30,8 +30,8 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
   const selectTab = (next: Tab) => setParams(previous => { const result = new URLSearchParams(previous); result.set('roommateTab', next); return result })
 
   return <div className="roommate-workspace">
-    {isRenter ? <section className="roommate-workspace__lifestyle">
-      <div><h2>Lối sống của bạn</h2><p>Giờ ngủ, thú cưng, hút thuốc, ngân sách và khu vực muốn ở.</p></div>
+    {isRenter ? <section className="roommate-workspace__lifestyle" data-glass-exclude>
+      <div><h2>Hồ sơ ở ghép</h2><p>Ngân sách, khu vực và thói quen sinh hoạt.</p></div>
       <button type="button" className="btn roommate-workspace__lifestyle-toggle" aria-expanded={editingLifestyle}
         aria-controls="roommate-lifestyle" onClick={() => setEditingLifestyle(open => !open)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

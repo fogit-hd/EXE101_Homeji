@@ -1,3 +1,4 @@
+import { PhoneAction } from '../ui/PhoneAction'
 import { useEffect, useState } from 'react'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { ContentSkeleton } from '../ContentSkeleton'
@@ -68,9 +69,9 @@ export function MapPlacePreview({
             </p>
           ) : null}
           {shown.phone ? (
-            <a className="map-place-preview__phone" href={`tel:${shown.phone}`}>
+            <PhoneAction className="map-place-preview__phone" phone={shown.phone}>
               {shown.phone}
-            </a>
+            </PhoneAction>
           ) : null}
           <p className="map-place-preview__note">
             Thông tin lấy từ Google Places — xem ngay trong Homeji, không mở

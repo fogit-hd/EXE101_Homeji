@@ -27,6 +27,7 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
   const { profile } = useAuth()
   const [invitations, setInvitations] = useState<RoommateInvitation[]>([])
   const [actionError, setActionError] = useState('')
+  const [filter, setFilter] = useState<'all' | 'received' | 'sent' | 'accepted'>('all')
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const handleAction = async (
@@ -59,6 +60,10 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
     } : i)))
   }
 
+  const received = invitations.filter(inv => inv.receiverId === profile?.id && inv.status === RoommateInvitationStatus.Pending)
+  const visible = invitations.filter(inv => filter === 'all' || (filter === 'received' && received.includes(inv)) || (filter === 'sent' && inv.senderId === profile?.id) || (filter === 'accepted' && inv.status === RoommateInvitationStatus.Accepted))
+    .sort((a, b) => Number(received.includes(b)) - Number(received.includes(a)) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
   return (
     <div className={embedded ? 'map-embed roommate-embed' : 'roommate-page'}>
       {!embedded ? (
@@ -69,22 +74,26 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
         </header>
       ) : null}
       <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
-      <Link to="/?section=profile&profileTab=lifestyle" className="btn btn-secondary">
+      {!embedded && <Link to="/?section=profile&profileTab=lifestyle" className="btn btn-secondary">
         Cập nhật lối sống của tôi
-      </Link>
+      </Link>}
 
+      <header className="roommate-inbox__heading"><div><h2>Kết nối của bạn</h2><p>{showLoader ? 'Đang tải lời mời…' : received.length ? `${received.length} lời mời đang chờ bạn phản hồi` : 'Lời mời và những người bạn đã kết nối'}</p></div><span className="roommate-inbox__total">{invitations.length} lời mời</span></header>
+      <div className="roommate-inbox__filters" role="group" aria-label="Lọc lời mời" data-glass-exclude>
+        {([['all', 'Tất cả'], ['received', 'Cần phản hồi'], ['sent', 'Đã gửi'], ['accepted', 'Đã kết nối']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
+      </div>
       {showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={error} />
           : <InvitationsSkeleton />
-      ) : invitations.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="roommate-empty">
-          <p className="roommate-empty__title">Chưa có lời mời nào</p>
+          <p className="roommate-empty__title">{invitations.length ? 'Không có lời mời trong mục này' : 'Chưa có lời mời nào'}</p>
           <p className="roommate-empty__copy">Mở tab Tìm bạn để kết nối theo nhu cầu và lối sống, kể cả khi chưa chọn phòng.</p>
         </div>
       ) : (
         <div className="roommate-grid">
-          {invitations.map((inv) => {
+          {visible.map((inv) => {
             const isReceiver = profile?.id === inv.receiverId
             const isSender = profile?.id === inv.senderId
             const statusClass = inv.status === RoommateInvitationStatus.Accepted
@@ -93,10 +102,10 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
                 ? 'is-pending'
                 : 'is-closed'
             return (
-              <article key={inv.id} className={`roommate-card ${statusClass}`}>
+              <article key={inv.id} className={`roommate-card ${statusClass}`} data-glass-exclude>
                 {/* Avatar placeholder */}
                 <div className="roommate-card__avatar" aria-hidden>
-                  {isReceiver ? 'G' : 'N'}
+                  {(isReceiver ? inv.senderDisplayName || 'Người gửi' : inv.receiverDisplayName || 'Người nhận').trim().charAt(0).toUpperCase()}
                 </div>
                 <div className="roommate-card__body">
                   <div className="roommate-card__top">

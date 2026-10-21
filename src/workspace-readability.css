@@ -1,0 +1,141 @@
+/* Dense workspaces use quiet surfaces; optical controls must not frame their content. */
+html:root :is(#root, body) .choice-picker__panel {
+  background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border);
+  border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px #0002; backdrop-filter: none;
+}
+html:root body .choice-picker__heading { padding: 8px 10px; }
+html:root body .choice-picker__heading strong { font-size: 14px; }
+html:root body .choice-picker__foot, html:root body .choice-picker__radio { display: none; }
+html:root body .choice-picker__options { outline: none; padding: 0; }
+html:root body .choice-picker__option { border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--text-primary); }
+html:root body .choice-picker__option::before, html:root body .choice-picker__option::after { display: none; }
+html:root body .choice-picker__option:is([aria-selected='true'],[data-active]) { background: var(--surface-muted); color: var(--text-heading); }
+html:root body .choice-picker__option[data-active] { outline: 1px solid var(--text-secondary); outline-offset: -2px; }
+html:root #root .food-preset-grid button { border-radius: 10px; border: 1px solid var(--border); padding: 8px; background: var(--surface-elevated); color: var(--text-heading); box-shadow: none; }
+html:root #root .food-preset-grid button::before, html:root #root .food-preset-grid button::after { display: none; }
+html:root #root .food-preset-grid button strong { color: var(--hj-accent); }
+html:root #root .food-preset-grid img { border-radius: 6px; }
+html:root #root .wallet-input { background: var(--surface-input); border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+html:root #root .wallet-input:focus-within { border-color: var(--text-primary); outline: none; box-shadow: none; }
+html:root #root .wallet-input input { background: transparent !important; color: var(--text-primary); border: 0 !important; border-radius: 0; box-shadow: none !important; outline: none !important; min-width: 0; }
+html:root #root .wallet-input input::before, html:root #root .wallet-input input::after { display: none; }
+html:root #root .wallet-deposit__amount { height: 70px; padding: 10px 16px; }
+html:root #root .wallet-deposit__amount input { font-size: clamp(24px,4vw,34px); font-weight: 650; font-variant-numeric: tabular-nums; }
+html:root #root .wallet-deposit__card { max-width: 720px; border-radius: 12px; }
+html:root #root .wallet-deposit__card h2 { font-size: 26px; }
+html:root #root .wallet-methods button { border-radius: 10px; background: var(--surface-elevated); box-shadow: none; }
+html:root #root .wallet-methods button::before, html:root #root .wallet-methods button::after { display: none; }
+html:root #root .wallet-methods button.is-active { border: 2px solid var(--hj-accent); }
+html:root #root .wallet-table { min-width: 800px; table-layout: auto; }
+html:root #root .wallet-table th, html:root #root .wallet-table td { border-color: var(--border); text-align: left; line-height: 1.5; }
+html:root #root .wallet-table td:nth-child(3) { max-width: 170px; overflow-wrap: anywhere; font-family: ui-monospace,monospace; font-size: 11px; }
+html:root #root .wallet-table td:nth-last-child(-n+2) { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+html:root #root .wallet-table th:nth-last-child(-n+2) { text-align: right; }
+html:root #root .wallet-table td:nth-child(2), html:root #root .wallet-pill { white-space: nowrap; }
+html:root #root .wallet-table-wrap { overflow-x: auto; }
+html:root #root .wallet-cards li { border-color: var(--border); padding: 18px 0; grid-template-columns: minmax(0,1fr) auto; align-items: start; }
+html:root #root .wallet-cards .wallet-tx { grid-column: 1; }
+html:root #root .wallet-cards li > :is(.is-in,.is-out) { grid-column: 2; grid-row: 1; white-space: nowrap; font-weight: 700; }
+html:root #root .wallet-cards li > small { grid-column: 1 / -1; overflow-wrap: anywhere; }
+html:root #root .wallet-cards .wallet-pill { grid-column: 1 / -1; justify-self: start; }
+@media(max-width:1100px) {
+  html:root #root .wallet-table-wrap { display: none; }
+  html:root #root .wallet-cards { display: block; }
+}
+html:root #root .pay-table__row { grid-template-columns: minmax(180px,1.5fr) minmax(130px,1fr) minmax(135px,1fr) 120px 110px; gap: 16px; border-radius: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text-primary); box-shadow: none; }
+html:root #root .pay-table__row.is-active { background: var(--hj-accent-soft); }
+html:root #root .pay-table__row small { overflow-wrap: anywhere; font-size: 11px; }
+html:root #root .pay-table__amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
+html:root #root .pay-table__row::before, html:root #root .pay-table__row::after { display: none; }
+html:root #root .pay-plan { border-radius: 12px; box-shadow: none; padding: 26px 22px; }
+html:root #root .pay-plan.is-current { border: 2px solid var(--hj-accent); }
+html:root #root .pay-plan__ribbon { position: static; display: inline-block; margin-bottom: 12px; }
+html:root #root .pay-plan__price { white-space: nowrap; font-size: 30px; }
+@media(max-width:1250px) { html:root #root .pay-table__head { display: none; } html:root #root .pay-table__row { grid-template-columns: minmax(0,1fr) auto; } html:root #root .pay-table__plan { grid-column: 1 / -1; } html:root #root .pay-table__time { grid-column: 1; } html:root #root .pay-table__amount { grid-column: 2; grid-row: 2; } }
+html:root #root .roommate-workspace { gap: 24px; }
+html:root #root .roommate-workspace__lifestyle { order: 3; background: transparent; border-radius: 0; border: 0; border-top: 1px solid var(--border); padding: 20px 0; }
+html:root #root .roommate-workspace__lifestyle h2 { font-size: 17px; }
+html:root #root .roommate-workspace__lifestyle-toggle.btn { min-height: 40px; border-radius: 8px; padding: 8px 14px; box-shadow: none; }
+html:root #root .roommate-inbox__heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+html:root #root .roommate-inbox__heading h2 { margin: 0 0 6px; font-size: 26px; }
+html:root #root .roommate-inbox__heading p { margin: 0; color: var(--text-secondary); }
+html:root #root .roommate-inbox__total { white-space: nowrap; color: var(--text-secondary); font-size: 13px; }
+html:root #root .roommate-inbox__filters { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+html:root #root .roommate-inbox__filters button { padding: 9px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font: inherit; font-size: 14px; }
+html:root #root .roommate-inbox__filters button[aria-pressed='true'] { background: var(--hj-accent-soft); color: var(--text-heading); font-weight: 700; }
+html:root #root .roommate-grid { display: flex; flex-direction: column; gap: 0; }
+html:root #root .roommate-card { grid-template-columns: 44px minmax(0,1fr); border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 22px 8px; background: transparent; box-shadow: none; transform: none; }
+html:root #root .roommate-card__avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--hj-accent-soft); color: var(--hj-accent); font-style: normal; font-size: 18px; }
+html:root #root .roommate-card__body { gap: 7px; }
+html:root #root .roommate-card__name { font-size: 17px; color: var(--text-heading); }
+html:root #root .roommate-card__post { white-space: normal; color: var(--text-primary); font-size: 14px; }
+html:root #root :is(.roommate-card__role,.roommate-card__date,.roommate-empty__copy) { color: var(--text-secondary); }
+html:root #root .roommate-card__status { background: var(--surface-muted); color: var(--text-secondary); padding: 4px 8px; border-radius: 5px; }
+html:root #root .roommate-card__status.is-pending { background: var(--hj-accent-soft); color: var(--hj-accent); }
+html:root #root .roommate-empty { border: 0; background: var(--surface-muted); border-radius: 12px; padding: 60px 20px; }
+html:root #root .roommate-empty__title { color: var(--text-heading); }
+html:root #root .roommate-card__actions .btn { border-radius: 7px; box-shadow: none; min-height: 40px; padding: 8px 16px; }
+html:root #root .map-listings__card { border-radius: 0; border: 0; border-bottom: 1px solid var(--border); padding: 16px 4px; background: transparent; box-shadow: none; }
+html:root #root .map-listings__card.is-selected { background: var(--hj-accent-soft); border-left: 3px solid var(--hj-accent); padding-left: 10px; }
+html:root #root .map-listings__card-hit { gap: 12px; padding: 0 36px 0 0; grid-template-columns: 96px minmax(0,1fr); }
+html:root #root .map-listings__card-photo { width: 96px; height: 116px; border-radius: 8px; }
+html:root #root .map-listings__price { font-size: 19px; white-space: nowrap; }
+html:root #root .map-listings__price small { font-size: 11px; font-weight: 400; }
+html:root #root .map-listings__name { font-size: 15px; line-height: 1.45; }
+html:root #root .map-listings__address { font-size: 13px; line-height: 1.45; }
+html:root #root .map-listings__save { width: 30px; height: 34px; border-radius: 6px; box-shadow: none; top: 16px; right: 5px; }
+html:root #root .map-listings__card-open { padding: 8px 0 0 108px; min-height: 36px; font-size: 13px; }
+html:root body .room-photo-viewer button { color: #fff !important; background: #25343b !important; border: 1px solid #87979e; box-shadow: none; }
+html:root body .room-photo-viewer button:disabled { opacity: .5; }
+html:root[data-theme='dark'] #root :is(.map-messages.is-workspace,.map-messages__split,.map-messages__inbox,.map-messages__thread,.map-messages__thread-empty,.map-messages__thread-head,.map-messages__composer-wrap,.map-messages__search-bar) { background: var(--surface) !important; color: var(--text-primary); border-color: var(--border); }
+html:root[data-theme='dark'] #root .map-messages__row { background: transparent; color: var(--text-primary); border-color: var(--border); }
+html:root[data-theme='dark'] #root .map-messages__row.is-active { background: var(--hj-accent-soft); }
+html:root[data-theme='dark'] #root :is(.map-messages__empty,.map-messages__meta small,.map-messages__peer-sub) { color: var(--text-secondary); }
+html:root[data-theme='dark'] #root :is(.map-messages__inbox-search,.map-messages__ctx-card,.map-messages__composer) { background: var(--surface-input); color: var(--text-primary); }
+html:root[data-theme='dark'] #root :is(.map-messages__search-bar input,.map-messages__inbox-search input,.map-messages__composer input) { color: var(--text-primary); }
+html:root[data-theme='dark'] #root .rental-map__btn img { filter: brightness(0) invert(1); }
+html:root[data-theme='dark'] #root .interest-launch { color: var(--text-heading); background: var(--surface-elevated); }
+html:root[data-theme='dark'] #root input[type='number'] { color-scheme: dark; }
+html:root #root .profile-badge.is-premium { background: var(--hj-accent-soft); color: var(--hj-accent); border: 1px solid var(--hj-accent); font-weight: 700; }
+html:root #root .profile-badge.is-premium::before { content: '✓ '; }
+
+html:root #root .profile-hero.is-premium .profile-hero__avatar { border: 2px solid var(--hj-accent); box-shadow: 0 0 0 4px var(--hj-accent-soft); }
+html:root #root .profile-hero.is-premium .profile-hero__name::after { content: '✓ Premium'; display: inline-block; margin-left: 10px; padding: 4px 8px; border-radius: 6px; background: var(--hj-accent-soft); color: var(--hj-accent); font-size: 12px; vertical-align: middle; }
+
+html:root #root :is(.roommate-workspace,.wallet-workspace,.map-messages) [role='tab'] { color: var(--text-secondary) !important; }
+html:root #root :is(.roommate-workspace,.wallet-workspace,.map-messages) [role='tab'][aria-selected='true'] { color: var(--text-heading) !important; }
+html:root #root .roommate-card__actions .btn-primary { background: #087f8c; color: #fff; }
+html:root #root .wallet-methods button { border-radius: 10px !important; background: var(--surface-input) !important; box-shadow: none !important; }
+html:root #root .wallet-amounts button { border-radius: 6px !important; box-shadow: none !important; background: var(--surface-input); color: var(--text-heading); }
+html:root[data-theme='dark'] #root .map-messages { --mm-text: #e0eaf0; --mm-muted: #b2c4ce; --mm-faint: #b2c4ce; --mm-line: #405966; --mm-bg: #0e1922; --mm-mint: #193f47; --mm-ink: #e0eaf0; --mm-green-ink: #80d9db; }
+html:root[data-theme='dark'] #root .map-messages__bubbles { background: var(--surface-muted) !important; }
+html:root[data-theme='dark'] #root :is(.map-messages__row.is-active,.map-messages__ctx-card,.map-messages__ctx-pop,.map-messages__attach-menu,.map-messages__day,.map-messages__bubble-body) { background: var(--surface-elevated) !important; color: var(--text-primary); }
+html:root[data-theme='dark'] #root :is(.map-messages__inbox-title,.map-messages__peer-name,.map-messages__meta strong,.map-messages__ctx-copy strong,.map-messages__loc-title) { color: var(--text-heading) !important; }
+html:root[data-theme='dark'] #root :is(.map-messages__ctx-copy b,.map-messages__loc-coords,.map-messages__loc-address,.map-messages__inbox-filters button) { color: var(--text-secondary) !important; }
+html:root[data-theme='dark'] #root .map-messages__loc-btn { background: var(--hj-accent-soft) !important; color: var(--hj-accent) !important; }
+html:root[data-theme='dark'] #root .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body { background: #136263 !important; color: #fff; }
+
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row.is-active,.map-messages__ctx-card) { background: var(--surface-elevated) !important; color: var(--text-heading) !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row.is-active strong,.map-messages__ctx-copy strong,.map-messages__ctx-copy b) { color: var(--text-heading) !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button { color: var(--text-primary) !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__new-icon,.map-messages__thread-actions button,.map-messages__attach-btn) { color: var(--text-primary) !important; background: var(--surface-input) !important; }
+
+html:root #root .roommate-people__profile { order: 5; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 24px 0; background: transparent; }
+html:root #root .roommate-people__grid, html:root #root .roommate-posts__grid { display: flex; flex-direction: column; gap: 0; }
+html:root #root .roommate-people__person, html:root #root .roommate-posts__card { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 24px 4px; background: transparent; box-shadow: none; }
+html:root #root .roommate-people__person { display: grid; grid-template-columns: minmax(0,1fr) minmax(200px,1fr); gap: 14px 30px; }
+html:root #root .roommate-people__person-header { grid-column: 1 / -1; }
+html:root #root .roommate-people__person dl { grid-column: 2; grid-row: 2 / span 2; }
+html:root #root .roommate-people__person button { justify-self: start; border-radius: 7px; }
+html:root #root .roommate-people__person .btn-primary { background: #087f8c; color: #fff; box-shadow: none; }
+html:root #root .roommate-people__intents label { border-radius: 8px; background: var(--surface-elevated); }
+html:root #root .roommate-posts__cost { border: 0; }
+html:root #root .roommate-posts__card h3 { font-size: 21px; }
+html:root #root .roommate-workspace__filters input { border-radius: 7px; box-shadow: none; }
+@media(max-width:640px) { html:root #root .roommate-people__person { grid-template-columns: minmax(0,1fr); } html:root #root .roommate-people__person dl { grid-column: auto; grid-row: auto; } }
+
+html:root #root .seller-location-lock { background: transparent; border: 0; border-left: 2px solid var(--border); padding: 8px 12px; }
+
+/* One readable contract for primary actions, including glass-rendered controls. */
+html:root :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: #087f8c !important; color: #fff !important; --glass-ink: #fff; }
+html:root[data-theme='dark'] :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: #80d9db !important; color: #103039 !important; --glass-ink: #103039; }

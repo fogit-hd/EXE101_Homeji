@@ -285,7 +285,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         </p>
       </header>
 
-      <section className="profile-hero map-motion-fade-up">
+      <section className={`profile-hero map-motion-fade-up${profile?.isPremium ? " is-premium" : ""}`}>
         <div className="profile-hero__avatar-wrap" aria-busy={avatarBusy}>
           <button
             type="button"
