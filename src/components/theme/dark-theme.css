@@ -120,3 +120,48 @@ html[data-theme='dark'] :is(.guest-map__list, .guest-map__map-frame) {
 }
 html[data-theme='dark'] :is(.guest-map__status, .guest-map__count, .guest-map__more) { color: var(--text-secondary); }
 html[data-theme='dark'] .guest-map__more-link { color: var(--hj-accent); }
+
+/* Pair component surfaces with their ink; global heading colors alone cannot
+   repair a component that still paints a light background. */
+html[data-theme='dark'] #root .map-appointments {
+  --hj-muted: var(--text-secondary);
+  --hj-accent: #80d9db;
+  --appointment-solid: var(--surface-elevated);
+}
+html[data-theme='dark'] #root .map-appointments :is(.map-appointments__cal, .map-appointments__prep, .map-appointments__month-sum, .map-appointments__tl-card, .map-appointments__reschedule) {
+  background: var(--surface-elevated); color: var(--text-primary); border-color: var(--border);
+}
+html[data-theme='dark'] #root .map-appointments :is(.map-appointments__cal-weekdays, .map-appointments__prep-list label) { color: var(--text-secondary); }
+html[data-theme='dark'] #root .map-appointments :is(.map-appointments__cal-day, .map-appointments__cal-nav button, .map-appointments__actions button, .map-appointments__view-toggle button) {
+  background: var(--surface-input); color: var(--text-primary); background-image: none;
+}
+html[data-theme='dark'] #root .map-appointments .map-appointments__cal-day.is-out { color: var(--text-secondary); }
+html[data-theme='dark'] #root .map-appointments :is(.map-appointments__cal-day.is-selected, .map-appointments__view-toggle button.is-active, .map-appointments__actions button.is-primary, .map-appointments__reschedule-btn--save, .map-appointments__add-btn) {
+  background: var(--action-primary); color: var(--action-on-primary); background-image: none;
+}
+html[data-theme='dark'] #root .map-appointments :is(.map-appointments__pill--confirmed, .map-appointments__month-chips .is-ok) { background: #214c3d; color: #b7edce; }
+html[data-theme='dark'] #root .map-appointments :is(.map-appointments__pill--done, .map-appointments__pill--muted) { background: var(--surface-input); color: var(--text-secondary); }
+html[data-theme='dark'] #root .legal-page { background: var(--surface-muted); color: var(--text-primary); }
+html[data-theme='dark'] #root .legal-page__card { background: var(--surface-elevated); border-color: var(--border); }
+html[data-theme='dark'] #root .legal-page :is(h1, h2) { color: var(--text-heading); }
+html[data-theme='dark'] #root .legal-page :is(p, .legal-page__intro, .legal-page__updated) { color: var(--text-secondary); }
+html[data-theme='dark'] #root .legal-page :is(a, .legal-page__eyebrow) { color: var(--hj-accent); }
+html[data-theme='dark'] #root .legal-page__content section { border-color: var(--border); }
+html[data-theme='dark'] .app-toast--error { background: #452b32; color: #ffd0d0; border-color: #a9646b; }
+html[data-theme='dark'] .app-toast--warning { background: #443a26; color: #ffe1a3; border-color: #9f8550; }
+html[data-theme='dark'] .app-toast--success { background: #214c3d; color: #b7edce; border-color: #538e70; }
+html[data-theme='dark'] .app-toast p { color: inherit; }
+html[data-theme='dark'] body .app-toast .app-toast__close { color: inherit; background: transparent; }
+html[data-theme='dark'] #root .hj-action__badge { background: #9e3724; color: #ffffff; }
+html[data-theme='dark'] #root .hj-notify__tab-count { background: #214c3d; color: #b7edce; }
+html[data-theme='dark'] #root .food-rail__address:disabled { opacity: 1; }
+html[data-theme='dark'] #root .food-rail__address strong { color: var(--text-heading); }
+html[data-theme='dark'] #root .food-rail__address small { color: var(--text-secondary); }
+html[data-theme='dark'] #root .natural-rental-search__close { color: var(--text-secondary); }
+html[data-theme='dark'] #root .ai-suggest-review__caveats.is-warn .ai-suggest-review__caveats-toggle { color: #ffe1a3; }
+html[data-theme='dark'] #root .guest-map { background: var(--surface-muted); }
+html[data-theme='dark'] #root .guest-map__field span { color: var(--text-secondary); }
+html[data-theme='dark'] #root .guest-map__field .choice-picker__value { color: var(--text-primary); }
+html[data-theme='dark'] #root .guest-map__map-fallback { background: var(--surface-input); color: var(--text-secondary); }
+html[data-theme='dark'] #root .guest-preview__photo > span { color: var(--text-secondary); }
+html[data-theme='dark'] #root .guest-preview__photo { background: var(--surface-input); }

@@ -102,14 +102,14 @@ export function PromoBanner() {
             </h2>
             <p className="hub-promo__sub">{slide.sub}</p>
             {slide.to ? (
-              <Link className="hub-promo__cta liquid-action" to={slide.to} style={{ '--promo-accent': slide.accent } as CSSProperties}>
+              <Link data-glass-exclude className="hub-promo__cta liquid-action" to={slide.to} style={{ '--promo-accent': slide.accent } as CSSProperties}>
                 {ctaLabel}
               </Link>
             ) : (
               <button
                 ref={ctaRef}
                 type="button"
-                className="hub-promo__cta liquid-action"
+                data-glass-exclude className="hub-promo__cta liquid-action"
                 style={{ '--promo-accent': slide.accent } as CSSProperties}
                 onClick={() => toggleHomejiAi(ctaRef.current, true)}
               >
