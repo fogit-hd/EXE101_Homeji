@@ -1,3 +1,4 @@
+import { WALLET_HISTORY_PATH } from '../lib/marketplaceNavigation'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyReceipts, type TransactionReceipt } from '../api/receipts'
@@ -63,7 +64,7 @@ export function ReceiptsPage() {
   return <div className="container page receipts-page" data-glass-exclude>
     <header className="receipts-page__header"><div><p className="receipts-eyebrow">VÍ HOMEJI / BIÊN NHẬN</p>
       <h1 className="page-title">Giao dịch của bạn</h1><p>Xem lại biên nhận và trạng thái gửi email tại một nơi.</p></div>
-      <Link className="btn" to={marketplaceHref('wallet')}>Về ví Homeji →</Link></header>
+      <div className="receipts-actions"><Link className="btn" to={WALLET_HISTORY_PATH}>Xem lịch sử giao dịch</Link><Link className="btn" to={marketplaceHref('wallet')}>Về ví Homeji →</Link></div></header>
     <div className="receipts-toolbar"><p>Thời gian Việt Nam (UTC+7) · Không phải hóa đơn thuế/VAT.</p>
       <button type="button" className="btn" disabled={loading} onClick={() => load(page)}>Làm mới</button></div>
     {error && <p role="alert" className="receipts-error">{error}</p>}

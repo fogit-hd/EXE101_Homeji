@@ -1,3 +1,6 @@
+/** Protected entry preserves the wallet tab through sign-in. */
+export const WALLET_HISTORY_PATH = '/marketplace?market=wallet&wallet=history'
+
 export type MarketplaceTab =
   | 'food'
   | 'browse'
