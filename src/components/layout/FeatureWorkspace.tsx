@@ -1,15 +1,17 @@
-import { PageFrame } from '../chrome'
 import { Suspense, useCallback } from 'react'
-import { SectionSkeleton } from '../skeletons/RouteSkeleton'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationType, type Notification } from '../../api'
-import {
-  ActivitiesPage, MarketplacePage, MyPostsPage, NotificationsPage, PaymentPage,
-  ProfilePage, RoommateWorkspace, SavedPostsPage, WantedPostsPage,
-  MapAppointmentsPanel, MapMessagesPanel,
-} from '../../pages/deferredPages'
 import { mapMessagesUrl, mapPostUrl, mapSectionUrl } from '../../lib/mapDeepLinks'
-import type { MapAppSection } from '../map/MapAppPanel'
+import {
+  ActivitiesPage,
+  MapAppointmentsPanel, MapMessagesPanel,
+  MarketplacePage, MyPostsPage, NotificationsPage, PaymentPage,
+  ProfilePage, RoommateWorkspace, SavedPostsPage, WantedPostsPage,
+} from '../../pages/deferredPages'
+import { PageFrame } from '../chrome'
+import type { MapAppSection } from "../map/MapAppPanel.logic"
+import { SectionSkeleton } from '../skeletons/RouteSkeleton'
+
 import './FeatureWorkspace.css'
 
 const TITLES: Partial<Record<MapAppSection, string>> = {

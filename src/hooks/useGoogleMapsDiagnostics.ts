@@ -1,3 +1,4 @@
+import { useChangedInputs } from './useChangedInputs'
 import { useEffect, useMemo, useState } from 'react'
 import {
   buildShareableMapsErrorReport,
@@ -20,11 +21,14 @@ export function useGoogleMapsDiagnostics(
 
   const failed = Boolean(loadError || mapsFailed || authFailed)
 
+  if (useChangedInputs([failed, apiKey], true)) {
+    setProbing(failed && Boolean(apiKey))
+    setProbeStatus(undefined)
+    setProbeError(undefined)
+  }
   useEffect(() => {
     if (!failed || !apiKey) return
-
     let cancelled = false
-    setProbing(true)
     void probeMapsApiKey(apiKey).then((result) => {
       if (cancelled) return
       setProbeStatus(result.status)

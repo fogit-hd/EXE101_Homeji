@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { navigateMenu } from '../ui/menuNavigation'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { useAuthModal } from '../../contexts/AuthModalContext'
+import { useAuthModal } from "../../contexts/AuthModalContext.logic"
+import { navigateMenu } from '../ui/menuNavigation'
+
 import { pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import './GuestPosterMenu.css'
 

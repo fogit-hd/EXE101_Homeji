@@ -13,9 +13,10 @@ import {
   usePageFrameChromeActive,
   usePageFrameChromePortals,
 } from '../components/chrome'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MyPostsSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
 import { getErrorMessage } from '../lib/errors'
 import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/labels'
 import { mapPostUrl, mapSectionUrl } from '../lib/mapDeepLinks'

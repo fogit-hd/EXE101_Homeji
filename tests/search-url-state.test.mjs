@@ -40,7 +40,7 @@ function searchSession(initialUrl) {
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }) },
     'react-router-dom': { useLocation: () => location, useNavigate: () => move },
     '../lib/placeAutocomplete': {},
-    './GoogleMapsProvider': { useGoogleMaps: () => ({ isLoaded: false }) },
+    './GoogleMapsProvider.logic': { useGoogleMaps: () => ({ isLoaded: false }) },
     '../lib/searchQuery': { isUsefulSearchQuery: value => value.trim().length >= 2 },
     '../lib/localPlaceSearch': { relevantRecentLocations: items => items },
     '../lib/ga4': { trackFunnelEvent: () => {} },

@@ -1,26 +1,19 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
-import { SectionSkeleton } from '../skeletons/RouteSkeleton'
 import type { NotificationReadChange } from '../../pages/NotificationsPage'
 import {
-  SavedPostsPage, RoommateWorkspace, NotificationsPage, PaymentPage, ProfilePage,
-  MarketplacePage, WantedPostsPage, ActivitiesPage, MyPostsPage, MapAppointmentsPanel,
+  ActivitiesPage,
+  MapAppointmentsPanel,
+  MarketplacePage,
+  MyPostsPage,
+  NotificationsPage, PaymentPage, ProfilePage,
+  RoommateWorkspace,
+  SavedPostsPage,
+  WantedPostsPage,
 } from '../../pages/deferredPages'
-import './MapMotion.css'
+import { SectionSkeleton } from '../skeletons/RouteSkeleton'
 import './MapAppPanel.css'
-
-export type MapAppSection =
-  | 'listings'
-  | 'saved'
-  | 'invitations'
-  | 'notifications'
-  | 'messages'
-  | 'appointments'
-  | 'payments'
-  | 'profile'
-  | 'marketplace'
-  | 'wanted'
-  | 'activities'
-  | 'myPosts'
+import { WIDE_MAP_SECTIONS, type MapAppSection } from "./MapAppPanel.logic"
+import './MapMotion.css'
 
 const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> = {
   listings: {
@@ -74,24 +67,6 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
 }
 
 const SECTION_EXIT_MS = 280
-
-/** Content-heavy utility sections that need a wide workspace. */
-export const WIDE_MAP_SECTIONS = new Set<MapAppSection>([
-  'marketplace',
-  'saved',
-  'notifications',
-  'appointments',
-  'wanted',
-  'invitations',
-  'myPosts',
-  'activities',
-  'profile',
-  'payments',
-])
-
-export function isWideMapSection(section: MapAppSection | null | undefined): boolean {
-  return Boolean(section && WIDE_MAP_SECTIONS.has(section))
-}
 
 type Props = {
   section: MapAppSection

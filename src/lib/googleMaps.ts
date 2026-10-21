@@ -1,5 +1,5 @@
-import { currentTheme } from './theme'
 import { importMarkerLibrary, importStreetViewLibrary } from './loadGoogleMaps'
+import { currentTheme } from './theme'
 
 /** Trung tâm Thủ Đức / Q.9 — khu Làng Đại học */
 export const DEFAULT_MAP_CENTER = { lat: 10.8706, lng: 106.7974 }
@@ -234,7 +234,7 @@ export async function geocodeAddress(
 export function looksLikeAddressQuery(raw: string): boolean {
   const t = raw.trim()
   if (t.length < 4) return false
-  if (/\d{1,5}[/\-]?\w*\s+\S+/.test(t)) return true
+  if (/\d{1,5}[/-]?\w*\s+\S+/.test(t)) return true
   if (t.includes(',') && t.split(',').filter((p) => p.trim()).length >= 2) return true
   if (
     /(đường|duong|phố|pho|phường|phuong|quận|quan|hẻm|hem|ngõ|ngo|tòa|toa|chung cư|chung cu|khu phố|khu pho|tp\.|thành phố|thanh pho)/i.test(

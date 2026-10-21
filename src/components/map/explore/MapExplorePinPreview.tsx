@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { RentalPostSummary } from '../../../api/types'
-import { shortListingAddress, shortListingTitle } from '../../MapListingCard'
+import { shortListingAddress, shortListingTitle } from "../../MapListingCard.logic"
+
 import {
   formatMillionPriceLabel,
   listingMetaLine,

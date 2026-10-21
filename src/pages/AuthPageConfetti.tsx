@@ -1,27 +1,8 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import type { DotLottie } from '@lottiefiles/dotlottie-react'
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-
-const SUCCESS_SRC = '/lottie/success-confetti.lottie'
-const WRONG_SRC = '/lottie/perfect-wrong.lottie'
-
-const ASSETS = [SUCCESS_SRC, WRONG_SRC] as const
-
-/** Prefetch cả 2 lottie vào HTTP cache. */
-let warmStarted = false
-export function warmConfettiLottie() {
-  if (warmStarted || typeof window === 'undefined') return
-  warmStarted = true
-  for (const href of ASSETS) {
-    void fetch(href, { cache: 'force-cache' }).catch(() => {})
-    const link = document.createElement('link')
-    link.rel = 'preload'
-    link.as = 'fetch'
-    link.href = href
-    link.crossOrigin = 'anonymous'
-    document.head.appendChild(link)
-  }
-}
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { SUCCESS_SRC, warmConfettiLottie, WRONG_SRC } from "./AuthPageConfetti.logic"
 
 type Phase = 'idle' | 'checking' | 'wrong' | 'wrong-hold' | 'recovering' | 'playing' | 'done'
 
@@ -94,20 +75,21 @@ export const ConfettiConfirmButton = forwardRef<ConfettiConfirmHandle, Props>(
     const onSuccessCb = useRef(onSuccess)
     const onValidateCb = useRef(onValidate)
     const onInvalidCb = useRef(onInvalid)
-    phaseRef.current = phase
-    onSuccessCb.current = onSuccess
-    onValidateCb.current = onValidate
-    onInvalidCb.current = onInvalid
+    useLayoutEffect(() => { phaseRef.current = phase }, [phase])
+    useLayoutEffect(() => { onSuccessCb.current = onSuccess }, [onSuccess])
+    useLayoutEffect(() => { onValidateCb.current = onValidate }, [onValidate])
+    useLayoutEffect(() => { onInvalidCb.current = onInvalid }, [onInvalid])
 
     useEffect(() => {
       warmConfettiLottie()
     }, [])
 
+    if (useChangedInputs([resetKey])) setPhase('idle')
+
     useEffect(() => {
       runId.current += 1
       hadWrongRef.current = false
       phaseRef.current = 'idle'
-      setPhase('idle')
       pinFrame(successRef.current, 0)
       pinFrame(wrongRef.current, 0)
     }, [resetKey])
@@ -205,7 +187,7 @@ export const ConfettiConfirmButton = forwardRef<ConfettiConfirmHandle, Props>(
       setPhase('checking')
 
       void (async () => {
-        let ok = false
+        let ok: boolean
         try {
           ok = await Promise.resolve(onValidateCb.current())
         } catch {

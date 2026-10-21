@@ -1,14 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import './AuthMascot.css'
-
-export type AuthMascotMood =
-  | 'idle'
-  | 'wave'
-  | 'peek'
-  | 'type'
-  | 'think'
-  | 'error'
-  | 'success'
+import { type AuthMascotMood } from "./AuthMascot.logic"
 
 type AuthMascotProps = {
   mood: AuthMascotMood
@@ -59,7 +52,7 @@ export function AuthMascot({
 }: AuthMascotProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const endRef = useRef(onOneShotEnd)
-  endRef.current = onOneShotEnd
+  useLayoutEffect(() => { endRef.current = onOneShotEnd }, [onOneShotEnd])
   const [systemReduced, setSystemReduced] = useState(false)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [burstKey, setBurstKey] = useState(0)
@@ -104,15 +97,14 @@ export function AuthMascot({
   }, [useStill])
 
   // Keystroke spark burst
-  useEffect(() => {
-    if (!typePulse) return
+  if (useChangedInputs([typePulse]) && typePulse) {
     setBurstKey((k) => k + 1)
-  }, [typePulse])
+  }
 
   // Mood change burst
-  useEffect(() => {
+  if (useChangedInputs([mood])) {
     setBurstKey((k) => k + 1)
-  }, [mood])
+  }
 
   const strengthClass =
     mood === 'peek' || mood === 'type'
@@ -177,111 +169,4 @@ export function AuthMascot({
       <p className="auth-mascot__caption">{MOOD_CAPTION[mood]}</p>
     </div>
   )
-}
-
-function resolveMood(opts: {
-  error: string
-  success?: string
-  loading: boolean
-  focusedField: string | null
-  isTyping: boolean
-  allowWave: boolean
-}): AuthMascotMood {
-  const { error, success, loading, focusedField, isTyping, allowWave } = opts
-  if (error) return 'error'
-  if (success) return 'success'
-  if (loading) return 'think'
-  if (focusedField === 'password') return 'peek'
-  if (isTyping || focusedField) return 'type'
-  if (allowWave) return 'wave'
-  return 'idle'
-}
-
-function passwordStrengthScore(password: string): number {
-  if (!password) return 0
-  let s = 0
-  if (password.length >= 6) s += 0.25
-  if (password.length >= 10) s += 0.2
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) s += 0.2
-  if (/\d/.test(password)) s += 0.2
-  if (/[^A-Za-z0-9]/.test(password)) s += 0.15
-  return Math.min(1, s)
-}
-
-/** Derive mascot mood + extra signals from auth form. */
-export function useAuthMascotMood(opts: {
-  mode: 'login' | 'register'
-  error: string
-  success?: string
-  loading: boolean
-  focusedField: string | null
-  isTyping: boolean
-  password?: string
-  /** Increment on each keystroke from the page */
-  typePulse?: number
-  hovering?: boolean
-}) {
-  const {
-    mode,
-    error,
-    success,
-    loading,
-    focusedField,
-    isTyping,
-    password = '',
-    typePulse: externalPulse = 0,
-    hovering = false,
-  } = opts
-  const [wavePending, setWavePending] = useState(true)
-  const [localPulse, setLocalPulse] = useState(0)
-  const prevMode = useRef(mode)
-  const prevPassword = useRef(password)
-
-  useEffect(() => {
-    if (prevMode.current !== mode) {
-      prevMode.current = mode
-      setWavePending(true)
-    }
-  }, [mode])
-
-  useEffect(() => {
-    if (error || success || loading || focusedField || isTyping) {
-      setWavePending(false)
-    }
-  }, [error, success, loading, focusedField, isTyping])
-
-  // Password length changes also spark (covers paste / autofill)
-  useEffect(() => {
-    if (password !== prevPassword.current) {
-      prevPassword.current = password
-      setLocalPulse((n) => n + 1)
-    }
-  }, [password])
-
-  // Hover intensifies presence but does not re-trigger wave loop
-  useEffect(() => {
-    if (!hovering) return
-    setLocalPulse((n) => n + 1)
-  }, [hovering])
-
-  const mood = resolveMood({
-    error,
-    success,
-    loading,
-    focusedField,
-    isTyping,
-    allowWave: wavePending,
-  })
-
-  const onOneShotEnd = useCallback(() => {
-    setWavePending(false)
-  }, [])
-
-  return {
-    mood,
-    onOneShotEnd,
-    typePulse: externalPulse + localPulse,
-    passwordStrength: passwordStrengthScore(password),
-    hovering,
-  }
 }

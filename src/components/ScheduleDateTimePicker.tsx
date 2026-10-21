@@ -1,3 +1,4 @@
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import { ChoicePicker } from './ui/ChoicePicker'
 import { useMotionPresence } from './motion/useMotionPresence'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -54,15 +55,14 @@ export function ScheduleDateTimePicker({
   const [hour, setHour] = useState(() => selected?.getHours() ?? 9)
   const [minute, setMinute] = useState<MinuteOption>(() => nearestMinute(selected?.getMinutes() ?? 0))
 
-  useEffect(() => {
-    if (!open) return
+  if (useChangedInputs([open, value]) && open) {
     const parsed = parseLocalInputValue(value)
     const base = parsed ?? new Date()
     setViewMonth(base)
     setDraftDate(base)
     setHour(parsed?.getHours() ?? 9)
     setMinute(nearestMinute(parsed?.getMinutes() ?? 0))
-  }, [open, value])
+  }
 
   useEffect(() => {
     if (!open) return

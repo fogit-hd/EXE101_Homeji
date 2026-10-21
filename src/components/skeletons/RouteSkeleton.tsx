@@ -1,16 +1,17 @@
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { resolveMarketplaceDestination } from '../../lib/marketplaceNavigation'
-import type { MapAppSection } from '../map/MapAppPanel'
+import type { MapAppSection } from "../map/MapAppPanel.logic"
+
 import { ScreenPending } from '../ScreenPending'
 import { isExploreSurface } from '../chrome/exploreMode'
+import { AuthSkeleton } from './AuthSkeleton'
 import {
   ActivitiesSkeleton, AdminSkeleton, AppointmentsSkeleton, HubSkeleton,
   InvitationsSkeleton, LegalSkeleton, ListingsSkeleton, MarketplaceSkeleton, MessagesSkeleton,
   MyPostsSkeleton, NotificationsSkeleton, PaymentWaitSkeleton, PaymentsSkeleton, PostFormSkeleton,
   ProfileSkeleton, SavedSkeleton, WantedSkeleton,
 } from './PageSkeletons'
-import { AuthSkeleton } from './AuthSkeleton'
 import { authSkeletonMode } from './authSkeletonMode'
 
 /** Sections whose page draws its own header (FeatureWorkspace hides the frame title). */

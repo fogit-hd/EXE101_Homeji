@@ -1,9 +1,3 @@
-import { announceSellerOrdersChanged, SELLER_ORDERS_SNAPSHOT } from '../lib/sellerOrderAlerts'
-import { MarketplaceSellerCatalog } from '../components/marketplace/MarketplaceSellerCatalog'
-import { marketplaceItemUrl, marketplaceStoreUrl } from '../lib/marketplaceSellers'
-import { QuantityStepper } from '../components/marketplace/food/QuantityStepper'
-import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { trackFunnelEvent } from '../lib/ga4'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -16,6 +10,7 @@ import {
   createMarketplacePost,
   createMomoPayment,
   createPayOsPayment,
+  createWalletWithdrawal,
   getMarketplacePost,
   getMyMarketplaceOrders,
   getMyMarketplacePosts,
@@ -23,14 +18,13 @@ import {
   getMyWalletTransactions,
   getMyWalletWithdrawals,
   getStoredSession,
-  markMarketplacePostSold,
   markMarketplaceOrderDelivered,
+  markMarketplacePostSold,
   rejectMarketplaceOrder,
   searchMarketplacePosts,
   startMarketplaceConversation,
   startMarketplaceOrderConversation,
   updateMarketplacePost,
-  createWalletWithdrawal,
   uploadImages,
   type MarketplaceOrder,
   type MarketplacePost,
@@ -45,62 +39,69 @@ import {
 } from '../api/types'
 import {
   DeferredMapBlock,
-  PageFrame,
   exploreMapUrl,
+  PageFrame,
   usePageFrameChromePortals,
 } from '../components/chrome'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { MarketplaceLoadingSkeleton } from '../components/MarketplaceLoadingSkeleton'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { AddressAutocomplete, type PlaceResult } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { MapToast } from '../components/map/MapToast'
+import { FoodMarketplaceView } from '../components/marketplace/food/FoodMarketplaceView'
+import '../components/marketplace/food/FoodMarketplaceView.css'
+import { QuantityStepper } from '../components/marketplace/food/QuantityStepper'
+import { MarketplaceFilterPanel } from '../components/marketplace/MarketplaceFilterPanel'
+import type { MarketplaceFilterValue } from '../components/marketplace/marketplaceFilterValue'
+import { MarketplaceHeader, type WalletHeaderStatus } from '../components/marketplace/MarketplaceHeader'
+import { MarketplaceSellerCatalog } from '../components/marketplace/MarketplaceSellerCatalog'
 import {
-  marketplacePostsToSellerPins,
-  type MarketplaceMapPin,
-} from '../lib/marketplaceSellerPins'
+  WalletPage,
+  type DepositMethod,
+} from '../components/marketplace/wallet/WalletPage'
+import { MarketplaceLoadingSkeleton } from '../components/MarketplaceLoadingSkeleton'
+import { useTabTransition } from '../components/motion/useTabTransition'
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useAuth } from '../contexts/AuthContext'
-import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { getErrorMessage } from '../lib/errors'
-import { withdrawalAttempt } from '../lib/withdrawalRequest'
-import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
+import { trackFunnelEvent } from '../lib/ga4'
+import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
+import {
+  FOOD_CATEGORIES,
+  formatDate,
+  formatPrice,
+  GOODS_CATEGORIES,
+  MARKETPLACE_CATEGORIES,
+  MARKETPLACE_CONDITIONS,
+  marketplaceOrderStatusLabel,
+  marketplacePostStatusLabel,
+} from '../lib/labels'
+import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
-  purchaseKindLabel,
-  resolvePurchaseKinds,
-  type PurchaseKind,
-} from '../lib/purchaseCatalog'
-import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
-import { marketplaceOrderGroupKey } from '../lib/marketplaceOrderGroups'
-import {
+  primaryOf,
   resolveMarketplaceDestination,
   subscribeToMarketplaceTabRequests,
   takeMarketplaceTabRequest,
   type MarketplaceTab,
 } from '../lib/marketplaceNavigation'
+import { marketplaceOrderGroupKey } from '../lib/marketplaceOrderGroups'
 import {
-  formatDate,
-  formatPrice,
-  MARKETPLACE_CATEGORIES,
-  FOOD_CATEGORIES,
-  GOODS_CATEGORIES,
-  MARKETPLACE_CONDITIONS,
-  marketplaceOrderStatusLabel,
-  marketplacePostStatusLabel,
-} from '../lib/labels'
-import { FoodMarketplaceView } from '../components/marketplace/food/FoodMarketplaceView'
-import { MarketplaceHeader, type WalletHeaderStatus } from '../components/marketplace/MarketplaceHeader'
+  marketplacePostsToSellerPins,
+  type MarketplaceMapPin,
+} from '../lib/marketplaceSellerPins'
+import { marketplaceItemUrl, marketplaceStoreUrl } from '../lib/marketplaceSellers'
 import {
-  WalletPage,
-  type DepositMethod,
-} from '../components/marketplace/wallet/WalletPage'
+  purchaseKindLabel,
+  resolvePurchaseKinds,
+  type PurchaseKind,
+} from '../lib/purchaseCatalog'
+import { announceSellerOrdersChanged, SELLER_ORDERS_SNAPSHOT } from '../lib/sellerOrderAlerts'
 import { formatWalletAmount, parseWalletTab, readDepositReturn } from '../lib/walletMoney'
-import '../components/marketplace/food/FoodMarketplaceView.css'
-import { useTabTransition } from '../components/motion/useTabTransition'
-import { primaryOf } from '../lib/marketplaceNavigation'
+import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
+import { withdrawalAttempt } from '../lib/withdrawalRequest'
 import './MarketplacePage.css'
-import { MarketplaceFilterPanel } from '../components/marketplace/MarketplaceFilterPanel'
-import type { MarketplaceFilterValue } from '../components/marketplace/marketplaceFilterValue'
 
 const TAB_MOTION_ORDER: readonly MarketplaceTab[] = ['food', 'browse', 'purchases', 'mine', 'sell', 'sales', 'wallet']
 

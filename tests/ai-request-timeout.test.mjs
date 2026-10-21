@@ -10,7 +10,7 @@ const apiSource = await readFile(new URL('../src/api/index.ts', import.meta.url)
 function module(source, require, globals = {}) {
   const exports = {}
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
-  vm.runInNewContext(code, { exports, require, ...globals })
+  vm.runInNewContext(code, { exports, require, localStorage: { getItem: key => key === 'homeji_access_token' ? 'fixture' : null, removeItem: () => {} }, ...globals })
   return exports
 }
 function session() {

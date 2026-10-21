@@ -1,4 +1,3 @@
-import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useCallback, useRef, useState } from 'react'
 import {
   getNotifications,
@@ -10,14 +9,16 @@ import {
   usePageFrameChromeActive,
   usePageFrameChromePortals,
 } from '../components/chrome'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
+import { RevealText } from '../components/motion/RevealText'
 import { NotificationsSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
+import { LiquidTabList } from '../components/ui/LiquidTabList'
+import { getErrorMessage } from '../lib/errors'
 import { formatDate, notificationTypeLabel } from '../lib/labels'
 import { getNotificationPresentation } from '../lib/notificationPresentation'
 import { notificationTargetHref } from '../lib/notificationTarget'
-import { getErrorMessage } from '../lib/errors'
-import { RevealText } from '../components/motion/RevealText'
 import { NotificationPopupList } from './NotificationPopupList'
 
 export type NotificationReadChange =

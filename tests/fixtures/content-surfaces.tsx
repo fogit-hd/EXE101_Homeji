@@ -22,7 +22,7 @@ import '../../src/components/marketplace/SellerOrderAlerts.css'
 
 const post = { id: 'room-1', type: 1, title: 'Căn hộ Flora Fuji Kikyo 2PN đầy đủ nội thất', price: 7500000, area: 67, address: 'Flora Fuji Kikyo, Quận 9, TP. Thủ Đức', thumbnailPath: '/landing/bloom-hero-bg2.jpg', viewCount: 14, saveCount: 0 }
 const initial = Array.from({ length: 5 }, (_, i) => ({ id: 'notification-' + i, type: 7, title: 'Tin nhắn mới', message: 'Bạn có tin nhắn mới liên quan đến một bài đăng.', createdAt: new Date(Date.now() - i * 86400000).toISOString(), isRead: i !== 0, relatedId: 'room-1' }))
-function Scene() {
+export function Scene() {
   const view = new URLSearchParams(location.search).get('view')
   const [items, setItems] = useState(initial)
   return <MemoryRouter><LiquidGlassEffects />{view === 'journey' ? <GuestJourney /> : view === 'receipts' ? <ReceiptsPage /> : view === 'map' ? <div style={{ height: '100dvh' }}>

@@ -1,15 +1,16 @@
-import { useMotionPresence } from '../motion/useMotionPresence'
 import { motion } from 'motion/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { highlightRentalPosts, type AiHighlightResponse, type AiParsedSearchCriteria } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
-import { useAuthModal } from '../../contexts/AuthModalContext'
+import { useAuthModal } from "../../contexts/AuthModalContext.logic"
+import { useMotionPresence } from '../motion/useMotionPresence'
+
+import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { getErrorMessage } from '../../lib/errors'
 import { AiSearchReview } from './AiSearchReview'
-import { RentalSourceBrowser } from './RentalSourceBrowser'
-import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import './NaturalRentalSearch.css'
+import { RentalSourceBrowser } from './RentalSourceBrowser'
 
 type NaturalRentalSearchProps = {
   query?: string

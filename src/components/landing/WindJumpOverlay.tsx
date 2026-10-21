@@ -1,7 +1,7 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import type { DotLottie } from '@lottiefiles/dotlottie-react'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import gsap from 'gsap'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import './WindJumpOverlay.css'
 
 /** Same file as video-src/Windblow.lottie (copied into public/) */
@@ -62,10 +62,9 @@ export function WindJumpOverlay({ open, direction, destY, onLand, onFinished }: 
   const destYRef = useRef(destY)
   const onLandRef = useRef(onLand)
   const onFinishedRef = useRef(onFinished)
-  destYRef.current = destY
-  onLandRef.current = onLand
-  onFinishedRef.current = onFinished
-
+  useLayoutEffect(() => { destYRef.current = destY }, [destY])
+  useLayoutEffect(() => { onLandRef.current = onLand }, [onLand])
+  useLayoutEffect(() => { onFinishedRef.current = onFinished }, [onFinished])
   useEffect(() => {
     if (!open) return
 

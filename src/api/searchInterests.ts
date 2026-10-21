@@ -1,5 +1,5 @@
-import { apiRequest, AI_REQUEST_TIMEOUT_MS } from './client'
-import type { RentalPostSummary } from './types'
+import { AI_REQUEST_TIMEOUT_MS, apiRequest } from './client';
+import type { RentalPostSummary } from './types';
 export type InterestCriteria = {
   area: string; minPrice?: number | null; maxPrice?: number | null; minArea?: number | null; maxArea?: number | null
   amenities?: string[]; excludedAmenities?: string[]; latitude?: number | null; longitude?: number | null
@@ -24,4 +24,4 @@ export const clearInterestHistory = () => apiRequest<InterestOverview>(root + '/
 export const markInterestViewed = (id: string) => apiRequest<void>(root + '/viewed/' + encodeURIComponent(id), { method: 'POST' })
 export const inferSearchInterest = () => apiRequest<{ criteria: InterestCriteria | null; unconfirmed: string[]; notice: string | null }>(root + '/ai-proposal', { method: 'POST', timeoutMs: AI_REQUEST_TIMEOUT_MS })
 
-export const rankInterestRooms = () => apiRequest<InterestOverview>(root + '/ai-ranking', { method: 'POST', timeoutMs: AI_REQUEST_TIMEOUT_MS })
+export const rankInterestRooms = (signal?: AbortSignal) => apiRequest<InterestOverview>(root + '/ai-ranking', { method: 'POST', timeoutMs: AI_REQUEST_TIMEOUT_MS, signal })

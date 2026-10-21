@@ -1,8 +1,6 @@
-import { GuestJourney } from '../components/landing/GuestJourney'
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { trackFunnelEvent } from '../lib/ga4'
+import { useChangedInputs } from '../hooks/useChangedInputs'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { AiSearchReview } from '../components/ai/AiSearchReview'
 import {
   getRentalPost,
   highlightRentalPosts,
@@ -12,7 +10,11 @@ import {
   type MarketplacePost,
   type RentalPostSummary,
 } from '../api'
-import { SERVICE_RETRY_MS, useHomejiLoading } from '../components/HomejiLoader'
+import { AiSearchReview } from '../components/ai/AiSearchReview'
+import { SERVICE_RETRY_MS, useHomejiLoading } from "../components/HomejiLoader.logic"
+import { GuestJourney } from '../components/landing/GuestJourney'
+import { trackFunnelEvent } from '../lib/ga4'
+
 import {
   isExploreSurface,
   parseExploreView,
@@ -20,43 +22,18 @@ import {
 } from '../components/chrome'
 import { AuthenticatedHomeMapShell } from '../components/map/AuthenticatedHomeMapShell'
 import type { HomeMapFocus } from '../components/map/HomeMapStage'
+import type { MapAppSection } from "../components/map/MapAppPanel.logic"
 import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
-import type { MapAppSection } from '../components/map/MapAppPanel'
+
 import { useAuth } from '../contexts/AuthContext'
-import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
-import { useOnReconnect } from '../contexts/NetworkStatusContext'
-import { getErrorMessage, isServiceDisruption } from '../lib/errors'
-import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
-import { MAP_FIT_MAX_ZOOM, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
-import {
-  loadMapPinLayers,
-  saveMapPinLayers,
-  type MapPinLayer,
-  type MapPinLayers,
-} from '../lib/mapPinLayers'
-import { AMENITY_OPTIONS } from '../lib/labels'
-import {
-  listingQueryToMarketplaceParams,
-  listingQueryToSearchParams,
-  nonBoundsSignature,
-  parseFiltersFromURL,
-  serializeFiltersToQuery,
-} from '../components/map/listings/listingAdapters'
-import {
-  bboxAround,
-  resolvePlaceCoordinates,
-  resolveSearchLocation,
-  type MapSearchBBox,
-  type ResolvedPlaceLocation,
-} from '../lib/placeAutocomplete'
+import { useGoogleMaps } from "../contexts/GoogleMapsProvider.logic"
+
+import { useOnReconnect } from "../contexts/NetworkStatusContext.logic"
+
 import { AuthenticatedHub } from '../components/hub/AuthenticatedHub'
 import { GuestChrome } from '../components/landing/GuestChrome'
 import { GuestHero } from '../components/landing/GuestHero'
 import { GuestListingPreview } from '../components/landing/GuestListingPreview'
-import { GuestMapSection } from '../components/landing/GuestMapSection'
-import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
-import { MissionConfetti } from '../components/landing/MissionConfetti'
-import { FeatureWorkspace } from '../components/layout/FeatureWorkspace'
 import {
   GUEST_DEFAULT_FOCUS,
   GUEST_DISTRICTS,
@@ -64,11 +41,39 @@ import {
   buildGuestSearchKeyword,
   wardsForDistrict,
 } from '../components/landing/guestMapAreas'
+import { GuestMapSection } from '../components/landing/GuestMapSection'
+import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
+import { MissionConfetti } from '../components/landing/MissionConfetti'
 import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
+import { FeatureWorkspace } from '../components/layout/FeatureWorkspace'
+import {
+  listingQueryToMarketplaceParams,
+  listingQueryToSearchParams,
+  nonBoundsSignature,
+  parseFiltersFromURL,
+  serializeFiltersToQuery,
+} from '../components/map/listings/listingAdapters'
 import '../components/map/MapMotion.css'
-import './HomePage.css'
 import { RevealText } from '../components/motion/RevealText'
+import { getErrorMessage, isServiceDisruption } from '../lib/errors'
+import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
+import { MAP_FIT_MAX_ZOOM, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import { markHomeReady } from '../lib/introGate'
+import { AMENITY_OPTIONS } from '../lib/labels'
+import {
+  loadMapPinLayers,
+  saveMapPinLayers,
+  type MapPinLayer,
+  type MapPinLayers,
+} from '../lib/mapPinLayers'
+import {
+  bboxAround,
+  resolvePlaceCoordinates,
+  resolveSearchLocation,
+  type MapSearchBBox,
+  type ResolvedPlaceLocation,
+} from '../lib/placeAutocomplete'
+import './HomePage.css'
 
 const AMENITY_OPTIONS_LIST = [...AMENITY_OPTIONS]
 
@@ -166,48 +171,49 @@ function HomePageComponent() {
     })
   }, [])
 
-  const mapFocusRef = useRef<HomeMapFocus | null>({ ...GUEST_DEFAULT_FOCUS })
+  const [mapFocus, setMapFocus] = useState<HomeMapFocus | null>(() => ({ ...GUEST_DEFAULT_FOCUS }))
+  const [locating, setLocating] = useState(false)
+  const locateRequestRef = useRef(0)
   const [mapFocusToken, setMapFocusToken] = useState(0)
   const [listingsFitToken, setListingsFitToken] = useState(0)
-  const mapFocus = useMemo(
-    () => (mapFocusRef.current ? { ...mapFocusRef.current } : null),
-    [mapFocusToken],
-  )
+
 
   // Deep links: /?section=… /?post=… stay in the URL (strategy A).
   // Gateway return params (paymentId, orderCode, …) are preserved for PaymentPage.
-  useEffect(() => {
-    if (!isAuthenticated || isLoading) return
-    if (!urlPostId) return
+  if (useChangedInputs([isAuthenticated, isLoading, urlPostId], true) && isAuthenticated && !isLoading && urlPostId) {
     setSelectedPostId(urlPostId)
     setListingsPanelOpen(true)
+  }
+  useEffect(() => {
+    if (!isAuthenticated || isLoading || !urlPostId) return
+    let cancelled = false
     void getRentalPost(urlPostId, { auth: true })
       .then((post) => {
+        if (cancelled) return
         setPosts((prev) => (prev.some((p) => p.id === post.id) ? prev : [post, ...prev]))
-        mapFocusRef.current = {
+        setMapFocus({
           lat: post.latitude,
           lng: post.longitude,
           zoom: MAP_FOCUS_ZOOM,
-        }
+        })
         setMapFocusToken((n) => n + 1)
       })
       .catch(() => {
         /* keep selection; detail panel will show load error state */
       })
+    return () => { cancelled = true }
   }, [isAuthenticated, isLoading, urlPostId])
 
-  useEffect(() => {
-    if (!isHubView) return
+  if (useChangedInputs([isHubView]) && isHubView) {
     setSelectedPostId(null)
-  }, [isHubView])
+  }
 
-  useEffect(() => {
-    if (!isExploreView) return
+  if (useChangedInputs([isExploreView, activeSection]) && isExploreView) {
     setListingsPanelOpen(true)
-  }, [isExploreView, activeSection])
+  }
 
   const commitMapFocus = useCallback((focus: HomeMapFocus) => {
-    mapFocusRef.current = { ...focus }
+    setMapFocus({ ...focus })
     setMapFocusToken((n) => n + 1)
   }, [])
 
@@ -253,24 +259,23 @@ function HomePageComponent() {
 
   const pinFilterResults = useCallback(() => {
     // Prefer fitting pins over a prior area focus / user pan.
-    mapFocusRef.current = null
+    setMapFocus(null)
     setMapFocusToken((n) => n + 1)
     setListingsFitToken((n) => n + 1)
   }, [])
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState('')
   const disruptedRef = useRef(false)
-  const locateRequestRef = useRef(0)
+
   const userLocationRef = useRef(userLocation)
-  userLocationRef.current = userLocation
-  disruptedRef.current = disrupted
+  useLayoutEffect(() => { userLocationRef.current = userLocation }, [userLocation])
+  useLayoutEffect(() => { disruptedRef.current = disrupted }, [disrupted])
   const cancelLocationFocus = useCallback(() => {
     // A newer selection supersedes stored focus and late geolocation responses.
     locateRequestRef.current += 1
     setLocating(false)
-    mapFocusRef.current = null
+    setMapFocus(null)
     setMapFocusToken((n) => n + 1)
   }, [])
   const filtersRef = useRef<{
@@ -280,6 +285,7 @@ function HomePageComponent() {
     selectedAmenities: string[]
     bbox: MapSearchBBox | null
   }>({ keyword, minPrice, maxPrice, selectedAmenities, bbox: null })
+  useLayoutEffect(() => {
   filtersRef.current = {
     keyword,
     minPrice,
@@ -287,6 +293,7 @@ function HomePageComponent() {
     selectedAmenities,
     bbox: filtersRef.current.bbox,
   }
+  }, [keyword, minPrice, maxPrice, selectedAmenities])
   // Brand intro hand-off: first listing response settled and (when used) the Maps script is in.
   const { loadError: mapsLoadError } = useGoogleMaps()
   useEffect(() => {
@@ -447,15 +454,15 @@ function HomePageComponent() {
     [],
   )
 
+  if (useChangedInputs([isAuthenticated], true) && !isAuthenticated) {
+    setLoading(false)
+    setDisrupted(false)
+  }
   useEffect(() => {
-    if (isLoading) return
-    if (isExploreView) return
-    if (isAuthenticated) {
-      void loadPosts()
-    } else {
-      setLoading(false)
-      setDisrupted(false)
-    }
+    if (isLoading || isExploreView || !isAuthenticated) return
+    let cancelled = false
+    void Promise.resolve().then(() => { if (!cancelled) void loadPosts() })
+    return () => { cancelled = true }
   }, [isAuthenticated, isLoading, isExploreView, loadPosts])
 
   const [exploreReload, setExploreReload] = useState(0)
@@ -469,13 +476,15 @@ function HomePageComponent() {
     }
   }, [isExploreView, searchParams, setSearchParams])
 
+  if (useChangedInputs([isAuthenticated, isLoading, isExploreView, searchParams, exploreReload], true) && isAuthenticated && !isLoading && isExploreView) {
+    setLoading(true)
+    setError('')
+  }
   useEffect(() => {
     if (!isAuthenticated || isLoading || !isExploreView) return
     const query = parseFiltersFromURL(searchParams)
     const controller = new AbortController()
     let cancelled = false
-    setLoading(true)
-    setError('')
     const fitKey = nonBoundsSignature(query)
     const marketMode = query.catalog === 'market'
     const finish = (ids: string[]) => {

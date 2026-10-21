@@ -1,9 +1,10 @@
-import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
 import { AddressAutocomplete, type PlaceResult } from '../map/AddressAutocomplete'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
-import { calculateShortlistCommute, type CommuteMode, type CommuteOrigin, type CommuteResult } from '../../lib/shortlistCommute'
+import { ChoicePicker } from '../ui/ChoicePicker'
+
 import { getErrorMessage } from '../../lib/errors'
+import { calculateShortlistCommute, type CommuteMode, type CommuteOrigin, type CommuteResult } from '../../lib/shortlistCommute'
 
 export type CommuteConfirmation = { routes: CommuteResult[]; minuteCeiling: number; destination: PlaceResult; mode: CommuteMode }
 const labels: Record<CommuteMode, string> = { DRIVING: 'Ô tô', WALKING: 'Đi bộ', TRANSIT: 'Phương tiện công cộng' }

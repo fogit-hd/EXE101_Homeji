@@ -1,4 +1,3 @@
-import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -15,18 +14,20 @@ import {
   usePageFrameChromeActive,
   usePageFrameChromePortals,
 } from '../components/chrome'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { WantedSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
-import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import {
   AMENITY_OPTIONS,
   amenityLabel,
   formatPrice,
   wantedPostStatusLabel,
 } from '../lib/labels'
+import { mapMessagesUrl } from '../lib/mapDeepLinks'
 
 export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()

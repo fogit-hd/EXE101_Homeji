@@ -1,5 +1,3 @@
-import { LiquidTabList } from '../components/ui/LiquidTabList'
-import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -17,17 +15,13 @@ import {
   SmokingPreference,
   UserRole,
 } from '../api/types'
-import { ProfileSkeleton } from '../components/skeletons/PageSkeletons'
 import { MapToast } from '../components/map/MapToast'
+import { ProfileSkeleton } from '../components/skeletons/PageSkeletons'
+import { ChoicePicker } from '../components/ui/ChoicePicker'
+import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useAuth } from '../contexts/AuthContext'
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import { getErrorMessage } from '../lib/errors'
-import {
-  normalizeFullName,
-  sanitizePhoneInput,
-  USER_INPUT_LIMITS,
-  validateFullName,
-  validateVietnamPhone,
-} from '../lib/userInputValidation'
 import {
   formatDate,
   formatPrice,
@@ -41,6 +35,13 @@ import {
   resolveSchoolSelectValue,
   THU_DUC_SCHOOLS,
 } from '../lib/thuDucSchools'
+import {
+  normalizeFullName,
+  sanitizePhoneInput,
+  USER_INPUT_LIMITS,
+  validateFullName,
+  validateVietnamPhone,
+} from '../lib/userInputValidation'
 import './MarketplacePage.css'
 import './ProfilePage.css'
 
@@ -89,8 +90,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
   const verifyStatus =
     verification?.status ?? profile?.landlordVerificationStatus ?? LandlordVerificationStatus.NotSubmitted
 
-  useEffect(() => {
-    if (!profile) return
+  if (useChangedInputs([profile], true) && profile) {
     setDisplayName(profile.displayName)
     setPhone(profile.phone ?? '')
     setSchool(resolveSchoolSelectValue(profile.school ?? ''))
@@ -103,11 +103,11 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
     setSmokingPreference(profile.smokingPreference)
     setMaxBudget(profile.maxBudget != null ? String(profile.maxBudget) : '')
     setPreferredArea(profile.preferredArea ?? '')
-  }, [profile])
+  }
 
-  useEffect(() => {
+  if (useChangedInputs([showVerifyTab, tab])) {
     if (!showVerifyTab && tab === 'verify') setTab('basic')
-  }, [showVerifyTab, tab])
+  }
 
   useEffect(() => {
     let cancelled = false

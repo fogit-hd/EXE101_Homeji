@@ -19,10 +19,10 @@ function selectionHarness(body) {
   const locationRequest = { current: 7 }
   let token = 4, selectedId = null, locating = true
   const setToken = fn => { token = fn(token) }
-  const cancel = new Function('mapFocusRef', 'setMapFocusToken', 'locateRequestRef', 'setLocating', compile(cancelBody))
+  const cancel = new Function('setMapFocus', 'setMapFocusToken', 'locateRequestRef', 'setLocating', compile(cancelBody))
   new Function('postId', 'setSelectedPostId', 'setMapFocusToken', 'cancelLocationFocus', 'urlPostId', 'setSearchParams', compile(body))(
     'room', value => { selectedId = typeof value === 'function' ? value(selectedId) : value }, setToken,
-    () => cancel(focusRef, setToken, locationRequest, value => { locating = value }),
+    () => cancel(value => { focusRef.current = value }, setToken, locationRequest, value => { locating = value }),
     null, () => {},
   )
   return { focus: focusRef.current, token, selectedId, locationRequest: locationRequest.current, locating }

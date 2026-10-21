@@ -1,58 +1,55 @@
-import { LiquidTabList } from '../components/ui/LiquidTabList'
-import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveRentalPost,
-  getAdminProductAnalytics,
   completeWalletWithdrawal,
-  getAdminWalletWithdrawals,
-  getAdminLandlordVerifications,
   getAdminActiveUsers,
-  terminateAdminUserSession,
-  sendMaintenanceAnnouncement,
+  getAdminLandlordVerifications,
+  getAdminProductAnalytics,
   getAdminReports,
+  getAdminWalletWithdrawals,
   getPendingRentalPosts,
   rejectRentalPost,
-  rejectWalletWithdrawal,
   rejectReport,
+  rejectWalletWithdrawal,
   resolveReport,
   reviewLandlordVerification,
-  type LandlordVerification,
+  sendMaintenanceAnnouncement,
+  terminateAdminUserSession,
   type AdminActiveUser,
   type AdminProductAnalytics,
+  type LandlordVerification,
   type RentalPostSummary,
   type Report,
   type WalletWithdrawal,
 } from '../api'
 import { LandlordVerificationStatus, ReportStatus, ReportTargetType, WalletWithdrawalStatus } from '../api/types'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
-import { AdminAnalyticsSkeleton, AdminSkeleton } from '../components/skeletons/PageSkeletons'
 import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashboard'
-import { AdminAssistant } from '../components/ai/AdminAssistant'
 import { AdminOperationsSummary } from '../components/admin/AdminOperationsSummary'
+import '../components/admin/AdminTaskFocus.css'
+import { AdminAssistant } from '../components/ai/AdminAssistant'
+import { PageFrame } from '../components/chrome'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
+import { AdminAnalyticsSkeleton, AdminSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
+import { ChoicePicker } from '../components/ui/ChoicePicker'
+import { LiquidTabList } from '../components/ui/LiquidTabList'
+import { useAuth } from '../contexts/AuthContext'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 import { getErrorMessage } from '../lib/errors'
-import { mapPostUrl } from '../lib/mapDeepLinks'
-import { useAuth } from '../contexts/AuthContext'
-import { PageFrame } from '../components/chrome'
 import {
   formatDate,
   formatPrice,
   landlordVerificationLabel,
+  rentalPostTypeLabel,
   reportStatusLabel,
   reportTargetLabel,
-  rentalPostTypeLabel,
   userRoleLabel,
 } from '../lib/labels'
+import { mapPostUrl } from '../lib/mapDeepLinks'
+import { cleanAdminReportText } from "./AdminModerationPage.logic"
 import './ProfilePage.css'
-import '../components/admin/AdminTaskFocus.css'
-
-export function cleanAdminReportText(value: string | null | undefined) {
-  const cleaned = value?.replace(/\s*\[[A-Z][A-Z0-9_:-]{4,}\]\s*$/u, '').trim()
-  return cleaned || ''
-}
 
 export function AdminModerationPage() {
   const { profile } = useAuth()

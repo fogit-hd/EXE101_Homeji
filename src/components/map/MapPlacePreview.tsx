@@ -1,7 +1,8 @@
-import { PhoneAction } from '../ui/PhoneAction'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { ContentSkeleton } from '../ContentSkeleton'
+import { PhoneAction } from '../ui/PhoneAction'
 import './MapPlacePreview.css'
 
 type MapPlacePreviewProps = {
@@ -19,9 +20,9 @@ export function MapPlacePreview({
 }: MapPlacePreviewProps) {
   const open = !leaving && !!(loading || place)
   const [cachedPlace, setCachedPlace] = useState(place)
-  useEffect(() => {
+  if (useChangedInputs([place])) {
     if (place) setCachedPlace(place)
-  }, [place])
+  }
 
   const shown = place ?? cachedPlace
 

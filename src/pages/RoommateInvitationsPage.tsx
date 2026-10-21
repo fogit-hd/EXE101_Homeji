@@ -8,13 +8,14 @@ import {
   type RoommateInvitation,
 } from '../api'
 import { RoommateInvitationStatus } from '../api/types'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { InvitationsSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
 import { useAuth } from '../contexts/AuthContext'
+import { getErrorMessage } from '../lib/errors'
 import { formatDate, invitationStatusLabel } from '../lib/labels'
 import { mapPostUrl } from '../lib/mapDeepLinks'
-import { getErrorMessage } from '../lib/errors'
 import './ProfilePage.css'
 import './RoommateInvitationsPage.css'
 

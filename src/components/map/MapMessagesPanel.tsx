@@ -1,40 +1,41 @@
-import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
-import { createAsyncActionGate } from '../../lib/asyncActionGate'
-import { LiquidTabList } from '../ui/LiquidTabList'
-import { ChoicePicker } from '../ui/ChoicePicker'
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { AnimatePresence, motion } from 'motion/react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
+  ConversationSubjectType,
   deleteConversationAttachment,
   downloadConversationAttachment,
   getConversationMessages,
   getConversations,
   getMarketplacePost,
   getRentalPost,
-  ConversationSubjectType,
   MessageAttachmentContext,
   MessageAttachmentStatus,
-  sendConversationMessage,
   sendConversationImages,
+  sendConversationMessage,
   type PostConversation,
   type PostMessage,
   type PostMessageAttachment,
 } from '../../api'
 import { getStoredSession } from '../../api/client'
+import { createAsyncActionGate } from '../../lib/asyncActionGate'
 import {
   chatLocationKindLabel,
   encodeChatLocation,
   parseChatLocation,
   type ChatLocationPayload,
 } from '../../lib/chatLocation'
+import { getErrorMessage } from '../../lib/errors'
 import { getDeviceLocation } from '../../lib/geolocation'
 import { formatPrice } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
-import { getErrorMessage } from '../../lib/errors'
-import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
-import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
-import { ConversationListSkeleton } from '../skeletons/PageSkeletons'
 import { staticMapUrl } from '../../lib/mapStaticMedia'
+import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
+import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
+import { ConversationListSkeleton } from '../skeletons/PageSkeletons'
+import { ChoicePicker } from '../ui/ChoicePicker'
+import { LiquidTabList } from '../ui/LiquidTabList'
+import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
 import './MapMessagesPanel.css'
 
 type InboxFilter = 'all' | 'unread' | 'rental'
@@ -421,6 +422,11 @@ export function MapMessagesPanel({
   const [conversations, setConversations] = useState<PostConversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
   const [appliedInitialId, setAppliedInitialId] = useState(initialConversationId)
+  const currentThread = useRef({ id: activeId, version: 0 })
+  useLayoutEffect(() => {
+    currentThread.current = { id: activeId, version: currentThread.current.version + 1 }
+    return () => { currentThread.current = { id: null, version: currentThread.current.version + 1 } }
+  }, [activeId])
   const [messages, setMessages] = useState<PostMessage[]>([])
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
@@ -487,23 +493,23 @@ export function MapMessagesPanel({
   }, [])
 
   useEffect(() => {
-    void loadConversations()
+    let cancelled = false
+    void Promise.resolve().then(() => { if (!cancelled) void loadConversations() })
+    return () => { cancelled = true }
   }, [loadConversations])
 
   useEffect(() => {
     if (!refreshKey) return
-    void loadConversations({ soft: true })
+    void Promise.resolve().then(() => loadConversations({ soft: true }))
   }, [refreshKey, loadConversations])
 
+  if (useChangedInputs([activeId], true)) {
+    setMessages([])
+    setConversations(prev => prev.map(c => c.id === activeId ? { ...c, unreadCount: 0 } : c))
+  }
   useEffect(() => {
-    if (!activeId) {
-      setMessages([])
-      return
-    }
+    if (!activeId) return
     let cancelled = false
-    setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, unreadCount: 0 } : c)),
-    )
     void getConversationMessages(activeId)
       .then((msgs) => {
         if (!cancelled) setMessages(msgs)
@@ -614,9 +620,10 @@ export function MapMessagesPanel({
       .map((m) => m.id)
   }, [messages, searchQuery])
 
-  useEffect(() => {
+  if (useChangedInputs([searchQuery, activeId])) {
     setMatchIndex(0)
-  }, [searchQuery, activeId])
+
+  }
 
   useEffect(() => {
     if (!matchedIds.length) return
@@ -668,36 +675,32 @@ export function MapMessagesPanel({
   }
 
   const appendSentMessage = (msg: PostMessage) => {
-    setMessages((prev) => prev.some(item => item.id === msg.id) ? prev : [...prev, msg])
     setConversations((prev) => {
-      const next = prev.map((c) =>
-        c.id === activeId
-          ? {
-              ...c,
-              lastMessage: msg.body,
-              lastMessageSenderId: msg.senderId,
-              updatedAt: msg.sentAt,
-              unreadCount: 0,
-            }
-          : c,
-      )
-      next.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      return next
+      const next = prev.map(c => c.id === msg.conversationId ? { ...c, lastMessage: msg.body, lastMessageSenderId: msg.senderId, updatedAt: msg.sentAt, unreadCount: 0 } : c)
+      return next.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     })
   }
 
+  const appendToCurrentThread = (msg: PostMessage, thread: { id: string | null; version: number }) => {
+    if (msg.conversationId !== thread.id || currentThread.current.id !== thread.id || currentThread.current.version !== thread.version) return false
+    setMessages((prev) => prev.some(item => item.id === msg.id) ? prev : [...prev, msg])
+    return true
+  }
+
   const sendBody = async (body: string) => sendGate.current(async () => {
-    if (!activeId || !body.trim() || sending) return
+    if (!activeId || currentThread.current.id !== activeId || !body.trim() || sending) return
+    const thread = { ...currentThread.current }
     setSending(true)
     setError(null)
     try {
       const msg = await sendConversationMessage(activeId, body.trim())
       appendSentMessage(msg)
+      if (!appendToCurrentThread(msg, thread)) return
       setDraft('')
       setAttachMode(null)
       resetAddressDraft()
     } catch (e) {
-      setError(getErrorMessage(e, 'Gửi thất bại'))
+      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Gửi thất bại'))
     } finally {
       setSending(false)
     }
@@ -727,17 +730,19 @@ export function MapMessagesPanel({
   }
 
   const handleSendImages = async () => sendGate.current(async () => {
-    if (!activeId || imageFiles.length === 0 || sending) return
+    if (!activeId || currentThread.current.id !== activeId || imageFiles.length === 0 || sending) return
+    const thread = { ...currentThread.current }
     setSending(true)
     setError(null)
     try {
       const msg = await sendConversationImages(activeId, imageFiles, imageContext, draft)
       appendSentMessage(msg)
+      if (!appendToCurrentThread(msg, thread)) return
       setDraft('')
       setImageFiles([])
       if (imageInputRef.current) imageInputRef.current.value = ''
     } catch (e) {
-      setError(getErrorMessage(e, 'Gửi ảnh thất bại'))
+      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Gửi ảnh thất bại'))
     } finally {
       setSending(false)
     }
@@ -748,6 +753,7 @@ export function MapMessagesPanel({
   }
 
   const handleSendGps = async () => gpsGate.current(async () => {
+    const thread = { ...currentThread.current }
     let loc = userLocation
     if (!loc) {
       try {
@@ -759,6 +765,7 @@ export function MapMessagesPanel({
         return
       }
     }
+    if (currentThread.current.id !== thread.id || currentThread.current.version !== thread.version) return
     await sendLocation({
       kind: 'gps',
       title: 'Vị trí của tôi',

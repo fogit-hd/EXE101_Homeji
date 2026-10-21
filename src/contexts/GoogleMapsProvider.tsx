@@ -1,27 +1,13 @@
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import {
-  createContext,
-  useContext,
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
+  type ReactNode
 } from 'react'
 import { getGoogleMapId, getGoogleMapsApiKey } from '../lib/googleMaps'
 import { loadGoogleMaps } from '../lib/loadGoogleMaps'
-
-type GoogleMapsContextValue = {
-  apiKey: string
-  mapId: string
-  isLoaded: boolean
-  loadError: Error | undefined
-}
-
-const GoogleMapsContext = createContext<GoogleMapsContextValue>({
-  apiKey: '',
-  mapId: getGoogleMapId(),
-  isLoaded: false,
-  loadError: undefined,
-})
+import { GoogleMapsContext } from "./GoogleMapsProvider.logic"
 
 /**
  * Loads the official Maps JavaScript API once.
@@ -33,15 +19,13 @@ export function GoogleMapsProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [loadError, setLoadError] = useState<Error | undefined>()
 
-  useEffect(() => {
-    if (!apiKey) {
-      setIsLoaded(false)
-      setLoadError(undefined)
-      return
-    }
-
-    let cancelled = false
+  if (useChangedInputs([apiKey])) {
+    setIsLoaded(false)
     setLoadError(undefined)
+  }
+  useEffect(() => {
+    if (!apiKey) return
+    let cancelled = false
 
     void loadGoogleMaps(apiKey)
       .then(() => {
@@ -66,8 +50,4 @@ export function GoogleMapsProvider({ children }: { children: ReactNode }) {
   return (
     <GoogleMapsContext.Provider value={value}>{children}</GoogleMapsContext.Provider>
   )
-}
-
-export function useGoogleMaps() {
-  return useContext(GoogleMapsContext)
 }

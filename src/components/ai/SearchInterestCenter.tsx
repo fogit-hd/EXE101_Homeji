@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ApiRequestError, UserRole } from '../../api'
+import {
+  clearInterestHistory, dismissSearchInterest, followSearchInterest, getSearchInterests, inferSearchInterest,
+  markInterestViewed,
+  observeSearchInterest,
+  rankInterestRooms,
+  removeSearchInterest, setInterestSettings,
+  type InterestCriteria, type InterestOverview, type InterestSettings
+} from '../../api/searchInterests'
 import { useAuth } from '../../contexts/AuthContext'
-import { UserRole } from '../../api'
 import { getErrorMessage } from '../../lib/errors'
-import { AddressAutocomplete } from '../map/AddressAutocomplete'
 import { AMENITY_OPTIONS, amenityLabel, formatPrice } from '../../lib/labels'
 import { interestFromSearch, interestSession } from '../../lib/searchInterestCapture'
-import { clearInterestHistory, dismissSearchInterest, followSearchInterest, getSearchInterests, inferSearchInterest,
-  markInterestViewed, rankInterestRooms, observeSearchInterest, removeSearchInterest, setInterestSettings,
-  type InterestCriteria, type InterestOverview, type InterestSettings } from '../../api/searchInterests'
+import { AddressAutocomplete } from '../map/AddressAutocomplete'
 import './SearchInterestCenter.css'
 
 export function SearchInterestCenter() {
@@ -58,6 +63,7 @@ function OwnedSearchInterestCenter() {
     return () => { cancelled = true; window.clearTimeout(capture) }
   }, [isAuthenticated, owner, current?.settings.enabled, location.search, apply])
   const rankedRooms = useRef('')
+  const [rankingRetry, setRankingRetry] = useState(0)
   useEffect(() => {
     if (!owner || !current?.settings.enabled || busy) return
     let cancelled = false
@@ -75,12 +81,21 @@ function OwnedSearchInterestCenter() {
     if (!owner || !current?.settings.enabled || !current.settings.aiEnabled || !roomSignature || busy) return
     const signature = owner + ':' + roomSignature
     if (rankedRooms.current === signature) return
-    rankedRooms.current = signature
-    let cancelled = false
+    const controller = new AbortController()
+    let timer: ReturnType<typeof setTimeout> | undefined
     const generation = latest.current
-    void rankInterestRooms().then(value => { if (!cancelled && latest.current === generation) apply(value) }).catch(() => {})
-    return () => { cancelled = true }
-  }, [owner, current?.settings.enabled, current?.settings.aiEnabled, roomSignature, busy, apply])
+    void rankInterestRooms(controller.signal).then(value => {
+      if (controller.signal.aborted || latest.current !== generation) return
+      rankedRooms.current = signature
+      apply(value)
+    }).catch(error => {
+      if (controller.signal.aborted || latest.current !== generation) return
+      const retryable = !(error instanceof ApiRequestError) || error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500
+      if (!retryable) { setError(getErrorMessage(error, 'Chưa xếp hạng được phòng.')); return }
+      timer = setTimeout(() => setRankingRetry(attempt => attempt + 1), Math.min(30000, 2000 * 2 ** Math.min(rankingRetry, 4)))
+    })
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [owner, current?.settings.enabled, current?.settings.aiEnabled, roomSignature, busy, apply, rankingRetry])
   const closePanel = () => {
     setOpen(false)
     const params = new URLSearchParams(location.search)

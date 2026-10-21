@@ -11,10 +11,11 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 import { trackFunnelEvent } from '../lib/ga4'
 import { fetchPlacePredictions, searchNearbyPlaces, type NearbyPlaceCategory } from '../lib/placeAutocomplete'
-import { useGoogleMaps } from './GoogleMapsProvider'
+import { useGoogleMaps } from "./GoogleMapsProvider.logic"
+
 import type { NearbyAnchor } from '../components/map/MapNearbyPanel'
-import { isUsefulSearchQuery } from '../lib/searchQuery'
 import { relevantRecentLocations } from '../lib/localPlaceSearch'
+import { isUsefulSearchQuery } from '../lib/searchQuery'
 
 export type SearchContextName =
   | 'global'

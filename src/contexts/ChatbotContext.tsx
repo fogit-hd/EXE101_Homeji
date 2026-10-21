@@ -2,7 +2,8 @@ import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapChatbot } from '../components/map/MapChatbot'
 import { useAuth } from './AuthContext'
-import { useAuthModal } from './AuthModalContext'
+import { useAuthModal } from "./AuthModalContext.logic"
+
 
 import { ChatbotSurfaceContext, type ChatbotSurface } from './chatbot-surface'
 

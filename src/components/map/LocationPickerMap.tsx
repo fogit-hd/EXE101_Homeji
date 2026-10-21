@@ -1,5 +1,6 @@
-import { memo, useEffect, useRef, useState } from 'react'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+
 import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
   useSystemMapColorScheme,
@@ -47,8 +48,7 @@ function LocationPickerMapComponent({
   const pinRef = useRef<google.maps.marker.PinElement | null>(null)
   const libRef = useRef<google.maps.MarkerLibrary | null>(null)
   const onLocationChangeRef = useRef(onLocationChange)
-  onLocationChangeRef.current = onLocationChange
-
+  useLayoutEffect(() => { onLocationChangeRef.current = onLocationChange }, [onLocationChange])
   const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {

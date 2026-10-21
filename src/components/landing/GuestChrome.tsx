@@ -1,6 +1,7 @@
 import gsap from 'gsap'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import './GuestChrome.css'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import {
   GUEST_LANDING_NAV_EVENT,
@@ -8,7 +9,6 @@ import {
 } from './guestLandingNav'
 import { isMobileLandingViewport } from './mobileLanding'
 import { WindJumpOverlay, type WindDirection } from './WindJumpOverlay'
-import './GuestChrome.css'
 
 const NAV = [
   { id: 'mission', label: 'Sứ mệnh' },
@@ -518,8 +518,7 @@ export function GuestChrome() {
   )
 
   const onNavigateRef = useRef(onNavigate)
-  onNavigateRef.current = onNavigate
-
+  useLayoutEffect(() => { onNavigateRef.current = onNavigate }, [onNavigate])
   useEffect(() => {
     const onExternalNav = (e: Event) => {
       const id = (e as CustomEvent<GuestLandingNavDetail>).detail?.id

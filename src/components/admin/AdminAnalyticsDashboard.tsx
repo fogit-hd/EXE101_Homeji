@@ -5,15 +5,16 @@ import type {
   AdminPriceSignal,
   AdminProductAnalytics,
 } from '../../api'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+
 import {
   DEFAULT_MAP_CENTER,
   createMapOptions,
   isValidCoord,
   loadMarkerLibrary,
 } from '../../lib/googleMaps'
-import { importMapsLibrary } from '../../lib/loadGoogleMaps'
 import { formatPrice } from '../../lib/labels'
+import { importMapsLibrary } from '../../lib/loadGoogleMaps'
 import './AdminAnalyticsDashboard.css'
 import { AdminTrafficPanel } from './AdminTrafficPanel'
 import { adminPriceEvidence, adminPriceRecommendation, adminPriceSignal } from './adminPriceEvidence'

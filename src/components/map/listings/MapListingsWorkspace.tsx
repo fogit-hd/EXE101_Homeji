@@ -1,4 +1,3 @@
-import { ChoicePicker } from '../../ui/ChoicePicker'
 import {
   useLayoutEffect,
   useMemo,
@@ -9,9 +8,12 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
-import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
+import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
+import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
+import { shortListingAddress } from "../../MapListingCard.logic"
+import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
+import { ChoicePicker } from '../../ui/ChoicePicker'
 import {
   mapBackendListingToListingViewModel,
   mapFilterMetadataToFilterConfig,
@@ -23,8 +25,7 @@ import {
   type ListingQuery,
   type MapListingsView,
 } from './listingAdapters'
-import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
-import { shortListingAddress } from '../../MapListingCard'
+
 import { Sk, SkCard } from '../../skeletons/Skeleton'
 import './MapListingsWorkspace.css'
 

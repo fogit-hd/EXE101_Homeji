@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import type { RentalPostSummary, UserProfile } from '../../api/types'
 import { UserRole } from '../../api/types'
 import { useAuth } from '../../contexts/AuthContext'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
-import { amenityLabel, formatPrice, rentalPostTypeLabel } from '../../lib/labels'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+
 import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import { amenityLabel, formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import {
   MAP_PIN_LAYER_OPTIONS,
   type MapPinLayer,
@@ -15,7 +16,8 @@ import { fetchPlacePredictions } from '../../lib/placeAutocomplete'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import type { GuestAreaOption } from '../landing/guestMapAreas'
 import { GUEST_DISTRICTS, GUEST_WARDS } from '../landing/guestMapAreas'
-import type { MapAppSection } from './MapAppPanel'
+import type { MapAppSection } from "./MapAppPanel.logic"
+
 import { MapAccountMenu } from './MapAccountMenu'
 import './MapMotion.css'
 import './MapOmnibox.css'

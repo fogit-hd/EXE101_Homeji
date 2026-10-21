@@ -1,17 +1,19 @@
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import type { CredentialResponse } from '@react-oauth/google'
-import { observeElementResize } from '../lib/observeElementResize'
-import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
-import { AuthHomeGallery } from '../components/auth/AuthHomeGallery'
-import { AuthCharacterScene } from '../components/auth/AuthCharacterScene'
 import gsap from 'gsap'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { checkEmail, isEmailTaken, googleLoginWithIdToken } from '../api'
+import { checkEmail, googleLoginWithIdToken, isEmailTaken } from '../api'
 import { consumeSessionTerminationMessage } from '../api/authSession'
+import { AuthCharacterScene } from '../components/auth/AuthCharacterScene'
+import { AuthHomeGallery } from '../components/auth/AuthHomeGallery'
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
+import { RevealText } from '../components/motion/RevealText'
 import { useAuth } from '../contexts/AuthContext'
 import { authDestination } from '../lib/authDestination'
 import { getErrorMessage } from '../lib/errors'
 import { googleOAuthClientId } from '../lib/googleOAuthClient'
+import { observeElementResize } from '../lib/observeElementResize'
 import {
   normalizeEmail,
   normalizeFullName,
@@ -20,14 +22,16 @@ import {
   validateRegistrationEmail,
   validateRegistrationPassword,
 } from '../lib/userInputValidation'
-import { ConfettiConfirmButton, ConfettiDoneMark, warmConfettiLottie, type ConfettiConfirmHandle } from './AuthPageConfetti'
-import { ConnectHomejiCta, warmConnectLottie } from './AuthPageConnect'
-import { AiVoiceFloat, PasswordEyeToggle, voiceTravelDuration } from './AuthPageMotion'
-import { layoutWelcomeStrokes, WELCOME_PHRASE } from './authWelcomeHandwrite'
-import './AuthPage.css'
 import './AuthFormLayout.css'
 import './AuthLoginLayout.css'
-import { RevealText } from '../components/motion/RevealText'
+import './AuthPage.css'
+import { ConfettiConfirmButton, ConfettiDoneMark, type ConfettiConfirmHandle } from "./AuthPageConfetti"
+import { warmConfettiLottie } from "./AuthPageConfetti.logic"
+import { ConnectHomejiCta } from "./AuthPageConnect"
+import { warmConnectLottie } from "./AuthPageConnect.logic"
+import { AiVoiceFloat, PasswordEyeToggle } from "./AuthPageMotion"
+import { voiceTravelDuration } from "./AuthPageMotion.logic"
+import { layoutWelcomeStrokes, WELCOME_PHRASE } from './authWelcomeHandwrite'
 
 const TOGGLE_COOLDOWN_MS = 1000
 
@@ -106,20 +110,17 @@ function TypeMessage({
   const cancelKeyRef = useRef(cancelKey)
   const voiceTravelingRef = useRef(voiceTraveling)
   const startedKeyRef = useRef(0)
-  onDoneRef.current = onDone
-  onSpeakingRef.current = onSpeaking
-  cancelKeyRef.current = cancelKey
-  voiceTravelingRef.current = voiceTraveling
-
+  useLayoutEffect(() => { onDoneRef.current = onDone }, [onDone])
+  useLayoutEffect(() => { onSpeakingRef.current = onSpeaking }, [onSpeaking])
+  useLayoutEffect(() => { cancelKeyRef.current = cancelKey }, [cancelKey])
+  useLayoutEffect(() => { voiceTravelingRef.current = voiceTraveling }, [voiceTraveling])
+  if (useChangedInputs([text, active, cancelKey])) { setCount(0); setPhase(active && text ? 'wait' : 'idle') }
   // Gọi Voice + chờ đủ travelMs rồi mới gõ
   useEffect(() => {
     doneRef.current = false
-    setCount(0)
-    setPhase('idle')
     if (!active || !text) return
 
     startedKeyRef.current = cancelKey
-    setPhase('wait')
 
     let cancelled = false
     let waitTimer = 0
@@ -142,6 +143,7 @@ function TypeMessage({
       beginTyping()
     }
 
+    const slotAtStart = slotRef.current
     const raf1 = window.requestAnimationFrame(() => {
       raf2 = window.requestAnimationFrame(() => {
         if (cancelled) return
@@ -157,8 +159,7 @@ function TypeMessage({
       window.cancelAnimationFrame(raf2)
       window.clearTimeout(waitTimer)
       window.clearTimeout(pollTimer)
-      const slot = slotRef.current
-      onSpeakingRef.current?.(false, slot?.isConnected ? slot : null)
+      onSpeakingRef.current?.(false, slotAtStart?.isConnected ? slotAtStart : null)
     }
   }, [text, active, msPerChar, cancelKey])
 
@@ -167,7 +168,6 @@ function TypeMessage({
     if (phase !== 'typing') return
     const startedKey = startedKeyRef.current
     let i = 0
-    setCount(0)
     const intervalId = window.setInterval(() => {
       if (cancelKeyRef.current !== startedKey) {
         window.clearInterval(intervalId)
@@ -340,7 +340,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   /** Sau câu cuối: chặn onSpeaking bật lại Voice khi TypeMessage unmount */
   const voicePosRef = useRef({ top: 0, left: 0 })
   const voiceVisibleRef = useRef(false)
-  voiceVisibleRef.current = voiceVisible
+  useLayoutEffect(() => { voiceVisibleRef.current = voiceVisible }, [voiceVisible])
   const voiceDismissedRef = useRef(false)
   /** Bump khi Sửa / Quay lại để Voice snap vào slot mới */
   const [voiceSnapKey, setVoiceSnapKey] = useState(0)
@@ -353,7 +353,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     from?: string
   } | null>(null)
   const threadRef = useRef(thread)
-  threadRef.current = thread
+  useLayoutEffect(() => { threadRef.current = thread }, [thread])
   /** Trước khi Sửa: Voice có đang bị ẩn ở màn kết không */
   const voiceWasDismissedRef = useRef(false)
   /** Tăng khi Lùi / Sửa / bắt đầu câu mới — hủy TypeMessage đang chạy */
@@ -376,7 +376,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       top: a.top - c.top + VOICE_NUDGE_Y,
       left: a.left - c.left,
     }
-  }, [cascadeEl])
+  }, [cascadeEl, VOICE_NUDGE_Y])
 
   const onSpeaking = useCallback(
     (_speaking: boolean, slot: HTMLElement | null): number => {
@@ -483,19 +483,17 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   const signupRunId = useRef(0)
   const modeRef = useRef(mode)
   const skippedRef = useRef(skipped)
-  modeRef.current = mode
-  skippedRef.current = skipped
-
+  useLayoutEffect(() => { modeRef.current = mode }, [mode])
+  useLayoutEffect(() => { skippedRef.current = skipped }, [skipped])
   const welcomeLayout = useMemo(() => layoutWelcomeStrokes(WELCOME_PHRASE), [])
 
   const showStory = mode === 'signup' && !skipped
   const showFormCard = mode === 'signin' || skipped
   const introRunning = showStory && storyStep !== 'done'
 
+  if (useChangedInputs([showStory, storyStep]) && (!showStory || storyStep === 'welcome' || storyStep === 'done')) { setVoiceVisible(false); setVoicePlaying(false) }
   useEffect(() => {
     if (!showStory || storyStep === 'welcome' || storyStep === 'done') {
-      setVoiceVisible(false)
-      setVoicePlaying(false)
       voiceDismissedRef.current = storyStep === 'done' || !showStory
     }
   }, [showStory, storyStep])
@@ -506,7 +504,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     }
   }, [isAuthenticated, isLoading, navigate, from, mode, profile?.role, submitting])
 
-  useEffect(() => {
+  if (useChangedInputs([location.pathname])) {
     const next: AuthMode = location.pathname.startsWith('/register') ? 'signup' : 'signin'
     setMode(next)
     if (next === 'signin') {
@@ -526,11 +524,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       setNameBoost(null)
       setConnectError('')
       setStoryGen(0)
-      storyGenRef.current = 0
-      voiceDismissedRef.current = false
-      resumeAfterEdit.current = null
     }
-  }, [location.pathname])
+  }
+  useLayoutEffect(() => { if (location.pathname.startsWith('/register')) { storyGenRef.current = 0; voiceDismissedRef.current = false; resumeAfterEdit.current = null } }, [location.pathname])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -565,14 +561,14 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }, [])
 
   /** Bước 1: Welcome viết tay (nhanh hơn một chút). */
-  const playWelcomeDraw = useCallback(() => {
+  const playWelcomeDraw = useCallback(function drawWelcome() {
     killIntro()
     const welcome = welcomeRef.current
     if (!welcome || skippedRef.current || modeRef.current !== 'signup') return
 
     const letters = Array.from(welcome.querySelectorAll<SVGGElement>('.auth-hw-letter'))
     if (!letters.length) {
-      window.requestAnimationFrame(() => playWelcomeDraw())
+      window.requestAnimationFrame(() => drawWelcome())
       return
     }
 
@@ -613,12 +609,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   }, [])
 
   useEffect(() => {
-    if (mode === 'signin') {
-      setSkipped(true)
-      setStoryStep('done')
-      return
-    }
-    if (skipped) return
+    if (mode === 'signin' || skipped) return
 
     let raf2 = 0
     const raf1 = window.requestAnimationFrame(() => {

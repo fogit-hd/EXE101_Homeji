@@ -128,7 +128,9 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
   }, [])
 
   useEffect(() => {
-    void load()
+    let cancelled = false
+    void Promise.resolve().then(() => { if (!cancelled) void load() })
+    return () => { cancelled = true }
   }, [load])
 
   const run = async (id: string, action: () => Promise<ViewingAppointment>) => {

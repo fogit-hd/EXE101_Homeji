@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+
 import {
   fetchPlacePredictions,
   resolvePlaceCoordinates,

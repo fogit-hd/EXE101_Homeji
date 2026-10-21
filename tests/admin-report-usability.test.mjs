@@ -20,5 +20,5 @@ test('admin report actions use clear decisions and keep a note per report', () =
   assert.match(page, /Xác nhận vi phạm/)
   assert.match(page, /Không vi phạm/)
   assert.match(page, /reportResolutionNotes\[r\.id\]/)
-  assert.match(page, /\[A-Z\]\[A-Z0-9_:-\]/)
+  assert.match(readFileSync(new URL('../src/pages/AdminModerationPage.logic.tsx', import.meta.url), 'utf8'), /\[A-Z\]\[A-Z0-9_:-\]/)
 })

@@ -1,8 +1,8 @@
+import { AnimatePresence, motion } from 'motion/react'
 import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { AnimatePresence, motion } from 'motion/react'
-import { fadeSwap, listItem } from '../../lib/motionTokens'
 import {
+  NotificationType,
   getNotifications,
   getRentalPost,
   getSavedPosts,
@@ -10,44 +10,46 @@ import {
   searchMarketplacePosts,
   unsavePost,
   type MarketplacePost,
+  type Notification,
   type RentalPost,
   type RentalPostSummary,
 } from '../../api'
-import type { MapPlaceDetails } from '../../lib/mapPlace'
-import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace'
+import { useAuth } from '../../contexts/AuthContext'
+import { useChatbotSurface } from '../../contexts/chatbot-surface'
+import { useSearch } from '../../contexts/SearchContext'
+import { useNotificationHub } from '../../hooks/useNotificationHub'
 import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM, isValidCoord } from '../../lib/googleMaps'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
-import { useAuth } from '../../contexts/AuthContext'
-import { useSearch } from '../../contexts/SearchContext'
+import type { MapPlaceDetails } from '../../lib/mapPlace'
+import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace'
+import { marketplacePostsToSellerPins } from '../../lib/marketplaceSellerPins'
+import { fadeSwap, listItem } from '../../lib/motionTokens'
+import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
+import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
+import type { NotificationReadChange } from '../../pages/NotificationsPage'
 import {
   DeferredMapBlock,
   type ExploreView,
 } from '../chrome'
 import { HomeListingSkeleton } from '../HomeListingSkeleton'
-import { PageNotice } from '../toast/PageNotice'
 import { MapListingCard } from '../MapListingCard'
-import { MapAppPanel, isWideMapSection, type MapAppSection } from './MapAppPanel'
-import { useChatbotSurface } from '../../contexts/chatbot-surface'
+import { PageNotice } from '../toast/PageNotice'
 import { HomeMapStage, type HomeMapFocus } from './HomeMapStage'
-import { MapEdgeToggle } from './MapEdgeToggle'
-import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
-import { MapNearbyPanel } from './MapNearbyPanel'
-import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
-import type { NearbyPlaceItem } from '../../lib/placeAutocomplete'
-import { MapToast } from './MapToast'
-import type { MarketplaceMapPin } from './RentalMap'
-import { marketplacePostsToSellerPins } from '../../lib/marketplaceSellerPins'
-import { useNotificationHub } from '../../hooks/useNotificationHub'
-import { NotificationType, type Notification } from '../../api'
-import type { NotificationReadChange } from '../../pages/NotificationsPage'
-import { MapListingsWorkspace } from './listings/MapListingsWorkspace'
-import { RoomDetailModal } from './listings/RoomDetailModal'
 import {
   marketplacePostsToListingPins,
   parseFiltersFromURL,
   serializeFiltersToQuery,
 } from './listings/listingAdapters'
+import { MapListingsWorkspace } from './listings/MapListingsWorkspace'
+import { RoomDetailModal } from './listings/RoomDetailModal'
+import { MapAppPanel } from "./MapAppPanel"
+import { isWideMapSection, type MapAppSection } from "./MapAppPanel.logic"
+import { MapEdgeToggle } from './MapEdgeToggle'
+import { MapNearbyPanel } from './MapNearbyPanel'
+import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
 import './MapPlaceDetailPanel.css'
+import { MapToast } from './MapToast'
+import type { MarketplaceMapPin } from './RentalMap'
 
 const MOBILE_SHEET_MEDIA = '(max-width: 900px)'
 
@@ -682,10 +684,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     },
     [
-      focusedPostId,
-      selectedPostId,
       onSelectPost,
-      onClearSelection,
       panelSection,
       destinationMode,
       isMapMode,

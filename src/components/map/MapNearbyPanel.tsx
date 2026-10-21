@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+
 import {
   NEARBY_PLACE_CATEGORY_OPTIONS,
   searchNearbyPlaces,

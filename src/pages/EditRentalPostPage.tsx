@@ -1,4 +1,3 @@
-import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -13,20 +12,23 @@ import {
 } from '../api'
 import { MediaType, RentalPostType, RoomTransferKind, UserRole } from '../api/types'
 import { DeferredMapBlock, PageFrame } from '../components/chrome'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
-import { PostFormSkeleton } from '../components/skeletons/PageSkeletons'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { AddressAutocomplete } from '../components/map/AddressAutocomplete'
 import { LocationPickerMap } from '../components/map/LocationPickerMap'
+import { PostFormSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useAuth } from '../contexts/AuthContext'
-import { useGoogleMaps } from '../contexts/GoogleMapsProvider'
-import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
+import { useGoogleMaps } from "../contexts/GoogleMapsProvider.logic"
+
+import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
+import { rentalPriceBasis } from '../components/ai/rentalPriceBasis'
+import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 import { getErrorMessage } from '../lib/errors'
+import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabel } from '../lib/labels'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
-import { RentalDraftAssistant } from '../components/ai/RentalDraftAssistant'
-import { aiFeatureFlags } from '../lib/aiFeatureFlags'
-import { rentalPriceBasis } from '../components/ai/rentalPriceBasis'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()

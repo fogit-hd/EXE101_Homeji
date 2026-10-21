@@ -1,3 +1,4 @@
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { PhoneAction } from '../ui/PhoneAction'
 import { LiquidTabList } from '../ui/LiquidTabList'
 import { MotionTabs } from '../motion/MotionTabs'
@@ -241,12 +242,11 @@ export function MapPlaceDetailPanel({
   const [photoTab, setPhotoTab] = useState<PlacePhotoTab>('all')
   const [photoIndex, setPhotoIndex] = useState(0)
 
-  useEffect(() => {
-    if (tabs.some((t) => t.id === tab)) return
+  if (useChangedInputs([tabs.map(item => item.id).join('|'), tab]) && !tabs.some(t => t.id === tab)) {
     setTab('overview')
-  }, [tabs, tab])
+  }
 
-  useEffect(() => {
+  if (useChangedInputs([open, place?.placeId, post?.id], true)) {
     if (open) {
       setTab('overview')
       setScheduleOpen(false)
@@ -257,7 +257,8 @@ export function MapPlaceDetailPanel({
       setPhotoTab('all')
       setPhotoIndex(0)
     }
-  }, [open, place?.placeId, post?.id])
+
+  }
 
   const switchTab = (next: string) => {
     if (next === tab) return
@@ -395,16 +396,13 @@ export function MapPlaceDetailPanel({
     setPhotoIndex((idx) => Math.min(photoItems.length - 1, idx + 1))
   }
 
-  useEffect(() => {
-    if (!photoBrowserOpen) return
+  if (useChangedInputs([photoTab, photoBrowserOpen]) && photoBrowserOpen) {
     setPhotoIndex(0)
-  }, [photoTab, photoBrowserOpen])
+  }
 
-  useEffect(() => {
-    if (!photoBrowserOpen) return
-    if (photoItems.length === 0) return
-    setPhotoIndex((idx) => Math.min(idx, photoItems.length - 1))
-  }, [photoItems, photoBrowserOpen])
+  if (useChangedInputs([photoItems.length, photoBrowserOpen]) && photoBrowserOpen && photoItems.length > 0) {
+    setPhotoIndex(idx => Math.min(idx, photoItems.length - 1))
+  }
 
   useEffect(() => {
     if (!photoBrowserOpen) return
@@ -417,10 +415,9 @@ export function MapPlaceDetailPanel({
     }
   }, [photoBrowserOpen])
 
-  useEffect(() => {
-    if (open) return
+  if (useChangedInputs([open]) && !open) {
     setPhotoBrowserOpen(false)
-  }, [open])
+  }
 
   useEffect(() => {
     if (typeof document === 'undefined') return

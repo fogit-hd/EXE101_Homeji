@@ -16,7 +16,7 @@ function Scene(){const[nearby,setNearby]=useState(true),[category,setCategory]=u
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'})
 const page=await browser.newPage({reducedMotion:'reduce'})
 await page.route('**/*',route=>new URL(route.request().url()).origin===new URL(base).origin?route.continue():route.abort())
-await page.route('**/src/contexts/GoogleMapsProvider.tsx*',route=>route.fulfill({contentType:'application/javascript',body:'export const useGoogleMaps=()=>({apiKey:"fixture",isLoaded:true})'}))
+await page.route('**/src/contexts/GoogleMapsProvider.logic.tsx*',route=>route.fulfill({contentType:'application/javascript',body:'export const useGoogleMaps=()=>({apiKey:"fixture",isLoaded:true})'}))
 await page.route('**/src/lib/placeAutocomplete.ts*',route=>route.fulfill({contentType:'application/javascript',body:`export const NEARBY_PLACE_CATEGORY_OPTIONS=[['food','Ăn uống'],['cafe','Cà phê'],['grocery','Tạp hóa'],['health','Y tế'],['pharmacy','Nhà thuốc'],['studyCafe','Cà phê để học']].map(([id,label])=>({id,label}));export async function searchNearbyPlaces(){return Array.from({length:8},(_,i)=>({placeId:'place-'+i,title:'Tiện ích thử nghiệm '+i,address:'Quận 9',typeLabel:'Cà phê',distanceMeters:80+i*100,lat:10.84,lng:106.78}))}`}))
 const errors=[];page.on('pageerror',e=>errors.push(e.message))
 try{

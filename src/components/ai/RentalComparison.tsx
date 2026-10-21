@@ -1,18 +1,19 @@
-import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { compareRentalPosts, getRentalPost, RentalPostType, type CompareRentalPostItem } from '../../api'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
 import { AddressAutocomplete, type PlaceResult } from '../map/AddressAutocomplete'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
-import { calculateShortlistCommute, type CommuteMode, type CommuteResult } from '../../lib/shortlistCommute'
+import { ChoicePicker } from '../ui/ChoicePicker'
+
+import { ApiRequestError } from '../../api/client'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { getErrorMessage } from '../../lib/errors'
-import { amenityLabel, formatListingRent, formatListingArea } from '../../lib/labels'
-import { RentalCostCalculator } from './RentalCostCalculator'
-import { ApiRequestError } from '../../api/client'
-import { isLowestComparablePrice, rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
+import { amenityLabel, formatListingArea, formatListingRent } from '../../lib/labels'
+import { calculateShortlistCommute, type CommuteMode, type CommuteResult } from '../../lib/shortlistCommute'
 import { recoverRentalComparison } from './recoverRentalComparison'
 import './RentalComparison.css'
+import { RentalCostCalculator } from './RentalCostCalculator'
+import { isLowestComparablePrice, rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 
 const modeLabels: Record<CommuteMode, string> = { DRIVING: 'Ô tô', WALKING: 'Đi bộ', TRANSIT: 'Phương tiện công cộng' }
 

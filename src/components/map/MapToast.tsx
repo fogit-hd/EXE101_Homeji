@@ -1,3 +1,4 @@
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useEffect, useState } from 'react'
 import './MapToast.css'
 
@@ -13,17 +14,18 @@ export function MapToast({ message, tone = 'info', onDismiss }: Props) {
   const [visible, setVisible] = useState(false)
   const [activeTone, setActiveTone] = useState(tone)
 
+  if (useChangedInputs([message, tone])) {
+    if (message) { setDisplay(message); setActiveTone(tone) }
+    else setVisible(false)
+  }
   useEffect(() => {
     if (message) {
-      setDisplay(message)
-      setActiveTone(tone)
-      const enter = window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => setVisible(true))
+      let frame = window.requestAnimationFrame(() => {
+        frame = window.requestAnimationFrame(() => setVisible(true))
       })
-      return () => window.cancelAnimationFrame(enter)
+      return () => window.cancelAnimationFrame(frame)
     }
 
-    setVisible(false)
     const exit = window.setTimeout(() => setDisplay(null), 340)
     return () => window.clearTimeout(exit)
   }, [message, tone])

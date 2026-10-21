@@ -1,4 +1,3 @@
-import { AUTH_REFRESHED_EVENT, ensureFreshSession } from '../api/sessionRefresh'
 import {
   createContext,
   useCallback,
@@ -10,22 +9,25 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  login as apiLogin,
+  register as apiRegister,
   ApiRequestError,
   AUTH_EXPIRED_EVENT,
   clearSession,
   getMyProfile,
   getStoredSession,
-  login as apiLogin,
   persistSession,
-  register as apiRegister,
   type AuthSession,
   type UserProfile,
 } from '../api'
-import { SERVICE_RETRY_MS } from '../components/HomejiLoader'
+import { AUTH_REFRESHED_EVENT, ensureFreshSession } from '../api/sessionRefresh'
+import { SERVICE_RETRY_MS } from "../components/HomejiLoader.logic"
+
 import { isServiceDisruption } from '../lib/errors'
-import { useOnReconnect } from './NetworkStatusContext'
-import { shouldBlockProtectedRoutes } from './authLoadingState'
+import { useOnReconnect } from "./NetworkStatusContext.logic"
+
 import { resetAnalyticsSearchMode, trackFunnelEvent } from '../lib/ga4'
+import { shouldBlockProtectedRoutes } from './authLoadingState'
 
 type AuthContextValue = {
   isAuthenticated: boolean

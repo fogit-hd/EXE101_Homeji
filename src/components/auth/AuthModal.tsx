@@ -1,13 +1,14 @@
-import { useMotionPresence } from '../motion/useMotionPresence'
-import { useTabTransition } from '../motion/useTabTransition'
+import type { CredentialResponse } from '@react-oauth/google'
 import { useEffect, useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import type { CredentialResponse } from '@react-oauth/google'
-import { GoogleSignInButton } from './GoogleSignInButton'
 import { googleLoginWithIdToken } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
-import type { AuthModalIntent, AuthModalMode } from '../../contexts/AuthModalContext'
-import { PageNotice } from '../toast/PageNotice'
+import type { AuthModalIntent, AuthModalMode } from "../../contexts/AuthModalContext.logic"
+import { useChangedInputs } from '../../hooks/useChangedInputs'
+import { useMotionPresence } from '../motion/useMotionPresence'
+import { useTabTransition } from '../motion/useTabTransition'
+import { GoogleSignInButton } from './GoogleSignInButton'
+
 import { getErrorMessage } from '../../lib/errors'
 import { googleOAuthClientId } from '../../lib/googleOAuthClient'
 import {
@@ -17,6 +18,7 @@ import {
   validateFullName,
   validateRegistrationEmail,
 } from '../../lib/userInputValidation'
+import { PageNotice } from '../toast/PageNotice'
 import './AuthModal.css'
 
 const AUTH_MODES = ['login', 'register'] as const
@@ -64,12 +66,11 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (!open) return
+  if (useChangedInputs([open, mode]) && open) {
     setError('')
     setMessage('')
     setSubmitting(false)
-  }, [open, mode])
+  }
 
   useEffect(() => {
     if (!open) return

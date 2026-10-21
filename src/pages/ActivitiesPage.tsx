@@ -1,14 +1,15 @@
-import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useCallback, useState } from 'react'
 import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
+import { RevealText } from '../components/motion/RevealText'
 import { ActivitiesSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
+import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { formatActivityDisplay } from '../lib/activityDisplay'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
 import './ProfilePage.css'
-import { RevealText } from '../components/motion/RevealText'
 
 export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
   const [items, setItems] = useState<UserActivity[]>([])

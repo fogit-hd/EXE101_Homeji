@@ -1,3 +1,4 @@
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useEffect, useState } from 'react'
 import { importPlacesLibrary } from '../../lib/loadGoogleMaps'
 import { GUEST_SCHOOL_FALLBACK, type GuestAreaOption } from './guestMapAreas'
@@ -54,15 +55,13 @@ export function useNearbyGuestSchools(enabled: boolean) {
   const [schools, setSchools] = useState<GuestAreaOption[]>(GUEST_SCHOOL_FALLBACK)
   const [loading, setLoading] = useState(false)
 
+  if (useChangedInputs([enabled], true)) {
+    setSchools(GUEST_SCHOOL_FALLBACK)
+    setLoading(enabled && typeof window !== 'undefined')
+  }
   useEffect(() => {
-    if (!enabled || typeof window === 'undefined') {
-      setSchools(GUEST_SCHOOL_FALLBACK)
-      setLoading(false)
-      return
-    }
-
+    if (!enabled || typeof window === 'undefined') return
     let cancelled = false
-    setLoading(true)
 
     const run = async () => {
       const collected: GuestAreaOption[] = []

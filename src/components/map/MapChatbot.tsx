@@ -1,13 +1,13 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { motion } from 'motion/react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { motion } from 'motion/react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ChatMessageSender,
   ChatbotNavigationActionKind,
+  deleteChatbotConversation,
   getChatbotPopupConfig,
   sendChatbotMessage,
-  deleteChatbotConversation,
   type AiHighlightResponse,
   type AiParsedSearchCriteria,
   type ChatbotMessage,
@@ -15,14 +15,17 @@ import {
   type ChatbotPopupConfig,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
-import { useAuthModal } from '../../contexts/AuthModalContext'
+import { useAuthModal } from "../../contexts/AuthModalContext.logic"
+import { useChangedInputs } from '../../hooks/useChangedInputs'
+
 import { getErrorMessage } from '../../lib/errors'
 import { requestMarketplaceCart, requestMarketplaceTab } from '../../lib/marketplaceNavigation'
-import { ChatbotMessageContent } from './ChatbotMessageContent'
-import { AiSearchReview } from '../ai/AiSearchReview'
 import { nearbyChatIntent } from '../../lib/nearbyChatIntent'
 import type { NearbyPlaceCategory } from '../../lib/placeAutocomplete'
-import type { MapAppSection } from './MapAppPanel'
+import { AiSearchReview } from '../ai/AiSearchReview'
+import { ChatbotMessageContent } from './ChatbotMessageContent'
+import type { MapAppSection } from "./MapAppPanel.logic"
+
 import {
   HOMEJI_AI_TRIGGER_ATTR,
   onHomejiAiToggle,
@@ -217,16 +220,13 @@ export function MapChatbot({
     onOpenChange?.(open)
   }, [open, onOpenChange])
 
-  useEffect(() => {
+  if (useChangedInputs([dismissSignal])) {
     if (dismissSignal > 0) setOpen(false)
-  }, [dismissSignal])
+  }
 
-  useEffect(() => {
-    // Keep UI consistent: when parent requests hiding Homeji controls,
-    // close any currently open chat panel as well.
-    if (!hideFab) return
+  if (useChangedInputs([hideFab]) && hideFab) {
     setOpen(false)
-  }, [hideFab])
+  }
 
   if (config && !config.enabled) return null
 

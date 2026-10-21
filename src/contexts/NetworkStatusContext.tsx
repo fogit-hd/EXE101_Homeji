@@ -1,31 +1,18 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
+  type ReactNode
 } from 'react'
 import '../components/NetworkStatusBanner.css'
-
-type NetworkStatus = 'online' | 'offline' | 'reconnecting'
-
-type NetworkStatusContextValue = {
-  status: NetworkStatus
-  isOnline: boolean
-}
-
-const NetworkStatusContext = createContext<NetworkStatusContextValue | null>(null)
+import { NetworkStatusContext, reconnectListeners, type NetworkStatus, type NetworkStatusContextValue } from "./NetworkStatusContext.logic"
 
 const PROBE_INTERVAL_OFFLINE_MS = 2500
 const PROBE_INTERVAL_ONLINE_MS = 20000
 const RESTORED_BANNER_MS = 2800
 const OFFLINE_FAIL_THRESHOLD = 2
-
-/** Module-level listeners — useOnReconnect does NOT subscribe to status context. */
-const reconnectListeners = new Set<() => void>()
 
 function notifyReconnectListeners() {
   reconnectListeners.forEach((cb) => {
@@ -221,28 +208,6 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
       <NetworkStatusBanner status={status} showRestored={showRestored} />
     </NetworkStatusContext.Provider>
   )
-}
-
-export function useNetworkStatus() {
-  const ctx = useContext(NetworkStatusContext)
-  if (!ctx) {
-    throw new Error('useNetworkStatus must be used within NetworkStatusProvider')
-  }
-  return ctx
-}
-
-/** Không dùng useNetworkStatus — tránh re-render HomePage khi status đổi. */
-export function useOnReconnect(callback: () => void) {
-  const cbRef = useRef(callback)
-  cbRef.current = callback
-
-  useEffect(() => {
-    const wrap = () => cbRef.current()
-    reconnectListeners.add(wrap)
-    return () => {
-      reconnectListeners.delete(wrap)
-    }
-  }, [])
 }
 
 function NetworkStatusBanner({

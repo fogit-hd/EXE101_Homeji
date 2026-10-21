@@ -12,18 +12,14 @@ function parseHashParams(): Record<string, string> {
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
-  const [accessToken, setAccessToken] = useState('')
+  const [accessToken] = useState(() => parseHashParams().access_token ?? '')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const params = parseHashParams()
-    const token = params.access_token
-    if (token) setAccessToken(token)
-  }, [])
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

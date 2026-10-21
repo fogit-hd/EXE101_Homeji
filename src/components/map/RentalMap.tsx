@@ -1,21 +1,24 @@
-import { observeElementResize } from '../../lib/observeElementResize'
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
 import {
   MarkerClusterer,
   SuperClusterAlgorithm,
   type Renderer,
 } from '@googlemaps/markerclusterer'
+import {
+  memo,
+  useCallback,
+  useEffect, useLayoutEffect, useMemo,
+  useRef,
+  useState
+} from 'react'
 import type { RentalPostSummary } from '../../api/types'
 import { RentalPostType } from '../../api/types'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+import { observeElementResize } from '../../lib/observeElementResize'
+
 import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
+import {
+  useSystemMapColorScheme,
+} from '../../hooks/useSystemMapColorScheme'
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
@@ -27,46 +30,43 @@ import {
   loadStreetViewLibrary,
   resolveMapsColorScheme,
 } from '../../lib/googleMaps'
+import { isInHomejiServiceArea } from '../../lib/homejiServiceArea'
+import {
+  createMapCameraScheduler,
+  type MapCameraScheduler,
+} from '../../lib/mapCamera'
+import {
+  DEFAULT_MAP_PIN_LAYERS,
+  type MapPinLayers,
+} from '../../lib/mapPinLayers'
 import {
   fetchMapPlaceDetails,
   isPlaceIconClick,
   type MapPlaceDetails,
 } from '../../lib/mapPlace'
-import {
-  createMapCameraScheduler,
-  type MapCameraScheduler,
-} from '../../lib/mapCamera'
+import { computeDrivingRoute } from '../../lib/mapRoutes'
 import { waitForMapHostSize } from '../../lib/mapWebGL'
-import {
-  useSystemMapColorScheme,
-} from '../../hooks/useSystemMapColorScheme'
-import { MapErrorPanel } from './MapErrorPanel'
-import {
-  createUserLocationDotContent,
-  createMapClusterContent,
-  createMarketplacePinContent,
-  createPricePillPinContent,
-  createRentalPinContent,
-  type MapClusterKind,
-  type MapPinContentHandle,
-} from './mapLocationPins'
+import type { MarketplaceMapPin } from '../../lib/marketplaceSellerPins'
 import { formatCompactPriceTr } from './explore/mapExploreFormat'
 import {
   createSharedLocationPinContent,
   type LocationLottieContentHandle,
 } from './locationLottieContent'
-import { computeDrivingRoute } from '../../lib/mapRoutes'
+import { MapErrorPanel } from './MapErrorPanel'
 import {
-  DEFAULT_MAP_PIN_LAYERS,
-  type MapPinLayers,
-} from '../../lib/mapPinLayers'
-import { isInHomejiServiceArea } from '../../lib/homejiServiceArea'
-import type { MarketplaceMapPin } from '../../lib/marketplaceSellerPins'
+  createMapClusterContent,
+  createMarketplacePinContent,
+  createPricePillPinContent,
+  createRentalPinContent,
+  createUserLocationDotContent,
+  type MapClusterKind,
+  type MapPinContentHandle,
+} from './mapLocationPins'
 import './RentalMap.css'
 
 export type { MapPlaceDetails }
 
-export { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM }
+export { DEFAULT_MAP_CENTER,DEFAULT_MAP_ZOOM }
 
 export type MapFocus = { lat: number; lng: number; zoom?: number }
 export type MapViewportPad = { top: number; bottom: number }
@@ -232,12 +232,12 @@ function RentalMapComponent({
   const routePolylinesRef = useRef<google.maps.Polyline[]>([])
   const routeMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const onNavigationResultRef = useRef(onNavigationResult)
-  onNavigationResultRef.current = onNavigationResult
+  useLayoutEffect(() => { onNavigationResultRef.current = onNavigationResult }, [onNavigationResult])
   const onViewportIdleRef = useRef(onViewportIdle)
-  onViewportIdleRef.current = onViewportIdle
+  useLayoutEffect(() => { onViewportIdleRef.current = onViewportIdle }, [onViewportIdle])
   const libRef = useRef<google.maps.MarkerLibrary | null>(null)
   const onSelectMarketplaceRef = useRef(onSelectMarketplace)
-  onSelectMarketplaceRef.current = onSelectMarketplace
+  useLayoutEffect(() => { onSelectMarketplaceRef.current = onSelectMarketplace }, [onSelectMarketplace])
   const fittedKeyRef = useRef('')
   const focusAppliedRef = useRef('')
   const selectAppliedRef = useRef('')
@@ -260,10 +260,10 @@ function RentalMapComponent({
   const onClearSelectionRef = useRef(onClearSelection)
   const onSelectPlaceRef = useRef(onSelectPlace)
   const onPlaceLoadingRef = useRef(onPlaceLoading)
-  onSelectPostRef.current = onSelectPost
-  onClearSelectionRef.current = onClearSelection
-  onSelectPlaceRef.current = onSelectPlace
-  onPlaceLoadingRef.current = onPlaceLoading
+  useLayoutEffect(() => { onSelectPostRef.current = onSelectPost }, [onSelectPost])
+  useLayoutEffect(() => { onClearSelectionRef.current = onClearSelection }, [onClearSelection])
+  useLayoutEffect(() => { onSelectPlaceRef.current = onSelectPlace }, [onSelectPlace])
+  useLayoutEffect(() => { onPlaceLoadingRef.current = onPlaceLoading }, [onPlaceLoading])
   const placeFetchSeqRef = useRef(0)
 
   const [mapReady, setMapReady] = useState(false)
@@ -503,6 +503,8 @@ function RentalMapComponent({
   }, [mapReady, syncMarketplaceMarkers])
 
   useEffect(() => {
+    const ownedMarkers = markersRef.current
+    const ownedMarketplaceMarkers = marketplaceMarkersRef.current
     if (!isLoaded || !apiKey) return
     const host = hostRef.current
     if (!host || mapRef.current) return
@@ -694,16 +696,16 @@ function RentalMapComponent({
       markerClustererRef.current?.clearMarkers(true)
       markerClustererRef.current?.setMap(null)
       markerClustererRef.current = null
-      markersRef.current.forEach((e) => {
+      ownedMarkers.forEach((e) => {
         e.marker.map = null
         e.dispose?.()
       })
-      markersRef.current.clear()
-      marketplaceMarkersRef.current.forEach((e) => {
+      ownedMarkers.clear()
+      ownedMarketplaceMarkers.forEach((e) => {
         e.marker.map = null
         e.dispose?.()
       })
-      marketplaceMarkersRef.current.clear()
+      ownedMarketplaceMarkers.clear()
       if (userMarkerRef.current) {
         userMarkerRef.current.map = null
         userMarkerRef.current = null
@@ -728,7 +730,7 @@ function RentalMapComponent({
       streetViewServiceRef.current = null
       for (const line of routePolylinesRef.current) line.setMap(null)
       routePolylinesRef.current = []
-      for (const m of routeMarkersRef.current) m.map = null
+      for (const marker of routeMarkersRef.current) Object.assign(marker, { map: null })
       routeMarkersRef.current = []
       const w = window as Window & { __HOMEJI_MAP?: google.maps.Map }
       if (w.__HOMEJI_MAP === mapRef.current) delete w.__HOMEJI_MAP
@@ -922,7 +924,7 @@ function RentalMapComponent({
   const clearRouteOverlay = useCallback(() => {
     for (const line of routePolylinesRef.current) line.setMap(null)
     routePolylinesRef.current = []
-    for (const m of routeMarkersRef.current) m.map = null
+    for (const marker of routeMarkersRef.current) Object.assign(marker, { map: null })
     routeMarkersRef.current = []
   }, [])
 
@@ -1197,9 +1199,7 @@ function RentalMapComponent({
     }
   }, [])
 
-  openStreetViewAtRef.current = (position) => {
-    void openStreetViewAt(position)
-  }
+  useLayoutEffect(() => { openStreetViewAtRef.current = position => { void openStreetViewAt(position) } }, [openStreetViewAt])
 
   const toggleStreetView = useCallback(async () => {
     const map = mapRef.current

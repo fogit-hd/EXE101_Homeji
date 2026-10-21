@@ -17,7 +17,7 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 const page = await browser.newPage()
 const errors = []; page.on('pageerror', e => errors.push(e.message))
 await page.route('**/*', route => new URL(route.request().url()).origin === new URL(base).origin ? route.continue() : route.abort())
-await page.route('**/src/contexts/GoogleMapsProvider.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export function useGoogleMaps(){return {apiKey:"fixture",isLoaded:true}}' }))
+await page.route('**/src/contexts/GoogleMapsProvider.logic.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export function useGoogleMaps(){return {apiKey:"fixture",isLoaded:true}}' }))
 await page.route('**/src/lib/placeAutocomplete.ts*', route => route.fulfill({ contentType: 'application/javascript', body: `
 export const NEARBY_PLACE_CATEGORY_OPTIONS=[['food','Ăn uống'],['cafe','Cà phê'],['grocery','Tạp hóa'],['health','Y tế'],['pharmacy','Nhà thuốc'],['studyCafe','Cà phê để học']].map(([id,label])=>({id,label}));
 const items=Array.from({length:8},(_,i)=>({placeId:'place-'+i,title:['PHỞ GÀ TA NGÔ GIA PHÚ','Cà phê sân vườn gần nhà','Cửa hàng tiện lợi khu dân cư'][i%3],address:'673 Đ. Đỗ Xuân Hợp, Bình Trưng Đông, Thủ Đức, Hồ Chí Minh',typeLabel:'Nhà hàng',distanceMeters:403+i*125,lat:10.8,lng:106.7}));

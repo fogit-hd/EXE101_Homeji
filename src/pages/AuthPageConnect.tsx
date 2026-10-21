@@ -1,20 +1,8 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import type { DotLottie } from '@lottiefiles/dotlottie-react'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-
-const CONNECTION_SRC = '/lottie/connection.lottie'
-const SAD_SRC = '/lottie/sad-animation.lottie'
-const ERROR_ICON_SRC = '/lottie/error.lottie'
-
-let warmStarted = false
-/** Prefetch Connection + Sad + Error icon vào cache. */
-export function warmConnectLottie() {
-  if (warmStarted || typeof window === 'undefined') return
-  warmStarted = true
-  for (const href of [CONNECTION_SRC, SAD_SRC, ERROR_ICON_SRC]) {
-    void fetch(href, { cache: 'force-cache' }).catch(() => {})
-  }
-}
+import { CONNECTION_SRC, ERROR_ICON_SRC, SAD_SRC, warmConnectLottie } from "./AuthPageConnect.logic"
 
 /**
  * CTA “Kết nối với Homeji”:
@@ -76,21 +64,11 @@ export function ConnectHomejiCta({
   }, [showFail, error])
 
   /** Mây fade-in trước — rồi mới mount + play error.lottie (tránh chạy lúc ẩn). */
+  if (useChangedInputs([showFail, error])) { setTyped(''); setCloudReady(false); setIconDone(false) }
   useEffect(() => {
-    if (!showFail || !error) {
-      setTyped('')
-      setCloudReady(false)
-      setIconDone(false)
-      iconDoneRef.current = false
-      playedRef.current = false
-      return
-    }
-    setCloudReady(false)
-    setIconDone(false)
     iconDoneRef.current = false
     playedRef.current = false
-    setTyped('')
-
+    if (!showFail || !error) return
     const cloudInId = window.setTimeout(() => setCloudReady(true), 280)
     return () => window.clearTimeout(cloudInId)
   }, [showFail, error])

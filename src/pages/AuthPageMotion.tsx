@@ -1,7 +1,9 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import type { DotLottie } from '@lottiefiles/dotlottie-react'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import gsap from 'gsap'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { voiceTravelDuration } from "./AuthPageMotion.logic"
 
 const AI_VOICE_SRC = '/lottie/ai-voice.lottie'
 const EYE_SRC = '/lottie/eye01.lottie'
@@ -44,12 +46,6 @@ type AiVoiceFloatProps = {
   onTravelEnd?: () => void
 }
 
-/** Thời lượng trượt theo khoảng cách (vị trí) — không liên quan vòng Lottie. */
-export function voiceTravelDuration(distPx: number) {
-  if (distPx < 0.75) return 0
-  return Math.min(2.35, Math.max(1.15, distPx / 78))
-}
-
 /**
  * Một AI Voice duy nhất — luôn mount.
  * - `AI Voice.lottie` loop liên tục khi hiện; không pause/restart khi đổi chỗ.
@@ -58,7 +54,6 @@ export function voiceTravelDuration(distPx: number) {
  */
 export function AiVoiceFloat({
   visible,
-  playing: _playing,
   top,
   left,
   snapKey = 0,
@@ -67,7 +62,7 @@ export function AiVoiceFloat({
 }: AiVoiceFloatProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const playerRef = useRef<DotLottie | null>(null)
-  const renderConfig = useRef(voiceRenderConfig()).current
+  const [renderConfig] = useState(voiceRenderConfig)
   /** Lần đặt vị trí đầu (hoặc sau khi ẩn): snap, các lần sau mới tween chậm. */
   const snapNextRef = useRef(true)
   const placedRef = useRef(false)
@@ -76,21 +71,16 @@ export function AiVoiceFloat({
   const loopOnRef = useRef(false)
   const onTravelStartRef = useRef(onTravelStart)
   const onTravelEndRef = useRef(onTravelEnd)
-  onTravelStartRef.current = onTravelStart
-  onTravelEndRef.current = onTravelEnd
-
+  useLayoutEffect(() => { onTravelStartRef.current = onTravelStart }, [onTravelStart])
+  useLayoutEffect(() => { onTravelEndRef.current = onTravelEnd }, [onTravelEnd])
   /** Class is-on/is-off theo visible; giữ mount để CSS fade chạy hết. */
   const [fadeOn, setFadeOn] = useState(visible)
   /** Sau fade-out mới pause Lottie. */
   const [engineOn, setEngineOn] = useState(visible)
 
+  if (useChangedInputs([visible])) { setFadeOn(visible); if (visible) setEngineOn(true) }
   useEffect(() => {
-    if (visible) {
-      setFadeOn(true)
-      setEngineOn(true)
-      return
-    }
-    setFadeOn(false)
+    if (visible) return
     const id = window.setTimeout(() => setEngineOn(false), 780)
     return () => window.clearTimeout(id)
   }, [visible])
@@ -192,8 +182,7 @@ export function AiVoiceFloat({
   }, [engineOn])
 
   const engineOnRef = useRef(engineOn)
-  engineOnRef.current = engineOn
-
+  useLayoutEffect(() => { engineOnRef.current = engineOn }, [engineOn])
   return (
     <span
       ref={rootRef}
@@ -258,8 +247,7 @@ export function PasswordEyeToggle({
   const readyRef = useRef(false)
   const animatingRef = useRef(false)
   const visibleRef = useRef(visible)
-  visibleRef.current = visible
-
+  useLayoutEffect(() => { visibleRef.current = visible }, [visible])
   const pinEye = (open: boolean) => {
     const p = playerRef.current
     if (!p) return

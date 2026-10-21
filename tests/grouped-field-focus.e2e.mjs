@@ -16,7 +16,7 @@ await writeFile(out+'/scene.tsx',[
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'})
 const page=await browser.newPage({reducedMotion:'reduce'})
 await page.route('**/src/contexts/AuthContext.tsx*',r=>r.fulfill({contentType:'application/javascript',body:'export const useAuth=()=>({isAuthenticated:true,profile:{id:"fixture",role:1}})'}))
-await page.route('**/src/contexts/AuthModalContext.tsx*',r=>r.fulfill({contentType:'application/javascript',body:'export const useAuthModal=()=>({openAuthModal:()=>{}})'}))
+await page.route('**/src/contexts/AuthModalContext.logic.tsx*',r=>r.fulfill({contentType:'application/javascript',body:'export const useAuthModal=()=>({openAuthModal:()=>{}})'}))
 const errors=[];page.on('pageerror',e=>errors.push(e.message))
 async function noInnerFrame(field){
  await field.focus()

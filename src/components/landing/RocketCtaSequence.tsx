@@ -1,3 +1,4 @@
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import gsap from 'gsap'
 import { useEffect, useRef, useState } from 'react'
@@ -94,20 +95,23 @@ export function RocketCtaSequence({ open, onFinished }: Props) {
     return id
   }
 
-  useEffect(() => {
-    if (!open) return
-
-    const session = ++sessionRef.current
-    clickDoneRef.current = false
-    introDoneRef.current = false
-    clearTimers()
-
+  if (useChangedInputs([open], true) && open) {
     setPhase('intro')
     setHeroBox(null)
     setShowHighlight(false)
     setShowClick(false)
     setShowConfetti(false)
     setRocketKey((k) => k + 1)
+  }
+  useEffect(() => {
+    if (!open) return
+
+    const cleanupNodes = [taglineRef.current, veilRef.current, stageRef.current, highlightWrapRef.current]
+    const session = ++sessionRef.current
+    clickDoneRef.current = false
+    introDoneRef.current = false
+    clearTimers()
+
     pauseGuestCoast()
 
     // Double rAF: wait until intro DOM (chars + rocket mount) is committed
@@ -158,10 +162,7 @@ export function RocketCtaSequence({ open, onFinished }: Props) {
       window.cancelAnimationFrame(boot2)
       clearTimers()
       gsap.killTweensOf([
-        taglineRef.current,
-        veilRef.current,
-        stageRef.current,
-        highlightWrapRef.current,
+        ...cleanupNodes,
         heroReserveBtn(),
       ].filter(Boolean))
       const btn = heroReserveBtn()

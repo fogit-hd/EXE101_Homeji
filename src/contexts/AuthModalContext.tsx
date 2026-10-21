@@ -1,34 +1,15 @@
+import { useChangedInputs } from '../hooks/useChangedInputs'
 import {
-  createContext,
   useCallback,
-  useContext,
-  useEffect,
+
   useMemo,
   useRef,
   useState,
-  type ReactNode,
+  type ReactNode
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AuthModal } from '../components/auth/AuthModal'
-
-export type AuthModalMode = 'login' | 'register'
-export type AuthModalIntent = 'contact' | 'save' | 'invite' | 'report' | 'browse' | string
-
-type OpenAuthModalOptions = {
-  mode?: AuthModalMode
-  intent?: AuthModalIntent
-  onSuccess?: () => void
-}
-
-type AuthModalContextValue = {
-  isOpen: boolean
-  mode: AuthModalMode
-  intent: AuthModalIntent | null
-  openAuthModal: (options?: OpenAuthModalOptions) => void
-  closeAuthModal: () => void
-}
-
-const AuthModalContext = createContext<AuthModalContextValue | null>(null)
+import { AuthModalContext, type AuthModalContextValue, type AuthModalIntent, type AuthModalMode, type OpenAuthModalOptions } from "./AuthModalContext.logic"
 
 export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -56,13 +37,13 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Deep-link: ?auth=login | ?auth=register
-  useEffect(() => {
+  if (useChangedInputs([searchParams], true)) {
     const auth = searchParams.get('auth')
     if (auth === 'login' || auth === 'register') {
       setMode(auth === 'register' ? 'register' : 'login')
       setIsOpen(true)
     }
-  }, [searchParams])
+  }
 
   const handleSuccess = useCallback(() => {
     const resume = onSuccessRef.current
@@ -94,10 +75,4 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       />
     </AuthModalContext.Provider>
   )
-}
-
-export function useAuthModal() {
-  const ctx = useContext(AuthModalContext)
-  if (!ctx) throw new Error('useAuthModal must be used within AuthModalProvider')
-  return ctx
 }

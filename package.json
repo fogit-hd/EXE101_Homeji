@@ -26,8 +26,7 @@
     "motion": "^14.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1",
-    "serve": "^14.2.6",
+    "react-router-dom": "^7.18.4",
     "three": "^0.186.1"
   },
   "devDependencies": {

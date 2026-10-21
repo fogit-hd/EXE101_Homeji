@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { RentalPostSummary } from '../../../api/types'
-import { shortListingTitle } from '../../MapListingCard'
+import { shortListingTitle } from "../../MapListingCard.logic"
+
 import bookmarkCheckUrl from '../../../assets/figma-map/icons/bookmark-check.svg'
 import bookmarkOutlineUrl from '../../../assets/figma-map/icons/bookmark-outline.svg'
 import {

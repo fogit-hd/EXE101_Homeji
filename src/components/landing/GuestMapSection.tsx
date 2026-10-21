@@ -1,4 +1,4 @@
-import { ChoicePicker } from '../ui/ChoicePicker'
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   getRentalPost,
@@ -6,19 +6,24 @@ import {
   type RentalPost,
   type RentalPostSummary,
 } from '../../api'
-import { RentalPostCard } from '../RentalPostCard'
-import { ContentSkeleton } from '../ContentSkeleton'
-import { RentalMap } from '../map/RentalMap'
-import { MapPlaceDetailPanel } from '../map/MapPlaceDetailPanel'
-import { MapNearbyPanel } from '../map/MapNearbyPanel'
-import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
-import type { NearbyPlaceItem, NearbyPlaceCategory } from '../../lib/placeAutocomplete'
+import { useAuthModal } from "../../contexts/AuthModalContext.logic"
 import { useChatbotSurface } from '../../contexts/chatbot-surface'
-import { useAuthModal } from '../../contexts/AuthModalContext'
-import { useGoogleMaps } from '../../contexts/GoogleMapsProvider'
+import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
+import type { NearbyPlaceCategory, NearbyPlaceItem } from '../../lib/placeAutocomplete'
+import { ContentSkeleton } from '../ContentSkeleton'
+import { MapNearbyPanel } from '../map/MapNearbyPanel'
+import { MapPlaceDetailPanel } from '../map/MapPlaceDetailPanel'
+import { RentalMap } from '../map/RentalMap'
+import { RentalPostCard } from '../RentalPostCard'
+import { ChoicePicker } from '../ui/ChoicePicker'
+
+import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+
 import { getErrorMessage } from '../../lib/errors'
 import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
+import '../map/MapPlaceDetailPanel.css'
+import { RevealText } from '../motion/RevealText'
 import {
   GUEST_CITY,
   GUEST_DEFAULT_FOCUS,
@@ -29,9 +34,7 @@ import {
   wardsForDistrict,
   type MapFocusPoint,
 } from './guestMapAreas'
-import '../map/MapPlaceDetailPanel.css'
 import './GuestMapSection.css'
-import { RevealText } from '../motion/RevealText'
 
 const PAGE_SIZE = 24
 const GUEST_SELECTION_PAD = { top: 24, bottom: 80 }
@@ -99,7 +102,9 @@ export function GuestMapSection() {
   }, [])
 
   useEffect(() => {
-    void load(searchKeyword)
+    let cancelled = false
+    void Promise.resolve().then(() => { if (!cancelled) void load(searchKeyword) })
+    return () => { cancelled = true }
   }, [load, searchKeyword])
 
   const applyFilters = useCallback(
@@ -177,14 +182,13 @@ export function GuestMapSection() {
     [posts, selectedPostId],
   )
 
+  if (useChangedInputs([selectedPostId])) {
+    setListingDetail(null)
+    setListingLoading(Boolean(selectedPostId))
+  }
   useEffect(() => {
-    if (!selectedPostId) {
-      setListingDetail(null)
-      setListingLoading(false)
-      return
-    }
+    if (!selectedPostId) return
     let cancelled = false
-    setListingLoading(true)
     void getRentalPost(selectedPostId, { auth: false })
       .then((post) => {
         if (cancelled) return

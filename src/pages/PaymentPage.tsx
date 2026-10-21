@@ -1,16 +1,12 @@
-import { LiquidTabList } from '../components/ui/LiquidTabList'
-import { paymentReturnUrl } from '../lib/paymentReturn'
-import { trackFunnelEvent } from '../lib/ga4'
-import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   createPremiumMomoPayment,
-  createPremiumWalletPayment,
-  getMyWallet,
   createPremiumPayOsPayment,
+  createPremiumWalletPayment,
   getMySubscription,
+  getMyWallet,
   getPayment,
   getPayments,
   getSubscriptionPackages,
@@ -18,28 +14,33 @@ import {
   type Payment,
   type SubscriptionPackage,
 } from '../api'
-import { PaymentStatus, SubscriptionTier } from '../api/types'
-import { HomejiLoader, usePersistentLoad } from '../components/HomejiLoader'
-import { PageNotice } from '../components/toast/PageNotice'
-import { PaymentsSkeleton } from '../components/skeletons/PageSkeletons'
-import { MapToast } from '../components/map/MapToast'
-import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
-import { ShellIcon } from '../components/shell/ShellIcons'
-import { useAuth } from '../contexts/AuthContext'
 import { ApiRequestError } from '../api/client'
+import { PaymentStatus, SubscriptionTier } from '../api/types'
+import { HomejiLoader } from "../components/HomejiLoader"
+import { usePersistentLoad } from "../components/HomejiLoader.logic"
+import { MapToast } from '../components/map/MapToast'
+import { RevealText } from '../components/motion/RevealText'
+import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
+import { marketplaceHref } from '../components/shell/navigation'
+import { ShellIcon } from '../components/shell/ShellIcons'
+import { PaymentsSkeleton } from '../components/skeletons/PageSkeletons'
+import { PageNotice } from '../components/toast/PageNotice'
+import { ChoicePicker } from '../components/ui/ChoicePicker'
+import { LiquidTabList } from '../components/ui/LiquidTabList'
+import { useAuth } from '../contexts/AuthContext'
+import { currentSubscription } from '../lib/currentSubscription'
 import { getErrorMessage } from '../lib/errors'
+import { trackFunnelEvent } from '../lib/ga4'
 import {
   formatDate,
   formatPrice,
   paymentMethodLabel,
 } from '../lib/labels'
-import { getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
-import { marketplaceHref } from '../components/shell/navigation'
-import { currentSubscription } from '../lib/currentSubscription'
+import { paymentReturnUrl } from '../lib/paymentReturn'
+import { getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import './MarketplacePage.css'
 import './PaymentPage.css'
-import { RevealText } from '../components/motion/RevealText'
 
 type PayTab = 'plans' | 'history'
 

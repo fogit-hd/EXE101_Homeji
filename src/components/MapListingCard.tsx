@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { type RentalPostSummary } from '../api/types'
 import { formatPrice, rentalPostTypeLabel } from '../lib/labels'
 import './MapListingCard.css'
+import { shortListingAddress, shortListingTitle } from "./MapListingCard.logic"
 
 type Props = {
   post: RentalPostSummary
@@ -11,23 +12,6 @@ type Props = {
   onHover?: () => void
   onLeave?: () => void
   onSelect?: () => void
-}
-
-/** Keep the lead phrase before marketing fluff (dash / pipe). */
-export function shortListingTitle(title: string, max = 48) {
-  const lead = title.split(/\s*[-–—|·]\s*/)[0]?.trim() || title.trim()
-  if (lead.length <= max) return lead
-  return `${lead.slice(0, max - 1).trimEnd()}…`
-}
-
-/** Street + ward only — drop city / province tails. */
-export function shortListingAddress(address: string) {
-  const parts = address
-    .split(',')
-    .map((p) => p.trim())
-    .filter(Boolean)
-  if (parts.length <= 2) return address
-  return parts.slice(0, 2).join(', ')
 }
 
 export const MapListingCard = memo(function MapListingCard({
