@@ -149,13 +149,13 @@ function OwnedSearchInterestCenter() {
       <div className="interest-content" aria-busy={busy}>
         {error && <p role="alert" className="interest-error">{error}</p>}
         {!current ? <button type="button" disabled={busy} onClick={() => void action(getSearchInterests)}>Tải lại thiết lập</button> : <>
-          <section><h3>Cá nhân hóa có kiểm soát</h3>
+          <section><h3>Phòng mới tự động</h3>
             <p>Chỉ lưu những khu vực và bộ lọc bạn chủ động tìm trên tài khoản này. Không lấy GPS. Lịch sử xét trong 7 ngày; từ 3 phiên tìm cùng khu vực sẽ gợi ý theo dõi.</p>
-            <label><input type="checkbox" checked={current.settings.enabled} disabled={busy} onChange={e => settings({ enabled: e.target.checked })} />Bật gợi ý từ lịch sử tìm kiếm</label>
+            <label><input type="checkbox" checked={current.settings.enabled} disabled={busy} onChange={e => settings({ enabled: e.target.checked })} />Tự gợi ý từ những lần tìm phòng</label>
             {!current.settings.enabled && <p>Bật để bắt đầu ghi nhận từ những lần tìm tiếp theo. Tắt sẽ xóa dữ liệu cá nhân hóa và bỏ toàn bộ khu vực đang theo dõi.</p>}
             {current.settings.enabled && <>
-              <label><input type="checkbox" checked={current.settings.aiEnabled} disabled={busy} onChange={e => settings({ aiEnabled: e.target.checked })} />Cho phép Gemini tổng hợp nhu cầu</label>
-              <small>Khi bạn bấm “AI tổng hợp”, tối đa 5 tìm kiếm gần đây và bộ lọc được gửi tới Gemini. Khi bấm “AI xếp hạng”, tiêu chí đã xác nhận cùng các tin đang xét được gửi để sắp xếp. Không gửi email, tên tài khoản hay vị trí thiết bị.</small>
+              <label><input type="checkbox" checked={current.settings.aiEnabled} disabled={busy} onChange={e => settings({ aiEnabled: e.target.checked })} />Tự xếp hạng phòng mới bằng AI</label>
+              <small>AI tự xếp hạng tin mới theo tiêu chí đã xác nhận. Khi dùng “AI tổng hợp”, Gemini nhận tối đa 5 tìm kiếm gần đây. Không gửi email, tên tài khoản hay vị trí thiết bị.</small>
               <label><input type="checkbox" checked={current.settings.emailEnabled} disabled={busy} onChange={e => settings({ emailEnabled: e.target.checked })} />Nhận email tổng hợp phòng mới, tối đa một lần/ngày</label>
               <small>Thông báo trong web được tạo cho khu vực bạn xác nhận theo dõi. Bạn có thể tắt email bất cứ lúc nào.</small>
             </>}

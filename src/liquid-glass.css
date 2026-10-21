@@ -121,8 +121,6 @@ html[data-theme='dark'] {
 }
 #root .guest-hero .liquid-action { --glass-tint: rgb(255 255 255 / .08); }
 #root .guest-fixed-cta .guest-fixed-cta__go { --glass-fill: rgb(12 57 36 / .76); }
-/* The food feature has its own permanently dark backdrop in either theme. */
-#root .food-featured { --glass-ink: #fff; --glass-tint: rgb(255 255 255 / .14); --glass-action: rgb(255 255 255 / .2); --glass-border: rgb(255 255 255 / .45); }
 /* Keep the demo's curved rim on action controls without turning small toolbar
    labels into glowing text. Panels remain calm so the controls carry hierarchy. */
 #root :is(.hj-action--icon, .hj-search__clear, .hj-notify__trigger) { border-radius: 50%; }

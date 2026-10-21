@@ -177,6 +177,7 @@ export function FoodMarketplaceView({
               <button
                 type="button"
                 className="food-featured__cta"
+                data-glass-exclude
                 disabled={!featured}
                 onClick={() => featured && onShowOnMap(featured)}
               >
