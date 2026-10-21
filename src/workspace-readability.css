@@ -139,3 +139,14 @@ html:root #root .seller-location-lock { background: transparent; border: 0; bord
 /* One readable contract for primary actions, including glass-rendered controls. */
 html:root :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: #087f8c !important; color: #fff !important; --glass-ink: #fff; }
 html:root[data-theme='dark'] :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: #80d9db !important; color: #103039 !important; --glass-ink: #103039; }
+
+html:root[data-theme='dark'] #root .map-listings__meta > span { background: var(--surface-input) !important; color: var(--text-primary) !important; }
+html:root[data-theme='dark'] #root .map-listings__save { background: var(--surface-input) !important; color: var(--text-heading) !important; border: 1px solid var(--border); }
+html:root[data-theme='dark'] #root .map-listings__move { background: var(--surface-elevated) !important; color: var(--text-primary) !important; }
+
+/* Ledger rows keep the amount beside the description at every width. */
+html:root #root .wallet-table-wrap { display: none; }
+html:root #root .wallet-cards { display: block; }
+html:root #root .wallet-cards .wallet-tx { min-width: 0; }
+html:root #root .wallet-cards .wallet-tx strong { font-size: 15px; }
+html:root #root .wallet-cards .wallet-tx small { display: block; line-height: 1.6; }

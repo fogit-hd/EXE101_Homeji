@@ -536,7 +536,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       aria-pressed={activePayment?.id === p.id}
                     >
                       <span className="pay-table__plan"><strong>{planName(p)}</strong><small>{p.orderCode}</small></span>
-                      <span className="pay-table__method"><i className={`pay-logo is-${p.method}`} aria-hidden="true">{p.method === 1 ? 'M' : 'P'}</i>{paymentMethodLabel[p.method]}</span>
+                      <span className="pay-table__method"><i className={`pay-logo is-${p.method}`} aria-hidden="true">{p.method === 1 ? 'M' : p.method === 3 ? 'Ví' : 'P'}</i>{paymentMethodLabel[p.method]}</span>
                       <span className="pay-table__time">{formatDate(p.createdAt)}</span>
                       <span className="pay-table__amount">{formatPrice(p.amount)}</span>
                       <span className="pay-table__status"><PaymentStatusBadge status={p.status} /></span>

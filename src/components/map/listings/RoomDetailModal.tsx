@@ -602,7 +602,7 @@ function PhotoGallery({ urls }: { urls: string[] }) {
       </div>
       <dialog
         ref={viewerRef}
-        className="room-photo-viewer"
+        className="room-photo-viewer" data-glass-exclude
         aria-label="Xem ảnh phòng"
         onClick={(event) => {
           event.stopPropagation()
