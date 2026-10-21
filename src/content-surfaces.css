@@ -66,3 +66,16 @@ html:root #root .map-listings__preview-price button { display: grid; place-items
 html:root #root .map-listings__preview-tags span { background: var(--surface-input); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 5px; }
 html:root #root .map-listings__move { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 2px 6px rgb(0 0 0 / .1); min-height: 44px; }
 html:root #root :is(.map-listings__save,.map-listings__preview-price button) { min-width: 44px; min-height: 44px; }
+html:root #root .hub-market { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+html:root #root .hub-market h2 { color: var(--text-heading); }
+html:root #root .hub-market > a { color: var(--hj-accent); }
+html:root #root .hub-market__thumb { display: block; position: relative; overflow: hidden; }
+html:root #root .hub-market__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+html:root #root .hj-nrow-list { margin: 0; list-style: none; }
+html:root #root .hj-nrow__main { display: flex; align-items: flex-start; gap: 12px; color: var(--text-primary); text-align: left; font: inherit; cursor: pointer; }
+html:root #root .hj-nrow__body { display: block; min-width: 0; flex: 1; }
+html:root #root .hj-nrow__title { flex: 1; font-size: 14px; font-weight: 600; }
+html:root #root .hj-nrow__msg { display: block; font-size: 13px; margin-top: 4px; }
+html:root #root .hj-nrow__icon { display: grid; position: relative; place-items: center; flex: none; width: 36px; height: 36px; }
+html:root #root .hj-nrow__sev { position: absolute; width: 8px; height: 8px; border-radius: 50%; bottom: -1px; right: -1px; background: var(--hj-accent); }
+html:root #root .hj-nrow__read { display: grid; place-items: center; cursor: pointer; }

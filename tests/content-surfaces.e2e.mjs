@@ -20,7 +20,7 @@ async function contrast(selector,bg=selector){
  const c=await page.locator(selector).first().evaluate((node,bg)=>{let e=document.querySelector(bg),fill='';while(e){const c=getComputedStyle(e).backgroundColor;if(c!=='rgba(0, 0, 0, 0)'&&c!=='transparent'){fill=c;break}e=e.parentElement}return{ink:getComputedStyle(node).color,fill}},bg)
  const[a,b]=[luminance(c.ink),luminance(c.fill)].sort((a,b)=>b-a);assert.ok((a+.05)/(b+.05)>=4.5,selector+' contrast '+JSON.stringify(c))
 }
-async function goto(view,theme){await page.goto(base+'/'+out+'/index.html?view='+view);await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.evaluate(()=>document.fonts.ready)}
+async function goto(view,theme){await page.goto(base+'/'+out+'/index.html?view='+view);await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(350)}
 try{
  for(const[width,height]of[[1440,1000],[390,844],[320,700]])for(const theme of['dark','light']){
   await page.setViewportSize({width,height});await goto('samples',theme);await page.getByRole('button',{name:'Lưu tin',exact:true}).waitFor()
