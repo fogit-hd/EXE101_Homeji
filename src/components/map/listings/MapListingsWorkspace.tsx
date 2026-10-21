@@ -404,7 +404,7 @@ export function MapListingsWorkspace({
                   </button>
                 </div>
               ) : (
-                marketMode ? <MarketplaceSellerCatalog posts={marketPosts}
+                marketMode ? <MarketplaceSellerCatalog posts={marketPosts} layout="list"
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 <ul className="map-listings__cards">
                   {cards.map(({ id, view }) => <li key={id}>{renderListingCard(id, view)}</li>)}
