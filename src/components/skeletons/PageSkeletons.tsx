@@ -1,6 +1,7 @@
 import { MarketplaceLoadingSkeleton } from '../MarketplaceLoadingSkeleton'
 import type { MarketplaceTab } from '../../lib/marketplaceNavigation'
 import { Sk, SkCard, SkHeader, SkLines, SkScreen, SkTabs } from './Skeleton'
+export { AuthSkeleton } from './AuthSkeleton'
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i)
 
@@ -368,19 +369,6 @@ export function AdminSkeleton({ withHeader = true }: HeadProps) {
       <div className="sk-grid sk-metrics">{range(4).map(i => <SkCard key={i}><Sk w="50%" h={10} /><Sk w="60%" h={26} /><Sk w="40%" h={10} /></SkCard>)}</div>
       <SkTabs count={4} />
       <SkCard style={{ gap: 0 }}>{range(6).map(i => <div key={i} className="sk-table-row"><Sk w="70%" h={12} /><Sk w="50%" h={12} /><Sk w="60%" h={22} r={999} /><Sk w="50%" h={30} r={999} /></div>)}</SkCard>
-    </SkScreen>
-  )
-}
-
-/* ---------- Đăng nhập / đăng ký ---------- */
-export function AuthSkeleton() {
-  return (
-    <SkScreen name="auth" label="Đang mở…">
-      <SkCard className="sk-center" style={{ gap: 14, marginTop: 40 }}>
-        <Sk w={150} h={24} /><Sk w="80%" h={12} />
-        {range(2).map(i => <div key={i} className="sk-stack"><Sk w={80} h={10} /><Sk h={44} r={10} /></div>)}
-        <Sk h={44} r={999} /><Sk h={44} r={999} />
-      </SkCard>
     </SkScreen>
   )
 }

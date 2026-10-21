@@ -62,7 +62,7 @@ export function VerifySignupPage() {
     }
   }
 
-  return <div className="container page auth-page"><section className="auth-card card" style={{ maxWidth: 540, width: '100%' }}>
+  return <div className="container page auth-page"><section data-glass-exclude className="auth-card card" style={{ maxWidth: 540, width: '100%' }}>
     <h1 className="page-title">Xác thực email đăng ký</h1>
     <p>Hoàn tất đăng ký Homeji bằng mã 6 chữ số đã gửi tới email của bạn.</p>
     <p>Mã có hiệu lực tối đa 10 phút và được thử tối đa 5 lần.</p>

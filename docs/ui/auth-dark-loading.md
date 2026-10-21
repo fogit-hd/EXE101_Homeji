@@ -1,0 +1,9 @@
+# Auth loading and dark appearance
+
+Login, registration and email verification now have route-specific placeholders in `AuthSkeleton`. Login preserves the form/gallery split; registration preserves the character/form composition and four fields. The placeholder primitives have scoped dark colors, a visible loading status and no focusable fake controls. Reduced motion stops their shimmer. `RouteSkeleton` selects the variant, including `/verify-email` and auth paths with a trailing slash.
+
+`auth-appearance.css` defines stable action/ink pairs, visible input boundaries and underlined secondary actions independently of optical material. Primary submit buttons and compact password helpers explicitly opt out of refraction. The verification card also opts out and replaces its light gradient wash in dark mode. This does not alter login, password validation, OTP, session or submission contracts.
+
+`GoogleSignInButton` follows `ThemeContext` using the SDK's `filled_black`/`outline` themes, and its subtree is excluded from Homeji glass styling. Do not recolor the iframe or the Google mark with CSS. See the [Google button configuration](https://developers.google.com/identity/gsi/web/reference/js-reference#GsiButtonConfiguration).
+
+Verification: `tests/auth-dark-loading.e2e.mjs` holds lazy modules to inspect the actual route fallback, then checks readable text/action contrast, visible field borders, native password toggling, numeric OTP editing, live theme changes and narrow layouts. It intercepts API traffic and stubs the Google SDK for deterministic option checks; it does not authenticate anyone or send OTPs. A separate manual/browser inspection can use the real Google SDK to verify the rendered provider button. Existing `AuthPage` lint diagnostics should be compared against baseline rather than described as newly passing.

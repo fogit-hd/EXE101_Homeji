@@ -1652,7 +1652,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       ) : null}
 
       {showStory ? (
-        <p className="auth-cinema__fixed-login">
+        <p className="auth-cinema__fixed-login" data-glass-exclude>
           Đã có tài khoản?{' '}
           <button
             type="button"
@@ -1714,17 +1714,17 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         autoComplete="current-password"
                         placeholder="Nhập mật khẩu của bạn"
                       />
-                      <button type="button" className="auth-login-password__toggle" aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={showPassword} aria-controls="auth-password" onClick={() => setShowPassword(value => !value)}>
+                      <button type="button" data-glass-exclude className="auth-login-password__toggle" aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={showPassword} aria-controls="auth-password" onClick={() => setShowPassword(value => !value)}>
                         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />{showPassword ? <path d="m3 3 18 18" /> : null}</svg>
                       </button>
                       </div>
                     </div>
                     <Link className="auth-login-forgot" to="/forgot-password">Quên mật khẩu?</Link>
-                    <button type="submit" className="auth-cinema__submit" disabled={submitting}>
+                    <button type="submit" data-glass-exclude className="auth-cinema__submit" disabled={submitting}>
                       {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                     </button>
                   </form>
-                  <p className="auth-cinema__footer">
+                  <p className="auth-cinema__footer" data-glass-exclude>
                     Chưa có tài khoản?{' '}
                     <button type="button" disabled={toggleLocked} onClick={() => switchMode('signup')}>
                       Đăng ký
@@ -1781,7 +1781,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         autoComplete="new-password"
                         placeholder="Ít nhất 6 ký tự"
                       />
-                      <button type="button" className="auth-cinema__password-toggle" aria-controls="auth-reg-password" aria-pressed={showPassword} onClick={() => setShowPassword(visible => !visible)}>
+                      <button type="button" data-glass-exclude className="auth-cinema__password-toggle" aria-controls="auth-reg-password" aria-pressed={showPassword} onClick={() => setShowPassword(visible => !visible)}>
                         {showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       </button>
                     </div>
@@ -1803,11 +1803,11 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         {password === confirmPassword ? 'Mật khẩu đã khớp.' : 'Mật khẩu xác nhận chưa khớp.'}
                       </p> : null}
                     </div>
-                    <button type="submit" className="auth-cinema__submit" disabled={submitting}>
+                    <button type="submit" data-glass-exclude className="auth-cinema__submit" disabled={submitting}>
                       {submitting ? 'Đang đăng ký...' : 'Đăng ký'}
                     </button>
                   </form>
-                  <p className="auth-cinema__footer">
+                  <p className="auth-cinema__footer" data-glass-exclude>
                     Đã có tài khoản?{' '}
                     <button type="button" disabled={toggleLocked || submitting} onClick={() => switchMode('signin')}>
                       Đăng nhập

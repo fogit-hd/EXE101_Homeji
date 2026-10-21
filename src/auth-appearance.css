@@ -1,0 +1,44 @@
+/* Authentication needs stable semantic contrast, independent of scenery/glass.
+   Photos and the provider-owned Google button retain their original rendering. */
+:root { --auth-action-fill: #175c57; --auth-action-ink: #fff; --auth-field-edge: #748b96; }
+html[data-theme='dark'] { --auth-action-fill: #80d9db; --auth-action-ink: #102a30; --auth-field-edge: #7895a5; }
+html:root #root :is(.auth-cinema__submit,.auth-page .btn-primary) {
+  background: var(--auth-action-fill); color: var(--auth-action-ink);
+  border: 1px solid var(--auth-action-fill); min-height: 48px;
+  box-shadow: 0 3px 10px rgb(0 0 0 / .12); text-shadow: none;
+  filter: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html:root #root :is(.auth-cinema__submit,.auth-page .btn-primary):hover:not(:disabled) { background: color-mix(in srgb,var(--auth-action-fill) 90%,var(--auth-action-ink)); }
+html:root #root :is(.auth-cinema__submit,.auth-page .btn-primary):disabled { opacity: .6; cursor: wait; }
+html:root #root :is(.auth-cinema__fixed-login,.auth-cinema__footer) button,
+html:root #root .auth-cinema__password-toggle {
+  background: transparent; background-image: none; box-shadow: none; border: 0;
+  border-radius: 4px; color: var(--text-accent); min-height: 44px;
+  padding: 8px 10px; text-decoration: underline; text-underline-offset: 4px;
+  filter: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html:root #root .auth-cinema__password-toggle { margin-left: auto; }
+html:root #root .auth-login-password__toggle {
+  background: var(--surface-input); color: var(--text-heading); border: 1px solid var(--auth-field-edge);
+  box-shadow: none; filter: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html:root #root :is(.auth-cinema--form .auth-cinema__field input,.auth-page .form-input) {
+  color: var(--text-heading); background: var(--surface-input); border: 1px solid var(--auth-field-edge);
+  box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html:root #root :is(.auth-cinema--form .auth-cinema__field input,.auth-page .form-input)::placeholder { color: var(--text-secondary); opacity: 1; }
+html:root #root :is(.auth-cinema,.auth-page) :is(input,button,a):focus-visible { outline: 2px solid var(--text-accent); outline-offset: 3px; }
+html:root #root .google-signin { background: transparent; border: 0; padding: 0; box-shadow: none; filter: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html:root #root .google-signin > div { max-width: 100%; border-radius: 999px; overflow: hidden; }
+html[data-theme='dark']:root #root .auth-page::before {
+  background: radial-gradient(ellipse at 20% 10%,#1c3d40,transparent 65%),var(--surface-muted);
+}
+html[data-theme='dark']:root #root .auth-page .auth-card { background: var(--surface-elevated); border-color: #526c7a; box-shadow: 0 16px 48px rgb(0 0 0 / .24); }
+html[data-theme='dark']:root #root .auth-page a { color: #97e3e4; text-decoration: underline; text-underline-offset: 3px; }
+html[data-theme='dark']:root #root .navbar-brand__logo { filter: brightness(0) invert(1); }
+html[data-theme='dark']:root #root .auth-page .btn:not(.btn-primary) { background: #2b4352; color: #eef7fa; border: 1px solid var(--auth-field-edge); min-height: 44px; box-shadow: none; }
+html[data-theme='dark']:root #root :is(.auth-cinema__alert--error,.auth-card__error) { color: #ffd1d5; background: #492d37; border-color: #a96b78; }
+html[data-theme='dark']:root #root :is(.auth-cinema__alert--ok,.auth-card__message) { color: #c3f4d9; background: #21483a; border-color: #4d9172; }
+@media(forced-colors:active) {
+  html:root #root :is(.auth-cinema__submit,.auth-page .btn-primary) { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
+}

@@ -5,11 +5,13 @@ import type { MapAppSection } from '../map/MapAppPanel'
 import { ScreenPending } from '../ScreenPending'
 import { isExploreSurface } from '../chrome/exploreMode'
 import {
-  ActivitiesSkeleton, AdminSkeleton, AppointmentsSkeleton, AuthSkeleton, HubSkeleton,
+  ActivitiesSkeleton, AdminSkeleton, AppointmentsSkeleton, HubSkeleton,
   InvitationsSkeleton, LegalSkeleton, ListingsSkeleton, MarketplaceSkeleton, MessagesSkeleton,
   MyPostsSkeleton, NotificationsSkeleton, PaymentWaitSkeleton, PaymentsSkeleton, PostFormSkeleton,
   ProfileSkeleton, SavedSkeleton, WantedSkeleton,
 } from './PageSkeletons'
+import { AuthSkeleton } from './AuthSkeleton'
+import { authSkeletonMode } from './authSkeletonMode'
 
 /** Sections whose page draws its own header (FeatureWorkspace hides the frame title). */
 const OWN_HEADER = new Set<MapAppSection>(['messages', 'appointments', 'payments', 'profile', 'marketplace'])
@@ -50,11 +52,13 @@ export function RouteSkeleton() {
   const { pathname, search } = useLocation()
   const { isAuthenticated } = useAuth()
   const params = new URLSearchParams(search)
+  const authMode = authSkeletonMode(pathname)
 
   let body
   let variant = ''
-  if (pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/auth/callback') {
-    body = <AuthSkeleton />
+  if (authMode) {
+    body = <AuthSkeleton mode={authMode} />
+    variant = ' sk-route--auth'
   } else if (pathname === '/privacy' || pathname === '/terms') {
     body = <LegalSkeleton />
   } else if (!isAuthenticated) {
