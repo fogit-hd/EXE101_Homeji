@@ -216,7 +216,7 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
       {error ? <span className="seller-watch__sync-dot" aria-hidden="true" /> : null}
     </button>, host) : null}
     <dialog ref={dialog} id={dialogId} className="seller-watch__dialog" aria-labelledby="seller-watch-title" onCancel={() => setOpen(false)}>
-      <header><div><h2 id="seller-watch-title">Đơn bán cần xử lý</h2><p>Thông báo trực tiếp cho đồ ăn và pass đồ</p></div>
+      <header data-glass-exclude><div><h2 id="seller-watch-title">Đơn bán cần xử lý</h2><p>Thông báo trực tiếp cho đồ ăn và pass đồ</p></div>
         <button type="button" className="btn btn-secondary" aria-label="Đóng theo dõi đơn bán" onClick={() => setOpen(false)}>×</button></header>
       <div className="seller-watch__content">
     <div className="seller-watch__summary">

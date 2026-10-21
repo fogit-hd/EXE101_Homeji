@@ -9,6 +9,7 @@ import './components/theme/dark-theme.css'
 import './product-ui.css'
 import './glass-controls.css'
 import './auth-appearance.css'
+import './content-surfaces.css'
 import { LiquidGlassEffects } from './components/ui/LiquidGlassEffects'
 
 /**

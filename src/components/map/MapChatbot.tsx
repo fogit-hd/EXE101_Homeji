@@ -427,7 +427,7 @@ export function MapChatbot({
       </div>
 
       {error ? <p className="map-chatbot__error">{error}</p> : null}
-      <details className="map-chatbot__privacy"><summary>Hội thoại và tiêu chí của bạn</summary>
+      <details className="map-chatbot__privacy" data-glass-exclude><summary>Hội thoại và tiêu chí của bạn</summary>
         <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Tin nhắn và tiêu chí chỉ dùng trong phiên hiện tại; không ghi vào lịch sử chatbot trên máy chủ.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Tin nhắn hỗ trợ chung có thể được gửi tới Gemini để trả lời.</p>
         {config?.historyStorageEnabled ? <label><input type="checkbox" checked={saveHistory} disabled={busy} onChange={event => {
           setSaveHistory(event.target.checked); setConversationId(undefined); sessionCriteria.current = undefined; setMessages([]); setDraft('')

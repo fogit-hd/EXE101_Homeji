@@ -208,7 +208,7 @@ export function MapListingsWorkspace({
             <button
               type="button"
               className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`}
-              aria-pressed={Boolean(savedIds?.has(id))}
+              data-glass-exclude aria-pressed={Boolean(savedIds?.has(id))}
               aria-label={savedIds?.has(id) ? 'Bỏ lưu phòng' : 'Lưu phòng'}
               disabled={saveBusy && selectedListingId === id}
               onClick={(event) => {
@@ -216,7 +216,7 @@ export function MapListingsWorkspace({
                 onToggleSave(id)
               }}
             >
-              <img src="/figma/map/bookmark.svg" alt="" width={15} height={15} />
+              <BookmarkIcon saved={savedIds?.has(id)} />
             </button>
           ) : null}
         </article>
@@ -228,7 +228,7 @@ export function MapListingsWorkspace({
     <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}`}>
       <header className="map-listings__header">
         <div className="map-listings__toolbar" aria-label="Tùy chỉnh kết quả">
-          <div className="map-listings__catalog" role="group" aria-label="Nguồn tin">
+          <div className="map-listings__catalog" role="group" aria-label="Nguồn tin" data-glass-exclude>
             {SOURCE_OPTIONS.map((option) => (
               <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
                 aria-pressed={query.catalog === option.id}
@@ -330,7 +330,7 @@ export function MapListingsWorkspace({
             <button
                 type="button"
                 className={`map-listings__move${query.searchOnMove ? ' is-on' : ''}`}
-                aria-pressed={query.searchOnMove}
+                data-glass-exclude aria-pressed={query.searchOnMove}
                 onClick={() =>
                   writeQuery({
                     searchOnMove: !query.searchOnMove,
@@ -523,6 +523,8 @@ function FilterRange({ label, unit, draft, onChange }: {
   </fieldset>
 }
 
+function BookmarkIcon({ saved = false }: { saved?: boolean }) { return <svg width="16" height="20" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z" /></svg> }
+
 function PreviewCard({
   view,
   monthly,
@@ -550,7 +552,7 @@ function PreviewCard({
             {onToggleSave ? (
               <button
                 type="button"
-                aria-pressed={Boolean(saved)}
+                data-glass-exclude aria-pressed={Boolean(saved)}
                 aria-label={saved ? 'Bỏ lưu' : 'Lưu phòng'}
                 disabled={saveBusy}
                 onClick={(event) => {
@@ -558,7 +560,7 @@ function PreviewCard({
                   onToggleSave()
                 }}
               >
-                <img src="/figma/map/bookmark.svg" alt="" width={16} height={16} />
+                <BookmarkIcon saved={saved} />
               </button>
             ) : null}
           </div>

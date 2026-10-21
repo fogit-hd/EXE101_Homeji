@@ -416,7 +416,7 @@ export function GuestMapSection() {
                     {posts.map((post) => (
                       <div
                         key={post.id}
-                        className={`guest-map__card-wrap${selectedPostId === post.id ? ' is-active' : ''}${hoveredPostId === post.id ? ' is-highlighted' : ''}`}
+                        data-glass-exclude className={`guest-map__card-wrap${selectedPostId === post.id ? ' is-active' : ''}${hoveredPostId === post.id ? ' is-highlighted' : ''}`}
                         onMouseEnter={() => handleHoverPost(post.id)}
                         onMouseLeave={() => handleHoverPost(null)}
                         onClick={() => handleSelectPost(post.id)}

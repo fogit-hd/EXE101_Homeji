@@ -1,0 +1,14 @@
+# Readable content surfaces, 2026-10-21
+
+The supplied screenshots cover guest onboarding, public map cards, registration CTA, chat privacy, seller alerts, notification inbox, market listings, map tabs/metadata/bookmarks and receipt HTML export.
+
+GuestJourney replaces three long sections with a three-step grid, a role directory and a concise trust section. It preserves the how/for/start navigation anchors. Its text is visible without waiting for a reveal animation. Content colors use theme roles.
+
+content-surfaces.css pairs foreground and actual background for the affected components. Dense rows and supporting copy opt out of optical controls. Notification rows use dividers and an unread edge; the separate mark-read action remains keyboard accessible and visible without hover. The popup and map catalog use underline tabs. Bookmark SVGs inherit semantic ink and distinguish saved state. Search, theme switches and unrelated glass controls retain their implementation.
+
+ReceiptsPage displays the receipt DTO as escaped React text, with amount, transaction/reference codes, description, local time and email delivery state. It removes HTML export and iframe preview. It retains pagination, retry/refresh, loading/empty/error states, selection and focus restoration. A withdrawal request continues to state that bank delivery is not confirmed. API HTML renderers remain available for email and backward compatibility; the website offers no HTML download control.
+
+Email attachment generation is changed in the backend: existing PDF plus bundled Homeji-logo.png, no .html attachment. The HTML-formatted message body remains readable; financial processing and delivery/idempotency logic are unchanged.
+
+Validation: npm run build; tests/content-surfaces.e2e.mjs checks real components with isolated API data and presentation samples for the privacy/order headings. It measures 4.5:1 text contrast, exercises saving/read actions, receipt text escaping and close focus, and checks dark/light 320/390/1440 layouts. Disabling the new surface layer reproduces the original pale price on white card failure. Fixture receipts are labelled as test data. No customer email or real transaction is submitted.
+

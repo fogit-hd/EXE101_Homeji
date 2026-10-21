@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getMyReceiptHtml, getMyReceipts, type TransactionReceipt } from '../api/receipts'
+import { getMyReceipts, type TransactionReceipt } from '../api/receipts'
 import { getErrorMessage } from '../lib/errors'
 import { marketplaceHref } from '../components/shell/navigation'
 import './receipts.css'
@@ -12,12 +12,15 @@ const titles: Record<TransactionReceipt['event'], string> = {
 }
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 2 })
 const time = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'Asia/Ho_Chi_Minh' })
-
 function emailStatus(receipt: TransactionReceipt) {
   if (!receipt.emailScheduled) return 'Biên nhận lịch sử · không gửi email'
   if (receipt.emailSentAt) return 'Đã chuyển cho dịch vụ email'
   if (receipt.emailFailed) return 'Email chưa được xác nhận · xem biên nhận tại đây'
   return 'Email đang chờ gửi'
+}
+function issuedAt(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Chưa có thời gian' : time.format(date)
 }
 
 export function ReceiptsPage() {
@@ -27,19 +30,14 @@ export function ReceiptsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [refresh, setRefresh] = useState(0)
-  const [selected, setSelected] = useState<{ id: string; html: string } | null>(null)
-  const [opening, setOpening] = useState(false)
-  const openLock = useRef(false)
-  const generation = useRef(0)
+  const [selected, setSelected] = useState<TransactionReceipt | null>(null)
   const previewHeading = useRef<HTMLHeadingElement>(null)
   const opener = useRef<HTMLButtonElement>(null)
-
   useEffect(() => {
     if (!selected) return
     previewHeading.current?.focus({ preventScroll: true })
     previewHeading.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
   }, [selected])
-
   useEffect(() => {
     const controller = new AbortController()
     void getMyReceipts(page, controller.signal).then(result => {
@@ -54,9 +52,6 @@ export function ReceiptsPage() {
     })
     return () => controller.abort()
   }, [page, refresh])
-
-  useEffect(() => () => { generation.current++ }, [])
-
   function load(nextPage: number) {
     setPage(nextPage)
     setRefresh(value => value + 1)
@@ -64,62 +59,39 @@ export function ReceiptsPage() {
     setError('')
     setItems([])
     setSelected(null)
-    generation.current++
   }
-
-  async function open(receipt: TransactionReceipt) {
-    if (openLock.current) return
-    openLock.current = true
-    setOpening(true)
-    setError('')
-    const requestGeneration = generation.current
-    try {
-      const html = await getMyReceiptHtml(receipt.id)
-      if (requestGeneration === generation.current) setSelected({ id: receipt.id, html })
-    } catch (err) {
-      if (requestGeneration === generation.current) setError(getErrorMessage(err, 'Không mở được biên nhận.'))
-    } finally {
-      openLock.current = false
-      if (requestGeneration === generation.current) setOpening(false)
-    }
-  }
-
-  function download() {
-    if (!selected) return
-    const url = URL.createObjectURL(new Blob([selected.html], { type: 'text/html;charset=utf-8' }))
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `Homeji-HJ-${selected.id}.html`
-    anchor.click()
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-  }
-
-  return <div className="container page receipts-page">
-    <header className="receipts-page__header"><div><h1 className="page-title">Lịch sử biên nhận</h1>
-      <p>Biên nhận nạp tiền, thanh toán và từng bước xử lý rút tiền. Thời gian theo Việt Nam (UTC+7).</p></div>
-      <Link className="btn" to={marketplaceHref('wallet')}>Về ví Homeji</Link></header>
-    <p>Biên nhận giao dịch Homeji không phải hóa đơn thuế/VAT.</p>
-    {error && <p role="alert" className="auth-card__error">{error}</p>}
-    <button type="button" className="btn" disabled={loading || opening} onClick={() => load(page)}>Làm mới</button>
-    {loading ? <p role="status">Đang tải biên nhận…</p> : !error && items.length === 0 ? <p>Chưa có biên nhận giao dịch.</p> : null}
+  return <div className="container page receipts-page" data-glass-exclude>
+    <header className="receipts-page__header"><div><p className="receipts-eyebrow">VÍ HOMEJI / BIÊN NHẬN</p>
+      <h1 className="page-title">Giao dịch của bạn</h1><p>Xem lại biên nhận và trạng thái gửi email tại một nơi.</p></div>
+      <Link className="btn" to={marketplaceHref('wallet')}>Về ví Homeji →</Link></header>
+    <div className="receipts-toolbar"><p>Thời gian Việt Nam (UTC+7) · Không phải hóa đơn thuế/VAT.</p>
+      <button type="button" className="btn" disabled={loading} onClick={() => load(page)}>Làm mới</button></div>
+    {error && <p role="alert" className="receipts-error">{error}</p>}
+    {loading ? <p role="status">Đang tải biên nhận…</p> : !error && items.length === 0 ? <p className="receipts-empty">Chưa có biên nhận giao dịch.</p> : null}
     <ul className="receipts-list" aria-label="Danh sách biên nhận">
-      {items.map(receipt => <li key={receipt.id} className="card receipts-list__item">
-        <div><h2>{titles[receipt.event]}</h2><p><strong>{money.format(receipt.amount)}</strong> · {time.format(new Date(receipt.issuedAt))}</p>
-          <p>{receipt.description}</p><p className="receipts-reference">Mã giao dịch: {receipt.referenceCode}</p>
-          <p className="receipts-reference">Biên nhận: HJ-{receipt.id.replaceAll('-', '')}</p>
-          <p>{emailStatus(receipt)}</p></div>
-        <button type="button" className="btn" disabled={opening || loading} onClick={event => { opener.current = event.currentTarget; void open(receipt) }}>Xem biên nhận</button>
+      {items.map(receipt => <li key={receipt.id} className={`receipts-list__item${selected?.id === receipt.id ? ' is-selected' : ''}`}>
+        <span className="receipts-list__icon" aria-hidden="true">↗</span>
+        <div><h2>{titles[receipt.event]}</h2><time dateTime={receipt.issuedAt}>{issuedAt(receipt.issuedAt)}</time>
+          <p className="receipts-reference">{receipt.referenceCode}</p><p className="receipts-email">{emailStatus(receipt)}</p></div>
+        <div className="receipts-list__action"><strong>{money.format(receipt.amount)}</strong>
+          <button type="button" className="btn" disabled={loading} aria-expanded={selected?.id === receipt.id}
+            onClick={event => { opener.current = event.currentTarget; setSelected(receipt) }}>Xem biên nhận</button></div>
       </li>)}
     </ul>
     <nav aria-label="Phân trang biên nhận" className="receipts-actions">
-      <button className="btn" disabled={loading || opening || page === 1} onClick={() => load(page - 1)}>Trang trước</button>
-      <span>Trang {page}</span><button className="btn" disabled={loading || opening || !hasMore} onClick={() => load(page + 1)}>Trang sau</button>
+      <button className="btn" disabled={loading || page === 1} onClick={() => load(page - 1)}>Trang trước</button>
+      <span>Trang {page}</span><button className="btn" disabled={loading || !hasMore} onClick={() => load(page + 1)}>Trang sau</button>
     </nav>
-    {opening && <p role="status">Đang mở biên nhận…</p>}
-    {selected && <section className="card receipts-preview" aria-label="Chi tiết biên nhận">
-      <div className="receipts-actions"><h2 ref={previewHeading} tabIndex={-1}>Chi tiết biên nhận</h2><button className="btn" onClick={download}>Tải HTML</button>
-        <button className="btn" onClick={() => { setSelected(null); opener.current?.focus() }}>Đóng chi tiết</button></div>
-      <iframe title="Biên nhận giao dịch Homeji" sandbox="" srcDoc={selected.html} referrerPolicy="no-referrer" />
+    {selected && <section className="receipts-preview" aria-label="Chi tiết biên nhận">
+      <header><div><p className="receipts-eyebrow">BIÊN NHẬN GIAO DỊCH</p><h2 ref={previewHeading} tabIndex={-1}>{titles[selected.event]}</h2></div>
+        <button className="btn" onClick={() => { setSelected(null); opener.current?.focus() }}>Đóng chi tiết</button></header>
+      <p className="receipts-preview__amount">{money.format(selected.amount)}</p>
+      <dl><div><dt>Thời gian</dt><dd>{issuedAt(selected.issuedAt)}</dd></div>
+        <div><dt>Mã giao dịch</dt><dd>{selected.referenceCode}</dd></div>
+        <div><dt>Mã biên nhận</dt><dd>HJ-{selected.id.replaceAll('-', '')}</dd></div>
+        <div><dt>Nội dung</dt><dd>{selected.description}</dd></div>
+        <div><dt>Email</dt><dd>{emailStatus(selected)}</dd></div></dl>
+      <p className="receipts-preview__note">{selected.event === 3 ? 'Yêu cầu rút tiền chưa xác nhận tiền đã tới tài khoản ngân hàng. ' : ''}Biên nhận giao dịch Homeji không phải hóa đơn thuế/VAT.</p>
     </section>}
   </div>
 }

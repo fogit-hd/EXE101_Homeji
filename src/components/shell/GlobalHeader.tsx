@@ -484,7 +484,7 @@ export function GlobalHeader() {
               <div
                 id={notifyId}
                 {...notifyPresence}
-                className="hj-notify__pop"
+                className="hj-notify__pop" data-glass-exclude
                 role="dialog"
                 aria-modal="false"
                 aria-labelledby={`${notifyId}-title`}

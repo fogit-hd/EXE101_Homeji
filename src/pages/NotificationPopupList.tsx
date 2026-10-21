@@ -100,7 +100,7 @@ export function NotificationPopupList({
   }
   const now = Date.now()
   return (
-    <ul className="hj-nrow-list">
+    <ul className="hj-nrow-list" data-glass-exclude>
       <AnimatePresence initial={false}>
         {items.map((n, index) => {
           const { importance } = getNotificationPresentation(n)

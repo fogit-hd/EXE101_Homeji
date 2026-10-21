@@ -1,0 +1,68 @@
+/* Dense content uses semantic surfaces; optical controls elsewhere retain glass. */
+html:root #root .guest-map__card-wrap .post-card.card { display: grid; grid-template-columns: 116px minmax(0,1fr); background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); border-radius: 14px; box-shadow: none; }
+html:root #root .guest-map__card-wrap .post-card-link { display: contents; }
+html:root #root .guest-map__card-wrap .post-card-image { grid-row: 1 / 4; height: 100%; max-height: none; min-height: 156px; border-radius: 0; }
+html:root #root .guest-map__card-wrap .post-card-body { padding: 14px 14px 6px; }
+html:root #root .guest-map__card-wrap .post-card-body h3 { color: var(--text-heading); font-size: 15px; line-height: 1.5; }
+html:root #root .guest-map__card-wrap :is(.post-card-meta,.post-card-stats,.post-card-public-link) { color: var(--text-secondary); }
+html:root #root .guest-map__card-wrap .post-card-price { color: var(--hj-accent); font-size: 17px; white-space: normal; margin-block: 6px; }
+html:root #root .guest-map__card-wrap .post-card-public-link { padding: 6px 14px; font-size: 12px; text-underline-offset: 3px; }
+html:root #root .guest-map__card-wrap .post-card-actions { padding: 4px 14px 14px; }
+html:root #root .guest-map__card-wrap .post-card-actions button { border: 1px solid var(--border); color: var(--text-primary); background: var(--surface-input); border-radius: 8px; box-shadow: none; min-height: 40px; }
+html:root #root .guest-map__card-wrap .post-card-type { background: #175c57; color: #fff; border-radius: 4px; font-size: 10px; max-width: calc(100% - 12px); left: 6px; }
+html:root #root .guest-fixed-cta { gap: 0; border-radius: 12px; overflow: hidden; background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); box-shadow: 0 6px 24px rgb(0 0 0 / .18); }
+html:root #root .guest-fixed-cta > span { background: var(--surface-elevated); color: var(--text-secondary); border-radius: 0; letter-spacing: 0; }
+html:root #root .guest-fixed-cta__go { background: #175c57; color: #fff; border-radius: 0; box-shadow: none; min-height: 48px; }
+html[data-theme='dark']:root #root .guest-fixed-cta__go { background: #80d9db; color: #102a30; }
+/* Inbox rows have one primary target and a separate, always-visible read action. */
+html:root #root .hj-notify__pop { border-radius: 16px; background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); backdrop-filter: none; }
+html:root #root .hj-nrow-list { padding: 0 12px 12px; }
+html:root #root .hj-nrow { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); border-radius: 0; background: var(--surface-elevated); }
+html:root #root .hj-nrow__main { flex: 1; min-width: 0; width: auto; padding: 16px 8px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html:root #root .hj-nrow.is-unread { border-left: 3px solid var(--hj-accent); background: var(--hj-accent-soft); }
+html:root #root .hj-nrow.is-unread .hj-nrow__main { background: transparent; }
+html:root #root .hj-nrow__main:hover { background: var(--surface-input); }
+html:root #root .hj-nrow__body { padding: 0; }
+html:root #root .hj-nrow__top { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+html:root #root .hj-nrow__title { white-space: normal; line-height: 1.5; color: var(--text-heading); }
+html:root #root .hj-nrow__msg { color: var(--text-secondary); line-height: 1.65; }
+html:root #root .hj-nrow__time { color: var(--text-secondary); opacity: 1; font-size: 11px; }
+html:root #root .hj-nrow__icon { background: var(--surface-input); color: var(--hj-accent); border-radius: 10px; }
+html:root #root .hj-nrow__read { position: static; flex: none; width: 36px; height: 44px; opacity: 1; transform: none; box-shadow: none; border: 0; border-radius: 8px; background: transparent; color: var(--hj-accent); margin-right: 2px; }
+html:root #root .hj-nrow__dot { display: none; }
+html:root #root .map-chatbot__privacy { border-top: 1px solid var(--border); background: var(--surface-muted); padding: 12px 16px; color: var(--text-secondary); }
+html:root #root .map-chatbot__privacy summary { padding: 8px 0; min-height: 40px; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; color: var(--text-heading); box-shadow: none; font-weight: 600; }
+html:root #root .map-chatbot__privacy p { font-size: 12px; line-height: 1.8; }
+html:root #root .map-chatbot__privacy button { min-height: 44px; padding: 8px 12px; color: var(--text-primary); background: var(--surface-input); border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+html:root #root .seller-watch__dialog > header { padding: 24px; background: var(--surface-muted); border-bottom: 1px solid var(--border); }
+html:root #root .seller-watch__dialog h2 { color: var(--text-heading); font-size: 22px; letter-spacing: -.02em; }
+html:root #root .seller-watch__dialog > header > button { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); border-radius: 10px; box-shadow: none; }
+html:root #root .hub-home { --hub-body: var(--text-primary); }
+html:root #root .hub-market li a { padding: 14px 0; grid-template-columns: 48px minmax(0,1fr); gap: 2px 14px; }
+html:root #root .hub-market__thumb { grid-row: span 2; width: 48px; height: 48px; border-radius: 10px; }
+html:root #root .hub-market li b { color: var(--text-heading); white-space: normal; line-height: 1.5; }
+html:root #root .hub-market li strong { grid-column: 2; color: var(--hj-accent); font-size: 13px; }
+html:root #root .hub-market li + li { border-color: var(--border); }
+html:root #root .map-listings__meta span { background: var(--surface-input); color: var(--text-secondary); border-radius: 5px; border: 1px solid var(--border); }
+html:root #root .map-listings__save { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 10px; color: var(--hj-accent); box-shadow: 0 2px 6px rgb(0 0 0 / .12); }
+html:root #root .map-listings__save svg { display: block; }
+html:root #root .map-listings__catalog { gap: 24px; background: transparent; border: 0; border-radius: 0; }
+html:root #root .map-listings__catalog button { min-height: 48px; padding: 0 4px; color: var(--text-secondary); background: transparent; border: 0; border-bottom: 3px solid transparent; border-radius: 0; box-shadow: none; }
+html:root #root .map-listings__catalog button.is-on { color: var(--hj-accent); border-bottom-color: var(--hj-accent); font-weight: 700; }
+html:root #root .map-listings__card-open { color: var(--hj-accent); min-height: 44px; font-size: 13px; }
+@media(max-width: 400px) {
+ html:root #root .guest-map__card-wrap .post-card.card { grid-template-columns: 88px minmax(0,1fr); }
+ html:root #root .guest-map__card-wrap .post-card-body { padding: 12px 10px 4px; }
+ html:root #root .guest-map__card-wrap .post-card-type { font-size: 9px; padding-inline: 4px; }
+}
+
+html:root #root .hub-market header a { color: var(--hj-accent); }
+html:root #root .hj-notify__tabs { display: flex; gap: 20px; padding: 0 20px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html:root #root .hj-notify__tabs::before,html:root #root .hj-notify__tabs .liquid-tabs__lens { display: none; }
+html:root #root .hj-notify__tabs > button[role='tab'] { min-height: 48px; padding: 0 4px; background: transparent; color: var(--text-secondary); border: 0; border-bottom: 3px solid transparent; border-radius: 0; box-shadow: none; }
+html:root #root .hj-notify__tabs > button[role='tab'][aria-selected='true'] { color: var(--hj-accent); border-bottom-color: var(--hj-accent); }
+html:root #root .hj-notify__mark-all { color: var(--hj-accent); background: transparent; border: 0; border-radius: 6px; min-height: 44px; box-shadow: none; }
+html:root #root .map-listings__preview-price button { display: grid; place-items: center; min-width: 40px; min-height: 40px; background: var(--surface-elevated); color: var(--hj-accent); border: 1px solid var(--border); border-radius: 10px; box-shadow: none; }
+html:root #root .map-listings__preview-tags span { background: var(--surface-input); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 5px; }
+html:root #root .map-listings__move { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 2px 6px rgb(0 0 0 / .1); min-height: 44px; }
+html:root #root :is(.map-listings__save,.map-listings__preview-price button) { min-width: 44px; min-height: 44px; }
