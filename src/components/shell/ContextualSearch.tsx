@@ -43,8 +43,6 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
   const {
     query,
     placeholder,
-    contextTitle,
-    contextScope,
     suggestions,
     recentSearches,
     isLoading,
@@ -170,10 +168,6 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
 
   return (
     <div ref={rootRef} className="hj-search-slot">
-      <div className="hj-search-context">
-        <p className="hj-search-context__title">{contextTitle}</p>
-        <p className="hj-search-context__scope">{contextScope}</p>
-      </div>
       {aiFeatureFlags.naturalSearch && locationSearch
         ? <NaturalRentalSearch query={query} onOpen={() => { setOpen(false); setFocused(false) }} renderTrigger={renderSearch} />
         : renderSearch(null)}

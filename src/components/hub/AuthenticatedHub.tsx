@@ -3,7 +3,6 @@ import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import {
   getConversations,
-  getMyActivities,
   getMyInvitations,
   getNotifications,
   getRoommateCandidates,
@@ -13,7 +12,6 @@ import {
   searchRentalPosts,
   NotificationType,
   RentalPostType,
-  UserActivityType,
   ViewingAppointmentStatus,
   type MarketplacePost,
   type Notification,
@@ -21,7 +19,6 @@ import {
   type RentalPostSummary,
   type RoommateCandidate,
   type RoommateInvitation,
-  type UserActivity,
   type ViewingAppointment,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -29,7 +26,6 @@ import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
-import { PromoBanner } from './PromoBanner'
 import './AuthenticatedHub.css'
 import { HubBodySkeleton } from '../skeletons/PageSkeletons'
 
@@ -41,7 +37,6 @@ type Bundle = {
   conversations: PostConversation[]
   saved: RentalPostSummary[]
   invitations: RoommateInvitation[]
-  activities: UserActivity[]
   candidates: RoommateCandidate[]
   market: MarketplacePost[]
   rooms: RentalPostSummary[]
@@ -52,7 +47,6 @@ type Bundle = {
     conversations: boolean
     market: boolean
     notifications: boolean
-    activities: boolean
   }
 }
 
@@ -60,12 +54,6 @@ function greetingPrefix(hour: number): string {
   if (hour < 11) return 'Chào buổi sáng'
   if (hour < 18) return 'Chào buổi chiều'
   return 'Chào buổi tối'
-}
-
-function dateLabel(now: Date): string {
-  return now
-    .toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
-    .toUpperCase()
 }
 
 function clock(iso: string): string {
@@ -141,13 +129,12 @@ export function AuthenticatedHub() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const [notify, appoint, chats, savedPosts, invites, activity, rooms, market] = await Promise.allSettled([
+      const [notify, appoint, chats, savedPosts, invites, rooms, market] = await Promise.allSettled([
         getNotifications(true),
         getViewingAppointments(),
         getConversations(),
         getSavedPosts(),
         getMyInvitations(),
-        getMyActivities({ take: 30 }),
         searchRentalPosts({ pageSize: 3 }),
         searchMarketplacePosts({ pageSize: 2 }),
       ])
@@ -163,7 +150,7 @@ export function AuthenticatedHub() {
         }
       }
       if (cancelled) return
-      const failed = [notify, appoint, chats, savedPosts, invites, activity, rooms, market].every(
+      const failed = [notify, appoint, chats, savedPosts, invites, rooms, market].every(
         (result) => result.status === 'rejected',
       )
       if (failed) {
@@ -177,7 +164,6 @@ export function AuthenticatedHub() {
         conversations: chats.status === 'fulfilled' ? chats.value : [],
         saved,
         invitations: invites.status === 'fulfilled' ? invites.value : [],
-        activities: activity.status === 'fulfilled' ? activity.value : [],
         candidates: candidates.slice(0, 3),
         market: market.status === 'fulfilled' ? market.value : [],
         rooms: rooms.status === 'fulfilled' ? rooms.value : [],
@@ -188,7 +174,6 @@ export function AuthenticatedHub() {
           conversations: chats.status === 'rejected',
           market: market.status === 'rejected',
           notifications: notify.status === 'rejected',
-          activities: activity.status === 'rejected',
         },
       })
       setPhase('ready')
@@ -224,15 +209,9 @@ export function AuthenticatedHub() {
   const matchingNotes = (bundle?.notifications ?? []).filter(
     (item) => item.type === NotificationType.NewMatchingRentalPost,
   )
-  const viewed = (bundle?.activities ?? []).some((item) => item.type === UserActivityType.ViewedRentalPost)
-  const contacted = (bundle?.conversations.length ?? 0) > 0
-    || (bundle?.activities ?? []).some((item) => item.type === UserActivityType.SentMessage)
-  const booked = (bundle?.appointments.length ?? 0) > 0
-  const savedAny = (bundle?.saved.length ?? 0) > 0
-
   const lead = matchingNotes.length > 0
     ? `${matchingNotes.length} tin mới khớp tìm kiếm của bạn.`
-    : 'Tiếp tục hành trình tìm một nơi ở vừa ngân sách, vừa đúng nhịp sống của bạn.'
+    : null
   const hasSide = Boolean(
     bundle &&
       (bundle.candidates.length > 0 ||
@@ -240,40 +219,33 @@ export function AuthenticatedHub() {
         bundle.failed.market ||
         bundle.market.length > 0),
   )
-  const progressSteps = [savedAny, contacted, booked, !bundle?.failed.activities && viewed].filter(Boolean).length
-  const progressTotal = bundle?.failed.activities ? 3 : 4
 
   return (
-    <div className="hub-home">
+    <div className="hub-home" data-glass-exclude>
       <header className="hub-welcome">
         <div>
-          <p className="hub-welcome__date">{dateLabel(now)}</p>
           <h1>{greetingPrefix(now.getHours())}, {displayName}</h1>
-          <p className="hub-welcome__lead">{lead}</p>
+          {lead ? <Link className="hub-welcome__lead" to={mapSectionUrl('notifications')}>{lead} <span aria-hidden="true">↗</span></Link> : null}
         </div>
-        <Link className="hub-welcome__cta liquid-action" to="/posts/new">Đăng tin phòng</Link>
       </header>
 
       <section className="hub-banner" aria-labelledby="hub-banner-title">
         <div>
-          <span>Một nơi ở · Nhiều kết nối</span>
+          <span>KHÔNG GIAN CHO BẠN</span>
           <h2 id="hub-banner-title">Ở đúng nơi, sống đúng gu.</h2>
-          <p>Tìm phòng vừa túi tiền, khám phá tiện ích quanh nhà và kết nối với bạn ở ghép.</p>
+          <p>Tìm một nơi ở vừa ý. Bắt đầu nhịp sống của riêng bạn.</p>
         </div>
-        <Link className="hub-banner__cta liquid-action" to={exploreListUrl()}>Khám phá phòng <span aria-hidden="true">→</span></Link>
+        <Link className="hub-banner__cta" to={exploreListUrl()}>Khám phá phòng <span aria-hidden="true">→</span></Link>
       </section>
 
-      <section className="hub-search" aria-label="Tìm kiếm gần đây">
-        <h2>Tiếp tục tìm kiếm</h2>
-        {recentSearches.length > 0 ? (
-          <>
-            <p>{recentSearches[0]}</p>
-            <Link className="liquid-action" to={exploreListUrl(new URLSearchParams({ keyword: recentSearches[0]! }))}>Tiếp tục</Link>
-          </>
-        ) : (
-          <p>Chưa có tìm kiếm để tiếp tục.</p>
-        )}
-      </section>
+      {recentSearches.length > 0 ? (
+        <section className="hub-search" aria-label="Tìm kiếm gần đây">
+          <h2>Gần đây</h2>
+          <ul>{recentSearches.map((keyword) => (
+            <li key={keyword}><Link to={exploreListUrl(new URLSearchParams({ keyword }))}>{keyword} <span aria-hidden="true">↗</span></Link></li>
+          ))}</ul>
+        </section>
+      ) : null}
 
       {phase === 'loading' ? (
         <div className="hub-skel-page sk-screen" role="status" aria-busy="true" aria-label="Đang tải trang chủ">
@@ -290,7 +262,7 @@ export function AuthenticatedHub() {
 
       {phase === 'ready' && bundle ? (
         <>
-          <section className="hub-card hub-viewings" aria-labelledby="hub-viewings">
+          {bundle.failed.appointments || upcoming.length > 0 ? <section className="hub-card hub-viewings" aria-labelledby="hub-viewings">
             <header>
               <h2 id="hub-viewings">Lịch xem phòng sắp tới</h2>
               <Link to={mapSectionUrl('appointments')}>
@@ -298,15 +270,6 @@ export function AuthenticatedHub() {
               </Link>
             </header>
             {bundle.failed.appointments ? <p className="hub-quiet">Không tải được lịch xem.</p> : null}
-            {!bundle.failed.appointments && upcoming.length === 0 ? (
-              <div className="hub-empty">
-                <span className="hub-empty__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3" /><path d="M8 3v4M16 3v4M3.5 10h17" /></svg>
-                </span>
-                <p>Chưa có buổi xem nào sắp tới.</p>
-                <Link to={exploreListUrl()}>Tìm phòng để đặt lịch →</Link>
-              </div>
-            ) : null}
             <ul>
               {upcoming.map((item) => (
                 <li key={item.id}>
@@ -319,9 +282,9 @@ export function AuthenticatedHub() {
                 </li>
               ))}
             </ul>
-          </section>
+          </section> : null}
 
-          <section className="hub-card hub-messages" aria-labelledby="hub-messages">
+          {bundle.failed.conversations || chats.length > 0 ? <section className="hub-card hub-messages" aria-labelledby="hub-messages">
             <header>
               <h2 id="hub-messages">Tin nhắn gần đây</h2>
               <Link to={mapSectionUrl('messages')}>
@@ -329,7 +292,6 @@ export function AuthenticatedHub() {
               </Link>
             </header>
             {bundle.failed.conversations ? <p className="hub-quiet">Không tải được tin nhắn.</p> : null}
-            {!bundle.failed.conversations && chats.length === 0 ? <p className="hub-quiet">Chưa có hội thoại.</p> : null}
             <ul>
               {chats.map((chat) => (
                 <li key={chat.id}>
@@ -351,25 +313,7 @@ export function AuthenticatedHub() {
                 </li>
               ))}
             </ul>
-          </section>
-
-          <PromoBanner />
-
-          <section className="hub-card hub-progress" aria-labelledby="hub-progress">
-            <h2 id="hub-progress">Hành trình tìm nhà</h2>
-            <p className="hub-progress__ratio">{progressSteps}/{progressTotal}</p>
-            <div className="hub-progress__track" aria-hidden>
-              <span style={{ width: `${Math.round((progressSteps / progressTotal) * 100)}%` }} />
-            </div>
-            <ul>
-              <li className={savedAny ? 'is-done' : ''}>{savedAny ? 'Đã lưu phòng' : 'Chưa lưu phòng'}</li>
-              <li className={contacted ? 'is-done' : ''}>{contacted ? 'Đã liên hệ' : 'Chưa nhắn tin'}</li>
-              <li className={booked ? 'is-done' : ''}>{booked ? 'Đã đặt lịch xem' : 'Chưa đặt lịch xem'}</li>
-              <li className={viewed ? 'is-done' : ''}>
-                {bundle.failed.activities ? 'Chưa rõ lượt xem tin' : viewed ? 'Đã xem tin' : 'Chưa có lượt xem tin'}
-              </li>
-            </ul>
-          </section>
+          </section> : null}
 
           {savedAlerts[0] ? (
             <Link className="hub-update" to={mapSectionUrl('notifications')}>
@@ -384,7 +328,6 @@ export function AuthenticatedHub() {
             <header>
               <div>
                 <h2 id="hub-rooms">Phòng đang mở</h2>
-                <p>Tin đang mở trên Homeji</p>
               </div>
               <Link to={exploreListUrl()}>Xem tất cả →</Link>
             </header>

@@ -32,7 +32,7 @@ export type SearchSuggestion = {
 }
 
 const PLACEHOLDER: Record<SearchContextName, string> = {
-  global: 'Tìm phòng, khu vực, đồ dùng hoặc người ở ghép…',
+  global: 'Tìm phòng, khu vực, ở ghép…',
   housing: 'Nhập tên đường, trường học hoặc nơi làm việc…',
   map: 'Tìm khu vực, trường học…',
   food: 'Tìm món, nguyên liệu hoặc tên bếp…',
