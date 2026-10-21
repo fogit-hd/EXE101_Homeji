@@ -58,10 +58,11 @@ try {
   await page.screenshot({path:new URL('selection-'+theme+'-'+width+'.png',out).pathname.slice(1)});
  }
 
- await page.getByRole('button',{name:'Tiếp tục',exact:true}).first().click();
+ assert.equal(await page.getByRole('button',{name:'Tiếp tục',exact:true}).count(),1,'Only one Continue action is shown after choosing a post type');
+ await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();
  await page.getByText('Không thể tạo tin nháp thử nghiệm',{exact:true}).waitFor();
  assert.deepEqual(draftCalls,[{type:3}]);
- await page.getByRole('button',{name:'Tiếp tục',exact:true}).last().click();
+ await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();
  await page.waitForURL('**/posts/44444444-4444-4444-8444-444444444444/edit');
  assert.deepEqual(draftCalls,[{type:3},{type:3}]);
  await page.goto(base+'/posts/new');await ready();await roommate.focus();await page.keyboard.press('Enter');

@@ -57,16 +57,6 @@ export function CreateRentalPostPage() {
   return (
     <PageFrame
       title="Đăng tin mới"
-      actions={
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          disabled={loading}
-          onClick={() => void handleCreate()}
-        >
-          {loading ? 'Đang tạo…' : 'Tiếp tục'}
-        </button>
-      }
     >
       <p className="page-subtitle" style={{ marginTop: 0 }}>
         Bước 1/3 · Chọn loại tin. Tiếp theo điền thông tin, thêm ảnh và gửi duyệt.
