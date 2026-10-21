@@ -548,6 +548,37 @@
 .room-detail__person > div { min-width: 0; }
 .room-detail__person strong { display: block; font-size: 16px; overflow-wrap: anywhere; }
 .room-detail__avatar { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px; color: var(--rd-forest); background: color-mix(in srgb,var(--hj-accent) 12%,var(--rd-surface)); font-weight: 650; }
+
+/* Contact information stays masked until the flashlight is switched on. */
+.room-detail__owner-profile { display: flex; flex-direction: column; gap: 18px; }
+.room-detail__owner-profile .room-detail__avatar { width: 48px; height: 48px; overflow: hidden; }
+.room-detail__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.room-detail__owner-label { display: block; margin-bottom: 4px; color: var(--rd-muted); font-size: 12px; line-height: 1.5; }
+.room-detail__owner-verified { display: block; margin-top: 4px; color: var(--hj-accent); font-size: 11px; }
+.room-detail__owner-phone { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--rd-border); border-radius: 12px; background: color-mix(in srgb,var(--hj-accent) 6%,var(--rd-surface)); }
+.room-detail__owner-phone::before { content: ''; position: absolute; pointer-events: none; z-index: -1; right: 44px; top: 50%; width: calc(100% - 44px); height: 150%; transform: translateY(-50%) scaleX(.2); transform-origin: right center; clip-path: polygon(100% 44%, 0 0, 0 100%, 100% 56%); background: linear-gradient(to left, rgb(255 211 92 / .65), rgb(255 226 142 / .3) 55%, rgb(255 238 184 / .04)); opacity: 0; transition: opacity 200ms ease, transform 350ms ease; }
+.room-detail__owner-phone.is-revealed::before { opacity: 1; transform: translateY(-50%) scaleX(1); transition-delay: 180ms; }
+.room-detail__owner-phone > div { min-width: 0; }
+.room-detail__phone-value { display: block; color: var(--rd-forest); font-size: 18px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.room-detail__phone-value > span { letter-spacing: .08em; }
+.room-detail__phone-value a { color: var(--hj-accent); text-decoration: none; }
+.room-detail__phone-value a:hover { text-decoration: underline; }
+html:root body .room-detail__flashlight { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; padding: 6px; border: 1px solid var(--rd-border); border-radius: 12px; background: var(--rd-surface); color: var(--rd-muted); box-shadow: none; cursor: pointer; transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease; }
+html:root body .room-detail__flashlight:hover { border-color: var(--hj-accent); }
+html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b5b0b; border-color: #e6bb54; box-shadow: 0 0 16px rgb(246 198 68 / .3); }
+.room-detail__flashlight svg { transform: rotate(0deg); transform-origin: center; transition: transform 420ms cubic-bezier(.22, 1, .36, 1); }
+.room-detail__flashlight.is-lit svg { transform: rotate(-90deg); }
+.room-detail__flashlight-beam { opacity: 0; }
+.room-detail__flashlight-rays { opacity: 0; }
+.room-detail__flashlight.is-lit .room-detail__flashlight-beam { opacity: .28; }
+.room-detail__flashlight.is-lit .room-detail__flashlight-rays { opacity: 1; }
+html:root body .room-detail__contact .room-detail__phone-hint { margin: -8px 0 0; color: var(--rd-muted); font-size: 11px; line-height: 1.6; }
+.room-detail__flashlight:focus-visible, .room-detail__phone-value a:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  html:root body .room-detail__flashlight,
+  .room-detail__flashlight svg,
+  .room-detail__owner-phone::before { transition: none; }
+}
 .room-detail__main > .room-detail__section { margin-top: 16px; border-top: 1px solid var(--rd-border); }
 .room-detail__footer-copy .room-detail__footer-price { font-size: 22px; font-variant-numeric: tabular-nums; }
 .room-detail__footer-price small { color: var(--rd-muted); font-size: 12px; font-weight: 400; }

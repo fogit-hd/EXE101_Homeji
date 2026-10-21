@@ -1,0 +1,139 @@
+/* Quiet navigation and a single visual focus on the signed-in home. */
+html:root #root .hj-header :is(.hj-menu-trigger,.hj-action,.hj-profile,.seller-watch__trigger,.hj-search-open) {
+  background: transparent;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+html:root #root .hj-header :is(.hj-menu-trigger,.hj-action,.hj-profile,.hj-search-open):hover {
+  background: var(--surface-input);
+}
+html:root #root .hj-header .hj-post-cta {
+  border: 0;
+  border-radius: 10px;
+  background: var(--action-primary);
+  color: var(--action-on-primary);
+  box-shadow: none;
+}
+html:root #root .hj-header .hj-search__field {
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+html:root #root .hj-header .hj-search__field:focus-within {
+  border-color: var(--action-primary);
+  box-shadow: 0 0 0 3px var(--action-soft);
+}
+html:root #root .hj-header .hj-search__submit {
+  height: 36px;
+  min-width: 90px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--action-primary);
+  color: var(--action-on-primary);
+  box-shadow: none;
+}
+html:root #root .hj-header .hj-ai-btn {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  box-shadow: none;
+}
+html:root #root .hj-header .hj-ai-btn__spectrum { display: none; }
+html:root #root .hj-logo__word { font-size: 26px; letter-spacing: -.04em; }
+html:root #root .hj-logo__mark { width: 38px; height: 38px; }
+html:root #root .hj-actions { gap: 6px; }
+
+html:root #root .hub-home {
+  width: min(1280px, 100%);
+  padding: 28px 32px 48px;
+  gap: 24px;
+  --hub-coral: var(--action-primary);
+}
+html:root #root .hub-welcome { align-items: center; }
+html:root #root .hub-welcome h1 {
+  font-size: clamp(20px, 2.2vw, 28px);
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+html:root #root .hub-welcome__lead {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 12px;
+  text-decoration: none;
+  color: var(--action-primary);
+}
+html:root #root .hub-promo { grid-column: 1 / -1; order: 0; }
+html:root #root .hub-search {
+  height: auto;
+  min-height: 0;
+  flex-wrap: wrap;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+html:root #root .hub-search h2 { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+html:root #root .hub-search a { gap: 14px; border: 1px solid var(--border); background: var(--surface-elevated); border-radius: 8px; }
+html:root #root .hub-card { padding: 22px; border-radius: 16px; box-shadow: none; }
+html:root #root .hub-card h2 { font-size: 19px; line-height: 1.5; letter-spacing: -.025em; }
+html:root #root .hub-card header { margin-bottom: 16px; }
+html:root #root .hub-card header a { font-size: 12px; }
+html:root #root .hub-rooms, html:root #root .hub-side { order: 1; }
+html:root #root .hub-update { order: 2; }
+html:root #root .hub-viewings, html:root #root .hub-messages { order: 3; }
+html:root #root .hub-rooms > ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+html:root #root .hub-rooms li + li { border: 0; }
+html:root #root .hub-rooms li a { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 0; margin: 0; }
+html:root #root .hub-room__photo { aspect-ratio: 1.4; border-radius: 10px; }
+html:root #root .hub-room__copy { gap: 6px; }
+html:root #root .hub-room__copy b { font-size: 14px; line-height: 1.55; min-height: 3.1em; }
+html:root #root .hub-room__price { flex-direction: row; align-items: baseline; gap: 5px; margin: 0; text-align: left; }
+html:root #root .hub-room__price strong { font-size: 17px; font-weight: 600; color: var(--action-primary); }
+html:root #root .hub-skel-page { grid-column: 1 / -1; }
+
+@media (min-width: 1181px) {
+  html:root #root .hj-shell:not(.is-compact) { --hj-header-h: 144px; }
+  html:root #root .hj-shell:not(.is-compact) .hj-bar {
+    grid-template-rows: 72px 72px;
+    min-height: 144px;
+    height: 144px;
+    padding-inline: 32px;
+  }
+  html:root #root .hj-shell:not(.is-compact) .hj-search-slot {
+    height: 72px;
+    margin-inline: -32px;
+    padding: 0 max(32px, calc((100vw - 1216px) / 2));
+  }
+}
+@media (max-width: 1180px) and (min-width: 768px) {
+  html:root #root .hj-shell, html:root #root .hj-shell.is-compact { --hj-header-h: 128px; }
+  html:root #root .hj-shell .hj-bar, html:root #root .hj-shell.is-compact .hj-bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 64px 64px;
+    grid-template-areas: "menu brand utils" "search search search";
+    height: 128px;
+    min-height: 128px;
+    padding: 0 16px;
+  }
+  html:root #root .hj-search-slot { height: 64px; margin: 0; padding: 8px 0; }
+  html:root #root .hj-actions { gap: 2px; }
+}
+@media (max-width: 767px) {
+  html:root #root .hub-home { padding: 20px 16px 32px; gap: 18px; }
+  html:root #root .hub-card { padding: 16px; }
+  html:root #root .hub-rooms > ul { grid-template-columns: 1fr; gap: 18px; }
+  html:root #root .hub-rooms li a { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 6px 12px; }
+  html:root #root .hub-room__photo { grid-row: span 2; height: 100%; min-height: 100px; }
+  html:root #root .hub-room__copy b { min-height: 0; }
+  html:root #root .hub-room__price { grid-column: 2; flex-wrap: wrap; }
+  html:root #root .hj-search-overlay .hj-search-slot { height: auto; margin: 0; padding: 12px; }
+  html:root #root .hj-header .hj-search__submit { min-width: 48px; }
+}

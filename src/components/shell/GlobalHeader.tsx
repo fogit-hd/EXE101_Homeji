@@ -397,7 +397,7 @@ export function GlobalHeader() {
   ]
 
   return (
-    <header className="hj-header">
+    <header className="hj-header" data-glass-exclude>
       <div className={`hj-bar${isAdmin ? ' hj-bar--admin' : ''}`}>
         <div
           className="hj-header__menu"
