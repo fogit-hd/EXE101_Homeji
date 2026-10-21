@@ -75,7 +75,7 @@ try {
       await page.getByText('Không tải được chi tiết', { exact: true }).waitFor()
       mode = 'ready'; await page.getByRole('button', { name: 'Thử lại', exact: true }).click(); await page.getByRole('button', { name: 'Nhắn tin ngay', exact: true }).waitFor()
     } else {
-      await page.getByText('Chưa có số điện thoại.', { exact: false }).waitFor()
+      await page.getByText('Liên hệ qua tin nhắn trên Homeji.', { exact: true }).waitFor()
       assert.equal(await page.getByRole('link', { name: 'Gọi điện', exact: true }).count(), 0)
     }
   }
