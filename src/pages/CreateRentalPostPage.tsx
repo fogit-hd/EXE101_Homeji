@@ -93,7 +93,6 @@ export function CreateRentalPostPage() {
       <button type="button" className="btn btn-primary" disabled={loading} onClick={() => void handleCreate()}>
         {loading ? 'Đang tạo…' : 'Tiếp tục'}
       </button>
-      <p className="form-hint">Tin sẽ được lưu dưới dạng nháp, chưa công khai. Bạn có thể quay lại từ Quản lý tin.</p>
     </PageFrame>
   )
 }
