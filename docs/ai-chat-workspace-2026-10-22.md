@@ -22,4 +22,4 @@ Build và ESLint các file thay đổi đạt. 70 kiểm thử frontend liên qu
 
 Ảnh ứng dụng thật tại `output/verification/ai-workspace/`: 4 kịch bản desktop/mobile sáng/tối trong fresh guest browser, không mock API hoặc tài khoản, đọc backend công khai qua proxy dev. Đã đo góc màu thay đổi để xác nhận viền chuyển động và kiểm tra auth gate không bị inert che. Vì landing khách chưa có nút AI trên navbar, smoke mở bằng event launcher thật của ứng dụng. Các ảnh này chứng minh giao diện local; không chứng minh đăng nhập hay câu trả lời model production. Luồng model, gửi tin cho chủ tin, đặt lịch và thanh toán thật không được thực hiện.
 
-Bản thiết kế này chưa deploy. Bản production trước đó không bị thay đổi trong lần chỉnh UI này.
+Thiết kế được phát hành cùng luồng cân nhắc nhiều phòng ngày 22/10/2026. Xem [bằng chứng phát hành và giới hạn kiểm chứng](./ai-rental-journey-2026-10-22.md#phát-hành). Production đã phục vụ bundle có UI mở rộng và viền động; workflow đăng nhập/model/gửi tin/thanh toán thật chưa được chạy trong lần phát hành này.

@@ -34,4 +34,10 @@ Kịch bản đơn vị phí hiện áp dụng cho toàn bộ phòng được ch
 - Đồ ăn/chợ: hỗ trợ ngân sách, hàng thật và giỏ cùng bếp chưa hoàn tất.
 - Sửa lỗi ngay tại form và bảo toàn bản nhập cần kiểm tra/mở rộng theo từng nghiệp vụ.
 
-Bản thay đổi này đang được kiểm chứng cục bộ; trạng thái phát hành cần được xác nhận bằng commit và asset trên hostname production.
+## Phát hành
+
+Đã push frontend `48495cf` và backend `42bdbea` lên nhánh chính ngày 22/10/2026. Lúc 08:59 UTC, `https://homeji-be.onrender.com/health/version` trả đúng `42bdbea98a6a33da019cf812f250265a7b38286c`, readiness 200; Swagger công khai có `rentalSelection` với `postIds`, `task`, `scenario`.
+
+Trên hostname canonical `https://homeji.onrender.com`, bundle mới `/assets/main-CaUR9ZCz.js` có xử lý `rentalSelection`, giao diện mở rộng và workspace cân nhắc; stylesheet `/assets/main-CUhQ0ye9.css` giữ animation viền dynamic. Workspace dùng chunk chung trong main, không nằm trong chunk trang SavedPosts. Danh sách deployment GitHub tại thời điểm kiểm tra vẫn báo commit cũ, nên bằng chứng frontend ở đây là nội dung asset đang phục vụ trên hostname canonical, không phải xác nhận commit từ dashboard Render.
+
+Smoke ứng dụng thật sau khi đồng bộ các cập nhật giao diện mới: bốn kịch bản local guest ở 390/1440px, sáng/tối, không mock request/account. Đã xác nhận viền thực sự chuyển động, mở rộng giữ nháp và auth gate truy cập được; không có POST chatbot. Tổng cộng đã chạy chín fixture browser kèm bốn smoke guest. Chưa chạy workflow đăng nhập/model/gửi tin/lịch/thanh toán thật trên production.
