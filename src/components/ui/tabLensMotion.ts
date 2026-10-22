@@ -31,15 +31,15 @@ export function createTabLensMotion(root: HTMLElement, lens: HTMLElement) {
       // Stretch towards the trailing side, keeping end tabs inside the rail.
       lens.style.transformOrigin = distance >= 0 ? 'right center' : 'left center'
       // More travel stretches the face further; the upper bound keeps small rails stable.
-      const stretch = 1 + Math.min(.28, Math.max(.16, Math.abs(distance) / target.width * .12))
+      const stretch = 1 + Math.min(.07, Math.max(.025, Math.abs(distance) / target.width * .025))
       // The production CSS optimizer can convert 620ms to .62s.
       const cssDuration = getComputedStyle(root).getPropertyValue('--glass-settle-duration').trim()
       const duration = parseFloat(cssDuration) * (cssDuration.endsWith('ms') ? 1 : 1000)
       const nextAnimation = lens.animate([
         { scale: startScale === 'none' ? '1' : startScale, offset: 0, easing: 'ease-in-out' },
-        { scale: `${stretch} .86`, offset: .22, easing: 'ease-in-out' },
-        { scale: '1.07 1.16', offset: .58, easing: 'ease-in-out' },
-        { scale: '.985 1.025', offset: .82, easing: 'ease-in-out' },
+        { scale: `${stretch} .98`, offset: .22, easing: 'ease-in-out' },
+        { scale: '1.015 1.025', offset: .58, easing: 'ease-in-out' },
+        { scale: '.995 1.008', offset: .82, easing: 'ease-in-out' },
         { scale: '1 1', offset: 1 },
       ], { duration: Number.isFinite(duration) && duration > 0 ? duration : 620, easing: 'linear' })
       animation = nextAnimation

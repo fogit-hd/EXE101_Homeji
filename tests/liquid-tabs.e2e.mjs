@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import {createHash} from 'node:crypto'
 import { createRequire } from 'node:module'
 import { mkdir, writeFile } from 'node:fs/promises'
 const { chromium } = createRequire(import.meta.url)(process.env.HOMEJI_PLAYWRIGHT_MODULE || 'playwright')
@@ -33,42 +32,14 @@ async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact
 async function aligned(list){await page.waitForFunction(label=>{const root=[...document.querySelectorAll('.liquid-tabs')].find(e=>e.getAttribute('aria-label')===label);const active=root?.querySelector('[aria-selected="true"]');const lens=root?.querySelector('.liquid-tabs__lens');if(!active||!lens||root.dataset.lensEngaged)return false;if(getComputedStyle(lens).display==='none')return document.documentElement.dataset.theme==='dark'&&root.closest('.admin-workspace')!==null;const a=active.getBoundingClientRect(),l=lens.getBoundingClientRect(),box=root.getBoundingClientRect();return Math.abs(a.x-l.x)<2&&Math.abs(a.width-l.width)<2&&Math.abs(l.height-a.height)<2&&l.top>=box.top-1&&l.bottom<=box.bottom+1},await list.getAttribute('aria-label'))}
 try{
  await page.goto(base+'/?section=profile');await ready();const profile=page.getByRole('tablist',{name:'Phần hồ sơ',exact:true});await aligned(profile);assert.ok(await profile.evaluate(e=>e.scrollWidth<=e.clientWidth),'Two profile tabs must both fit without clipping')
- await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const i=new Image();i.src=e.getAttribute('href');await i.decode()}))});
- const optical=await profile.screenshot({animations:'disabled'});await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale','0')));const flat=await profile.screenshot({animations:'disabled'});assert.notEqual(createHash('sha256').update(optical).digest('hex'),createHash('sha256').update(flat).digest('hex'),'The actual tab track refracts beneath the selected lens');await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(e=>e.setAttribute('scale',String(Math.max(0,Number(e.closest('filter').dataset.glassDepth)+Number(e.dataset.glassOffset))))));
  const raisedLens=profile.locator('.liquid-tabs__lens')
  const basic=profile.getByRole('tab',{name:'Cơ bản',exact:true}),lifestyle=profile.getByRole('tab',{name:'Lối sống',exact:true})
  const baseRect=await basic.boundingBox(),targetRect=await lifestyle.boundingBox()
- assert.ok(await raisedLens.evaluate(e=>Number(getComputedStyle(e).zIndex)>Number(getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex)),'The optical face is painted above real labels')
- // Flatten the rail color and crop inside the word: only glyph refraction can
- // change this region when displacement is disabled; drawn rim/glare stay fixed.
- await profile.evaluate(e=>{e.style.setProperty('--tabs-track','#18685e');e.style.setProperty('--tabs-track-light','#18685e')})
- const matte=await page.addStyleTag({content:'.liquid-tabs[data-text-test] > .liquid-tabs__lens {background:transparent!important;border-color:transparent!important;box-shadow:none!important;transition:none!important;scale:1!important}.liquid-tabs[data-text-test] > .liquid-tabs__lens::before,.liquid-tabs[data-text-test] > .liquid-tabs__lens::after {display:none!important}'})
- await profile.evaluate(e=>{e.dataset.textTest='true';e.dataset.lensEngaged='true'})
- const originalTransform=await raisedLens.evaluate(e=>{const old=e.style.transform;const m=new DOMMatrix(getComputedStyle(e).transform);e.style.transform=`translate3d(${m.m41+30}px,${m.m42}px,0)`;return old})
- const glyphBox=await basic.evaluate(e=>{const range=document.createRange();range.selectNodeContents(e);const r=range.getBoundingClientRect();return{x:Math.floor(r.x),y:Math.floor(r.y),width:Math.ceil(r.width),height:Math.ceil(r.height)}})
- const idleFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)[1])
- const bentGlyphs=await page.screenshot({clip:glyphBox,path:new URL('text-through-glass.png',out).pathname.slice(1)})
- await page.locator('#'+idleFilter+' feDisplacementMap').evaluateAll(es=>es.forEach(e=>e.setAttribute('scale','0')))
- const flatGlyphs=await page.screenshot({clip:glyphBox,path:new URL('text-without-refraction.png',out).pathname.slice(1)})
- assert.notEqual(createHash('sha256').update(bentGlyphs).digest('hex'),createHash('sha256').update(flatGlyphs).digest('hex'),'Text itself refracts through the lens on a uniform rail, rather than floating above it')
- await page.locator('#'+idleFilter+' feDisplacementMap').evaluateAll(es=>es.forEach(e=>e.setAttribute('scale',String(Number(e.closest('filter').dataset.glassDepth)+Number(e.dataset.glassOffset)))))
- await raisedLens.evaluate((e,t)=>e.style.transform=t,originalTransform);await profile.evaluate(e=>{delete e.dataset.textTest;delete e.dataset.lensEngaged;e.style.removeProperty('--tabs-track');e.style.removeProperty('--tabs-track-light')});await matte.evaluate(e=>e.remove())
-
+ assert.ok(await raisedLens.evaluate(e=>Number(getComputedStyle(e).zIndex)<Number(getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex)),'Labels remain above the glass')
  await page.mouse.move(baseRect.x+baseRect.width/2,baseRect.y+baseRect.height/2);await page.mouse.down()
- await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.liquid-tabs__lens')).scale.split(' ')[1])>1.08)
- assert.ok((await raisedLens.boundingBox()).height>baseRect.height+3,'Only a pressed lens rises above its resting size')
- await raisedLens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))})
- const activeFilter=await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter.match(/#([^\")]+)/)?.[1])
- assert.match(activeFilter,/-active$/,'Engagement uses stronger real refraction, independently of the scale animation')
- assert.equal(await page.locator('#'+activeFilter+' feDisplacementMap[result=green-warp]').getAttribute('scale'),'0.364')
- const bent=await profile.screenshot(),stable=await profile.screenshot()
- assert.equal(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(stable).digest('hex'),'Pressed optical comparison is stable before changing refraction')
- await page.locator('#'+activeFilter+' feDisplacementMap').evaluateAll(es=>es.forEach(e=>e.setAttribute('scale','0')))
- const unbent=await profile.screenshot()
- assert.notEqual(createHash('sha256').update(bent).digest('hex'),createHash('sha256').update(unbent).digest('hex'),'Pressed lens actually bends the existing rail pixels, not only its drawn rim')
- await page.locator('#'+activeFilter+' feDisplacementMap').evaluateAll(es=>es.forEach(e=>e.setAttribute('scale',String(Number(e.closest('filter').dataset.glassDepth)+Number(e.dataset.glassOffset)))))
  assert.equal(await basic.evaluate(e=>getComputedStyle(e).filter),'none')
- assert.match(await raisedLens.evaluate(e=>getComputedStyle(e).transitionTimingFunction),/linear\(/,'Lens uses the bounded spring easing in the optimized build')
+ assert.equal(await basic.evaluate(e=>getComputedStyle(e).backdropFilter),'none')
+ assert.doesNotMatch(await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/,'The face uses smooth background softness without displacement')
  const lightBefore=await raisedLens.evaluate(e=>e.style.getPropertyValue('--lens-light-x'))
 
  await page.screenshot({path:new URL('profile-lens-pressed.png',out).pathname.slice(1)});await profile.screenshot({path:new URL('profile-lens-pressed-detail.png',out).pathname.slice(1)})
@@ -140,5 +111,5 @@ try{
   await admin.screenshot({path:new URL('admin-withdraw-'+width+'.png',out).pathname.slice(1)})
  }
 
- assert.deepEqual(errors,[]);console.log('PASS: actual text refracts beneath lens, long admin labels at 320/390/1280, resting lens fits rail, press grows, drag commits on release, cancellation restores, same lens follows selection and keyboard, correct geometry at 320/390/1440, actual profile/payment/market tabs and select, forced-colors/reduced-motion')
+ assert.deepEqual(errors,[]);console.log('PASS: sharp text stays above lens, long admin labels at 320/390/1280, resting lens fits rail, subtle press, drag commits on release, cancellation restores, same lens follows selection and keyboard, correct geometry at 320/390/1440, actual profile/payment/market tabs and select, forced-colors/reduced-motion')
 }finally{await browser.close()}
