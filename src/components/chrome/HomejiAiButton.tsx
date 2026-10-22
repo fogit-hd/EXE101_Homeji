@@ -1,6 +1,7 @@
 import { useRef, useSyncExternalStore } from 'react'
 import {
   HOMEJI_AI_TRIGGER_ATTR,
+  HOMEJI_AI_PANEL_ID,
   homejiAiOpenSnapshot,
   subscribeHomejiAiOpen,
   toggleHomejiAi,
@@ -19,6 +20,7 @@ export function HomejiAiButton({ tone = 'light' }: { tone?: 'light' | 'glass' })
       className={`hj-ai-btn ai-spectrum-launcher is-${tone}${open ? ' is-open' : ''}`}
       aria-expanded={open}
       aria-haspopup="dialog"
+      aria-controls={HOMEJI_AI_PANEL_ID}
       aria-label="Hỏi Homeji AI"
       {...{ [HOMEJI_AI_TRIGGER_ATTR]: '' }}
       onClick={() => toggleHomejiAi(ref.current)}

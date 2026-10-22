@@ -14,7 +14,7 @@
   .map-chatbot .map-chatbot__form, .ai-search-review, .rental-draft-assistant,
   .rental-comparison, .ai-spectrum-button.ai-spectrum-button,
   .map-chatbot .map-chatbot__chip,
-  .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send) {
+  .map-chatbot .map-chatbot__action, .map-chatbot .map-chatbot__send):not(:where(.homeji-assistant *)) {
   --ai-spectrum-surface: var(--surface-elevated);
   --ai-border-angle: 0deg;
   --ai-glow-depth: 8px;
@@ -30,13 +30,13 @@
 
 :is(.ai-spectrum-button.ai-spectrum-button,
   .map-chatbot .map-chatbot__chip, .map-chatbot .map-chatbot__action,
-  .map-chatbot .map-chatbot__send) {
+  .map-chatbot .map-chatbot__send):not(:where(.homeji-assistant *)) {
   border-width: 1.5px;
   --ai-glow-depth: 6px;
   color: var(--text-heading);
 }
 
-.map-chatbot__panel.is-visible {
+.map-chatbot__panel.is-visible:not(:where(.homeji-assistant *)) {
   border-width: 2px;
   --ai-glow-depth: 12px;
   box-shadow: 0 16px 48px #152a2929, -1px 0 8px #f45b7833, 1px 0 8px #7376f033;
@@ -47,7 +47,7 @@
   box-shadow: -1px 0 9px #f45b7838, 1px 0 9px #7376f038, 0 1px 7px #38bce826;
 }
 
-.map-chatbot__panel.is-visible.is-thinking {
+.map-chatbot__panel.is-visible.is-thinking:not(:where(.homeji-assistant *)) {
   animation-duration: 2s;
   box-shadow: 0 16px 48px #152a2929, -2px 0 12px #f45b7845, 2px 0 12px #7376f045;
 }
@@ -61,11 +61,11 @@
   transform-origin: center top;
   animation: ai-popup-open 460ms cubic-bezier(.16, 1, .3, 1) both;
 }
-.map-chatbot__panel {
+.map-chatbot__panel:not(:where(.homeji-assistant *)) {
   transform: translate3d(0, 10px, 0) scale(.96);
   transition: opacity 420ms ease, transform 460ms cubic-bezier(.16, 1, .3, 1), left 180ms ease, top 180ms ease;
 }
-.map-chatbot__panel.is-visible { transform: translate3d(0, 0, 0) scale(1); }
+.map-chatbot__panel.is-visible:not(:where(.homeji-assistant *)) { transform: translate3d(0, 0, 0) scale(1); }
 @keyframes ai-popup-open {
   from { opacity: 0; scale: .96; }
   to { opacity: 1; scale: 1; }
@@ -94,7 +94,7 @@
 /* AI identity remains visible, while rainbow reflections wait for real input. */
 html:root #root :is(.map-chatbot__panel.is-visible,.map-chatbot__fab,.map-chatbot__form,
   .ai-search-review,.rental-draft-assistant,.rental-comparison,.ai-spectrum-button,
-  .map-chatbot__chip,.map-chatbot__action,.map-chatbot__send):not([data-glass-interacting]):not(:has([data-glass-interacting])):not(.is-thinking) {
+  .map-chatbot__chip,.map-chatbot__action,.map-chatbot__send):not(:where(.homeji-assistant *)):not([data-glass-interacting]):not(:has([data-glass-interacting])):not(.is-thinking) {
   --ai-spectrum-fill: linear-gradient(var(--ai-spectrum-surface),var(--ai-spectrum-surface)) padding-box,
     linear-gradient(160deg,rgb(226 242 239 / .9),rgb(166 199 194 / .6)) border-box;
   background: var(--ai-spectrum-fill);

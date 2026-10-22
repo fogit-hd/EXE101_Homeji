@@ -9,14 +9,14 @@ const out = 'output/verification/rental-assistant-context'
 await mkdir(out, { recursive: true })
 await writeFile(`${out}/index.html`, '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rental assistant fixture</title><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
 await writeFile(`${out}/scene.tsx`, `
-import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';
+import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter,useLocation}from'react-router-dom';
 import{RoomDetailModal}from'/src/components/map/listings/RoomDetailModal.tsx';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';
 import{toggleHomejiAi}from'/src/lib/homejiAiLauncher.ts';import{MapPlaceDetailPanel}from'/src/components/map/MapPlaceDetailPanel.tsx';import{ChatbotProvider}from'/src/contexts/ChatbotContext.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';
-import'/src/index.css';import'/src/ui-consistency.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';
-function Scene(){const[room,setRoom]=useState('room-a');const[conversation,setConversation]=useState(null);const[identity,setIdentity]=useState('renter');const[post,setPost]=useState(null);
+import'/src/index.css';import'/src/ui-consistency.css';import'/src/ai-spectrum.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';
+function Scene(){const route=useLocation();const[room,setRoom]=useState('room-a');const[conversation,setConversation]=useState(null);const[identity,setIdentity]=useState('renter');const[post,setPost]=useState(null);
 useEffect(()=>{const listener=e=>{window.localStorage.setItem('homeji_user_id',e.detail);window.__fixtureUser=e.detail;setIdentity(e.detail)};window.addEventListener('fixture-account',listener);return()=>window.removeEventListener('fixture-account',listener)},[]);
 const map=new URLSearchParams(location.search).get('scene')==='map';useEffect(()=>{if(map)fetch('/api/rental-posts/room-a').then(r=>r.json()).then(setPost)},[map]);
-return <main key={identity} className={map?"home-map-page--dest":""} style={{height:'95dvh',padding:16}}><button data-homeji-ai-trigger="" style={{position:"fixed",top:8,right:8,zIndex:1000}} onClick={event=>toggleHomejiAi(event.currentTarget)}>Mở trợ lý từ thanh điều hướng</button><p>Kiểm thử local với dữ liệu giả; không gửi giao dịch thật.</p>{conversation?<MapMessagesPanel key={identity} embedded initialConversationId={conversation}/>:map?<MapPlaceDetailPanel open listing={post}/>:<RoomDetailModal listingId={room} onClose={()=>setRoom(null)} onOpenMessages={id=>{setRoom(null);setConversation(id)}}/>}</main>}
+return <main key={identity} className={map?"home-map-page--dest":""} style={{height:'95dvh',padding:16}}><button data-homeji-ai-trigger="" style={{position:"fixed",top:8,right:8,zIndex:1000}} onClick={event=>toggleHomejiAi(event.currentTarget)}>Mở trợ lý từ thanh điều hướng</button><output data-testid="fixture-route">{route.pathname+route.search}</output><p>Kiểm thử local với dữ liệu giả; không gửi giao dịch thật.</p>{conversation?<MapMessagesPanel key={identity} embedded initialConversationId={conversation}/>:map?<MapPlaceDetailPanel open listing={post}/>:<RoomDetailModal listingId={room} onClose={()=>setRoom(null)} onOpenMessages={id=>{setRoom(null);setConversation(id)}}/>}</main>}
 createRoot(document.getElementById('root')).render(<MemoryRouter><ToastProvider><ChatbotProvider><Scene/></ChatbotProvider></ToastProvider></MemoryRouter>);`)
 
 const post = { id: 'room-a', ownerId: 'owner-a', ownerRole: 2, title: 'Phòng gần trường · dữ liệu kiểm thử', description: 'Thông tin giả dùng để kiểm tra giao diện.', address: 'Khu vực kiểm thử', price: 3000000, deposit: 3000000, area: 24, type: 1, status: 3, electricityPrice: 3500, waterPrice: 0, internetPrice: 100000, amenities: ['KITCHEN'], maxOccupants: 2, availableSlots: 2, latitude: 10.84, longitude: 106.8, viewCount: 0, saveCount: 0, ownerDisplayName: 'Chủ phòng kiểm thử', media: [], thumbnailPath: null, createdAt: '2026-10-20T00:00:00Z', updatedAt: '2026-10-21T00:00:00Z' }
@@ -24,8 +24,18 @@ const conversation = { id: 'conversation-a', subjectType: 1, subjectId: post.id,
 const browser = await chromium.launch({ headless: true, executablePath: process.env.HOMEJI_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
 const results = []
 try {
-  for (const width of [390, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce' })
+  for (const { width, theme, fullFlow } of [
+    { width: 390, theme: 'light', fullFlow: true }, { width: 1440, theme: 'light', fullFlow: true },
+    { width: 320, theme: 'light', fullFlow: false }, { width: 390, theme: 'dark', fullFlow: false }, { width: 1440, theme: 'dark', fullFlow: false },
+  ]) {
+    const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce', colorScheme: theme })
+    await context.addInitScript(theme => {
+      const apply = () => { document.documentElement.dataset.theme = theme }
+      if (document.documentElement) apply()
+      else document.addEventListener('DOMContentLoaded', apply, { once: true })
+      window.__fixtureCopied = []
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.__fixtureCopied.push(text) } } })
+    }, theme)
     await context.addInitScript(() => { localStorage.setItem('homeji_access_token', 'fixture'); localStorage.setItem('homeji_user_id', 'renter'); window.__fixtureUser = 'renter' })
     await context.route('**/src/contexts/AuthContext.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuth=()=>({isAuthenticated:true,profile:{id:window.__fixtureUser||"renter",role:1,displayName:"Tài khoản kiểm thử",onboardingCompleted:true}})' }))
     await context.route('**/src/contexts/AuthModalContext.logic.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuthModal=()=>({isOpen:false,openAuthModal:()=>{}})' }))
@@ -48,7 +58,7 @@ try {
       } else if (pathname === '/api/chatbot/popup-config') json = { enabled: true, title: 'Homeji', greeting: 'Chào bạn', suggestedPrompts: [], historyStorageEnabled: false }
       else if (pathname === '/api/chatbot/messages') {
         const body = req.postDataJSON(); assistantRequests.push(body)
-        json = { conversationId: 'ai-conversation', userMessage: { id: 'question', conversationId: 'ai-conversation', sender: 1, content: body.message, createdAt: post.updatedAt }, assistantMessage: { id: 'answer', conversationId: 'ai-conversation', sender: 2, content: 'Tiền thuê theo tin: 3.000.000 đồng/phòng/tháng. Chưa đủ thông tin để kết luận tổng tháng.', createdAt: post.updatedAt }, actions: [], searchUpdate: null, rentalDecision: { posts: [{ post, cost: { postId: post.id, knownMonthlySubtotal: post.price, estimatedMonthlyTotal: null, initialPayment: null, priceBasis: 'room', unknown: ['Đơn vị phí điện, nước'], questions: ['Điện tính theo đơn vị nào?'], sourceType: 'listing', updatedAt: post.updatedAt }, commute: null }], unavailablePostIds: [], summary: 'Dữ liệu theo chủ tin.' } }
+        json = { conversationId: 'ai-conversation', userMessage: { id: 'question-' + assistantRequests.length, conversationId: 'ai-conversation', sender: 1, content: body.message, createdAt: post.updatedAt }, assistantMessage: { id: 'answer-' + assistantRequests.length, conversationId: 'ai-conversation', sender: 2, content: 'Tiền thuê theo tin: 3.000.000 đồng/phòng/tháng. Chưa đủ thông tin để kết luận tổng tháng.', createdAt: post.updatedAt }, actions: [], searchUpdate: null, rentalDecision: { posts: [{ post, cost: { postId: post.id, knownMonthlySubtotal: post.price, estimatedMonthlyTotal: null, initialPayment: null, priceBasis: 'room', unknown: ['Đơn vị phí điện, nước'], questions: ['Điện tính theo đơn vị nào?'], sourceType: 'listing', updatedAt: post.updatedAt }, commute: null }], unavailablePostIds: [], summary: 'Dữ liệu theo chủ tin.' } }
       }
       return route.fulfill({ json })
     })
@@ -56,6 +66,7 @@ try {
     page.setDefaultTimeout(12_000)
     page.on('pageerror', error => { errors.push(error.message); console.error('Page error:', error.message) })
     page.on('console', message => { if (message.type() === 'error') console.error('Browser error:', message.text()) })
+    if (fullFlow) {
     await page.goto(`${base}/${out}/index.html`)
     await page.getByRole('button', { name: 'Soạn câu hỏi cho người đăng', exact: true }).click()
     const draft = page.getByRole('textbox', { name: /Bản nháp câu hỏi/ })
@@ -131,6 +142,7 @@ try {
     await assistantDialog.getByRole('button', { name: 'Đóng Homeji', exact: true }).click()
     assert.equal(await roomModal.isVisible(), true)
 
+    }
     await page.goto(`${base}/${out}/index.html?scene=map`)
     assert.equal(await page.locator('.map-chatbot__fab').count(), 0, 'Release must keep navbar AI entry without restoring old FAB')
     await page.getByRole('button', { name: 'Mở trợ lý từ thanh điều hướng', exact: true }).click()
@@ -140,15 +152,94 @@ try {
     await page.getByRole('button', { name: 'Hỏi trợ lý về phòng đang xem', exact: true }).click()
     await page.getByRole('button', { name: 'Tính tiền tháng', exact: true }).click()
     await page.getByLabel('Thông tin và chi phí theo tin phòng').waitFor()
-    assert.equal(assistantRequests.length, 2)
-    assert.deepEqual(assistantRequests[1].rentalContext, { postId: post.id, task: 'cost' })
-    assert.ok(!JSON.stringify(assistantRequests[1]).includes(post.address), 'Client sent full listing instead of a context ID')
+    const contextRequestCount = fullFlow ? 2 : 1
+    assert.equal(assistantRequests.length, contextRequestCount)
+    assert.deepEqual(assistantRequests.at(-1).rentalContext, { postId: post.id, task: 'cost' })
+    assert.ok(!JSON.stringify(assistantRequests.at(-1)).includes(post.address), 'Client sent full listing instead of a context ID')
     assert.equal(await page.locator('.map-chatbot__fab').count(), 0)
     await page.getByRole('dialog', { name: 'Homeji', exact: true }).getByRole('button', { name: 'Đóng Homeji', exact: true }).focus()
     await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.map-chatbot__panel')).opacity) >= 0.999)
-    await page.screenshot({ path: `${out}/context-cost-${width}.png` })
+    const suffix = `${width}${theme === 'dark' ? '-dark' : ''}`
+    const ai = page.getByRole('dialog', { name: 'Homeji', exact: true })
+    const assertBounds = async () => {
+      const bounds = await ai.boundingBox()
+      assert.ok(bounds && bounds.x >= -1 && bounds.y >= -1 && bounds.x + bounds.width <= width + 1 && bounds.y + bounds.height <= 1001, `Assistant outside ${width}px viewport: ${JSON.stringify(bounds)}`)
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'Assistant caused horizontal page overflow')
+    }
+    await assertBounds()
+    await page.screenshot({ path: `${out}/context-cost-${suffix}.png` })
+    const aiComposer = ai.getByRole('textbox', { name: 'Nhập tin nhắn cho Homeji', exact: true })
+    await aiComposer.fill('Tìm phòng dưới 3 triệu')
+    const sendStyle = await ai.getByRole('button', { name: 'Gửi', exact: true }).evaluate(button => {
+      const style = getComputedStyle(button)
+      const luminance = color => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number).map(value => {
+        const channel = value / 255
+        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+      }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0)
+      const a = luminance(style.color), b = luminance(style.backgroundColor)
+      return { contrast: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05), fill: style.backgroundImage,
+        edge: getComputedStyle(button, '::before').backgroundImage }
+    })
+    assert.ok(sendStyle.contrast >= 4.5, `Send label contrast is too low: ${sendStyle.contrast}`)
+    assert.equal(sendStyle.fill, 'none', 'Legacy AI fill overwrote the readable send surface')
+    assert.match(sendStyle.edge, /conic-gradient/, 'The dynamic seven-color AI edge was removed')
+    await aiComposer.press('Shift+Enter')
+    await aiComposer.pressSequentially('Gần trường và có bếp')
+    const unsentDraft = 'Tìm phòng dưới 3 triệu\nGần trường và có bếp'
+    assert.equal(await aiComposer.inputValue(), unsentDraft)
+    assert.equal(assistantRequests.length, contextRequestCount, 'Shift+Enter submitted an unfinished question')
+    await ai.getByRole('button', { name: 'Mở rộng cuộc trò chuyện', exact: true }).click()
+    const shrink = ai.getByRole('button', { name: 'Thu gọn cuộc trò chuyện', exact: true })
+    assert.equal(await shrink.getAttribute('aria-pressed'), 'true')
+    assert.equal(await ai.getAttribute('aria-modal'), 'true')
+    assert.equal(await aiComposer.inputValue(), unsentDraft)
+    await assertBounds()
+    await page.screenshot({ path: `${out}/expanded-${suffix}.png` })
+    await shrink.click()
+    assert.equal(await ai.getByRole('button', { name: 'Mở rộng cuộc trò chuyện', exact: true }).getAttribute('aria-pressed'), 'false')
+    assert.equal(await aiComposer.inputValue(), unsentDraft)
+    await assertBounds()
+    assert.equal(assistantRequests.length, contextRequestCount, 'Expanding/shrinking must not send an assistant request')
+    await ai.getByRole('button', { name: 'Công cụ', exact: true }).click()
+    assert.equal(await ai.getByRole('button', { name: 'Công cụ', exact: true }).getAttribute('aria-expanded'), 'true')
+    for (const label of ['Tìm phòng', 'Phòng đã lưu', 'Tin nhắn', 'Chợ Homeji', 'Lịch xem phòng']) {
+      assert.equal(await ai.getByRole('button', { name: label, exact: true }).isVisible(), true)
+    }
+    const toolsBox = await ai.getByLabel('Công cụ Homeji', { exact: true }).boundingBox()
+    const composerBox = await aiComposer.boundingBox()
+    assert.ok(toolsBox && composerBox && toolsBox.y + toolsBox.height <= composerBox.y + 1, 'Tools cover the composer instead of taking layout space')
+    await page.screenshot({ path: `${out}/tools-${suffix}.png` })
+    await ai.getByRole('button', { name: 'Tin nhắn', exact: true }).click()
+    await ai.waitFor({ state: 'hidden' })
+    await page.waitForFunction(() => document.querySelector('[data-testid="fixture-route"]')?.textContent?.includes('section=messages'))
+    assert.match(await page.getByTestId('fixture-route').textContent(), /section=messages/)
+    assert.equal(assistantRequests.length, contextRequestCount, 'Navigation shortcuts must not call the model')
+    await page.getByRole('button', { name: 'Mở trợ lý từ thanh điều hướng', exact: true }).click()
+    await ai.waitFor()
+    assert.equal(await ai.getByRole('button', { name: 'Công cụ', exact: true }).getAttribute('aria-expanded'), 'false', 'Shortcut drawer remained over the reopened conversation')
+    assert.equal(await aiComposer.inputValue(), unsentDraft)
+    const aiReply = page.waitForResponse(response => new URL(response.url()).pathname === '/api/chatbot/messages' && response.request().method() === 'POST')
+    await aiComposer.press('Enter')
+    await aiReply
+    await ai.getByRole('button', { name: 'Sao chép câu trả lời', exact: true }).nth(1).waitFor()
+    assert.equal(assistantRequests.length, contextRequestCount + 1)
+    assert.equal(assistantRequests.at(-1).message, unsentDraft)
+    assert.equal(assistantRequests.at(-1).rentalContext, undefined, 'Explicit search inherited the selected room')
+    await ai.getByRole('button', { name: 'Sao chép câu trả lời', exact: true }).last().click()
+    await page.waitForFunction(() => window.__fixtureCopied.length === 1)
+    assert.match(await ai.textContent(), /Đã sao chép/)
+    await ai.getByRole('button', { name: 'Cuộc trò chuyện mới', exact: true }).click()
+    assert.ok(await ai.locator('.map-chatbot__msg.is-user').count() > 0)
+    await ai.getByRole('button', { name: 'Bắt đầu cuộc trò chuyện mới', exact: true }).click()
+    assert.equal(await ai.locator('.map-chatbot__msg.is-user').count(), 0)
+    assert.equal(await aiComposer.inputValue(), '')
+    assert.match(await ai.getByLabel('Phòng đang hỗ trợ', { exact: true }).textContent(), /Phòng gần trường/)
+    assert.equal(assistantRequests.length, contextRequestCount + 1, 'Local reset caused an extra assistant request')
+    await assertBounds()
+    await page.waitForFunction(() => document.querySelector('[data-homeji-ai-panel="open"] .map-chatbot__body')?.scrollTop === 0)
+    await page.screenshot({ path: `${out}/empty-${suffix}.png` })
     assert.deepEqual(errors, [])
-    results.push({ width, sends: sends.length, groundedContextRequests: assistantRequests.length, navbarLauncherPreserved: true, modalAssistantKeyboardPreserved: true, lateClosedRoomIgnored: true, lateAccountChangedIgnored: true, pageErrors: errors })
+    results.push({ width, theme, sends: sends.length, groundedContextRequests: contextRequestCount, totalAssistantRequests: assistantRequests.length, navbarLauncherPreserved: true, modalAssistantKeyboardPreserved: fullFlow ? true : null, lateClosedRoomIgnored: fullFlow ? true : null, lateAccountChangedIgnored: fullFlow ? true : null, expandShrinkDraftPreserved: true, multilineRequiresExplicitSend: true, localResetKeepsRoom: true, realToolsNavigateWithoutModel: true, boundsChecked: true, pageErrors: errors })
     await context.close()
   }
   await writeFile(`${out}/results.json`, JSON.stringify({ evidence: 'Local real components with mocked APIs; no real account/message/provider', results }, null, 2))

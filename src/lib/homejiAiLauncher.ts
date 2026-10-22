@@ -1,6 +1,7 @@
 /** Navbar entry ↔ global MapChatbot. The chat window has no floating launcher; it opens only from here. */
 const TOGGLE = 'homeji-ai:toggle'
 const STATE = 'homeji-ai:state'
+export const HOMEJI_AI_PANEL_ID = 'homeji-ai-conversation'
 
 export type HomejiAiToggleDetail = { anchor: DOMRect | null; open?: boolean }
 
