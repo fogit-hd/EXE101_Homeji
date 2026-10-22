@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { PointerEvent, ReactNode } from 'react'
 import { primaryOf, type MarketplacePrimary, type MarketplaceTab } from '../../lib/marketplaceNavigation'
 import { formatAvailableBalance } from '../../lib/walletMoney'
 import { SegmentedTabs } from '../motion/SegmentedTabs'
@@ -68,6 +68,12 @@ type Props = {
   subtabsExtra?: ReactNode
 }
 
+function reflectUtilityAction(event: PointerEvent<HTMLButtonElement>) {
+  const button = event.currentTarget
+  const face = button.getBoundingClientRect()
+  if (face.width) button.style.setProperty('--utility-light-x', `${Math.max(8, Math.min(92, (event.clientX - face.left) / face.width * 100))}%`)
+}
+
 export function MarketplaceHeader({
   tab,
   availableBalance,
@@ -99,19 +105,21 @@ export function MarketplaceHeader({
           <h1 className="marketplace-header__title">{headline.title}</h1>
         </div>
         <div className="marketplace-header__utilities">
-          <PersistentWalletBalance
-            availableBalance={availableBalance}
-            status={walletStatus}
-            onTopUp={onTopUp}
-          />
-          {tab !== 'wallet' ? (
-            <>
-              <span className="marketplace-header__utilities-divider" aria-hidden="true" />
-              <button type="button" className="marketplace-header__primary" onClick={onOpenSell}>
+          <PersistentWalletBalance availableBalance={availableBalance} status={walletStatus} />
+          <div className="marketplace-header__utility-actions">
+            {walletStatus !== 'loading' ? (
+              <button type="button" className="marketplace-header__topup marketplace-header__utility-action"
+                onPointerMove={reflectUtilityAction} onClick={onTopUp}>
+                Nạp tiền
+              </button>
+            ) : null}
+            {tab !== 'wallet' ? (
+              <button type="button" className="marketplace-header__primary marketplace-header__utility-action"
+                onPointerMove={reflectUtilityAction} onClick={onOpenSell}>
                 Đăng bán
               </button>
-            </>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -148,11 +156,9 @@ export function MarketplaceHeader({
 function PersistentWalletBalance({
   availableBalance,
   status,
-  onTopUp,
 }: {
   availableBalance: number | null
   status: WalletHeaderStatus
-  onTopUp: () => void
 }) {
   const showAmount = status === 'ready' && availableBalance != null
   return (
@@ -169,9 +175,6 @@ function PersistentWalletBalance({
           ) : (
             <strong className="marketplace-header__wallet-error">Không thể tải số dư</strong>
           )}
-          <button type="button" className="marketplace-header__topup" onClick={onTopUp}>
-            Nạp tiền
-          </button>
         </>
       )}
     </div>
