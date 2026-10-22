@@ -39,12 +39,12 @@ try {
  await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('feImage')].map(async e=>{const i=new Image();i.src=e.getAttribute('href');await i.decode()}))});
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  const state=await lens.evaluate(e=>({filter:getComputedStyle(e).backdropFilter,z:getComputedStyle(e).zIndex,buttonZ:getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex}));
- assert.doesNotMatch(state.filter,/url\(/);assert.ok(+state.z<+state.buttonZ);
+ assert.match(state.filter,/url\(/);assert.ok(+state.z<+state.buttonZ);
  await list.screenshot({path:new URL('rest.png',out).pathname.slice(1)});
  const active=list.getByRole('tab',{name:'Mua sắm',exact:true}); const rect=await active.boundingBox();
  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.down();
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
- assert.doesNotMatch(await lens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
+ assert.match(await lens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
  assert.equal(await lens.evaluate(e=>getComputedStyle(e,'::before').content),'none','No extra rim overlay');
  await page.mouse.move(rect.x+rect.width*.85,rect.y+rect.height/2,{steps:5});
  assert.ok(await lens.evaluate(e=>+getComputedStyle(e).zIndex<+getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex));

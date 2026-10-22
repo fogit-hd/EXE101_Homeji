@@ -43,10 +43,10 @@
   z-index: 1;
   box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1;
   border: 1px solid var(--tabs-rim);
-  background: linear-gradient(160deg, rgb(255 255 255 / .28), rgb(255 255 255 / .06));
+  background: linear-gradient(160deg, rgb(255 255 255 / .13), rgb(255 255 255 / .02));
   box-shadow: 0 3px 10px -4px rgb(18 58 48 / .2);
-  -webkit-backdrop-filter: blur(3px) saturate(1.08);
-  backdrop-filter: blur(3px) saturate(1.08);
+  -webkit-backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.2px) saturate(1.08);
+  backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.2px) saturate(1.08);
 }
 #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens {
   transition: transform var(--glass-travel-duration) var(--glass-spring,cubic-bezier(.2,.8,.2,1)),width var(--glass-travel-duration) var(--glass-spring,cubic-bezier(.2,.8,.2,1)),height 260ms ease,scale 300ms var(--glass-spring,cubic-bezier(.2,.8,.2,1));
@@ -80,13 +80,14 @@ html[data-theme='dark'] #root .liquid-tabs {
   #root .liquid-tabs > button[role='tab'][aria-selected='true'] { color: #fff; }
 }
 
-/* Selection slides as one continuous surface. Text never enters its backdrop. */
+/* Refraction bends only the scene behind the face. The text plane stays above
+   it during rest, press, drag and travel; no displacement ever samples labels. */
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1.015; }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { scale: 1.025 .99; transition: scale 180ms ease; }
 #root .liquid-tabs[data-lens-travel] > .liquid-tabs__lens { z-index: 1; scale: 1; }
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
-  -webkit-backdrop-filter: blur(3px) saturate(1.08);
-  backdrop-filter: blur(3px) saturate(1.08);
+  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.2px) saturate(1.08);
+  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.2px) saturate(1.08);
 }
 @media(prefers-reduced-motion:reduce) {
   #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1; }

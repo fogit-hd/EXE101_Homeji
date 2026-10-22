@@ -39,7 +39,7 @@ try{
  await page.mouse.move(baseRect.x+baseRect.width/2,baseRect.y+baseRect.height/2);await page.mouse.down()
  assert.equal(await basic.evaluate(e=>getComputedStyle(e).filter),'none')
  assert.equal(await basic.evaluate(e=>getComputedStyle(e).backdropFilter),'none')
- assert.doesNotMatch(await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/,'The face uses smooth background softness without displacement')
+ assert.match(await raisedLens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/,'The scene refracts below the unfiltered text plane')
  const lightBefore=await raisedLens.evaluate(e=>e.style.getPropertyValue('--lens-light-x'))
 
  await page.screenshot({path:new URL('profile-lens-pressed.png',out).pathname.slice(1)});await profile.screenshot({path:new URL('profile-lens-pressed-detail.png',out).pathname.slice(1)})
