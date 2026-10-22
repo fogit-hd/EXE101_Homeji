@@ -38,13 +38,6 @@ html:root #root .hj-header .hj-search__submit {
   color: var(--action-on-primary);
   box-shadow: none;
 }
-html:root #root .hj-header .hj-ai-btn {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-elevated);
-  box-shadow: none;
-}
-html:root #root .hj-header .hj-ai-btn__spectrum { display: none; }
 html:root #root .hj-logo__word { font-size: 26px; letter-spacing: -.04em; }
 html:root #root .hj-logo__mark { width: 38px; height: 38px; }
 html:root #root .hj-actions { gap: 6px; }

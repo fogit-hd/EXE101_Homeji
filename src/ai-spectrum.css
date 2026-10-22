@@ -101,3 +101,42 @@ html:root #root :is(.map-chatbot__panel.is-visible,.map-chatbot__fab,.map-chatbo
   animation-play-state: paused;
   box-shadow: 0 2px 6px rgb(20 54 67 / .12),inset 0 1px 0 rgb(255 255 255 / .6);
 }
+
+/* AI entry points keep an animated identity even before the first interaction.
+   The masked edge never paints over labels or intercepts pointer input. */
+html:root #root button.ai-spectrum-launcher.ai-spectrum-launcher {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  box-shadow: -1px 0 7px #f45b781a, 1px 0 7px #7376f01a;
+  transition: box-shadow 180ms ease, transform 120ms ease;
+}
+html:root #root .ai-spectrum-launcher__edge {
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--ai-border-angle), var(--ai-spectrum-colors));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: ai-spectrum-orbit 5s linear infinite;
+}
+html:root #root button.ai-spectrum-launcher:is(:hover, :focus-visible, [aria-expanded='true']) {
+  box-shadow: -2px 0 10px #f45b7838, 2px 0 10px #7376f038, 0 2px 8px #38bce82e;
+}
+html:root #root .ai-spectrum-launcher[aria-expanded='true'] .ai-spectrum-launcher__edge { animation-duration: 3s; }
+@media (prefers-reduced-motion: reduce) {
+  html:root #root .ai-spectrum-launcher__edge { animation: none; }
+}
+@media (forced-colors: active) {
+  html:root #root .ai-spectrum-launcher__edge { display: none; }
+  html:root #root button.ai-spectrum-launcher.ai-spectrum-launcher { background: ButtonFace; color: ButtonText; border-color: ButtonText; box-shadow: none; }
+}

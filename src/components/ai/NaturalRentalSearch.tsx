@@ -76,7 +76,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
     </button>
   </form>
-  const trigger = <button ref={opener} type="button" className="natural-rental-search__trigger" aria-haspopup="dialog" aria-expanded={open} aria-controls="natural-rental-search-panel" onClick={() => {
+  const trigger = <button ref={opener} type="button" data-glass-exclude className="natural-rental-search__trigger ai-spectrum-launcher" aria-haspopup="dialog" aria-expanded={open} aria-controls="natural-rental-search-panel" onClick={() => {
     if (!open) {
       // A new search-bar query starts fresh; reopening a refinement keeps its criteria.
       if (query.trim() && query.trim() !== seededQuery.current) {
@@ -88,7 +88,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
     }
     if (open) cancelSearch()
     setOpen(value => !value)
-  }}><SparkIcon />Gợi ý AI</button>
+  }}><span className="ai-spectrum-launcher__edge" aria-hidden="true" /><SparkIcon />Gợi ý AI</button>
   return <div className="natural-rental-search">
     {renderTrigger ? renderTrigger(trigger) : trigger}
     {present ? <section {...presence} id="natural-rental-search-panel" className={`natural-rental-search__panel${loading ? ' is-thinking' : ''}`} role="dialog" aria-busy={loading} aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
