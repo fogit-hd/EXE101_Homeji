@@ -41,11 +41,18 @@ try {
  const state=await lens.evaluate(e=>({filter:getComputedStyle(e).backdropFilter,z:getComputedStyle(e).zIndex,buttonZ:getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex}));
  assert.match(state.filter,/url\(/);assert.ok(+state.z<+state.buttonZ);
  await list.screenshot({path:new URL('rest.png',out).pathname.slice(1)});
+ const face=await lens.boundingBox();
+ await page.mouse.move(face.x+12,face.y+face.height/2);await page.waitForTimeout(80);
+ const leftReflection=await list.screenshot({path:new URL('reflection-left.png',out).pathname.slice(1)});
+ await page.mouse.move(face.x+face.width-12,face.y+face.height/2);await page.waitForTimeout(80);
+ const rightReflection=await list.screenshot({path:new URL('reflection-right.png',out).pathname.slice(1)});
+ assert.notDeepEqual(leftReflection,rightReflection,'The reflection must visibly move across the face on a plain rail');
+
  const active=list.getByRole('tab',{name:'Mua sắm',exact:true}); const rect=await active.boundingBox();
  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.down();
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  assert.match(await lens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
- assert.equal(await lens.evaluate(e=>getComputedStyle(e,'::before').content),'none','No extra rim overlay');
+ assert.equal(await lens.evaluate(e=>getComputedStyle(e,'::before').pointerEvents),'none','The continuous rim must not intercept gestures');
  await page.mouse.move(rect.x+rect.width*.85,rect.y+rect.height/2,{steps:5});
  assert.ok(await lens.evaluate(e=>+getComputedStyle(e).zIndex<+getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex));
  await list.screenshot({path:new URL('drag.png',out).pathname.slice(1)});

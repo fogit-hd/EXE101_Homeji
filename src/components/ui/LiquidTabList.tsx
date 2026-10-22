@@ -97,6 +97,10 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
     onPointerMove={event => {
       onPointerMove?.(event)
       const current = drag.current, lens = lensRef.current, root = rootRef.current
+      if (!event.defaultPrevented && !current && lens) {
+        const face = lens.getBoundingClientRect()
+        if (face.width) lens.style.setProperty('--lens-light-x', `${Math.max(8, Math.min(92, (event.clientX - face.left) / face.width * 100))}%`)
+      }
       if (event.defaultPrevented || !current || current.pointerId !== event.pointerId || !lens || !root) return
       const dx = event.clientX - current.x, dy = event.clientY - current.y
       // Let a vertical touch gesture scroll the page rather than changing tabs.
