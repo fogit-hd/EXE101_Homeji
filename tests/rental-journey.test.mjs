@@ -52,7 +52,7 @@ test('cards, shared workspace and account scope use the same choices and scenari
       React.createElement(Snapshot),
       ...['a', 'b', 'c', 'd'].map(id => React.createElement(RentalConsiderationToggle, { key: id, post: { id, title: 'Phòng ' + id } })),
       React.createElement(RentalJourneyTray), workspace ? React.createElement(RentalShortlistWorkspace) : null))))
-  const card = id => [...document.querySelectorAll('button')].find(button => button.textContent.endsWith('Phòng ' + id))
+  const card = id => [...document.querySelectorAll('button')].find(button => button.getAttribute('aria-label')?.endsWith('Phòng ' + id))
   try {
     await show(false)
     await act(() => card('a').click())

@@ -35,6 +35,7 @@ import { RentalContextCard } from '../ai/RentalContextCard'
 import type { DecisionResponse } from '../../api/rentalAssistant'
 import type { RentalAssistantSelection, RentalAssistantComparison } from '../../contexts/rental-assistant-context'
 import { decisionMatchesChoices, rentalScenarioSnapshot } from '../../lib/rentalJourney'
+import { isVisibleFocusTarget } from '../../lib/isVisibleFocusTarget'
 import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
@@ -189,6 +190,8 @@ export function MapChatbot({
   const [error, setError] = useState<string | null>(null)
   const [sheetMode, setSheetMode] = useState(isSheetViewport)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const latestMessageRef = useRef<HTMLElement | null>(null)
+  const lastScrolledMessage = useRef<string | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const pendingIdRef = useRef(0)
   const activeTargetKey = rentalTargetKey(rentalContext, rentalSelection)
@@ -313,9 +316,20 @@ export function MapChatbot({
 
   useEffect(() => {
     if (!panelVisible) return
-    if (messages.length) bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'auto' })
-    else panelRef.current?.querySelector('.map-chatbot__body')?.scrollTo?.({ top: 0 })
-  }, [messages, busy, panelVisible])
+    const body = panelRef.current?.querySelector<HTMLElement>('.map-chatbot__body')
+    const latest = messages.at(-1)
+    if (!latest) {
+      lastScrolledMessage.current = null
+      body?.scrollTo?.({ top: 0 })
+      return
+    }
+    if (lastScrolledMessage.current === latest.id) return
+    lastScrolledMessage.current = latest.id
+    if (latest.sender === ChatMessageSender.Assistant && body && latestMessageRef.current) {
+      const top = body.scrollTop + latestMessageRef.current.getBoundingClientRect().top - body.getBoundingClientRect().top - 12
+      body.scrollTo?.({ top: Math.max(0, top), behavior: 'auto' })
+    } else bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'auto' })
+  }, [messages, panelVisible])
 
   useEffect(() => {
     const mq = window.matchMedia(SHEET_MEDIA)
@@ -336,7 +350,7 @@ export function MapChatbot({
       if (event.key !== 'Tab' || !(panel?.getAttribute('aria-modal') === 'true' || document.querySelector('.room-detail[aria-modal="true"]'))) return
       if (!panel?.contains(document.activeElement)) return
       const nodes = [...panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
-        .filter(node => node.getClientRects().length > 0)
+        .filter(isVisibleFocusTarget)
       const first = nodes[0]
       const last = nodes.at(-1)
       if (event.shiftKey && document.activeElement === first) {
@@ -540,7 +554,7 @@ export function MapChatbot({
     { section: 'appointments', label: 'Lịch xem phòng', icon: 'calendar' },
   ]
   const showTools = expanded && !sheetMode ? !toolsCollapsed : toolsOpen
-  const scrollToLatest = () => bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' })
+  const scrollToEnd = () => bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' })
 
   return (
     <div className="map-chatbot homeji-assistant is-nav" data-expanded={expanded} data-glass-exclude>
@@ -578,7 +592,7 @@ export function MapChatbot({
               <button type="button" onClick={() => expanded && !sheetMode ? setToolsCollapsed(value => !value) : setToolsOpen(value => !value)} aria-expanded={showTools} aria-controls={showTools ? `${reactId}-tools` : undefined}>
                 <AssistantIcon name="tools" />Công cụ</button>
               <span><i aria-hidden="true" />{saveHistory ? 'Đã bật lưu lịch sử' : 'Chỉ trong phiên này'}</span>
-              {messages.length > 0 ? <button type="button" onClick={scrollToLatest} aria-label="Đến câu trả lời mới nhất" title="Đến câu trả lời mới nhất">↓</button> : null}
+              {messages.length > 0 ? <button type="button" onClick={scrollToEnd} aria-label="Tới cuối hội thoại" title="Tới cuối hội thoại">↓</button> : null}
             </div>
             {resetRequested ? <div className="homeji-assistant__reset" role="alert">
               <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.</p>
@@ -608,11 +622,11 @@ export function MapChatbot({
                 </div>
                 {(config?.suggestedPrompts ?? []).length ? <div className="map-chatbot__suggestions"><span>Hoặc thử hỏi</span>{config!.suggestedPrompts.slice(0, 3).map(prompt => <button type="button" key={prompt} className="map-chatbot__chip" onClick={() => prepareDraft(prompt)}>{prompt}<span aria-hidden>↗</span></button>)}</div> : null}
               </div> : null}
-              {messages.map(m => {
+              {messages.map((m, index) => {
                 const isUser = m.sender === ChatMessageSender.User
                 const needsRoomReselection = Boolean(m.rentalContext && m.rentalContext.postId !== rentalContext?.postId)
                 const needsChoiceReselection = Boolean(m.rentalSelection && rentalTargetKey(null, m.rentalSelection) !== rentalTargetKey(null, rentalSelection))
-                return <article key={m.id} className={`map-chatbot__msg ${isUser ? 'is-user' : 'is-assistant'}${m.pending ? ' is-pending' : ''}${m.rentalDecision ? ' is-grounded' : ''}`}>
+                return <article key={m.id} ref={index === messages.length - 1 ? latestMessageRef : undefined} className={`map-chatbot__msg ${isUser ? 'is-user' : 'is-assistant'}${m.pending ? ' is-pending' : ''}${m.rentalDecision ? ' is-grounded' : ''}`}>
                   <div className="homeji-assistant__message-author">{isUser ? <span className="homeji-assistant__you" aria-hidden>B</span> : <HomejiAvatar inline />}<strong>{isUser ? 'Bạn' : 'Homeji'}</strong>{!isUser ? <span>AI</span> : null}</div>
                   <div className="map-chatbot__bubble">
                     {m.rentalContext ? <small className="map-chatbot__message-context">Về phòng: {m.rentalContext.title || 'Tin phòng đã chọn'}</small> : null}
@@ -620,7 +634,7 @@ export function MapChatbot({
                     {isUser ? <><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
-                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} onApply={update => { onSearchUpdate?.(update); setOpen(false) }} onRefine={prepareDraft} /> : null}
+                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} onApply={update => { onSearchUpdate?.(update); setOpen(false) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
                           if (needsChoiceReselection) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Chọn lại danh sách', description: '', target: '/?section=saved&view=considering' })

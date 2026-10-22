@@ -1027,7 +1027,7 @@ function HomePageComponent() {
     <>
     {pendingAiReview ? <aside className="home-ai-review" aria-label="Xác nhận tìm kiếm">
       <button type="button" onClick={() => setPendingAiReview(null)} aria-label="Đóng xác nhận tìm kiếm">×</button>
-      <AiSearchReview result={pendingAiReview} onApply={applyAiSearchUpdate}
+      <AiSearchReview result={pendingAiReview} onApply={applyAiSearchUpdate} onOpenListing={() => setPendingAiReview(null)}
         onRefine={text => { setSearchQuery(text); setPendingAiReview(null) }} />
     </aside> : null}
     <AuthenticatedHomeMapShell

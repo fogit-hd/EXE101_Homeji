@@ -108,7 +108,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
       </div> : null}
       {loading ? <p className="natural-rental-search__thinking" role="status"><span /><span /><span /> Homeji đang tìm tin phù hợp…</p> : null}
       {error ? <p className="natural-rental-search__error" role="alert">{error}</p> : null}
-      {result ? <AiSearchReview variant="compact" result={result} onRefine={value => { setText(value); queryInput.current?.focus() }} onApply={update => { setOpen(false); navigate('/?section=listings', { state: { aiSearchUpdate: update } }) }} /> : null}
+      {result ? <AiSearchReview variant="compact" result={result} onOpenListing={() => setOpen(false)} onRefine={value => { setText(value); queryInput.current?.focus() }} onApply={update => { setOpen(false); navigate('/?section=listings', { state: { aiSearchUpdate: update } }) }} /> : null}
       {asked && !loading ? form : null}
       {aiFeatureFlags.sourceBrowser ? <RentalSourceBrowser /> : null}
     </section> : null}

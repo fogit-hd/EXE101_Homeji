@@ -64,13 +64,14 @@
 .ai-suggest-review__chips button { cursor: pointer; transition: border-color .15s ease, color .15s ease; }
 .ai-suggest-review__chips button:hover { border-color: #00b14f; color: var(--hj-accent); }
 .ai-suggest-review__chips button span { border: 0; padding: 0; color: #8a939c; font-size: inherit; background: none; }
-.ai-suggest-review__cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.ai-suggest-review__card { display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 1px solid #eef0f2; border-radius: 10px; color: inherit; text-decoration: none; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.ai-suggest-review__cards { display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; }
+.ai-suggest-review__card { display: grid; grid-template-columns: 70px minmax(0,1fr); align-items: start; column-gap: 10px; padding: 10px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; color: inherit; text-decoration: none; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
 .ai-suggest-review__card:hover { border-color: #d5d8dc; box-shadow: 0 4px 14px rgba(18, 24, 28, .08); transform: translateY(-1px); }
-.ai-suggest-review__thumb { display: block; height: 64px; background: linear-gradient(135deg, #e6f7ee, #f1f4f6); }
+.ai-suggest-review__thumb { display: grid; place-items: center; grid-row: span 3; width: 70px; height: 70px; border-radius: 8px; overflow: hidden; background: var(--surface-input); color: var(--text-secondary); font-size: 18px; font-weight: 600; }
 .ai-suggest-review__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ai-suggest-review__card-title { display: -webkit-box; margin: 6px 8px 0; overflow: hidden; font-size: 12px; font-weight: 600; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.ai-suggest-review__card-price { margin: 2px 8px 8px; color: var(--hj-accent); font-size: 12px; font-weight: 700; }
+.ai-suggest-review__card-title { display: -webkit-box; margin: 0; overflow: hidden; font-size: 12px; font-weight: 600; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ai-suggest-review__card-price { margin-top: 4px; color: var(--text-heading); font-size: 14px; font-weight: 700; }
+.ai-suggest-review__card-unit { margin-top: 2px; color: var(--text-secondary); font-size: 11px; line-height: 1.5; }
 .ai-suggest-review__more { margin: -4px 0 0; color: var(--text-secondary); font-size: 12px; }
 .ai-suggest-review__caveats { border-top: 1px solid #eef0f2; }
 .ai-suggest-review__caveats-toggle { display: flex; align-items: center; gap: 6px; width: 100%; padding: 10px 0 0; border: 0; background: transparent; color: var(--text-secondary); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
@@ -79,12 +80,6 @@
 .ai-suggest-review__caveats.is-warn .ai-suggest-review__caveats-toggle { color: #8a6d00; font-weight: 600; }
 .ai-suggest-review__caveats-body { overflow: hidden; }
 .ai-suggest-review__notes { margin: 8px 0 0; padding-left: 18px; color: var(--text-secondary); font-size: 12.5px; line-height: 1.5; }
-.ai-suggest-review__detail { display: grid; gap: 4px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface-muted); font-size: 12.5px; }
-.ai-suggest-review__detail a { color: var(--text-heading); font-weight: 600; }
-.ai-suggest-review__detail :is(p, ul) { margin: 0; }
-.ai-suggest-review__detail ul { padding-left: 16px; }
-.ai-suggest-review__detail :is(small, p, span) { color: var(--text-secondary); }
-.ai-suggest-review__detail button { justify-self: start; padding: 2px 0; border: 0; background: none; color: var(--hj-accent); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .ai-suggest-review__apply { height: 40px; border: 0; border-radius: 10px; background: var(--action-primary); color: var(--action-on-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
 .ai-suggest-review__apply:hover:not(:disabled) { background: var(--action-primary); }
 .ai-suggest-review__apply:disabled { background: #e3e7ea; color: #69727d; cursor: default; }

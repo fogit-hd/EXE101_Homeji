@@ -3,27 +3,27 @@ import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import type { AiHighlightResponse } from '../../api'
-import { RentalPostType } from '../../api'
-import { amenityLabel, formatPrice, formatListingRent, formatListingArea } from '../../lib/labels'
+import { formatPrice, formatListingRent } from '../../lib/labels'
 import './AiSearchReview.css'
-import { RentalConsiderationToggle } from './RentalConsiderationToggle'
+import { AiRentalResultCard } from './AiRentalResultCard'
 import { ShortlistCommutePlanner, type CommuteConfirmation } from './ShortlistCommutePlanner'
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import { buildRentalSearchChips } from './rentalSearchChips'
 
-export function AiSearchReview({ result, onApply, onRefine, variant = 'full' }: {
+export function AiSearchReview({ result, onApply, onRefine, onOpenListing, variant = 'full' }: {
   result: AiHighlightResponse
   onApply: (result: AiHighlightResponse) => void
   onRefine?: (message: string) => void
+  onOpenListing?: () => void
   /** `compact` is the minimalist search-bar panel: summary, chips, small cards, caveats collapsed. */
   variant?: 'full' | 'compact'
 }) {
-  return <AiSearchReviewSession key={JSON.stringify(result)} result={result} onApply={onApply} onRefine={onRefine} variant={variant} />
+  return <AiSearchReviewSession key={JSON.stringify(result)} result={result} onApply={onApply} onRefine={onRefine} onOpenListing={onOpenListing} variant={variant} />
 }
 
-function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
-  result: AiHighlightResponse; onApply: (result: AiHighlightResponse) => void; onRefine?: (message: string) => void; variant: 'full' | 'compact'
+function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, variant }: {
+  result: AiHighlightResponse; onApply: (result: AiHighlightResponse) => void; onRefine?: (message: string) => void; onOpenListing?: () => void; variant: 'full' | 'compact'
 }) {
   const [caveatsOpen, setCaveatsOpen] = useState(false)
   const [commute, setCommute] = useState<CommuteConfirmation | null>(null)
@@ -45,21 +45,8 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
   const unknownPriceUnit = result.posts.some(item => rentalPriceBasis(item.post) === 'unknown')
   const unresolved = Boolean(c.unknown?.length) || unknownPriceUnit
   const shownPosts = pendingCosts ? routedPosts : visiblePosts
-  const renderListing = (item: AiHighlightResponse['posts'][number], compact = false): ReactNode => <article key={item.post.id} className={compact ? 'ai-suggest-review__detail' : 'ai-search-review__listing'}>
-      <Link to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`}>{item.post.title}</Link>
-      <RentalConsiderationToggle post={item.post} />
-      <strong>{formatListingRent(item.post.price)} · {rentalPriceLabel(rentalPriceBasis(item.post))} · {formatListingArea(item.post.area)}</strong>
-      <span>{item.post.address}</span>
-      {item.post.type === RentalPostType.RoomTransfer ? <small>Tin pass phòng dùng vị trí gần đúng. Tuyến từ ghim này chưa thay thế đường đi từ cửa phòng.</small> : null}
-      {item.post.isOwnerPremium ? <small>Chủ tin Premium · ưu tiên thương mại riêng</small> : null}
-      <p>Giá, diện tích và tiện ích theo tin chủ đăng.</p>
-      <ul>{item.reasonEvidence?.length ? item.reasonEvidence.filter(reason => reason.postId === item.post.id && reason.sourceType === 'listing').map(reason => <li key={`${reason.field}-${reason.value}`}>
-        {reason.field === 'amenities' ? `Có ${amenityLabel(reason.value)} theo tin chủ đăng.` : reason.text}
-        <small> · căn cứ: {reason.field === 'amenities' ? 'tiện ích' : reason.field === 'price' ? 'giá thuê' : reason.field === 'address' ? 'địa chỉ' : reason.field === 'title' ? 'tiêu đề' : 'trạng thái'} của tin này</small>
-        {reason.field === 'amenities' && onRefine && (c.requiredAmenities ?? []).includes(reason.value) ? <button type="button" onClick={() => onRefine(`Ưu tiên ${amenityLabel(reason.value)}`)}>Đổi thành mong muốn</button> : null}
-      </li>) : item.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
-      {item.updatedAt && Number.isFinite(Date.parse(item.updatedAt)) ? <small>Tin cập nhật: {new Date(item.updatedAt).toLocaleDateString('vi-VN')}</small> : null}
-      <small>Chưa xác nhận tình trạng phòng trống và phí phát sinh.</small>
+  const renderListing = (item: AiHighlightResponse['posts'][number], index: number): ReactNode => <AiRentalResultCard key={item.post.id} item={item} index={index}
+      onOpen={onOpenListing} onRefine={onRefine} requiredAmenities={c.requiredAmenities}>
       {pendingCosts ? <>
         {confirmedCosts[item.post.id] != null ? <p role="status">Kịch bản đã xác nhận: {formatPrice(confirmedCosts[item.post.id])} / tháng · {visiblePosts.some(post => post.post.id === item.post.id) ? 'trong ngân sách' : 'vượt ngân sách'}</p> : null}
         {rentalPriceBasis(item.post) === 'room' ? <RentalCostCalculator rent={item.post.price} occupantsHint={c.occupants ?? 1} monthlyCeiling={c.priceMax}
@@ -69,7 +56,7 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
             const next = { ...current }; delete next[item.post.id]; return next
           })} /> : <p>Không dùng giá mỗi người hoặc giá chưa rõ đơn vị để tính tổng chi phí cả phòng. Tin này chưa được xác nhận cho bộ lọc ngân sách cả phí; hỏi người đăng hoặc sửa yêu cầu.</p>}
       </> : null}
-    </article>
+    </AiRentalResultCard>
   const apply = () => onApply({ ...result, criteria: c, posts: visiblePosts })
 
   if (variant === 'compact') {
@@ -85,7 +72,7 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
     return <section className="ai-suggest-review" aria-label="Tiêu chí và tin phòng có nguồn">
       <p className="ai-suggest-review__summary" role="status">
         {shownPosts.length
-          ? <>Tìm thấy <b>{shownPosts.length} tin</b> phù hợp{unresolved ? ', cần xác nhận vài điểm trước khi áp dụng.' : '.'}</>
+          ? <>Có <b>{shownPosts.length} tin</b> để bạn xem{unresolved ? ', cần xác nhận vài điểm trước khi áp dụng.' : '.'}</>
           : 'Chưa có tin phù hợp. Các điều kiện được giữ nguyên.'}
       </p>
       {chips.length ? <div className="ai-suggest-review__chips">{chips.map(chip => onRefine
@@ -93,10 +80,11 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
         : <span key={chip.text}>{chip.text}</span>)}</div> : null}
       {cards.length ? <div className="ai-suggest-review__cards">{cards.map((item, index) => <motion.div key={item.post.id}
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}>
-        <Link className="ai-suggest-review__card" to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`}>
-          <span className="ai-suggest-review__thumb">{item.post.thumbnailPath ? <img src={item.post.thumbnailPath} alt="" loading="lazy" /> : null}</span>
+        <Link className="ai-suggest-review__card" to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`} onClick={onOpenListing}>
+          <span className="ai-suggest-review__thumb">{item.post.thumbnailPath ? <img src={item.post.thumbnailPath} alt="" loading="lazy" /> : <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>}</span>
           <span className="ai-suggest-review__card-title">{item.post.title}</span>
           <span className="ai-suggest-review__card-price">{formatListingRent(item.post.price)}</span>
+          <span className="ai-suggest-review__card-unit">{rentalPriceLabel(rentalPriceBasis(item.post))}</span>
         </Link>
       </motion.div>)}</div> : null}
       {shownPosts.length > cards.length ? <p className="ai-suggest-review__more">+{shownPosts.length - cards.length} tin khác khi áp dụng lên bản đồ</p> : null}
@@ -113,7 +101,7 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
             <ul className="ai-suggest-review__notes">{notes.map(note => <li key={note}>{note}</li>)}</ul>
             {aiFeatureFlags.commute && pendingCommute && result.posts.length ? <ShortlistCommutePlanner origins={result.posts.slice(0, 5).map(item => item.post)}
               destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
-            {shownPosts.slice(0, 5).map(item => renderListing(item, true))}
+            {shownPosts.slice(0, 5).map(renderListing)}
           </motion.div> : null}
         </AnimatePresence>
       </div>
@@ -124,12 +112,11 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
   }
 
   return <section className="ai-search-review" aria-label="Tiêu chí và tin phòng có nguồn">
-    <strong>Homeji hiểu bạn muốn…</strong>
+    <header className="ai-search-review__heading"><strong>Phòng tìm được</strong><span>{shownPosts.length > 5 ? `Xem trước 5/${shownPosts.length} tin` : `${shownPosts.length} tin`}</span></header>
     <div className="ai-search-review__chips">{chips.map(chip => onRefine
       ? <button type="button" key={chip.text} onClick={() => onRefine(chip.edit)} title="Sửa tiêu chí">{chip.text} ✎</button>
       : <span key={chip.text}>{chip.text}</span>)}</div>
-    {unresolved ? <p role="status">Cần xác nhận thông tin còn thiếu trước khi áp dụng. Bạn có thể sửa yêu cầu hoặc dùng công cụ bên dưới.</p> : <>
-      <button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Xác nhận · áp dụng lên bản đồ</button>
+    {unresolved ? <p className="ai-search-review__notice" role="status">Cần xác nhận thông tin còn thiếu trước khi áp dụng. Bạn có thể sửa yêu cầu hoặc dùng công cụ bên dưới.</p> : <>
       {visiblePosts.length === 0 ? <p>Chưa có tin phù hợp. Các điều kiện được giữ nguyên.</p> : null}
       {pendingCosts ? <p>Chỉ áp dụng những phòng trong ngân sách theo kịch bản chi phí bạn đã xác nhận. Các khoản này do bạn nhập, chưa phải báo giá của chủ phòng.</p> : null}
     </>}
@@ -138,6 +125,7 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
     {aiFeatureFlags.commute && pendingCommute && result.posts.length ? <ShortlistCommutePlanner origins={result.posts.slice(0, 5).map(item => item.post)}
       destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
     {unresolved && routedPosts.length ? <strong>Tin ứng viên cần xác nhận phí hoặc đường đi; chưa đáp ứng toàn bộ yêu cầu.</strong> : null}
-    {shownPosts.slice(0, 5).map(item => renderListing(item))}
+    {shownPosts.slice(0, 5).map(renderListing)}
+    {!unresolved ? <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Xác nhận · áp dụng lên bản đồ</button></div> : null}
   </section>
 }

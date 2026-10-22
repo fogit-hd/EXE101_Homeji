@@ -16,6 +16,14 @@ Ngày 22/10/2026. Thay giao diện popup hội thoại bằng không gian trợ 
 
 Chế độ mở rộng/mobile có backdrop, khóa cuộn nền, inert nội dung nền và vòng focus. Dialog ẩn trong trang không được dùng để miễn trừ nền khỏi inert. Auth overlay là ngoại lệ có tên cụ thể. Đóng trả focus về nút mở; modal chi tiết phòng vẫn nhường phím cho trợ lý. Nếu cấu hình trả về enabled=false trong khi mở, mọi khóa nền được gỡ.
 
+## Kết quả phòng dễ theo dõi
+
+Theo phản hồi về thẻ kết quả ngày 22/10, mỗi tin có thứ tự, tên, khối giá và diện tích riêng, vị trí, rồi hai hành động “Xem phòng”/“Cân nhắc”. Đơn vị theo người/cả phòng/chưa rõ luôn đi cùng giá. Lưu ý phòng trống/phí vẫn hiện; căn cứ và ngày cập nhật nằm trong disclosure native “Xem nguồn & lưu ý”. Chỉ căn cứ cùng post ID và nguồn listing được trình bày. Nút cân nhắc dùng aria-label có tên phòng, không phụ thuộc CSS ẩn chữ để giữ bố cục gọn.
+
+Phản hồi dài tự cuộn tới đầu câu trả lời mới; sửa nháp hoặc cập nhật trạng thái không kéo người đọc xuống cuối. Có nút tới cuối hội thoại. Bấm tên hoặc “Xem phòng” đóng lớp trợ lý/review trước khi chuyển tới chi tiết. Tìm nhanh dùng hàng dọc có đơn vị giá rõ. Các điều khiển nằm trong details đang đóng được loại khỏi vòng focus ở chat và dialog review; không chỉ dựa vào layout rectangles của browser.
+
+Kiểm chứng bổ sung: 9 browser fixture ở 320/390/900/1440px sáng/tối, bao phủ disclosure, nguồn đúng tin, contrast, chọn cân nhắc, giữ vị trí đọc, chuyển tới chi tiết và vòng Tab/Shift+Tab khi các ô phí đang thu gọn. Dùng API/account giả, không gửi tin/lịch/giao dịch. 124 kiểm thử frontend liên quan, build và ESLint đạt. Smoke local ứng dụng thật với backend public qua proxy (4 kịch bản guest, không mock) xác nhận viền 7 sắc vẫn chuyển động; chưa phải kiểm chứng workflow đăng nhập/model thật ở production. Ảnh ở `output/verification/ai-search-readability/`.
+
 ## Kiểm chứng và giới hạn
 
 Build và ESLint các file thay đổi đạt. 70 kiểm thử frontend liên quan đạt, gồm 20 DOM chat bao phủ mở rộng, textarea/IME, công cụ, reset, clipboard, vòng focus, trạng thái cấu hình và ngữ cảnh phòng. Browser fixture dùng component thật với API giả: 5 kịch bản ở 320/390/1440px, sáng/tối; kiểm tra luồng gửi có xác nhận, tương phản nút gửi và các race đã có.

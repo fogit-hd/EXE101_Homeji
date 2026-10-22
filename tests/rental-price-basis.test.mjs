@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createElement } from 'react'
 import { MemoryRouter } from 'react-router-dom'
+import { reactDomModule } from './helpers/react-dom-module.mjs'
 
 const compileUrl = source => `data:text/javascript;base64,${Buffer.from(ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
@@ -68,12 +69,16 @@ const reviewJs = ts.transpileModule(reviewSource, { compilerOptions: { module: t
 const chipLabelsUrl = compileUrl(`export const amenityLabel = value => value; export const formatPrice = value => String(value);`)
 const chipsUrl = compileUrl((await readFile(new URL('../src/components/ai/rentalSearchChips.ts', import.meta.url), 'utf8'))
   .replace('../../lib/labels', chipLabelsUrl))
+const cardUrl = reactDomModule('src/components/ai/AiRentalResultCard.tsx', {
+  './RentalConsiderationToggle': compileUrl('export const RentalConsiderationToggle=()=>null'),
+})
 const bindings = `
 import React, { useState } from '${pathToFileURL(require.resolve('react')).href}';
 import { Link } from '${pathToFileURL(require.resolve('react-router-dom')).href}';
 import { RentalPostType } from '${typesUrl}';
 import { rentalPriceBasis, rentalPriceLabel } from '${compileUrl(source.replace('../../api/types', typesUrl))}';
 import { buildRentalSearchChips } from '${chipsUrl}';
+import { AiRentalResultCard } from '${cardUrl}';
 const aiFeatureFlags = { commute: false };
 const amenityLabel = value => value;
 const formatPrice = value => String(value);

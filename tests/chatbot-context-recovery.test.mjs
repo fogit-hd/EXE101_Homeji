@@ -75,6 +75,7 @@ const typeDraft = async (value, input = composer()) => act(async () => {
 const keydown = (element, options) => act(async () => element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...options })))
 const focusableIn = panel => [...panel.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
   .filter(element => !element.closest('[hidden]') && element.getAttribute('aria-hidden') !== 'true' && element.getClientRects().length > 0)
+  .filter(element => [...panel.querySelectorAll('details:not([open])')].every(details => !details.contains(element) || details.querySelector(':scope > summary') === element))
 const roomA = { postId: 'room-a', title: 'Phòng A' }
 const roomB = { postId: 'room-b', title: 'Phòng B' }
 const render = async (root, props = {}) => {
