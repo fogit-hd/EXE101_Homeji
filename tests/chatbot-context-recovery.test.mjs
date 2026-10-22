@@ -84,9 +84,118 @@ const render = async (root, props = {}) => {
   }
 }
 const reply = (request, content = 'Đã lấy dữ liệu phòng A') => ({
-  conversationId: 'conversation', userMessage: { id: 'u', sender: 1, content: request.body.message },
-  assistantMessage: { id: 'a', sender: 2, content }, actions: [], searchUpdate: null,
+  conversationId: 'conversation', userMessage: { id: 'u-' + globalThis.__chatFixture.requests.indexOf(request), sender: 1, content: request.body.message },
+  assistantMessage: { id: 'a-' + globalThis.__chatFixture.requests.indexOf(request), sender: 2, content }, actions: [], searchUpdate: null,
   rentalDecision: { posts: [{ post: { id: request.body.rentalContext?.postId, title: 'Dữ liệu A' } }], unavailablePostIds: [], summary: '' },
+})
+const scenario = { occupants: 2, electricityKwh: 120, waterM3: 6, electricityUnit: 'kwh', waterUnit: 'm3', internetUnit: 'month' }
+const choices = { postIds: ['room-a', 'room-b'], title: 'Phòng A · Phòng B', scenario }
+const selectionReply = request => ({ ...reply(request, 'Đối chiếu theo cùng kịch bản'), rentalDecision: {
+  posts: request.body.rentalSelection.postIds.map(id => ({ post: { id, title: 'Dữ liệu ' + id } })), unavailablePostIds: [], summary: '',
+} })
+
+test('choice task sends only selected IDs and a whitelisted scenario, then keeps editable follow-up on those choices', async () => {
+  const env = await environment()
+  try {
+    await render(env.root, { rentalContext: null, rentalSelection: { ...choices, scenario: { ...scenario, privateNotes: 'Do not send' } } })
+    await click(button('So sánh các lựa chọn'))
+    const pending = globalThis.__chatFixture.requests[0]
+    assert.deepEqual(JSON.parse(JSON.stringify(pending.body.rentalSelection)), { postIds: choices.postIds, task: 'compare', scenario })
+    assert.equal(pending.body.rentalContext, undefined)
+    assert.doesNotMatch(JSON.stringify(pending.body), /Phòng A|Phòng B|Do not send/)
+    await act(async () => pending.resolve(selectionReply(pending)))
+    assert.match(document.body.textContent, /Dữ liệu room-a, Dữ liệu room-b/)
+    await click(button('Hỏi tiếp'))
+    assert.equal(globalThis.__chatFixture.requests.length, 1)
+    assert.match(composer().value, /các lựa chọn này/)
+    await typeDraft(composer().value + 'cần hỏi chủ tin về điện nước như thế nào?')
+    await keydown(composer(), { key: 'Enter' })
+    assert.deepEqual(globalThis.__chatFixture.requests[1].body.rentalSelection.postIds, choices.postIds)
+  } finally { await env.cleanup() }
+})
+
+test('changing selected IDs or scenario aborts the pending result, and retry preserves the original selection', async () => {
+  const env = await environment()
+  try {
+    await render(env.root, { rentalContext: null, rentalSelection: choices })
+    await typeDraft('Hai lựa chọn này có những phí gì?')
+    await keydown(composer(), { key: 'Enter' })
+    const pending = globalThis.__chatFixture.requests[0]
+    const changed = { ...choices, postIds: ['room-a', 'room-c'], scenario: { ...scenario, occupants: 3 } }
+    await render(env.root, { rentalContext: null, rentalSelection: changed })
+    assert.equal(pending.signal.aborted, true)
+    assert.equal(composer().value, 'Hai lựa chọn này có những phí gì?')
+    await act(async () => pending.resolve(selectionReply(pending)))
+    assert.doesNotMatch(document.body.textContent, /Đối chiếu theo cùng kịch bản/)
+    await click(button('Thử lại câu hỏi này'))
+    const retried = globalThis.__chatFixture.requests[1]
+    assert.deepEqual(retried.body.rentalSelection.postIds, ['room-a', 'room-b'])
+    assert.equal(retried.body.rentalSelection.scenario.occupants, 2)
+    await act(async () => retried.resolve(selectionReply(retried)))
+    assert.equal(button('Hỏi tiếp'), undefined)
+    await click(button('Mở danh sách để chọn lại'))
+    assert.deepEqual(globalThis.__chatFixture.navigations, ['/?section=saved&view=considering'])
+  } finally { await env.cleanup() }
+})
+
+test('changing only the shared scenario also invalidates an in-flight comparison', async () => {
+  const env = await environment()
+  try {
+    await render(env.root, { rentalContext: null, rentalSelection: choices })
+    await click(button('So sánh các lựa chọn'))
+    const pending = globalThis.__chatFixture.requests[0]
+    await render(env.root, { rentalContext: null, rentalSelection: { ...choices, scenario: { ...scenario, electricityKwh: 200 } } })
+    assert.equal(pending.signal.aborted, true)
+    await act(async () => pending.resolve(selectionReply(pending)))
+    assert.doesNotMatch(document.body.textContent, /Đối chiếu theo cùng kịch bản/)
+  } finally { await env.cleanup() }
+})
+
+test('missing, duplicate or unrelated choice coverage cannot become grounded comparison facts', async () => {
+  const env = await environment()
+  try {
+    for (const ids of [[], ['room-a'], ['room-a', 'room-c'], ['room-a', 'room-a']]) {
+      await render(env.root, { rentalContext: null, rentalSelection: choices })
+      await click(button('So sánh các lựa chọn'))
+      const pending = globalThis.__chatFixture.requests.at(-1)
+      await act(async () => pending.resolve({ ...selectionReply(pending), assistantMessage: { id: 'a-' + globalThis.__chatFixture.requests.length, sender: 2, content: 'Kết luận sai phạm vi' },
+        rentalDecision: { posts: ids.map(id => ({ post: { id, title: 'Tin sai' } })), unavailablePostIds: [], summary: '' } }))
+      assert.doesNotMatch(document.body.textContent, /Kết luận sai phạm vi|Tin sai/)
+      assert.match(document.body.textContent, /chưa nhận được dữ liệu đúng các lựa chọn/)
+    }
+  } finally { await env.cleanup() }
+})
+
+test('an explicitly unavailable choice is accepted as incomplete coverage instead of inventing its facts', async () => {
+  const env = await environment()
+  try {
+    await render(env.root, { rentalContext: null, rentalSelection: choices })
+    await click(button('So sánh các lựa chọn'))
+    const pending = globalThis.__chatFixture.requests[0]
+    const response = selectionReply(pending)
+    response.rentalDecision.posts.pop()
+    response.rentalDecision.unavailablePostIds.push('room-b')
+    response.assistantMessage.content = 'Một tin đã ẩn, chưa thể so sánh đủ.'
+    await act(async () => pending.resolve(response))
+    assert.match(document.body.textContent, /Một tin đã ẩn, chưa thể so sánh đủ/)
+    assert.match(document.body.textContent, /Dữ liệu room-a/)
+    assert.doesNotMatch(document.body.textContent, /Dữ liệu room-b/)
+  } finally { await env.cleanup() }
+})
+
+test('an explicit new search does not inherit choice context or shared cost assumptions', async () => {
+  const env = await environment()
+  try {
+    for (const message of ['Tìm phòng khác thay hai lựa chọn này', 'Lọc phòng có bếp thay hai lựa chọn này']) {
+      await render(env.root, { rentalContext: null, rentalSelection: choices })
+      await typeDraft(message)
+      await keydown(composer(), { key: 'Enter' })
+      const pending = globalThis.__chatFixture.requests.at(-1)
+      assert.equal(pending.body.rentalSelection, undefined)
+      assert.equal(pending.body.rentalContext, undefined)
+      await act(async () => pending.resolve({ ...reply(pending), rentalDecision: null }))
+    }
+  } finally { await env.cleanup() }
 })
 
 test('room task sends IDs only, retries without duplicating history and keeps reply context when selection changes', async () => {
@@ -219,7 +328,7 @@ test('an old backend without grounded room data cannot present general text or g
       searchUpdate: { posts: [], criteria: {} } }
     await act(async () => { pending.resolve(oldReply) })
     assert.doesNotMatch(document.body.textContent, /Tổng chi phí chắc chắn là 3 triệu/)
-    assert.match(document.body.textContent, /chưa nhận được dữ liệu của phòng đang chọn/)
+    assert.match(document.body.textContent, /chưa nhận được dữ liệu đúng các lựa chọn đang chọn/)
     assert.equal(document.querySelectorAll('.map-chatbot__decision').length, 0)
     assert.equal(document.querySelectorAll('.map-chatbot__msg.is-user').length, 1)
   } finally { await env.cleanup() }
@@ -231,14 +340,15 @@ test('nested selection cleanup restores the underlying room and account changes 
     const contextOverrides = {
       './AuthContext': fixtureUrl,
       './AuthModalContext.logic': fixtureUrl,
+      '../components/ai/RentalJourney': moduleUrl('export const RentalJourneyTray=()=>null'),
       'react-router-dom': fixtureUrl,
       '../components/map/MapChatbot': moduleUrl(`import React from '${reactUrl}';export function MapChatbot(props){globalThis.__chatFixture.chatProps=props;return React.createElement('div',null,props.rentalContext?.title||'No context')}`),
       '../lib/rentalMessageDraft': moduleUrl('export const rentalMessageDraftStore={clearUser:id=>(globalThis.__chatFixture.cleared??=[]).push(id)}'),
     }
     const contextModule = reactDomModule(path.resolve('src/contexts/rental-assistant-context.tsx'), contextOverrides)
-    const { useRentalAssistantSelection } = await import(contextModule)
+    const { useRentalAssistantSelection, useRentalAssistantOpener } = await import(contextModule)
     const { ChatbotProvider } = await import(reactDomModule(path.resolve('src/contexts/ChatbotContext.tsx'), contextOverrides))
-    function Surface({ room }) { useRentalAssistantSelection(room); return null }
+    function Surface({ room }) { useRentalAssistantSelection(room); globalThis.__chatFixture.contextOpener = useRentalAssistantOpener(); return null }
     const show = async (base, nested) => act(async () => env.root.render(React.createElement(ChatbotProvider, null,
       base ? React.createElement(Surface, { key: 'base', room: roomA }) : null,
       nested ? React.createElement(Surface, { key: 'nested', room: roomB }) : null)))
@@ -251,6 +361,11 @@ test('nested selection cleanup restores the underlying room and account changes 
     await show(true, true)
     await show(true, false)
     assert.equal(globalThis.__chatFixture.chatProps.rentalContext.postId, 'room-a', 'Closing a nested modal restores the map room')
+    await act(async () => globalThis.__chatFixture.chatProps.onDismissRentalContext())
+    assert.equal(globalThis.__chatFixture.chatProps.rentalContext, null)
+    await act(async () => globalThis.__chatFixture.contextOpener())
+    assert.equal(globalThis.__chatFixture.chatProps.rentalContext.postId, 'room-a', 'An explicit contextual opener restores the still-mounted selection after dismissal')
+    assert.ok(globalThis.__chatFixture.chatProps.openRequestToken > 0)
     globalThis.__chatFixture.auth = { isAuthenticated: true, profile: { id: 'user-b' } }
     await show(true, false)
     assert.equal(globalThis.__chatFixture.chatProps.rentalContext.postId, 'room-a')

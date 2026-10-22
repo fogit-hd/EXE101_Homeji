@@ -1,0 +1,17 @@
+.rental-journey-tray { position: fixed; z-index: 60; bottom: max(16px,env(safe-area-inset-bottom)); left: 16px; display: flex; align-items: center; gap: 16px; max-width: calc(100vw - 32px); padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); color: var(--text-primary); box-shadow: 0 5px 25px #10212b26; }
+.rental-journey-tray > div { display: grid; gap: 3px; min-width: 0; }
+.rental-journey-tray span { font-size: 11px; color: var(--text-secondary); }
+.rental-journey-tray a { flex-shrink: 0; }
+.rental-journey-workspace { display: grid; grid-template-columns: minmax(0,1fr); min-width: 0; gap: 12px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 14px; color: var(--text-primary); background: var(--surface-elevated); }
+.rental-journey-workspace > * { min-width: 0; }
+.rental-journey-workspace .btn { white-space: normal; }
+.rental-journey-workspace :is(h2,p) { margin: 0; }
+.rental-journey-workspace p { font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+.rental-journey__choices { list-style: none; display: grid; gap: 8px; padding: 0; margin: 0; }
+.rental-journey__choices li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; }
+.rental-journey__choices a { min-width: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.rental-journey__choices button { min-width: 36px; min-height: 36px; cursor: pointer; background: transparent; color: var(--text-primary); border: 0; font-size: 20px; }
+.rental-journey-toggle { margin: 6px 0; }
+.map-listings__consideration { padding: 0 14px 8px; }
+.map-listings__consideration .rental-journey-toggle { width: 100%; white-space: normal; }
+@media(max-width:600px) { .rental-journey-tray { left: 8px; right: 8px; bottom: max(8px,env(safe-area-inset-bottom)); max-width: none; gap: 8px; padding: 10px; font-size: 12px; } .rental-journey-tray span { display: none; } .rental-journey-workspace { padding: 12px; } }

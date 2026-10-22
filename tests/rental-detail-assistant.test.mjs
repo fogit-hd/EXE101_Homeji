@@ -5,7 +5,9 @@ import { JSDOM } from 'jsdom'
 import { reactDomModule } from './helpers/react-dom-module.mjs'
 
 const { buildRentalOwnerDraft, rentalOwnerQuestions, normalizeRentalOwnerDraft, RENTAL_OWNER_DRAFT_MAX_LENGTH } = await import(reactDomModule('src/lib/rentalOwnerQuestions.ts'))
-const { RentalDetailAssistant } = await import(reactDomModule('src/components/ai/RentalDetailAssistant.tsx'))
+const { RentalDetailAssistant } = await import(reactDomModule('src/components/ai/RentalDetailAssistant.tsx', {
+  '../../lib/aiFeatureFlags': 'data:text/javascript,export const aiFeatureFlags={decisionTools:true}',
+}))
 const room = (extra = {}) => ({ id: 'room-a', type: 1, ownerRole: 2, title: 'Phòng có cửa sổ', price: 3000000, deposit: 0,
   electricityPrice: 4000, waterPrice: 0, internetPrice: 0, houseRules: '', updatedAt: '2026-10-21T08:00:00Z',
   ownerPhone: '0909999999', address: 'ĐỊA CHỈ RIÊNG TƯ', description: 'NỘI DUNG RIÊNG TƯ', ...extra })

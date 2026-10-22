@@ -80,6 +80,7 @@ const formatPrice = value => String(value);
 const formatListingRent = value => Number.isFinite(value) && value > 0 ? String(value) : 'Chưa có thông tin';
 const formatListingArea = value => Number.isFinite(value) && value > 0 ? value + ' m²' : 'Chưa có thông tin';
 const ShortlistCommutePlanner = () => null;
+const RentalConsiderationToggle = () => null;
 const RentalCostCalculator = () => React.createElement('span', null, 'WHOLE_ROOM_CALCULATOR');
 `
 const { AiSearchReview } = await import(`data:text/javascript;base64,${Buffer.from(bindings + reviewJs).toString('base64')}`)

@@ -33,7 +33,8 @@ import {
 } from '../../lib/homejiAiLauncher'
 import { RentalContextCard } from '../ai/RentalContextCard'
 import type { DecisionResponse } from '../../api/rentalAssistant'
-import type { RentalAssistantSelection } from '../../contexts/rental-assistant-context'
+import type { RentalAssistantSelection, RentalAssistantComparison } from '../../contexts/rental-assistant-context'
+import { decisionMatchesChoices, rentalScenarioSnapshot } from '../../lib/rentalJourney'
 import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
@@ -73,6 +74,7 @@ type Props = {
   onOpenSection?: (section: MapAppSection) => void
   onNearbyRequest?: (category: NearbyPlaceCategory) => boolean
   rentalContext?: RentalAssistantSelection | null
+  rentalSelection?: RentalAssistantComparison | null
   onDismissRentalContext?: () => void
   openRequestToken?: number
 }
@@ -80,6 +82,7 @@ type Props = {
 type ChatRequest = {
   message: string
   context?: RentalAssistantSelection & { task?: ChatbotRentalContext['task'] }
+  selection?: RentalAssistantComparison & { task?: 'compare' | 'cost' | 'questions' | 'details' }
   conversationId?: string
   previousCriteria?: AiParsedSearchCriteria
   saveHistory: boolean
@@ -90,6 +93,7 @@ type DisplayMessage = ChatbotMessage & {
   retry?: ChatRequest
   failure?: string
   rentalContext?: RentalAssistantSelection
+  rentalSelection?: RentalAssistantComparison
   rentalDecision?: DecisionResponse | null
   actions?: ChatbotNavigationAction[]
   searchUpdate?: AiHighlightResponse | null
@@ -128,6 +132,10 @@ function HomejiAvatar({ inline = false }: { inline?: boolean }) {
   )
 }
 
+function rentalTargetKey(room?: RentalAssistantSelection | null, selection?: RentalAssistantComparison | null) {
+  return selection ? `choices:${JSON.stringify([selection.postIds, rentalScenarioSnapshot(selection.scenario)])}` : room ? `room:${room.postId}` : ''
+}
+
 /** Compact docks at the right; expanded centers within the available keyboard-safe viewport. */
 function assistantViewport() {
   const viewport = window.visualViewport
@@ -153,6 +161,7 @@ export function MapChatbot({
   onOpenSection,
   onNearbyRequest,
   rentalContext = null,
+  rentalSelection = null,
   onDismissRentalContext,
   openRequestToken = 0,
 }: Props) {
@@ -182,6 +191,7 @@ export function MapChatbot({
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const pendingIdRef = useRef(0)
+  const activeTargetKey = rentalTargetKey(rentalContext, rentalSelection)
 
   if (useChangedInputs([openRequestToken]) && openRequestToken) {
     setOpen(true)
@@ -194,7 +204,8 @@ export function MapChatbot({
 
   useLayoutEffect(() => {
     const pending = activeRequest.current
-    if (!pending?.request.context || pending.request.context.postId === rentalContext?.postId) return
+    if (!pending || !pending.request.context && !pending.request.selection
+      || rentalTargetKey(pending.request.context, pending.request.selection) === activeTargetKey) return
     activeRequest.current = null
     pending.controller.abort()
     setBusy(false)
@@ -202,7 +213,7 @@ export function MapChatbot({
       ? { ...message, pending: false, failure: 'Đã dừng vì phòng đang hỗ trợ thay đổi.', retry: pending.request }
       : message))
     setDraft(current => pending.restoreDraft && !current && draftRevision.current === pending.draftRevision ? pending.request.message : current)
-  }, [rentalContext?.postId])
+  }, [activeTargetKey])
 
   const panel = navPanelLayout(expanded, sheetMode, viewport)
   const modal = expanded || sheetMode
@@ -375,7 +386,7 @@ export function MapChatbot({
     inputRef.current?.focus()
   }
 
-  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'], retryMessage?: DisplayMessage) => {
+  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage) => {
     const message = text.trim()
     if (!message || busy || activeRequest.current) return
     const nearby = nearbyChatIntent(message)
@@ -395,12 +406,15 @@ export function MapChatbot({
 
     const normalized = message.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase()
     const refersToRoom = /\b(?:phong|tin|cho) (?:nay|dang xem)\b/.test(normalized)
-    const startsSearch = /\b(?:tim|kiem|goi y|de xuat)\b.*\b(?:phong|o ghep|nha)\b/.test(normalized)
-    const context = rentalContext && (task || refersToRoom && !startsSearch) ? { ...rentalContext, task } : undefined
+    const startsSearch = /\b(?:tim|kiem|loc|goi y|de xuat)\b.*\b(?:phong|tro|o ghep|nha)\b|\b(?:phong|tro) khac\b|\b(?:tim lai|bat dau lai)\b/.test(normalized)
+    const refersToChoices = /\b(?:(?:hai|ba|2|3|cac|nhung) (?:lua chon|phong|tin)|so sanh|danh sach (?:nay|can nhac))\b/.test(normalized)
+    const selection = rentalSelection && !startsSearch && (task || refersToChoices)
+      ? { ...rentalSelection, postIds: [...rentalSelection.postIds], scenario: rentalScenarioSnapshot(rentalSelection.scenario), task } : undefined
+    const context = !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
     const request: ChatRequest = retryMessage?.retry ?? {
-      message, context,
+      message, context, selection,
       conversationId: saveHistory ? conversationId : undefined,
-      previousCriteria: saveHistory || context ? undefined : sessionCriteria.current,
+      previousCriteria: saveHistory || context || selection ? undefined : sessionCriteria.current,
       saveHistory,
     }
     const pendingId = retryMessage?.id ?? `${reactId}-pending-${++pendingIdRef.current}`
@@ -419,27 +433,29 @@ export function MapChatbot({
       createdAt: new Date().toISOString(),
       pending: true,
       rentalContext: request.context,
+      rentalSelection: request.selection,
     }
 
     setMessages(prev => retryMessage ? prev.map(item => item.id === pendingId ? optimisticUser : item) : [...prev, optimisticUser])
 
     try {
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
-        previousCriteria: request.previousCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined }, pending.controller.signal)
+        previousCriteria: request.previousCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
+        rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
-      const contextualUnavailable = Boolean(request.context) && (!reply.rentalDecision
-        || reply.rentalDecision.posts.some(item => item.post.id !== request.context!.postId))
-      if (reply.searchUpdate && !request.context) sessionCriteria.current = reply.searchUpdate.criteria
+      const contextualUnavailable = request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
+        : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
+      if (reply.searchUpdate && !request.context && !request.selection) sessionCriteria.current = reply.searchUpdate.criteria
       setMessages((prev) => {
-        const userMessage = { ...reply.userMessage, rentalContext: request.context }
+        const userMessage = { ...reply.userMessage, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
-          content: contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu của phòng đang chọn. Mở chi tiết phòng để dùng công cụ chi phí và xem những khoản cần hỏi chủ tin, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của phòng này.' : reply.assistantMessage.content,
+          content: contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
           actions: contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
-            label: 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của phòng đã chọn',
-            target: `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
-          searchUpdate: request.context ? null : reply.searchUpdate,
-          rentalContext: request.context, rentalDecision: contextualUnavailable ? null : reply.rentalDecision }
+            label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
+            target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
+          searchUpdate: request.context || request.selection ? null : reply.searchUpdate,
+          rentalContext: request.context, rentalSelection: request.selection, rentalDecision: contextualUnavailable ? null : reply.rentalDecision }
         return prev.flatMap(item => item.id === pendingId ? [userMessage, assistantMessage] : [item])
       })
     } catch (e) {
@@ -569,6 +585,11 @@ export function MapChatbot({
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
             </div> : null}
             <div className="map-chatbot__body" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
+              {rentalSelection ? <section className="map-chatbot__context" aria-label="Các phòng đang hỗ trợ">
+                <div className="homeji-assistant__room-heading"><span className="homeji-assistant__room-icon"><AssistantIcon name="home" /></span><div><span>CÁC LỰA CHỌN ĐANG HỖ TRỢ</span><strong>{rentalSelection.title}</strong></div><button type="button" className="homeji-assistant__icon-button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh so sánh"><AssistantIcon name="close" /></button></div>
+                <div className="map-chatbot__context-prompts"><button type="button" disabled={busy} onClick={() => void send('So sánh các lựa chọn này', false, 'compare')}>So sánh các lựa chọn</button><button type="button" disabled={busy} onClick={() => void send('Những điều cần hỏi về các lựa chọn này', false, 'questions')}>Những điều cần hỏi</button></div>
+                <small>Cùng kịch bản {rentalSelection.scenario.occupants} người. Đổi phí hoặc danh sách tại màn so sánh; các khoản chưa xác nhận vẫn được giữ là chưa biết.</small>
+              </section> : null}
               {rentalContext ? <section className="map-chatbot__context" aria-label="Phòng đang hỗ trợ">
                 <div className="homeji-assistant__room-heading"><span className="homeji-assistant__room-icon"><AssistantIcon name="home" /></span><div><span>PHÒNG ĐANG HỖ TRỢ</span><strong>{rentalContext.title || 'Tin phòng đang xem'}</strong></div><button type="button" className="homeji-assistant__icon-button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh phòng đang xem"><AssistantIcon name="close" /></button></div>
                 <div className="map-chatbot__context-prompts"><button type="button" disabled={busy} onClick={() => void send('Tính tiền tháng của phòng này', false, 'cost')}>Tính tiền tháng <span aria-hidden>↗</span></button><button type="button" disabled={busy} onClick={() => void send('Những điều cần hỏi về phòng này', false, 'questions')}>Những điều cần hỏi <span aria-hidden>↗</span></button></div>
@@ -590,19 +611,22 @@ export function MapChatbot({
               {messages.map(m => {
                 const isUser = m.sender === ChatMessageSender.User
                 const needsRoomReselection = Boolean(m.rentalContext && m.rentalContext.postId !== rentalContext?.postId)
+                const needsChoiceReselection = Boolean(m.rentalSelection && rentalTargetKey(null, m.rentalSelection) !== rentalTargetKey(null, rentalSelection))
                 return <article key={m.id} className={`map-chatbot__msg ${isUser ? 'is-user' : 'is-assistant'}${m.pending ? ' is-pending' : ''}${m.rentalDecision ? ' is-grounded' : ''}`}>
                   <div className="homeji-assistant__message-author">{isUser ? <span className="homeji-assistant__you" aria-hidden>B</span> : <HomejiAvatar inline />}<strong>{isUser ? 'Bạn' : 'Homeji'}</strong>{!isUser ? <span>AI</span> : null}</div>
                   <div className="map-chatbot__bubble">
                     {m.rentalContext ? <small className="map-chatbot__message-context">Về phòng: {m.rentalContext.title || 'Tin phòng đã chọn'}</small> : null}
+                    {m.rentalSelection ? <small className="map-chatbot__message-context">Về lựa chọn: {m.rentalSelection.title}</small> : null}
                     {isUser ? <><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} onApply={update => { onSearchUpdate?.(update); setOpen(false) }} onRefine={prepareDraft} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
-                          if (needsRoomReselection && m.rentalContext) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Mở lại phòng', description: '', target: `/?post=${encodeURIComponent(m.rentalContext.postId)}` })
-                          else prepareDraft(m.rentalContext ? 'Về phòng này, mình muốn hỏi thêm: ' : 'Mình muốn hỏi thêm: ')
-                        }}><AssistantIcon name="chat" />{needsRoomReselection ? 'Mở lại phòng để hỏi tiếp' : 'Hỏi tiếp'}</button></div>
+                          if (needsChoiceReselection) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Chọn lại danh sách', description: '', target: '/?section=saved&view=considering' })
+                          else if (needsRoomReselection && m.rentalContext) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Mở lại phòng', description: '', target: `/?post=${encodeURIComponent(m.rentalContext.postId)}` })
+                          else prepareDraft(m.rentalSelection ? 'Về các lựa chọn này, mình muốn hỏi thêm: ' : m.rentalContext ? 'Về phòng này, mình muốn hỏi thêm: ' : 'Mình muốn hỏi thêm: ')
+                        }}><AssistantIcon name="chat" />{needsChoiceReselection ? 'Mở danh sách để chọn lại' : needsRoomReselection ? 'Mở lại phòng để hỏi tiếp' : 'Hỏi tiếp'}</button></div>
                       </>}
                   </div>
                 </article>

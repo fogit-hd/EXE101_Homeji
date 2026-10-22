@@ -9,13 +9,21 @@ import './RentalAssistant.css'
 
 const initialScenario: CostScenario = { occupants: 1, electricityKwh: 0, waterM3: 0, electricityUnit: 'unknown', waterUnit: 'unknown', internetUnit: 'unknown' }
 
-export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling, onUnavailable, autoLoad = false, occupants = 1 }: {
+export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling, onUnavailable, autoLoad = false, occupants = 1, scenario: sharedScenario, onScenarioChange }: {
   postIds: string[]; maxCommuteMinutes?: number | null; budgetCeiling?: number | null
   onUnavailable?: (ids: string[]) => void
   autoLoad?: boolean
   occupants?: number
+  scenario?: CostScenario
+  onScenarioChange?: (scenario: CostScenario) => void
 }) {
-  const [scenario, setScenario] = useState(() => ({ ...initialScenario, occupants }))
+  const [localScenario, setLocalScenario] = useState(() => ({ ...initialScenario, occupants }))
+  const scenario = sharedScenario ?? localScenario
+  const setScenario = (update: (current: CostScenario) => CostScenario) => {
+    const next = update(scenario)
+    if (onScenarioChange) onScenarioChange(next)
+    else setLocalScenario(next)
+  }
   const [destination, setDestination] = useState<CommuteDestination>()
   const [address, setAddress] = useState('')
   const [mode, setMode] = useState<'WALK' | 'DRIVE'>('WALK')

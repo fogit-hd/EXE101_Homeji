@@ -5,6 +5,7 @@ import { buildRentalOwnerDraft, normalizeRentalOwnerDraft, RENTAL_OWNER_DRAFT_MA
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import './RentalDetailAssistant.css'
+import { RentalConsiderationToggle } from './RentalConsiderationToggle'
 
 type RentalDetailAssistantProps = {
   post: RentalPost
@@ -30,6 +31,7 @@ function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = tru
       <span aria-hidden="true">✦</span><h3 id={`${id}-heading`}>Hiểu chi phí, hỏi đúng điều cần biết</h3>
     </div>
     <p className="rental-detail-assistant__source">Dữ liệu do người đăng cung cấp{Number.isNaN(updatedAt.getTime()) ? '' : ` · cập nhật ${updatedAt.toLocaleDateString('vi-VN')}`}. Chưa xác minh tình trạng còn phòng.</p>
+    <RentalConsiderationToggle post={post} />
     <dl className="rental-detail-assistant__facts">
       <div><dt>{rentalPriceLabel(basis)}</dt><dd>{formatListingRent(post.price)}</dd></div>
       <div><dt>Tiền cọc · khoản riêng</dt><dd>{validAmount(post.deposit) ? formatPrice(post.deposit) : 'Chưa xác nhận'}</dd></div>

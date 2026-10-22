@@ -6,6 +6,7 @@ import type { AiHighlightResponse } from '../../api'
 import { RentalPostType } from '../../api'
 import { amenityLabel, formatPrice, formatListingRent, formatListingArea } from '../../lib/labels'
 import './AiSearchReview.css'
+import { RentalConsiderationToggle } from './RentalConsiderationToggle'
 import { ShortlistCommutePlanner, type CommuteConfirmation } from './ShortlistCommutePlanner'
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
@@ -46,6 +47,7 @@ function AiSearchReviewSession({ result, onApply, onRefine, variant }: {
   const shownPosts = pendingCosts ? routedPosts : visiblePosts
   const renderListing = (item: AiHighlightResponse['posts'][number], compact = false): ReactNode => <article key={item.post.id} className={compact ? 'ai-suggest-review__detail' : 'ai-search-review__listing'}>
       <Link to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`}>{item.post.title}</Link>
+      <RentalConsiderationToggle post={item.post} />
       <strong>{formatListingRent(item.post.price)} · {rentalPriceLabel(rentalPriceBasis(item.post))} · {formatListingArea(item.post.area)}</strong>
       <span>{item.post.address}</span>
       {item.post.type === RentalPostType.RoomTransfer ? <small>Tin pass phòng dùng vị trí gần đúng. Tuyến từ ghim này chưa thay thế đường đi từ cửa phòng.</small> : null}

@@ -1,4 +1,5 @@
 import { resultCountBucket } from '../lib/analyticsPolicy'
+import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import {
   getDefaultNotifications,
   isDefaultNotificationId,
@@ -20,6 +21,7 @@ import type {
   ChatbotPopupConfig,
   ChatbotReply,
   ChatbotRentalContext,
+  ChatbotRentalSelection,
   CompareRentalPostsResult,
   EmailAvailabilityResult,
   LandlordVerification,
@@ -355,7 +357,7 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext }, signal?: AbortSignal) =>
+export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection }, signal?: AbortSignal) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
@@ -364,6 +366,10 @@ export const sendChatbotMessage = (data: { conversationId?: string; message: str
       message: data.message,
       saveHistory: data.saveHistory === true,
       ...(data.rentalContext ? { rentalContext: { postId: data.rentalContext.postId, ...(data.rentalContext.task ? { task: data.rentalContext.task } : {}) } } : {}),
+      ...(data.rentalSelection ? { rentalSelection: { postIds: [...data.rentalSelection.postIds],
+        ...(data.rentalSelection.task ? { task: data.rentalSelection.task } : {}),
+        ...(data.rentalSelection.scenario ? { scenario: rentalScenarioSnapshot(data.rentalSelection.scenario) } : {}),
+      } } : {}),
       ...(data.previousCriteria ? { previousCriteria: data.previousCriteria } : {}),
       ...(data.conversationId ? { conversationId: data.conversationId } : {}),
     },

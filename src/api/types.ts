@@ -712,6 +712,11 @@ export interface ChatbotRentalContext {
   postId: string
   task?: 'cost' | 'questions' | 'details'
 }
+export interface ChatbotRentalSelection {
+  postIds: string[]
+  task?: 'compare' | 'cost' | 'questions' | 'details'
+  scenario?: import('./rentalAssistant').CostScenario
+}
 
 export interface UploadImageResult {
   url: string

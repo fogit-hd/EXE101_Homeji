@@ -14,6 +14,7 @@ import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
 import { ChoicePicker } from '../../ui/ChoicePicker'
+import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
 import {
   mapBackendListingToListingViewModel,
   mapFilterMetadataToFilterConfig,
@@ -204,6 +205,7 @@ export function MapListingsWorkspace({
               </span>
             </span>
           </button>
+          {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
           {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></button> : null}
           {!marketMode && onToggleSave ? (
             <button
@@ -348,6 +350,7 @@ export function MapListingsWorkspace({
               <PreviewCard
                 view={selected.view}
                 monthly={!marketMode}
+                considerationPost={!marketMode ? { id: selected.id, title: selected.view.title } : undefined}
                 saved={savedIds?.has(selected.id)}
                 saveBusy={saveBusy}
                 onToggleSave={!marketMode && onToggleSave ? () => onToggleSave(selected.id) : undefined}
@@ -533,6 +536,7 @@ function PreviewCard({
   saveBusy,
   onToggleSave,
   onOpen,
+  considerationPost,
 }: {
   view: ReturnType<typeof mapBackendListingToListingViewModel>
   monthly: boolean
@@ -540,6 +544,7 @@ function PreviewCard({
   saveBusy?: boolean
   onToggleSave?: () => void
   onOpen: () => void
+  considerationPost?: { id: string; title: string }
 }) {
   return (
     <article className="map-listings__preview" aria-label="Phòng đang chọn">
@@ -577,6 +582,7 @@ function PreviewCard({
         {view.highlightTag ? <span>{view.highlightTag}</span> : null}
         {view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
       </div>
+      {considerationPost ? <RentalConsiderationToggle post={considerationPost} /> : null}
       <button type="button" className="map-listings__preview-open" onClick={onOpen}>
         {monthly ? 'Xem phòng & liên hệ' : 'Xem chi tiết'}
         <img src="/figma/map/arrow-right.svg" alt="" width={13} height={13} />

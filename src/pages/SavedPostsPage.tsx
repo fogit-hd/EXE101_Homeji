@@ -14,8 +14,7 @@ import { savedPostsKey } from '../lib/queryKeys'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ContentSkeleton } from '../components/ContentSkeleton'
 import { RentalPostCard } from '../components/RentalPostCard'
-import { RentalDecisionPanel } from '../components/ai/RentalDecisionPanel'
-import { RentalComparison } from '../components/ai/RentalComparison'
+import { RentalShortlistWorkspace } from '../components/ai/RentalJourney'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -49,8 +48,6 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
   const inviteLock = useRef(false)
   const unsaveLock = useRef(false)
   const [unsaveBusy, setUnsaveBusy] = useState(false)
-  const [compareIds, setCompareIds] = useState<string[]>([])
-  const [comparison, setComparison] = useState<string[] | null>(null)
 
   const handleUnsave = async (postId: string) => {
     if (unsaveLock.current) return
@@ -60,8 +57,6 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
     try {
       await unsavePost(postId)
       queryClient.setQueryData<typeof savedQuery.data>(queryKey, previous => previous?.filter(post => post.id !== postId))
-      setCompareIds(prev => prev.filter(id => id !== postId))
-      setComparison(null)
       if (candidatesFor === postId) {
         candidateRequest.current++
         setCandidatesFor(null)
@@ -123,11 +118,7 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
       <PageNotice message={actionError || (savedQuery.error ? getErrorMessage(savedQuery.error, 'Không tải được phòng đã lưu.') : '')} tone="error" />
       {savedQuery.isError ? <button type="button" className="btn btn-secondary" onClick={() => void savedQuery.refetch()} disabled={savedQuery.isFetching}>Thử tải lại</button> : null}
       <PageNotice message={actionMsg} tone="success" />
-      {aiFeatureFlags.decisionTools && posts.length > 1 ? <div className="saved-compare-controls">
-        <span>Chọn 2–3 tin để so sánh · {compareIds.length}/3</span>
-        <button type="button" className="btn btn-secondary btn-sm" disabled={compareIds.length < 2} onClick={() => setComparison([...compareIds])}>So sánh tin đã chọn</button>
-      </div> : null}
-      {!accessDenied && comparison ? <><RentalComparison postIds={comparison} onClose={() => setComparison(null)} /><RentalDecisionPanel postIds={comparison} onUnavailable={ids => { setCompareIds(current => current.filter(id => !ids.includes(id))); setComparison(current => current ? current.filter(id => !ids.includes(id)) : null) }} /></> : null}
+      {aiFeatureFlags.decisionTools && !accessDenied ? <RentalShortlistWorkspace /> : null}
 
       {savedQuery.isPending && !savedQuery.isError ? (
         <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
@@ -140,9 +131,6 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
         <div className="grid-posts">
           {posts.map((post) => (
             <div key={post.id}>
-              {aiFeatureFlags.decisionTools ? <label className="saved-compare-pick"><input type="checkbox" checked={compareIds.includes(post.id)}
-                disabled={!compareIds.includes(post.id) && compareIds.length >= 3}
-                onChange={event => { setCompareIds(prev => event.target.checked ? [...prev, post.id] : prev.filter(id => id !== post.id)); setComparison(null) }} />So sánh {post.title}</label> : null}
               <RentalPostCard
                 post={post}
                 showSave

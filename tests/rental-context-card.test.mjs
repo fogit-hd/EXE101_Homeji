@@ -43,3 +43,11 @@ test('missing rent, deposit and source dates remain unknown rather than free or 
   assert.match(html, /chưa có ngày cập nhật/)
   assert.doesNotMatch(html, /Invalid Date|miễn phí/)
 })
+
+test('complete scenario totals remain labelled as estimates and each selected room is named', () => {
+  const html = render({ ...item, cost: { ...item.cost, unknown: [], questions: [], estimatedMonthlyTotal: 3_500_000 } })
+  assert.match(html, /<h4>Phòng A<\/h4>/)
+  assert.match(html, /Tổng tháng theo kịch bản/)
+  assert.match(html, /3\.500\.000/)
+  assert.match(html, /Ước tính theo tin đăng và kịch bản bạn nhập/)
+})

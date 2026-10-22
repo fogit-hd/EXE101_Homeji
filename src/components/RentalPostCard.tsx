@@ -3,6 +3,7 @@ import type { RentalPostSummary } from '../api/types'
 import { formatListingRent, formatListingArea, rentalPostTypeLabel } from '../lib/labels'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import './RentalPostCard.css'
+import { RentalConsiderationToggle } from './ai/RentalConsiderationToggle'
 
 type Props = {
   post: RentalPostSummary
@@ -39,6 +40,7 @@ export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, save
         </div>
       </Link>
       <a className="post-card-public-link" href={`/rentals/${encodeURIComponent(post.id)}`}>Thông tin công khai</a>
+      <RentalConsiderationToggle post={post} />
       {showSave && (
         <div className="post-card-actions">
           {isSaved ? (
