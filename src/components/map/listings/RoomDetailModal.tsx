@@ -20,7 +20,7 @@ import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
 import { rentalPriceBasis, rentalPriceLabel } from '../../ai/rentalPriceBasis'
 import { RentalDetailAssistant } from '../../ai/RentalDetailAssistant'
-import { useRentalAssistantSelection } from '../../../contexts/rental-assistant-context'
+import { useRentalAssistantOpener, useRentalAssistantSelection } from '../../../contexts/rental-assistant-context'
 import { rentalDraftTarget, rentalMessageDraftStore } from '../../../lib/rentalMessageDraft'
 import { getStoredSession } from '../../../api/client'
 import { aiFeatureFlags } from '../../../lib/aiFeatureFlags'
@@ -114,6 +114,7 @@ export function RoomDetailModal({
   const loadState: LoadState = matched?.state ?? 'loading'
   const post = matched?.state === 'ready' ? matched.post : null
   useRentalAssistantSelection(post && listingId ? { postId: post.id, title: post.title } : null)
+  const openRentalAssistant = useRentalAssistantOpener()
   const isStudentShare = post?.type === RentalPostType.RoommateShare && post.ownerRole === UserRole.Renter
   const priceBasis = post ? rentalPriceBasis(post) : 'unknown'
   const actionMessage = notice && notice.id === listingId ? notice.message : null
@@ -172,6 +173,8 @@ export function RoomDetailModal({
       ) ?? [])].filter(node => node.getClientRects().length > 0)
 
     const onKey = (event: KeyboardEvent) => {
+      // The assistant is portaled beside this modal and owns keys while focused.
+      if (event.target instanceof Element && event.target.closest('[data-homeji-ai-panel="open"]')) return
       // The image viewer owns keyboard navigation while its native dialog is open.
       if (root?.querySelector('dialog[open]')) return
       if (event.key === 'Escape') {
@@ -426,6 +429,8 @@ export function RoomDetailModal({
                 {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post}
                   canMessage={Boolean(isAuthenticated && isRenter && profile?.id !== post.ownerId && onOpenMessages && !actionBusy)}
                   onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
+                {aiFeatureFlags.decisionTools && openRentalAssistant ? <button type="button" className="btn btn-secondary btn-sm"
+                  onClick={openRentalAssistant}>Hỏi trợ lý về phòng đang xem</button> : null}
               </div>
               <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ">
                 <div className="room-detail__price">

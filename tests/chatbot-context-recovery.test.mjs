@@ -157,6 +157,33 @@ test('unmount aborts an in-flight chat request', async () => {
   assert.equal(pending.signal.aborted, true)
 })
 
+test('assistant over a room modal wraps Tab and returns focus to its opener after Escape', async () => {
+  const env = await environment()
+  try {
+    const modal = document.createElement('div')
+    modal.className = 'room-detail'
+    modal.setAttribute('aria-modal', 'true')
+    const opener = document.createElement('button')
+    modal.append(opener)
+    document.body.append(modal)
+    window.HTMLElement.prototype.getClientRects = () => [{ width: 100, height: 40 }]
+    await render(env.root, { openRequestToken: 0 })
+    opener.focus()
+    await act(async () => { window.dispatchEvent(new CustomEvent('homeji-ai:toggle', { detail: { anchor: null, open: true } })) })
+    const input = document.querySelector('input[aria-label="Nhập tin nhắn cho Homeji"]')
+    const close = document.querySelector('.map-chatbot__close')
+    input.focus()
+    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })) })
+    assert.equal(document.activeElement, close)
+    await act(async () => { close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true })) })
+    assert.equal(document.activeElement, input)
+    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    assert.equal(document.querySelector('[data-homeji-ai-panel="open"]'), null)
+    assert.equal(document.activeElement, opener)
+    assert.equal(modal.isConnected, true)
+  } finally { await env.cleanup() }
+})
+
 test('an old backend without grounded room data cannot present general text or global results as room facts', async () => {
   const env = await environment()
   try {

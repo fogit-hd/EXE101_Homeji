@@ -251,14 +251,30 @@ export function MapChatbot({
 
   useEffect(() => {
     if (!open) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const focusFrame = window.requestAnimationFrame(() => inputRef.current?.focus())
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false)
+      if (event.key !== 'Tab' || !document.querySelector('.room-detail[aria-modal="true"]')) return
+      const panel = panelRef.current
+      if (!panel?.contains(document.activeElement)) return
+      const nodes = [...panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
+        .filter(node => node.getClientRects().length > 0)
+      const first = nodes[0]
+      const last = nodes.at(-1)
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
     }
     document.addEventListener('keydown', closeOnEscape)
     return () => {
       window.cancelAnimationFrame(focusFrame)
       document.removeEventListener('keydown', closeOnEscape)
+      if (opener?.isConnected) opener.focus()
     }
   }, [open])
 
@@ -575,6 +591,7 @@ export function MapChatbot({
           transformOrigin: sheetMode ? 'center bottom' : 'top right',
         }}
         aria-hidden={!panelVisible}
+        data-homeji-ai-panel={panelVisible ? 'open' : 'closed'}
         inert={!panelVisible}
         role="dialog"
         aria-label={HOMEJI_TITLE}
