@@ -1,0 +1,27 @@
+.rental-detail-assistant { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text-primary); font-size: 14px; line-height: 1.6; }
+.rental-detail-assistant__heading { display: flex; align-items: flex-start; gap: 8px; }
+.rental-detail-assistant__heading > span { color: var(--accent, #0f766e); font-size: 20px; line-height: 1.4; }
+.rental-detail-assistant h3 { margin: 0; font-size: 16px; line-height: 1.5; }
+.rental-detail-assistant__source { margin: 8px 0; color: var(--text-secondary); font-size: 12px; }
+.rental-detail-assistant__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0 8px; }
+.rental-detail-assistant__facts dt { color: var(--text-secondary); font-size: 12px; }
+.rental-detail-assistant__facts dd { margin: 2px 0 0; font-weight: 700; overflow-wrap: anywhere; }
+.rental-detail-assistant__note { margin: 8px 0; font-size: 13px; }
+.rental-detail-assistant summary { cursor: pointer; font-weight: 600; }
+.rental-detail-assistant summary:focus-visible { outline: 2px solid var(--accent, #0f766e); outline-offset: 4px; border-radius: 4px; }
+.rental-detail-assistant__fees { margin: 12px 0; }
+.rental-detail-assistant__fees ul { padding-left: 20px; margin: 8px 0; }
+.rental-detail-assistant__fees li { margin: 6px 0; }
+.rental-detail-assistant__fees p { color: var(--text-secondary); font-size: 12px; }
+.rental-detail-assistant__prepare { margin-top: 14px; }
+.rental-detail-assistant__draft { margin-top: 16px; }
+.rental-detail-assistant__draft label { display: block; margin-bottom: 8px; font-weight: 600; }
+.rental-detail-assistant__draft textarea { display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 160px; box-sizing: border-box; resize: vertical; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-primary); font: inherit; line-height: 1.6; }
+.rental-detail-assistant__draft textarea:focus-visible { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; }
+.rental-detail-assistant__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rental-detail-assistant .btn { min-height: 44px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .rental-detail-assistant { padding: 12px; }
+  .rental-detail-assistant__facts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .rental-detail-assistant__actions > .btn { width: 100%; }
+}

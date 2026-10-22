@@ -848,3 +848,41 @@
 /* Navbar-launched panel: Motion drives opacity/transform; CSS only positions it. */
 .map-chatbot__panel.is-nav { z-index: 1300; transition: none; }
 .map-chatbot.is-nav { position: fixed; inset: 0; z-index: 1300; pointer-events: none; }
+
+.map-chatbot__msg.is-grounded .map-chatbot__formatted-content { animation: none; }
+
+.map-chatbot__context {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-input, #f1f3f4);
+  color: var(--text-primary);
+}
+.map-chatbot__context strong, .map-chatbot__context span, .map-chatbot__message-context { display: block; overflow-wrap: anywhere; }
+.map-chatbot__context span, .map-chatbot__context small, .map-chatbot__message-context { color: var(--text-secondary); font-size: 12px; }
+.map-chatbot__context-prompts { display: flex; flex-wrap: wrap; gap: 8px; grid-column: 1 / -1; }
+.map-chatbot__context small { grid-column: 1 / -1; }
+.map-chatbot__context button, .map-chatbot__recovery button, .map-chatbot__request-status button {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-elevated, #fff);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.map-chatbot__context button:focus-visible, .map-chatbot__recovery button:focus-visible, .map-chatbot__request-status button:focus-visible { outline: 2px solid var(--maps-blue, #1a73e8); outline-offset: 2px; }
+.map-chatbot__context button:disabled, .map-chatbot__recovery button:disabled { opacity: .6; cursor: wait; }
+.map-chatbot__message-context { margin-bottom: 6px; white-space: normal; }
+.map-chatbot__recovery { margin-top: 8px; white-space: normal; }
+.map-chatbot__recovery p { margin: 0 0 6px; }
+.map-chatbot__request-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; color: var(--text-secondary); font-size: 12px; }
+.map-chatbot__decision { min-width: 0; max-width: 100%; margin-top: 10px; white-space: normal; }
+.map-chatbot__msg, .map-chatbot__bubble { min-width: 0; }
+.map-chatbot__panel .map-chatbot__body { min-height: 0; }
+
+@media (prefers-reduced-motion: reduce) { .map-chatbot__formatted-content { animation: none; } }

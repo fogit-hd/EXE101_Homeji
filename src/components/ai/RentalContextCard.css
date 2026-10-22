@@ -1,0 +1,12 @@
+.rental-context-card { min-width: 0; color: var(--text-primary); white-space: normal; }
+.rental-context-card article { display: grid; min-width: 0; gap: 10px; }
+.rental-context-card dl { display: grid; gap: 10px; margin: 0; }
+.rental-context-card dl > div { display: grid; gap: 2px; min-width: 0; }
+.rental-context-card dt { color: var(--text-secondary); font-size: 12px; }
+.rental-context-card dd { display: grid; gap: 2px; margin: 0; overflow-wrap: anywhere; }
+.rental-context-card dd small, .rental-context-card__source { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.rental-context-card__notice { margin: 0; padding: 8px; border-left: 3px solid var(--maps-blue, #1a73e8); background: var(--surface-elevated, #fff); font-size: 12px; line-height: 1.5; }
+.rental-context-card summary { padding: 8px 0; cursor: pointer; font-weight: 600; }
+.rental-context-card ul { display: grid; gap: 6px; margin: 6px 0; padding-left: 18px; }
+.rental-context-card__detail { display: inline-flex; align-items: center; min-height: 40px; color: var(--maps-blue-text, #1558b0); font-weight: 600; text-underline-offset: 3px; }
+.rental-context-card :is(summary, a):focus-visible { outline: 2px solid var(--maps-blue, #1a73e8); outline-offset: 2px; }

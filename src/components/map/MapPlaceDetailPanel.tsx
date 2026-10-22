@@ -28,6 +28,10 @@ import { type MapPlaceDetails } from '../../lib/mapPlace'
 import { streetViewStaticUrl } from '../../lib/mapStaticMedia'
 import { ScheduleDateTimePicker } from '../ScheduleDateTimePicker'
 import { ContentSkeleton } from '../ContentSkeleton'
+import { RentalDetailAssistant } from '../ai/RentalDetailAssistant'
+import { useRentalAssistantOpener, useRentalAssistantSelection } from '../../contexts/rental-assistant-context'
+import { rentalDraftTarget, rentalMessageDraftStore } from '../../lib/rentalMessageDraft'
+import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
 
@@ -184,6 +188,15 @@ export function MapPlaceDetailPanel({
   const { profile, isAuthenticated } = useAuth()
   const isListing = !!(listing || listingSummary)
   const post = listing ?? listingSummary
+  useRentalAssistantSelection(open && post ? { postId: post.id, title: post.title } : null)
+  const openRentalAssistant = useRentalAssistantOpener()
+  const messageTargetRef = useRef({ postId: post?.id, userId: profile?.id })
+  const messageEpoch = useRef(0)
+  useLayoutEffect(() => { messageTargetRef.current = { postId: post?.id, userId: profile?.id } }, [post?.id, profile?.id])
+  useLayoutEffect(() => {
+    messageEpoch.current += 1
+    return () => { messageEpoch.current += 1 }
+  }, [open, post?.id, profile?.id])
   const isRenter = profile?.role === UserRole.Renter
   const isLandlord = profile?.role === UserRole.Landlord
   const myId = getStoredSession()?.userId
@@ -246,7 +259,8 @@ export function MapPlaceDetailPanel({
     setTab('overview')
   }
 
-  if (useChangedInputs([open, place?.placeId, post?.id], true)) {
+  if (useChangedInputs([open, place?.placeId, post?.id, profile?.id], true)) {
+    setActionBusy(false)
     if (open) {
       setTab('overview')
       setScheduleOpen(false)
@@ -471,21 +485,35 @@ export function MapPlaceDetailPanel({
     setActionMsg(message)
   }
 
-  const handleMessage = async () => {
+  const handleMessage = async (questionDraft?: string) => {
+    if (actionBusy) return
     if (!post?.id || !isAuthenticated || !isRenter) {
       notify('Chỉ người thuê đã đăng nhập mới nhắn chủ nhà.', 'err')
       return
     }
+    const source = { postId: post.id, ownerId: listing?.ownerId, userId: profile?.id }
+    const epoch = messageEpoch.current
+    const isCurrent = () => messageEpoch.current === epoch && messageTargetRef.current.postId === source.postId
+      && messageTargetRef.current.userId === source.userId && getStoredSession()?.userId === source.userId
     setActionBusy(true)
     setActionMsg(null)
     try {
       const convo = await startRentalPostConversation(post.id)
+      if (!isCurrent()) return
+      if (questionDraft !== undefined) {
+        const target = rentalDraftTarget(source.userId, convo)
+        if (!target || target.postId !== source.postId || target.recipientId !== source.ownerId
+          || !rentalMessageDraftStore.queue(target, questionDraft)) {
+          notify('Chưa chuyển được bản nháp vào đúng hội thoại. Nội dung vẫn ở đây để bạn sửa và thử lại.', 'err')
+          return
+        }
+      }
       onOpenMessages?.(convo.id)
       notify('Đã mở hội thoại với chủ nhà.')
     } catch (e) {
-      notify(getErrorMessage(e, 'Không mở được chat'), 'err')
+      if (isCurrent()) notify(getErrorMessage(e, 'Không mở được chat'), 'err')
     } finally {
-      setActionBusy(false)
+      if (isCurrent()) setActionBusy(false)
     }
   }
 
@@ -969,6 +997,11 @@ export function MapPlaceDetailPanel({
                       </p>
                     </InfoRow>
                   ) : null}
+                  {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${listing.id}`} post={listing}
+                    canMessage={Boolean(isAuthenticated && isRenter && !isOwner && onOpenMessages && !actionBusy)}
+                    onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
+                  {aiFeatureFlags.decisionTools && openRentalAssistant ? <button type="button" className="btn btn-secondary btn-sm"
+                    onClick={openRentalAssistant}>Hỏi trợ lý về phòng đang xem</button> : null}
                 </>
               ) : null}
             </div>

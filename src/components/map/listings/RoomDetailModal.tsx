@@ -1,5 +1,6 @@
 import { PhoneAction } from '../../ui/PhoneAction'
 import { useMotionPresence } from '../../motion/useMotionPresence'
+import { useChangedInputs } from '../../../hooks/useChangedInputs'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { RentalPostType } from '../../../api/types'
@@ -18,6 +19,11 @@ import { gallerySwipeDirection } from '../../../lib/gallerySwipe'
 import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
 import { rentalPriceBasis, rentalPriceLabel } from '../../ai/rentalPriceBasis'
+import { RentalDetailAssistant } from '../../ai/RentalDetailAssistant'
+import { useRentalAssistantSelection } from '../../../contexts/rental-assistant-context'
+import { rentalDraftTarget, rentalMessageDraftStore } from '../../../lib/rentalMessageDraft'
+import { getStoredSession } from '../../../api/client'
+import { aiFeatureFlags } from '../../../lib/aiFeatureFlags'
 import houseUrl from '../../../assets/room-detail/house.svg'
 import mapPinUrl from '../../../assets/room-detail/map-pin.svg'
 import messageCircleUrl from '../../../assets/room-detail/message-circle.svg'
@@ -84,12 +90,15 @@ export function RoomDetailModal({
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const listingIdRef = useRef<string | null>(null)
+  const identityRef = useRef(profile?.id)
+  const messageEpoch = useRef(0)
   const onCloseRef = useRef(onClose)
   const requestSeq = useRef(0)
 
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<{
     id: string
+    viewerId: string
     attempt: number
     state: Exclude<LoadState, 'loading'>
     post: RentalPost | null
@@ -100,19 +109,28 @@ export function RoomDetailModal({
   const [scheduleAt, setScheduleAt] = useState('')
   const [scheduleNote, setScheduleNote] = useState('')
 
-  const matched = result && (result.id === listingId || (!listingId && present)) && result.attempt === attempt ? result : null
+  const viewerId = profile?.id ?? 'guest'
+  const matched = result && result.viewerId === viewerId && (result.id === listingId || (!listingId && present)) && result.attempt === attempt ? result : null
   const loadState: LoadState = matched?.state ?? 'loading'
   const post = matched?.state === 'ready' ? matched.post : null
+  useRentalAssistantSelection(post && listingId ? { postId: post.id, title: post.title } : null)
   const isStudentShare = post?.type === RentalPostType.RoommateShare && post.ownerRole === UserRole.Renter
   const priceBasis = post ? rentalPriceBasis(post) : 'unknown'
   const actionMessage = notice && notice.id === listingId ? notice.message : null
   const actionTone = notice?.tone ?? 'ok'
   const scheduleOpen = scheduleListingId != null && scheduleListingId === listingId
+  if (useChangedInputs([listingId, viewerId])) setActionBusy(false)
+
+  useLayoutEffect(() => {
+    messageEpoch.current += 1
+    return () => { messageEpoch.current += 1 }
+  }, [listingId, viewerId])
 
   useLayoutEffect(() => {
     listingIdRef.current = listingId
+    identityRef.current = profile?.id
     onCloseRef.current = onClose
-  }, [listingId, onClose])
+  }, [listingId, onClose, profile?.id])
 
   useEffect(() => {
     if (!listingId) return undefined
@@ -124,21 +142,21 @@ export function RoomDetailModal({
     void getRentalPost(id, { auth: isAuthenticated, signal: controller.signal })
       .then((next) => {
         if (seq !== requestSeq.current) return
-        setResult({ id, attempt: currentAttempt, state: 'ready', post: next })
+        setResult({ id, viewerId, attempt: currentAttempt, state: 'ready', post: next })
       })
       .catch((error: unknown) => {
         if (seq !== requestSeq.current) return
         if (controller.signal.aborted) return
         if (error instanceof DOMException && error.name === 'AbortError') return
         if (error instanceof ApiRequestError && (error.status === 404 || error.status === 410)) {
-          setResult({ id, attempt: currentAttempt, state: 'missing', post: null })
+          setResult({ id, viewerId, attempt: currentAttempt, state: 'missing', post: null })
           return
         }
-        setResult({ id, attempt: currentAttempt, state: 'error', post: null })
+        setResult({ id, viewerId, attempt: currentAttempt, state: 'error', post: null })
       })
 
     return () => controller.abort()
-  }, [listingId, isAuthenticated, attempt])
+  }, [listingId, isAuthenticated, viewerId, attempt])
 
   useEffect(() => {
     if (!listingId) return undefined
@@ -202,20 +220,34 @@ export function RoomDetailModal({
     onToggleSave(listingId)
   }
 
-  const handleMessage = async () => {
-    if (!post?.id || !isAuthenticated || !isRenter) {
+  const handleMessage = async (questionDraft?: string) => {
+    if (actionBusy) return
+    if (!post?.id || !isAuthenticated || !isRenter || !profile || post.ownerId === profile.id) {
       notify('Chỉ người thuê đã đăng nhập mới nhắn chủ nhà.', 'err')
       return
     }
+    const source = { postId: post.id, ownerId: post.ownerId, userId: profile.id }
+    const epoch = messageEpoch.current
+    const isCurrent = () => messageEpoch.current === epoch && listingIdRef.current === source.postId
+      && identityRef.current === source.userId && getStoredSession()?.userId === source.userId
     setActionBusy(true)
     try {
       const convo = await startRentalPostConversation(post.id)
+      if (!isCurrent()) return
+      if (questionDraft !== undefined) {
+        const target = rentalDraftTarget(source.userId, convo)
+        if (!target || target.postId !== source.postId || target.recipientId !== source.ownerId
+          || !rentalMessageDraftStore.queue(target, questionDraft)) {
+          notify('Chưa chuyển được bản nháp vào đúng hội thoại. Nội dung vẫn ở đây để bạn sửa và thử lại.', 'err')
+          return
+        }
+      }
       onOpenMessages?.(convo.id)
       notify('Đã mở hội thoại với chủ nhà.')
     } catch (error) {
-      notify(getErrorMessage(error, 'Không mở được chat'), 'err')
+      if (isCurrent()) notify(getErrorMessage(error, 'Không mở được chat'), 'err')
     } finally {
-      setActionBusy(false)
+      if (isCurrent()) setActionBusy(false)
     }
   }
 
@@ -391,6 +423,9 @@ export function RoomDetailModal({
                     <p className="room-detail__muted">Các tiện ích khác: chưa cung cấp</p>
                   )}
                 </section>
+                {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post}
+                  canMessage={Boolean(isAuthenticated && isRenter && profile?.id !== post.ownerId && onOpenMessages && !actionBusy)}
+                  onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
               </div>
               <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ">
                 <div className="room-detail__price">

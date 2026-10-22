@@ -19,6 +19,7 @@ import type {
   ChatbotMessage,
   ChatbotPopupConfig,
   ChatbotReply,
+  ChatbotRentalContext,
   CompareRentalPostsResult,
   EmailAvailabilityResult,
   LandlordVerification,
@@ -354,13 +355,15 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria }) =>
+export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext }, signal?: AbortSignal) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
+    signal,
     body: {
       message: data.message,
       saveHistory: data.saveHistory === true,
+      ...(data.rentalContext ? { rentalContext: { postId: data.rentalContext.postId, ...(data.rentalContext.task ? { task: data.rentalContext.task } : {}) } } : {}),
       ...(data.previousCriteria ? { previousCriteria: data.previousCriteria } : {}),
       ...(data.conversationId ? { conversationId: data.conversationId } : {}),
     },

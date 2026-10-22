@@ -1,6 +1,6 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { motion } from 'motion/react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ChatMessageSender,
@@ -13,6 +13,7 @@ import {
   type ChatbotMessage,
   type ChatbotNavigationAction,
   type ChatbotPopupConfig,
+  type ChatbotRentalContext,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAuthModal } from "../../contexts/AuthModalContext.logic"
@@ -31,6 +32,9 @@ import {
   onHomejiAiToggle,
   publishHomejiAiOpen,
 } from '../../lib/homejiAiLauncher'
+import { RentalContextCard } from '../ai/RentalContextCard'
+import type { DecisionResponse } from '../../api/rentalAssistant'
+import type { RentalAssistantSelection } from '../../contexts/rental-assistant-context'
 import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
@@ -72,10 +76,25 @@ type Props = {
   /** Mở panel thật của ứng dụng khi assistant trả về action đã whitelist. */
   onOpenSection?: (section: MapAppSection) => void
   onNearbyRequest?: (category: NearbyPlaceCategory) => boolean
+  rentalContext?: RentalAssistantSelection | null
+  onDismissRentalContext?: () => void
+  openRequestToken?: number
+}
+
+type ChatRequest = {
+  message: string
+  context?: RentalAssistantSelection & { task?: ChatbotRentalContext['task'] }
+  conversationId?: string
+  previousCriteria?: AiParsedSearchCriteria
+  saveHistory: boolean
 }
 
 type DisplayMessage = ChatbotMessage & {
   pending?: boolean
+  retry?: ChatRequest
+  failure?: string
+  rentalContext?: RentalAssistantSelection
+  rentalDecision?: DecisionResponse | null
   actions?: ChatbotNavigationAction[]
   searchUpdate?: AiHighlightResponse | null
 }
@@ -117,6 +136,9 @@ export function MapChatbot({
   hideFab = false,
   onOpenSection,
   onNearbyRequest,
+  rentalContext = null,
+  onDismissRentalContext,
+  openRequestToken = 0,
 }: Props) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
@@ -131,6 +153,8 @@ export function MapChatbot({
   const sessionCriteria = useRef<AiParsedSearchCriteria | undefined>(undefined)
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [draft, setDraft] = useState('')
+  const draftRevision = useRef(0)
+  const activeRequest = useRef<{ controller: AbortController; pendingId: string; request: ChatRequest; draftRevision: number; restoreDraft: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
@@ -139,6 +163,28 @@ export function MapChatbot({
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const pendingIdRef = useRef(0)
+
+  if (useChangedInputs([openRequestToken]) && openRequestToken) {
+    setOpen(true)
+  }
+
+  useEffect(() => () => {
+    activeRequest.current?.controller.abort()
+    activeRequest.current = null
+  }, [])
+
+  useLayoutEffect(() => {
+    const pending = activeRequest.current
+    if (!pending?.request.context || pending.request.context.postId === rentalContext?.postId) return
+    activeRequest.current = null
+    pending.controller.abort()
+    setBusy(false)
+    setActivePrompt(null)
+    setMessages(current => current.map(message => message.id === pending.pendingId
+      ? { ...message, pending: false, failure: 'Đã dừng vì phòng đang hỗ trợ thay đổi.', retry: pending.request }
+      : message))
+    setDraft(current => pending.restoreDraft && !current && draftRevision.current === pending.draftRevision ? pending.request.message : current)
+  }, [rentalContext?.postId])
 
   const panel = navPanelLayout(anchor)
 
@@ -235,9 +281,22 @@ export function MapChatbot({
   const panelVisible = open
 
 
-  const send = async (text: string, fromSuggestion = false) => {
+  const stopRequest = () => {
+    const pending = activeRequest.current
+    if (!pending) return
+    activeRequest.current = null
+    pending.controller.abort()
+    setBusy(false); setActivePrompt(null); setSuggestionsLeaving(false)
+    setMessages(current => current.map(message => message.id === pending.pendingId
+      ? { ...message, pending: false, failure: 'Đã dừng chờ phản hồi. Bạn có thể sửa hoặc thử lại.', retry: pending.request }
+      : message))
+    setDraft(current => pending.restoreDraft && !current && draftRevision.current === pending.draftRevision ? pending.request.message : current)
+    inputRef.current?.focus()
+  }
+
+  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'], retryMessage?: DisplayMessage) => {
     const message = text.trim()
-    if (!message || busy) return
+    if (!message || busy || activeRequest.current) return
     const nearby = nearbyChatIntent(message)
     if (nearby) {
       if (onNearbyRequest?.(nearby)) { setOpen(false); setDraft(''); setError(null) }
@@ -253,50 +312,62 @@ export function MapChatbot({
       return
     }
 
-    setBusy(true)
-    setError(null)
-    setDraft('')
-
-    if (fromSuggestion) {
-      setActivePrompt(message)
-      setSuggestionsLeaving(true)
-      await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 220)
-      })
+    const normalized = message.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase()
+    const refersToRoom = /\b(?:phong|tin|cho) (?:nay|dang xem)\b/.test(normalized)
+    const startsSearch = /\b(?:tim|kiem|goi y|de xuat)\b.*\b(?:phong|o ghep|nha)\b/.test(normalized)
+    const context = rentalContext && (task || refersToRoom && !startsSearch) ? { ...rentalContext, task } : undefined
+    const request: ChatRequest = retryMessage?.retry ?? {
+      message, context,
+      conversationId: saveHistory ? conversationId : undefined,
+      previousCriteria: saveHistory || context ? undefined : sessionCriteria.current,
+      saveHistory,
     }
-
-    const pendingId = `${reactId}-pending-${++pendingIdRef.current}`
+    const pendingId = retryMessage?.id ?? `${reactId}-pending-${++pendingIdRef.current}`
+    const pending = { controller: new AbortController(), pendingId, request, draftRevision: draftRevision.current,
+      restoreDraft: draft.trim() === message }
+    activeRequest.current = pending
+    setBusy(true); setError(null)
+    if (pending.restoreDraft) setDraft('')
+    if (fromSuggestion) { setActivePrompt(message); setSuggestionsLeaving(true) }
     const optimisticUser: DisplayMessage = {
       id: pendingId,
-      conversationId: conversationId ?? '',
+      conversationId: request.conversationId ?? '',
       sender: ChatMessageSender.User,
-      content: message,
+      content: request.message,
       createdAt: new Date().toISOString(),
       pending: true,
+      rentalContext: request.context,
     }
 
-    setMessages((prev) => [...prev, optimisticUser])
+    setMessages(prev => retryMessage ? prev.map(item => item.id === pendingId ? optimisticUser : item) : [...prev, optimisticUser])
 
     try {
-      const reply = await sendChatbotMessage({ conversationId: saveHistory ? conversationId : undefined, message, saveHistory,
-        previousCriteria: saveHistory ? undefined : sessionCriteria.current })
-      setConversationId(saveHistory ? reply.conversationId : undefined)
-      if (reply.searchUpdate) sessionCriteria.current = reply.searchUpdate.criteria
+      const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
+        previousCriteria: request.previousCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined }, pending.controller.signal)
+      if (activeRequest.current !== pending || pending.controller.signal.aborted) return
+      setConversationId(request.saveHistory ? reply.conversationId : undefined)
+      const contextualUnavailable = Boolean(request.context) && (!reply.rentalDecision
+        || reply.rentalDecision.posts.some(item => item.post.id !== request.context!.postId))
+      if (reply.searchUpdate && !request.context) sessionCriteria.current = reply.searchUpdate.criteria
       setMessages((prev) => {
-        const withoutPending = prev.filter((m) => m.id !== pendingId)
-        return [
-          ...withoutPending,
-          reply.userMessage,
-          { ...reply.assistantMessage, actions: reply.actions, searchUpdate: reply.searchUpdate },
-        ]
+        const userMessage = { ...reply.userMessage, rentalContext: request.context }
+        const assistantMessage = { ...reply.assistantMessage,
+          content: contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu của phòng đang chọn. Mở chi tiết phòng để dùng công cụ chi phí và xem những khoản cần hỏi chủ tin, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của phòng này.' : reply.assistantMessage.content,
+          actions: contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
+            label: 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của phòng đã chọn',
+            target: `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
+          searchUpdate: request.context ? null : reply.searchUpdate,
+          rentalContext: request.context, rentalDecision: contextualUnavailable ? null : reply.rentalDecision }
+        return prev.flatMap(item => item.id === pendingId ? [userMessage, assistantMessage] : [item])
       })
     } catch (e) {
-      setMessages((prev) => prev.filter((m) => m.id !== pendingId))
-      setError(getErrorMessage(e, 'Homeji tạm thời không phản hồi'))
+      if (activeRequest.current !== pending || pending.controller.signal.aborted) return
+      const failure = getErrorMessage(e, 'Homeji tạm thời không phản hồi')
+      setMessages(prev => prev.map(item => item.id === pendingId ? { ...item, pending: false, retry: request, failure } : item))
+      setDraft(current => pending.restoreDraft && !current && draftRevision.current === pending.draftRevision ? request.message : current)
       setSuggestionsLeaving(false)
     } finally {
-      setBusy(false)
-      setActivePrompt(null)
+      if (activeRequest.current === pending) { activeRequest.current = null; setBusy(false); setActivePrompt(null) }
     }
   }
 
@@ -334,6 +405,15 @@ export function MapChatbot({
   const chatBody = (
     <>
       <div className="map-chatbot__body">
+      {rentalContext ? <section className="map-chatbot__context" aria-label="Phòng đang hỗ trợ">
+        <div><span>Đang hỗ trợ phòng</span><strong>{rentalContext.title || 'Tin phòng đang xem'}</strong></div>
+        <button type="button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh phòng đang xem">×</button>
+        <div className="map-chatbot__context-prompts">
+          <button type="button" disabled={busy} onClick={() => void send('Tính tiền tháng của phòng này', false, 'cost')}>Tính tiền tháng</button>
+          <button type="button" disabled={busy} onClick={() => void send('Những điều cần hỏi về phòng này', false, 'questions')}>Những điều cần hỏi</button>
+        </div>
+        <small>Chỉ dùng tin này khi bạn hỏi về phòng đang xem. Tìm phòng mới vẫn dùng nhu cầu bạn nhập.</small>
+      </section> : null}
         {showGreeting ? (
           <div className="map-chatbot__greeting map-motion-fade-up">
             <div className="map-chatbot__greeting-bubble" role="status">
@@ -368,6 +448,7 @@ export function MapChatbot({
                 'map-chatbot__msg',
                 isUser ? 'is-user' : 'is-assistant',
                 m.pending ? 'is-pending' : '',
+                m.rentalDecision ? 'is-grounded' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -376,11 +457,17 @@ export function MapChatbot({
                 <HomejiAvatar inline />
               ) : null}
               <div className="map-chatbot__bubble">
+                {m.rentalContext ? <small className="map-chatbot__message-context">Về phòng: {m.rentalContext.title || 'Tin phòng đã chọn'}</small> : null}
                 {isUser ? (
-                  <span className="map-chatbot__bubble-text">{m.content}</span>
+                  <><span className="map-chatbot__bubble-text">{m.content}</span>
+                    {m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy}
+                      onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
                 ) : (
                   <>
                     <ChatbotMessageContent content={m.content} />
+                    {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng">
+                      <RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} />
+                    </section> : null}
                     {m.searchUpdate ? <AiSearchReview result={m.searchUpdate}
                       onApply={update => { onSearchUpdate?.(update); setOpen(false) }}
                       onRefine={text => { setDraft(text); inputRef.current?.focus() }} /> : null}
@@ -426,13 +513,14 @@ export function MapChatbot({
         <div ref={bottomRef} />
       </div>
 
-      {error ? <p className="map-chatbot__error">{error}</p> : null}
+      {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
+      {showTyping ? <div className="map-chatbot__request-status" role="status"><span>Đang lấy thông tin… Bạn có thể tiếp tục soạn.</span><button type="button" onClick={stopRequest}>Dừng chờ</button></div> : null}
       <details className="map-chatbot__privacy" data-glass-exclude><summary>Hội thoại và tiêu chí của bạn</summary>
         <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Tin nhắn và tiêu chí chỉ dùng trong phiên hiện tại; không ghi vào lịch sử chatbot trên máy chủ.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Tin nhắn hỗ trợ chung có thể được gửi tới Gemini để trả lời.</p>
         {config?.historyStorageEnabled ? <label><input type="checkbox" checked={saveHistory} disabled={busy} onChange={event => {
-          setSaveHistory(event.target.checked); setConversationId(undefined); sessionCriteria.current = undefined; setMessages([]); setDraft('')
+          setSaveHistory(event.target.checked); setConversationId(undefined); sessionCriteria.current = undefined; setMessages([]); setDraft(''); draftRevision.current += 1
         }} /> Đồng ý lưu hội thoại và tiêu chí theo chính sách lưu lịch sử</label> : <p>Lưu lịch sử hiện đang tắt.</p>}
-        {!saveHistory ? <button type="button" disabled={busy} onClick={() => { setMessages([]); setDraft(''); sessionCriteria.current = undefined }}>Xóa nội dung phiên và tiêu chí</button> : null}
+        {!saveHistory ? <button type="button" disabled={busy} onClick={() => { setMessages([]); setDraft(''); draftRevision.current += 1; sessionCriteria.current = undefined }}>Xóa nội dung phiên và tiêu chí</button> : null}
         {conversationId ? <button type="button" disabled={busy} onClick={() => void deleteConversation()}>Xóa hội thoại và tiêu chí hiện tại</button> : null}
       </details>
 
@@ -447,9 +535,8 @@ export function MapChatbot({
           ref={inputRef}
           value={draft}
           maxLength={1000}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => { draftRevision.current += 1; setDraft(e.target.value) }}
           placeholder="Hỏi Homeji ngay"
-          disabled={busy}
           aria-label="Nhập tin nhắn cho Homeji"
         />
         <button

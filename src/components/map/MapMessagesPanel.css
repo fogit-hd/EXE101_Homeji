@@ -1010,7 +1010,7 @@
   padding-top: 6px;
 }
 
-.map-messages.is-workspace .map-messages__composer input,
+.map-messages.is-workspace .map-messages__composer :is(input, textarea),
 .map-messages.is-workspace .map-messages__attach-btn,
 .map-messages.is-workspace .map-messages__composer > button[type='submit'] {
   height: 36px;
@@ -1233,7 +1233,7 @@
   cursor: not-allowed;
 }
 
-.map-messages__composer input {
+.map-messages__composer :is(input, textarea) {
   flex: 1 1 auto;
   min-width: 0;
   height: 40px;
@@ -1245,7 +1245,7 @@
   font: inherit;
 }
 
-.map-messages__composer input::placeholder {
+.map-messages__composer :is(input, textarea)::placeholder {
   color: color-mix(in srgb, var(--text-heading) 55%, var(--text-secondary));
   opacity: 1;
 }
@@ -1493,11 +1493,11 @@
   background: var(--mm-mint); color: var(--mm-green-ink); transition: transform 180ms ease, background-color 160ms ease;
 }
 .map-messages.map-messages .map-messages__attach-btn.is-open { transform: rotate(45deg); background: var(--mm-ink); color: #fff; }
-.map-messages.map-messages .map-messages__composer input {
+.map-messages.map-messages .map-messages__composer :is(input, textarea) {
   flex: 1; min-width: 0; height: 44px; padding: 0 16px; border: 1px solid var(--mm-line); border-radius: 999px;
   background: var(--mm-bg); font: 400 14px/1 var(--font-ui); color: var(--mm-text);
 }
-.map-messages.map-messages .map-messages__composer input:focus { outline: none; border-color: var(--mm-green); background: #fff; box-shadow: 0 0 0 3px rgba(0, 177, 79, 0.14); }
+.map-messages.map-messages .map-messages__composer :is(input, textarea):focus { outline: none; border-color: var(--mm-green); background: #fff; box-shadow: 0 0 0 3px rgba(0, 177, 79, 0.14); }
 .map-messages.map-messages .map-messages__composer > button.map-messages__send {
   display: grid; place-items: center; flex: none; width: 44px; height: 44px; min-width: 0; padding: 0; border: 0; border-radius: 50%;
   background: var(--mm-green); color: #fff; box-shadow: 0 6px 14px rgba(0, 177, 79, 0.28); transition: opacity 160ms ease, transform 120ms ease;
@@ -1606,3 +1606,39 @@ html:root #root .map-messages .map-messages__row .map-messages__unread-badge {
 @media (prefers-reduced-motion:reduce) {
   html:root #root .map-messages .map-messages__row { transition: none; }
 }
+
+.map-messages.map-messages .map-messages__composer textarea {
+  height: 64px;
+  min-height: 44px;
+  max-height: 160px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.map-messages__draft-notice {
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.map-messages__draft-notice p { margin: 6px 0; }
+.map-messages__draft-notice summary { cursor: pointer; color: var(--text-heading); }
+.map-messages__draft-preview { max-height: 160px; overflow-y: auto; overflow-wrap: anywhere; white-space: pre-wrap; }
+.map-messages__draft-notice > div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.map-messages__draft-notice button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  font: inherit;
+  cursor: pointer;
+}
+.map-messages__draft-notice button:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 2px; }

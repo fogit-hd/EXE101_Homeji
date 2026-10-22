@@ -705,6 +705,12 @@ export interface ChatbotReply {
   assistantMessage: ChatbotMessage
   searchUpdate: AiHighlightResponse | null
   actions: ChatbotNavigationAction[]
+  rentalDecision?: import('./rentalAssistant').DecisionResponse | null
+}
+
+export interface ChatbotRentalContext {
+  postId: string
+  task?: 'cost' | 'questions' | 'details'
 }
 
 export interface UploadImageResult {

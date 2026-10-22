@@ -77,3 +77,21 @@ test('abandoning an AI search cancels immediately without a timeout error', asyn
   await assert.rejects(result, error => error.name === 'AbortError' && error.status === undefined)
   assert.equal(s.timers.size, 0)
 })
+
+test('abandoning contextual chat cancels its fetch and releases the AI deadline', async () => {
+  const s = session()
+  const controller = new AbortController()
+  const result = s.api.sendChatbotMessage({ message: 'Tính tiền tháng', rentalContext: { postId: 'room', task: 'cost' } }, controller.signal)
+  await new Promise(resolve => setImmediate(resolve))
+  controller.abort()
+  await assert.rejects(result, error => error.name === 'AbortError' && error.status === undefined)
+  assert.equal(s.timers.size, 0)
+})
+
+test('contextual chat serializes only room ID and explicit task, excluding display/private fields', () => {
+  const api = module(apiSource, name => name === './client' ? { apiRequest: (path, options) => ({ path, options }) } : {})
+  const controller = new AbortController()
+  const { options } = api.sendChatbotMessage({ message: 'Câu hỏi', rentalContext: { postId: 'room', task: 'questions', title: 'Private title', address: 'Private address', ownerPhone: 'Private contact' } }, controller.signal)
+  assert.equal(JSON.stringify(options.body.rentalContext), JSON.stringify({ postId: 'room', task: 'questions' }))
+  assert.equal(options.signal, controller.signal)
+})

@@ -138,7 +138,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   destinationMode = false,
   exploreView = 'map',
 }: AuthenticatedHomeMapShellProps) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, profile } = useAuth()
   const { setNearbyAnchor, nearbyCategory, setNearbyCategory } = useSearch()
   const [searchParams, setSearchParams] = useSearchParams()
   const listingCatalog = useMemo(() => parseFiltersFromURL(searchParams).catalog, [searchParams])
@@ -150,7 +150,9 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [focusedPostId, setFocusedPostId] = useState<string | null>(selectedPostId)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceDetails | null>(null)
   const [placeLoading, setPlaceLoading] = useState(false)
-  const [listingDetail, setListingDetail] = useState<RentalPost | null>(null)
+  const listingViewer = `${isAuthenticated ? 'member' : 'guest'}:${profile?.id ?? ''}`
+  const [listingSnapshot, setListingSnapshot] = useState<{ viewer: string; postId: string; post: RentalPost } | null>(null)
+  const listingDetail = listingSnapshot?.viewer === listingViewer && listingSnapshot.postId === selectedPostId ? listingSnapshot.post : null
   const [listingLoading, setListingLoading] = useState(false)
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set())
   const [roomDetailId, setRoomDetailId] = useState<string | null>(null)
@@ -483,7 +485,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       setSelectedPlace(null)
       setPlaceLoading(false)
     } else {
-      setListingDetail(null)
+      setListingSnapshot(null)
       setListingLoading(false)
     }
   }, [selectedPostId])
@@ -491,25 +493,26 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   // Fetch full listing when a pin/card is selected.
   useEffect(() => {
     if (!selectedPostId || marketMode) {
-      setListingDetail(null)
+      setListingSnapshot(null)
       setListingLoading(false)
       return
     }
     const seq = ++listingFetchSeq.current
+    const controller = new AbortController()
     setListingLoading(true)
-    void getRentalPost(selectedPostId, { auth: isAuthenticated })
+    void getRentalPost(selectedPostId, { auth: isAuthenticated, signal: controller.signal })
       .then((post) => {
-        if (seq !== listingFetchSeq.current) return
-        setListingDetail(post)
+        if (seq !== listingFetchSeq.current || controller.signal.aborted) return
+        setListingSnapshot({ viewer: listingViewer, postId: selectedPostId, post })
         setListingLoading(false)
       })
       .catch(() => {
-        if (seq !== listingFetchSeq.current) return
-        setListingDetail(null)
+        if (seq !== listingFetchSeq.current || controller.signal.aborted) return
+        setListingSnapshot(null)
         setListingLoading(false)
       })
-
-  }, [selectedPostId, isAuthenticated, marketMode])
+    return () => controller.abort()
+  }, [selectedPostId, isAuthenticated, listingViewer, marketMode])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -535,7 +538,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     setFocusedPostId(null)
     setSelectedPlace(null)
     setPlaceLoading(false)
-    setListingDetail(null)
+    setListingSnapshot(null)
     setListingLoading(false)
     setNearbyFocus(null)
     setSharedLocationPin(null)
@@ -614,7 +617,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     if (!placeFocusToken || !next) return
     onClearSelection()
     setSelectedMarketplaceId(null)
-    setListingDetail(null)
+    setListingSnapshot(null)
     setNearbyFocus(null)
 
     const synthetic = buildSyntheticMapPlace({

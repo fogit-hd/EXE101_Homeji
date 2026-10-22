@@ -36,6 +36,8 @@ import { ConversationListSkeleton } from '../skeletons/PageSkeletons'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { LiquidTabList } from '../ui/LiquidTabList'
 import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
+import { useAuth } from '../../contexts/AuthContext'
+import { RentalMessageDraftNotice } from './RentalMessageDraftNotice'
 import './MapMessagesPanel.css'
 
 type InboxFilter = 'all' | 'unread' | 'rental'
@@ -418,6 +420,7 @@ export function MapMessagesPanel({
   const isFloating = isFloatingInbox || isFloatingThread
   /** FeatureWorkspace page (not map dock): split inbox | thread. */
   const isWorkspace = embedded && !isFloating
+  const { profile } = useAuth()
 
   const [conversations, setConversations] = useState<PostConversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
@@ -1342,6 +1345,8 @@ export function MapMessagesPanel({
             </form>
           ) : null}
 
+          <RentalMessageDraftNotice userId={me && me === profile?.id ? me : undefined} conversation={active} existingDraft={draft}
+            onUse={body => { setDraft(body) }} />
           <form
             className="map-messages__composer"
             onSubmit={(e) => {
@@ -1359,11 +1364,20 @@ export function MapMessagesPanel({
             >
               <svg viewBox="0 0 24 24" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
-            <input
+            <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              rows={2}
+              maxLength={2000}
+              onKeyDown={event => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault()
+                  if (!sending && (imageFiles.length > 0 || draft.trim())) event.currentTarget.form?.requestSubmit()
+                }
+              }}
               placeholder={activeId ? `Nhắn cho ${peerName}…` : 'Nhập tin nhắn…'}
               aria-label="Nội dung tin nhắn"
+              title="Enter để gửi, Shift + Enter để xuống dòng"
               disabled={!activeId}
             />
             <button
