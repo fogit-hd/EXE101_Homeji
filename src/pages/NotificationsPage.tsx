@@ -108,10 +108,11 @@ export function NotificationsPage({
     <button
       type="button"
       className={popup ? 'hj-notify__mark-all' : 'btn btn-secondary btn-sm'}
+      aria-label="Đánh dấu tất cả đã đọc"
       disabled={readBusy !== null}
       onClick={() => void handleMarkAll()}
     >
-      {readBusy === 'all' ? 'Đang đánh dấu…' : 'Đánh dấu tất cả đã đọc'}
+      {readBusy === 'all' ? 'Đang đánh dấu…' : popup ? 'Đọc tất cả' : 'Đánh dấu tất cả đã đọc'}
     </button>
   )
 

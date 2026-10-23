@@ -16,20 +16,6 @@ html:root #root .guest-fixed-cta__go { background: #175c57; color: #fff; border-
 html[data-theme='dark']:root #root .guest-fixed-cta__go { background: #80d9db; color: #102a30; }
 /* Inbox rows have one primary target and a separate, always-visible read action. */
 html:root #root .hj-notify__pop { border-radius: 16px; background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); backdrop-filter: none; }
-html:root #root .hj-nrow-list { padding: 0 12px 12px; }
-html:root #root .hj-nrow { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); border-radius: 0; background: var(--surface-elevated); }
-html:root #root .hj-nrow__main { flex: 1; min-width: 0; width: auto; padding: 16px 8px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-html:root #root .hj-nrow.is-unread { border-left: 3px solid var(--hj-accent); background: var(--hj-accent-soft); }
-html:root #root .hj-nrow.is-unread .hj-nrow__main { background: transparent; }
-html:root #root .hj-nrow__main:hover { background: var(--surface-input); }
-html:root #root .hj-nrow__body { padding: 0; }
-html:root #root .hj-nrow__top { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-html:root #root .hj-nrow__title { white-space: normal; line-height: 1.5; color: var(--text-heading); }
-html:root #root .hj-nrow__msg { color: var(--text-secondary); line-height: 1.65; }
-html:root #root .hj-nrow__time { color: var(--text-secondary); opacity: 1; font-size: 11px; }
-html:root #root .hj-nrow__icon { background: var(--surface-input); color: var(--hj-accent); border-radius: 10px; }
-html:root #root .hj-nrow__read { position: static; flex: none; width: 36px; height: 44px; opacity: 1; transform: none; box-shadow: none; border: 0; border-radius: 8px; background: transparent; color: var(--hj-accent); margin-right: 2px; }
-html:root #root .hj-nrow__dot { display: none; }
 html:root #root .map-chatbot__privacy { border-top: 1px solid var(--border); background: var(--surface-muted); padding: 12px 16px; color: var(--text-secondary); }
 html:root #root .map-chatbot__privacy summary { padding: 8px 0; min-height: 40px; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; color: var(--text-heading); box-shadow: none; font-weight: 600; }
 html:root #root .map-chatbot__privacy p { font-size: 12px; line-height: 1.8; }
@@ -71,11 +57,3 @@ html:root #root .hub-market h2 { color: var(--text-heading); }
 html:root #root .hub-market > a { color: var(--hj-accent); }
 html:root #root .hub-market__thumb { display: block; position: relative; overflow: hidden; }
 html:root #root .hub-market__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-html:root #root .hj-nrow-list { margin: 0; list-style: none; }
-html:root #root .hj-nrow__main { display: flex; align-items: flex-start; gap: 12px; color: var(--text-primary); text-align: left; font: inherit; cursor: pointer; }
-html:root #root .hj-nrow__body { display: block; min-width: 0; flex: 1; }
-html:root #root .hj-nrow__title { flex: 1; font-size: 14px; font-weight: 600; }
-html:root #root .hj-nrow__msg { display: block; font-size: 13px; margin-top: 4px; }
-html:root #root .hj-nrow__icon { display: grid; position: relative; place-items: center; flex: none; width: 36px; height: 36px; }
-html:root #root .hj-nrow__sev { position: absolute; width: 8px; height: 8px; border-radius: 50%; bottom: -1px; right: -1px; background: var(--hj-accent); }
-html:root #root .hj-nrow__read { display: grid; place-items: center; cursor: pointer; }

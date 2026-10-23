@@ -1,3 +1,6 @@
+import { notificationTypeLabel } from '../lib/labels'
+import { notificationDisplayMessage, notificationGroups } from '../lib/notificationInbox'
+import './NotificationPopupList.css'
 import { relativeTime } from '../lib/notificationTime'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -91,47 +94,50 @@ export function NotificationPopupList({
     )
   }
   return (
-    <ul className="hj-nrow-list" data-glass-exclude>
-      <AnimatePresence initial={false}>
-        {items.map((n, index) => {
-          const { importance } = getNotificationPresentation(n)
-          const target = onOpen && notificationTargetHref(n) ? n : null
-          const activate = () => {
-            if (!n.isRead) onMarkRead(n.id)
-            if (target) onOpen?.(n)
-          }
-          return (
-            <motion.li
-              key={n.id}
-              layout="position"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0, transition: { delay: Math.min(index, 8) * 0.025 } }}
-              exit={{ opacity: 0, height: 0 }}
-              className={`hj-nrow hj-nrow--${importance}${n.isRead ? '' : ' is-unread'}`}
-            >
-              <button type="button" className="hj-nrow__main" onClick={activate}
-                aria-label={`${n.title}${n.isRead ? '' : ', chưa đọc'}`}>
-                <span className="hj-nrow__icon"><Glyph name={iconFor(n.type)} /><i className="hj-nrow__sev" /></span>
-                <span className="hj-nrow__body">
-                  <span className="hj-nrow__top">
+    <div className="hj-notify-feed" data-glass-exclude>
+      {notificationGroups(items, now).map(group => <section className="hj-notify-feed__group" key={group.label} aria-label={group.label}>
+        <h3 className="hj-notify-feed__day">{group.label}</h3>
+        <ul className="hj-nrow-list">
+          <AnimatePresence initial={false}>
+            {group.items.map(n => {
+              const { importance } = getNotificationPresentation(n)
+              const target = onOpen && notificationTargetHref(n) ? n : null
+              const activate = () => {
+                if (!n.isRead && readBusy === null) onMarkRead(n.id)
+                if (target) onOpen?.(n)
+              }
+              const reference = n.relatedEntityId && n.type === NotificationType.MarketplaceOrderUpdated
+                ? `Đơn #${n.relatedEntityId.replaceAll('-', '').slice(-8).toUpperCase()}` : null
+              return <motion.li key={n.id} layout="position" initial={false}
+                exit={{ opacity: 0, height: 0 }} className={`hj-nrow hj-nrow--${importance}${n.isRead ? '' : ' is-unread'}`}>
+                <button type="button" className="hj-nrow__main" onClick={activate}
+                  disabled={!target && (n.isRead || readBusy !== null)}
+                  aria-label={`${n.title}${n.isRead ? ', đã đọc' : ', chưa đọc'}`}>
+                  <span className="hj-nrow__icon"><Glyph name={iconFor(n.type)} /></span>
+                  <span className="hj-nrow__body">
+                    <span className="hj-nrow__meta">
+                      <span>{n.type === NotificationType.MarketplaceOrderUpdated ? 'Chợ Homeji' : notificationTypeLabel[n.type] ?? 'Thông báo'}</span>
+                      <time className="hj-nrow__time" dateTime={n.createdAt} title={new Date(n.createdAt).toLocaleString('vi-VN')}>
+                        {relativeTime(n.createdAt, now)}
+                      </time>
+                    </span>
                     <span className="hj-nrow__title">{n.title}</span>
-                    <time className="hj-nrow__time" dateTime={n.createdAt}>{relativeTime(n.createdAt, now)}</time>
+                    <span className="hj-nrow__msg">{notificationDisplayMessage(n.message)}</span>
+                    {reference ? <span className="hj-nrow__reference">{reference}</span> : null}
                   </span>
-                  <span className="hj-nrow__msg">{n.message}</span>
-                </span>
-                {!n.isRead ? <span className="hj-nrow__dot" aria-hidden="true" /> : null}
-              </button>
-              {!n.isRead ? (
-                <button type="button" className="hj-nrow__read" title="Đánh dấu đã đọc"
-                  aria-label="Đánh dấu đã đọc" disabled={readBusy !== null}
-                  onClick={() => onMarkRead(n.id)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                 </button>
-              ) : null}
-            </motion.li>
-          )
-        })}
-      </AnimatePresence>
-    </ul>
+                <div className="hj-nrow__footer">
+                  <span className={`hj-nrow__status${n.isRead ? '' : ' is-unread'}`}>{n.isRead ? 'Đã đọc' : 'Chưa đọc'}</span>
+                  {!n.isRead ? <button type="button" className="hj-nrow__read" disabled={readBusy !== null}
+                    aria-label={`Đánh dấu đã đọc: ${n.title}`} onClick={() => onMarkRead(n.id)}>
+                    {readBusy === n.id ? 'Đang đánh dấu…' : 'Đánh dấu đã đọc'}
+                  </button> : null}
+                </div>
+              </motion.li>
+            })}
+          </AnimatePresence>
+        </ul>
+      </section>)}
+    </div>
   )
 }
