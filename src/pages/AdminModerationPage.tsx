@@ -34,7 +34,8 @@ import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { AdminAnalyticsSkeleton, AdminSkeleton } from '../components/skeletons/PageSkeletons'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { LiquidTabList } from '../components/ui/LiquidTabList'
+import { AdminWorkspaceNav } from '../components/admin/AdminWorkspaceNav'
+import './AdminWorkspace.css'
 import { useAuth } from '../contexts/AuthContext'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
 import { getErrorMessage } from '../lib/errors'
@@ -65,8 +66,12 @@ export function AdminModerationPage() {
   const [analyticsAttempt, setAnalyticsAttempt] = useState(0)
   const [tab, setTab] = useState<'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('overview')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
-  const [rejectReason, setRejectReason] = useState('')
-  const [resolutionNote, setResolutionNote] = useState('')
+  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
+  const [withdrawalNotes, setWithdrawalNotes] = useState<Record<string, string>>({})
+  const [verificationNotes, setVerificationNotes] = useState<Record<string, string>>({})
+  const [query, setQuery] = useState('')
+  const [pendingAction, setPendingAction] = useState<string | null>(null)
+  const actionLock = useRef(false)
   const [reportResolutionNotes, setReportResolutionNotes] = useState<Record<string, string>>({})
   const [consentVerificationNotes, setConsentVerificationNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
@@ -104,12 +109,11 @@ export function AdminModerationPage() {
     [reportStatus],
   )
 
-  const loadPosts = () => void reload()
-  const loadReports = () => void reload()
   const openAssistantTask = (kind: 'posts' | 'reports', id: string) => {
     setTaskNotice('')
     taskFocusRef.current = { kind, id, afterRevision: queueSnapshot.revision + 1 }
     setTab(kind)
+    setQuery('')
     if (kind === 'reports') setReportStatus(ReportStatus.Pending)
     void reload()
   }
@@ -221,7 +225,7 @@ export function AdminModerationPage() {
         delete next[post.id]
         return next
       })
-      void loadPosts()
+      await reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Duyệt thất bại'))
     }
@@ -229,10 +233,10 @@ export function AdminModerationPage() {
 
   const handleRejectPost = async (postId: string) => {
     try {
-      await rejectRentalPost(postId, rejectReason)
+      await rejectRentalPost(postId, rejectReasons[postId] ?? '')
       setMessage('Đã từ chối tin đăng.')
-      setRejectReason('')
-      void loadPosts()
+      setRejectReasons(current => ({ ...current, [postId]: '' }))
+      await reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Từ chối thất bại'))
     }
@@ -247,7 +251,7 @@ export function AdminModerationPage() {
         delete next[reportId]
         return next
       })
-      void loadReports()
+      await reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Xử lý thất bại'))
     }
@@ -262,13 +266,14 @@ export function AdminModerationPage() {
         delete next[reportId]
         return next
       })
-      void loadReports()
+      await reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Thao tác thất bại'))
     }
   }
 
   const handleCompleteWithdrawal = async (id: string) => {
+    const resolutionNote = withdrawalNotes[id]?.trim() ?? ''
     if (!resolutionNote.trim()) {
       setError('Vui lòng nhập mã giao dịch chuyển khoản trước khi xác nhận.')
       return
@@ -277,14 +282,15 @@ export function AdminModerationPage() {
     try {
       await completeWalletWithdrawal(id, resolutionNote || undefined)
       setMessage('Đã xác nhận chuyển khoản thành công.')
-      setResolutionNote('')
-      void reload()
+      setWithdrawalNotes(current => ({ ...current, [id]: '' }))
+      await reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể hoàn tất yêu cầu rút tiền.'))
     }
   }
 
   const handleRejectWithdrawal = async (id: string) => {
+    const resolutionNote = withdrawalNotes[id]?.trim() ?? ''
     if (!resolutionNote.trim()) {
       setError('Vui lòng nhập lý do từ chối để người dùng đối soát.')
       return
@@ -293,66 +299,88 @@ export function AdminModerationPage() {
     try {
       await rejectWalletWithdrawal(id, resolutionNote || undefined)
       setMessage('Đã từ chối và hoàn tiền vào ví người dùng.')
-      setResolutionNote('')
-      void reload()
+      setWithdrawalNotes(current => ({ ...current, [id]: '' }))
+      await reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể từ chối yêu cầu rút tiền.'))
     }
   }
 
-  const adminTabs = (
-    <LiquidTabList className="tabs" role="tablist" aria-label="Mục quản trị">
-      <button type="button" role="tab" aria-selected={tab === 'overview'} className={`tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
-        Tổng quan sản phẩm
-      </button>
-      <button type="button" role="tab" aria-selected={tab === 'posts'} className={`tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => setTab('posts')}>
-        Tin chờ duyệt ({pendingPosts.length})
-      </button>
-      <button type="button" role="tab" aria-selected={tab === 'reports'} className={`tab ${tab === 'reports' ? 'active' : ''}`} onClick={() => setTab('reports')}>
-        Báo cáo <span className="admin-tab-badge">{reports.length}</span>
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={tab === 'verifications'}
-        className={`tab ${tab === 'verifications' ? 'active' : ''}`}
-        onClick={() => setTab('verifications')}
-      >
-        Xác minh chủ nhà ({verifications.length})
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={tab === 'withdrawals'}
-        className={`tab ${tab === 'withdrawals' ? 'active' : ''}`}
-        onClick={() => setTab('withdrawals')}
-      >
-        Rút tiền ({withdrawals.length})
-      </button>
-      <button type="button" role="tab" aria-selected={tab === 'active'} className={`tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>
-        Đang hoạt động ({activeUsers.filter((user) => user.isOnline).length})
-      </button>
-      <button type="button" role="tab" aria-selected={tab === 'maintenance'} className={`tab ${tab === 'maintenance' ? 'active' : ''}`} onClick={() => setTab('maintenance')}>
-        Bảo trì
-      </button>
-    </LiquidTabList>
-  )
+  const selectTab = (next: typeof tab) => {
+    setTab(next)
+    setQuery('')
+    setTaskNotice('')
+  }
+  // Lock synchronously so rapid clicks cannot submit the same decision twice.
+  const runAction = async (key: string, action: () => Promise<void>) => {
+    if (actionLock.current) return
+    actionLock.current = true
+    setPendingAction(key)
+    setError('')
+    setMessage('')
+    try { await action() }
+    finally { actionLock.current = false; setPendingAction(null) }
+  }
+  const handleReviewVerification = async (id: string, approved: boolean) => {
+    try {
+      await reviewLandlordVerification(id, { approved, note: verificationNotes[id]?.trim() || undefined })
+      setMessage(approved ? 'Đã duyệt xác minh.' : 'Đã từ chối xác minh.')
+      setVerificationNotes(current => ({ ...current, [id]: '' }))
+      await reload()
+    } catch (err) { setError(getErrorMessage(err, 'Không thể lưu kết quả xác minh.')) }
+  }
+  const counts = { posts: pendingPosts.length, reports: reports.length, verifications: verifications.length,
+    withdrawals: withdrawals.length, active: activeUsers.filter(user => user.isOnline).length }
+  const sectionInfo = {
+    overview: ['Tổng quan sản phẩm', 'Hàng chờ, hoạt động và thị trường.'],
+    posts: ['Tin chờ duyệt', 'Kiểm tra thông tin và sự đồng ý của chủ nhà trước khi duyệt.'],
+    reports: ['Báo cáo', 'Đọc nội dung bị báo cáo, ghi lại kết quả kiểm tra rồi đưa ra kết luận.'],
+    verifications: ['Xác minh chủ nhà', 'Đối chiếu giấy tờ và lưu ghi chú cho từng hồ sơ.'],
+    withdrawals: ['Yêu cầu rút tiền', 'Đối chiếu người nhận và mã chuyển khoản trước khi xác nhận.'],
+    active: ['Người đang hoạt động', 'Theo dõi kết nối và quản lý phiên đăng nhập.'],
+    maintenance: ['Bảo trì', 'Soạn nội dung và thời gian dự kiến để thông báo cho người dùng.'],
+  }
+  const matches = (...values: (string | null | undefined)[]) => !query.trim()
+    || values.some(value => value?.toLocaleLowerCase('vi-VN').includes(query.trim().toLocaleLowerCase('vi-VN')))
+  const visiblePosts = pendingPosts.filter(post => matches(post.title, post.address))
+  const visibleReports = reports.filter(report => matches(report.targetDisplayName, report.reporterDisplayName, report.reason, report.description))
+  const visibleVerifications = verifications.filter(item => matches(item.applicantDisplayName, item.applicantNote))
+  const visibleWithdrawals = withdrawals.filter(item => matches(item.accountHolder, item.accountNumber, item.bankName, item.userId))
+  const visibleUsers = activeUsers.filter(user => matches(user.displayName))
+  const visibleCounts = { posts: visiblePosts.length, reports: visibleReports.length, verifications: visibleVerifications.length,
+    withdrawals: visibleWithdrawals.length, active: visibleUsers.length }
+  const searchable = tab !== 'overview' && tab !== 'maintenance'
 
   return (
-    <PageFrame title="Điều hành Homeji" lead="Theo dõi sản phẩm, thị trường và vận hành trên cùng một màn hình." filters={adminTabs} className="account-surface admin-workspace">
-      <Link to="/?section=listings&view=map">Xem trang tìm phòng</Link>
+    <PageFrame title="Điều hành Homeji" eyebrow="HOMEJI / ADMIN" lead="Nắm tình hình. Xử lý đúng việc."
+      actions={<Link className="btn btn-secondary" to="/?section=listings&view=map">Xem trang tìm phòng ↗</Link>}
+      className="account-surface admin-workspace">
+      <div className="admin-layout" data-glass-exclude>
+      <AdminWorkspaceNav selected={tab} counts={showLoader || loadError ? {} : counts} onSelect={selectTab} />
+      <section className="admin-content" aria-label={sectionInfo[tab][0]}>
+      {tab !== 'overview' ? <header className="admin-section-heading">
+        <div><span className="admin-section-kicker">Quản lý</span><h2>{sectionInfo[tab][0]}</h2><p>{sectionInfo[tab][1]}</p></div>
+        <button type="button" className="btn btn-secondary btn-sm" disabled={showLoader || pendingAction !== null} onClick={() => void reload()}>Làm mới</button>
+      </header> : null}
+      {searchable ? <div className="admin-queue-tools"><label htmlFor="admin-queue-search">Tìm trong danh sách</label>
+        <div className="admin-queue-search"><input id="admin-queue-search" type="search" className="form-input" placeholder={tab === 'withdrawals' ? 'Tên, ngân hàng hoặc số tài khoản…' : 'Nhập tên hoặc nội dung…'} value={query} onChange={event => setQuery(event.target.value)} />
+        {query ? <button type="button" className="btn btn-ghost btn-sm" onClick={() => setQuery('')}>Xóa tìm kiếm</button> : null}</div>
+        {!showLoader && !loadError ? <small role="status">{visibleCounts[tab]} mục trong danh sách{query ? ' khớp tìm kiếm' : ''}</small> : null}
+      </div> : null}
       <PageNotice message={error || (loadError && !disrupted ? loadError : '')} tone="error" />
       <PageNotice message={message} tone="success" />
       {taskNotice ? <p role="status">{taskNotice}</p> : null}
+      {pendingAction ? <p className="admin-saving" role="status">Đang lưu kết quả xử lý…</p> : null}
 
       {tab === 'overview' ? (
         <>
-          {aiFeatureFlags.adminSummary ? <AdminAssistant onOpen={openAssistantTask} onRefreshQueues={reload}>
-            <AdminOperationsSummary counts={{ posts: pendingPosts.length, reports: reports.length, verifications: verifications.length, withdrawals: withdrawals.length }}
-              analytics={!analyticsLoading && !analyticsError ? analytics : null} loading={showLoader} error={loadError || ''} onOpen={setTab} />
-          </AdminAssistant> : null}
-          <PageNotice message={analyticsError} tone="error" />
-          {analyticsError && !analyticsLoading ? <button type="button" className="btn btn-secondary" onClick={() => { setAnalyticsLoading(true); setAnalyticsAttempt((n) => n + 1) }}>Thử lại</button> : null}
+          <AdminOperationsSummary counts={counts} reportLabel={reportStatus === undefined ? 'Tất cả trạng thái' : reportStatusLabel[reportStatus]}
+            loading={showLoader} error={loadError || ''} onOpen={selectTab} />
+          {loadError && !showLoader ? <button type="button" className="btn btn-secondary" onClick={() => void reload()}>Tải lại hàng chờ</button> : null}
+          {aiFeatureFlags.adminSummary ? <AdminAssistant onOpen={openAssistantTask} onRefreshQueues={reload} /> : null}
+          {analyticsError ? <div className="admin-load-error" role="alert"><strong>Chưa cập nhật được báo cáo sản phẩm</strong><p>{analyticsError}</p>
+            <button type="button" className="btn btn-secondary" disabled={analyticsLoading} onClick={() => { setAnalyticsLoading(true); setAnalyticsAttempt((n) => n + 1) }}>{analyticsLoading ? 'Đang tải lại…' : 'Thử lại'}</button>
+          </div> : null}
           {analytics && (!analyticsError || analytics.periodDays === analyticsDays) ? <AdminAnalyticsDashboard data={analytics} days={analytics.periodDays} loading={analyticsLoading} onDaysChange={handleAnalyticsDaysChange} /> : analyticsLoading ? <AdminAnalyticsSkeleton /> : null}
         </>
       ) : null}
@@ -391,7 +419,7 @@ export function AdminModerationPage() {
             <div className="admin-maintenance-footer">
               <small>Thông báo được lưu lại để người offline đọc sau khi đăng nhập.</small>
               <button type="button" className="btn btn-primary" disabled={sendingMaintenance} onClick={() => void handleSendMaintenance()}>
-                {sendingMaintenance ? 'Đang gửi…' : 'Gửi đến toàn bộ user'}
+                {sendingMaintenance ? 'Đang gửi…' : 'Gửi thông báo cho tất cả tài khoản'}
               </button>
             </div>
           </div>
@@ -404,10 +432,10 @@ export function AdminModerationPage() {
             <strong>{activeUsers.filter((user) => user.isOnline).length} người đang hoạt động</strong>
             <span>Tự cập nhật mỗi 30 giây · dựa trên kết nối realtime đang mở</span>
           </div>
-          {activeUsers.length === 0 ? (
-            <div className="empty-state card">Hiện chưa có người dùng đang kết nối.</div>
+          {visibleUsers.length === 0 ? (
+            <div className="empty-state card">{query ? 'Không tìm thấy mục phù hợp. Thử từ khóa khác hoặc xóa tìm kiếm.' : 'Hiện chưa có người dùng đang kết nối.'}</div>
           ) : (
-            activeUsers.map((user) => (
+            visibleUsers.map((user) => (
               <article key={user.userId} className={`card admin-item admin-presence-item${user.isOnline ? ' is-online' : ''}`}>
                 <div className="admin-presence-user">
                   <span className="admin-presence-avatar" aria-hidden>
@@ -429,6 +457,7 @@ export function AdminModerationPage() {
                         <textarea
                           className="form-textarea"
                           maxLength={300}
+                          aria-label={`Lý do kết thúc phiên: ${user.displayName}`}
                           placeholder="Lý do kết thúc phiên…"
                           value={terminationReasons[user.userId] ?? ''}
                           onChange={(event) => setTerminationReasons((current) => ({ ...current, [user.userId]: event.target.value }))}
@@ -455,10 +484,10 @@ export function AdminModerationPage() {
 
       {tab === 'posts' && (
         <div className="admin-list">
-          {pendingPosts.length === 0 ? (
-            <div className="empty-state card">Không có tin chờ duyệt.</div>
+          {visiblePosts.length === 0 ? (
+            <div className="empty-state card">{query ? 'Không tìm thấy mục phù hợp. Thử từ khóa khác hoặc xóa tìm kiếm.' : 'Không có tin chờ duyệt.'}</div>
           ) : (
-            pendingPosts.map((post) => (
+            visiblePosts.map((post) => (
               <article key={post.id} id={`admin-posts-${post.id}`} tabIndex={-1} className="card admin-item admin-task-target" aria-label={post.title || 'Tin chờ duyệt'}>
                 <div>
                   {post.ownerConsentContact ? (
@@ -472,6 +501,7 @@ export function AdminModerationPage() {
                       </label>
                       <textarea
                         id={`consent-note-${post.id}`}
+                        disabled={pendingAction !== null}
                         className="form-textarea"
                         maxLength={500}
                         placeholder="Ví dụ: Đã gọi số trên hợp đồng lúc 14:30; chủ nhà xác nhận cho chuyển hợp đồng đến 01/02/2027."
@@ -491,16 +521,19 @@ export function AdminModerationPage() {
                   </Link>
                 </div>
                 <div className="admin-actions">
-                  <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleApprove(post)}>
+                  <button type="button" className="btn btn-primary btn-sm" disabled={pendingAction !== null} onClick={() => void runAction(post.id, () => handleApprove(post))}>
                     Duyệt
                   </button>
-                  <input
+                  <label className="admin-review-label" htmlFor={`reject-${post.id}`}>Lý do nếu từ chối</label>
+                  <input id={`reject-${post.id}`}
+                    disabled={pendingAction !== null}
                     className="form-input"
                     placeholder="Lý do từ chối"
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
+                    aria-label={`Lý do từ chối: ${post.title}`}
+                    value={rejectReasons[post.id] ?? ''}
+                    onChange={(e) => setRejectReasons(current => ({ ...current, [post.id]: e.target.value }))}
                   />
-                  <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleRejectPost(post.id)}>
+                  <button type="button" className="btn btn-danger btn-sm" disabled={pendingAction !== null} onClick={() => void runAction(post.id, () => handleRejectPost(post.id))}>
                     Từ chối
                   </button>
                 </div>
@@ -527,10 +560,10 @@ export function AdminModerationPage() {
           </ChoicePicker>
 
           <div className="admin-list">
-            {reports.length === 0 ? (
-              <div className="empty-state card">Không có báo cáo.</div>
+            {visibleReports.length === 0 ? (
+              <div className="empty-state card">{query ? 'Không tìm thấy mục phù hợp. Thử từ khóa khác hoặc xóa tìm kiếm.' : 'Không có báo cáo.'}</div>
             ) : (
-              reports.map((r) => (
+              visibleReports.map((r) => (
                 <article key={r.id} id={`admin-reports-${r.id}`} tabIndex={-1} className="card admin-item admin-report-item admin-task-target" aria-label={`Báo cáo: ${r.targetDisplayName || 'Nội dung cần kiểm tra'}`}>
                   <div className="admin-report-content">
                     <div className="admin-report-badges">
@@ -571,8 +604,11 @@ export function AdminModerationPage() {
                   </div>
                   {r.status === ReportStatus.Pending && (
                     <div className="admin-actions admin-report-actions">
-                      <textarea
+                      <label className="admin-review-label" htmlFor={`report-note-${r.id}`}>Kết quả kiểm tra</label>
+                      <textarea id={`report-note-${r.id}`}
+                        disabled={pendingAction !== null}
                         className="form-textarea"
+                        aria-label={`Kết quả kiểm tra: ${r.targetDisplayName || 'Báo cáo'}`}
                         placeholder="Ghi rõ cách đã kiểm tra hoặc lý do kết luận"
                         value={reportResolutionNotes[r.id] ?? ''}
                         onChange={(e) => setReportResolutionNotes((current) => ({
@@ -581,10 +617,10 @@ export function AdminModerationPage() {
                         }))}
                         maxLength={500}
                       />
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => void handleResolveReport(r.id)}>
+                      <button type="button" className="btn btn-primary btn-sm" disabled={pendingAction !== null} onClick={() => void runAction(r.id, () => handleResolveReport(r.id))}>
                         Xác nhận vi phạm
                       </button>
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleRejectReport(r.id)}>
+                      <button type="button" className="btn btn-secondary btn-sm" disabled={pendingAction !== null} onClick={() => void runAction(r.id, () => handleRejectReport(r.id))}>
                         Không vi phạm
                       </button>
                     </div>
@@ -597,10 +633,10 @@ export function AdminModerationPage() {
       )}
       {tab === 'verifications' && (
         <div className="admin-list">
-          {verifications.length === 0 ? (
-            <div className="empty-state card">Không có yêu cầu xác minh chờ duyệt.</div>
+          {visibleVerifications.length === 0 ? (
+            <div className="empty-state card">{query ? 'Không tìm thấy mục phù hợp. Thử từ khóa khác hoặc xóa tìm kiếm.' : 'Không có yêu cầu xác minh chờ duyệt.'}</div>
           ) : (
-            verifications.map((v) => (
+            visibleVerifications.map((v) => (
               <article key={v.id} className="card admin-item">
                 <div>
                   <span className="badge badge-gray">{landlordVerificationLabel[v.status]}</span>
@@ -614,37 +650,28 @@ export function AdminModerationPage() {
                   <small>{formatDate(v.createdAt)}</small>
                 </div>
                 <div className="admin-actions">
-                  <input
+                  <label className="admin-review-label" htmlFor={`verification-note-${v.id}`}>Ghi chú xử lý</label>
+                  <input id={`verification-note-${v.id}`}
+                    disabled={pendingAction !== null}
                     className="form-input"
                     placeholder="Ghi chú duyệt"
-                    value={resolutionNote}
-                    onChange={(e) => setResolutionNote(e.target.value)}
+                    aria-label={`Ghi chú duyệt: ${v.applicantDisplayName}`}
+                    value={verificationNotes[v.id] ?? ''}
+                    onChange={(e) => setVerificationNotes(current => ({ ...current, [v.id]: e.target.value }))}
                   />
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
-                    onClick={() => {
-                      void reviewLandlordVerification(v.id, { approved: true, note: resolutionNote || undefined })
-                        .then(() => {
-                          setMessage('Đã duyệt xác minh.')
-                          void reload()
-                        })
-                        .catch((err) => setError(getErrorMessage(err, 'Duyệt thất bại')))
-                    }}
+                    disabled={pendingAction !== null}
+                    onClick={() => void runAction(v.id, () => handleReviewVerification(v.id, true))}
                   >
                     Duyệt
                   </button>
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"
-                    onClick={() => {
-                      void reviewLandlordVerification(v.id, { approved: false, note: resolutionNote || undefined })
-                        .then(() => {
-                          setMessage('Đã từ chối xác minh.')
-                          void reload()
-                        })
-                        .catch((err) => setError(getErrorMessage(err, 'Từ chối thất bại')))
-                    }}
+                    disabled={pendingAction !== null}
+                    onClick={() => void runAction(v.id, () => handleReviewVerification(v.id, false))}
                   >
                     Từ chối
                   </button>
@@ -656,37 +683,44 @@ export function AdminModerationPage() {
       )}
       {tab === 'withdrawals' && (
         <div className="admin-list">
-          {withdrawals.length === 0 ? (
-            <div className="empty-state card">Không có yêu cầu rút tiền chờ xử lý.</div>
+          {visibleWithdrawals.length === 0 ? (
+            <div className="empty-state card">{query ? 'Không tìm thấy mục phù hợp. Thử từ khóa khác hoặc xóa tìm kiếm.' : 'Không có yêu cầu rút tiền chờ xử lý.'}</div>
           ) : (
-            withdrawals.map((withdrawal) => (
+            visibleWithdrawals.map((withdrawal) => (
               <article key={withdrawal.id} className="card admin-item">
                 <div>
                   <span className="badge badge-blue">Chờ chuyển khoản</span>
                   <h3>{formatPrice(withdrawal.amount)}</h3>
-                  <p><strong>{withdrawal.bankName}</strong> · {withdrawal.accountNumber}</p>
-                  <p>Chủ tài khoản: <strong>{withdrawal.accountHolder}</strong></p>
-                  <small>User ID: {withdrawal.userId} · {formatDate(withdrawal.createdAt)}</small>
+                  <dl className="admin-withdrawal-details">
+                    <div><dt>Ngân hàng</dt><dd>{withdrawal.bankName}</dd></div>
+                    <div><dt>Số tài khoản</dt><dd>{withdrawal.accountNumber}</dd></div>
+                    <div><dt>Chủ tài khoản</dt><dd>{withdrawal.accountHolder}</dd></div>
+                    <div><dt>Yêu cầu lúc</dt><dd>{formatDate(withdrawal.createdAt)}</dd></div>
+                  </dl>
+                  <details className="admin-reference"><summary>Thông tin đối soát</summary><small>Mã yêu cầu: {withdrawal.id}<br />Mã tài khoản: {withdrawal.userId}</small></details>
                 </div>
                 <div className="admin-actions">
-                  <input
+                  <label className="admin-review-label" htmlFor={`withdrawal-note-${withdrawal.id}`}>Mã chuyển khoản / lý do từ chối</label>
+                  <input id={`withdrawal-note-${withdrawal.id}`}
+                    disabled={pendingAction !== null}
                     className="form-input"
                     placeholder="Mã giao dịch hoặc lý do từ chối"
-                    value={resolutionNote}
-                    onChange={(event) => setResolutionNote(event.target.value)}
+                    aria-label={`Mã giao dịch hoặc lý do từ chối: ${withdrawal.accountHolder}`}
+                    value={withdrawalNotes[withdrawal.id] ?? ''}
+                    onChange={(event) => setWithdrawalNotes(current => ({ ...current, [withdrawal.id]: event.target.value }))}
                     maxLength={300}
                   />
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
-                    onClick={() => void handleCompleteWithdrawal(withdrawal.id)}
+                    disabled={pendingAction !== null} onClick={() => void runAction(withdrawal.id, () => handleCompleteWithdrawal(withdrawal.id))}
                   >
                     Xác nhận đã chuyển
                   </button>
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"
-                    onClick={() => void handleRejectWithdrawal(withdrawal.id)}
+                    disabled={pendingAction !== null} onClick={() => void runAction(withdrawal.id, () => handleRejectWithdrawal(withdrawal.id))}
                   >
                     Từ chối & hoàn tiền
                   </button>
@@ -698,6 +732,8 @@ export function AdminModerationPage() {
       )}
         </>
       ))}
+      </section>
+      </div>
     </PageFrame>
   )
 }

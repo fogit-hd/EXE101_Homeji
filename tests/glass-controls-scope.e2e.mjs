@@ -178,11 +178,11 @@ try {
  await page.keyboard.press('Escape');
  await page.emulateMedia({reducedMotion:'no-preference'});
 
- // The report-status picker is explicitly flat; other admin controls retain optics.
+ // Operational Admin controls and the report-status picker keep flat, readable surfaces.
  profileRole=3;
  await page.setViewportSize({width:1440,height:1000});
  await page.goto(base+'/admin');await ready();
- await page.getByRole('tab',{name:/^Báo cáo/}).click();
+ await page.getByRole('navigation',{name:'Mục quản trị'}).getByRole('button',{name:/^Báo cáo/}).click();
  const status=page.getByRole('combobox',{name:'Trạng thái báo cáo'});
  await status.waitFor();
  for(const theme of ['light','dark']){

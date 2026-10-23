@@ -9,7 +9,6 @@ test('admin reports display people and reported content instead of raw identifie
   assert.match(types, /reporterDisplayName: string/)
   assert.match(types, /targetDisplayName: string/)
   assert.match(types, /targetImagePath: string \| null/)
-  assert.match(page, /admin-tab-badge/)
   assert.match(page, /Người gửi báo cáo:/)
   assert.match(page, /Mở nội dung bị báo cáo/)
   assert.doesNotMatch(page, /\{r\.targetId\}/)

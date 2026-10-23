@@ -11,6 +11,6 @@ test('admin can send a persisted maintenance announcement to every user', () => 
   assert.match(api, /maintenance-announcements/)
   assert.match(types, /MaintenanceAnnouncement: 14/)
   assert.match(page, /Thông báo bảo trì toàn hệ thống|ThÃ´ng bÃ¡o báº£o trÃ¬ toÃ n há»‡ thá»‘ng/)
-  assert.match(page, /Gửi đến toàn bộ user|Gá»­i Ä‘áº¿n toÃ n bá»™ user/)
+  assert.match(page, /Gửi thông báo cho tất cả tài khoản/)
   assert.match(page, /datetime-local/)
 })

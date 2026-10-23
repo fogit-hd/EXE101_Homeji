@@ -94,11 +94,11 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
   ]
 
   return (
-    <div className={`admin-analytics${loading ? ' is-loading' : ''}`}>
+    <div className={`admin-analytics${loading ? ' is-loading' : ''}`} aria-busy={loading}>
       <div className="admin-analytics__toolbar">
         <div>
-          <span className="admin-analytics__eyebrow">Bảng điều hành sản phẩm</span>
-          <h2>Nhu cầu, nguồn cung và tín hiệu giá theo khu vực</h2>
+          <span className="admin-analytics__eyebrow">Tổng quan sản phẩm</span>
+          <h2>Hoạt động & thị trường</h2>
           <p>Dữ liệu từ hệ thống Homeji, không phải dự báo do AI tự sinh. Có thể bao gồm tin mẫu và hoạt động kiểm thử; cần đối soát trước quyết định kinh doanh.</p>
         </div>
         <div className="admin-analytics__range" role="group" aria-label="Khoảng thời gian phân tích">
@@ -116,6 +116,8 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
           ))}
         </div>
       </div>
+
+      {loading ? <p role="status">Đang cập nhật kỳ phân tích…</p> : null}
 
       <div className="admin-analytics__kpis">
         {cards.map((card) => (
@@ -248,9 +250,12 @@ function AreaDecisionCard({ area }: { area: AdminAreaInsight }) {
         <span className={`admin-price-signal is-${signal}`}>{signalLabels[signal]}</span>
         <h4>{area.areaName}</h4>
         <p>{adminPriceRecommendation(area)}</p>
-        <p>{prices.description}</p>
-        <p>{confidenceLabels[area.confidence]} · Dựa trên {area.totalViews.toLocaleString('vi-VN')} lượt xem tin, {area.totalSaves.toLocaleString('vi-VN')} lượt lưu và {area.viewingRequests.toLocaleString('vi-VN')} yêu cầu xem trong kỳ.</p>
-        <p className="admin-analytics__legend">Chỉ số cầu so mức quan tâm với toàn hệ thống: 100 là mốc tham chiếu. Không phải số khách hay xác suất thuê được. Gợi ý giá cần chủ nhà xem xét, không tự áp dụng.</p>
+        <details>
+          <summary>Cơ sở đánh giá & giới hạn</summary>
+          <p>{prices.description}</p>
+          <p>{confidenceLabels[area.confidence]} · Dựa trên {area.totalViews.toLocaleString('vi-VN')} lượt xem tin, {area.totalSaves.toLocaleString('vi-VN')} lượt lưu và {area.viewingRequests.toLocaleString('vi-VN')} yêu cầu xem trong kỳ.</p>
+          <p className="admin-analytics__legend">Chỉ số cầu so mức quan tâm với toàn hệ thống: 100 là mốc tham chiếu. Không phải số khách hay xác suất thuê được. Gợi ý giá cần chủ nhà xem xét, không tự áp dụng.</p>
+        </details>
       </div>
       <dl>
         <div><dt>Chỉ số cầu</dt><dd>{area.demandIndex}</dd></div>
@@ -278,7 +283,18 @@ function AdminTrendChart({
   points: AdminAnalyticsTrendPoint[]
   metric: TrendMetric
 }) {
-  const width = 720
+  const hostRef = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(720)
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    // Match the viewBox to the panel so axis labels keep their size on phones.
+    const measure = () => setWidth(Math.max(240, Math.round(host.clientWidth)))
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [])
   const height = 248
   const padding = { top: 24, right: 22, bottom: 42, left: 44 }
   const metricConfig = trendMetrics.find((item) => item.id === metric) ?? trendMetrics[0]
@@ -297,7 +313,7 @@ function AdminTrendChart({
   const labelIndexes = new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])
 
   return (
-    <div className="admin-trend-chart">
+    <div ref={hostRef} className="admin-trend-chart">
       <div className="admin-trend-chart__summary">
         <strong>{total.toLocaleString('vi-VN')}</strong>
         <span>{metricConfig.label.toLowerCase()} trong kỳ</span>

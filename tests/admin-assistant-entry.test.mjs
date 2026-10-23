@@ -18,6 +18,7 @@ const useAuth = () => ({ profile: { role: 3 } });
 const usePersistentLoad = () => ({ showLoader: false, error: '', reload: async () => {} });
 const aiFeatureFlags = { adminSummary: true };
 const ReportStatus = { Pending: 1 };
+const reportStatusLabel = { 1: 'Chờ xử lý' };
 const PageNotice = () => null;
 const ContentSkeleton = () => null;
 const AdminAnalyticsSkeleton = () => null;
@@ -25,7 +26,7 @@ const PageFrame = ({ children, tabs }) => React.createElement('main', null, tabs
 const Link = ({ children }) => React.createElement('a', null, children);
 `
 const components = await Promise.all([
-  'src/components/ui/LiquidTabList.tsx',
+  'src/components/admin/AdminWorkspaceNav.tsx',
   'src/components/admin/AdminOperationsSummary.tsx',
   'src/components/ai/AdminAssistant.tsx',
   'src/pages/AdminModerationPage.tsx',

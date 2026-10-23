@@ -1,18 +1,19 @@
-import type { AdminProductAnalytics } from '../../api'
-
 type Queue = 'posts' | 'reports' | 'verifications' | 'withdrawals'
-export function AdminOperationsSummary({ counts, analytics, loading, error, onOpen }: {
-  counts: Record<Queue, number>; analytics: AdminProductAnalytics | null; loading: boolean; error: string
+export function AdminOperationsSummary({ counts, reportLabel, loading, error, onOpen }: {
+  counts: Record<Queue, number>; reportLabel: string; loading: boolean; error: string
   onOpen: (queue: Queue) => void
 }) {
-  const labels: Record<Queue, string> = { posts: 'tin chờ duyệt', reports: 'báo cáo trong bộ lọc đang chọn', verifications: 'hồ sơ chủ nhà chờ xác minh', withdrawals: 'yêu cầu rút tiền chờ xử lý' }
-  return <div>
-    {loading ? <p role="status">Đang tải hàng chờ…</p> : error ? <p role="alert">Chưa có đủ dữ liệu hàng chờ để tóm tắt. {error}</p> : <>
-      <p>Số mục trong các danh sách đã tải ở lần gần nhất; không chỉ tính các mục tạo hôm nay và không suy ra tổng nếu danh sách bị giới hạn.</p>
-      <ul>{(Object.keys(labels) as Queue[]).map(queue => <li key={queue}>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onOpen(queue)}>{counts[queue].toLocaleString('vi-VN')} {labels[queue]} · mở danh sách</button>
+  const labels: Record<Queue, string> = { posts: 'Tin chờ duyệt', reports: 'Báo cáo', verifications: 'Xác minh chủ nhà', withdrawals: 'Yêu cầu rút tiền' }
+  return <section className="admin-queues" aria-labelledby="admin-queues-title">
+    <div className="admin-section-heading"><div><span className="admin-section-kicker">Vận hành</span><h2 id="admin-queues-title">Hàng chờ xử lý</h2></div><span>Mở một nhóm để kiểm tra</span></div>
+    {error ? <p role="alert">Chưa có đủ dữ liệu hàng chờ để tóm tắt. {error}</p> : loading ? <p role="status">Đang tải hàng chờ…</p> : <>
+      <ul className="admin-queues__grid">{(Object.keys(labels) as Queue[]).map(queue => <li key={queue}>
+        <button type="button" onClick={() => onOpen(queue)}>
+          <span>{labels[queue]}</span><strong>{counts[queue].toLocaleString('vi-VN')}</strong>
+          <span className="admin-queues__status">{queue === 'reports' ? reportLabel : 'Chờ xử lý'}<span aria-hidden="true">↗</span></span>
+        </button>
       </li>)}</ul>
-      {analytics ? <p>Trong kỳ {analytics.periodDays} ngày: {analytics.kpis.listingViews.toLocaleString('vi-VN')} lượt xem tin, {analytics.kpis.saves.toLocaleString('vi-VN')} lượt lưu và {analytics.kpis.viewingRequests.toLocaleString('vi-VN')} yêu cầu xem phòng. Lượt xem là số sự kiện xem tin, không phải số người khác nhau. Cập nhật báo cáo: {new Date(analytics.generatedAt).toLocaleString('vi-VN')}. Các số này chưa chứng minh nguyên nhân biến động nhu cầu thuê.</p> : <p>Chưa có báo cáo sản phẩm cho kỳ đã chọn.</p>}
+      <p className="admin-queues__note">Số mục trong danh sách đã tải gần nhất, gồm cả các ngày trước.</p>
     </>}
-  </div>
+  </section>
 }

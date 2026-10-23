@@ -93,23 +93,7 @@ try{
  await touchPage.waitForFunction(()=>!document.querySelector('.liquid-tabs').dataset.lensEngaged)
  await touchPage.screenshot({path:new URL('touch-drag-settled-390.png',out).pathname.slice(1),fullPage:true})
  await touchContext.close()
- await page.emulateMedia({forcedColors:'none',reducedMotion:'no-preference'});await page.setViewportSize({width:1280,height:800});profileRole=3
- await page.goto(base+'/admin');await ready()
- const admin=page.getByRole('tablist',{name:'Mục quản trị',exact:true});await admin.waitFor()
- const pending=admin.getByRole('tab',{name:'Tin chờ duyệt (0)',exact:true}),verification=admin.getByRole('tab',{name:'Xác minh chủ nhà (0)',exact:true}),withdraw=admin.getByRole('tab',{name:'Rút tiền (0)',exact:true})
- await pending.click();await aligned(admin);await admin.screenshot({path:new URL('admin-pending-rest.png',out).pathname.slice(1)})
- const pa=await pending.boundingBox(),ve=await verification.boundingBox()
- await page.mouse.move(pa.x+pa.width/2,pa.y+pa.height/2);await page.mouse.down();await page.mouse.move(ve.x+ve.width*.25,ve.y+ve.height/2,{steps:8})
- await admin.locator('.liquid-tabs__lens').evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))})
- await admin.screenshot({path:new URL('admin-labels-through-glass.png',out).pathname.slice(1)});await page.mouse.up();await aligned(admin)
- await withdraw.click();await aligned(admin);await admin.screenshot({path:new URL('admin-withdraw-rest.png',out).pathname.slice(1)})
- await page.screenshot({path:new URL('admin-context.png',out).pathname.slice(1)})
- for(const width of [390,320]){
-  await page.setViewportSize({width,height:844})
-  for(const target of [pending,verification,withdraw]){await target.click();await aligned(admin)}
-  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Admin tabs fit '+width)
-  await admin.screenshot({path:new URL('admin-withdraw-'+width+'.png',out).pathname.slice(1)})
- }
+ // Admin uses a responsive operational navigation; covered by admin-workspace.e2e.mjs.
 
- assert.deepEqual(errors,[]);console.log('PASS: sharp text stays above lens, long admin labels at 320/390/1280, resting lens fits rail, subtle press, drag commits on release, cancellation restores, same lens follows selection and keyboard, correct geometry at 320/390/1440, actual profile/payment/market tabs and select, forced-colors/reduced-motion')
+ assert.deepEqual(errors,[]);console.log('PASS: sharp text stays above lens, resting lens fits rail, subtle press, drag commits on release, cancellation restores, same lens follows selection and keyboard, correct geometry at 320/390/1440, actual profile/payment/market tabs and select, forced-colors/reduced-motion')
 }finally{await browser.close()}
