@@ -56,7 +56,7 @@ export function GuestHero() {
           <p className="guest-hero__sub">Tìm phòng phù hợp. Gặp người cùng nhịp sống.</p>
           <div className="guest-hero__primary-wrap" id="hero-start-cta">
             <Link to="/register" className="guest-hero__primary liquid-action">
-              <span>Bắt đầu ngay</span>
+              <span>Tạo tài khoản</span>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>
