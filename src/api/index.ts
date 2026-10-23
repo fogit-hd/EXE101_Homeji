@@ -1,5 +1,6 @@
 import { resultCountBucket } from '../lib/analyticsPolicy'
 import { rentalScenarioSnapshot } from '../lib/rentalJourney'
+import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
 import {
   getDefaultNotifications,
   isDefaultNotificationId,
@@ -21,6 +22,7 @@ import type {
   ChatbotPopupConfig,
   ChatbotReply,
   ChatbotFoodContext,
+  ChatbotFoodCriteria,
   ChatbotRentalContext,
   ChatbotRentalSelection,
   CompareRentalPostsResult,
@@ -358,7 +360,7 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext }, signal?: AbortSignal) =>
+export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria }, signal?: AbortSignal) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
@@ -367,6 +369,7 @@ export const sendChatbotMessage = (data: { conversationId?: string; message: str
       message: data.message,
       saveHistory: data.saveHistory === true,
       ...(data.foodContext ? { foodContext: { latitude: data.foodContext.latitude, longitude: data.foodContext.longitude, radiusKm: data.foodContext.radiusKm } } : {}),
+      ...(data.previousFoodCriteria ? { previousFoodCriteria: foodCriteriaSnapshot(data.previousFoodCriteria) } : {}),
       ...(data.rentalContext ? { rentalContext: { postId: data.rentalContext.postId, ...(data.rentalContext.task ? { task: data.rentalContext.task } : {}) } } : {}),
       ...(data.rentalSelection ? { rentalSelection: { postIds: [...data.rentalSelection.postIds],
         ...(data.rentalSelection.task ? { task: data.rentalSelection.task } : {}),

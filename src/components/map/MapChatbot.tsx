@@ -14,6 +14,7 @@ import {
   type ChatbotRentalContext,
   type ChatbotFoodContext,
   type ChatbotFoodResponse,
+  type ChatbotFoodCriteria,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAuthModal } from "../../contexts/AuthModalContext.logic"
@@ -22,7 +23,7 @@ import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { getErrorMessage } from '../../lib/errors'
 import { requestMarketplaceCart, requestMarketplaceTab } from '../../lib/marketplaceNavigation'
 import { nearbyChatIntent } from '../../lib/nearbyChatIntent'
-import { isFoodChat, isFoodDiscoveryChat } from '../../lib/foodChatIntent'
+import { isFoodChat, isFoodDiscoveryChat, isFoodRefinement, foodCriteriaSnapshot } from '../../lib/foodChatIntent'
 import { FoodDiscoveryCard } from '../ai/FoodDiscoveryCard'
 import type { NearbyPlaceCategory } from '../../lib/placeAutocomplete'
 import { AiSearchReview } from '../ai/AiSearchReview'
@@ -92,6 +93,7 @@ type ChatRequest = {
   previousCriteria?: AiParsedSearchCriteria
   saveHistory: boolean
   foodContext?: ChatbotFoodContext
+  previousFoodCriteria?: ChatbotFoodCriteria
 }
 
 type DisplayMessage = ChatbotMessage & {
@@ -189,6 +191,7 @@ export function MapChatbot({
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [saveHistory, setSaveHistory] = useState(false)
   const sessionCriteria = useRef<AiParsedSearchCriteria | undefined>(undefined)
+  const sessionFood = useRef<ChatbotFoodCriteria | undefined>(undefined)
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [draft, setDraft] = useState('')
   const draftRevision = useRef(0)
@@ -407,10 +410,11 @@ export function MapChatbot({
     inputRef.current?.focus()
   }
 
-  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext) => {
+  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria) => {
     const message = text.trim()
     if (!message || busy || activeRequest.current) return
-    const foodQuery = isFoodChat(message)
+    const previousFood = retryMessage?.retry?.previousFoodCriteria ?? foodCriteria ?? (isFoodRefinement(message) ? sessionFood.current : undefined)
+    const foodQuery = isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message))
     const nearby = foodQuery ? null : nearbyChatIntent(message)
     if (nearby) {
       if (onNearbyRequest?.(nearby)) { setOpen(false); setDraft(''); setError(null) }
@@ -438,6 +442,7 @@ export function MapChatbot({
       conversationId: saveHistory ? conversationId : undefined,
       previousCriteria: saveHistory || context || selection || foodQuery ? undefined : sessionCriteria.current,
       foodContext: foodContext ? { ...foodContext } : undefined,
+      previousFoodCriteria: previousFood ? foodCriteriaSnapshot(previousFood) : undefined,
       saveHistory,
     }
     const pendingId = retryMessage?.id ?? `${reactId}-pending-${++pendingIdRef.current}`
@@ -463,14 +468,15 @@ export function MapChatbot({
 
     try {
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
-        previousCriteria: request.previousCriteria, foodContext: request.foodContext, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
+        previousCriteria: request.previousCriteria, foodContext: request.foodContext, previousFoodCriteria: request.previousFoodCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
         rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       const contextualUnavailable = request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
-      const foodExpected = isFoodDiscoveryChat(request.message)
+      const foodExpected = isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message))
       const foodUnavailable = foodExpected && !reply.foodDiscovery
+      sessionFood.current = reply.foodDiscovery && !request.context && !request.selection ? foodCriteriaSnapshot(reply.foodDiscovery) : undefined
       if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) sessionCriteria.current = reply.searchUpdate.criteria
       setMessages((prev) => {
         const userMessage = { ...reply.userMessage, rentalContext: request.context, rentalSelection: request.selection }
@@ -499,7 +505,7 @@ export function MapChatbot({
     setBusy(true); setError(null)
     try {
       await deleteChatbotConversation(conversationId)
-      setConversationId(undefined); setMessages([]); setDraft(''); sessionCriteria.current = undefined
+      setConversationId(undefined); setMessages([]); setDraft(''); sessionCriteria.current = undefined; sessionFood.current = undefined
     } catch (reason) { setError(getErrorMessage(reason, 'Chưa xóa được hội thoại.')) }
     finally { setBusy(false) }
   }
@@ -539,6 +545,7 @@ export function MapChatbot({
     if (busy) return
     setConversationId(undefined)
     sessionCriteria.current = undefined
+    sessionFood.current = undefined
     setMessages([])
     setDraft('')
     draftRevision.current += 1
@@ -647,7 +654,7 @@ export function MapChatbot({
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} onApply={update => { onSearchUpdate?.(update); setOpen(false) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
-                        {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin)} onOpen={() => setOpen(false)} /> : null}
+                        {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
                           if (needsChoiceReselection) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Chọn lại danh sách', description: '', target: '/?section=saved&view=considering' })

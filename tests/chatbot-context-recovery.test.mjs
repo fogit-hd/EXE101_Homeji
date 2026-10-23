@@ -138,6 +138,28 @@ test('an older or mismatched server cannot render rental results or a generic gu
   } finally { await env.cleanup() }
 })
 
+test('short food follow-ups retain food criteria and never inherit rental context or a previous housing budget', async () => {
+  const env = await environment()
+  try {
+    await render(env.root)
+    await typeDraft('Gợi ý cơm gà dưới 40k')
+    await keydown(composer(), { key: 'Enter' })
+    const initial = globalThis.__chatFixture.requests[0]
+    await act(async () => initial.resolve({ ...reply(initial, 'Món đang bán'), rentalDecision: null,
+      foodDiscovery: { status: 'results', items: [], keyword: 'cơm gà', maxPrice: 40000, origin: null } }))
+    await typeDraft('gần tui'); await keydown(composer(), { key: 'Enter' })
+    const nearby = globalThis.__chatFixture.requests[1]
+    assert.deepEqual(nearby.body.previousFoodCriteria, { keyword: 'cơm gà', maxPrice: 40000, origin: null, nearby: false })
+    assert.equal(nearby.body.message, 'gần tui')
+    assert.equal(nearby.body.rentalContext, undefined)
+    assert.equal(nearby.body.previousCriteria, undefined)
+    await act(async () => nearby.resolve({ ...reply(nearby, 'Chọn mốc để tìm món'), rentalDecision: null,
+      foodDiscovery: { status: 'locationRequired', items: [], keyword: 'cơm gà', maxPrice: 40000, origin: null } }))
+    await typeDraft('Tìm phòng dưới 3 triệu'); await keydown(composer(), { key: 'Enter' })
+    assert.equal(globalThis.__chatFixture.requests[2].body.previousFoodCriteria, undefined)
+  } finally { await env.cleanup() }
+})
+
 test('choice task sends only selected IDs and a whitelisted scenario, then keeps editable follow-up on those choices', async () => {
   const env = await environment()
   try {

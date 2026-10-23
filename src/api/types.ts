@@ -710,6 +710,7 @@ export interface ChatbotReply {
 }
 
 export interface ChatbotFoodContext { latitude: number; longitude: number; radiusKm: number }
+export interface ChatbotFoodCriteria { keyword: string | null; maxPrice: number | null; origin: ChatbotFoodContext | null; nearby?: boolean }
 export interface ChatbotFoodResponse {
   status: 'results' | 'locationRequired' | 'empty' | 'unavailable' | 'clarificationRequired'
   summary: string
@@ -718,6 +719,7 @@ export interface ChatbotFoodResponse {
   keyword: string | null
   maxPrice: number | null
   origin: ChatbotFoodContext | null
+  nearby?: boolean
 }
 
 export interface ChatbotRentalContext {

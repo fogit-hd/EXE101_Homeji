@@ -46,11 +46,13 @@ try {
       if (path === '/api/chatbot/popup-config') json = { enabled: true, greeting: 'Chào bạn', suggestedPrompts: [], historyStorageEnabled: false }
       else if (path === '/api/chatbot/messages') {
         const body = request.postDataJSON(); requests.push(body)
-        const locationRequired = /GẦN TUI/.test(body.message) && !body.foodContext
+        const origin = body.foodContext || body.previousFoodCriteria?.origin || null
+        const locationRequired = (/GẦN TUI/i.test(body.message) || body.previousFoodCriteria?.nearby) && !origin
+        const maxPrice = /dưới 40k/i.test(body.message) ? 40000 : body.previousFoodCriteria?.maxPrice || null
         const status = /empty/.test(body.message) ? 'empty' : /unavailable/.test(body.message) ? 'unavailable' : locationRequired ? 'locationRequired' : 'results'
         const foodDiscovery = { status, summary: locationRequired ? 'Bạn muốn ăn quanh đâu? Chọn mốc để tìm món.' : status === 'empty' ? 'Chưa có món khớp bộ lọc.' : status === 'unavailable' ? 'Chưa tải được món đang bán.' : 'Đây là các món đang bán theo tin người bán.',
-          items: status === 'results' ? foods.map(item => ({ ...item, distanceKm: body.foodContext ? .5 : null })) : [],
-          keyword: null, maxPrice: null, origin: body.foodContext || null }
+          items: status === 'results' ? foods.filter(item => !maxPrice || item.price <= maxPrice).map(item => ({ ...item, distanceKm: origin ? .5 : null })) : [],
+          keyword: body.previousFoodCriteria?.keyword || null, maxPrice, origin, nearby: Boolean(origin || locationRequired) }
         json = { conversationId: 'fixture', userMessage: { id: 'u' + requests.length, sender: 1, content: body.message },
           assistantMessage: { id: 'a' + requests.length, sender: 2, content: foodDiscovery.summary }, searchUpdate: null, rentalDecision: null, foodDiscovery,
           actions: [{ id: 'food-menu', label: 'Mở Chợ đồ ăn', kind: 1, description: 'Xem thực đơn', target: 'marketplace:food' }] }
@@ -73,7 +75,15 @@ try {
     assert.match(await page.locator('.ai-food').first().textContent(), /35\.000.*phần.*Bếp Homeji kiểm thử/s)
     assert.equal(requests[0].rentalContext, undefined); assert.equal(requests[0].previousCriteria, undefined)
     await page.screenshot({ path: `${out}/food-results-${width}-${theme}.png` })
+    await composer.fill('dưới 40k'); await composer.press('Enter')
+    await page.waitForFunction(() => document.querySelectorAll('.ai-food').length === 2)
+    assert.deepEqual(requests[1].previousFoodCriteria, { keyword: null, maxPrice: null, origin: null, nearby: false })
+    await composer.fill('gần tui'); await composer.press('Enter')
+    await page.waitForFunction(() => document.querySelectorAll('.ai-food').length === 3)
+    assert.equal(requests[2].previousFoodCriteria.maxPrice, 40000)
+    assert.equal(await page.locator('.ai-food').last().locator('.ai-food__item').count(), 0)
     await composer.fill('GIỚI THIỆU ĐỒ ĂN NGON GẦN TUI'); await composer.press('Enter')
+    await page.waitForFunction(() => document.querySelectorAll('.ai-food').length === 4)
     const locationCard = page.locator('.ai-food').last()
     const address = locationCard.getByRole('combobox', { name: 'Tìm quanh địa chỉ hoặc mốc', exact: true })
     const search = locationCard.getByRole('button', { name: 'Tìm quanh mốc này', exact: true })
@@ -85,8 +95,8 @@ try {
     await page.getByRole('option').filter({ hasText: 'Mốc kiểm thử Thủ Đức' }).click()
     await search.click()
     await page.locator('.ai-food').last().getByRole('link', { name: 'Xem món & thực đơn', exact: false }).first().waitFor()
-    assert.deepEqual(requests[2].foodContext, { latitude: 10.84, longitude: 106.8, radiusKm: 3 })
-    assert.equal(requests[2].message, 'GIỚI THIỆU ĐỒ ĂN NGON GẦN TUI')
+    assert.deepEqual(requests[4].foodContext, { latitude: 10.84, longitude: 106.8, radiusKm: 3 })
+    assert.equal(requests[4].message, 'GIỚI THIỆU ĐỒ ĂN NGON GẦN TUI')
     assert.match(await page.locator('.ai-food').last().textContent(), /0,5 km đường thẳng/)
     assert.equal(await page.evaluate(() => window.__gpsCalls), 0)
     assert.equal(await page.locator('.ai-rental-result').count(), 0)
@@ -109,7 +119,7 @@ try {
     for (const status of ['empty', 'unavailable']) {
       await composer.fill(`Gợi ý đồ ăn ${status}`); await composer.press('Enter')
       await page.locator('.ai-food').last().waitFor()
-      await page.waitForFunction(count => document.querySelectorAll('.ai-food').length === count, status === 'empty' ? 4 : 5)
+      await page.waitForFunction(count => document.querySelectorAll('.ai-food').length === count, status === 'empty' ? 6 : 7)
       assert.equal(await page.locator('.ai-food').last().locator('.ai-food__item').count(), 0)
     }
     assert.deepEqual(errors, []); assert.equal(writes.length, 0)
