@@ -629,7 +629,7 @@ export function MapChatbot({
                 <small>Giá và phí lấy từ tin này. Khi tìm phòng mới, hãy nhập nhu cầu mới của bạn.</small>
               </section> : null}
               {showGreeting ? <div className="map-chatbot__greeting">
-                <div className="homeji-assistant__welcome-mark" aria-hidden="true">✦</div>
+                <div className="homeji-assistant__welcome-mark" aria-hidden="true"><img src="/brand/homeji-logo2.png" alt="" draggable={false} /></div>
                 <span className="homeji-assistant__eyebrow">BẮT ĐẦU TỪ ĐIỀU BẠN CẦN</span>
                 <h2>Bạn đang tìm<br />một nơi như thế nào?</h2>
                 <p>{config?.greeting ?? HOMEJI_GREETING}</p>

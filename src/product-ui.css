@@ -304,3 +304,19 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
 #root .marketplace-detail-dialog__actions { display: flex; flex-wrap: wrap; gap: 12px; }
 #root .marketplace-detail-dialog__actions > button { flex: 1 1 180px; }
 #root .marketplace-detail-dialog__summary { min-width: 0; overflow-wrap: anywhere; }
+
+/* The search owns one rounded focus indicator, never a second box on its input. */
+html:root body .choice-picker-layer .choice-picker__search-wrap input:is(:focus,:focus-visible) {
+  outline: none; box-shadow: none; border: 0;
+}
+html:root body .choice-picker-layer .choice-picker__search-wrap:focus-within {
+  outline: none; border-color: var(--text-secondary); box-shadow: 0 0 0 1px var(--text-secondary);
+}
+
+html:root #root .homeji-assistant .map-chatbot__form:focus-within {
+  outline: none; border-color: var(--assistant-line);
+  box-shadow: 0 0 0 1px var(--assistant-muted);
+}
+html:root #root .homeji-assistant .map-chatbot__form textarea:is(:focus,:focus-visible) {
+  outline: none; box-shadow: none;
+}

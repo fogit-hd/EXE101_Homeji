@@ -198,3 +198,5 @@ html:root #root .homeji-assistant .map-chatbot__privacy summary { width: fit-con
   .homeji-assistant :is(.homeji-assistant__window,.map-chatbot__form,.homeji-assistant__starters > button,.map-chatbot__context-prompts button,.map-chatbot__send)::before { display: none; }
   html:root #root .homeji-assistant :is(.homeji-assistant__window,.map-chatbot__form,.map-chatbot__send,.map-chatbot__context,.homeji-assistant__starters > button) { border: 1px solid ButtonText; background: Canvas; color: CanvasText; box-shadow: none; }
 }
+
+.homeji-assistant__welcome-mark img { width: 36px; height: 36px; object-fit: contain; }

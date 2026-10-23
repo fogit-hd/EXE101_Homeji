@@ -15,3 +15,8 @@
 .map-listings__consideration { padding: 0 14px 8px; }
 .map-listings__consideration .rental-journey-toggle { width: 100%; white-space: normal; }
 @media(max-width:600px) { .rental-journey-tray { left: 8px; right: 8px; bottom: max(8px,env(safe-area-inset-bottom)); max-width: none; gap: 8px; padding: 10px; font-size: 12px; } .rental-journey-tray span { display: none; } .rental-journey-workspace { padding: 12px; } }
+
+/* Stack companion actions above the measured tray, including wrapped labels. */
+body:has(.rental-journey-tray) #root .interest-launch { bottom: calc(var(--rental-tray-height,80px) + 32px + env(safe-area-inset-bottom)); }
+body:has(.rental-journey-tray) #root { padding-bottom: calc(var(--rental-tray-height,80px) + 32px); }
+@media(max-width:600px) { .rental-journey-tray a { max-width: 55%; white-space: normal; } }

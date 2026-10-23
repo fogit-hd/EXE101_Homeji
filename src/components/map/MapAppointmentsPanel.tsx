@@ -396,7 +396,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
 
       <div className="map-appointments__layout">
         <aside className="map-appointments__rail" aria-label="Lịch tháng">
-          <div className="map-appointments__cal">
+          <div className="map-appointments__cal" data-glass-exclude>
             <div className="map-appointments__cal-nav">
               <button
                 type="button"
@@ -432,6 +432,8 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
                 return (
                   <button
                     key={key + String(inMonth)}
+                    aria-label={date.toLocaleDateString('vi-VN')}
+                    aria-pressed={selected}
                     type="button"
                     className={[
                       'map-appointments__cal-day',
@@ -469,7 +471,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
             </div>
           </div>
 
-          <div className="map-appointments__prep">
+          <div className="map-appointments__prep" data-glass-exclude>
             <div className="map-appointments__prep-head">
               <h2>Chuẩn bị trước khi đi</h2>
             </div>

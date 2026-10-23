@@ -600,3 +600,22 @@
     height: 140px;
   }
 }
+
+/* Calendar ink follows the local dark card, even when the page is light. */
+html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button) {
+  background: transparent; background-image: none; color: #f4faf7; box-shadow: none; filter: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-out { color: #b5c5bc; }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected {
+  background: var(--action-primary); color: var(--action-on-primary); font-weight: 700;
+}
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-today:not(.is-selected) { box-shadow: inset 0 0 0 1px #b5c5bc; }
+html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button):hover { background: #ffffff1a; }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected:hover { background: var(--action-primary-hover); }
+html:root #root .map-appointments__cal-weekdays { color: #b5c5bc; }
+@media(forced-colors:active) {
+  html:root #root .map-appointments__cal { background: Canvas; color: CanvasText; }
+  html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button,.map-appointments__cal-weekdays) { color: ButtonText; }
+  html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected { background: Highlight; color: HighlightText; }
+}

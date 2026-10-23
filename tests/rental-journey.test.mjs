@@ -25,6 +25,7 @@ const moduleUrl = source => 'data:text/javascript;base64,' + Buffer.from(source)
 const reactUrl = new URL('../node_modules/react/index.js', import.meta.url).href
 const fixture = moduleUrl(`import React from '${reactUrl}';
 export const useAuth=()=>globalThis.__journey.auth;
+export const useLocation=()=>({search:globalThis.__journey.search||''});
 export const Link=({to,children,...props})=>React.createElement('a',{href:to,...props},children);
 export const aiFeatureFlags={decisionTools:true,commute:false};
 export function RentalDecisionPanel(props){globalThis.__journey.panel=props;return React.createElement('section',{'aria-label':'Controlled cost comparison'});}
@@ -38,9 +39,9 @@ const { RentalAssistantComparisonContext } = await import(reactDomModule('src/co
 
 test('cards, shared workspace and account scope use the same choices and scenario; account switches clear both', async () => {
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost' })
-  const keys = ['window', 'document', 'IS_REACT_ACT_ENVIRONMENT']
+  const keys = ['window', 'document', 'IS_REACT_ACT_ENVIRONMENT', 'ResizeObserver']
   const previous = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
-  Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true })
+  Object.assign(globalThis, { ResizeObserver: class { observe(){} disconnect(){} }, window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true })
   globalThis.__journey = { auth: { isAuthenticated: true, profile: { id: 'a' } } }
   const { createRoot } = await import('react-dom/client')
   const root = createRoot(document.getElementById('root'))
@@ -61,7 +62,11 @@ test('cards, shared workspace and account scope use the same choices and scenari
     assert.equal(card('d').disabled, true)
     assert.equal(card('a').getAttribute('aria-pressed'), 'true')
     assert.equal(document.querySelector('.rental-journey-tray a').getAttribute('href'), '/?section=saved&view=considering')
+    globalThis.__journey.search='?section=saved'
     await show(true)
+    assert.equal(document.querySelector('.rental-journey-tray'),null,'Saved workspace owns its choice list without a duplicate floating tray')
+    assert.equal(document.documentElement.style.getPropertyValue('--rental-tray-height'),'')
+    globalThis.__journey.search=''
     assert.deepEqual(globalThis.__journey.panel.postIds, ['a', 'b', 'c'])
     assert.match(registered.title, /Phòng a · Phòng b · Phòng c/)
     await act(() => globalThis.__journey.panel.onScenarioChange({ ...globalThis.__journey.panel.scenario, occupants: 3, electricityKwh: 200 }))

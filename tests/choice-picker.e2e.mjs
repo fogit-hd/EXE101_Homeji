@@ -18,6 +18,7 @@ import {ScheduleDateTimePicker} from '/src/components/ScheduleDateTimePicker.tsx
 import '/src/index.css'
 import '/src/liquid-glass.css'
 import '/src/glass-controls.css'
+import '/src/product-ui.css'
 function Fixture(){
  const [value,setValue]=useState(''),[disabled,setDisabled]=useState(false),[changes,setChanges]=useState(0),[submitted,setSubmitted]=useState(''),[date,setDate]=useState('')
  return <><LiquidGlassEffects/><InteractionMotion/><main style={{maxWidth:940,margin:'auto',padding:24}}>
@@ -57,6 +58,9 @@ try {
   check('Required native validation blocks submission and focuses visible trigger')
 
   await open('Trường học')
+  const searchInput=dialog().getByRole('combobox');await searchInput.focus();
+  assert.equal(await searchInput.evaluate(e=>getComputedStyle(e).outlineStyle),'none','Search input must not add a rectangular focus ring inside the rounded search');
+  assert.notEqual(await dialog().locator('.choice-picker__search-wrap').evaluate(e=>getComputedStyle(e).boxShadow),'none','Composite search retains a visible keyboard focus indicator');
   await dialog().getByRole('combobox').fill('thu duc')
   assert.equal(await dialog().getByRole('option').count(), 1)
   await dialog().getByRole('combobox').press('Enter')
@@ -135,7 +139,7 @@ try {
   await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).scrollIntoViewIfNeeded()
   await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).hover()
   await page.waitForFunction(() => !!document.querySelector('button[type="submit"]').style.getPropertyValue('--glass-x'))
-  const optical = await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).evaluate(e => getComputedStyle(e,e.hasAttribute('data-glass-face')?'::after':null).backdropFilter)
+  const optical = await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).evaluate(e => getComputedStyle(e).backdropFilter)
   assert.match(optical, /homeji-liquid-lens/)
   check('Hovered action uses the local SVG optical filter and pointer highlight')
 

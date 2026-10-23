@@ -1,12 +1,6 @@
 import { resultCountBucket } from '../lib/analyticsPolicy'
 import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
-import {
-  getDefaultNotifications,
-  isDefaultNotificationId,
-  markAllDefaultNotificationsRead,
-  markDefaultNotificationRead,
-} from '../lib/defaultNotifications'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
 import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload } from './client'
 import type {
@@ -415,21 +409,17 @@ export const getNotifications = async (unreadOnly = false) => {
   const serverNotifications = await apiRequest<Notification[]>('/api/notifications', {
     params: { unreadOnly },
   })
-  return [...serverNotifications, ...getDefaultNotifications(unreadOnly)].sort(
+  return [...serverNotifications].sort(
     (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
   )
 }
 
 export const markNotificationRead = (notificationId: string) => {
-  if (isDefaultNotificationId(notificationId)) {
-    return Promise.resolve(markDefaultNotificationRead(notificationId))
-  }
   return apiRequest<Notification>(`/api/notifications/${notificationId}/read`, { method: 'POST' })
 }
 
 export const markAllNotificationsRead = async () => {
   await apiRequest<void>('/api/notifications/read-all', { method: 'POST' })
-  markAllDefaultNotificationsRead()
 }
 
 // Reports

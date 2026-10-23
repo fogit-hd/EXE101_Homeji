@@ -12,7 +12,7 @@ const js = ts.transpileModule(source, {
       ? undefined : node, context)] },
 }).outputText
 
-test('bulk read commits local onboarding notifications only after server success', async () => {
+test('bulk read reports server failure and succeeds only after retry', async () => {
   const bindings = `
     let fail = true;
     const calls = [];
@@ -20,16 +20,22 @@ test('bulk read commits local onboarding notifications only after server success
       calls.push([path, options.method]);
       if (fail) throw new Error('server rejected read');
     };
-    let localWrites = 0;
-    const markAllDefaultNotificationsRead = () => { localWrites++; };
-    export const inspect = () => ({ localWrites, calls });
+    export const inspect = () => ({ calls });
     export const recover = () => { fail = false; };
   `
   const api = await import(`data:text/javascript;base64,${Buffer.from(bindings + js).toString('base64')}`)
   await assert.rejects(api.markAllNotificationsRead(), /server rejected read/)
-  assert.equal(api.inspect().localWrites, 0)
   api.recover()
   await api.markAllNotificationsRead()
-  assert.equal(api.inspect().localWrites, 1)
   assert.deepEqual(api.inspect().calls, [['/api/notifications/read-all', 'POST'], ['/api/notifications/read-all', 'POST']])
+})
+
+
+test('notification inbox reflects only server events, including an empty inbox', async () => {
+  const bindings = `let notifications=[]; const apiRequest=async()=>notifications;
+    export const setNotifications=value=>{notifications=value};`;
+  const api=await import(`data:text/javascript;base64,${Buffer.from(bindings+js).toString('base64')}`);
+  assert.deepEqual(await api.getNotifications(),[]);
+  const real={id:'server-event',title:'Lịch hẹn đã xác nhận',createdAt:'2026-10-23T00:00:00Z'};
+  api.setNotifications([real]);assert.deepEqual(await api.getNotifications(),[real]);
 })

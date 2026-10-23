@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useRentalJourney } from '../../contexts/rental-journey'
 import { useRentalAssistantComparison, useRentalAssistantOpener } from '../../contexts/rental-assistant-context'
 import { MAX_RENTAL_CHOICES, type RentalChoice } from '../../lib/rentalJourney'
@@ -15,8 +16,21 @@ function ChoiceList({ choices, remove }: { choices: RentalChoice[]; remove: (pos
 
 export function RentalJourneyTray() {
   const journey = useRentalJourney()
-  if (!aiFeatureFlags.decisionTools || !journey?.enabled || !journey.choices.length) return null
-  return <aside className="rental-journey-tray" aria-label="Danh sách phòng đang cân nhắc" data-glass-exclude>
+  const location = useLocation()
+  const tray = useRef<HTMLElement>(null)
+  const onWorkspace = new URLSearchParams(location.search).get('section') === 'saved'
+  const visible = aiFeatureFlags.decisionTools && journey?.enabled && Boolean(journey.choices.length) && !onWorkspace
+  useEffect(() => {
+    const element = tray.current
+    if (!visible || !element) return
+    const measure = () => document.documentElement.style.setProperty('--rental-tray-height', `${element.getBoundingClientRect().height}px`)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty('--rental-tray-height') }
+  }, [visible])
+  if (!visible || !journey) return null
+  return <aside ref={tray} className="rental-journey-tray" aria-label="Danh sách phòng đang cân nhắc" data-glass-exclude>
     <div><strong>Đang cân nhắc · {journey.choices.length}/{MAX_RENTAL_CHOICES}</strong><span>Giữ cùng lựa chọn từ tìm kiếm đến liên hệ</span></div>
     <Link className="btn btn-primary btn-sm" to="/?section=saved&view=considering">{journey.choices.length >= 2 ? 'So sánh các lựa chọn' : 'Xem lựa chọn'}</Link>
   </aside>
