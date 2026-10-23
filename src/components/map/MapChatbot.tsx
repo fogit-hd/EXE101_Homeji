@@ -12,6 +12,8 @@ import {
   type ChatbotNavigationAction,
   type ChatbotPopupConfig,
   type ChatbotRentalContext,
+  type ChatbotFoodContext,
+  type ChatbotFoodResponse,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAuthModal } from "../../contexts/AuthModalContext.logic"
@@ -20,6 +22,8 @@ import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { getErrorMessage } from '../../lib/errors'
 import { requestMarketplaceCart, requestMarketplaceTab } from '../../lib/marketplaceNavigation'
 import { nearbyChatIntent } from '../../lib/nearbyChatIntent'
+import { isFoodChat, isFoodDiscoveryChat } from '../../lib/foodChatIntent'
+import { FoodDiscoveryCard } from '../ai/FoodDiscoveryCard'
 import type { NearbyPlaceCategory } from '../../lib/placeAutocomplete'
 import { AiSearchReview } from '../ai/AiSearchReview'
 import { ChatbotMessageContent } from './ChatbotMessageContent'
@@ -87,6 +91,7 @@ type ChatRequest = {
   conversationId?: string
   previousCriteria?: AiParsedSearchCriteria
   saveHistory: boolean
+  foodContext?: ChatbotFoodContext
 }
 
 type DisplayMessage = ChatbotMessage & {
@@ -98,6 +103,8 @@ type DisplayMessage = ChatbotMessage & {
   rentalDecision?: DecisionResponse | null
   actions?: ChatbotNavigationAction[]
   searchUpdate?: AiHighlightResponse | null
+  foodDiscovery?: ChatbotFoodResponse | null
+  foodQuery?: string
 }
 
 type PanelLayout = {
@@ -400,10 +407,11 @@ export function MapChatbot({
     inputRef.current?.focus()
   }
 
-  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage) => {
+  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext) => {
     const message = text.trim()
     if (!message || busy || activeRequest.current) return
-    const nearby = nearbyChatIntent(message)
+    const foodQuery = isFoodChat(message)
+    const nearby = foodQuery ? null : nearbyChatIntent(message)
     if (nearby) {
       if (onNearbyRequest?.(nearby)) { setOpen(false); setDraft(''); setError(null) }
       else setError('Hãy chọn ghim phòng trên bản đồ trước để tìm tiện ích quanh đúng phòng đó.')
@@ -422,13 +430,14 @@ export function MapChatbot({
     const refersToRoom = /\b(?:phong|tin|cho) (?:nay|dang xem)\b/.test(normalized)
     const startsSearch = /\b(?:tim|kiem|loc|goi y|de xuat)\b.*\b(?:phong|tro|o ghep|nha)\b|\b(?:phong|tro) khac\b|\b(?:tim lai|bat dau lai)\b/.test(normalized)
     const refersToChoices = /\b(?:(?:hai|ba|2|3|cac|nhung) (?:lua chon|phong|tin)|so sanh|danh sach (?:nay|can nhac))\b/.test(normalized)
-    const selection = rentalSelection && !startsSearch && (task || refersToChoices)
+    const selection = !foodQuery && rentalSelection && !startsSearch && (task || refersToChoices)
       ? { ...rentalSelection, postIds: [...rentalSelection.postIds], scenario: rentalScenarioSnapshot(rentalSelection.scenario), task } : undefined
-    const context = !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
+    const context = !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
     const request: ChatRequest = retryMessage?.retry ?? {
       message, context, selection,
       conversationId: saveHistory ? conversationId : undefined,
-      previousCriteria: saveHistory || context || selection ? undefined : sessionCriteria.current,
+      previousCriteria: saveHistory || context || selection || foodQuery ? undefined : sessionCriteria.current,
+      foodContext: foodContext ? { ...foodContext } : undefined,
       saveHistory,
     }
     const pendingId = retryMessage?.id ?? `${reactId}-pending-${++pendingIdRef.current}`
@@ -454,22 +463,25 @@ export function MapChatbot({
 
     try {
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
-        previousCriteria: request.previousCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
+        previousCriteria: request.previousCriteria, foodContext: request.foodContext, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
         rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       const contextualUnavailable = request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
-      if (reply.searchUpdate && !request.context && !request.selection) sessionCriteria.current = reply.searchUpdate.criteria
+      const foodExpected = isFoodDiscoveryChat(request.message)
+      const foodUnavailable = foodExpected && !reply.foodDiscovery
+      if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) sessionCriteria.current = reply.searchUpdate.criteria
       setMessages((prev) => {
         const userMessage = { ...reply.userMessage, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
-          content: contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
-          actions: contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
+          content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở Chợ đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
+          actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở Chợ đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
             target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
-          searchUpdate: request.context || request.selection ? null : reply.searchUpdate,
-          rentalContext: request.context, rentalSelection: request.selection, rentalDecision: contextualUnavailable ? null : reply.rentalDecision }
+          searchUpdate: request.context || request.selection || foodExpected ? null : reply.searchUpdate,
+          rentalContext: request.context, rentalSelection: request.selection, rentalDecision: contextualUnavailable || foodExpected ? null : reply.rentalDecision,
+          foodDiscovery: request.context || request.selection ? null : reply.foodDiscovery, foodQuery: request.message }
         return prev.flatMap(item => item.id === pendingId ? [userMessage, assistantMessage] : [item])
       })
     } catch (e) {
@@ -635,11 +647,12 @@ export function MapChatbot({
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} onApply={update => { onSearchUpdate?.(update); setOpen(false) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
+                        {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin)} onOpen={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
                           if (needsChoiceReselection) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Chọn lại danh sách', description: '', target: '/?section=saved&view=considering' })
                           else if (needsRoomReselection && m.rentalContext) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Mở lại phòng', description: '', target: `/?post=${encodeURIComponent(m.rentalContext.postId)}` })
-                          else prepareDraft(m.rentalSelection ? 'Về các lựa chọn này, mình muốn hỏi thêm: ' : m.rentalContext ? 'Về phòng này, mình muốn hỏi thêm: ' : 'Mình muốn hỏi thêm: ')
+                          else prepareDraft(m.foodDiscovery ? 'Gợi ý đồ ăn ' : m.rentalSelection ? 'Về các lựa chọn này, mình muốn hỏi thêm: ' : m.rentalContext ? 'Về phòng này, mình muốn hỏi thêm: ' : 'Mình muốn hỏi thêm: ')
                         }}><AssistantIcon name="chat" />{needsChoiceReselection ? 'Mở danh sách để chọn lại' : needsRoomReselection ? 'Mở lại phòng để hỏi tiếp' : 'Hỏi tiếp'}</button></div>
                       </>}
                   </div>

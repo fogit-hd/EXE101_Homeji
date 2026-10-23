@@ -31,6 +31,7 @@ const overrides = {
   './ChatbotMessageContent': moduleUrl(`import React from '${reactUrl}';export const ChatbotMessageContent=({content})=>React.createElement('p',null,content)`),
   '../ai/AiSearchReview': moduleUrl('export const AiSearchReview=()=>null'),
   '../ai/RentalContextCard': moduleUrl(`import React from '${reactUrl}';export const RentalContextCard=({data})=>React.createElement('p',null,data.posts.map(item=>item.post.title).join(', '))`),
+  '../ai/FoodDiscoveryCard': moduleUrl(`import React from '${reactUrl}';export const FoodDiscoveryCard=({data,onSearch,busy})=>React.createElement('section',{'aria-label':'Gợi ý món ăn'},data.items.map(item=>React.createElement('p',{key:item.id},item.title)),React.createElement('button',{disabled:busy,onClick:()=>onSearch({latitude:10.84,longitude:106.8,radiusKm:3})},'Tìm quanh mốc kiểm thử'))`),
 }
 const { MapChatbot } = await import(reactDomModule(path.resolve('src/components/map/MapChatbot.tsx'), overrides))
 
@@ -94,6 +95,48 @@ const choices = { postIds: ['room-a', 'room-b'], title: 'Phòng A · Phòng B', 
 const selectionReply = request => ({ ...reply(request, 'Đối chiếu theo cùng kịch bản'), rentalDecision: {
   posts: request.body.rentalSelection.postIds.map(id => ({ post: { id, title: 'Dữ liệu ' + id } })), unavailablePostIds: [], summary: '',
 } })
+
+test('food requests ignore selected rooms, then send explicit origin with the original query and preserve it on retry', async () => {
+  const env = await environment()
+  try {
+    await render(env.root, { rentalSelection: choices })
+    await typeDraft('GIỚI THIỆU ĐỒ ĂN NGON GẦN TUI')
+    await keydown(composer(), { key: 'Enter' })
+    const initial = globalThis.__chatFixture.requests[0]
+    assert.equal(initial.body.rentalContext, undefined)
+    assert.equal(initial.body.rentalSelection, undefined)
+    assert.equal(initial.body.previousCriteria, undefined)
+    assert.equal(initial.body.foodContext, undefined)
+    await act(async () => initial.resolve({ ...reply(initial, 'Chọn mốc để tìm món'), rentalDecision: null,
+      foodDiscovery: { status: 'locationRequired', items: [], origin: null } }))
+    await click(button('Tìm quanh mốc kiểm thử'))
+    const located = globalThis.__chatFixture.requests[1]
+    assert.equal(located.body.message, initial.body.message)
+    assert.deepEqual(located.body.foodContext, { latitude: 10.84, longitude: 106.8, radiusKm: 3 })
+    await act(async () => located.reject(new Error('Mất mạng')))
+    await click(button('Thử lại câu hỏi này'))
+    const retried = globalThis.__chatFixture.requests[2]
+    assert.deepEqual(retried.body.foodContext, located.body.foodContext)
+    await act(async () => retried.resolve({ ...reply(retried, 'Món quanh mốc của bạn'), rentalDecision: null,
+      foodDiscovery: { status: 'results', items: [{ id: 'food-a', title: 'Cơm gà' }], origin: located.body.foodContext } }))
+    assert.match(document.body.textContent, /Cơm gà/)
+    assert.doesNotMatch(document.body.textContent, /Dữ liệu A/)
+  } finally { await env.cleanup() }
+})
+
+test('an older or mismatched server cannot render rental results or a generic guide as food discovery', async () => {
+  const env = await environment()
+  try {
+    await render(env.root)
+    await typeDraft('CÓ GÌ ĂN GIỚI THIỆU ĐI')
+    await keydown(composer(), { key: 'Enter' })
+    const pending = globalThis.__chatFixture.requests[0]
+    await act(async () => pending.resolve(reply(pending, 'Hướng dẫn chung chưa có món thật')))
+    assert.match(document.body.textContent, /Chưa nhận được dữ liệu món ăn/)
+    assert.doesNotMatch(document.body.textContent, /Hướng dẫn chung|Dữ liệu A/)
+    assert.ok(button('Mở Chợ đồ ăn'))
+  } finally { await env.cleanup() }
+})
 
 test('choice task sends only selected IDs and a whitelisted scenario, then keeps editable follow-up on those choices', async () => {
   const env = await environment()

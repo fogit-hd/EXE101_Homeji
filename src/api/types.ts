@@ -706,6 +706,18 @@ export interface ChatbotReply {
   searchUpdate: AiHighlightResponse | null
   actions: ChatbotNavigationAction[]
   rentalDecision?: import('./rentalAssistant').DecisionResponse | null
+  foodDiscovery?: ChatbotFoodResponse | null
+}
+
+export interface ChatbotFoodContext { latitude: number; longitude: number; radiusKm: number }
+export interface ChatbotFoodResponse {
+  status: 'results' | 'locationRequired' | 'empty' | 'unavailable' | 'clarificationRequired'
+  summary: string
+  items: Array<{ id: string; sellerId: string; sellerName: string; title: string; price: number; unit: string;
+    availableQuantity: number; preparationMinutes: number | null; distanceKm: number | null; updatedAt: string }>
+  keyword: string | null
+  maxPrice: number | null
+  origin: ChatbotFoodContext | null
 }
 
 export interface ChatbotRentalContext {
