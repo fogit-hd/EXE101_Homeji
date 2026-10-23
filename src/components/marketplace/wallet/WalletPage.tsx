@@ -645,7 +645,7 @@ function WithdrawPanel({
         <header className="wallet-card__head">
           <p className="wallet-card__eyebrow">Rút về ngân hàng</p>
           <h2>Rút tiền về ngân hàng</h2>
-          <p>Thông tin người nhận phải trùng với hồ sơ đã từng rút thành công, nếu ví đã có tài khoản xác minh.</p>
+          <p>Kiểm tra tên ngân hàng, số tài khoản và tên người nhận trước khi gửi yêu cầu.</p>
         </header>
 
         {withdrawalsUnavailable ? (
@@ -711,8 +711,8 @@ function WithdrawPanel({
           <div className="wallet-notice wallet-notice--paper">
             <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.clock} /></span>
             <span>
-              <strong>Xử lý trong 1–2 ngày làm việc</strong>
-              <small>Yêu cầu trước 15:00 thường được đối soát trong ngày; cuối tuần sẽ chuyển sang ngày làm việc kế tiếp.</small>
+              <strong>Theo dõi yêu cầu trong Lịch sử</strong>
+              <small>Homeji cập nhật trạng thái sau khi xử lý. Thời điểm tiền vào tài khoản còn phụ thuộc ngân hàng nhận.</small>
             </span>
           </div>
         </div>
@@ -738,7 +738,7 @@ function WithdrawPanel({
           <article className="wallet-verified">
             <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.landmark} size={20} /></span>
             <span>
-              <strong>{verifiedAccount.bankName} <em>Đã xác minh</em></strong>
+              <strong>{verifiedAccount.bankName} <em>Đã dùng trong yêu cầu được xử lý</em></strong>
               <small>•••• {verifiedAccount.accountNumber.slice(-4)} · {verifiedAccount.accountHolder}</small>
             </span>
             <Icon src={WALLET_ASSETS.check} size={18} />
@@ -751,14 +751,14 @@ function WithdrawPanel({
           <div><dt>Từ ví Homeji</dt><dd>{balance == null ? '—' : formatWalletAmount(balance)}</dd></div>
           <div><dt>Số tiền rút</dt><dd className="is-out">{Number.isInteger(amount) && amount > 0 ? formatWalletSigned(-amount) : '—'}</dd></div>
           <div><dt>Phí xử lý</dt><dd>{formatWalletAmount(fee)}</dd></div>
-          <div className="is-total"><dt>Ngân hàng nhận</dt><dd>{Number.isInteger(amount) && amount > 0 ? formatWalletAmount(amount - fee) : '—'}</dd></div>
+          <div className="is-total"><dt>Số tiền yêu cầu chuyển</dt><dd>{Number.isInteger(amount) && amount > 0 ? formatWalletAmount(amount - fee) : '—'}</dd></div>
         </dl>
-        <p className="wallet-fee-note">API rút tiền không trả phí riêng. Form đang tính phí xử lý 0 ₫ và số nhận bằng số rút.</p>
-        <h3>Tiến trình dự kiến</h3>
+        <p className="wallet-fee-note">Số tiền yêu cầu rút được trừ khỏi ví khi tạo yêu cầu. Nếu yêu cầu bị từ chối, Homeji hoàn lại số tiền vào ví.</p>
+        <h3>Các bước xử lý</h3>
         <ol className="wallet-timeline">
-          <li><span>1</span><b>Gửi yêu cầu</b><small>Hôm nay</small></li>
-          <li><span>2</span><b>Homeji đối soát</b><small>Trong 24 giờ</small></li>
-          <li><span>3</span><b>Ngân hàng ghi có</b><small>1–2 ngày làm việc</small></li>
+          <li><span>1</span><b>Gửi yêu cầu</b><small>Kiểm tra thông tin người nhận</small></li>
+          <li><span>2</span><b>Homeji xử lý</b><small>Theo dõi trạng thái trong Lịch sử</small></li>
+          <li><span>3</span><b>Kiểm tra tiền về</b><small>Xem giao dịch ở ngân hàng nhận</small></li>
         </ol>
         <div className="wallet-notice wallet-notice--mint">
           <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.lock} /></span>
@@ -767,7 +767,7 @@ function WithdrawPanel({
             <small>Homeji không yêu cầu mã OTP để duyệt lệnh rút.</small>
           </span>
         </div>
-        <p className="wallet-policy">Bằng việc gửi yêu cầu, bạn xác nhận thông tin trên là chính xác và đồng ý với quy trình đối soát của Homeji.</p>
+        <p className="wallet-policy">Khi gửi yêu cầu, bạn xác nhận thông tin người nhận và số tiền rút là chính xác.</p>
       </aside>
     </div>
   )
