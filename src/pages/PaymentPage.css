@@ -840,3 +840,13 @@
 
 .pay-plan__methods > .pay-wallet-confirm { display:block; }
 .pay-wallet-confirm { width:100%; box-sizing:border-box; }
+
+/* Opaque action surfaces keep text contrast stable over glass in both themes. */
+html:root #root .pay-v2 .pay-btn--primary { background: #173c37 !important; color: #fff !important; background-image: none !important; }
+html:root #root .pay-v2 .pay-current > .pay-btn { background: #fff !important; color: #173c37 !important; background-image: none !important; }
+html:root #root .pay-v2 :is(.pay-btn--primary,.pay-current > .pay-btn)::before,
+html:root #root .pay-v2 :is(.pay-btn--primary,.pay-current > .pay-btn)::after { display: none; }
+html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid #278c7e; outline-offset: 3px; }
+.pay-compare table { table-layout: fixed; }
+.pay-compare th:first-child { width: 44%; }
+.pay-compare th, .pay-compare td { overflow-wrap: anywhere; vertical-align: top; }

@@ -176,11 +176,7 @@ function matchesOrderStatusFilter(
 
 function formatOrderEta(group: MarketplaceOrderGroup): string {
   if (group.status === MarketplaceOrderStatus.Requested) {
-    const expiresAt = new Date(group.createdAt).getTime() + 30 * 60 * 1000
-    const remainingMinutes = Math.max(0, Math.ceil((expiresAt - Date.now()) / 60_000))
-    return remainingMinutes > 0
-      ? `Người bán còn ${remainingMinutes} phút để xác nhận`
-      : 'Đang kiểm tra thời hạn xác nhận'
+    return 'Chờ người bán xác nhận'
   }
 
   if (group.status === MarketplaceOrderStatus.Delivered
@@ -188,8 +184,8 @@ function formatOrderEta(group: MarketplaceOrderGroup): string {
         && group.orders.some((order) => !order.fundsReleasedAt))) {
     const releaseDueAt = group.orders[0]?.fundsReleaseDueAt
     return releaseDueAt
-      ? `Tự giải ngân lúc ${formatDate(releaseDueAt)}`
-      : 'Tiền đang được giữ trong 24 giờ'
+      ? `Tiền dự kiến về ví người bán lúc ${formatDate(releaseDueAt)}`
+      : 'Tiền đang được giữ; chưa có thời điểm chuyển về ví người bán'
   }
 
   const pickupAt = new Date(group.pickupAt)
@@ -2017,7 +2013,7 @@ export function MarketplacePage({
               <span aria-hidden="true">!</span>
               <div>
                 <strong>Bạn có {sellerActionCount} đơn mới cần xác nhận</strong>
-                <p>Người mua đang chờ. Đơn chưa xác nhận sẽ tự hết hạn sau 30 phút.</p>
+                <p>Người mua đang chờ bạn xác nhận. Đơn có thể hết hạn nếu chưa được xử lý.</p>
               </div>
             </div>
           ) : null}
@@ -2233,7 +2229,7 @@ export function MarketplacePage({
                             onClick={() => void handleOrderGroupAction(
                               group.groupKey,
                               () => markMarketplaceOrderDelivered(firstOrder.id),
-                              'Đã báo giao toàn bộ đơn. Tiền bắt đầu được giữ trong 24 giờ.',
+                              'Đã báo giao toàn bộ đơn. Xem thời điểm tiền dự kiến về ví trong chi tiết đơn.',
                             )}
                           >
                             {busy ? 'Đang xử lý…' : 'Đã giao đủ món'}
@@ -2247,7 +2243,7 @@ export function MarketplacePage({
                             onClick={() => void handleOrderGroupAction(
                               group.groupKey,
                               () => completeMarketplaceOrder(firstOrder.id),
-                              'Đã xác nhận nhận hàng. Tiền vẫn được giữ đủ 24 giờ trước khi về ví người bán.',
+                              'Đã xác nhận nhận hàng. Tiền sẽ về ví người bán theo thời điểm hiển thị trong đơn.',
                             )}
                           >
                             {busy ? 'Đang xử lý…' : 'Đã nhận đủ món'}
@@ -2255,15 +2251,16 @@ export function MarketplacePage({
                         ) : null}
                         {delivered && group.isSeller ? (
                           <p className="marketplace-card__info">
-                            Tiền đang được giữ 24 giờ và sẽ tự về ví lúc{' '}
-                            <strong>{formatDate(firstOrder.fundsReleaseDueAt ?? firstOrder.updatedAt)}</strong>.
+                            {firstOrder.fundsReleaseDueAt
+                              ? <>Tiền dự kiến về ví lúc <strong>{formatDate(firstOrder.fundsReleaseDueAt)}</strong>.</>
+                              : 'Tiền đang được giữ; chưa có thời điểm chuyển về ví.'}
                           </p>
                         ) : null}
                         {completedAwaitingRelease ? (
                           <p className="marketplace-card__info">
-                            Người mua đã xác nhận. Tiền vẫn được giữ đến{' '}
-                            <strong>{formatDate(firstOrder.fundsReleaseDueAt ?? firstOrder.updatedAt)}</strong>{' '}
-                            rồi tự động về ví người bán.
+                            Người mua đã xác nhận. {firstOrder.fundsReleaseDueAt
+                              ? <>Tiền dự kiến về ví người bán lúc <strong>{formatDate(firstOrder.fundsReleaseDueAt)}</strong>.</>
+                              : 'Chưa có thời điểm chuyển tiền về ví người bán.'}
                           </p>
                         ) : null}
                       </footer>

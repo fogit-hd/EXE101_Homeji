@@ -30,7 +30,7 @@ export function AiRentalResultCard({ item, index, onOpen, onRefine, requiredAmen
     <p className="ai-rental-result__location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></svg><span>{post.address || 'Chưa có địa chỉ'}</span></p>
     {amenities.length ? <ul className="ai-rental-result__amenities" aria-label="Tiện ích theo tin đăng">{amenities.slice(0, 3).map(value => <li key={value}>{amenityLabel(value)}</li>)}{amenities.length > 3 ? <li>+{amenities.length - 3} tiện ích</li> : null}</ul> : null}
     {post.type === RentalPostType.RoomTransfer ? <p className="ai-rental-result__notice">Vị trí gần đúng của tin pass phòng. Cần hỏi lại đường đi từ cửa phòng.</p> : null}
-    {post.isOwnerPremium ? <p className="ai-rental-result__notice">Chủ tin Premium · ưu tiên thương mại, không phải điểm phù hợp.</p> : null}
+    {post.isOwnerPremium ? <p className="ai-rental-result__notice">Người đăng dùng gói Premium; tin có thể được ưu tiên hiển thị. Nhãn này không đánh giá mức phù hợp với bạn.</p> : null}
     <div className="ai-rental-result__actions">
       <Link className="ai-rental-result__open" to={target} onClick={onOpen}>Xem phòng <span aria-hidden="true">↗</span></Link>
       <RentalConsiderationToggle post={post} compact />

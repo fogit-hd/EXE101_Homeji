@@ -290,7 +290,7 @@ function WalletSummary({ wallet, loading }: { wallet: Wallet | null; loading: bo
           ) : null}
         </div>
         <p className="wallet-summary__balance">
-          {wallet ? formatAvailableBalance(wallet.balance) : loading ? 'Đang tải…' : 'Chưa có số dư'}
+          {wallet ? formatAvailableBalance(wallet.balance) : loading ? 'Đang tải…' : 'Chưa tải được số dư'}
         </p>
         <p className="wallet-summary__note">
           {wallet
@@ -615,8 +615,8 @@ function WithdrawPanel({
     if (!bankName.trim()) next.bankName = 'Nhập tên ngân hàng.'
     if (!/^\d{6,40}$/.test(accountNumber.trim())) next.accountNumber = 'Số tài khoản chỉ gồm chữ số.'
     if (!accountHolder.trim()) next.accountHolder = 'Nhập tên chủ tài khoản.'
-    if (!Number.isInteger(amount) || amount <= 0) next.amount = 'Số tiền rút phải là số nguyên dương.'
-    else if (balance == null) next.amount = 'Chưa có số dư để kiểm tra hạn mức.'
+    if (!Number.isInteger(amount) || amount <= 0) next.amount = 'Nhập số tiền lớn hơn 0 đồng, không có phần thập phân.'
+    else if (balance == null) next.amount = 'Chưa tải được số dư để kiểm tra hạn mức.'
     setFieldError(next)
     if (Object.keys(next).length > 0) {
       setFormError('Kiểm tra lại các trường được đánh dấu.')
@@ -650,7 +650,7 @@ function WithdrawPanel({
 
         {withdrawalsUnavailable ? (
           <p className="wallet-status is-failed" role="status">
-            Rút tiền đang tạm khóa vì danh sách yêu cầu chưa tải được. Các chức năng số dư khác vẫn hoạt động.
+            Chưa thể rút tiền vì chưa tải được lịch sử yêu cầu. Bấm Tải lại lịch sử để thử lại.
           </p>
         ) : null}
 
@@ -705,7 +705,7 @@ function WithdrawPanel({
             <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.dollar} /></span>
             <span>
               <strong>Giữ lại tối thiểu {formatWalletAmount(reserve)}</strong>
-              <small>Sau giao dịch, ví phải còn ít nhất {formatWalletAmount(reserve)} để xử lý điều chỉnh hoặc hoàn tiền phát sinh.</small>
+              <small>Sau khi rút, ví cần còn ít nhất {formatWalletAmount(reserve)}.</small>
             </span>
           </div>
           <div className="wallet-notice wallet-notice--paper">
@@ -718,7 +718,7 @@ function WithdrawPanel({
         </div>
 
         {formError ? <p className="wallet-status is-failed" role="alert">{formError}</p> : null}
-        {sent ? <p className="wallet-status is-processing" role="status">Đã gửi yêu cầu. Số dư cập nhật theo phản hồi của ví, không theo ước tính trên form.</p> : null}
+        {sent ? <p className="wallet-status is-processing" role="status">Đã gửi yêu cầu rút tiền. Bạn có thể theo dõi trạng thái trong Lịch sử.</p> : null}
 
         <footer className="wallet-submit">
           <div>
@@ -744,7 +744,7 @@ function WithdrawPanel({
             <Icon src={WALLET_ASSETS.check} size={18} />
           </article>
         ) : (
-          <WalletEmptyState title="Chưa có tài khoản đã xác minh" detail="Thẻ này hiện khi đã có một lệnh rút hoàn tất." />
+          <WalletEmptyState title="Chưa có tài khoản từ các lần rút đã xử lý" detail="Tài khoản ngân hàng sẽ hiện ở đây sau khi Homeji xử lý xong yêu cầu rút." />
         )}
         <h3>Tóm tắt giao dịch</h3>
         <dl className="wallet-lines">
@@ -841,7 +841,7 @@ function HistoryPanel({
         {loading && rows.length === 0 ? (
           <p className="wallet-status is-processing" role="status">Đang tải sổ giao dịch…</p>
         ) : filtered.length === 0 ? (
-          <WalletEmptyState title="Không có giao dịch trong bộ lọc này" detail="Đổi loại, thời gian hoặc trạng thái. Không có dòng giả khi ví trả về danh sách trống." />
+          <WalletEmptyState title="Không có giao dịch trong bộ lọc này" detail="Thử đổi loại giao dịch, khoảng thời gian hoặc trạng thái." />
         ) : (
           <>
             <div className="wallet-table-wrap">
@@ -927,10 +927,10 @@ function HistoryPanel({
         <div className="wallet-notice wallet-notice--mint">
           <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.badge} /></span>
           <span>
-            <strong>Sổ dư đã đối soát</strong>
+            <strong>Số dư Homeji ghi nhận</strong>
             <small>
               {walletUpdatedAt
-                ? `Cập nhật lần cuối ${formatWalletLedgerTime(walletUpdatedAt)}. Các giao dịch thành công đã khớp với đối tác thanh toán.`
+                ? `Cập nhật lần cuối ${formatWalletLedgerTime(walletUpdatedAt)}.`
                 : 'Chưa có mốc cập nhật ví.'}
             </small>
           </span>

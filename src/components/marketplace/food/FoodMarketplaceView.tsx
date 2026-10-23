@@ -45,7 +45,7 @@ type Props = {
 }
 
 function formatDistanceMeters(distanceKm: number | null): string {
-  if (distanceKm == null) return 'gần bạn'
+  if (distanceKm == null) return 'Chưa rõ khoảng cách'
   if (distanceKm < 1) return `cách bạn ${Math.round(distanceKm * 1000)} m`
   return `cách bạn ${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(distanceKm)} km`
 }

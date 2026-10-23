@@ -779,7 +779,7 @@ export function MapMessagesPanel({
 
   const handleSendAddress = async () => {
     if (!addressPlace) {
-      setError('Chọn địa chỉ từ gợi ý Google Maps — không gửi được chữ nhập tay.')
+      setError('Chọn một địa chỉ trong danh sách gợi ý để người nhận mở đúng vị trí trên bản đồ.')
       return
     }
     await sendLocation({
@@ -1290,7 +1290,7 @@ export function MapMessagesPanel({
                   ))}
                 </ChoicePicker>
               </label>
-              <small>Ảnh được kiểm tra, xóa EXIF/GPS và chỉ thành viên cuộc trò chuyện xem được.</small>
+              <small>Homeji xóa thông tin vị trí lưu trong tệp ảnh trước khi gửi. Chỉ thành viên cuộc trò chuyện có thể mở ảnh trên Homeji.</small>
             </section>
           ) : null}
 

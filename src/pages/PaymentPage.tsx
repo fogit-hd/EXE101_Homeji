@@ -95,7 +95,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       setSubscriptionError('')
     } else {
       setMine(null)
-      setSubscriptionError('Chưa kiểm tra được gói hiện tại. Vui lòng làm mới; hệ thống không tự coi tài khoản là Free.')
+      setSubscriptionError('Chưa tải được gói đang dùng. Bấm Làm mới để thử lại.')
     }
     if (catalog.status === 'rejected') throw catalog.reason
   }, [])
@@ -303,7 +303,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         <p className="pay-head__lead">
           {tab === 'history'
             ? 'Theo dõi thanh toán và quản lý gói thành viên ở cùng một nơi.'
-            : 'Nâng cấp khi bạn cần thêm lợi thế trong hành trình tìm nhà — không ràng buộc dài hạn.'}
+            : 'Xem quyền lợi, giá và thời hạn trước khi chọn gói phù hợp.'}
         </p>
       </header>
 
@@ -325,7 +325,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               ? `Hết hạn ${formatDate(mine.premiumExpiresAt)}`
               : mine?.isPremium
                 ? 'Quyền lợi Premium đang được kích hoạt cho tài khoản của bạn.'
-                : 'Chọn gói Premium để bài đăng được ưu tiên và có badge Cao cấp.'}
+                : 'Gói Premium giúp tin đăng được ưu tiên hiển thị và có nhãn Premium.'}
           </p>
         </div>
         <button type="button" className="pay-btn" onClick={() => void reload()}>Làm mới</button>
@@ -360,7 +360,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 : current.premium === false
               const busy = busyCode !== null
               const pickingPay = payPickerCode === plan.code
-              const featured = view.highlight === 'popular'
+
 
               return (
                 <motion.article
@@ -370,27 +370,23 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
                   className={[
                     'pay-plan',
-                    featured ? 'is-featured' : '',
                     selectedCode === plan.code ? 'is-selected' : '',
                     isCurrent ? 'is-current' : '',
                   ].filter(Boolean).join(' ')}
                 >
-                  {view.highlightLabel ? (
-                    <span className={`pay-plan__ribbon${featured ? '' : ' is-dark'}`}>{view.highlightLabel}</span>
-                  ) : null}
-                  <h3>{plan.name}</h3>
+                  <h3>{view.title}</h3>
                   <p className="pay-plan__duration">
-                    {isPremium ? `${plan.durationDays} ngày` : view.note ?? 'Mặc định cho mọi tài khoản'}
+                    {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
                   </p>
                   <p className="pay-plan__price">
-                    {isPremium ? view.headlinePrice : '0 ₫'}
-                    <small>{isPremium ? view.headlineSuffix || '/ tháng' : '/ mãi mãi'}</small>
+                    {view.headlinePrice}
+                    <small>{view.headlineSuffix}</small>
                   </p>
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>
                         Thanh toán {formatPrice(plan.price)}
-                        {view.savingsLabel ? <> · <b>{view.savingsLabel}</b></> : null}
+                        · thanh toán một lần
                       </>
                     ) : '\u00a0'}
                   </p>
@@ -468,15 +464,18 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             <h2 id="pay-compare-title" className="sr-only">So sánh quyền lợi</h2>
             <table>
               <thead>
-                <tr><th scope="col">Quyền lợi</th><th scope="col">Standard</th><th scope="col">Premium</th></tr>
+                <tr><th scope="col">Quyền lợi</th><th scope="col">Miễn phí</th><th scope="col">Premium</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Tìm kiếm &amp; lưu phòng</th><td>Không giới hạn</td><td>Không giới hạn</td></tr>
-                <tr><th scope="row">Thông báo phòng mới</th><td>1 khu vực</td><td className="is-accent">10 khu vực</td></tr>
-                <tr><th scope="row">So sánh phòng</th><td>3 phòng</td><td className="is-accent">Không giới hạn</td></tr>
+                <tr><th scope="row">Tìm và lưu phòng</th><td>Có</td><td>Có</td></tr>
+                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa 10</td></tr>
+                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 tin/lần</td><td>Tối đa 3 tin/lần</td></tr>
+                <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td>Có</td></tr>
+                <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td>Có</td></tr>
               </tbody>
             </table>
           </section>
+          <p className="pay-foot">Thanh toán một lần cho thời hạn gói đã chọn. Ưu tiên hiển thị không bảo đảm tin đứng đầu hay luôn phù hợp với người tìm phòng.</p>
           <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo hoặc PayOS · Đơn chờ MoMo/PayOS tự hủy sau 15 phút</p>
         </div>
       ) : null}

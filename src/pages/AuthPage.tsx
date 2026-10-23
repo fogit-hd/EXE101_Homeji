@@ -46,14 +46,14 @@ const COPY = {
     'Bạn muốn tìm chỗ quanh Thủ Đức hay Quận 9? Homeji giúp bạn gặp được phòng vừa ý, hợp gu — rõ ràng và yên tâm hơn.',
   askName: 'Hmm, trước hết, bạn muốn mình gọi bạn là gì nhỉ?',
   helloAfter: (name: string) => `Rất vui được gặp bạn, ${name}.`,
-  context2: 'Một tài khoản thôi là đủ để bạn có thể tìm nhà, nói chuyện với chủ nhà đáng tin và bạn ở ghép dễ chịu lắm lun í.',
-  askEmail: 'Email của bạn là gì ấy nhở!? chia sẻ với Homeji nhé!',
+  context2: 'Tạo tài khoản để lưu phòng, nhắn tin cho người đăng và tìm bạn ở ghép.',
+  askEmail: 'Nhập email để đăng ký tài khoản.',
   askPassword: 'Hãy điền phần mật khẩu mà bạn có thể nhớ được — nhớ là phải từ 6 ký tự trở lên nhé.',
   ending:
-    'Tuyệt vời — mọi thứ đã sẵn sàng. Bạn hãy double check lại các thông tin 1 lần nữa nhé, Click vào nút bên dưới, chúng mình rất nhanh sẽ gặp nhau thôi!!.',
+    'Kiểm tra lại thông tin, rồi chọn Tạo tài khoản để tiếp tục.',
   renameAfter: (name: string) =>
     `Tên hay quá dạ!! Homeji chúng mình chào mừng ${name} dữ lắm nha.`,
-  connectCta: 'Kết nối với Homeji',
+  connectCta: 'Tạo tài khoản',
   stepBack: '← Lùi một bước',
 } as const
 
@@ -277,7 +277,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     initialMode ?? (location.pathname.startsWith('/register') ? 'signup' : 'signin')
 
   const [mode, setMode] = useState<AuthMode>(modeFromPath)
-  /** Skip Intro → hiện form card đầy đủ */
+  /** Bỏ qua giới thiệu → hiện form card đầy đủ */
   const [skipped, setSkipped] = useState(true)
   const [storyStep, setStoryStep] = useState<StoryStep>(
     modeFromPath === 'signup' ? 'welcome' : 'done',
@@ -951,7 +951,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
-      setError('Không nhận được token từ Google.')
+      setError('Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
       return
     }
     setError('')
@@ -1149,7 +1149,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
           aria-hidden={!introRunning}
           tabIndex={introRunning && !connectUiLocked ? 0 : -1}
         >
-          Skip Intro
+          Bỏ qua giới thiệu
         </button>
       </div>
 

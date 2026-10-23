@@ -680,7 +680,7 @@ export function MapPlaceDetailPanel({
           <p className="map-detail-panel__category">{category}</p>
           {isListing && (showPremiumBadge || showOwnerBadge || listing?.isOwnerVerified) ? (
             <p className="map-detail-panel__owner-badges">
-              {listing?.isOwnerVerified ? <span className="is-verified">Đã xác minh</span> : null}
+              {listing?.isOwnerVerified ? <span className="is-verified">Hồ sơ chủ nhà đã được duyệt</span> : null}
               {showPremiumBadge ? <span className="is-premium">Premium</span> : null}
               {showOwnerBadge ? <span className="is-owner">{ownerBadgeText}</span> : null}
             </p>

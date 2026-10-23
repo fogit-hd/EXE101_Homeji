@@ -40,7 +40,7 @@ const PRIMARY_TABS: { id: MarketplacePrimary; label: string }[] = [
   { id: 'shopping', label: 'Mua sắm' },
   { id: 'purchases', label: 'Đơn mua' },
   { id: 'shop', label: 'Quản lý cửa hàng' },
-  { id: 'wallet', label: 'Số dư' },
+  { id: 'wallet', label: 'Ví Homeji' },
 ]
 
 const SHOPPING_TABS: { id: MarketplaceTab; label: string }[] = [

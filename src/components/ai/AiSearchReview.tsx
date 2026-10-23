@@ -62,10 +62,10 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
   if (variant === 'compact') {
     const notes = [
       unresolved ? 'Cần xác nhận thông tin còn thiếu trước khi áp dụng. Bạn có thể sửa yêu cầu hoặc dùng công cụ bên dưới.' : null,
-      !unresolved && pendingCosts ? 'Chỉ áp dụng những phòng trong ngân sách theo kịch bản chi phí bạn đã xác nhận. Các khoản này do bạn nhập, chưa phải báo giá của chủ phòng.' : null,
+      !unresolved && pendingCosts ? 'Chỉ lọc các phòng trong ngân sách theo chi phí bạn đã nhập và xác nhận. Đây là số tiền ước tính, chưa được người đăng xác nhận.' : null,
       unknownPriceUnit ? 'Một số tin ở ghép chưa rõ giá theo người hay cả phòng. Hỏi người đăng đơn vị hoặc sửa yêu cầu để loại các tin này trước khi áp dụng ngân sách.' : null,
       pendingCommute && !aiFeatureFlags.commute ? 'Kiểm tra thời gian đi học chưa được bật. Bạn có thể sửa yêu cầu để tìm theo giá, diện tích và tiện ích trước.' : null,
-      unresolved && routedPosts.length ? 'Tin ứng viên cần xác nhận phí hoặc đường đi; chưa đáp ứng toàn bộ yêu cầu.' : null,
+      unresolved && routedPosts.length ? 'Các tin dưới đây chưa đủ thông tin về phí hoặc đường đi để xác nhận phù hợp với yêu cầu của bạn.' : null,
       'Giá, diện tích và tiện ích theo tin chủ đăng. Chưa xác nhận tình trạng phòng trống và phí phát sinh.',
     ].filter((note): note is string => Boolean(note))
     const cards = shownPosts.slice(0, 3)
@@ -118,13 +118,13 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
       : <span key={chip.text}>{chip.text}</span>)}</div>
     {unresolved ? <p className="ai-search-review__notice" role="status">Cần xác nhận thông tin còn thiếu trước khi áp dụng. Bạn có thể sửa yêu cầu hoặc dùng công cụ bên dưới.</p> : <>
       {visiblePosts.length === 0 ? <p>Chưa có tin phù hợp. Các điều kiện được giữ nguyên.</p> : null}
-      {pendingCosts ? <p>Chỉ áp dụng những phòng trong ngân sách theo kịch bản chi phí bạn đã xác nhận. Các khoản này do bạn nhập, chưa phải báo giá của chủ phòng.</p> : null}
+      {pendingCosts ? <p>Chỉ lọc các phòng trong ngân sách theo chi phí bạn đã nhập và xác nhận. Đây là số tiền ước tính, chưa được người đăng xác nhận.</p> : null}
     </>}
     {unknownPriceUnit ? <p role="status">Một số tin ở ghép chưa rõ giá theo người hay cả phòng. Hỏi người đăng đơn vị hoặc sửa yêu cầu để loại các tin này trước khi áp dụng ngân sách.</p> : null}
     {pendingCommute && !aiFeatureFlags.commute ? <p>Kiểm tra thời gian đi học chưa được bật. Bạn có thể sửa yêu cầu để tìm theo giá, diện tích và tiện ích trước.</p> : null}
     {aiFeatureFlags.commute && pendingCommute && result.posts.length ? <ShortlistCommutePlanner origins={result.posts.slice(0, 5).map(item => item.post)}
       destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
-    {unresolved && routedPosts.length ? <strong>Tin ứng viên cần xác nhận phí hoặc đường đi; chưa đáp ứng toàn bộ yêu cầu.</strong> : null}
+    {unresolved && routedPosts.length ? <strong>Các tin dưới đây chưa đủ thông tin về phí hoặc đường đi để xác nhận phù hợp với yêu cầu của bạn.</strong> : null}
     {shownPosts.slice(0, 5).map(renderListing)}
     {!unresolved ? <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Xác nhận · áp dụng lên bản đồ</button></div> : null}
   </section>

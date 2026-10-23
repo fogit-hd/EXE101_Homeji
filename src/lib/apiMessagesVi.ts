@@ -1,5 +1,5 @@
 const API_MESSAGE_VI: Record<string, string> = {
-  'The viewing time must be in the future.': 'Thời gian xem phòng phải ở tương lai.',
+  'The viewing time must be in the future.': 'Chọn giờ xem phòng sau thời điểm hiện tại.',
   'This viewing appointment can no longer be cancelled.':
     'Lịch xem phòng này không còn hủy được nữa.',
   'This viewing appointment can no longer be rescheduled.':
@@ -13,7 +13,7 @@ const API_MESSAGE_VI: Record<string, string> = {
   'Rental post owners cannot request a viewing for their own post.':
     'Chủ tin đăng không thể tự đặt lịch xem phòng cho tin của mình.',
   'You already have an active viewing appointment for this rental post.':
-    'Bạn đã có lịch xem phòng đang hoạt động cho tin này.',
+    'Bạn đã có lịch hẹn cho phòng này. Hãy kiểm tra lịch xem phòng trước khi đặt thêm.',
 }
 
 /** Đổi thông báo lỗi tiếng Anh từ API sang tiếng Việt khi có bản dịch. */

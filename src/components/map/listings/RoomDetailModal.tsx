@@ -549,7 +549,7 @@ function OwnerProfile({ post, phone, isStudentShare }: { post: RentalPost; phone
         <div>
           <span className="room-detail__owner-label">Họ và tên</span>
           <strong>{name}</strong>
-          {post.isOwnerVerified ? <span className="room-detail__owner-verified">✓ Đã xác minh danh tính</span> : null}
+          {post.isOwnerVerified ? <span className="room-detail__owner-verified">✓ Hồ sơ chủ nhà đã được duyệt</span> : null}
         </div>
       </div>
       <div className={`room-detail__owner-phone${revealed ? ' is-revealed' : ''}`}>

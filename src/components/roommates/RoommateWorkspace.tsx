@@ -37,7 +37,7 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m16 3 5 5-12 12-6 1 1-6Z" /><path d="m14 5 5 5" />
         </svg>
-        {editingLifestyle ? 'Đóng form lối sống' : profile?.onboardingCompleted ? 'Cập nhật lối sống' : 'Nhập lối sống'}
+        {editingLifestyle ? 'Thu gọn thông tin' : profile?.onboardingCompleted ? 'Cập nhật thông tin ở ghép' : 'Thêm thông tin ở ghép'}
         <svg className="roommate-workspace__lifestyle-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
       </button>
       {lifestylePresent ? <div {...lifestylePresence} id="roommate-lifestyle"><ProfilePage embedded lifestyleOnly /></div> : null}

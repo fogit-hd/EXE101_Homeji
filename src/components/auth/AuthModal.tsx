@@ -128,7 +128,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
-      setError('Không nhận được token từ Google.')
+      setError('Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
       return
     }
     setError('')

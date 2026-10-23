@@ -621,7 +621,7 @@ export function MapChatbot({
               {rentalSelection ? <section className="map-chatbot__context" aria-label="Các phòng đang hỗ trợ">
                 <div className="homeji-assistant__room-heading"><span className="homeji-assistant__room-icon"><AssistantIcon name="home" /></span><div><span>CÁC LỰA CHỌN ĐANG HỖ TRỢ</span><strong>{rentalSelection.title}</strong></div><button type="button" className="homeji-assistant__icon-button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh so sánh"><AssistantIcon name="close" /></button></div>
                 <div className="map-chatbot__context-prompts"><button type="button" disabled={busy} onClick={() => void send('So sánh các lựa chọn này', false, 'compare')}>So sánh các lựa chọn</button><button type="button" disabled={busy} onClick={() => void send('Những điều cần hỏi về các lựa chọn này', false, 'questions')}>Những điều cần hỏi</button></div>
-                <small>Cùng kịch bản {rentalSelection.scenario.occupants} người. Đổi phí hoặc danh sách tại màn so sánh; các khoản chưa xác nhận vẫn được giữ là chưa biết.</small>
+                <small>Cùng mức sử dụng cho {rentalSelection.scenario.occupants} người. Đổi phí hoặc danh sách tại màn so sánh; các khoản chưa xác nhận vẫn được giữ là chưa biết.</small>
               </section> : null}
               {rentalContext ? <section className="map-chatbot__context" aria-label="Phòng đang hỗ trợ">
                 <div className="homeji-assistant__room-heading"><span className="homeji-assistant__room-icon"><AssistantIcon name="home" /></span><div><span>PHÒNG ĐANG HỖ TRỢ</span><strong>{rentalContext.title || 'Tin phòng đang xem'}</strong></div><button type="button" className="homeji-assistant__icon-button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh phòng đang xem"><AssistantIcon name="close" /></button></div>
@@ -680,7 +680,7 @@ export function MapChatbot({
               </form>
               <div className="homeji-assistant__composer-hint" id={`${reactId}-composer-help`}><span>Enter để gửi · Shift + Enter xuống dòng</span><span>AI có thể nhầm. Hãy kiểm tra thông tin.</span></div>
               <details className="map-chatbot__privacy" data-glass-exclude><summary>Quyền riêng tư & lịch sử</summary>
-                <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Tin nhắn và tiêu chí chỉ dùng trong phiên hiện tại; không ghi vào lịch sử chatbot trên máy chủ.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Tin nhắn hỗ trợ chung có thể được gửi tới Gemini để trả lời.</p>
+                <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
                 {config?.historyStorageEnabled ? <label><input type="checkbox" checked={saveHistory} disabled={busy} onChange={event => { setSaveHistory(event.target.checked); startNewConversation() }} />Đồng ý lưu hội thoại và tiêu chí theo chính sách lưu lịch sử</label> : <p>Lưu lịch sử hiện đang tắt.</p>}
                 {!saveHistory ? <button type="button" disabled={busy} onClick={() => setResetRequested(true)}>Xóa nội dung phiên và tiêu chí</button> : null}
                 {conversationId ? <button type="button" disabled={busy} onClick={() => void deleteConversation()}>Xóa hội thoại và tiêu chí hiện tại</button> : null}

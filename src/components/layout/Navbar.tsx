@@ -75,7 +75,7 @@ export function Navbar() {
                 Đăng nhập
               </Link>
               <Link to="/register" className="btn btn-primary btn-sm">
-                Bắt đầu ngay
+                Tạo tài khoản
               </Link>
             </>
           )}
@@ -148,7 +148,7 @@ export function Navbar() {
                     Đăng nhập
                   </Link>
                   <Link to="/register" className="btn btn-primary" onClick={closeMenu}>
-                    Bắt đầu ngay
+                    Tạo tài khoản
                   </Link>
                 </>
               )}

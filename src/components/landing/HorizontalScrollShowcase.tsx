@@ -89,12 +89,12 @@ function ProtectionPanel({
       </div>
       <div className="dxh-panel__copy" data-reveal="shield-copy">
         <span className="dxh-step">04</span>
-        <span className="dxh-eyebrow">Giải pháp an toàn</span>
-        <h2>Chúng tôi là giải pháp an toàn cho bạn</h2>
+        <span className="dxh-eyebrow">Thông tin để quyết định</span>
+        <h2>Xem thông tin trước khi liên hệ</h2>
         <div className="dxh-hairline" />
         <p>
-          Homeji ghép đủ thông tin phòng, bạn cùng phòng và chủ nhà thành một lớp bảo vệ. Thiếu chúng
-          tôi — bạn thiếu một mảnh quan trọng cho giải pháp an toàn nhất.
+          Đọc giá thuê, vị trí và tiện ích do người đăng cung cấp. Khi xem phòng, hãy xác nhận chi phí,
+          người cho thuê và điều khoản trước khi quyết định.
         </p>
       </div>
     </article>

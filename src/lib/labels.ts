@@ -35,7 +35,7 @@ export const formatDate = (value: string) =>
 export const rentalPostTypeLabel: Record<RentalPostType, string> = {
   [RentalPostType.VacantRoom]: 'Phòng trống',
   [RentalPostType.RoommateShare]: 'Tìm bạn ở ghép',
-  [RentalPostType.RoomTransfer]: 'Pass phòng',
+  [RentalPostType.RoomTransfer]: 'Nhượng phòng',
 }
 
 export const rentalPostStatusLabel: Record<number, string> = {
@@ -162,7 +162,7 @@ export const marketplacePostStatusLabel: Record<number, string> = {
 
 export const marketplaceOrderStatusLabel: Record<number, string> = {
   [MarketplaceOrderStatus.Requested]: 'Chờ xác nhận',
-  [MarketplaceOrderStatus.Accepted]: 'Đã nhận',
+  [MarketplaceOrderStatus.Accepted]: 'Người bán đã xác nhận',
   [MarketplaceOrderStatus.Rejected]: 'Từ chối',
   [MarketplaceOrderStatus.Cancelled]: 'Đã hủy',
   [MarketplaceOrderStatus.Completed]: 'Hoàn tất',
@@ -220,7 +220,7 @@ export const AMENITY_LABELS: Record<string, string> = {
   WARDROBE: 'Tủ quần áo',
   TV: 'TV',
   MICROWAVE: 'Lò vi sóng',
-  PET_FRIENDLY: 'Thú cưng',
+  PET_FRIENDLY: 'Cho nuôi thú cưng',
   FURNITURE: 'Nội thất',
   FURNISHED: 'Full nội thất',
   FREE_TIME: 'Giờ giấc tự do',
@@ -230,10 +230,10 @@ export const AMENITY_LABELS: Record<string, string> = {
   GARDEN: 'Sân vườn',
   POOL: 'Hồ bơi',
   GYM: 'Phòng gym',
-  LAUNDRY: 'Chỗ phơi đồ',
+  LAUNDRY: 'Giặt/phơi đồ (cần hỏi lại)',
   DRYING_AREA: 'Chỗ phơi đồ',
-  INCLUDED_ELECTRICITY: 'Điện miễn phí',
-  INCLUDED_WATER: 'Nước miễn phí',
+  INCLUDED_ELECTRICITY: 'Tiền điện đã gồm trong giá thuê',
+  INCLUDED_WATER: 'Tiền nước đã gồm trong giá thuê',
   NEAR_MARKET: 'Gần chợ',
   NEAR_SCHOOL: 'Gần trường',
 }

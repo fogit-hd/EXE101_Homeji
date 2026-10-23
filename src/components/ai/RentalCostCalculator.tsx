@@ -38,7 +38,7 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
     {fee.unit === 'usage' ? <><label htmlFor={`${id}-${label}-usage`}>{label === 'Điện' ? 'kWh' : 'm³'} dùng mỗi tháng</label>
       <input id={`${id}-${label}-usage`} type="number" min="0" max="100000" value={fee.usage ?? ''} onChange={event => update(setFee, { ...fee, usage: amount(event.target.value) })} /></> : null}
   </fieldset>
-  return <details className="rental-cost"><summary>Ước tính chi phí theo kịch bản của bạn</summary>
+  return <details className="rental-cost"><summary>Ước tính tiền cần trả mỗi tháng</summary>
     <p>Giá thuê lấy từ tin. Nhập các khoản bạn đã hỏi chủ phòng; nhập 0 khi đã xác nhận miễn phí. Bỏ trống giữ trạng thái chưa biết.</p>
     {knownRent === null ? <p role="status">Tin chưa có giá thuê hợp lệ. Chưa thể xác nhận tổng chi phí; cần người đăng cập nhật giá.</p> : null}
     <label htmlFor={`${id}-people`}>Số người</label><input id={`${id}-people`} type="number" min="1" max="20" value={people} onChange={event => update(setPeople, Number(event.target.value))} />
@@ -54,10 +54,10 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
       <p>Hằng tháng: <strong>{result.monthly == null ? `${formatPrice(result.knownMonthly)} đã biết + khoản chưa có thông tin` : formatPrice(result.monthly)}</strong></p>
       <p>Ban đầu (cọc + thuê đầu kỳ + phí ban đầu): <strong>{result.initial == null ? 'Chưa có đủ thông tin' : formatPrice(result.initial)}</strong></p>
     </> : <p role="alert">Kiểm tra số người (1–20), các khoản tiền (0–1 tỷ VND) và lượng dùng (0–100.000).</p>}</output>
-    {monthlyCeiling != null && result?.monthly != null ? <p>{result.monthly <= monthlyCeiling ? 'Trong ngân sách theo kịch bản này.' : 'Vượt ngân sách theo kịch bản này.'}</p> : null}
+    {monthlyCeiling != null && result?.monthly != null ? <p>{result.monthly <= monthlyCeiling ? 'Trong ngân sách theo chi phí bạn nhập.' : 'Vượt ngân sách theo chi phí bạn nhập.'}</p> : null}
     {onConfirmMonthly ? <button type="button" disabled={result?.monthly == null} onClick={() => {
       if (result?.monthly != null) onConfirmMonthly(result.monthly)
-    }}>Xác nhận kịch bản chi phí của phòng này</button> : null}
-    <small>Ước tính từ kịch bản bạn nhập; có thể còn khoản chưa được cung cấp, chưa phải báo giá chính thức.</small>
+    }}>Dùng các khoản này để tính</button> : null}
+    <small>Ước tính từ thông tin bạn nhập. Hãy xác nhận các khoản còn thiếu với người đăng.</small>
   </details>
 }

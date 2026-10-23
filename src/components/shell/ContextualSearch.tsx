@@ -127,7 +127,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
               </li>
             ) : null}
             {isLoading ? <li className="hj-search__suggest-note">Đang gợi ý…</li> : null}
-            {locationSearch && query.trim().length >= 2 && !isLoading && suggestions.length === 0 ? <li className="hj-search__suggest-note">Chưa có gợi ý địa điểm. Thử tên đường đầy đủ hoặc tên trường và cơ sở. Nút Tìm vẫn tìm theo từ khóa tin đăng.</li> : null}
+            {locationSearch && query.trim().length >= 2 && !isLoading && suggestions.length === 0 ? <li className="hj-search__suggest-note">Chưa tìm thấy địa điểm. Nhập thêm tên đường hoặc cơ sở trường. Bạn vẫn có thể bấm Tìm để tìm trong tin đăng.</li> : null}
             {suggestions.map((item) => (
               <li key={item.id}>
                 <button

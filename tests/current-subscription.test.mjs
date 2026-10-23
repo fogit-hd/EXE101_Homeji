@@ -3,7 +3,7 @@ import test from 'node:test'
 import { currentSubscription } from '../src/lib/currentSubscription.ts'
 test('missing subscription is unknown, never falsely Free', () => {
   assert.equal(currentSubscription(null).premium, null)
-  assert.notEqual(currentSubscription(null).label, 'Homeji Free')
+  assert.notEqual(currentSubscription(null).label, 'Homeji Miễn phí')
 })
 test('premium keeps server package name and normalizes matching code', () => {
   const current = currentSubscription({isPremium:true,packageName:'Homeji Pro Max',packageCode:' premium_yearly ',premiumExpiresAt:'2027-01-01T00:00:00Z'})
@@ -12,5 +12,5 @@ test('premium keeps server package name and normalizes matching code', () => {
   assert.equal(current.premium, true)
 })
 test('only a successful non-premium response identifies Free', () => {
-  assert.equal(currentSubscription({isPremium:false,packageName:null,packageCode:null,premiumExpiresAt:null}).label, 'Homeji Free')
+  assert.equal(currentSubscription({isPremium:false,packageName:null,packageCode:null,premiumExpiresAt:null}).label, 'Homeji Miễn phí')
 })

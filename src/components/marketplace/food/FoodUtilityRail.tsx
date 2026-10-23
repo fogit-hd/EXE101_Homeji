@@ -98,7 +98,7 @@ export function FoodUtilityRail({
             onClick={onRequestLocation}
           >
             <img src={FOOD_ASSETS.icons.locate} alt="" width={14} height={14} />
-            {locating ? 'Đang lấy…' : 'Định vị tôi'}
+            {locating ? 'Đang lấy…' : 'Dùng vị trí hiện tại'}
           </button>
         </div>
 
