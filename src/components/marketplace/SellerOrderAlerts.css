@@ -37,7 +37,11 @@ html:root #root .seller-watch__dialog.seller-watch__dialog--workspace > header >
 .seller-watch__pickup { margin:10px 0 14px; font-size:11px; line-height:1.6; color:var(--text-secondary); }
 .seller-watch__item-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 .seller-watch__item-actions a,.seller-watch__item-actions button,.seller-watch__settings-body button,.seller-watch__error button { display:inline-flex; align-items:center; justify-content:center; gap:18px; min-height:38px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; color:var(--text-primary); background:var(--surface-elevated); font:500 12px/1.5 var(--font-ui); text-decoration:none; cursor:pointer; }
-.seller-watch__item-actions a.seller-watch__open-order { border-color:var(--action-primary); background:var(--action-primary); color:var(--action-on-primary); }
+.seller-watch__item-actions a.seller-watch__open-order { gap:10px; min-height:42px; padding:9px 16px; border-radius:999px; background:transparent; color:var(--text-heading); font-size:13px; font-weight:600; transition:background-color .15s,border-color .15s; }
+.seller-watch__item-actions a.seller-watch__open-order:hover { border-color:var(--action-primary); background:var(--action-soft); color:var(--action-on-soft); }
+.seller-watch__open-order svg { flex-shrink:0; opacity:.75; }
+.seller-watch__item-actions > button { min-height:42px; padding:9px 8px; border-color:transparent; background:transparent; color:var(--text-secondary); }
+.seller-watch__item-actions > button:not(:disabled):hover { color:var(--text-heading); text-decoration:underline; text-underline-offset:3px; }
 .seller-watch__ack-hint { margin:12px 0 0; color:var(--text-secondary); font-size:11px; line-height:1.7; }
 .seller-watch__error { padding:14px; margin-bottom:16px; border:1px solid var(--border); border-radius:10px; background:var(--surface-muted); }
 .seller-watch__error strong { font-size:13px; }
@@ -80,4 +84,4 @@ html:root #root .seller-watch__dialog.seller-watch__dialog--workspace > header >
  .seller-watch__count { position:absolute; top:-4px; right:-5px; }
  .seller-watch__sync-dot { position:absolute; bottom:2px; right:2px; }
 }
-@media(prefers-reduced-motion:reduce) { .seller-watch__toggle::after { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .seller-watch__toggle::after,.seller-watch__item-actions a.seller-watch__open-order { transition:none; } }
