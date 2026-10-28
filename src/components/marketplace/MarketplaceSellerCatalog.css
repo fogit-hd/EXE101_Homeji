@@ -117,19 +117,29 @@ html:root #root .map-listings .seller-catalog.seller-catalog--list .map-listings
 html:root #root .map-listings .seller-catalog.seller-catalog--list .map-listings__meta > span { padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 html:root #root .map-listings .seller-catalog.seller-catalog--list .seller-catalog__more { padding: 10px 12px; font-size: 12px; }
 
-/* Product photos need their full silhouette; wide shallow crops hide the item. */
-html:root #root .seller-catalog:not(.seller-catalog--list) .seller-catalog__items { grid-template-columns: repeat(auto-fill, minmax(min(100%,220px),1fr)); align-items: stretch; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__main { display: flex; flex-direction: column; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__thumb { width: 100%; height: auto; aspect-ratio: 1; max-height: 300px; object-fit: contain; background: var(--surface-muted); border-radius: 0; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__seller { display: none; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__title { font-size: 16px; line-height: 1.4; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions .btn-map-cta { display: none; }
-html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions .btn { flex: 1 1 100px; min-height: 40px; padding: 8px 10px; font-size: 13px; }
-@media(max-width:600px) {
- html:root #root .seller-catalog:not(.seller-catalog--list) .seller-catalog__items { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 10px; }
- html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__body { padding: 10px; }
- html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__info { display: none; }
- html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__price { font-size: 15px; white-space: normal; }
- html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__addr { font-size: 12px; }
+/* Horizontal product rows keep the entire photo visible without oversized cards. */
+html:root #root .seller-catalog:not(.seller-catalog--list) .seller-catalog__items { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:stretch; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row { display:flex; flex-direction:column; border-radius:12px; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row .marketplace-card__main { display:grid; grid-template-columns:160px minmax(0,1fr); align-items:start; gap:0; padding:12px; }
+.marketplace-product-photo { position:relative; min-width:0; width:100%; aspect-ratio:1; background:var(--surface-muted); border-radius:8px; overflow:hidden; }
+html:root #root .marketplace-product-photo .marketplace-card__thumb { display:block; width:100%; height:100%; max-height:none; object-fit:contain; object-position:center; border:0; border-radius:0; }
+.marketplace-product-photo__hint { position:absolute; right:6px; bottom:6px; padding:3px 6px; border-radius:4px; background:var(--surface-elevated); color:var(--text-heading); font-size:10px; line-height:1.5; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row .marketplace-card__body { padding:0 0 0 14px; min-width:0; gap:6px; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__seller { display:none; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__title { font-size:16px; line-height:1.45; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__price { font-size:17px; white-space:normal; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__addr { font-size:12px; line-height:1.5; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions { display:flex; gap:8px; flex-wrap:wrap; padding:10px 12px; margin-top:auto; border-top:1px solid var(--border); }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions .btn-map-cta { display:none; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions .btn { flex:1 1 100px; min-height:40px; padding:8px 10px; font-size:13px; }
+html:root #root .seller-catalog .map-listings__card-photo { object-fit:contain; background-size:contain; background-repeat:no-repeat; background-position:center; background-color:var(--surface-muted); }
+html:root #root .seller-catalog .map-listings__card-photo img { width:100%;height:100%;object-fit:contain; }
+@media(max-width:1000px) {
+ html:root #root .seller-catalog:not(.seller-catalog--list) .seller-catalog__items { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:480px) {
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row .marketplace-card__main { grid-template-columns:112px minmax(0,1fr); padding:10px; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row .marketplace-card__body { padding-left:12px; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__info { font-size:12px; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__title { font-size:15px; }
 }

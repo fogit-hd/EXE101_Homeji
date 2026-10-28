@@ -1110,7 +1110,7 @@ export function MarketplacePage({
     return (
       <article
         key={p.id}
-        className={`marketplace-card marketplace-card--${mine ? 'mine' : 'browse'} map-motion-fade-up${
+        className={`marketplace-card${!mine ? ' marketplace-product-row' : ''} marketplace-card--${mine ? 'mine' : 'browse'} map-motion-fade-up${
           selectedMarketplaceId === p.sellerId ? ' is-selected' : ''
         }`}
       >
@@ -1128,7 +1128,7 @@ export function MarketplacePage({
           }}
         >
           {thumb ? (
-            <img className="marketplace-card__thumb" src={thumb} alt="" loading="lazy" />
+            <div className="marketplace-product-photo"><img className="marketplace-card__thumb" src={thumb} alt={p.title} loading="lazy" /><span className="marketplace-product-photo__hint">Xem sản phẩm ↗</span></div>
           ) : (
             <div className="marketplace-card__thumb marketplace-card__thumb--empty" aria-hidden>
               Đồ

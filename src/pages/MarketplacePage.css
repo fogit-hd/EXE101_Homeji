@@ -2877,3 +2877,7 @@
 .food-checkout-confirmation { width: min(460px, calc(100% - 32px)); max-height: 85dvh; overflow-y: auto; box-sizing: border-box; grid-template-columns: minmax(0, 1fr); }
 .food-checkout-confirmation:not([open]) { display: none; }
 .food-checkout-confirmation::backdrop { background: rgb(13 31 24 / .58); }
+
+/* Product detail and order thumbnails preserve the complete item silhouette. */
+#root .marketplace-detail-dialog__image { object-fit:contain; background:var(--surface-muted); }
+#root .marketplace-order-items img { object-fit:contain; background:var(--surface-muted); }
