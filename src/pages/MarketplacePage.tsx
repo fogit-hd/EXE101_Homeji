@@ -80,6 +80,7 @@ import {
   marketplaceOrderStatusLabel,
   marketplacePostStatusLabel,
 } from '../lib/labels'
+import { getDeviceLocation } from '../lib/geolocation'
 import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
@@ -290,11 +291,34 @@ export function MarketplacePage({
   onFocusMap,
   selectedMarketplaceId: selectedMarketplaceIdProp = null,
   onSelectMarketplaceId,
-  userLocation = null,
-  onRequestLocation,
-  locating = false,
+  userLocation: userLocationProp = null,
+  onRequestLocation: onRequestLocationProp,
+  locating: locatingProp = false,
   onCartOpenChange,
 }: Props) {
+  const [internalLocation, setInternalLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [internalLocating, setInternalLocating] = useState(false)
+  const [locationNotice, setLocationNotice] = useState<string | null>(null)
+
+  const userLocation = userLocationProp ?? internalLocation
+  const locating = Boolean(locatingProp || internalLocating)
+
+  const handleRequestLocation = useCallback(async () => {
+    onRequestLocationProp?.()
+    setInternalLocating(true)
+    setLocationNotice(null)
+    try {
+      const loc = await getDeviceLocation({ fast: true })
+      setInternalLocation({ lat: loc.lat, lng: loc.lng })
+      setLocationNotice(null)
+    } catch (err) {
+      console.warn('Geolocation unavailable, falling back to university coordinates:', err)
+      setInternalLocation({ lat: DEFAULT_LAT, lng: DEFAULT_LNG })
+      setLocationNotice('Khu đô thị ĐHQG TP.HCM / Thủ Đức')
+    } finally {
+      setInternalLocating(false)
+    }
+  }, [onRequestLocationProp])
   const { profile, needsProfileSetup } = useAuth()
   const withdrawalSubmitting = useRef(false)
   const navigate = useNavigate()
@@ -702,7 +726,7 @@ export function MarketplacePage({
 
   const { showLoader, onIntroComplete, error, disrupted, reload: reloadMain } = usePersistentLoad(
     loadFn,
-    [tab, keyword, category, priceFilter, myUserId, selectedMarketplaceId, storePage],
+    [tab, keyword, category, priceFilter, myUserId, selectedMarketplaceId, storePage, userLocation?.lat, userLocation?.lng],
     { holdForIntro: false },
   )
 
@@ -1325,7 +1349,9 @@ export function MarketplacePage({
   )
 
   const locationPrimary = userLocation
-    ? 'Vị trí hiện tại của bạn'
+    ? locationNotice
+      ? 'Khu đô thị ĐHQG TP.HCM'
+      : 'Vị trí hiện tại của bạn'
     : 'Chưa có vị trí của bạn'
   const locationSecondary = userLocation
     ? 'Đang xếp bếp theo khoảng cách gần nhất'
@@ -1525,8 +1551,8 @@ export function MarketplacePage({
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              disabled={locating || !onRequestLocation}
-              onClick={onRequestLocation}
+              disabled={locating}
+              onClick={handleRequestLocation}
             >
               {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
             </button>
@@ -1686,7 +1712,7 @@ export function MarketplacePage({
             else addToCart(post)
           }}
           onShowOnMap={showOnMap}
-          onRequestLocation={onRequestLocation}
+          onRequestLocation={handleRequestLocation}
           onUpdateCartQuantity={updateCartQuantity}
           onRemoveCartItem={(postId) => {
             setCartItems((current) => current.filter((item) => item.postId !== postId))

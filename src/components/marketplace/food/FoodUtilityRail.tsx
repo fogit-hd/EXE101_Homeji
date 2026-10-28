@@ -87,6 +87,7 @@ export function FoodUtilityRail({
     <aside
       className={`food-rail${compact ? ' food-rail--compact' : ''}`}
       aria-label="Vị trí, bếp gần và giỏ hàng"
+      data-glass-exclude=""
     >
       <section className="food-rail__location liquid-surface" aria-labelledby={locationTitleId}>
         <div className="food-rail__location-head">
@@ -94,7 +95,8 @@ export function FoodUtilityRail({
           <button
             type="button"
             className="food-rail__locate"
-            disabled={locating || !onRequestLocation}
+            data-glass-exclude=""
+            disabled={locating}
             onClick={onRequestLocation}
           >
             <img src={FOOD_ASSETS.icons.locate} alt="" width={14} height={14} />
@@ -179,6 +181,7 @@ export function FoodUtilityRail({
             <button
               type="button"
               className="food-rail__clear"
+              data-glass-exclude=""
               disabled={cartBusy}
               onClick={onClearCart}
             >
@@ -218,6 +221,7 @@ export function FoodUtilityRail({
                     <button
                       type="button"
                       className="food-rail__remove"
+                      data-glass-exclude=""
                       aria-label={`Xóa ${item.title}`}
                       disabled={cartBusy}
                       onClick={() => onRemoveCartItem(item.postId)}
@@ -288,6 +292,7 @@ export function FoodUtilityRail({
           <button
             type="button"
             className="food-rail__checkout"
+            data-glass-exclude=""
             disabled={!canCheckout}
             onClick={onCheckout}
           >

@@ -2,9 +2,26 @@
    enforced by LiquidGlassEffects before an element receives these markers. */
 /* Clear convex material: the scene bends behind the surface; ink stays above it. */
 :root { --control-glass-fill: var(--glass-clear-fill); --control-glass-edge: var(--glass-clear-edge); }
-:is(html:root #root,html:root body) [data-glass-content] {
-  -webkit-backdrop-filter: none; backdrop-filter: none; filter: none;
+:is(html:root #root,html:root body) :is([data-glass-content], [data-glass-exclude], [data-glass-exclude] button, .food-rail__checkout, .food-rail__locate, .food-qty__btn, .food-rail__clear, .food-rail__remove) {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; filter: none;
   background-image: none; box-shadow: none;
+}
+:is(html:root #root,html:root body) .food-rail__checkout {
+  background: var(--action-primary, #087a3c) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--action-primary, #087a3c) !important;
+}
+:is(html:root #root,html:root body) .food-rail__locate {
+  background: transparent !important;
+  color: var(--food-accent, #e05822) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:is(html:root #root,html:root body) .food-qty__btn {
+  background: var(--surface-elevated, #ffffff) !important;
+  color: var(--text-heading, #1b382b) !important;
+  border: 1px solid var(--control-border, #d2ded7) !important;
+  box-shadow: none !important;
 }
 :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {
   color: var(--glass-ink);

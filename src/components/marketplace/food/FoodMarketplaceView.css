@@ -696,6 +696,8 @@
   color: var(--food-accent);
   font: 800 11px/1 var(--font-ui);
   cursor: pointer;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .food-rail__locate:disabled {
@@ -1124,6 +1126,8 @@
   color: #fff;
   font: 700 14px/1 var(--font-ui);
   cursor: pointer;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .food-rail__checkout:hover:not(:disabled) {

@@ -267,6 +267,7 @@ export function FoodMarketplaceView({
         ref={cartDialogRef}
         id={cartDialogId}
         className="food-cart-sheet__panel"
+        data-glass-exclude=""
         aria-labelledby={cartTitleId}
         tabIndex={-1}
         onKeyDown={event => {
@@ -295,6 +296,7 @@ export function FoodMarketplaceView({
             <button
               type="button"
               className="food-cart-sheet__close"
+              data-glass-exclude=""
               onClick={() => onCartOpenChange(false)}
               disabled={cartBusy}
               aria-label="Đóng giỏ hàng"

@@ -155,6 +155,7 @@ function watchFirstFix(
  */
 export async function getDeviceLocation(options?: {
   signal?: AbortSignal
+  fast?: boolean
 }): Promise<DeviceLocation> {
   if (typeof window !== 'undefined' && !window.isSecureContext) {
     throw new DeviceLocationError(
@@ -180,19 +181,20 @@ export async function getDeviceLocation(options?: {
   }
 
   let lastError: DeviceLocationError | null = null
+  const fast = options?.fast ?? false
 
   const attempts: Array<() => Promise<DeviceLocation>> = [
     () =>
       getPosition({
         enableHighAccuracy: false,
-        timeout: 12_000,
+        timeout: fast ? 4_000 : 12_000,
         maximumAge: 300_000,
       }).then((pos) => fromPosition(pos, 'cached')),
     () =>
       watchFirstFix(
         {
           enableHighAccuracy: true,
-          timeout: 20_000,
+          timeout: fast ? 6_000 : 20_000,
           maximumAge: 60_000,
         },
         'gps',
@@ -200,7 +202,7 @@ export async function getDeviceLocation(options?: {
     () =>
       getPosition({
         enableHighAccuracy: false,
-        timeout: 20_000,
+        timeout: fast ? 6_000 : 20_000,
         maximumAge: 600_000,
       }).then((pos) => fromPosition(pos, 'network')),
   ]

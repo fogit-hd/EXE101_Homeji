@@ -17,10 +17,11 @@ export function QuantityStepper({
   onChange,
 }: Props) {
   return (
-    <div className="food-qty" role="group" aria-label={label}>
+    <div className="food-qty" role="group" aria-label={label} data-glass-exclude="">
       <button
         type="button"
         className="food-qty__btn"
+        data-glass-exclude=""
         aria-label={`Giảm ${label}`}
         disabled={disabled || value <= min}
         onClick={() => onChange(Math.max(min, value - 1))}
@@ -33,6 +34,7 @@ export function QuantityStepper({
       <button
         type="button"
         className="food-qty__btn"
+        data-glass-exclude=""
         aria-label={`Tăng ${label}`}
         disabled={disabled || value >= max}
         onClick={() => onChange(Math.min(max, value + 1))}
