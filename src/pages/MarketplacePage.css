@@ -2880,4 +2880,5 @@
 
 /* Product detail and order thumbnails preserve the complete item silhouette. */
 #root .marketplace-detail-dialog__image { object-fit:contain; background:var(--surface-muted); }
-#root .marketplace-order-items img { object-fit:contain; background:var(--surface-muted); }
+#root .marketplace-order-items img,
+#root .marketplace-order__product img { object-fit:contain; background:var(--surface-muted); }

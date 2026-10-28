@@ -1128,7 +1128,7 @@ export function MarketplacePage({
           }}
         >
           {thumb ? (
-            <div className="marketplace-product-photo"><img className="marketplace-card__thumb" src={thumb} alt={p.title} loading="lazy" /><span className="marketplace-product-photo__hint">Xem sản phẩm ↗</span></div>
+            <div className="marketplace-product-photo"><img className="marketplace-card__thumb" src={thumb} alt={p.title} loading="lazy" /></div>
           ) : (
             <div className="marketplace-card__thumb marketplace-card__thumb--empty" aria-hidden>
               Đồ

@@ -123,7 +123,6 @@ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-
 html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row .marketplace-card__main { display:grid; grid-template-columns:160px minmax(0,1fr); align-items:start; gap:0; padding:12px; }
 .marketplace-product-photo { position:relative; min-width:0; width:100%; aspect-ratio:1; background:var(--surface-muted); border-radius:8px; overflow:hidden; }
 html:root #root .marketplace-product-photo .marketplace-card__thumb { display:block; width:100%; height:100%; max-height:none; object-fit:contain; object-position:center; border:0; border-radius:0; }
-.marketplace-product-photo__hint { position:absolute; right:6px; bottom:6px; padding:3px 6px; border-radius:4px; background:var(--surface-elevated); color:var(--text-heading); font-size:10px; line-height:1.5; }
 html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-product-row .marketplace-card__body { padding:0 0 0 14px; min-width:0; gap:6px; }
 html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__seller { display:none; }
 html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__title { font-size:16px; line-height:1.45; }
