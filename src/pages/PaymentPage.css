@@ -864,3 +864,34 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid #278c7e; out
 .pay-listing-preview__type,.pay-listing-preview > div > span:last-child { color:var(--text-secondary); font-size:12px; }
 .pay-premium-value__caption { margin:0; font-size:11px; line-height:1.6; color:var(--text-secondary); }
 @media(max-width:700px) { .pay-premium-value { grid-template-columns:1fr; padding:18px; gap:18px; } .pay-premium-value h2 { font-size:21px; } }
+
+/* Each duration has a distinct visual identity; none implies extra entitlements. */
+.pay-v2 .pay-plan { --plan-accent:#647580; --plan-soft:#edf2f5; --plan-tint:#f8fafb; position:relative; isolation:isolate; border-radius:18px; border-color:var(--border); padding:22px; overflow:hidden; background:linear-gradient(155deg,var(--plan-tint),var(--surface-elevated) 60%); transition:border-color .2s,box-shadow .25s,translate .25s; }
+.pay-v2 .pay-plan[data-plan-tone=mint] { --plan-accent:#087e72; --plan-soft:#d8f2e9; --plan-tint:#edf9f3; }
+.pay-v2 .pay-plan[data-plan-tone=ocean] { --plan-accent:#315cb2; --plan-soft:#e1eafa; --plan-tint:#edf3ff; }
+.pay-v2 .pay-plan[data-plan-tone=gold] { --plan-accent:#946322; --plan-soft:#f7e9c9; --plan-tint:#fff8e6; }
+.pay-v2 .pay-plan::before { content:''; position:absolute; inset:0 0 auto; height:4px; background:var(--plan-accent); pointer-events:none; }
+.pay-v2 .pay-plan::after { content:''; position:absolute; z-index:-1; inset:0; background:linear-gradient(110deg,transparent 20%,color-mix(in srgb,var(--plan-accent) 12%,transparent) 45%,transparent 70%); transform:translateX(-120%); pointer-events:none; }
+.pay-v2 .pay-plan:is(:hover,:focus-within)::after { animation:pay-plan-sheen .85s ease-out both; }
+.pay-v2 .pay-plan:is(:hover,:focus-within) { translate:0 -5px; box-shadow:0 12px 26px color-mix(in srgb,var(--plan-accent) 14%,transparent); border-color:var(--plan-accent); }
+.pay-v2 .pay-plan.is-selected { border-color:var(--plan-accent); box-shadow:0 0 0 2px color-mix(in srgb,var(--plan-accent) 20%,transparent); }
+.pay-v2 .pay-plan__identity { display:flex; align-items:center; gap:9px; min-height:34px; margin-bottom:18px; color:var(--plan-accent); }
+.pay-v2 .pay-plan__identity > span { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--plan-soft); font-size:21px; }
+.pay-v2 .pay-plan__identity small { font:700 10px/1.4 var(--font-ui); letter-spacing:.1em; }
+.pay-v2 .pay-plan__identity em { margin-left:auto; font:600 10px/1.5 var(--font-ui); letter-spacing:0; }
+.pay-v2 .pay-plan h3 { font-size:18px; line-height:1.5; }
+.pay-v2 .pay-plan__price { font-size:30px; }
+.pay-v2 .pay-plan__equivalent { min-height:36px; margin:7px 0 0; color:var(--plan-accent); font-size:12px; line-height:1.5; font-weight:600; }
+.pay-v2 .pay-plan__total { font-size:12px; }
+.pay-v2 .pay-plan ul { padding-top:16px; border-top:1px solid var(--border); }
+.pay-v2 .pay-plan li::before { color:var(--plan-accent); }
+html:root #root .pay-v2 .pay-plan .pay-btn--primary { background:var(--plan-accent) !important; border-color:var(--plan-accent); border-radius:9px; box-shadow:none; transition:filter .2s,translate .2s; }
+.pay-v2 .pay-plan .pay-btn--primary:active { translate:0 1px; }
+.pay-v2 .pay-plan .pay-btn--current { border-radius:9px; box-shadow:none; }
+[data-theme=dark] .pay-v2 .pay-plan { --plan-tint:var(--surface-muted); --plan-soft:#283640; --plan-accent:#a7bac8; }
+[data-theme=dark] .pay-v2 .pay-plan[data-plan-tone=mint] { --plan-accent:#77d9bd; --plan-soft:#193e36; }
+[data-theme=dark] .pay-v2 .pay-plan[data-plan-tone=ocean] { --plan-accent:#a4bfff; --plan-soft:#253552; }
+[data-theme=dark] .pay-v2 .pay-plan[data-plan-tone=gold] { --plan-accent:#efcc88; --plan-soft:#43351e; }
+html:root[data-theme=dark] #root .pay-v2 .pay-plan .pay-btn--primary { color:#132a30 !important; }
+@keyframes pay-plan-sheen { to { transform:translateX(120%); } }
+@media(prefers-reduced-motion:reduce) { .pay-v2 .pay-plan,.pay-v2 .pay-plan .pay-btn--primary { transition:none; translate:none; } .pay-v2 .pay-plan:is(:hover,:focus-within)::after { animation:none; } }

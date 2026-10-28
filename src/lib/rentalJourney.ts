@@ -8,10 +8,11 @@ export const initialRentalScenario: CostScenario = {
 }
 
 /** Keep only the IDs and bounded display titles needed by this account's journey. */
-export function toggleRentalChoice(current: RentalChoice[], choice: RentalChoice): RentalChoice[] {
+export function toggleRentalChoice(current: RentalChoice[], choice: RentalChoice, limit = MAX_RENTAL_CHOICES): RentalChoice[] {
   if (!choice.postId.trim() || choice.postId.length > 128) return current
   if (current.some(item => item.postId === choice.postId)) return current.filter(item => item.postId !== choice.postId)
-  if (current.length >= MAX_RENTAL_CHOICES) return current
+  const cap = limit === 5 ? 5 : MAX_RENTAL_CHOICES
+  if (current.length >= cap) return current
   return [...current, { postId: choice.postId, title: choice.title.slice(0, 200) }]
 }
 

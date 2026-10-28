@@ -13,6 +13,17 @@ test('consideration is capped at three distinct choices and can remove at capaci
   assert.deepEqual(choices.map(choice => choice.postId), ['a', 'c'])
   assert.equal(toggleRentalChoice(choices, { postId: '', title: 'bad' }), choices)
 })
+
+test('Premium can compare five while an unknown limit keeps the free cap; expiry does not delete choices',()=>{
+ let choices=[]
+ for(const postId of ['a','b','c','d','e','f']) choices=toggleRentalChoice(choices,{postId,title:postId},5)
+ assert.equal(choices.length,5)
+ assert.equal(toggleRentalChoice(choices,{postId:'g',title:'g'},3),choices)
+ assert.equal(toggleRentalChoice(choices,{postId:'a',title:'a'},3).length,4)
+ let unknown=[]
+ for(const postId of ['a','b','c','d'])unknown=toggleRentalChoice(unknown,{postId,title:postId},30)
+ assert.equal(unknown.length,3)
+})
 test('comparison coverage requires each selected ID to be either available or explicitly unavailable exactly once', () => {
   const response = (ids, unavailablePostIds = []) => ({ posts: ids.map(id => ({ post: { id } })), unavailablePostIds })
   assert.equal(decisionMatchesChoices(response(['a'], ['b']), ['a', 'b']), true)
@@ -25,12 +36,13 @@ const moduleUrl = source => 'data:text/javascript;base64,' + Buffer.from(source)
 const reactUrl = new URL('../node_modules/react/index.js', import.meta.url).href
 const fixture = moduleUrl(`import React from '${reactUrl}';
 export const useAuth=()=>globalThis.__journey.auth;
+export const getMySubscription=async()=>globalThis.__journey.subscription??{isPremium:false,maxComparedPosts:3};
 export const useLocation=()=>({search:globalThis.__journey.search||''});
 export const Link=({to,children,...props})=>React.createElement('a',{href:to,...props},children);
 export const aiFeatureFlags={decisionTools:true,commute:false};
 export function RentalDecisionPanel(props){globalThis.__journey.panel=props;return React.createElement('section',{'aria-label':'Controlled cost comparison'});}
 `)
-const overrides = { './AuthContext': fixture, 'react-router-dom': fixture, '../../lib/aiFeatureFlags': fixture, './RentalDecisionPanel': fixture }
+const overrides = { '../api/index': fixture, './AuthContext': fixture, 'react-router-dom': fixture, '../../lib/aiFeatureFlags': fixture, './RentalDecisionPanel': fixture }
 const { RentalJourneyProvider } = await import(reactDomModule('src/contexts/RentalJourneyProvider.tsx', overrides))
 const { useRentalJourney } = await import(reactDomModule('src/contexts/rental-journey.ts', overrides))
 const { RentalConsiderationToggle } = await import(reactDomModule('src/components/ai/RentalConsiderationToggle.tsx', overrides))

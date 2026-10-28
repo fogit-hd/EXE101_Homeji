@@ -31,7 +31,7 @@ export function RentalJourneyTray() {
   }, [visible])
   if (!visible || !journey) return null
   return <aside ref={tray} className="rental-journey-tray" aria-label="Danh sách phòng đang cân nhắc" data-glass-exclude>
-    <div><strong>Đang cân nhắc · {journey.choices.length}/{MAX_RENTAL_CHOICES}</strong><span>Giữ cùng lựa chọn từ tìm kiếm đến liên hệ</span></div>
+    <div><strong>Đang cân nhắc · {journey.choices.length}/{journey.maxChoices ?? MAX_RENTAL_CHOICES}</strong><span>Giữ cùng lựa chọn từ tìm kiếm đến liên hệ</span></div>
     <Link className="btn btn-primary btn-sm" to="/?section=saved&view=considering">{journey.choices.length >= 2 ? 'So sánh các lựa chọn' : 'Xem lựa chọn'}</Link>
   </aside>
 }
@@ -41,17 +41,20 @@ export function RentalShortlistWorkspace() {
   const openAssistant = useRentalAssistantOpener()
   const choices = journey?.choices ?? []
   const postIds = choices.map(item => item.postId)
-  useRentalAssistantComparison(aiFeatureFlags.decisionTools && journey?.enabled && choices.length >= 2
+  const limit = journey?.maxChoices ?? MAX_RENTAL_CHOICES
+  const withinLimit = choices.length <= limit
+  useRentalAssistantComparison(aiFeatureFlags.decisionTools && journey?.enabled && choices.length >= 2 && withinLimit
     ? { postIds, title: choices.map(choice => choice.title || 'Tin phòng đã chọn').join(' · '), scenario: journey.scenario } : null)
   if (!aiFeatureFlags.decisionTools || !journey?.enabled) return null
   return <section className="rental-journey-workspace" aria-label="Danh sách cân nhắc và so sánh chung">
     <h2>Đang cân nhắc</h2>
-    <p>Chọn tối đa {MAX_RENTAL_CHOICES} tin từ tìm kiếm, bản đồ hoặc chi tiết. Danh sách và kịch bản chỉ ở phiên tài khoản này; không cần lưu tin trước.</p>
+    <p>Gói hiện tại cho phép so sánh tối đa {limit} phòng mỗi lần. Chọn từ tìm kiếm, bản đồ hoặc chi tiết; không cần lưu tin trước.</p>
+    {!withinLimit && <p role="status">Danh sách đang có {choices.length} phòng. Bỏ bớt {choices.length - limit} phòng để so sánh với gói hiện tại; lựa chọn của bạn vẫn được giữ lại.</p>}
     {choices.length ? <ChoiceList choices={choices} remove={journey.remove} /> : <p>Chưa chọn phòng. Dùng “Thêm vào cân nhắc” trên tin phòng để bắt đầu.</p>}
-    {choices.length >= 2 ? <>
+    {choices.length >= 2 && withinLimit ? <>
       <RentalDecisionPanel postIds={postIds} scenario={journey.scenario} onScenarioChange={journey.setScenario} />
       {openAssistant ? <button type="button" className="btn btn-secondary ai-spectrum-button" onClick={openAssistant}>Hỏi trợ lý về các lựa chọn này</button> : null}
-    </> : <p>Chọn thêm một phòng để đối chiếu cùng kịch bản chi phí.</p>}
+    </> : choices.length < 2 ? <p>Chọn thêm một phòng để đối chiếu cùng kịch bản chi phí.</p> : null}
     <p>Mở chi tiết phòng từ danh sách để xem phí, sửa nháp câu hỏi và yêu cầu lịch xem. Các thao tác liên hệ vẫn do bạn xác nhận.</p>
   </section>
 }

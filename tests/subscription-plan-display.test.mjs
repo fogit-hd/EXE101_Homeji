@@ -50,3 +50,12 @@ test('zero price does not silently convert a Premium catalog item into Basic', (
   assert.equal(result.title, 'Premium')
   assert.equal(result.headlineSuffix, '/ 90 ngày')
 })
+
+test('duration colors and equivalent price use catalog values without invented savings',()=>{
+  assert.equal(getPlanDisplay({...plan,tier:1,price:0}).tone,'free')
+  assert.equal(getPlanDisplay({...plan,durationDays:30}).tone,'mint')
+  assert.equal(getPlanDisplay({...plan,durationDays:180,price:450000}).tone,'ocean')
+  assert.equal(getPlanDisplay({...plan,durationDays:365,price:780000}).tone,'gold')
+  assert.equal(getPlanDisplay({...plan,durationDays:180,price:450000}).equivalentPrice,`Khoảng ${labels.formatPrice(75000)} / 30 ngày`)
+  assert.equal(getPlanDisplay({...plan,durationDays:0}).equivalentPrice,null)
+})

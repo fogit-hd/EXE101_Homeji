@@ -12,6 +12,7 @@ export type InterestOverview = {
   following: Array<{ id: string; criteria: InterestCriteria; createdAt: string }>
   rooms: Array<{ post: RentalPostSummary; reason: string; followId: string }>
   notice?: string | null
+  maxFollowedAreas?: number
 }
 const root = '/api/search-interests'
 export const getSearchInterests = () => apiRequest<InterestOverview>(root)

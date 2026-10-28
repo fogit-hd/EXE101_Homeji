@@ -1,11 +1,11 @@
 import { PremiumBadge } from '../PremiumBadge'
 
-export function PremiumListingPreview() {
+export function PremiumListingPreview({ maxFollowedAreas, maxComparedPosts }: { maxFollowedAreas: number; maxComparedPosts: number }) {
   return <section className="pay-premium-value" aria-labelledby="premium-value-title">
     <div className="pay-premium-value__copy">
-      <span className="pay-label">Dành cho người đăng tin phòng</span>
-      <h2 id="premium-value-title">Để tin của bạn dễ được chú ý hơn</h2>
-      <p>Premium thêm khung viền nổi bật, nhãn riêng và ưu tiên hiển thị tin phòng. Tìm phòng, lưu tin và so sánh vẫn dùng được miễn phí.</p>
+      <span className="pay-label">Cho người tìm phòng và người đăng tin</span>
+      <h2 id="premium-value-title">Tìm rộng hơn, so sánh nhiều hơn</h2>
+      <p>Premium theo dõi tối đa {maxFollowedAreas} khu vực và so sánh {maxComparedPosts} phòng mỗi lần. Tin phòng của bạn có thêm khung viền, nhãn riêng và ưu tiên hiển thị. Gói miễn phí vẫn giữ 10 khu vực và 3 phòng so sánh.</p>
       <p className="pay-premium-value__note">Các gói Premium có cùng quyền lợi, khác thời hạn sử dụng. Nhãn Premium không thay cho xác minh thông tin phòng.</p>
     </div>
     <div className="pay-premium-value__examples" aria-label="Minh họa cách hiển thị tin đăng">

@@ -404,6 +404,7 @@ test('nested selection cleanup restores the underlying room and account changes 
   const env = await environment()
   try {
     const contextOverrides = {
+      '../api/index': moduleUrl('export const getMySubscription=async()=>({isPremium:false,maxComparedPosts:3})'),
       './AuthContext': fixtureUrl,
       './AuthModalContext.logic': fixtureUrl,
       '../components/ai/RentalJourney': moduleUrl('export const RentalJourneyTray=()=>null'),

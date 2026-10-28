@@ -7,7 +7,7 @@ export function RentalConsiderationToggle({ post, compact = false }: { post: { i
   const journey = useRentalJourney()
   if (!aiFeatureFlags.decisionTools || !journey?.enabled) return null
   const selected = journey.choices.some(item => item.postId === post.id)
-  const full = journey.choices.length >= MAX_RENTAL_CHOICES
+  const full = journey.choices.length >= (journey.maxChoices ?? MAX_RENTAL_CHOICES)
   return <button type="button" className="btn btn-secondary btn-sm rental-journey-toggle" aria-pressed={selected}
     aria-label={`${selected ? 'Bỏ khỏi cân nhắc' : 'Thêm vào cân nhắc'} · ${post.title}`}
     disabled={!selected && full} title={!selected && full ? 'Bỏ một lựa chọn để thêm phòng khác' : selected ? 'Nhấn để bỏ phòng này khỏi cân nhắc' : undefined}

@@ -749,6 +749,8 @@ export interface SubscriptionPackage {
   durationDays: number
   badge: string
   benefits: string[]
+  maxFollowedAreas?: number
+  maxComparedPosts?: number
 }
 
 export interface MySubscription {
@@ -759,6 +761,8 @@ export interface MySubscription {
   packageName: string | null
   premiumStartedAt: string | null
   premiumExpiresAt: string | null
+  maxFollowedAreas?: number
+  maxComparedPosts?: number
 }
 
 export interface RentalPostOwnerStatsItem {

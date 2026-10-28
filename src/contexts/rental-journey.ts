@@ -4,6 +4,7 @@ import type { RentalChoice } from '../lib/rentalJourney'
 
 export type RentalJourney = {
   enabled: boolean
+  maxChoices?: number
   choices: RentalChoice[]
   scenario: CostScenario
   toggle: (choice: RentalChoice) => void

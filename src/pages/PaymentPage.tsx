@@ -281,6 +281,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const premiumPlans = packages.filter((p) => p.tier === SubscriptionTier.Premium)
+  const premiumAreaLimit = premiumPlans.some(plan => plan.maxFollowedAreas === 30) ? 30 : 10
+  const premiumComparisonLimit = premiumPlans.some(plan => plan.maxComparedPosts === 5) ? 5 : 3
   const basicPlan = packages.find((p) => p.tier === SubscriptionTier.Basic)
   const displayPlans = sortPlansForDisplay([
     ...(basicPlan ? [basicPlan] : []),
@@ -355,7 +357,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       {tab === 'plans' ? (
         <div className="pay-plans">
-          <PremiumListingPreview />
+          <PremiumListingPreview maxFollowedAreas={premiumAreaLimit} maxComparedPosts={premiumComparisonLimit} />
           <div className="pay-plan-grid" style={{ ['--pay-cols' as string]: String(Math.max(1, Math.min(4, displayPlans.length))) }}>
             {displayPlans.map((plan, index) => {
               const view = getPlanDisplay(plan)
@@ -372,6 +374,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               return (
                 <motion.article
                   key={plan.code}
+                  data-plan-tone={view.tone}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
@@ -381,6 +384,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     isCurrent ? 'is-current' : '',
                   ].filter(Boolean).join(' ')}
                 >
+                  <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '✦' : '○'}</span><small>{isPremium ? 'PREMIUM' : 'CƠ BẢN'}</small>{isCurrent && <em>Đang dùng</em>}</div>
                   <h3>{view.title}</h3>
                   <p className="pay-plan__duration">
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
@@ -389,6 +393,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     {view.headlinePrice}
                     <small>{view.headlineSuffix}</small>
                   </p>
+                  <p className="pay-plan__equivalent">{view.equivalentPrice ?? (isPremium ? 'Thanh toán một lần · Dùng đủ thời hạn' : 'Bắt đầu mà không cần trả phí')}</p>
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>
@@ -479,8 +484,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               </thead>
               <tbody>
                 <tr><th scope="row">Tìm và lưu phòng</th><td>Có</td><td>Có</td></tr>
-                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa 10</td></tr>
-                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 tin/lần</td><td>Tối đa 3 tin/lần</td></tr>
+                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa {premiumAreaLimit}</td></tr>
+                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 phòng/lần</td><td>Tối đa {premiumComparisonLimit} phòng/lần</td></tr>
                 <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td>Có</td></tr>
                 <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td>Có, kèm hiệu ứng nhẹ</td></tr>
                 <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td>Có</td></tr>
