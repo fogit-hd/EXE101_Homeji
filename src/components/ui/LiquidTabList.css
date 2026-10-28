@@ -2,74 +2,176 @@
    optimizer can otherwise retain only the prefixed property, which Chrome ignores.
    The moving face always stays below the unfiltered label plane. */
 #root .liquid-tabs {
-  --tabs-track: rgb(28 111 96 / .08); --tabs-track-light: rgb(255 255 255 / .04);
-  --tabs-ink: #123e39; --tabs-muted-ink: #355a55;
-  --tabs-lens-tint: var(--glass-clear-fill); --tabs-rim: var(--glass-clear-edge);
+  --tabs-track: rgba(28, 111, 96, 0.07);
+  --tabs-track-light: rgba(255, 255, 255, 0.55);
+  --tabs-ink: #0f2e28;
+  --tabs-muted-ink: #385953;
+  --tabs-lens-tint: var(--glass-clear-fill);
+  --tabs-rim: var(--glass-clear-edge);
   /* Background softness never filters foreground labels. */
   --glass-scene-blur: 0px;
-  position: relative; isolation: isolate; display: flex; align-items: center;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
   /* The rail starts 10px down: 13px/3px padding gives the lens a 3px inset on every edge. */
-  gap: 4px; height: auto; min-height: 64px; box-sizing: border-box; width: fit-content; max-width: 100%; padding: 13px 3px;
-  margin-block: 4px 20px; border: 0; border-radius: 999px;
-  background: transparent; box-shadow: none; overflow-x: auto; overflow-y: hidden;
-  scrollbar-width: none; flex-shrink: 0;
+  gap: 4px;
+  height: auto;
+  min-height: 64px;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  padding: 13px 3px;
+  margin-block: 4px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  flex-shrink: 0;
 }
 #root .liquid-tabs::-webkit-scrollbar { display: none; }
 #root .liquid-tabs::before {
-  content: ''; position: absolute; top: 10px; bottom: 10px; left: 0; width: var(--tabs-track-width,100%);
-  z-index: -1; border-radius: 999px;
-  background: linear-gradient(115deg,var(--tabs-track-light),var(--tabs-track) 65%);
-  border: 1px solid rgb(47 104 94 / .16); box-sizing: border-box;
-  box-shadow: inset 0 1px 1px #ffffffa0, inset 0 -1px 1px #244b4010;
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: var(--tabs-track-width, 100%);
+  z-index: -1;
+  border-radius: 999px;
+  background: linear-gradient(115deg, var(--tabs-track-light), var(--tabs-track) 65%);
+  border: 1px solid rgba(47, 104, 94, 0.14);
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.85), inset 0 -1px 1px rgba(20, 50, 40, 0.04);
   pointer-events: none;
 }
 #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) {
-  position: relative; z-index: 2; flex: 0 0 auto; display: inline-flex;
-  align-items: center; justify-content: center; gap: 7px;
-  min-height: 42px; height: auto; width: auto; min-width: 80px; white-space: nowrap; padding: 9px 22px;
-  margin: 0; border: 1px solid transparent; border-radius: 999px;
-  background: transparent; background-image: none; box-shadow: none;
-  -webkit-backdrop-filter: none; backdrop-filter: none;
-  color: var(--tabs-muted-ink); text-shadow: none; font: 550 13px/1.5 var(--font-ui);
-  cursor: pointer; touch-action: pan-y; user-select: none; transform: none; transition: color 160ms ease;
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  height: auto;
+  width: auto;
+  min-width: 80px;
+  white-space: nowrap;
+  padding: 9px 22px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: var(--tabs-muted-ink);
+  text-shadow: none;
+  font: 550 13px/1.5 var(--font-ui);
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  transform: none;
+  transition: color 160ms ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-#root .liquid-tabs > button[role='tab'][aria-selected='true'] { color: var(--tabs-ink); font-weight: 650; }
+#root .liquid-tabs > button[role='tab'][aria-selected='true'] {
+  color: var(--tabs-ink);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
 #root .liquid-tabs > button[role='tab']::after { display: none; }
 #root .liquid-tabs > button[role='tab']:hover { color: var(--tabs-ink); }
 #root .liquid-tabs > button[role='tab']:focus-visible { outline: 2px solid var(--tabs-ink); outline-offset: -4px; }
 #root .liquid-tabs > button[role='tab']:disabled { opacity: .4; cursor: not-allowed; }
 #root .liquid-tabs > .liquid-tabs__lens {
-  position: absolute; left: 0; top: 0; pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
   z-index: 1;
-  box-sizing: border-box; border-radius: 999px; transform-origin: center; scale: 1;
+  box-sizing: border-box;
+  border-radius: 999px;
+  transform-origin: center;
+  scale: 1;
   border: 0;
-  --lens-specular-x: var(--lens-light-x,26%);
+  --lens-specular-x: var(--lens-light-x, 26%);
   background:
-    radial-gradient(ellipse 78% 52% at var(--lens-specular-x) 0%, rgb(255 255 255 / .52), transparent 76%),
-    linear-gradient(170deg, rgb(255 255 255 / .12) 8%, transparent 52%, rgb(25 92 79 / .09));
-  box-shadow: inset 0 -3px 5px -4px rgb(12 65 53 / .52), 0 5px 12px -5px rgb(13 63 53 / .32);
-  -webkit-backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.2px) saturate(1.08);
-  backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(.2px) saturate(1.08);
+    radial-gradient(ellipse 72% 48% at var(--lens-specular-x, 26%) 0%, rgba(255, 255, 255, 0.45), transparent 72%),
+    radial-gradient(ellipse 60% 40% at 75% 100%, rgba(255, 255, 255, 0.18), transparent 60%),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.14) 100%),
+    var(--tabs-lens-tint, var(--glass-clear-fill));
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 1px 0 rgba(18, 50, 42, 0.05),
+    0 2px 6px -1px rgba(18, 50, 42, 0.08),
+    0 6px 16px -4px rgba(18, 50, 42, 0.1);
+  -webkit-backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(12px) saturate(1.25);
+  backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(12px) saturate(1.25);
 }
-/* One continuous beveled rim makes the clear face readable on a flat scene.
-   It is masked to the edge and shares the face's rounded geometry. */
+/* Subtle 1px specular highlight rim along the top and curved edge */
 #root .liquid-tabs__lens::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  border-radius: inherit; padding: 2px;
-  background: linear-gradient(155deg, #ffffff 5%, rgb(255 255 255 / .65) 28%,
-    rgb(34 92 78 / .1) 48%, rgb(34 92 78 / .34) 72%, rgb(255 255 255 / .88) 96%);
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.45) 28%,
+    rgba(255, 255, 255, 0.08) 65%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
 }
 #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens {
-  transition: transform var(--glass-travel-duration) var(--glass-spring,cubic-bezier(.2,.8,.2,1)),width var(--glass-travel-duration) var(--glass-spring,cubic-bezier(.2,.8,.2,1)),height 260ms ease,scale 300ms var(--glass-spring,cubic-bezier(.2,.8,.2,1));
+  transition: transform var(--glass-travel-duration, 460ms) var(--glass-spring, cubic-bezier(.2,.8,.2,1)),
+    width var(--glass-travel-duration, 460ms) var(--glass-spring, cubic-bezier(.2,.8,.2,1)),
+    height 260ms ease,
+    scale 300ms var(--glass-spring, cubic-bezier(.2,.8,.2,1));
 }
 #root .liquid-tabs :is(.pay-tabs__pill,.segmented-tabs__pill,.motion-tabs__indicator) { display: none; }
 html[data-theme='dark'] #root .liquid-tabs {
-  --tabs-track: rgb(104 194 166 / .1); --tabs-track-light: rgb(192 238 224 / .06);
-  --tabs-ink: #effff8; --tabs-muted-ink: #c0d9d1;
+  --tabs-track: rgba(104, 194, 166, 0.1);
+  --tabs-track-light: rgba(192, 238, 224, 0.05);
+  --tabs-ink: #f0fdf9;
+  --tabs-muted-ink: #b2d5cc;
+}
+html[data-theme='dark'] #root .liquid-tabs::before {
+  border-color: rgba(104, 194, 166, 0.18);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
+}
+html[data-theme='dark'] #root .liquid-tabs > .liquid-tabs__lens {
+  background:
+    radial-gradient(ellipse 72% 48% at var(--lens-specular-x, 26%) 0%, rgba(255, 255, 255, 0.14), transparent 72%),
+    radial-gradient(ellipse 60% 40% at 75% 100%, rgba(255, 255, 255, 0.06), transparent 60%),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.05) 100%),
+    var(--tabs-lens-tint, var(--glass-clear-fill));
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
+    0 2px 6px -1px rgba(0, 0, 0, 0.4),
+    0 6px 16px -4px rgba(0, 0, 0, 0.3);
+}
+html[data-theme='dark'] #root .liquid-tabs__lens::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.22) 28%,
+    rgba(255, 255, 255, 0.04) 65%,
+    rgba(255, 255, 255, 0.18) 100%
+  );
 }
 @media(max-width:600px) { #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 72px; padding-inline: 16px; font-size: 12px; } }
 @media(prefers-reduced-motion:reduce) { #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens { transition: none; } }
@@ -85,7 +187,7 @@ html[data-theme='dark'] #root .liquid-tabs {
 @media(max-width:767px) { #root .marketplace-header > .liquid-tabs { margin-left: 18px; max-width: calc(100% - 36px); } }
 
 @media(max-width:767px) {
-  #root .marketplace-header > .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 60px; padding-inline: 11px; font-size: 12px; }
+  #root .marketplace-header :is(>, .marketplace-header__subtabs) .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 60px; padding-inline: 11px; font-size: 12px; }
 }
 
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
@@ -101,8 +203,8 @@ html[data-theme='dark'] #root .liquid-tabs {
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { scale: 1.025 .99; transition: scale 180ms ease; }
 #root .liquid-tabs[data-lens-travel] > .liquid-tabs__lens { z-index: 1; scale: 1; }
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.2px) saturate(1.08);
-  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(.2px) saturate(1.08);
+  -webkit-backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(14px) saturate(1.3);
+  backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(14px) saturate(1.3);
 }
 @media(prefers-reduced-motion:reduce) {
   #root .liquid-tabs > .liquid-tabs__lens { --lens-specular-x: 26%; }

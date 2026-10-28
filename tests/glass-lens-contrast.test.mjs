@@ -58,3 +58,48 @@ test('MarketplaceHeader button text contrast meets WCAG AA standard (>= 4.5:1) i
   const brokenContrast = contrastRatio(brokenMudLum, lightTextLum)
   assert.ok(brokenContrast < 2.0, `Broken offset 0 produced failing contrast of ${brokenContrast.toFixed(2)}:1`)
 })
+
+test('LiquidTabList active tab lens meets Liquid Glass V2 styling requirements', async () => {
+  const css = await readFile(new URL('../src/components/ui/LiquidTabList.css', import.meta.url), 'utf8')
+  // Backdrop filter must connect to SVG lens filter with real optical blur
+  assert.match(css, /backdrop-filter:\s*var\(--glass-lens-filter[\s\S]*?blur\(12px\)/, 'Lens must connect to SVG lens filter with 12px optical blur')
+  // Subtly defined specular highlight rim (1px gradient highlight on top edge)
+  assert.match(css, /\.liquid-tabs__lens::before[\s\S]*?padding:\s*1px/, 'Specular highlight rim must use 1px padding')
+  // Ensure muddy claymorphic shadow (rgb(12 65 53)) is eliminated
+  assert.doesNotMatch(css, /rgb\(12\s+65\s+53/, 'Muddy claymorphic green-gray shadow must be eliminated')
+  // Soft ambient occlusion drop shadow in light and dark mode
+  assert.match(css, /\.liquid-tabs__lens[\s\S]*?box-shadow:[\s\S]*?inset 0 1px 1px 0 rgba\(255,\s*255,\s*255,\s*0\.85\)/, 'Light mode lens must have top specular inner bevel')
+  assert.match(css, /html\[data-theme='dark'\][\s\S]*?\.liquid-tabs__lens[\s\S]*?box-shadow:/, 'Dark theme must define ambient occlusion shadow for lens')
+  // Ensure dynamic clear fill token is connected to lens background in light and dark mode
+  assert.match(css, /\.liquid-tabs__lens[\s\S]*?background:[\s\S]*?var\(--tabs-lens-tint,\s*var\(--glass-clear-fill\)\)/, 'Light mode lens must connect to dynamic glass clear fill')
+  assert.match(css, /html\[data-theme='dark'\][\s\S]*?\.liquid-tabs__lens[\s\S]*?background:[\s\S]*?var\(--tabs-lens-tint,\s*var\(--glass-clear-fill\)\)/, 'Dark mode lens must connect to dynamic glass clear fill')
+})
+
+test('SegmentedTabs and MarketplaceHeader subtabs adhere to Liquid Glass V2 styling', async () => {
+  const segCss = await readFile(new URL('../src/components/motion/SegmentedTabs.css', import.meta.url), 'utf8')
+  assert.match(segCss, /\.segmented-tabs__pill[\s\S]*?var\(--tabs-lens-tint,\s*var\(--glass-clear-fill\)\)/, 'SegmentedTabs pill must connect to dynamic glass clear fill')
+  assert.match(segCss, /\.segmented-tabs__pill::before[\s\S]*?padding:\s*1px/, 'SegmentedTabs pill must define 1px specular highlight rim')
+
+  const headerCss = await readFile(new URL('../src/components/marketplace/MarketplaceHeader.css', import.meta.url), 'utf8')
+  assert.match(headerCss, /\.marketplace-header__subtab[\s\S]*?background:\s*transparent/, 'MarketplaceHeader subtab must have transparent background override')
+})
+
+test('LiquidTabList active tab text meets WCAG AAA standard (>= 7.0:1) in light and dark themes', async () => {
+  const css = await readFile(new URL('../src/components/ui/LiquidTabList.css', import.meta.url), 'utf8')
+  // Verify --tabs-ink declarations
+  assert.match(css, /--tabs-ink:\s*#0f2e28/, 'Light mode tab ink must use deep forest #0f2e28')
+  assert.match(css, /html\[data-theme='dark'\][\s\S]*?--tabs-ink:\s*#f0fdf9/, 'Dark mode tab ink must use crisp #f0fdf9')
+
+  // Light mode: #0f2e28 (rgb(15, 46, 40)) against frosted track (~rgb(245, 248, 246))
+  const lightInkLum = relLuminance(15, 46, 40)
+  const lightTrackLum = relLuminance(245, 248, 246)
+  const lightContrast = contrastRatio(lightTrackLum, lightInkLum)
+  assert.ok(lightContrast >= 7.0, `Light mode active tab contrast ${lightContrast.toFixed(2)}:1 must meet WCAG AAA (>= 7.0:1)`)
+
+  // Dark mode: #f0fdf9 (rgb(240, 253, 249)) against dark track (~rgb(22, 40, 36))
+  const darkInkLum = relLuminance(240, 253, 249)
+  const darkTrackLum = relLuminance(22, 40, 36)
+  const darkContrast = contrastRatio(darkInkLum, darkTrackLum)
+  assert.ok(darkContrast >= 7.0, `Dark mode active tab contrast ${darkContrast.toFixed(2)}:1 must meet WCAG AAA (>= 7.0:1)`)
+})
+

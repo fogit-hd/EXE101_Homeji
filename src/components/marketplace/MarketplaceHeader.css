@@ -391,9 +391,21 @@
   background: var(--glass-panel);
   border-bottom: 1px solid var(--glass-border);
 }
-#root .marketplace-header > .liquid-tabs { margin-block: 0 4px; }
-#root .marketplace-header__subtabs { padding-block: 0 8px; background: transparent; }
+#root .marketplace-header > .liquid-tabs { margin-block: 0 4px; border-bottom: none; }
+#root .marketplace-header__subtabs { padding-block: 0 8px; background: transparent; border-bottom: none; }
 #root .marketplace-header__subtabs .liquid-tabs { margin-block: 0; }
+#root .marketplace-header .marketplace-header__subtab {
+  background: transparent;
+}
+#root .marketplace-header :is(.marketplace-header__tab, .marketplace-header__subtab, .segmented-tabs__tab).is-active {
+  color: var(--tabs-ink, #0f2e28);
+  font-weight: 650;
+  background: transparent;
+}
+html[data-theme='dark'] #root .marketplace-header :is(.marketplace-header__tab, .marketplace-header__subtab, .segmented-tabs__tab).is-active {
+  color: var(--tabs-ink, #f0fdf9);
+  background: transparent;
+}
 /* The two actions share one clear glass face; the balance stays unfiltered. */
 #root .marketplace-header__utilities { gap: 16px; width: auto; }
 #root .marketplace-header__wallet { display: flex; align-items: flex-start; gap: 4px; }

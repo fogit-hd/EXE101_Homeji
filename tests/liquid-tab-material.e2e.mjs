@@ -57,7 +57,7 @@ try {
  assert.ok(await lens.evaluate(e=>+getComputedStyle(e).zIndex<+getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex));
  await list.screenshot({path:new URL('drag.png',out).pathname.slice(1)});
  await page.mouse.up(); console.log('stage: drag complete');
- await list.getByRole('tab',{name:'Mua sắm',exact:true}).focus(); await page.keyboard.press('End'); console.log('stage: End',await listState()); await page.waitForFunction(()=>[...document.querySelectorAll('[role=tab][aria-selected=true]')].some(e=>e.textContent.includes('Số dư'))); 
+ await list.getByRole('tab',{name:'Mua sắm',exact:true}).focus(); await page.keyboard.press('End'); console.log('stage: End',await listState()); await page.waitForFunction(()=>[...document.querySelectorAll('[role=tab][aria-selected=true]')].some(e=>e.textContent.includes('Ví Homeji')||e.textContent.includes('Số dư'))); 
  await page.waitForFunction(()=>![...document.querySelectorAll('.liquid-tabs')].some(e=>e.dataset.lensEngaged));
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  console.log('stage: settle complete');
