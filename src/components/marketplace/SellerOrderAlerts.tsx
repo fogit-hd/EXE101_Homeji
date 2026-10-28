@@ -139,9 +139,9 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (event.key === `homeji:seller-sound:${ownerId}`) {
-        soundAttempt.current++
         soundWanted.current = event.newValue !== 'false'
-        if (!soundWanted.current) sound.mute()
+        // Another tab enabling sound must not cancel this tab's pending resume.
+        if (!soundWanted.current) { soundAttempt.current++; sound.mute() }
         setSoundState(soundWanted.current ? (sound.ready ? 'ready' : 'blocked') : 'off')
       }
       if (event.key === `homeji:seller-ack:${ownerId}`) {

@@ -21,6 +21,7 @@
 - TypeScript/Vite build and targeted ESLint passed.
 - 412 unit/regression tests passed, including four audio lifecycle tests.
 - Seller fixture E2E passed automatic arming, silent empty queue, persistent mute, explicit preview, status filters, cart grouping, duplicate events, acknowledgement/reload, stage changes, synchronization failure retention, offline polling recovery and reminders.
+- A second browser tab verifies shared enable/mute preferences. A positive storage event preserves a valid pending resume in the receiving tab.
 - Fixture screenshots cover light/dark and 320, 390, 1440 px. No production order or payment was created. Oscillator scheduling does not establish physical speaker output on every device.
 
 ## Browser reference
