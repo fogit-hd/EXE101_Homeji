@@ -86,7 +86,7 @@ async function editSession() {
   }
   const exports = {}
   vm.runInNewContext(compiled, {
-    exports, require: name => { assert.ok(name in adapters, `Unexpected dependency ${name}`); return adapters[name] },
+    exports, require: name => { if (name.endsWith('.css')) return {}; assert.ok(name in adapters, `Unexpected dependency ${name}`); return adapters[name] },
     confirm: () => true, document: { getElementById: () => ({ focus() {} }) },
   })
   function entries(node, disabled = false, result = []) {
@@ -285,7 +285,7 @@ async function addressSession({ pick = true } = {}) {
   }
   const exports = {}
   vm.runInNewContext(addressCode, {
-    exports, require: name => { assert.ok(name in adapters, `Unexpected dependency ${name}`); return adapters[name] },
+    exports, require: name => { if (name.endsWith('.css')) return {}; assert.ok(name in adapters, `Unexpected dependency ${name}`); return adapters[name] },
     window: { setTimeout: callback => { timers.push(callback); return timers.length }, clearTimeout() {} },
   })
   const flatten = node => !node || typeof node !== 'object' ? []

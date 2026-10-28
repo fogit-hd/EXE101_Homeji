@@ -40,13 +40,13 @@ test('roommate per-person prices never inherit whole-room totals from an older b
   const html = render([item(2, 1)])
   assert.match(html, /Chi phí dự kiến\/người\/tháng/)
   assert.match(html, /VND:1500000/)
-  assert.doesNotMatch(html, /VND:1900000|VND:2500000|trong trần/)
+  assert.doesNotMatch(html, /VND:1900000|VND:2500000|trong ngân sách/)
 })
 
 test('unknown author metadata and conflicting server cost units cannot confirm a group total', () => {
   for (const candidate of [item(2, null), { ...item(), cost: { ...item().cost, priceBasis: 'person' } }]) {
     const html = render([candidate])
-    assert.doesNotMatch(html, /VND:1900000|VND:2500000|trong trần/)
+    assert.doesNotMatch(html, /VND:1900000|VND:2500000|trong ngân sách/)
     assert.match(html, /cần xác nhận/)
   }
 })
@@ -58,7 +58,7 @@ test('verified whole-room price retains totals and budget comparison for old and
     const html = render([candidate])
     assert.match(html, /Tiền thuê cả phòng\/tháng/)
     assert.match(html, /VND:1900000/)
-    assert.match(html, /trong trần theo kịch bản/)
+    assert.match(html, /trong ngân sách theo chi phí bạn nhập/)
   }
 })
 
@@ -67,7 +67,7 @@ test('missing rent preserves known fee subtotal but never confirms total or init
   candidate.post.price = 0
   const html = render([candidate])
   assert.match(html, /chỉ các khoản đã biết; chưa có tiền thuê/)
-  assert.doesNotMatch(html, /VND:2500000|trong trần|BACKEND_DIFFERENCE/)
+  assert.doesNotMatch(html, /VND:2500000|trong ngân sách|BACKEND_DIFFERENCE/)
 })
 
 test('mixed price units suppress unsafe legacy difference summary', () => {
@@ -83,6 +83,6 @@ test('null or invalid aggregate values stay unknown instead of becoming zero cur
     candidate.cost.knownMonthlySubtotal = amount
     candidate.cost.estimatedMonthlyTotal = amount
     candidate.cost.initialPayment = amount
-    assert.doesNotMatch(render([candidate]), /VND:null|VND:NaN|VND:Infinity|VND:-1|trong trần/)
+    assert.doesNotMatch(render([candidate]), /VND:null|VND:NaN|VND:Infinity|VND:-1|trong ngân sách/)
   }
 })

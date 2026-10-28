@@ -1,3 +1,4 @@
+import './auth.css'
 import { authDestination } from '../lib/authDestination'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'

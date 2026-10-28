@@ -1,3 +1,4 @@
+import './post-form.css'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { createRentalPostDraft } from '../api'

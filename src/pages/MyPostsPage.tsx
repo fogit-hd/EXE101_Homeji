@@ -1,3 +1,4 @@
+import './pages.css'
 import { useCallback, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {

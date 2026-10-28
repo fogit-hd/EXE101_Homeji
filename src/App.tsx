@@ -1,6 +1,5 @@
-import { ReferralsPage } from './pages/ReferralsPage'
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WebsiteTrafficTracker } from './components/WebsiteTrafficTracker'
@@ -9,7 +8,7 @@ import { AnalyticsConsent } from './components/AnalyticsConsent'
 import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
-import { SearchInterestCenter } from './components/ai/SearchInterestCenter'
+import { useAuth } from './contexts/AuthContext'
 import { SearchProvider } from './contexts/SearchContext'
 import { ToastProvider } from './components/toast/ToastProvider'
 import { AuthModalProvider } from './contexts/AuthModalContext'
@@ -20,21 +19,23 @@ import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
 import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
 import { InteractionMotion } from './components/motion/InteractionMotion'
-import { BrandIntro } from './components/intro/BrandIntro'
+import { introRequested } from './lib/introGate'
 import { MotionConfig } from 'motion/react'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import {
   AdminModerationPage, CreateRentalPostPage, EditRentalPostPage, ExplorePage,
   ForgotPasswordPage, HomePage, PaymentWaitingPage, LoginPage, PrivacyPolicyPage,
   TermsOfServicePage, RegisterPage, AuthCallbackPage, ResetPasswordPage,
-  VerifySignupPage, ReceiptsPage,
+  VerifySignupPage, ReceiptsPage, ReferralsPage,
 } from './pages/deferredPages'
-import './components/layout/footer.css'
-import './pages/HomePage.css'
-import './pages/auth.css'
-import './pages/detail.css'
-import './pages/post-form.css'
-import './pages/pages.css'
+
+const BrandIntro = lazy(() => import('./components/intro/BrandIntro').then(module => ({ default: module.BrandIntro })))
+const SearchInterestCenter = lazy(() => import('./components/ai/SearchInterestCenter').then(module => ({ default: module.SearchInterestCenter })))
+
+function DeferredAccountTools() {
+  const { isAuthenticated, profile } = useAuth()
+  return isAuthenticated && profile ? <Suspense fallback={null}><SearchInterestCenter /></Suspense> : null
+}
 
 function AppRoutes() {
   return (
@@ -105,8 +106,8 @@ function App() {
           <GoogleOAuthRoot>
             <AuthProvider>
             <AccountQueryProvider><BrowserRouter>
-              <BrandIntro />
-              <SearchInterestCenter />
+              <Suspense fallback={null}>{introRequested() && <BrandIntro />}</Suspense>
+              <DeferredAccountTools />
               <WebsiteTrafficTracker />
               <AnalyticsConsent />
               <SearchProvider>

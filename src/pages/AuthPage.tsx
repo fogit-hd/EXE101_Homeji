@@ -1,3 +1,4 @@
+import './auth.css'
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import type { CredentialResponse } from '@react-oauth/google'
 import gsap from 'gsap'

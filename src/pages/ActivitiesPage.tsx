@@ -1,3 +1,4 @@
+import './pages.css'
 import { useCallback, useState } from 'react'
 import { getMyActivities, type UserActivity } from '../api'
 import { UserActivityType } from '../api/types'

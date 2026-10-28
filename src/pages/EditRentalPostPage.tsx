@@ -1,3 +1,4 @@
+import './post-form.css'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {

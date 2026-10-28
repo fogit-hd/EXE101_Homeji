@@ -1,5 +1,7 @@
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import {
+  lazy,
+  Suspense,
   useCallback,
 
   useMemo,
@@ -8,11 +10,13 @@ import {
   type ReactNode
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AuthModal } from '../components/auth/AuthModal'
 import { AuthModalContext, type AuthModalContextValue, type AuthModalIntent, type AuthModalMode, type OpenAuthModalOptions } from "./AuthModalContext.logic"
+
+const AuthModal = lazy(() => import('../components/auth/AuthModal').then(module => ({ default: module.AuthModal })))
 
 export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [hasOpened, setHasOpened] = useState(false)
   const [mode, setMode] = useState<AuthModalMode>('login')
   const [intent, setIntent] = useState<AuthModalIntent | null>(null)
   const onSuccessRef = useRef<(() => void) | null>(null)
@@ -33,6 +37,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     setMode(options?.mode ?? 'login')
     setIntent(options?.intent ?? null)
     onSuccessRef.current = options?.onSuccess ?? null
+    setHasOpened(true)
     setIsOpen(true)
   }, [])
 
@@ -41,6 +46,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     const auth = searchParams.get('auth')
     if (auth === 'login' || auth === 'register') {
       setMode(auth === 'register' ? 'register' : 'login')
+      setHasOpened(true)
       setIsOpen(true)
     }
   }
@@ -65,14 +71,14 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   return (
     <AuthModalContext.Provider value={value}>
       {children}
-      <AuthModal
+      {hasOpened && <Suspense fallback={null}><AuthModal
         open={isOpen}
         mode={mode}
         intent={intent}
         onModeChange={setMode}
         onClose={closeAuthModal}
         onSuccess={handleSuccess}
-      />
+      /></Suspense>}
     </AuthModalContext.Provider>
   )
 }

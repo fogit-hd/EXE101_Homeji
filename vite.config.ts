@@ -6,12 +6,26 @@ import { resolve } from 'node:path'
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: { main: resolve('index.html'), publicRentalAnalytics: resolve('src/publicRentalAnalytics.ts') },
-      output: { entryFileNames: chunk => chunk.name === 'publicRentalAnalytics' ? 'assets/public-rental-analytics.js' : 'assets/[name]-[hash].js' },
+      output: {
+        entryFileNames: chunk => chunk.name === 'publicRentalAnalytics' ? 'assets/public-rental-analytics.js' : 'assets/[name]-[hash].js',
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            { name: 'vendor-react', test: /node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\// },
+            { name: 'vendor-scroll', test: /node_modules\/lenis\// },
+            { name: 'vendor-google', test: /node_modules\/@react-oauth\// },
+            { name: 'vendor-gsap', test: /node_modules\/gsap\// },
+            { name: 'vendor-query', test: /node_modules\/@tanstack\// },
+            { name: 'vendor-signalr', test: /node_modules\/@microsoft\/signalr\// },
+            { name: 'vendor-motion', test: /node_modules\/(motion|motion-dom|motion-utils|framer-motion)\// },
+          ],
+        },
+      },
     },
-    // Silence large-chunk warning on Render (default 500 kB)
-    chunkSizeWarningLimit: 1500,
+    manifest: true,
+    chunkSizeWarningLimit: 500,
   },
   server: {
     watch: {

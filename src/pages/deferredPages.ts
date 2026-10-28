@@ -28,3 +28,5 @@ export const MyPostsPage = lazy(() => import('./MyPostsPage').then(module => ({ 
 export const RoommateWorkspace = lazy(() => import('../components/roommates/RoommateWorkspace').then(module => ({ default: module.RoommateWorkspace })))
 export const MapAppointmentsPanel = lazy(() => import('../components/map/MapAppointmentsPanel').then(module => ({ default: module.MapAppointmentsPanel })))
 export const MapMessagesPanel = lazy(() => import('../components/map/MapMessagesPanel').then(module => ({ default: module.MapMessagesPanel })))
+
+export const ReferralsPage = lazy(() => import('./ReferralsPage').then(module => ({ default: module.ReferralsPage })))

@@ -5,7 +5,7 @@ import postcss from 'postcss'
 
 // Read the shipped declarations, including final appearance overrides. This guards
 // specific foreground/background regressions; it does not replace browser visual QA.
-const files = ['src/index.css','src/components/shell/shell.css','src/ui-consistency.css','src/liquid-glass.css','src/components/theme/dark-theme.css']
+const files = ['src/index.css','src/components/shell/shell.css','src/ui-consistency.css','src/liquid-glass.css','src/components/theme/dark-theme.css','src/pages/NotificationPopupList.css']
 const roots = files.filter(f=>fs.existsSync(f)).map(f=>postcss.parse(fs.readFileSync(f,'utf8')))
 const tokens = {}
 for(const root of roots) root.walkRules(rule=>{
@@ -49,8 +49,9 @@ test('secondary copy and input placeholders remain readable on elevated dark sur
   assert.ok(contrast(resolve(tokens['--text-secondary']),resolve(tokens['--surface-elevated']))>=4.5)
   assert.ok(contrast('#afc1cd',resolve(tokens['--surface-input']))>=4.5)
 })
-test('unread notification text is paired with a dark fill',()=>{
-  const fill=value(['.hj-nrow.is-unread .hj-nrow__main',"html[data-theme='dark'] #root .hj-nrow.is-unread .hj-nrow__main"],'background')
+test('unread notification text remains readable on its inherited dark surface',()=>{
+  const background=value(['.hj-notify-feed .hj-nrow__main'],'background')
+  const fill=background === 'transparent' ? resolve(tokens['--surface-elevated']) : background
   assert.ok(contrast(resolve(tokens['--text-primary']),fill)>=4.5)
   assert.ok(contrast(resolve(tokens['--text-secondary']),fill)>=4.5)
 })

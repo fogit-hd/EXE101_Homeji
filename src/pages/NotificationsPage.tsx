@@ -1,3 +1,4 @@
+import './pages.css'
 import { useCallback, useRef, useState } from 'react'
 import {
   getNotifications,

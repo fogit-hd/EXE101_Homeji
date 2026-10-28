@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapChatbot } from '../components/map/MapChatbot'
 import { useAuth } from './AuthContext'
 import { useAuthModal } from "./AuthModalContext.logic"
 
@@ -10,6 +9,8 @@ import { RentalAssistantOpenerContext, RentalAssistantSelectionContext, RentalAs
 import { rentalMessageDraftStore } from '../lib/rentalMessageDraft'
 import { RentalJourneyProvider } from './RentalJourneyProvider'
 import { RentalJourneyTray } from '../components/ai/RentalJourney'
+
+const MapChatbot = lazy(() => import('../components/map/MapChatbot').then(module => ({ default: module.MapChatbot })))
 
 /** One conversation follows the user across routes; map controls register their callbacks. */
 export function ChatbotProvider({ children }: { children: ReactNode }) {
@@ -57,7 +58,7 @@ function ContextualChatbotProvider({ children }: { children: ReactNode }) {
   return <ChatbotSurfaceContext.Provider value={setSurface}><RentalAssistantSelectionContext.Provider value={registerSelection}><RentalAssistantComparisonContext.Provider value={registerComparison}><RentalAssistantOpenerContext.Provider value={openAssistant}>
     {children}
     <RentalJourneyTray />
-    <MapChatbot key={identity} {...surface}
+    <Suspense fallback={null}><MapChatbot key={identity} {...surface}
       rentalContext={selection?.room ?? null}
       rentalSelection={selection?.comparison ?? null}
       onDismissRentalContext={() => setDismissedSelection(selection?.token ?? null)}
@@ -65,6 +66,6 @@ function ContextualChatbotProvider({ children }: { children: ReactNode }) {
       onOpenChange={handleOpenChange}
       onSearchUpdate={surface?.onSearchUpdate ?? (update => navigate('/?section=listings', { state: { aiSearchUpdate: update } }))}
       hideFab={isOpen || !requested && surface?.hideFab}
-      onOpenSection={surface?.onOpenSection ?? (section => navigate(`/?section=${encodeURIComponent(section)}`))} />
+      onOpenSection={surface?.onOpenSection ?? (section => navigate(`/?section=${encodeURIComponent(section)}`))} /></Suspense>
   </RentalAssistantOpenerContext.Provider></RentalAssistantComparisonContext.Provider></RentalAssistantSelectionContext.Provider></ChatbotSurfaceContext.Provider>
 }
