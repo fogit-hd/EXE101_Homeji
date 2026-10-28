@@ -182,11 +182,11 @@ export function MapChatbot({
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
-  const [toolsCollapsed, setToolsCollapsed] = useState(false)
   const [resetRequested, setResetRequested] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
   const [viewport, setViewport] = useState(assistantViewport)
   const panelRef = useRef<HTMLDivElement>(null)
+  const toolsButtonRef = useRef<HTMLButtonElement>(null)
   const [config, setConfig] = useState<ChatbotPopupConfig | null>(null)
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [saveHistory, setSaveHistory] = useState(false)
@@ -232,8 +232,17 @@ export function MapChatbot({
   const modal = expanded || sheetMode
   const panelVisible = open && config?.enabled !== false
 
+  const closeChat = () => {
+    setOpen(false)
+    setToolsOpen(false)
+  }
+
   useEffect(() => onHomejiAiToggle(({ open: want }) => {
-    setOpen((value) => want ?? !value)
+    setOpen((value) => {
+      const next = want ?? !value
+      if (!next) setToolsOpen(false)
+      return next
+    })
   }), [])
 
   useEffect(() => {
@@ -248,7 +257,7 @@ export function MapChatbot({
       if (target.closest(`[${HOMEJI_AI_TRIGGER_ATTR}]`)) return
       // Portaled UI launched from the chat (auth modal, review sheets) must not close it.
       if (target.closest('[role="dialog"]')) return
-      if (!modal) setOpen(false)
+      if (!modal) closeChat()
     }
     document.addEventListener('pointerdown', onDown)
     return () => {
@@ -272,7 +281,7 @@ export function MapChatbot({
     const input = inputRef.current
     if (!input) return
     input.style.height = 'auto'
-    input.style.height = `${Math.min(132, Math.max(48, input.scrollHeight))}px`
+    input.style.height = `${Math.min(110, Math.max(28, input.scrollHeight))}px`
   }, [draft, expanded])
 
   useEffect(() => {
@@ -356,7 +365,7 @@ export function MapChatbot({
     const closeOnEscape = (event: KeyboardEvent) => {
       const panel = panelRef.current
       if (event.target instanceof Element && event.target.closest('[role="dialog"]') && !panel?.contains(event.target)) return
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') closeChat()
       if (event.key !== 'Tab' || !(panel?.getAttribute('aria-modal') === 'true' || document.querySelector('.room-detail[aria-modal="true"]'))) return
       if (!panel?.contains(document.activeElement)) return
       const nodes = [...panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
@@ -384,11 +393,11 @@ export function MapChatbot({
   }, [panelVisible, onOpenChange])
 
   if (useChangedInputs([dismissSignal])) {
-    if (dismissSignal > 0) setOpen(false)
+    if (dismissSignal > 0) closeChat()
   }
 
   if (useChangedInputs([hideFab]) && hideFab) {
-    setOpen(false)
+    closeChat()
   }
 
   if (config && !config.enabled) return null
@@ -417,7 +426,7 @@ export function MapChatbot({
     const foodQuery = isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message))
     const nearby = foodQuery ? null : nearbyChatIntent(message)
     if (nearby) {
-      if (onNearbyRequest?.(nearby)) { setOpen(false); setDraft(''); setError(null) }
+      if (onNearbyRequest?.(nearby)) { closeChat(); setDraft(''); setError(null) }
       else setError('Hãy chọn ghim phòng trên bản đồ trước để tìm tiện ích quanh đúng phòng đó.')
       return
     }
@@ -572,13 +581,13 @@ export function MapChatbot({
     { section: 'marketplace', label: 'Chợ Homeji', icon: 'bag' },
     { section: 'appointments', label: 'Lịch xem phòng', icon: 'calendar' },
   ]
-  const showTools = expanded && !sheetMode ? !toolsCollapsed : toolsOpen
+  const showTools = toolsOpen
   const scrollToEnd = () => bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' })
 
   return (
     <div className="map-chatbot homeji-assistant is-nav" data-expanded={expanded} data-glass-exclude>
       {panelVisible && modal ? <button type="button" className="homeji-assistant__backdrop" tabIndex={-1}
-        aria-label="Đóng không gian trợ lý" onClick={() => setOpen(false)} /> : null}
+        aria-label="Đóng không gian trợ lý" onClick={closeChat} /> : null}
       <div ref={panelRef} id={HOMEJI_AI_PANEL_ID}
         className={`map-chatbot__panel homeji-assistant__window${panelVisible ? ' is-visible' : ''}${sheetMode ? ' is-sheet' : ''}${expanded ? ' is-expanded' : ''}${busy ? ' is-thinking' : ''}`}
         style={{ left: panel.left, top: panel.top, width: panel.width, height: panel.maxHeight, maxHeight: panel.maxHeight }}
@@ -586,33 +595,56 @@ export function MapChatbot({
         data-homeji-ai-panel={panelVisible ? 'open' : 'closed'} inert={!panelVisible}
         role="dialog" aria-label={HOMEJI_TITLE}>
         <header className="map-chatbot__head">
-          <div className="map-chatbot__brand"><HomejiAvatar /><div><span className="homeji-assistant__eyebrow">HOMEJI / AI</span><strong>Cùng bạn, từng quyết định.</strong></div></div>
+          <div className="map-chatbot__head-left">
+            <div className="map-chatbot__brand">
+              <HomejiAvatar />
+              <div className="map-chatbot__brand-titles">
+                <span className="homeji-assistant__eyebrow">HOMEJI / AI</span>
+                <strong>Homeji</strong>
+              </div>
+            </div>
+            <button
+              ref={toolsButtonRef}
+              type="button"
+              className="homeji-assistant__tools-trigger"
+              onClick={() => setToolsOpen(value => !value)}
+              aria-expanded={showTools}
+              aria-controls={showTools ? `${reactId}-tools` : undefined}
+            >
+              <AssistantIcon name="tools" />
+              <span>Công cụ</span>
+            </button>
+          </div>
           <div className="homeji-assistant__window-actions">
+            {messages.length > 0 ? (
+              <button
+                type="button"
+                className="homeji-assistant__icon-button"
+                onClick={scrollToEnd}
+                aria-label="Tới cuối hội thoại"
+                title="Tới cuối hội thoại"
+              >
+                <span className="homeji-assistant__scroll-arrow" aria-hidden="true">↓</span>
+              </button>
+            ) : null}
             <button type="button" className="homeji-assistant__icon-button" disabled={busy} onClick={() => setResetRequested(true)}
               aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><AssistantIcon name="plus" /></button>
             <button type="button" className="homeji-assistant__icon-button" onClick={() => setExpanded(value => !value)}
               aria-pressed={expanded} aria-label={expanded ? 'Thu gọn cuộc trò chuyện' : 'Mở rộng cuộc trò chuyện'}
               title={expanded ? 'Thu gọn cuộc trò chuyện' : 'Mở rộng cuộc trò chuyện'}><AssistantIcon name={expanded ? 'shrink' : 'expand'} /></button>
-            <button type="button" className="map-chatbot__close homeji-assistant__icon-button" onClick={() => setOpen(false)} aria-label="Đóng Homeji" title="Đóng Homeji"><AssistantIcon name="close" /></button>
+            <button type="button" className="map-chatbot__close homeji-assistant__icon-button" onClick={closeChat} aria-label="Đóng Homeji" title="Đóng Homeji"><AssistantIcon name="close" /></button>
           </div>
         </header>
         <div className={`homeji-assistant__workspace${showTools ? ' has-tools' : ''}`}>
           {showTools ? <aside className="homeji-assistant__tools" aria-label="Công cụ Homeji" id={`${reactId}-tools`}>
-            <div className="homeji-assistant__tools-heading"><span>LỐI TẮT CỦA BẠN</span><button type="button" className="homeji-assistant__icon-button" onClick={() => { setToolsOpen(false); panelRef.current?.querySelector<HTMLButtonElement>('.homeji-assistant__toolbar > button')?.focus() }} aria-label="Đóng công cụ" hidden={expanded && !sheetMode}><AssistantIcon name="close" /></button></div>
+            <div className="homeji-assistant__tools-heading"><span>LỐI TẮT CỦA BẠN</span><button type="button" className="homeji-assistant__icon-button" onClick={() => { setToolsOpen(false); toolsButtonRef.current?.focus() }} aria-label="Đóng công cụ"><AssistantIcon name="close" /></button></div>
             <p>Đi thẳng đến việc bạn cần.</p>
             <nav aria-label="Đi tới Homeji">{shortcuts.map(item => <button type="button" key={item.section}
               onClick={() => handleNavigationAction({ id: `shortcut-${item.section}`, kind: ChatbotNavigationActionKind.OpenSection, label: item.label, target: item.section, description: '' })}>
               <AssistantIcon name={item.icon} /><span>{item.label}</span><AssistantIcon name="arrow" />
             </button>)}</nav>
-            <div className="homeji-assistant__tools-tip"><span>✦</span><strong>Một câu hỏi, một bước rõ hơn.</strong><p>Thêm ngân sách, khu vực và số người để Homeji hiểu nhu cầu của bạn.</p></div>
           </aside> : null}
           <div className="homeji-assistant__conversation">
-            <div className="homeji-assistant__toolbar">
-              <button type="button" onClick={() => expanded && !sheetMode ? setToolsCollapsed(value => !value) : setToolsOpen(value => !value)} aria-expanded={showTools} aria-controls={showTools ? `${reactId}-tools` : undefined}>
-                <AssistantIcon name="tools" />Công cụ</button>
-              <span><i aria-hidden="true" />{saveHistory ? 'Đã bật lưu lịch sử' : 'Chỉ trong phiên này'}</span>
-              {messages.length > 0 ? <button type="button" onClick={scrollToEnd} aria-label="Tới cuối hội thoại" title="Tới cuối hội thoại">↓</button> : null}
-            </div>
             {resetRequested ? <div className="homeji-assistant__reset" role="alert">
               <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.</p>
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
@@ -673,18 +705,66 @@ export function MapChatbot({
             {showTyping ? <div className="map-chatbot__request-status" role="status"><span>Đang xử lý · bạn vẫn có thể soạn tin</span><button type="button" onClick={stopRequest}>Dừng chờ</button></div> : null}
             <div className="homeji-assistant__composer-area">
               <form className="map-chatbot__form" onSubmit={event => { event.preventDefault(); void send(draft) }}>
-                <textarea ref={inputRef} value={draft} maxLength={1000} rows={2} onChange={event => { draftRevision.current += 1; setDraft(event.target.value) }}
-                  onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) { event.preventDefault(); if (!busy && draft.trim()) event.currentTarget.form?.requestSubmit() } }}
-                  placeholder={rentalContext ? 'Hỏi về phòng này, hoặc điều bạn cần…' : 'Kể Homeji nghe điều bạn đang cần…'} aria-label="Nhập tin nhắn cho Homeji" aria-describedby={`${reactId}-composer-help`} />
-                <div className="homeji-assistant__composer-bottom"><span>{draft.length ? `${draft.length}/1.000` : 'Một câu hỏi cũng đủ để bắt đầu'}</span><button type="submit" className="map-chatbot__send" disabled={busy || !draft.trim()} aria-label="Gửi"><span>Gửi</span><AssistantIcon name="send" /></button></div>
+                <textarea
+                  ref={inputRef}
+                  value={draft}
+                  maxLength={1000}
+                  rows={2}
+                  onChange={event => {
+                    draftRevision.current += 1
+                    setDraft(event.target.value)
+                  }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) {
+                      event.preventDefault()
+                      if (!busy && draft.trim()) event.currentTarget.form?.requestSubmit()
+                    }
+                  }}
+                  placeholder={rentalContext ? 'Hỏi về phòng này, hoặc điều bạn cần…' : 'Kể Homeji nghe điều bạn đang cần…'}
+                  aria-label="Nhập tin nhắn cho Homeji"
+                  aria-describedby={`${reactId}-composer-help`}
+                />
+                <button type="submit" className="map-chatbot__send" disabled={busy || !draft.trim()} aria-label="Gửi">
+                  <span className="sr-only">Gửi</span>
+                  <AssistantIcon name="send" />
+                </button>
               </form>
-              <div className="homeji-assistant__composer-hint" id={`${reactId}-composer-help`}><span>Enter để gửi · Shift + Enter xuống dòng</span><span>AI có thể nhầm. Hãy kiểm tra thông tin.</span></div>
-              <details className="map-chatbot__privacy" data-glass-exclude><summary>Quyền riêng tư & lịch sử</summary>
-                <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
-                {config?.historyStorageEnabled ? <label><input type="checkbox" checked={saveHistory} disabled={busy} onChange={event => { setSaveHistory(event.target.checked); startNewConversation() }} />Đồng ý lưu hội thoại và tiêu chí theo chính sách lưu lịch sử</label> : <p>Lưu lịch sử hiện đang tắt.</p>}
-                {!saveHistory ? <button type="button" disabled={busy} onClick={() => setResetRequested(true)}>Xóa nội dung phiên và tiêu chí</button> : null}
-                {conversationId ? <button type="button" disabled={busy} onClick={() => void deleteConversation()}>Xóa hội thoại và tiêu chí hiện tại</button> : null}
-              </details>
+              <div className="homeji-assistant__composer-meta">
+                <div className="homeji-assistant__composer-hint" id={`${reactId}-composer-help`}>
+                  <span>Enter để gửi · Shift + Enter xuống dòng</span>
+                  {draft.length ? <span className="homeji-assistant__char-count">{draft.length}/1.000</span> : null}
+                </div>
+                <details className="map-chatbot__privacy" data-glass-exclude>
+                  <summary>Quyền riêng tư & lịch sử</summary>
+                  <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
+                  {config?.historyStorageEnabled ? (
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={saveHistory}
+                        disabled={busy}
+                        onChange={event => {
+                          setSaveHistory(event.target.checked)
+                          startNewConversation()
+                        }}
+                      />
+                      Đồng ý lưu hội thoại và tiêu chí theo chính sách lưu lịch sử
+                    </label>
+                  ) : (
+                    <p>Lưu lịch sử hiện đang tắt.</p>
+                  )}
+                  {!saveHistory ? (
+                    <button type="button" disabled={busy} onClick={() => setResetRequested(true)}>
+                      Xóa nội dung phiên và tiêu chí
+                    </button>
+                  ) : null}
+                  {conversationId ? (
+                    <button type="button" disabled={busy} onClick={() => void deleteConversation()}>
+                      Xóa hội thoại và tiêu chí hiện tại
+                    </button>
+                  ) : null}
+                </details>
+              </div>
             </div>
           </div>
         </div>
