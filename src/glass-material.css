@@ -1,19 +1,26 @@
 /* Homeji's single clear-glass material. Shape and semantic variants consume
    these tokens; they do not introduce a second tint or lighting system. */
 :root {
-  --glass-clear-fill: rgb(255 255 255 / .035);
-  --glass-clear-edge: rgb(255 255 255 / .85);
+  --glass-density: 0.5;
+  --glass-density-blur: calc(8px + var(--glass-density) * 24px);
+  --glass-density-opacity: calc(0.15 + var(--glass-density) * 0.78);
+  --glass-panel-dynamic: color-mix(in srgb, var(--surface-elevated, #fff) calc(var(--glass-density-opacity) * 100%), transparent);
+  --glass-tint-dynamic: color-mix(in srgb, var(--surface-elevated, #fff) calc((0.18 + var(--glass-density) * 0.72) * 100%), transparent);
+  --glass-clear-fill: color-mix(in srgb, rgb(255 255 255 / calc(0.01 + var(--glass-density) * 0.045)) 100%, transparent);
+  --glass-clear-edge: color-mix(in srgb, rgb(255 255 255 / calc(0.45 + var(--glass-density) * 0.45)) 100%, transparent);
   --glass-clear-shadow: inset 0 1px 1px var(--glass-clear-edge),inset 1px 0 1px #ffffffa0,
     inset -1px 0 1px #123a3040,inset 0 -1px 1px #123a3030,
     0 1px 2px #123a3030,0 5px 9px -4px #123a3050;
-  --glass-scene-blur: .65px;
-  --glass-scene-saturation: 1.04;
+  --glass-scene-blur: calc(0.35px + var(--glass-density) * 0.6px);
+  --glass-scene-saturation: calc(1.0 + var(--glass-density) * 0.1);
   --glass-travel-duration: 460ms;
   --glass-settle-duration: 620ms;
 }
 html[data-theme='dark'] {
-  --glass-clear-fill: rgb(24 40 45 / .05);
-  --glass-clear-edge: rgb(245 255 252 / .6);
+  --glass-panel-dynamic: color-mix(in srgb, var(--surface-elevated, #182b36) calc(var(--glass-density-opacity) * 100%), transparent);
+  --glass-tint-dynamic: color-mix(in srgb, var(--surface-elevated, #182b36) calc((0.2 + var(--glass-density) * 0.74) * 100%), transparent);
+  --glass-clear-fill: color-mix(in srgb, rgb(24 40 45 / calc(0.02 + var(--glass-density) * 0.05)) 100%, transparent);
+  --glass-clear-edge: color-mix(in srgb, rgb(245 255 252 / calc(0.3 + var(--glass-density) * 0.4)) 100%, transparent);
 }
 /* Resolve the light position on each face, where pointer coordinates live. */
 :where([data-glass-control],.liquid-tabs__lens) {

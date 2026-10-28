@@ -70,8 +70,13 @@ export function LiquidGlassEffects() {
     }
     const reconcile = (element: HTMLElement) => {
       const kind = glassControlKind(element)
-      const profile = kind === 'surface' || kind === 'field' || kind === 'toggle' || element.matches('.theme-switch')
-        ? 'surface' : element.matches('[role="switch"],.theme-switch__thumb') ? 'bead' : 'control'
+      const profile = kind === 'surface' || kind === 'field' || kind === 'toggle' || element.matches('.theme-switch,.liquid-switch')
+        ? 'surface'
+        : element.matches('.theme-switch__thumb,.liquid-switch__thumb,[data-glass-profile="bead"]')
+        ? 'bead'
+        : element.matches('[role="switch"]') && !element.matches('.theme-switch,.liquid-switch')
+        ? 'bead'
+        : 'control'
       if (kinds.get(element) === kind && profiles.get(element) === profile) return
       if (observed.has(element)) forget(element)
       else { kinds.delete(element); profiles.delete(element); clearMarkers(element) }
@@ -116,12 +121,12 @@ export function LiquidGlassEffects() {
       for (const root of removals) {
         if (root.isConnected) continue
         if (root instanceof HTMLElement && kinds.has(root)) forget(root)
-        root.querySelectorAll<HTMLElement>('[data-glass-control],[data-glass-content],.liquid-tabs__lens,.theme-switch__thumb,[data-glass-optics]')
+        root.querySelectorAll<HTMLElement>('[data-glass-control],[data-glass-content],.liquid-tabs__lens,.theme-switch__thumb,.liquid-switch__thumb,[data-glass-lens],[data-glass-optics]')
           .forEach(element => { if (kinds.has(element)) forget(element) })
       }
     })
     mutations.observe(document.body, { childList: true, subtree: true, attributes: true,
-      attributeFilter: ['class', 'role', 'type', 'readonly', 'hidden', 'aria-hidden', 'data-glass-exclude', 'data-glass-optics', 'data-glass-panel'] })
+      attributeFilter: ['class', 'role', 'type', 'readonly', 'hidden', 'aria-hidden', 'data-glass-exclude', 'data-glass-optics', 'data-glass-panel', 'data-glass-lens', 'data-glass-profile'] })
     mutations.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => {
       stopActivity()

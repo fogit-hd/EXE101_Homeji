@@ -5,14 +5,9 @@
  * https://kube.io/blog/liquid-glass-css-svg/ (not Apple's private renderer).
  */
 const clamp = value => Math.max(0, Math.min(1, value))
-const squircle = value => Math.pow(Math.max(0, 1 - (1 - value) ** 4), .25)
 const surfaceHeight = (t, bead) => {
   if (!bead) return Math.pow(Math.max(0, 1 - (1 - t) ** 2.5), 1 / 2.5)
-  const blend = t ** 3 * (10 - 15 * t + 6 * t * t)
-  const bowl = 1 - squircle(t) + .08
-  // A thin convex shoulder surrounds the shallow concave center. Clamp the
-  // shoulder at full height so it cannot turn back down inside the bead.
-  return squircle(clamp(t * 4)) * (1 - blend) + bowl * blend
+  return Math.sqrt(Math.max(0, 1 - (1 - t) ** 2))
 }
 export function capsuleLensField(x, y, ratio, profile = 'capsule') {
   const axis = Math.max(.5, Math.min(ratio - .5, x))

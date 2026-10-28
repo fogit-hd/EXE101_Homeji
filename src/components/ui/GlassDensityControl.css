@@ -1,0 +1,189 @@
+/* GlassDensityControl: Floating liquid glass density HUD card */
+.glass-density-control {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  background: var(--glass-panel, rgba(255, 255, 255, 0.72));
+  -webkit-backdrop-filter: blur(var(--glass-density-blur, 16px)) saturate(1.1);
+  backdrop-filter: blur(var(--glass-density-blur, 16px)) saturate(1.1);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.5));
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  max-width: 380px;
+  width: 100%;
+  box-sizing: border-box;
+  user-select: none;
+  touch-action: pan-y;
+  transition:
+    background-color 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+html[data-theme='dark'] .glass-density-control {
+  background: var(--glass-panel, rgba(20, 35, 45, 0.78));
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.glass-density-control__slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.glass-density-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary, #687076);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 180ms ease, transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.glass-density-icon-btn:hover {
+  color: var(--text-heading, #11181c);
+  transform: scale(1.08);
+}
+
+.glass-density-icon-btn.is-active {
+  color: var(--maps-blue, #0071e3);
+}
+
+/* Track Rail with 3 distinct snap dots */
+.glass-density-track {
+  position: relative;
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+
+.glass-density-track:focus-visible {
+  outline: 2px solid var(--maps-blue, #0071e3);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.glass-density-track__rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border, #000) 22%, transparent);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme='dark'] .glass-density-track__rail {
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 3 snap dots along the track */
+.glass-density-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text-secondary, #687076) 55%, transparent);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  transition: transform 160ms ease, background-color 160ms ease;
+  z-index: 1;
+}
+
+.glass-density-dot:hover {
+  transform: translateX(-50%) scale(1.4);
+  background: var(--text-heading, #111);
+}
+
+.glass-density-dot--middle {
+  left: 50%;
+}
+
+/* 3D Liquid Glass Pill Thumb */
+.glass-density-thumb {
+  position: absolute;
+  top: 4px;
+  width: 36px;
+  height: 24px;
+  border-radius: 12px;
+  z-index: 2;
+  background: radial-gradient(ellipse at 40% 30%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 2px 2px -1px #ffffff,
+    inset 0 -2px 3px -1px rgba(255, 255, 255, 0.4),
+    0 3px 8px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  backdrop-filter: blur(8px) saturate(1.2);
+  pointer-events: none;
+  transition: transform 120ms ease, box-shadow 160ms ease;
+  will-change: left, transform;
+}
+
+.glass-density-track.is-dragging .glass-density-thumb {
+  transform: scale(1.08);
+  box-shadow:
+    inset 0 2px 2px -1px #ffffff,
+    inset 0 -2px 3px -1px rgba(255, 255, 255, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.28),
+    0 2px 4px rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme='dark'] .glass-density-thumb {
+  background: radial-gradient(ellipse at 40% 30%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 2px 2px -1px rgba(255, 255, 255, 0.8),
+    inset 0 -2px 3px -1px rgba(255, 255, 255, 0.2),
+    0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Explanatory Caption */
+.glass-density-control__caption {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #687076);
+  font-weight: 450;
+  letter-spacing: -0.01em;
+}
+
+/* Floating dock on the Map Shell */
+:is(.home-map-panel, .home-map-frame, .home-map-page--dest, .map-listings__map) .glass-density-control--docked {
+  position: absolute;
+  bottom: 24px;
+  right: 20px;
+  z-index: 1000;
+  animation: map-fade-up 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@media (max-width: 900px) {
+  :is(.home-map-panel, .home-map-frame, .home-map-page--dest, .map-listings__map) .glass-density-control--docked {
+    bottom: 84px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+    width: auto;
+  }
+}

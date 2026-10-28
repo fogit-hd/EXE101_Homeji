@@ -364,11 +364,16 @@
 }
 
 .home-map-page--dest .map-detail-panel {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  border-radius: 0;
-  box-shadow: 4px 0 16px rgba(var(--shadow-color, 9, 29, 46), 0.1);
+  left: 16px;
+  top: 16px;
+  bottom: 16px;
+  height: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  border-radius: 24px;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.75);
 }
 
 .home-map-page--dest .home-map-master-toggle {
@@ -376,7 +381,7 @@
 }
 
 .home-map-page--dest .home-map-master-toggle.is-on-detail {
-  left: calc(var(--map-detail-width, min(456px, 94vw)) - 14px);
+  left: calc(16px + var(--map-detail-width, min(456px, 94vw)) - 14px);
 }
 
 .home-map-page--dest .home-map-banner--dest {
@@ -996,9 +1001,11 @@
 
 .home-list-panel {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  height: calc(100% - 32px);
+  max-height: calc(100% - 32px);
   /* Below Homie chatbot (9999) and chat dock (10020); above map (1). */
   z-index: 5000;
   width: min(320px, 34vw);
@@ -1006,9 +1013,15 @@
   min-width: 260px;
   display: flex;
   flex-direction: column;
-  background: var(--surface-elevated);
-  border-left: 1px solid var(--border);
-  box-shadow: none;
+  background: var(--glass-panel, color-mix(in srgb, var(--surface-elevated, #fff) calc(var(--glass-density-opacity, 0.72) * 100%), transparent));
+  -webkit-backdrop-filter: blur(var(--glass-density-blur, 18px)) saturate(var(--glass-scene-saturation, 1.08));
+  backdrop-filter: blur(var(--glass-density-blur, 18px)) saturate(var(--glass-scene-saturation, 1.08));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.45));
+  border-radius: 24px;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.75);
   overflow: hidden;
   opacity: 0;
   transform: translate3d(20px, 0, 0);
@@ -1018,7 +1031,7 @@
     transform 0.3s ease,
     box-shadow 0.3s ease,
     background-color 0.3s ease,
-    border-left-color 0.3s ease,
+    border-color 0.3s ease,
     width 0.28s ease,
     max-width 0.28s ease;
   will-change: transform, opacity;
@@ -1033,9 +1046,9 @@
 /* Listings + Tin tìm phòng slide in from the right. */
 .home-list-panel.is-slide-right {
   left: auto;
-  right: 0;
+  right: 16px;
   width: 90%;
-  max-width: 90vw;
+  max-width: calc(100vw - 32px);
   min-width: 0;
 }
 
@@ -1055,8 +1068,8 @@
   transform: translate3d(0, 0, 0);
   opacity: 1;
   pointer-events: auto;
-  border-left-color: var(--border);
-  box-shadow: -12px 0 32px rgba(var(--shadow-color), 0.18);
+  border-color: var(--glass-border, rgba(255, 255, 255, 0.45));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .home-list-panel.is-slide-right .home-list-body {

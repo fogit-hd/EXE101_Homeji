@@ -11,10 +11,10 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
     ? '0 0 0 0 .06 0 0 0 0 .1 0 0 0 0 .12 .19134 .64368 .06498 0 .06'
     : [
       // Neutral scenes lift towards a light reflection. Subtracting luminance
-      // preserves local chroma, so blue and pink backdrops do not turn gray.
-      '.7874 -.7152 -.0722 0 .92',
-      '-.2126 .2848 -.0722 0 .92',
-      '-.2126 -.7152 .9278 0 .92',
+      // preserves local chroma without adding milky white haze to the text.
+      '.7874 -.7152 -.0722 0 0',
+      '-.2126 .2848 -.0722 0 0',
+      '-.2126 -.7152 .9278 0 0',
       '.455571 1.532571 .154714 0 -.214286',
     ].join(' ')
   const acquire = (width: number, height: number, ratio: number, variant: GlassLensVariant) => {
@@ -61,7 +61,12 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
       .forEach(([key, value]) => normals.setAttribute(key, value))
     const warp = document.createElementNS(svg, 'feDisplacementMap')
     // Equal pixel units on X and Y avoid aspect-dependent vertical stretching.
-    Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(GLASS_LENS_DEPTHS[variant] * Math.min(width, height)),
+    // For text and control variants, restrict distortion to the 2-3px outer meniscus edge.
+    const isControl = variant === 'control' || variant === 'control-active' || variant === 'tab-rest' || variant === 'tab-active'
+    const scale = isControl
+      ? Math.min(3, Math.max(1, GLASS_LENS_DEPTHS[variant] * Math.min(width, height)))
+      : GLASS_LENS_DEPTHS[variant] * Math.min(width, height)
+    Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(scale),
       xChannelSelector: 'R', yChannelSelector: 'G', result: 'refracted-scene' }).forEach(([key, value]) => warp.setAttribute(key, value))
     filter.append(normals, warp)
     let illumination: SVGFEColorMatrixElement | undefined

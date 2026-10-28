@@ -1,4 +1,4 @@
-const activityTargets = '[data-glass-control],.liquid-tabs,.theme-switch,.ai-spectrum-button,.map-chatbot__panel,.map-chatbot__form,.rental-draft-assistant,.rental-comparison,.ai-search-review'
+const activityTargets = '[data-glass-control],.liquid-tabs,.theme-switch,.liquid-switch,.ai-spectrum-button,.map-chatbot__panel,.map-chatbot__form,.rental-draft-assistant,.rental-comparison,.ai-search-review'
 
 /** Transient optics follow real input, never a stationary hover or focus. */
 export function observeGlassActivity(doc: Document) {
@@ -13,7 +13,7 @@ export function observeGlassActivity(doc: Document) {
     const result: HTMLElement[] = []
     for (let node: Element | null = target; node; node = node.parentElement) {
       if (!(node instanceof HTMLElement) || !node.matches(activityTargets) || node.matches(':disabled,[aria-disabled="true"]')) continue
-      const lens = node.matches('.liquid-tabs,.theme-switch') ? node.querySelector<HTMLElement>('.liquid-tabs__lens,.theme-switch__thumb') : null
+      const lens = node.matches('.liquid-tabs,.theme-switch,.liquid-switch') ? node.querySelector<HTMLElement>('.liquid-tabs__lens,.theme-switch__thumb,.liquid-switch__thumb,[data-glass-lens]') : null
       result.push(lens ?? node)
     }
     return result

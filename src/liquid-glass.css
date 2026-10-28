@@ -3,9 +3,9 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: rgb(249 253 252 / .86);
+  --glass-tint: var(--glass-tint-dynamic, rgb(249 253 252 / .86));
   --glass-border: rgb(161 187 187 / .48);
-  --glass-panel: rgb(249 253 251 / .9);
+  --glass-panel: var(--glass-panel-dynamic, rgb(249 253 251 / .9));
   --glass-edge: rgb(255 255 255 / .72);
   --glass-shadow: rgb(25 63 61 / .1);
   --glass-ink: #183b46;
@@ -18,9 +18,9 @@
   :root { --glass-spring: linear(0, .23 12%, .65 28%, .91 44%, 1.035 60%, .99 80%, 1); }
 }
 html[data-theme='dark'] {
-  --glass-tint: rgb(25 47 58 / .92);
+  --glass-tint: var(--glass-tint-dynamic, rgb(25 47 58 / .92));
   --glass-border: rgb(198 227 225 / .23);
-  --glass-panel: rgb(18 39 51 / .9);
+  --glass-panel: var(--glass-panel-dynamic, rgb(18 39 51 / .9));
   --glass-edge: rgb(233 255 251 / .26);
   --glass-shadow: rgb(0 6 15 / .35);
   --glass-ink: #e8f8ff;

@@ -12,8 +12,8 @@ export function nearestLensRatio(width: number, height: number) {
 export const GLASS_LENS_DEPTHS: Record<GlassLensVariant, number> = {
   surface: .06, 'surface-active': .08,
   bead: .6, 'bead-active': .65,
-  control: .75, 'tab-rest': .75,
-  'control-active': .8, 'tab-active': .8,
+  control: .06, 'tab-rest': .06,
+  'control-active': .08, 'tab-active': .08,
 }
 
 /** Search/action faces soften high-contrast scenery. A tab face crossing its

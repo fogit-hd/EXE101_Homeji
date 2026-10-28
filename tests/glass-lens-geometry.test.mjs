@@ -54,9 +54,9 @@ test('encoded glass maps preserve the flat core and bend opposite sides at the b
  }
 })
 
-test('switch lip has an inward outer shoulder and a compressed inner scene',()=>{
+test('switch droplet forms a 3D magnifying convex lens dome over the scene',()=>{
  assert.ok(capsuleLensField(.5,.04,1,'bead').y>0)
- assert.ok(capsuleLensField(.5,.3,1,'bead').y<0)
+ assert.ok(capsuleLensField(.5,.3,1,'bead').y>0)
  for(const profile of ['capsule','bead'])for(let y=0;y<=1;y+=.002)for(let x=0;x<=1;x+=.01){
   const field=capsuleLensField(x,y,1,profile)
   assert.ok(Number.isFinite(field.x)&&Number.isFinite(field.y))

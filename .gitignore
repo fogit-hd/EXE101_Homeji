@@ -39,3 +39,6 @@ public/mascot/render_*.log
 #FIGMA
 public/figma/
 src/assets/ 
+
+output/
+tmp/
