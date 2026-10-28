@@ -296,7 +296,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
             <small>{avatarBusy ? 'Đang tải…' : 'Đổi ảnh'}</small>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void handleAvatarPick(e.target.files?.[0] ?? null)} />
-          <div><span className="profile-account-header__eyebrow">HOMEJI · TÀI KHOẢN CỦA BẠN</span><h1>{profile?.displayName || 'Chào bạn'}</h1><p>{userRoleLabel[profile?.role ?? UserRole.Renter]} · {profile?.isPremium ? profile.subscriptionBadge || 'Premium' : 'Gói miễn phí'}</p></div>
+          <div><span className="profile-account-header__eyebrow">Hồ sơ của bạn</span><h1>{profile?.displayName || 'Chào bạn'}</h1><p><span>{userRoleLabel[profile?.role ?? UserRole.Renter]}</span><span>{profile?.isPremium ? profile.subscriptionBadge || 'Premium' : 'Gói miễn phí'}</span></p></div>
         </div>
         <Link className="profile-account-header__home" to="/">← Về trang chủ</Link>
       </header>}
