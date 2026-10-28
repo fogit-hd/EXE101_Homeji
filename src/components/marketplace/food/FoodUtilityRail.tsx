@@ -90,7 +90,7 @@ export function FoodUtilityRail({
     >
       <section className="food-rail__location liquid-surface" aria-labelledby={locationTitleId}>
         <div className="food-rail__location-head">
-          <h2 id={locationTitleId}>Giao đến đâu?</h2>
+          <h2 id={locationTitleId}>Tìm quán gần bạn</h2>
           <button
             type="button"
             className="food-rail__locate"
@@ -102,14 +102,13 @@ export function FoodUtilityRail({
           </button>
         </div>
 
-        <button type="button" className="food-rail__address" disabled>
+        <div className="food-rail__address">
           <img src={FOOD_ASSETS.icons.mapPin} alt="" width={17} height={17} />
           <span className="food-rail__address-copy">
             <strong>{locationLabel}</strong>
             <small>{locationSecondary}</small>
           </span>
-          <img src={FOOD_ASSETS.icons.chevronDown} alt="" width={14} height={14} />
-        </button>
+        </div>
 
         <div className="food-rail__sort">
           <span>Sắp xếp</span>
@@ -122,7 +121,7 @@ export function FoodUtilityRail({
 
       <section className="food-rail__kitchens liquid-surface" aria-labelledby={kitchensTitleId}>
         <div className="food-rail__kitchens-head">
-          <h3 id={kitchensTitleId}>Bếp đang mở gần bạn</h3>
+          <h3 id={kitchensTitleId}>Quán trong danh sách</h3>
           <span>{loading ? <Sk w={44} h={10} /> : `${kitchens.length} bếp`}</span>
         </div>
         <ul className="food-rail__kitchen-list" aria-busy={loading || undefined}>
@@ -260,7 +259,7 @@ export function FoodUtilityRail({
             <strong>Nhận món tại bếp</strong>
           </div>
           <p>Mỗi lần thanh toán gồm món của một bếp. Bạn nhận tại địa chỉ bếp sau khi người bán xác nhận.</p>
-          <p>Thời gian chuẩn bị dự kiến: {estimatedEtaLabel}.</p>
+          {cartItems.length > 0 && <p>Thời gian chuẩn bị dự kiến: {estimatedEtaLabel}.</p>}
         </div>
 
         <footer className="food-rail__footer">

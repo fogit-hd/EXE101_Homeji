@@ -31,6 +31,7 @@ type Props = {
   locationLabel: string
   locationSecondary: string
   minimumCartTotal: number
+  onRetry: () => void
   onQuantityChange: (postId: string, quantity: number) => void
   onAddToCart: (post: MarketplacePost) => void
   onShowOnMap: (post: MarketplacePost) => void
@@ -77,6 +78,7 @@ export function FoodMarketplaceView({
   locationLabel,
   locationSecondary,
   minimumCartTotal,
+  onRetry,
   onQuantityChange,
   onAddToCart,
   onShowOnMap,
@@ -104,13 +106,6 @@ export function FoodMarketplaceView({
       document.body.style.overflow = previousOverflow
     }
   }, [cartOpen])
-  const featured = posts[0] ?? null
-  const featuredDistance = featured?.distanceKm != null ? formatDistanceMeters(featured.distanceKm) : 'Món đang mở bán'
-  const featuredPrice = featured ? formatPrice(featured.price) : ''
-  const featuredPortions = featured?.availableQuantity
-  const featuredEta = featured?.preparationMinutes
-    ? `${featured.preparationMinutes} phút`
-    : ''
   const etaLabel = estimatedEtaFromCart(cartItems, posts)
   const remainingKitchens = Math.max(0, kitchens.length - 3)
   const discoveryNames = kitchens
@@ -144,69 +139,9 @@ export function FoodMarketplaceView({
   return (
     <div className="food-market-body">
       <div className="food-catalog">
-        {loading ? (
-        <section className="food-featured food-featured--loading" aria-busy="true" aria-label="Đang tải gợi ý hôm nay">
-          <div className="food-featured__copy sk-stack">
-            <Sk w={140} h={10} />
-            <Sk w="85%" h={28} r={10} />
-            <Sk w="70%" h={12} />
-            <div className="sk-row" style={{ marginTop: 8 }}><Sk w={150} h={40} r={999} /><Sk w={90} h={16} /></div>
-          </div>
-          <div className="food-featured__media"><Sk w="100%" h="100%" r={16} style={{ minHeight: 150 }} /></div>
-        </section>
-        ) : (
-        <section className="food-featured" aria-label="Gợi ý hôm nay">
-          <div className="food-featured__copy">
-            <div className="food-featured__status">
-              <span className="food-featured__eyebrow">Gợi ý hôm nay</span>
-              <span aria-hidden="true">•</span>
-              <span>{featuredDistance}</span>
-            </div>
-            <h2 className="food-featured__title">
-              {featured
-                ? `${featured.title}${featured.sellerDisplayName ? ` — ${featured.sellerDisplayName}` : ''}`
-                : 'Chưa có món nào để gợi ý'}
-            </h2>
-            <p className="food-featured__desc">
-              {featured?.description?.trim()
-                || (featured
-                  ? 'Món đang mở bán quanh bạn.'
-                  : 'Khi có món ăn đang bán, món đầu danh sách sẽ hiện ở đây.')}
-            </p>
-            <div className="food-featured__actions">
-              <button
-                type="button"
-                className="food-featured__cta"
-                data-glass-exclude
-                disabled={!featured}
-                onClick={() => featured && onShowOnMap(featured)}
-              >
-                Xem vị trí nhận món
-              </button>
-              <span className="food-featured__price">
-                {featured ? `Từ ${featuredPrice}` : featuredPrice}
-              </span>
-            </div>
-          </div>
-          <div className="food-featured__media">
-            {featured?.mediaUrls?.[0] ? (
-              <img src={featured.mediaUrls[0]} alt="" />
-            ) : (
-              <span className="food-featured__empty" />
-            )}
-            {featured ? (
-              <span className="food-featured__note">
-                {featuredPortions != null ? `Còn ${featuredPortions} phần` : 'Đang mở'}
-                {featuredEta ? ` · ${featuredEta}` : ''}
-              </span>
-            ) : null}
-          </div>
-        </section>
-        )}
-
         <div className="food-nearby-head">
           <div>
-            <h2>Chọn bếp, chọn món</h2>
+            <h2>Chọn quán, chọn món</h2>
             <p className="food-nearby-head__note">
               {loading ? <Sk w={150} h={10} /> : kitchens.length > 0
                 ? `${kitchens.length} bếp trong danh sách này`
@@ -236,6 +171,7 @@ export function FoodMarketplaceView({
           <div className="food-catalog__state food-catalog__state--error" role="alert">
             <strong>Không tải được danh sách món</strong>
             <p>{error}</p>
+            <button type="button" className="btn btn-secondary" onClick={onRetry}>Tải lại danh sách món</button>
           </div>
         ) : posts.length === 0 ? (
           <div className="food-catalog__state" role="status">
@@ -315,6 +251,7 @@ export function FoodMarketplaceView({
       <button
         type="button"
         className="food-cart-fab"
+        data-glass-exclude
         onClick={() => onCartOpenChange(true)}
         aria-label={`Mở giỏ hàng, ${cartItemCount} món, ${formatPrice(cartTotal)}`}
         aria-haspopup="dialog"

@@ -292,7 +292,7 @@ export function MarketplacePage({
   locating = false,
   onCartOpenChange,
 }: Props) {
-  const { profile } = useAuth()
+  const { profile, needsProfileSetup } = useAuth()
   const withdrawalSubmitting = useRef(false)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -786,7 +786,7 @@ export function MarketplacePage({
         )
         urls = uploaded.map((u) => u.url).filter(Boolean)
         if (urls.length === 0) {
-          setActionError('Upload ảnh thất bại. Thử lại.')
+          setActionError('Chưa tải ảnh lên được. Hãy thử lại.')
           return
         }
       }
@@ -938,6 +938,7 @@ export function MarketplacePage({
   }
 
   const startWalletTopUp = async (amount: number, method: DepositMethod) => {
+    if (needsProfileSetup) return { ok: false as const, message: 'Lưu Thông tin cơ bản trong Hồ sơ trước khi nạp tiền. Dùng nút Bổ sung thông tin tài khoản ở đầu trang.' }
     setWalletBusy(method)
     try {
       let url: string | null | undefined
@@ -1315,7 +1316,7 @@ export function MarketplacePage({
 
   const locationPrimary = userLocation
     ? 'Vị trí hiện tại của bạn'
-    : 'Chưa chọn điểm giao'
+    : 'Chưa có vị trí của bạn'
   const locationSecondary = userLocation
     ? 'Đang xếp bếp theo khoảng cách gần nhất'
     : locating
@@ -1642,6 +1643,7 @@ export function MarketplacePage({
       {tab === 'food' ? (
         <>
         <FoodMarketplaceView
+          onRetry={() => void reloadMain()}
           posts={listForTab}
           sellerGroups={foodSellerGroups}
           kitchens={foodKitchens}

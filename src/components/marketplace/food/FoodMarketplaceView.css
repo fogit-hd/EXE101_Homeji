@@ -43,8 +43,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 26px 28px 26px 32px;
+  gap: 16px;
+  padding: 20px;
   overflow: auto;
 }
 
@@ -323,14 +323,17 @@
 /* ── Food cards ── */
 .food-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 12px;
 }
 
 .food-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 240px;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+  padding: 10px;
+  gap: 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -345,7 +348,8 @@
   position: relative;
   display: block;
   width: 100%;
-  height: 128px;
+  height: 84px;
+  border-radius: 8px;
   padding: 0;
   border: 0;
   cursor: pointer;
@@ -375,9 +379,10 @@
 .food-card__body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   flex: 1;
-  padding: 15px 16px 14px;
+  min-width: 0;
+  padding: 0;
 }
 
 .food-card__seller {
@@ -405,9 +410,10 @@
 .food-card__title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 21px;
-  font-weight: 400;
-  line-height: 1.15;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
   color: var(--food-ink);
 }
 
@@ -442,6 +448,7 @@
 
 .food-card__purchase {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -484,8 +491,8 @@
 .food-qty__btn {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: 999px;
   background: var(--food-mint);
@@ -517,7 +524,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
+  min-height: 36px;
   padding: 0 10px;
   border: 0;
   border-radius: 10px;
@@ -1170,7 +1177,6 @@
 
 /* ── Responsive ── */
 @media (max-width: 1200px) {
-  .food-card-grid,
   .food-skeleton-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

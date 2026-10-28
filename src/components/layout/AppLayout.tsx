@@ -1,4 +1,5 @@
 import { SellerOrderAlertsProvider } from '../marketplace/SellerOrderAlerts'
+import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { Suspense, useLayoutEffect } from 'react'
 import { useAnimate } from 'motion/react'
 import { transitions } from '../../lib/motionTokens'
@@ -16,7 +17,8 @@ import './AppLayout.css'
 export function AppLayout() {
   const location = useLocation()
   const navType = useNavigationType()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, needsProfileSetup } = useAuth()
+  const isProfile = location.pathname === '/profile' || new URLSearchParams(location.search).get('section') === 'profile'
   const isAuthCinema =
     location.pathname === '/login' || location.pathname === '/register'
   const isGuestLanding = location.pathname === '/' && !isAuthenticated
@@ -65,6 +67,7 @@ export function AppLayout() {
     >
       {isAuthedApp ? <AppShell /> : <Navbar />}
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
+        {isAuthenticated && needsProfileSetup && !isProfile && !isAuthCinema ? <ProfileSetupNotice /> : null}
         <div
           ref={outletRef}
           /* Keep HomePage mounted across hub / map / feature switches on `/`. */

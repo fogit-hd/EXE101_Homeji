@@ -38,7 +38,7 @@ test('seller menus contain separate dishes and retain each dish purchase and map
     assert.match(menus[0].querySelector('header').textContent, /2 món/)
     assert.equal(menus[0].querySelectorAll('.food-card__seller')[0].textContent, 'Còn 5 phần')
     const [rice, bread, sold] = document.querySelectorAll('.food-card')
-    assert.equal(rice.querySelector('.food-card__cart-btn').textContent, 'Trong giỏ')
+    assert.equal(rice.querySelector('.food-card__cart-btn').textContent, 'Bỏ khỏi giỏ')
     assert.equal(sold.querySelector('.food-card__cart-btn').disabled, true)
     await act(() => bread.querySelector('.food-card__cart-btn').click())
     await act(() => bread.querySelector('.food-card__media').click())

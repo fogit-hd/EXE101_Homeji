@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { profileReturnTo, profileSetupUrl } from '../lib/profileSetup'
 import {
   getMyLandlordVerification,
   submitLandlordVerification,
@@ -44,6 +45,7 @@ import {
 } from '../lib/userInputValidation'
 import './MarketplacePage.css'
 import './ProfilePage.css'
+import '../components/auth/ProfileSetupNotice.css'
 
 type ProfileTab = 'basic' | 'lifestyle' | 'verify'
 
@@ -58,8 +60,9 @@ function initialsFromName(name: string) {
 }
 
 export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embedded?: boolean; lifestyleOnly?: boolean }) {
-  const { profile, refreshProfile, needsProfileSetup } = useAuth()
+  const { profile, refreshProfile, needsProfileSetup, profileError } = useAuth()
   const [searchParams] = useSearchParams()
+  const returnTo = profileReturnTo(searchParams.get('returnTo'))
   const [tab, setTab] = useState<ProfileTab>(() => lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
@@ -76,6 +79,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
   const [preferredArea, setPreferredArea] = useState('')
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'error' | 'info' } | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [savingLifestyle, setSavingLifestyle] = useState(false)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [verification, setVerification] = useState<LandlordVerification | null>(null)
@@ -192,6 +196,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       return
     }
     setSavingProfile(true)
+    setSaveError('')
     try {
       await updateMyProfile({
         displayName: nextName,
@@ -205,7 +210,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       await refreshProfile()
       showToast('Đã lưu thông tin hồ sơ.', 'success')
     } catch (err) {
-      showToast(getErrorMessage(err, 'Cập nhật thất bại'), 'error')
+      setSaveError(getErrorMessage(err, 'Chưa lưu được thông tin. Hãy thử lại.'))
     } finally {
       setSavingProfile(false)
     }
@@ -213,6 +218,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
 
   const handleLifestyleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (needsProfileSetup) { setTab('basic'); showToast('Hãy lưu Thông tin cơ bản trước khi thêm lối sống.', 'info'); return }
     if (savingLifestyle) return
     const budget = maxBudget.trim() ? Number(maxBudget) : undefined
     if (budget !== undefined && (!Number.isFinite(budget) || budget <= 0)) {
@@ -220,6 +226,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       return
     }
     setSavingLifestyle(true)
+    setSaveError('')
     try {
       await updateMyLifestyle({
         role,
@@ -232,7 +239,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       await refreshProfile()
       showToast('Đã lưu lối sống & vai trò.', 'success')
     } catch (err) {
-      showToast(getErrorMessage(err, 'Cập nhật thất bại'), 'error')
+      setSaveError(getErrorMessage(err, 'Chưa lưu được lối sống. Hãy thử lại.'))
     } finally {
       setSavingLifestyle(false)
     }
@@ -261,6 +268,8 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       setVerifyBusy(false)
     }
   }
+
+  if (profileLoading && profileError) return <section className="profile-setup-notice" role="alert"><p>{profileError}</p><button className="btn btn-primary" type="button" onClick={() => void refreshProfile()}>Tải lại hồ sơ</button></section>
 
   if (profileLoading) {
     return (
@@ -317,7 +326,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
             {profile?.isPremium ? (
               <span className="profile-badge is-premium">{profile.subscriptionBadge || 'Premium'}</span>
             ) : (
-              <span className="profile-badge">Basic</span>
+              <span className="profile-badge">Miễn phí</span>
             )}
             {role === UserRole.Landlord || profile?.role === UserRole.Landlord ? (
               <span
@@ -335,7 +344,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
               </span>
             ) : null}
             {!profile?.onboardingCompleted ? (
-              <span className="profile-badge is-warn">Chưa hoàn tất onboarding</span>
+              <button type="button" className="profile-badge is-warn" onClick={() => setTab(needsProfileSetup ? 'basic' : 'lifestyle')}>{needsProfileSetup ? 'Bổ sung thông tin tài khoản' : 'Thêm thông tin ở ghép (tùy chọn)'}</button>
             ) : null}
           </div>
           <p className="profile-hero__hint">
@@ -376,7 +385,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
           className={`tab ${tab === 'basic' ? 'active' : ''}`}
           onClick={() => setTab('basic')}
         >
-          Cơ bản
+          Thông tin cơ bản
         </button>
         <button
           type="button"
@@ -385,7 +394,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
           className={`tab ${tab === 'lifestyle' ? 'active' : ''}`}
           onClick={() => setTab('lifestyle')}
         >
-          Lối sống
+          Lối sống & vai trò
         </button>
         {showVerifyTab ? (
           <button
@@ -402,6 +411,16 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
 
       </> : null}
 
+      {needsProfileSetup ? <aside className="profile-setup-notice" role="status" data-glass-exclude>
+        <div><strong>Bước tiếp theo: lưu thông tin tài khoản</strong><p>Nhập tên ở mục Thông tin cơ bản rồi chọn Lưu thông tin. Sau đó bạn có thể nạp tiền và thanh toán; không cần điền lối sống.</p></div>
+        {tab !== 'basic' ? lifestyleOnly
+          ? <Link className="btn btn-primary" to={profileSetupUrl('/?section=invitations')}>Mở Thông tin cơ bản</Link>
+          : <button className="btn btn-primary" type="button" onClick={() => setTab('basic')}>Mở Thông tin cơ bản</button> : null}
+      </aside> : returnTo ? <aside className="profile-setup-notice" role="status" data-glass-exclude>
+        <p>Thông tin tài khoản đã được lưu. Bạn có thể quay lại và tiếp tục thao tác.</p><Link className="btn btn-primary" to={returnTo}>Quay lại thao tác trước</Link>
+      </aside> : null}
+
+      {saveError ? <p className="profile-setup-notice" role="alert">{saveError}</p> : null}
       {tab === 'basic' ? (
         <form className="profile-section map-motion-fade-up" onSubmit={(e) => void handleProfileSave(e)}>
           <header className="profile-section__head">
@@ -633,7 +652,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
           </div>
 
           <div className="profile-section__actions">
-            <button type="submit" className="btn btn-primary" disabled={savingLifestyle}>
+            <button type="submit" className="btn btn-primary" disabled={savingLifestyle || needsProfileSetup}>
               {savingLifestyle ? 'Đang lưu…' : 'Lưu lối sống'}
             </button>
           </div>

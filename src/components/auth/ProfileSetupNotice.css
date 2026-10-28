@@ -1,0 +1,5 @@
+.profile-setup-notice { display:flex; align-items:center; gap:16px; padding:16px; margin:12px auto; max-width:1100px; box-sizing:border-box; border:1px solid #8fb9ae; border-radius:12px; background:#edf7f3; color:#173c37; }
+.profile-setup-notice p { margin:6px 0 0; line-height:1.55; }
+.profile-setup-notice .btn { flex-shrink:0; white-space:normal; text-align:center; }
+.profile-setup-notice a:focus-visible { outline:3px solid #278c7e; outline-offset:3px; }
+@media (max-width:640px) { .profile-setup-notice { flex-direction:column; align-items:stretch; margin:12px; } }

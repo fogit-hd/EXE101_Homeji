@@ -22,7 +22,7 @@ export function FoodCard({
   const thumb = post.mediaUrls?.find((url) => url && !url.endsWith('/vite.svg')) || null
 
   return (
-    <article className={`food-card${inCart ? ' is-in-cart' : ''}`}>
+    <article data-glass-exclude className={`food-card${inCart ? ' is-in-cart' : ''}`}>
       <button
         type="button"
         className="food-card__media"
@@ -46,11 +46,12 @@ export function FoodCard({
           <button
             type="button"
             className={`food-card__cart-btn${inCart ? ' is-added' : ''}`}
+            aria-label={`${inCart ? 'Bỏ khỏi giỏ' : 'Thêm vào giỏ'}: ${post.title}`}
             aria-pressed={inCart}
             disabled={!inCart && post.availableQuantity <= 0}
             onClick={onAddToCart}
           >
-            {inCart ? 'Trong giỏ' : post.availableQuantity <= 0 ? 'Hết phần' : 'Thêm'}
+            {inCart ? 'Bỏ khỏi giỏ' : post.availableQuantity <= 0 ? 'Hết phần' : 'Thêm'}
           </button>
         </div>
       </div>

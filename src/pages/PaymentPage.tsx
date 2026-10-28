@@ -45,7 +45,7 @@ import './PaymentPage.css'
 type PayTab = 'plans' | 'history'
 
 export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
-  const { refreshProfile } = useAuth()
+  const { refreshProfile, needsProfileSetup } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab: PayTab = searchParams.get('tab') === 'history' ? 'history' : 'plans'
@@ -192,7 +192,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const startCheckout = async (packageCode: string, method: 'momo' | 'payos') => {
-    if (busyCode) return
+    if (busyCode || needsProfileSetup) return
     trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     setBusyCode(packageCode)
     setBusyMethod(method)
@@ -211,7 +211,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const checkoutWithWallet = async (plan: SubscriptionPackage) => {
-    if (checkoutGuard.current) return
+    if (checkoutGuard.current || needsProfileSetup) return
     trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     checkoutGuard.current = true
     setBusyCode(plan.code)
@@ -358,7 +358,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               const isCurrent = isPremium
                 ? !!(current.premium && current.code === plan.code.trim().toUpperCase())
                 : current.premium === false
-              const busy = busyCode !== null
+              const busy = busyCode !== null || needsProfileSetup
               const pickingPay = payPickerCode === plan.code
 
 

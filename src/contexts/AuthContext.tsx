@@ -23,7 +23,7 @@ import {
 import { AUTH_REFRESHED_EVENT, ensureFreshSession } from '../api/sessionRefresh'
 import { SERVICE_RETRY_MS } from "../components/HomejiLoader.logic"
 
-import { isServiceDisruption } from '../lib/errors'
+import { getErrorMessage, isProfileRequiredError, isServiceDisruption } from '../lib/errors'
 import { useOnReconnect } from "./NetworkStatusContext.logic"
 
 import { resetAnalyticsSearchMode, trackFunnelEvent } from '../lib/ga4'
@@ -34,6 +34,7 @@ type AuthContextValue = {
   isLoading: boolean
   profile: UserProfile | null
   needsProfileSetup: boolean
+  profileError: string
   email: string | null
   login: (email: string, password: string) => Promise<AuthSession>
   register: (email: string, password: string, displayName: string) => Promise<AuthSession>
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasToken, setHasToken] = useState(() => Boolean(getStoredSession()?.accessToken))
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
+  const [profileError, setProfileError] = useState('')
   const [email, setEmail] = useState<string | null>(() => getStoredSession()?.email ?? null)
   const [authDisrupted, setAuthDisrupted] = useState(false)
   const sessionVersion = useRef(0)
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setHasToken(false)
     setProfile(null)
     setNeedsProfileSetup(false)
+    setProfileError('')
     setEmail(null)
     setAuthDisrupted(false)
   }, [])
@@ -77,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshInFlight.current = null
       setProfile(null)
       setNeedsProfileSetup(false)
+      setProfileError('')
       setAuthDisrupted(false)
     }
     if (getStoredSession()?.userId !== session.userId) resetAnalyticsSearchMode()
@@ -90,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!session?.accessToken) {
       setProfile(null)
       setNeedsProfileSetup(false)
+      setProfileError('')
       setAuthDisrupted(false)
       return
     }
@@ -102,13 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await getMyProfile()
         if (!isCurrent()) return
         setProfile(data)
+        setProfileError('')
         setNeedsProfileSetup(false)
         setAuthDisrupted(false)
       } catch (err) {
         if (!isCurrent()) return
         // User mới đăng ký chưa có row profile trong DB — vẫn giữ session
-        if (err instanceof ApiRequestError && err.status === 404) {
+        if ((err instanceof ApiRequestError && err.status === 404) || isProfileRequiredError(err)) {
           setProfile(null)
+          setProfileError('')
           setNeedsProfileSetup(true)
           setAuthDisrupted(false)
           return
@@ -129,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setProfile(null)
         setNeedsProfileSetup(false)
+        setProfileError(getErrorMessage(err, 'Chưa tải được hồ sơ. Hãy thử tải lại.'))
         setAuthDisrupted(false)
       }
     })()
@@ -222,6 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading: shouldBlockProtectedRoutes(isLoading, authDisrupted),
       profile,
       needsProfileSetup,
+      profileError,
       email: email ?? profile?.displayName ?? null,
       login,
       register,
@@ -235,6 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authDisrupted,
       profile,
       needsProfileSetup,
+      profileError,
       email,
       login,
       register,

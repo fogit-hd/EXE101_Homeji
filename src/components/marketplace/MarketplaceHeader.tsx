@@ -8,11 +8,11 @@ import './MarketplaceHeader.css'
 const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
   food: {
     eyebrow: 'Bữa ăn quanh nhà',
-    title: 'Bữa ngon, tử tế từ căn bếp quanh nhà.',
+    title: 'Quán ăn & món đang bán',
   },
   browse: {
-    eyebrow: 'Chợ đồ quanh khu phố',
-    title: 'Đồ tử tế, giá vừa túi, gần ngay bạn.',
+    eyebrow: 'Mua bán đồ dùng',
+    title: 'Chợ đồ cũ',
   },
   purchases: {
     eyebrow: 'Đơn mua',

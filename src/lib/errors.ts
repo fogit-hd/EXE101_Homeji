@@ -54,7 +54,7 @@ function isNetworkLike(err: unknown): boolean {
 export function isSystemApiError(err: unknown): boolean {
   if (!(err instanceof ApiRequestError)) return false
   const s = err.status
-  return s === 0 || s === 408 || s === 429 || s >= 500
+  return s === 0 || s === 408 || s >= 500
 }
 
 /**
@@ -66,7 +66,16 @@ export function isServiceDisruption(err: unknown): boolean {
 }
 
 export const PROFILE_INCOMPLETE_MESSAGE =
-  'Vui lòng hoàn thiện hồ sơ trước khi dùng tính năng này.'
+  'Bạn chưa lưu thông tin tài khoản. Mở Hồ sơ → Thông tin cơ bản, nhập tên và chọn Lưu thông tin để tiếp tục.'
+
+export function isProfileRequiredError(err: unknown): boolean {
+  if (!(err instanceof ApiRequestError) || err.status !== 403) return false
+  if (err.body.code === 'profile_required') return true
+  const detail = (err.body.detail ?? '').trim().toLowerCase()
+  return detail === 'vui lòng hoàn thiện hồ sơ trước khi dùng tính năng này.'
+    || detail === 'vui lòng hoàn thiện hồ sơ trước khi cập nhật lối sống.'
+    || detail === 'complete your profile before using this feature.'
+}
 
 export const REVIEW_REQUIRES_VIEWING_MESSAGE =
   'Bạn cần hoàn tất lịch xem phòng trước khi đánh giá tin này.'
@@ -90,11 +99,7 @@ export function getErrorMessage(err?: unknown, fallback?: string): string {
     if (err.status === 403) {
       const detail = (err.body.detail || err.message || '').toLowerCase()
       // Match real profile gate only — not other "Complete …" 403s (e.g. viewing appointment).
-      if (
-        detail.includes('complete your profile') ||
-        detail.includes('hồ sơ') ||
-        (detail.includes('profile') && detail.includes('before using'))
-      ) {
+      if (isProfileRequiredError(err)) {
         return PROFILE_INCOMPLETE_MESSAGE
       }
       if (
@@ -109,9 +114,11 @@ export function getErrorMessage(err?: unknown, fallback?: string): string {
       ) {
         return REVIEW_OWN_POST_MESSAGE
       }
-      return err.body.detail || 'Bạn không có quyền thực hiện thao tác này.'
+      return err.body.detail && !isTechnicalMessage(err.body.detail)
+        ? localizeApiMessage(err.body.detail) : 'Bạn không có quyền thực hiện thao tác này.'
     }
     if (isSystemApiError(err)) {
+      if (err.status === 500) return SYSTEM_ERROR_MESSAGE
       const detail = err.body.detail
       if (detail && !isTechnicalMessage(detail)) return localizeApiMessage(detail)
       return SYSTEM_ERROR_MESSAGE
@@ -121,7 +128,11 @@ export function getErrorMessage(err?: unknown, fallback?: string): string {
     if (err.body.detail && !isTechnicalMessage(err.body.detail)) {
       return localizeApiMessage(err.body.detail)
     }
-    return SYSTEM_ERROR_MESSAGE
+    if (err.status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+    if (err.status === 404) return fallback || 'Nội dung này không còn hoặc bạn không có quyền xem. Hãy quay lại danh sách và chọn lại.'
+    if (err.status === 409) return fallback || 'Dữ liệu vừa thay đổi. Hãy tải lại và kiểm tra trước khi thử lại.'
+    if (err.status === 400 || err.status === 422) return fallback || 'Thông tin chưa hợp lệ. Hãy kiểm tra các mục đã nhập rồi thử lại.'
+    return fallback || SYSTEM_ERROR_MESSAGE
   }
   if (err instanceof Error && err.message && !isTechnicalMessage(err.message)) {
     return err.message
@@ -162,6 +173,7 @@ function isTechnicalMessage(message: string): boolean {
     m.includes('useauth') ||
     m.includes('typeerror') ||
     m.includes('referenceerror') ||
-    /\b(404|500|502|503|504)\b/.test(m)
+    /\b(?:http|status|error)\s*[:(]?\s*(404|500|502|503|504)\b/.test(m) ||
+    /\b\w*exception\b/i.test(m)
   )
 }
