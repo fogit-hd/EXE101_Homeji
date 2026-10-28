@@ -2,15 +2,20 @@
 export class SellerOrderSound {
   private context: AudioContext | null = null
   private enabled = false
+  private revision = 0
 
   async arm() {
     if (!window.AudioContext) return false
+    const revision = this.revision
     try {
       this.context ??= new AudioContext()
-      await this.context.resume()
-      this.enabled = this.context.state === 'running'
+      const context = this.context
+      await context.resume()
+      // A delayed browser permission must never undo mute or revive a disposed player.
+      if (revision !== this.revision || context !== this.context) return false
+      this.enabled = context.state === 'running'
       return this.enabled
-    } catch { this.enabled = false; return false }
+    } catch { if (revision === this.revision) this.enabled = false; return false }
   }
 
   get ready() { return this.enabled && this.context?.state === 'running' }
@@ -39,6 +44,6 @@ export class SellerOrderSound {
     } catch { this.enabled = false; return false }
   }
 
-  mute() { this.enabled = false }
-  dispose() { this.enabled = false; void this.context?.close().catch(() => {}); this.context = null }
+  mute() { this.revision++; this.enabled = false }
+  dispose() { this.mute(); void this.context?.close().catch(() => {}); this.context = null }
 }

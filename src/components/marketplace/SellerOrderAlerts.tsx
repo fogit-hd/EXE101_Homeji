@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { Link, useLocation } from 'react-router-dom'
@@ -45,7 +45,10 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [open, setOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
-  const [soundState, setSoundState] = useState<'off' | 'ready' | 'blocked'>(() => readStored(`homeji:seller-sound:${ownerId}`, false) ? 'blocked' : 'off')
+  const [soundState, setSoundState] = useState<'off' | 'ready' | 'blocked'>(() => readStored<unknown>(`homeji:seller-sound:${ownerId}`, true) !== false ? 'blocked' : 'off')
+  const soundWanted = useRef(soundState !== 'off')
+  const soundAttempt = useRef(0)
+  const [filter, setFilter] = useState<'all' | 'new' | 'handoff'>('all')
   const [acknowledged, setAcknowledged] = useState<Record<string, string>>(() => {
     const value = readStored<unknown>(`homeji:seller-ack:${ownerId}`, {})
     return value && typeof value === 'object' && !Array.isArray(value)
@@ -135,7 +138,12 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
   }, [open])
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.key === `homeji:seller-sound:${ownerId}` && event.newValue === 'false') { sound.mute(); setSoundState('off') }
+      if (event.key === `homeji:seller-sound:${ownerId}`) {
+        soundAttempt.current++
+        soundWanted.current = event.newValue !== 'false'
+        if (!soundWanted.current) sound.mute()
+        setSoundState(soundWanted.current ? (sound.ready ? 'ready' : 'blocked') : 'off')
+      }
       if (event.key === `homeji:seller-ack:${ownerId}`) {
         try {
           const value: unknown = JSON.parse(event.newValue || '{}')
@@ -184,14 +192,42 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
     // Fingerprint is the canonical set of outstanding order versions.
   }, [fingerprint, now, soundState, desktop, error, ownerId, sound, token, visible, outstanding.length])
 
-  const armSound = async () => {
-    const armed = await sound.arm()
-    if (getStoredSession()?.accessToken !== token) return
-    setSoundState(armed ? 'ready' : 'blocked')
+  const armSound = useCallback(async (preview = false) => {
+    const attempt = ++soundAttempt.current
+    soundWanted.current = true
     writeStored(`homeji:seller-sound:${ownerId}`, true)
-    if (armed) { sound.play(); lastChime.current = Date.now() }
-  }
+    const armed = await sound.arm()
+    if (getStoredSession()?.accessToken !== token || !soundWanted.current || attempt !== soundAttempt.current) return
+    setSoundState(armed ? 'ready' : 'blocked')
+    if (armed && preview) { sound.play(); lastChime.current = Date.now() }
+  }, [ownerId, sound, token])
+  useEffect(() => {
+    if (!visible || soundState === 'off') return
+    let active = true
+    const activate = () => {
+      if (!active || !soundWanted.current || (sound.ready && soundState === 'ready') || getStoredSession()?.accessToken !== token) return
+      void armSound()
+    }
+    const gesture = (event: Event) => { if (event.isTrusted) activate() }
+    // Try immediately when allowed, otherwise the next real click/key unlocks audio.
+    // Arming is silent: only actionable orders or the explicit test button make sound.
+    activate()
+    document.addEventListener('click', gesture, true)
+    document.addEventListener('keydown', gesture, true)
+    const resume = () => { if (document.visibilityState === 'visible') activate() }
+    document.addEventListener('visibilitychange', resume)
+    window.addEventListener('focus', activate)
+    return () => {
+      active = false
+      document.removeEventListener('click', gesture, true)
+      document.removeEventListener('keydown', gesture, true)
+      document.removeEventListener('visibilitychange', resume)
+      window.removeEventListener('focus', activate)
+    }
+  }, [visible, soundState, armSound, sound, token])
   const muteSound = () => {
+    soundAttempt.current++
+    soundWanted.current = false
     sound.mute(); setSoundState('off'); writeStored(`homeji:seller-sound:${ownerId}`, false)
   }
   const acknowledge = (key: string, version: string) => {
@@ -205,6 +241,10 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
 
   const status = alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'
   const detail = error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có đơn mới chờ xác nhận' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và pass đồ'
+  const requested = alerts.filter(alert => alert.status === MarketplaceOrderStatus.Requested).length
+  const handoff = alerts.length - requested
+  const filteredAlerts = alerts.filter(alert => filter === 'all' || (filter === 'new' ? alert.status === MarketplaceOrderStatus.Requested : alert.status === MarketplaceOrderStatus.Accepted))
+  const audioSupported = typeof window.AudioContext !== 'undefined'
   return <>
     <span className="seller-watch__live" role="status" aria-live="polite" aria-atomic="true">{status}. {detail}</span>
     {host ? createPortal(<button type="button" className={`hj-action seller-watch__trigger${alerts.length ? ' has-orders' : ''}`}
@@ -215,44 +255,30 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
       {alerts.length > 0 ? <span className="seller-watch__count" aria-hidden="true">{alerts.length > 99 ? '99+' : alerts.length}</span> : null}
       {error ? <span className="seller-watch__sync-dot" aria-hidden="true" /> : null}
     </button>, host) : null}
-    <dialog ref={dialog} id={dialogId} className="seller-watch__dialog" aria-labelledby="seller-watch-title" onCancel={() => setOpen(false)}>
-      <header data-glass-exclude><div><h2 id="seller-watch-title">Đơn bán cần xử lý</h2><p>Thông báo trực tiếp cho đồ ăn và pass đồ</p></div>
-        <button type="button" className="btn btn-secondary" aria-label="Đóng theo dõi đơn bán" onClick={() => setOpen(false)}>×</button></header>
-      <div className="seller-watch__content">
-    <div className="seller-watch__summary">
-      <strong>{alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'}</strong>
-      <span>{detail}</span>
-    </div>
-        <div className="seller-watch__actions">
-          <button type="button" className="btn btn-secondary" onClick={soundState === 'ready' ? muteSound : () => void armSound()} aria-pressed={soundState === 'ready'}>
-            {soundState === 'ready' ? 'Âm đơn: Bật' : soundState === 'blocked' ? 'Chạm để bật lại âm' : 'Bật âm báo đơn'}
-          </button>
-        </div>
-        <details className="seller-watch__settings" open={alerts.length === 0 || undefined}>
-          <summary data-glass-exclude="">Âm thanh và đồng bộ</summary>
-          <p>{soundState === 'ready' ? 'Âm báo đang bật. Đơn chưa ghi nhận sẽ được nhắc lại mỗi phút.' : soundState === 'blocked' ? 'Cần chạm để cho phép âm thanh trong lần mở web này.' : 'Âm báo đang tắt. Bật để nghe khi có đơn mới hoặc đơn cần giao.'}</p>
-          <button type="button" className="btn btn-secondary" onClick={() => void armSound()}>Bật / nghe thử âm báo</button>
-          {soundState === 'ready' && <button type="button" className="btn btn-secondary" onClick={muteSound}>Tắt âm báo</button>}
-          {'Notification' in window && !desktop && <button type="button" className="btn btn-secondary" onClick={() => {
-            void Notification.requestPermission().then(permission => { setDesktop(permission === 'granted'); if (permission !== 'granted') setDesktopError('Thông báo hệ thống chưa được cho phép. Bạn vẫn nhận cảnh báo trong web.') }).catch(() => setDesktopError('Chưa bật được thông báo hệ thống.'))
-          }}>Bật thông báo hệ thống</button>}
-          {desktopError && <p role="status">{desktopError}</p>}
-          <p>Giữ Homeji mở để nhận trực tiếp. Khi đóng trình duyệt hoặc thiết bị ngủ, âm báo không được bảo đảm; đơn chưa xử lý sẽ được kiểm tra lại khi bạn mở web.</p>
-          <p>{error ? 'Chưa cập nhật được đơn. Danh sách bên dưới có thể chưa mới nhất.' : lastSync ? `Đồng bộ lúc ${lastSync.toLocaleTimeString('vi-VN')}` : 'Đang kiểm tra đơn…'}</p>
-          <button type="button" className="btn btn-secondary" onClick={() => refreshRef.current()}>Kiểm tra lại đơn</button>
-        </details>
-        {!alerts.length && <p role="status">{error ? 'Chưa xác nhận được có đơn cần xử lý hay không.' : 'Không có đơn chờ xác nhận hoặc chờ giao.'}</p>}
-        <ul className="seller-watch__orders">{alerts.map(alert => <li key={alert.key}>
-          <span className={`seller-watch__stage${alert.status === MarketplaceOrderStatus.Requested ? ' is-new' : ''}`}>{alert.status === MarketplaceOrderStatus.Requested ? 'Đơn mới · chờ xác nhận' : 'Đã nhận · chuẩn bị giao / bàn giao'}</span>
-          <h3>{alert.buyer} · {alert.quantity} món</h3>
-          <p>{alert.title}</p><strong>{formatPrice(alert.total)}</strong>
-          <p>Hẹn nhận: {Number.isFinite(Date.parse(alert.pickupAt)) ? new Date(alert.pickupAt).toLocaleString('vi-VN') : 'Kiểm tra trong đơn hàng'}</p>
-          <div className="seller-watch__item-actions">
-            <Link className="btn btn-primary" to={sellerOrderUrl(alert.orders[0].id)} onClick={() => setOpen(false)}>Mở đơn để xử lý</Link>
-            <button type="button" className="btn btn-secondary" disabled={!alertNeedsSound(alert, acknowledged)} onClick={() => acknowledge(alert.key, alert.version)}>{alertNeedsSound(alert, acknowledged) ? 'Đã ghi nhận · dừng nhắc âm' : 'Đã ghi nhận'}</button>
-          </div><small>Ghi nhận chỉ dừng nhắc âm ở bước này. Đơn vẫn ở đây đến khi bạn xử lý.</small>
-        </li>)}</ul>
+    <dialog ref={dialog} id={dialogId} className="seller-watch__dialog seller-watch__dialog--workspace" data-glass-exclude aria-labelledby="seller-watch-title" onCancel={() => setOpen(false)}>
+      <header data-glass-exclude><div><span className="seller-watch__eyebrow">KÊNH NGƯỜI BÁN</span><h2 id="seller-watch-title">Đơn bán <span aria-hidden="true">{hasLoaded ? alerts.length : '—'}</span></h2><p>Đồ ăn · Chợ đồ</p></div><button type="button" className="seller-watch__close" aria-label="Đóng theo dõi đơn bán" onClick={() => setOpen(false)}>×</button></header>
+      <div className="seller-watch__toolbar">
+        <button type="button" className={`seller-watch__sound${soundState === 'ready' ? ' is-ready' : ''}`} role="switch" aria-label="Âm báo đơn" aria-checked={soundState === 'ready'} disabled={!audioSupported} onClick={soundState === 'ready' ? muteSound : () => void armSound()}><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m11 5-6 4H2v6h3l6 4V5Z"/>{soundState === 'ready' ? <path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/> : <path d="m16 9 5 6m0-6-5 6"/>}</svg><span>{soundState === 'ready' ? 'Âm báo bật' : !audioSupported ? 'Chưa hỗ trợ âm' : soundState === 'off' ? 'Âm báo tắt' : 'Chạm để bật âm'}</span><span className="seller-watch__toggle" aria-hidden="true" /></button>
+        <button type="button" className="seller-watch__refresh" onClick={() => refreshRef.current()} aria-label="Làm mới đơn bán"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
       </div>
+      {soundState === 'blocked' && audioSupported && <p className="seller-watch__audio-hint" role="status">Âm báo sẽ tự bật khi bạn tương tác với trang.</p>}
+      <div className="seller-watch__filters" role="group" aria-label="Lọc đơn cần xử lý">{([
+        ['all', 'Tất cả', alerts.length], ['new', 'Chờ xác nhận', requested], ['handoff', 'Chờ giao', handoff],
+      ] as const).map(([value, label, count]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}<span>{hasLoaded ? count : '—'}</span></button>)}</div>
+      <div className="seller-watch__content">
+        {error && <div className="seller-watch__error" role="alert"><strong>Chưa cập nhật được đơn</strong><p>{hasLoaded ? 'Đang hiển thị danh sách lần gần nhất. Homeji sẽ thử lại.' : 'Kiểm tra kết nối và thử tải lại.'}</p><button type="button" onClick={() => refreshRef.current()}>Thử lại</button></div>}
+        {!filteredAlerts.length && <div className="seller-watch__empty" role="status"><span className="seller-watch__empty-icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 14h24l3 26H9l3-26Zm5 1v-3a7 7 0 0 1 14 0v3m-15 11 5 5 10-10"/></svg></span><h3>{error && !hasLoaded ? 'Chưa tải được đơn bán' : !hasLoaded ? 'Đang kiểm tra đơn bán…' : filter === 'new' ? 'Không có đơn chờ xác nhận' : filter === 'handoff' ? 'Không có đơn chờ giao' : 'Chưa có đơn cần xử lý'}</h3><p>{error && !hasLoaded ? 'Bạn có thể thử tải lại ở phía trên.' : 'Đơn mới và đơn chờ giao sẽ xuất hiện ở đây.'}</p><Link to={sellerOrderUrl()} onClick={() => setOpen(false)}>Xem tất cả đơn bán <span aria-hidden="true">→</span></Link></div>}
+        {filteredAlerts.length > 0 && <ul className="seller-watch__orders">{filteredAlerts.map(alert => <li key={alert.key}>
+          <div className="seller-watch__order-heading"><span className={`seller-watch__stage${alert.status === MarketplaceOrderStatus.Requested ? ' is-new' : ''}`}>{alert.status === MarketplaceOrderStatus.Requested ? 'Chờ xác nhận' : 'Chờ giao'}</span><strong>{formatPrice(alert.total)}</strong></div>
+          <h3>{alert.buyer}</h3><p className="seller-watch__products">{alert.title}</p>
+          <p className="seller-watch__pickup">{alert.quantity} món · Hẹn nhận: {Number.isFinite(Date.parse(alert.pickupAt)) ? new Date(alert.pickupAt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Xem trong đơn'}</p>
+          <div className="seller-watch__item-actions"><Link className="seller-watch__open-order" to={sellerOrderUrl(alert.orders[0].id)} onClick={() => setOpen(false)}>Mở đơn <span aria-hidden="true">→</span></Link><button type="button" disabled={!alertNeedsSound(alert, acknowledged)} onClick={() => acknowledge(alert.key, alert.version)}>{alertNeedsSound(alert, acknowledged) ? 'Dừng nhắc âm' : 'Đã dừng nhắc'}</button></div>
+        </li>)}</ul>}
+        {filteredAlerts.length > 0 && <p className="seller-watch__ack-hint">Dừng nhắc chỉ tắt âm ở bước hiện tại. Đơn vẫn cần được xác nhận hoặc bàn giao.</p>}
+      </div>
+      <footer className="seller-watch__footer"><span className={error ? 'is-stale' : ''}>{error ? 'Chưa đồng bộ' : lastSync ? `Cập nhật ${lastSync.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Đang kết nối…'}</span><details className="seller-watch__settings"><summary data-glass-exclude>Cài đặt thông báo</summary><div className="seller-watch__settings-body"><p>{soundState === 'ready' ? 'Âm báo đang bật. Đơn chưa dừng nhắc sẽ được nhắc lại mỗi phút.' : soundState === 'off' ? 'Bạn đã tắt âm báo. Bật lại bằng công tắc phía trên.' : audioSupported ? 'Trình duyệt đang chờ tương tác để cho phép âm thanh.' : 'Trình duyệt này chưa hỗ trợ âm báo. Bạn vẫn xem được đơn trong web.'}</p><button type="button" disabled={!audioSupported} onClick={() => void armSound(true)}>Nghe thử âm báo</button>{'Notification' in window && !desktop && <button type="button" onClick={() => {
+        void Notification.requestPermission().then(permission => { setDesktop(permission === 'granted'); if (permission !== 'granted') setDesktopError('Thông báo hệ thống chưa được cho phép. Bạn vẫn nhận cảnh báo trong web.') }).catch(() => setDesktopError('Chưa bật được thông báo hệ thống.'))
+      }}>Bật thông báo hệ thống</button>}{desktopError && <p role="status">{desktopError}</p>}<p>Giữ Homeji mở để nhận âm báo. Khi thiết bị ngủ hoặc đóng trình duyệt, bạn cần mở lại để kiểm tra đơn.</p></div></details></footer>
     </dialog>
   </>
 }
