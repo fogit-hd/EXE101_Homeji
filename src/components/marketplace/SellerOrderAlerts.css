@@ -27,20 +27,24 @@ html:root #root .seller-watch__dialog.seller-watch__dialog--workspace > header >
 .seller-watch__empty p { max-width:300px; margin:0; font-size:13px; line-height:1.7; color:var(--text-secondary); }
 .seller-watch__empty a { display:flex; align-items:center; gap:12px; min-height:40px; margin-top:18px; color:var(--action-on-soft); font-size:12px; font-weight:600; text-decoration:none; }
 .seller-watch__orders { display:grid; gap:12px; padding:0; margin:0; list-style:none; }
-.seller-watch__orders li { padding:18px; border:1px solid var(--border); border-radius:13px; min-width:0; }
+.seller-watch__list-hint { margin:0 0 12px; color:var(--text-secondary); font-size:12px; line-height:1.6; }
+.seller-watch__orders li { padding:0; border:1px solid var(--border); border-radius:13px; min-width:0; overflow:hidden; }
+.seller-watch__order-main { display:block; padding:18px; color:var(--text-heading); text-decoration:none; transition:background-color .15s; }
+.seller-watch__order-main:hover { background:var(--surface-muted); }
+.seller-watch__dialog .seller-watch__order-main:focus-visible { outline-offset:-3px; }
+.seller-watch__buyer { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:14px 0 6px; }
+.seller-watch__buyer svg { flex:0 0 18px; color:var(--text-secondary); }
 .seller-watch__order-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 .seller-watch__order-heading > strong { font-size:16px; }
 .seller-watch__stage { display:inline-block; padding:4px 8px; font-size:11px; line-height:1.5; font-weight:600; border-radius:6px; background:var(--surface-muted); color:var(--text-heading); }
 .seller-watch__stage.is-new { background:var(--action-soft); color:var(--action-on-soft); }
-.seller-watch__orders h3 { margin:14px 0 5px; font-size:15px; line-height:1.5; overflow-wrap:anywhere; }
+.seller-watch__orders h3 { margin:0; font-size:15px; line-height:1.5; overflow-wrap:anywhere; }
 .seller-watch__products { margin:0; font-size:13px; line-height:1.65; overflow-wrap:anywhere; color:var(--text-secondary); }
-.seller-watch__pickup { margin:10px 0 14px; font-size:11px; line-height:1.6; color:var(--text-secondary); }
-.seller-watch__item-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-.seller-watch__item-actions a,.seller-watch__item-actions button,.seller-watch__settings-body button,.seller-watch__error button { display:inline-flex; align-items:center; justify-content:center; gap:18px; min-height:38px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; color:var(--text-primary); background:var(--surface-elevated); font:500 12px/1.5 var(--font-ui); text-decoration:none; cursor:pointer; }
-.seller-watch__item-actions a.seller-watch__open-order { gap:10px; min-height:42px; padding:9px 16px; border-radius:999px; background:transparent; color:var(--text-heading); font-size:13px; font-weight:600; transition:background-color .15s,border-color .15s; }
-.seller-watch__item-actions a.seller-watch__open-order:hover { border-color:var(--action-primary); background:var(--action-soft); color:var(--action-on-soft); }
-.seller-watch__open-order svg { flex-shrink:0; opacity:.75; }
-.seller-watch__item-actions > button { min-height:42px; padding:9px 8px; border-color:transparent; background:transparent; color:var(--text-secondary); }
+.seller-watch__pickup { margin:10px 0 0; font-size:11px; line-height:1.6; color:var(--text-secondary); }
+.seller-watch__item-actions { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 14px; align-items:center; padding:4px 12px 4px 18px; border-top:1px solid var(--border); }
+.seller-watch__item-actions > span { color:var(--text-secondary); font-size:11px; line-height:1.6; }
+.seller-watch__settings-body button,.seller-watch__error button { display:inline-flex; align-items:center; justify-content:center; gap:18px; min-height:38px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; color:var(--text-primary); background:var(--surface-elevated); font:500 12px/1.5 var(--font-ui); text-decoration:none; cursor:pointer; }
+.seller-watch__item-actions > button { min-height:40px; padding:9px 4px; border:0; background:transparent; color:var(--text-secondary); font:500 12px/1.5 var(--font-ui); cursor:pointer; }
 .seller-watch__item-actions > button:not(:disabled):hover { color:var(--text-heading); text-decoration:underline; text-underline-offset:3px; }
 .seller-watch__ack-hint { margin:12px 0 0; color:var(--text-secondary); font-size:11px; line-height:1.7; }
 .seller-watch__error { padding:14px; margin-bottom:16px; border:1px solid var(--border); border-radius:10px; background:var(--surface-muted); }
@@ -75,7 +79,8 @@ html:root #root .seller-watch__dialog.seller-watch__dialog--workspace > header >
  .seller-watch__audio-hint { padding-inline:16px; }
  .seller-watch__empty { padding:20px 4px; }
  .seller-watch__empty h3 { font-size:17px; }
- .seller-watch__orders li { padding:14px; }
+ .seller-watch__order-main { padding:14px; }
+ .seller-watch__item-actions { padding-left:14px; }
  .seller-watch__footer { padding:14px 16px; }
 }
 @media(max-width:767px) {
@@ -84,4 +89,4 @@ html:root #root .seller-watch__dialog.seller-watch__dialog--workspace > header >
  .seller-watch__count { position:absolute; top:-4px; right:-5px; }
  .seller-watch__sync-dot { position:absolute; bottom:2px; right:2px; }
 }
-@media(prefers-reduced-motion:reduce) { .seller-watch__toggle::after,.seller-watch__item-actions a.seller-watch__open-order { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .seller-watch__toggle::after,.seller-watch__order-main { transition:none; } }

@@ -6,6 +6,7 @@
 - Empty, loading and failed-sync states are distinct. A read failure retains the last known queue.
 - Sound and refresh controls stay visible; notification settings start collapsed, including when there are no orders.
 - Opening an order and stopping its sound remain separate actions. Stopping sound does not accept, deliver or remove an order.
+- The order body is a native link with a chevron; the full summary opens details. Sound acknowledgement sits in a separate footer, outside the link. There is no standalone open-order button.
 
 ## Sound behavior
 
