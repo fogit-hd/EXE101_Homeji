@@ -9,6 +9,22 @@ const idle = shell.match(/const handleViewportIdle = useCallback\(\s*\(bounds: \
 const runIdle = new Function('bounds', 'destinationMode', 'isMapMode', 'viewportPaused', 'parseFiltersFromURL', 'searchParams', 'serializeFiltersToQuery', 'setSearchParams', compile(idle))
 const bounds = { minLatitude: 11, maxLatitude: 11.1, minLongitude: 107, maxLongitude: 107.1 }
 
+test('initial and programmatic camera idle never overwrite URL bounds; a gesture reports once', async () => {
+  const source = await readFile(new URL('../src/components/map/RentalMap.tsx', import.meta.url), 'utf8')
+  const body = source.match(/map.addListener\('idle', \(\) => \{([\s\S]*?)\n        \}\),/)[1]
+  const run = new Function('viewportGestureRef', 'onViewportIdleRef', 'map', compile(body))
+  const gesture = { current: false }
+  const reports = []
+  const callback = { current: area => reports.push(area) }
+  const map = { getBounds: () => ({ getNorthEast: () => ({ lat: () => 11.1, lng: () => 107.1 }), getSouthWest: () => ({ lat: () => 11, lng: () => 107 }) }) }
+  run(gesture, callback, map)
+  assert.equal(reports.length, 0)
+  gesture.current = true
+  run(gesture, callback, map)
+  run(gesture, callback, map)
+  assert.deepEqual(reports, [bounds])
+})
+
 test('amenity camera movement keeps the original search area and does not replace listing pins', () => {
   const params = new URLSearchParams('section=listings&minLatitude=10.79&maxLatitude=10.81')
   let updates = 0

@@ -242,6 +242,7 @@ function RentalMapComponent({
   const focusAppliedRef = useRef('')
   const selectAppliedRef = useRef('')
   const userGestureRef = useRef(false)
+  const viewportGestureRef = useRef(false)
   /** First overview fit only — pin-layer chips must not re-zoom the map. */
   const overviewFitDoneRef = useRef(false)
   const ignoreClickUntilRef = useRef(0)
@@ -562,9 +563,11 @@ function RentalMapComponent({
       )
 
       // Click-guard only — never fetch listing data on drag / bounds_changed.
-      // idle reports the settled viewport; the parent decides whether to query.
+      // Only intentional map gestures report search bounds; camera focus and initial fits do not.
       listeners.push(
         map.addListener('idle', () => {
+          if (!viewportGestureRef.current) return
+          viewportGestureRef.current = false
           const report = onViewportIdleRef.current
           if (!report) return
           const bounds = map.getBounds()
@@ -582,12 +585,14 @@ function RentalMapComponent({
 
       listeners.push(
         map.addListener('dragstart', () => {
+          viewportGestureRef.current = true
           userGestureRef.current = true
           ignoreClickUntilRef.current = performance.now() + DRAG_CLICK_GUARD_MS
         }),
       )
       listeners.push(
         map.addListener('dragend', () => {
+          viewportGestureRef.current = true
           userGestureRef.current = true
           ignoreClickUntilRef.current = performance.now() + DRAG_CLICK_GUARD_MS
         }),
@@ -744,6 +749,7 @@ function RentalMapComponent({
       selectAppliedRef.current = ''
       overviewFitDoneRef.current = false
       userGestureRef.current = false
+      viewportGestureRef.current = false
       baseMapModeRef.current = 'roadmap'
       if (mapDiv) {
         mapDiv.replaceChildren()
@@ -1135,6 +1141,8 @@ function RentalMapComponent({
     if (z == null) return
     const next = Math.min(21, Math.max(3, z + delta))
     // Single-step zoom is fine; pan elsewhere uses smooth camera.
+    viewportGestureRef.current = true
+    userGestureRef.current = true
     map.setZoom(next)
   }, [])
 
@@ -1280,7 +1288,15 @@ function RentalMapComponent({
 
   return (
     <div className="rental-map">
-      <div ref={hostRef} className="rental-map__host" />
+      <div ref={hostRef} className="rental-map__host"
+        onWheelCapture={() => { viewportGestureRef.current = true; userGestureRef.current = true }}
+        onDoubleClickCapture={() => { viewportGestureRef.current = true; userGestureRef.current = true }}
+        onKeyDownCapture={(event) => {
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '-', '=', 'PageUp', 'PageDown'].includes(event.key)) {
+            viewportGestureRef.current = true
+            userGestureRef.current = true
+          }
+        }} />
 
       {!mapReady ? (
         <div className="rental-map__loader" role="status" aria-live="polite">
