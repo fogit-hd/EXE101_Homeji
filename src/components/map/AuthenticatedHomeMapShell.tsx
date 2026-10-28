@@ -1020,6 +1020,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     <MapNearbyPanel key={nearbyAnchor.contextKey} anchor={nearbyAnchor}
       category={nearbyCategory} onCategoryChange={setNearbyCategory}
       onReturnToAnchor={handleReturnToAnchor} onClearAnchor={handleClearMapSelection}
+      showReturnToAnchor={Boolean(sharedLocationPin?.sourceContextKey && sharedLocationPin.sourceContextKey === nearbyAnchor.contextKey)}
       onClose={() => setNearbyDismissedKey(nearbyContextKey)} onPick={handlePickNearby} />
   ) : null
 

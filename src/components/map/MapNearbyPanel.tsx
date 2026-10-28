@@ -11,10 +11,11 @@ import './MapNearbyPanel.css'
 
 export type NearbyAnchor = { lat: number; lng: number; label: string; placeId?: string }
 
-export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryChange, onReturnToAnchor, onClearAnchor }: {
+export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryChange, onReturnToAnchor, onClearAnchor, showReturnToAnchor = false }: {
   anchor: NearbyAnchor
   onReturnToAnchor?: () => void
   onClearAnchor?: () => void
+  showReturnToAnchor?: boolean
   onClose: () => void
   onPick: (place: NearbyPlaceItem) => void
   category: NearbyPlaceCategory
@@ -46,15 +47,10 @@ export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryCh
   return (
     <aside className="map-nearby-panel" aria-labelledby="nearby-panel-title">
       <header>
-        <div><span>KHÁM PHÁ KHU VỰC</span><h2 id="nearby-panel-title">Quanh phòng có gì?</h2></div>
+        <h2 id="nearby-panel-title">Tiện ích quanh đây</h2>
         <button type="button" className="map-nearby-panel__close" onClick={onClose} aria-label="Đóng tiện ích gần đây">×</button>
       </header>
       <p className="map-nearby-panel__anchor" title={anchor.label}>Quanh <strong>{anchor.label}</strong></p>
-      {onReturnToAnchor && <div className="map-nearby-panel__return">
-        <button type="button" data-glass-exclude onClick={onReturnToAnchor}>Về vị trí đang xem</button>
-        {onClearAnchor && <button type="button" data-glass-exclude onClick={onClearAnchor}>Bỏ chọn vị trí</button>}
-        <p>Giữ nguyên các tin trong khu vực khi bạn xem tiện ích.</p>
-      </div>}
       <div className="map-nearby-panel__categories" role="group" aria-label="Loại tiện ích">
         {NEARBY_PLACE_CATEGORY_OPTIONS.map((option) => (
           <button type="button" key={option.id} aria-pressed={category === option.id}
@@ -78,7 +74,12 @@ export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryCh
                 </article>
               ))}
       </div>
-      <footer data-glass-exclude><details><summary>Nguồn & cách tính khoảng cách</summary><p>Dữ liệu Google Maps / Google Places, không cần có tin trên Homeji. Khoảng cách đường thẳng, không phải quãng đường đi bộ. Homeji chưa xác minh các địa điểm này.</p></details></footer>
+      <footer data-glass-exclude>
+        <div className="map-nearby-panel__tools">
+          {showReturnToAnchor && onReturnToAnchor && <button type="button" data-glass-exclude onClick={onReturnToAnchor} title="Quay về vị trí đã chọn trên bản đồ">↶ Về ghim gốc</button>}
+          {onClearAnchor && <button type="button" data-glass-exclude onClick={onClearAnchor}>Bỏ chọn</button>}
+        </div>
+        <details><summary>Nguồn & cách tính khoảng cách</summary><p>Dữ liệu Google Maps / Google Places, không cần có tin trên Homeji. Khoảng cách đường thẳng, không phải quãng đường đi bộ. Homeji chưa xác minh các địa điểm này.</p></details></footer>
     </aside>
   )
 }
