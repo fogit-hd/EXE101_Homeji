@@ -1,3 +1,4 @@
+import { ProfileOverview } from '../components/profile/ProfileOverview'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { profileReturnTo, profileSetupUrl } from '../lib/profileSetup'
@@ -62,9 +63,11 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
   const { profile, refreshProfile, needsProfileSetup, profileError } = useAuth()
   const [searchParams] = useSearchParams()
   const returnTo = profileReturnTo(searchParams.get('returnTo'))
+  const [editing, setEditing] = useState(() => lifestyleOnly || searchParams.has('profileTab'))
   const [tab, setTab] = useState<ProfileTab>(() => lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
   if (useChangedInputs([searchParams.get('profileTab')])) {
     setTab(lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
+    if (searchParams.has('profileTab')) setEditing(true)
   }
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
@@ -211,6 +214,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       })
       await refreshProfile()
       showToast('Đã lưu thông tin hồ sơ.', 'success')
+      if (!returnTo) setEditing(false)
     } catch (err) {
       setSaveError(getErrorMessage(err, 'Chưa lưu được thông tin. Hãy thử lại.'))
     } finally {
@@ -240,6 +244,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       })
       await refreshProfile()
       showToast('Đã lưu lối sống & vai trò.', 'success')
+      if (!lifestyleOnly) setEditing(false)
     } catch (err) {
       setSaveError(getErrorMessage(err, 'Chưa lưu được lối sống. Hãy thử lại.'))
     } finally {
@@ -283,107 +288,25 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
 
 
   return (
-    <div data-glass-exclude className={`${embedded ? 'map-embed profile-embed' : 'container page profile-page'}${lifestyleOnly ? '' : ' profile-workspace'}`}>
-      {!lifestyleOnly ? <aside className="profile-workspace__sidebar">
-      <header className="profile-page-header">
-        <span className="profile-page-eyebrow">Tài khoản cá nhân</span>
-        <h1 className="profile-page-title">
-          Tài khoản của bạn
-        </h1>
-        <p className="profile-page-lead">
-          Quản lý thông tin cá nhân và nhu cầu ở ghép.
-        </p>
-      </header>
-
-      <section className={`profile-hero map-motion-fade-up${profile?.isPremium ? " is-premium" : ""}`}>
-        <div className="profile-hero__avatar-wrap" aria-busy={avatarBusy}>
-          <button
-            type="button"
-            className="profile-hero__avatar map-motion-press"
-            onClick={() => avatarInputRef.current?.click()}
-            disabled={avatarBusy}
-            aria-label={avatarPath ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện lên'}
-          >
-            {avatarPath ? (
-              <img src={avatarPath} alt="" className="profile-hero__avatar-img" />
-            ) : (
-              <span>{initials}</span>
-            )}
-            <span className="profile-hero__avatar-edit">{avatarBusy ? '…' : 'Đổi'}</span>
+    <div data-glass-exclude className={`${embedded ? 'map-embed profile-embed' : 'container page profile-page'}${lifestyleOnly ? '' : ' profile-account'}`}>
+      {!lifestyleOnly && <header className="profile-account-header">
+        <div className="profile-account-header__identity">
+          <button type="button" className="profile-account-avatar" onClick={() => avatarInputRef.current?.click()} disabled={avatarBusy} aria-label="Đổi ảnh đại diện">
+            {avatarPath ? <img src={avatarPath} alt="" /> : <span>{initials}</span>}
+            <small>{avatarBusy ? 'Đang tải…' : 'Đổi ảnh'}</small>
           </button>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            hidden
-            onChange={(e) => void handleAvatarPick(e.target.files?.[0] ?? null)}
-          />
+          <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void handleAvatarPick(e.target.files?.[0] ?? null)} />
+          <div><span className="profile-account-header__eyebrow">HOMEJI · TÀI KHOẢN CỦA BẠN</span><h1>{profile?.displayName || 'Chào bạn'}</h1><p>{userRoleLabel[profile?.role ?? UserRole.Renter]} · {profile?.isPremium ? profile.subscriptionBadge || 'Premium' : 'Gói miễn phí'}</p></div>
         </div>
-
-        <div className="profile-hero__meta">
-          <h2 className="profile-hero__name">{displayName || profile?.displayName || 'Người dùng Homeji'}</h2>
-          <div className="profile-hero__badges">
-            <span className="profile-badge">{userRoleLabel[role] ?? userRoleLabel[UserRole.Renter]}</span>
-            {profile?.isPremium ? (
-              <span className="profile-badge is-premium">{profile.subscriptionBadge || 'Premium'}</span>
-            ) : (
-              <span className="profile-badge">Miễn phí</span>
-            )}
-            {role === UserRole.Landlord || profile?.role === UserRole.Landlord ? (
-              <span
-                className={`profile-badge is-verify${
-                  verifyStatus === LandlordVerificationStatus.Verified
-                    ? ' is-ok'
-                    : verifyStatus === LandlordVerificationStatus.Pending
-                      ? ' is-pending'
-                      : verifyStatus === LandlordVerificationStatus.Rejected
-                        ? ' is-bad'
-                        : ''
-                }`}
-              >
-                {landlordVerificationLabel[verifyStatus]}
-              </span>
-            ) : null}
-            {!profile?.onboardingCompleted ? (
-              <button type="button" className="profile-badge is-warn" onClick={() => setTab(needsProfileSetup ? 'basic' : 'lifestyle')}>{needsProfileSetup ? 'Bổ sung thông tin tài khoản' : 'Thêm thông tin ở ghép (tùy chọn)'}</button>
-            ) : null}
-          </div>
-          <p className="profile-hero__hint">
-            {profile?.updatedAt
-              ? `Cập nhật ${formatDate(profile.updatedAt)}`
-              : 'Hoàn thiện hồ sơ để dùng tốt hơn các tính năng Homeji'}
-          </p>
-          <div className="profile-hero__avatar-actions">
-            <button
-              type="button"
-              className="profile-avatar-upload map-motion-press"
-              onClick={() => avatarInputRef.current?.click()}
-              disabled={avatarBusy}
-            >
-              <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 3a1 1 0 0 1 1 1v7.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 14a1 1 0 0 1 1 1v3h12v-3a1 1 0 1 1 2 0v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a1 1 0 0 1 1-1Z"
-                />
-              </svg>
-              {avatarBusy ? 'Đang tải ảnh…' : avatarPath ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'}
-            </button>
-            <span className="profile-avatar-help">JPG, PNG hoặc WebP · tối đa 5 MB</span>
-          </div>
-        </div>
-      </section>
-
-      <nav className="profile-workspace__nav" aria-label="Cài đặt tài khoản">
-        <button type="button" aria-current={tab === 'basic' ? 'page' : undefined} onClick={() => setTab('basic')}><strong>Thông tin cơ bản</strong><span>Tên, liên hệ và nơi bạn ở</span></button>
-        <button type="button" aria-current={tab === 'lifestyle' ? 'page' : undefined} onClick={() => setTab('lifestyle')}><strong>Nhu cầu ở ghép</strong><span>Ngân sách, thói quen và vai trò</span></button>
-        {showVerifyTab && <button type="button" aria-current={tab === 'verify' ? 'page' : undefined} onClick={() => setTab('verify')}><strong>Xác minh chủ nhà</strong><span>Giấy tờ và trạng thái xét duyệt</span></button>}
-        <Link to="/referrals"><strong>Mời bạn & voucher</strong><span>Link mời và ưu đãi của bạn →</span></Link>
-      </nav>
-      </aside> : null}
-      <div className="profile-workspace__content">
-      {!lifestyleOnly && <header className="profile-workspace__section-heading"><span>Cài đặt tài khoản</span><h2>{tab === 'basic' ? 'Thông tin cá nhân' : tab === 'lifestyle' ? 'Nhu cầu ở ghép' : 'Xác minh chủ nhà'}</h2><p>{tab === 'basic' ? 'Lưu tên để bắt đầu dùng các tính năng tài khoản. Các thông tin khác có thể thêm sau.' : tab === 'lifestyle' ? 'Thông tin tùy chọn giúp tìm người ở ghép phù hợp. Bạn vẫn có thể thanh toán khi chưa điền phần này.' : 'Kiểm tra yêu cầu và theo dõi kết quả xác minh tại đây.'}</p></header>}
-
-
+        <Link className="profile-account-header__home" to="/">← Về trang chủ</Link>
+      </header>}
+      {!lifestyleOnly && !editing && !needsProfileSetup ? <ProfileOverview profile={profile!} verificationStatus={verifyStatus} onEdit={next => { setTab(next); setEditing(true); setSaveError('') }} /> : null}
+      <div className="profile-workspace__content" hidden={!lifestyleOnly && !editing && !needsProfileSetup}>
+      {!lifestyleOnly && <header className="profile-editor-heading">
+        {!needsProfileSetup && <button type="button" className="profile-text-action" disabled={savingProfile || savingLifestyle || verifyBusy} onClick={() => { setEditing(false); setSaveError('') }}>← Tổng quan tài khoản</button>}
+        <h2>{tab === 'basic' ? 'Thông tin cơ bản' : tab === 'lifestyle' ? 'Nhu cầu ở ghép' : 'Xác minh chủ nhà'}</h2>
+        <p>{tab === 'basic' ? 'Tên là thông tin cần lưu để bắt đầu. Bạn có thể bổ sung các mục khác sau.' : tab === 'lifestyle' ? 'Phần này tùy chọn, giúp tìm người ở ghép phù hợp với bạn.' : 'Gửi giấy tờ và theo dõi kết quả xét duyệt tại đây.'}</p>
+      </header>}
       {needsProfileSetup ? <aside className="profile-setup-notice" role="status" data-glass-exclude>
         <div><strong>Bước tiếp theo: lưu thông tin tài khoản</strong><p>Nhập tên ở mục Thông tin cơ bản rồi chọn Lưu thông tin. Sau đó bạn có thể nạp tiền và thanh toán; không cần điền lối sống.</p></div>
         {tab !== 'basic' ? lifestyleOnly
