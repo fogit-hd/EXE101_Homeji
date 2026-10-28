@@ -45,6 +45,13 @@ html:root #root .seller-watch__dialog.seller-watch__dialog--workspace > header >
 .seller-watch__open { display:inline-flex; gap:8px; align-items:center; min-height:28px; color:var(--action-on-soft); font-size:12px; font-weight:600; }
 .seller-watch__order-main:hover .seller-watch__open { text-decoration:underline; text-underline-offset:3px; }
 .seller-watch__item-actions { display:flex; justify-content:flex-start; padding:0 0 8px; }
+.seller-watch__decision { padding:8px 0 0; }
+.seller-watch__decision-buttons { display:flex; justify-content:flex-end; gap:10px; }
+.seller-watch__decision-buttons button { flex:1; min-height:44px; padding:10px 16px; border:1px solid var(--border); border-radius:6px; background:var(--surface-elevated); color:var(--text-heading); font:600 13px/1.5 var(--font-ui); box-shadow:none; cursor:pointer; }
+.seller-watch__decision-buttons .seller-watch__accept { background:var(--action-primary); border-color:var(--action-primary); color:var(--action-on-primary); }
+.seller-watch__decision-buttons .seller-watch__reject { border-color:var(--text-secondary); }
+.seller-watch__decision p,.seller-watch__decision-result { margin:0 0 10px; color:var(--text-secondary); font-size:13px; line-height:1.6; }
+.seller-watch__decision [role=alert] { padding:10px 0 0; color:var(--text-heading); }
 .seller-watch__settings-body button,.seller-watch__error button { display:inline-flex; align-items:center; justify-content:center; min-height:40px; padding:8px 12px; border:1px solid var(--border); border-radius:6px; color:var(--text-primary); background:var(--surface-elevated); font:500 12px/1.5 var(--font-ui); cursor:pointer; }
 .seller-watch__item-actions > button { min-height:40px; padding:8px 0; border:0; background:transparent; color:var(--text-secondary); font:400 12px/1.5 var(--font-ui); cursor:pointer; }
 .seller-watch__item-actions > button:not(:disabled):hover { color:var(--text-heading); text-decoration:underline; text-underline-offset:3px; }

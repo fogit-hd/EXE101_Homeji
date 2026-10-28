@@ -8,6 +8,7 @@ import { formatPrice } from '../../lib/labels'
 import { alertNeedsSound, NOTIFICATION_CONNECTED, NOTIFICATION_RECEIVED, SELLER_ALERT_POLL_MS, SELLER_ORDERS_CHANGED,
   SELLER_ORDERS_SNAPSHOT, SELLER_REMINDER_MS, sellerOrderAlerts, sellerOrderUrl } from '../../lib/sellerOrderAlerts'
 import { SellerOrderSound } from '../../lib/sellerOrderSound'
+import { SellerOrderDecision } from './SellerOrderDecision'
 import './SellerOrderAlerts.css'
 
 function readStored<T>(key: string, fallback: T): T {
@@ -240,7 +241,7 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
   if (!visible) return null
 
   const status = alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'
-  const detail = error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có đơn mới chờ xác nhận' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và pass đồ'
+  const detail = error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có yêu cầu mua mới chờ phản hồi' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và pass đồ'
   const requested = alerts.filter(alert => alert.status === MarketplaceOrderStatus.Requested).length
   const handoff = alerts.length - requested
   const filteredAlerts = alerts.filter(alert => filter === 'all' || (filter === 'new' ? alert.status === MarketplaceOrderStatus.Requested : alert.status === MarketplaceOrderStatus.Accepted))
@@ -256,28 +257,29 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
       {error ? <span className="seller-watch__sync-dot" aria-hidden="true" /> : null}
     </button>, host) : null}
     <dialog ref={dialog} id={dialogId} className="seller-watch__dialog seller-watch__dialog--workspace" data-glass-exclude aria-labelledby="seller-watch-title" onCancel={() => setOpen(false)}>
-      <header data-glass-exclude><div><h2 id="seller-watch-title">Đơn bán <span aria-hidden="true">{hasLoaded ? alerts.length : '—'}</span></h2><p>Các đơn đang chờ bạn xử lý</p></div><button type="button" className="seller-watch__close" aria-label="Đóng theo dõi đơn bán" onClick={() => setOpen(false)}>×</button></header>
+      <header data-glass-exclude><div><h2 id="seller-watch-title">Đơn bán <span aria-hidden="true">{hasLoaded ? alerts.length : '—'}</span></h2><p>Bạn chọn nhận hoặc từ chối yêu cầu mua.</p></div><button type="button" className="seller-watch__close" aria-label="Đóng theo dõi đơn bán" onClick={() => setOpen(false)}>×</button></header>
       <div className="seller-watch__toolbar">
         <button type="button" className={`seller-watch__sound${soundState === 'ready' ? ' is-ready' : ''}`} role="switch" aria-label="Âm báo đơn" aria-checked={soundState === 'ready'} disabled={!audioSupported} onClick={soundState === 'ready' ? muteSound : () => void armSound()}><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m11 5-6 4H2v6h3l6 4V5Z"/>{soundState === 'ready' ? <path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/> : <path d="m16 9 5 6m0-6-5 6"/>}</svg><span>{soundState === 'ready' ? 'Âm báo bật' : !audioSupported ? 'Chưa hỗ trợ âm' : soundState === 'off' ? 'Âm báo tắt' : 'Chạm để bật âm'}</span><span className="seller-watch__toggle" aria-hidden="true" /></button>
         <button type="button" className="seller-watch__refresh" onClick={() => refreshRef.current()} aria-label="Làm mới đơn bán"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
       </div>
       {soundState === 'blocked' && audioSupported && <p className="seller-watch__audio-hint" role="status">Âm báo sẽ tự bật khi bạn tương tác với trang.</p>}
       <div className="seller-watch__filters" role="group" aria-label="Lọc đơn cần xử lý">{([
-        ['all', 'Tất cả', alerts.length], ['new', 'Chờ xác nhận', requested], ['handoff', 'Chờ giao', handoff],
+        ['all', 'Tất cả', alerts.length], ['new', 'Chờ phản hồi', requested], ['handoff', 'Đã nhận', handoff],
       ] as const).map(([value, label, count]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}<span>{hasLoaded ? count : '—'}</span></button>)}</div>
       <div className="seller-watch__content">
         {error && <div className="seller-watch__error" role="alert"><strong>Chưa cập nhật được đơn</strong><p>{hasLoaded ? 'Đang hiển thị danh sách lần gần nhất. Homeji sẽ thử lại.' : 'Kiểm tra kết nối và thử tải lại.'}</p><button type="button" onClick={() => refreshRef.current()}>Thử lại</button></div>}
-        {!filteredAlerts.length && <div className="seller-watch__empty" role="status"><span className="seller-watch__empty-icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 14h24l3 26H9l3-26Zm5 1v-3a7 7 0 0 1 14 0v3m-15 11 5 5 10-10"/></svg></span><h3>{error && !hasLoaded ? 'Chưa tải được đơn bán' : !hasLoaded ? 'Đang kiểm tra đơn bán…' : filter === 'new' ? 'Không có đơn chờ xác nhận' : filter === 'handoff' ? 'Không có đơn chờ giao' : 'Chưa có đơn cần xử lý'}</h3><p>{error && !hasLoaded ? 'Bạn có thể thử tải lại ở phía trên.' : 'Đơn mới và đơn chờ giao sẽ xuất hiện ở đây.'}</p><Link to={sellerOrderUrl()} onClick={() => setOpen(false)}>Xem tất cả đơn bán <span aria-hidden="true">→</span></Link></div>}
+        {!filteredAlerts.length && <div className="seller-watch__empty" role="status"><span className="seller-watch__empty-icon" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 14h24l3 26H9l3-26Zm5 1v-3a7 7 0 0 1 14 0v3m-15 11 5 5 10-10"/></svg></span><h3>{error && !hasLoaded ? 'Chưa tải được đơn bán' : !hasLoaded ? 'Đang kiểm tra đơn bán…' : filter === 'new' ? 'Không có yêu cầu chờ phản hồi' : filter === 'handoff' ? 'Không có đơn chờ giao' : 'Chưa có đơn cần xử lý'}</h3><p>{error && !hasLoaded ? 'Bạn có thể thử tải lại ở phía trên.' : 'Đơn mới và đơn chờ giao sẽ xuất hiện ở đây.'}</p><Link to={sellerOrderUrl()} onClick={() => setOpen(false)}>Xem tất cả đơn bán <span aria-hidden="true">→</span></Link></div>}
         {filteredAlerts.length > 0 && <ul className="seller-watch__orders">{filteredAlerts.map(alert => <li key={alert.key}>
           <Link className="seller-watch__order-main" to={sellerOrderUrl(alert.orders[0].id)} aria-label={`Xem đơn của ${alert.buyer}, ${alert.quantity} món`} onClick={() => setOpen(false)}>
-            <div className="seller-watch__order-heading"><span className={`seller-watch__stage${alert.status === MarketplaceOrderStatus.Requested ? ' is-new' : ''}`}>{alert.status === MarketplaceOrderStatus.Requested ? 'Chờ xác nhận' : 'Chờ giao'}</span><span className="seller-watch__quantity">{alert.quantity} món</span></div>
+            <div className="seller-watch__order-heading"><span className={`seller-watch__stage${alert.status === MarketplaceOrderStatus.Requested ? ' is-new' : ''}`}>{alert.status === MarketplaceOrderStatus.Requested ? 'Yêu cầu mua mới' : 'Đã nhận · Chờ giao'}</span><span className="seller-watch__quantity">{alert.quantity} món</span></div>
             <div className="seller-watch__order-summary"><h3>{alert.title}</h3><strong>{formatPrice(alert.total)}</strong></div>
             <p className="seller-watch__buyer">{alert.buyer}</p>
             <div className="seller-watch__order-bottom"><p className="seller-watch__pickup">Hẹn nhận: {Number.isFinite(Date.parse(alert.pickupAt)) ? new Date(alert.pickupAt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Xem trong đơn'}</p><span className="seller-watch__open">Xem chi tiết <span aria-hidden="true">→</span></span></div>
           </Link>
+          {alert.status === MarketplaceOrderStatus.Requested && <SellerOrderDecision key={alert.version} alert={alert} ownerId={ownerId} token={token} />}
           <div className="seller-watch__item-actions"><button type="button" disabled={!alertNeedsSound(alert, acknowledged)} onClick={() => acknowledge(alert.key, alert.version)}>{alertNeedsSound(alert, acknowledged) ? 'Dừng nhắc âm' : 'Đã dừng nhắc'}</button></div>
         </li>)}</ul>}
-        {filteredAlerts.length > 0 && <p className="seller-watch__ack-hint">Dừng nhắc chỉ tắt âm ở bước hiện tại. Đơn vẫn cần được xác nhận hoặc bàn giao.</p>}
+        {filteredAlerts.length > 0 && <p className="seller-watch__ack-hint">Dừng nhắc âm không thay đổi đơn. Với yêu cầu mới, bạn có thể nhận hoặc từ chối.</p>}
       </div>
       <footer className="seller-watch__footer"><span className={error ? 'is-stale' : ''}>{error ? 'Chưa đồng bộ' : lastSync ? `Cập nhật ${lastSync.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Đang kết nối…'}</span><details className="seller-watch__settings"><summary data-glass-exclude>Cài đặt thông báo</summary><div className="seller-watch__settings-body"><p>{soundState === 'ready' ? 'Âm báo đang bật. Đơn chưa dừng nhắc sẽ được nhắc lại mỗi phút.' : soundState === 'off' ? 'Bạn đã tắt âm báo. Bật lại bằng công tắc phía trên.' : audioSupported ? 'Trình duyệt đang chờ tương tác để cho phép âm thanh.' : 'Trình duyệt này chưa hỗ trợ âm báo. Bạn vẫn xem được đơn trong web.'}</p><button type="button" disabled={!audioSupported} onClick={() => void armSound(true)}>Nghe thử âm báo</button>{'Notification' in window && !desktop && <button type="button" onClick={() => {
         void Notification.requestPermission().then(permission => { setDesktop(permission === 'granted'); if (permission !== 'granted') setDesktopError('Thông báo hệ thống chưa được cho phép. Bạn vẫn nhận cảnh báo trong web.') }).catch(() => setDesktopError('Chưa bật được thông báo hệ thống.'))

@@ -12,7 +12,7 @@ const context=await browser.newContext({viewport:{width:1440,height:1000}})
 const seller='11111111-1111-4111-8111-111111111111',buyer='22222222-2222-4222-8222-222222222222'
 const stamp='2026-10-19T03:00:00Z'
 const order=(id,patch={})=>({id,checkoutId:'checkout-food',marketplacePostId:id,buyerId:buyer,sellerId:seller,postTitle:id==='rice'?'Cơm gà xối mỡ':'Bánh mì chả cá',quantity:1,unitPrice:40000,agreedPrice:40000,platformFeeRate:0,platformFeeAmount:0,sellerNetAmount:40000,status:1,pickupAt:'2026-10-19T15:00:00Z',pickupAddress:'Linh Trung, Thủ Đức',buyerDisplayName:'Khách Minh Anh',sellerDisplayName:'Bếp Homeji',createdAt:stamp,updatedAt:stamp,...patch})
-let orders=[order('old',{status:5})],fail=false,calls=0,mutations=[]
+let orders=[order('old',{status:5})],fail=false,rejectFails=false,calls=0,mutations=[]
 await context.addInitScript(({seller})=>{
  localStorage.setItem('homeji_access_token','seller-fixture');localStorage.setItem('homeji_user_id',seller);sessionStorage.setItem('hj-intro-seen','1')
  window.__toneStarts=0
@@ -28,8 +28,9 @@ await context.route('**/*',async route=>{
  if(u.pathname==='/api/profile/me')json={id:seller,displayName:'Người bán Homeji',role:1,onboardingCompleted:true,isPremium:false}
  else if(u.pathname==='/api/marketplace-orders'){
   calls++;if(fail)return route.fulfill({status:503,json:{detail:'Tạm mất kết nối đơn hàng'}});json=orders
- }else if(u.pathname.endsWith('/accept')||u.pathname.endsWith('/delivered')){
-  mutations.push(u.pathname);orders=orders.map(o=>({...o,status:u.pathname.endsWith('/accept')?2:7}));json=orders[0]
+ }else if(u.pathname.endsWith('/accept')||u.pathname.endsWith('/delivered')||u.pathname.endsWith('/reject')){
+  if(u.pathname.endsWith('/reject')&&rejectFails)return route.fulfill({status:503,json:{detail:'Chưa thể từ chối đơn, vui lòng thử lại.'}})
+  mutations.push(u.pathname);orders=orders.map(o=>({...o,status:u.pathname.endsWith('/accept')?2:u.pathname.endsWith('/reject')?3:7}));json=orders[0]
  }else if(u.pathname==='/api/wallet')json={userId:seller,balance:300000,isActivated:true,minimumTopUp:10000,maximumTopUp:10000000}
  else if(u.pathname==='/api/subscriptions/me')json={tier:1,isPremium:false}
  else if(u.pathname==='/api/search-interests')json={settings:{enabled:false},following:[],suggestions:[],rooms:[]}
@@ -96,7 +97,7 @@ try{
  await openQueue();await dialog.waitFor()
  assert.equal(await dialog.locator('.seller-watch__orders > li').count(),1)
  assert.match(await dialog.innerText(),/Cơm gà xối mỡ/);assert.match(await dialog.innerText(),/Bánh mì chả cá/)
- await dialog.getByRole('group',{name:'Lọc đơn cần xử lý'}).getByRole('button',{name:/Chờ giao/}).click()
+ await dialog.getByRole('group',{name:'Lọc đơn cần xử lý'}).getByRole('button',{name:/Đã nhận/}).click()
  await dialog.getByRole('heading',{name:'Không có đơn chờ giao',exact:true}).waitFor()
  assert.equal(await dialog.locator('.seller-watch__orders > li').count(),0)
  await dialog.getByRole('group',{name:'Lọc đơn cần xử lý'}).getByRole('button',{name:/Tất cả/}).click()
@@ -109,7 +110,7 @@ try{
  await dialog.getByRole('link',{name:/^Xem đơn của/}).click()
  await page.waitForURL('**market=sales&sale=rice')
  await page.locator('.is-purchase-focus').waitFor()
- await page.getByRole('button',{name:'Xác nhận nhận đơn',exact:true}).click()
+ await page.getByRole('button',{name:'Nhận đơn',exact:true}).click()
  await status('Đơn đã nhận · cần chuẩn bị giao')
  await openQueue()
  await dialog.getByRole('button',{name:'Dừng nhắc âm',exact:true}).waitFor()
@@ -149,6 +150,36 @@ try{
  await page.clock.fastForward(90001)
  await new Promise(resolve=>setTimeout(resolve,300))
  assert.equal(await tones(),acknowledgedTones,'Acknowledged work is not re-announced by polling')
+ // The queue itself exposes both choices; dismissing a rejection changes nothing.
+ await dialog.getByRole('button',{name:'Nhận đơn',exact:true}).waitFor()
+ await page.evaluate(()=>document.documentElement.dataset.theme='light')
+ for(const width of [320,390,1440]){
+  await page.setViewportSize({width,height:900})
+  assert.equal(await dialog.evaluate(e=>e.scrollWidth>e.clientWidth+1),false,'Decision buttons fit the order queue')
+  await page.screenshot({path:`${out}/pending-choices-${width}.png`})
+ }
+ await page.setViewportSize({width:390,height:900})
+ await page.screenshot({path:out+'/pending-choices-mobile.png'})
+ const beforeReject=mutations.length
+ await dialog.getByRole('button',{name:'Từ chối',exact:true}).click()
+ await dialog.getByText('Từ chối toàn bộ yêu cầu này?',{exact:false}).waitFor()
+ await dialog.getByRole('button',{name:'Quay lại',exact:true}).click()
+ assert.equal(mutations.length,beforeReject)
+ rejectFails=true
+ await dialog.getByRole('button',{name:'Từ chối',exact:true}).click()
+ await dialog.getByRole('button',{name:'Xác nhận từ chối',exact:true}).click()
+ await dialog.locator('[role=alert]').filter({hasText:'Chưa thể từ chối'}).waitFor()
+ assert.equal(await dialog.locator('.seller-watch__orders > li').count(),1,'A failed rejection must not remove the request')
+ rejectFails=false
+ await dialog.getByRole('button',{name:'Xác nhận từ chối',exact:true}).click()
+ await status('Đang theo dõi đơn bán')
+ assert.equal(mutations.at(-1),'/api/marketplace-orders/pass/reject')
+ orders=[order('queue-accept',{checkoutId:'queue-accept'})]
+ await page.clock.fastForward(30001);await status('1 đơn bán cần xử lý')
+ await dialog.getByRole('button',{name:'Nhận đơn',exact:true}).click()
+ await status('Đơn đã nhận · cần chuẩn bị giao')
+ assert.equal(mutations.at(-1),'/api/marketplace-orders/queue-accept/accept')
+ assert.equal(await dialog.getByRole('button',{name:'Từ chối',exact:true}).count(),0,'An accepted order is no longer an undecided request')
  assert.deepEqual(errors,[])
  await writeFile(out+'/result.json',JSON.stringify({passed:true,fixtureData:true,calls,errors,mutations,tones:await tones()},null,2))
  console.log('PASS seller cart grouping, chime/duplicate suppression, acknowledgement/reload, accept/handoff, failure retention, polling recovery and reminders; 320/390/1440 light/dark')

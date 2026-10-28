@@ -1074,7 +1074,7 @@ export function MarketplacePage({
       setCartNote('')
       setCartOpen(false)
       setCheckoutConfirmationOpen(false)
-      await rememberCreatedPurchase(createdOrder.id, `Đã đặt ${itemCount} món. Chờ bếp xác nhận.`)
+      await rememberCreatedPurchase(createdOrder.id, `Đã gửi yêu cầu mua ${itemCount} món. Người bán có thể nhận hoặc từ chối; bạn sẽ được hoàn tiền nếu yêu cầu bị từ chối.`)
       await reload()
     } catch (err) {
       setActionError(getErrorMessage(err, 'Thanh toán giỏ hàng thất bại'))
@@ -2230,10 +2230,10 @@ export function MarketplacePage({
                               onClick={() => void handleOrderGroupAction(
                                 group.groupKey,
                                 () => acceptMarketplaceOrder(firstOrder.id),
-                                'Đã xác nhận toàn bộ đơn hàng.',
+                                'Đã nhận toàn bộ đơn hàng.',
                               )}
                             >
-                              {busy ? 'Đang xử lý…' : 'Xác nhận nhận đơn'}
+                              {busy ? 'Đang xử lý…' : 'Nhận đơn'}
                             </button>
                           </>
                         ) : null}

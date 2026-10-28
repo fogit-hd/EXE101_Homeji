@@ -19,7 +19,8 @@ test('grouping retains distinct events with matching titles and never mutates th
   assert.deepEqual(items,before)
 })
 test('historic enum statuses use the existing Vietnamese order labels without rewriting arbitrary text', () => {
-  assert.equal(notificationDisplayMessage('Đơn hàng hiện ở trạng thái Requested.'),'Đơn hàng hiện ở trạng thái Chờ xác nhận.')
+  assert.equal(notificationDisplayMessage('Đơn hàng hiện ở trạng thái Requested.'),'Đơn hàng hiện ở trạng thái Chờ người bán phản hồi.')
+  assert.equal(notificationDisplayMessage('Trạng thái Rejected.'),'Trạng thái Người bán đã từ chối.')
   assert.equal(notificationDisplayMessage('Trạng thái Delivered.'),'Trạng thái Đã giao.')
   for(const text of ['Requested là tên riêng','trạng thái Unknown','trạng thái constructor','Tiền đã về ví']) assert.equal(notificationDisplayMessage(text),text)
 })

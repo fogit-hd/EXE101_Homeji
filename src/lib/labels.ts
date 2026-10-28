@@ -161,9 +161,9 @@ export const marketplacePostStatusLabel: Record<number, string> = {
 }
 
 export const marketplaceOrderStatusLabel: Record<number, string> = {
-  [MarketplaceOrderStatus.Requested]: 'Chờ xác nhận',
-  [MarketplaceOrderStatus.Accepted]: 'Người bán đã xác nhận',
-  [MarketplaceOrderStatus.Rejected]: 'Từ chối',
+  [MarketplaceOrderStatus.Requested]: 'Chờ người bán phản hồi',
+  [MarketplaceOrderStatus.Accepted]: 'Người bán đã nhận đơn',
+  [MarketplaceOrderStatus.Rejected]: 'Người bán đã từ chối',
   [MarketplaceOrderStatus.Cancelled]: 'Đã hủy',
   [MarketplaceOrderStatus.Completed]: 'Hoàn tất',
   [MarketplaceOrderStatus.Expired]: 'Hết hạn',
