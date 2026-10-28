@@ -1,3 +1,4 @@
+import { ReferralsPage } from './pages/ReferralsPage'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email" element={<VerifySignupPage />} />
+        <Route path="/referrals" element={<ReferralsPage />} />
         <Route path="/receipts" element={<ProtectedRoute><ReceiptsPage /></ProtectedRoute>} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

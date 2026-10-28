@@ -1,3 +1,4 @@
+import { VoucherPicker, type VoucherSelection } from '../components/marketplace/VoucherPicker'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -382,6 +383,7 @@ export function MarketplacePage({
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
   const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
+  const [foodVoucher, setFoodVoucher] = useState<VoucherSelection | null>(null)
   const [checkoutConfirmationOpen, setCheckoutConfirmationOpen] = useState(false)
   const checkoutDialogRef = useRef<HTMLDialogElement>(null)
   useLayoutEffect(() => {
@@ -390,6 +392,10 @@ export function MarketplacePage({
     dialog.showModal()
     return () => dialog.close()
   }, [checkoutConfirmationOpen, tab])
+  const cartTotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems],
+  )
   const [cartNote, setCartNote] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [inventoryBusy, setInventoryBusy] = useState(false)
@@ -1014,7 +1020,7 @@ export function MarketplacePage({
   }
 
   const checkoutCart = async () => {
-    if (!checkoutConfirmationOpen || tab !== 'food') return
+    if (!checkoutConfirmationOpen || tab !== 'food' || foodVoucher?.pending) return
     if (cartItems.length === 0 || cartBusy) return
     trackFunnelEvent('begin_checkout', { item_category: 'marketplace' })
     setCartBusy(true)
@@ -1025,6 +1031,7 @@ export function MarketplacePage({
         ...cartItems.map((item) => item.preparationMinutes),
       )
       const created = await createMarketplaceCartOrder({
+        voucherId: foodVoucher?.amount === cartTotal ? foodVoucher.id : undefined,
         items: cartItems.map((item) => ({ postId: item.postId, quantity: item.quantity })),
         pickupAt: new Date(Date.now() + estimatedPreparationMinutes * 60 * 1000).toISOString(),
         pickupAddress: cartItems[0]?.sellerAddress || 'Nhận tại bếp Homeji',
@@ -1037,6 +1044,7 @@ export function MarketplacePage({
       }
       const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
       setCartItems([])
+      setFoodVoucher(null)
       setCartNote('')
       setCartOpen(false)
       setCheckoutConfirmationOpen(false)
@@ -1326,10 +1334,6 @@ export function MarketplacePage({
     () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
     [cartItems],
   )
-  const cartTotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [cartItems],
-  )
   const displayedWalletTransactions = useMemo(
     () => groupMarketplaceOrderRefunds(walletTransactions, orders),
     [walletTransactions, orders],
@@ -1357,7 +1361,7 @@ export function MarketplacePage({
         status: first.status,
         createdAt: first.createdAt,
         pickupAt: first.pickupAt,
-        total: groupedOrders.reduce((sum, order) => sum + order.agreedPrice, 0),
+        total: groupedOrders.reduce((sum, order) => sum + (order.buyerPaidAmount ?? order.agreedPrice), 0),
         isBuyer: iAmBuyer,
         isSeller: first?.sellerId === myUserId,
       }
@@ -1607,7 +1611,7 @@ export function MarketplacePage({
             if (!cartBusy) setCheckoutConfirmationOpen(false)
           }
           if (event.key === 'Tab') {
-            const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
+            const buttons = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), input:not(:disabled), a[href]')]
             if (!buttons.length) { event.preventDefault(); event.currentTarget.focus(); return }
             const first = buttons[0], last = buttons.at(-1)
             if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
@@ -1615,11 +1619,13 @@ export function MarketplacePage({
           }
         }}>
           <h2 id="checkout-confirmation-title">Xác nhận đặt món</h2>
-          <p>{cartItemCount} món · Tổng cộng {formatPrice(cartTotal)}</p>
+          <p>{cartItemCount} món · Tạm tính {formatPrice(cartTotal)}</p>
+          {checkoutConfirmationOpen && <VoucherPicker key={cartTotal} purpose="food" amount={cartTotal} disabled={cartBusy} onChange={setFoodVoucher} />}
+          <p>Voucher: −{formatPrice(foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0)} · Cần trả {formatPrice(cartTotal - (foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0))}</p>
           <p>Nhận tại {cartItems[0]?.sellerAddress || 'bếp Homeji'}. Chỉ xác nhận khi đã kiểm tra món và tổng tiền.</p>
           <div className="food-checkout-confirmation__actions">
           <button type="button" className="btn btn-secondary" autoFocus disabled={cartBusy} onClick={() => setCheckoutConfirmationOpen(false)}>Quay lại giỏ</button>
-          <button type="button" className="btn btn-primary" disabled={cartBusy || cartItems.length === 0} onClick={() => void checkoutCart()}>{cartBusy ? 'Đang đặt…' : 'Xác nhận đặt món'}</button>
+          <button type="button" className="btn btn-primary" disabled={cartBusy || Boolean(foodVoucher?.pending) || cartItems.length === 0} onClick={() => void checkoutCart()}>{cartBusy ? 'Đang đặt…' : 'Xác nhận đặt món'}</button>
           </div>
         </dialog>
       ) : null}
@@ -1684,7 +1690,7 @@ export function MarketplacePage({
             setCartItems((current) => current.filter((item) => item.postId !== postId))
           }}
           onClearCart={() => setCartItems([])}
-          onCheckout={() => setCheckoutConfirmationOpen(true)}
+          onCheckout={() => { setFoodVoucher(null); setCheckoutConfirmationOpen(true) }}
           onCartNoteChange={setCartNote}
           onCartOpenChange={setCartOpen}
           onSelectKitchen={(sellerId) => navigate(marketplaceStoreUrl(sellerId, true))}
@@ -2148,7 +2154,7 @@ export function MarketplacePage({
                             <strong>{order.postTitle || 'Món Homeji'}</strong>
                             <small>{order.quantity} × {formatPrice(order.unitPrice)}</small>
                           </div>
-                          <b>{formatPrice(order.agreedPrice)}</b>
+                          <b>{formatPrice(order.buyerPaidAmount ?? order.agreedPrice)}</b>
                         </li>
                       ))}
                     </ul>

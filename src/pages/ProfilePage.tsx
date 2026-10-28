@@ -19,7 +19,6 @@ import {
 import { MapToast } from '../components/map/MapToast'
 import { ProfileSkeleton } from '../components/skeletons/PageSkeletons'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useAuth } from '../contexts/AuthContext'
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import { getErrorMessage } from '../lib/errors'
@@ -64,6 +63,9 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
   const [searchParams] = useSearchParams()
   const returnTo = profileReturnTo(searchParams.get('returnTo'))
   const [tab, setTab] = useState<ProfileTab>(() => lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
+  if (useChangedInputs([searchParams.get('profileTab')])) {
+    setTab(lifestyleOnly || searchParams.get('profileTab') === 'lifestyle' ? 'lifestyle' : 'basic')
+  }
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
   const [profileErrors, setProfileErrors] = useState<{ displayName?: string; phone?: string }>({})
@@ -279,18 +281,17 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
     )
   }
 
-  const tabCols = showVerifyTab ? 3 : 2
 
   return (
-    <div className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
-      {!lifestyleOnly ? <>
+    <div data-glass-exclude className={`${embedded ? 'map-embed profile-embed' : 'container page profile-page'}${lifestyleOnly ? '' : ' profile-workspace'}`}>
+      {!lifestyleOnly ? <aside className="profile-workspace__sidebar">
       <header className="profile-page-header">
         <span className="profile-page-eyebrow">Tài khoản cá nhân</span>
         <h1 className="profile-page-title">
-          Hồ sơ của {profile?.displayName?.trim() || 'bạn'}
+          Tài khoản của bạn
         </h1>
         <p className="profile-page-lead">
-          Một hồ sơ rõ ràng giúp Homeji tìm đúng phòng và đúng người ở ghép hơn.
+          Quản lý thông tin cá nhân và nhu cầu ở ghép.
         </p>
       </header>
 
@@ -372,44 +373,16 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         </div>
       </section>
 
-      <LiquidTabList
-        className="tabs map-section-tabs"
-        style={{ ['--map-tab-cols' as string]: tabCols }}
-        role="tablist"
-        aria-label="Phần hồ sơ"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'basic'}
-          className={`tab ${tab === 'basic' ? 'active' : ''}`}
-          onClick={() => setTab('basic')}
-        >
-          Thông tin cơ bản
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'lifestyle'}
-          className={`tab ${tab === 'lifestyle' ? 'active' : ''}`}
-          onClick={() => setTab('lifestyle')}
-        >
-          Lối sống & vai trò
-        </button>
-        {showVerifyTab ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'verify'}
-            className={`tab ${tab === 'verify' ? 'active' : ''}`}
-            onClick={() => setTab('verify')}
-          >
-            Xác minh
-          </button>
-        ) : null}
-      </LiquidTabList>
+      <nav className="profile-workspace__nav" aria-label="Cài đặt tài khoản">
+        <button type="button" aria-current={tab === 'basic' ? 'page' : undefined} onClick={() => setTab('basic')}><strong>Thông tin cơ bản</strong><span>Tên, liên hệ và nơi bạn ở</span></button>
+        <button type="button" aria-current={tab === 'lifestyle' ? 'page' : undefined} onClick={() => setTab('lifestyle')}><strong>Nhu cầu ở ghép</strong><span>Ngân sách, thói quen và vai trò</span></button>
+        {showVerifyTab && <button type="button" aria-current={tab === 'verify' ? 'page' : undefined} onClick={() => setTab('verify')}><strong>Xác minh chủ nhà</strong><span>Giấy tờ và trạng thái xét duyệt</span></button>}
+        <Link to="/referrals"><strong>Mời bạn & voucher</strong><span>Link mời và ưu đãi của bạn →</span></Link>
+      </nav>
+      </aside> : null}
+      <div className="profile-workspace__content">
+      {!lifestyleOnly && <header className="profile-workspace__section-heading"><span>Cài đặt tài khoản</span><h2>{tab === 'basic' ? 'Thông tin cá nhân' : tab === 'lifestyle' ? 'Nhu cầu ở ghép' : 'Xác minh chủ nhà'}</h2><p>{tab === 'basic' ? 'Lưu tên để bắt đầu dùng các tính năng tài khoản. Các thông tin khác có thể thêm sau.' : tab === 'lifestyle' ? 'Thông tin tùy chọn giúp tìm người ở ghép phù hợp. Bạn vẫn có thể thanh toán khi chưa điền phần này.' : 'Kiểm tra yêu cầu và theo dõi kết quả xác minh tại đây.'}</p></header>}
 
-      </> : null}
 
       {needsProfileSetup ? <aside className="profile-setup-notice" role="status" data-glass-exclude>
         <div><strong>Bước tiếp theo: lưu thông tin tài khoản</strong><p>Nhập tên ở mục Thông tin cơ bản rồi chọn Lưu thông tin. Sau đó bạn có thể nạp tiền và thanh toán; không cần điền lối sống.</p></div>
@@ -714,6 +687,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         </form>
       ) : null}
 
+      </div>
       <MapToast
         message={toast?.message ?? null}
         tone={toast?.tone ?? 'info'}

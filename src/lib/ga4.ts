@@ -131,7 +131,7 @@ export function trackVerifiedPremiumPurchase(payment: { id: string; status: numb
   try { sessionStorage.setItem(`homeji_ga4_${transactionId}`, '1') } catch { /* No storage requirement. */ }
 }
 
-type PaidOrder = { id: string; checkoutId?: string; agreedPrice: number; refundedAt?: string | null }
+type PaidOrder = { id: string; checkoutId?: string; agreedPrice: number; buyerPaidAmount?: number; refundedAt?: string | null }
 export function trackVerifiedMarketplacePurchase(orders: PaidOrder[]) {
   // Only call after the create-order API commits the wallet debit, never on a cart click.
   if (!canSend() || !initialized || orders.length === 0) return
@@ -141,13 +141,13 @@ export function trackVerifiedMarketplacePurchase(orders: PaidOrder[]) {
     groups.set(checkout, [...(groups.get(checkout) ?? []), order])
   }
   for (const [checkout, lines] of groups) {
-    if (!/^[0-9a-f-]{36}$/i.test(checkout) || lines.some(line => !Number.isFinite(line.agreedPrice) || line.agreedPrice <= 0)) continue
+    if (!/^[0-9a-f-]{36}$/i.test(checkout) || lines.some(line => !Number.isFinite(line.buyerPaidAmount ?? line.agreedPrice) || (line.buyerPaidAmount ?? line.agreedPrice) <= 0)) continue
     const transactionId = `marketplace_${checkout}`
     if (purchaseIds.has(transactionId)) continue
     try { if (sessionStorage.getItem(`homeji_ga4_${transactionId}`)) continue } catch { /* In-memory fallback. */ }
     command('event', 'purchase', { transaction_id: transactionId, currency: 'VND',
-      value: lines.reduce((sum, line) => sum + line.agreedPrice, 0),
-      items: lines.map(line => ({ item_id: `order_${line.id}`, item_name: 'Đơn hàng Homeji', item_category: 'marketplace', price: line.agreedPrice, quantity: 1 })) })
+      value: lines.reduce((sum, line) => sum + (line.buyerPaidAmount ?? line.agreedPrice), 0),
+      items: lines.map(line => ({ item_id: `order_${line.id}`, item_name: 'Đơn hàng Homeji', item_category: 'marketplace', price: line.buyerPaidAmount ?? line.agreedPrice, quantity: 1 })) })
     purchaseIds.add(transactionId)
     try { sessionStorage.setItem(`homeji_ga4_${transactionId}`, '1') } catch { /* In-memory fallback. */ }
   }

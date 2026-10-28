@@ -15,7 +15,7 @@ export function MarketplaceSellerCatalog({ posts, renderItem, selectedSellerId, 
   const sellers = useMemo(() => groupMarketplaceBySeller(posts), [posts])
   return <div className={`seller-catalog${layout === 'list' ? ' seller-catalog--list' : ''}`} aria-label="Sản phẩm theo người bán">
     {sellers.map(seller => {
-      const visiblePosts = layout === 'list' || selectedSellerId === seller.sellerId ? seller.posts : seller.posts.slice(0, 3)
+      const visiblePosts = layout === 'list' || selectedSellerId === seller.sellerId ? seller.posts : seller.posts.slice(0, 6)
       return <section key={seller.sellerId || seller.posts[0].id} className="seller-catalog__shop" aria-label={`Cửa hàng ${seller.sellerName}`}>
       <header className="seller-catalog__head">
         <span className="seller-catalog__avatar" aria-hidden="true">{seller.sellerName.slice(0, 1).toUpperCase()}</span>

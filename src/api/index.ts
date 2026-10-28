@@ -389,9 +389,9 @@ export const getSubscriptionPackages = () =>
 
 export const getMySubscription = () => apiRequest<MySubscription>('/api/subscriptions/me')
 
-export const createPremiumWalletPayment = (packageCode: string, requestId: string, expectedAmount: number) =>
+export const createPremiumWalletPayment = (packageCode: string, requestId: string, expectedAmount: number, voucherId?: string) =>
   apiRequest<Payment>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/wallet`, {
-    method: 'POST', body: { requestId, expectedAmount },
+    method: 'POST', body: { requestId, expectedAmount, voucherId },
   }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
 export const createPremiumMomoPayment = (packageCode: string) =>
@@ -623,6 +623,7 @@ export const createMarketplaceCartOrder = (data: {
   items: Array<{ postId: string; quantity: number }>
   pickupAt: string
   pickupAddress: string
+  voucherId?: string
   note?: string
 }) =>
   apiRequest<MarketplaceOrder[]>('/api/marketplace-orders/cart', {

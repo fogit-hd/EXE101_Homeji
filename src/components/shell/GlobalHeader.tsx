@@ -574,6 +574,7 @@ export function GlobalHeader() {
                   <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}
                     active={accountOpen} ownerId={profile?.id} onNavigate={() => setAccountOpen(false)} />
                 </div>
+                <Link to="/referrals" role="menuitem" className="hj-account__item" onClick={() => setAccountOpen(false)}>Mời bạn & voucher</Link>
                 {accountGroups.map(group => <div key={group.label} role="group" aria-label={group.label} className="hj-account__group">
                   <p className="hj-account__group-label">{group.label}</p>
                   {group.items.map((item) => (

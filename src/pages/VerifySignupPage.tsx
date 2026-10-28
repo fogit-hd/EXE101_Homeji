@@ -1,5 +1,6 @@
+import { authDestination } from '../lib/authDestination'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { resendSignupOtp, verifySignupOtp } from '../api/receipts'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
@@ -7,6 +8,8 @@ import { trackFunnelEvent } from '../lib/ga4'
 
 export function VerifySignupPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from
   const { setSessionFromAuth } = useAuth()
   const [email, setEmail] = useState(() => sessionStorage.getItem('homeji_pending_signup_email') ?? '')
   const [code, setCode] = useState('')
@@ -33,7 +36,7 @@ export function VerifySignupPage() {
       await setSessionFromAuth(session)
       trackFunnelEvent('sign_up')
       sessionStorage.removeItem('homeji_pending_signup_email')
-      navigate('/', { replace: true })
+      navigate(authDestination(from, undefined), { replace: true })
     } catch (err) {
       setError(getErrorMessage(err, 'Không xác thực được mã OTP.'))
     } finally {

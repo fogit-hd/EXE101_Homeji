@@ -116,3 +116,20 @@ html:root #root .map-listings .seller-catalog.seller-catalog--list .map-listings
 html:root #root .map-listings .seller-catalog.seller-catalog--list .map-listings__address-text { white-space: normal; overflow-wrap: anywhere; }
 html:root #root .map-listings .seller-catalog.seller-catalog--list .map-listings__meta > span { padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 html:root #root .map-listings .seller-catalog.seller-catalog--list .seller-catalog__more { padding: 10px 12px; font-size: 12px; }
+
+/* Product photos need their full silhouette; wide shallow crops hide the item. */
+html:root #root .seller-catalog:not(.seller-catalog--list) .seller-catalog__items { grid-template-columns: repeat(auto-fill, minmax(min(100%,220px),1fr)); align-items: stretch; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__main { display: flex; flex-direction: column; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__thumb { width: 100%; height: auto; aspect-ratio: 1; max-height: 300px; object-fit: contain; background: var(--surface-muted); border-radius: 0; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__seller { display: none; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__title { font-size: 16px; line-height: 1.4; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions .btn-map-cta { display: none; }
+html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__actions .btn { flex: 1 1 100px; min-height: 40px; padding: 8px 10px; font-size: 13px; }
+@media(max-width:600px) {
+ html:root #root .seller-catalog:not(.seller-catalog--list) .seller-catalog__items { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 10px; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__body { padding: 10px; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__info { display: none; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__price { font-size: 15px; white-space: normal; }
+ html:root #root .seller-catalog:not(.seller-catalog--list) .marketplace-card__addr { font-size: 12px; }
+}

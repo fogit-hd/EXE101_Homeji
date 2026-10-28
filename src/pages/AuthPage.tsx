@@ -500,7 +500,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !submitting) {
-      navigate(mode === 'signin' ? authDestination(from, profile?.role) : '/', { replace: true })
+      navigate(authDestination(from, profile?.role), { replace: true })
     }
   }, [isAuthenticated, isLoading, navigate, from, mode, profile?.role, submitting])
 
@@ -889,13 +889,13 @@ export function AuthPage({ initialMode }: AuthPageProps) {
         nextName,
       )
       if (session.emailConfirmationRequired) {
-        if (session.confirmationMethod === 'otp') { navigate('/verify-email'); return }
+        if (session.confirmationMethod === 'otp') { navigate('/verify-email', { state: { from } }); return }
         // Ở lại intro — báo qua mây chat (không nhảy form / không Perfect Wrong)
         setConnectError(
           'Đăng ký thành công. Vui lòng xác nhận email trước khi đăng nhập nhé.',
         )
       } else {
-        navigate('/')
+        navigate(authDestination(from, profile?.role))
       }
     } catch (err) {
       setConnectError(getErrorMessage(err, 'Đăng ký thất bại — thử lại giúp mình nhé.'))
@@ -903,7 +903,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       formSubmitLock.current = false
       setSubmitting(false)
     }
-  }, [register, email, draftEmail, password, draftPassword, confirmPassword, displayName, draftName, navigate])
+  }, [register, email, draftEmail, password, draftPassword, confirmPassword, displayName, draftName, navigate, from, profile?.role])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -936,10 +936,10 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     try {
       const session = await register(nextEmail, password, nextName)
       if (session.emailConfirmationRequired) {
-        if (session.confirmationMethod === 'otp') { navigate('/verify-email'); return }
+        if (session.confirmationMethod === 'otp') { navigate('/verify-email', { state: { from } }); return }
         setMessage(session.message || 'Vui lòng xác nhận email trước khi đăng nhập.')
       } else {
-        navigate('/')
+        navigate(authDestination(from, profile?.role))
       }
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng ký thất bại'))
