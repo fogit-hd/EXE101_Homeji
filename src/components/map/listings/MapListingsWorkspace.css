@@ -1434,3 +1434,6 @@
   -webkit-backdrop-filter: none; backdrop-filter: none;
 }
 @media(forced-colors:active) { .map-listings__range-inputs label > div:focus-within { border-color: Highlight; } }
+
+/* Paused search is information the user still needs to read. */
+html:root #root .map-listings__move:disabled { opacity:1; cursor:default; }

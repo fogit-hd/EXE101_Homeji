@@ -63,3 +63,6 @@
 .map-nearby-panel__return { padding:0 18px 12px; }
 .map-nearby-panel__return button { min-height:40px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; color:var(--text-heading); background:var(--surface-input); font-weight:600; }
 .map-nearby-panel__return p { margin:6px 0 0; font-size:12px; line-height:1.5; color:var(--text-secondary); }
+
+.map-nearby-panel__return { display:flex; flex-wrap:wrap; gap:6px; }
+.map-nearby-panel__return p { flex-basis:100%; }

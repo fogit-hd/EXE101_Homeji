@@ -11,9 +11,10 @@ import './MapNearbyPanel.css'
 
 export type NearbyAnchor = { lat: number; lng: number; label: string; placeId?: string }
 
-export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryChange, onReturnToAnchor }: {
+export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryChange, onReturnToAnchor, onClearAnchor }: {
   anchor: NearbyAnchor
   onReturnToAnchor?: () => void
+  onClearAnchor?: () => void
   onClose: () => void
   onPick: (place: NearbyPlaceItem) => void
   category: NearbyPlaceCategory
@@ -51,6 +52,7 @@ export function MapNearbyPanel({ anchor, onClose, onPick, category, onCategoryCh
       <p className="map-nearby-panel__anchor" title={anchor.label}>Quanh <strong>{anchor.label}</strong></p>
       {onReturnToAnchor && <div className="map-nearby-panel__return">
         <button type="button" data-glass-exclude onClick={onReturnToAnchor}>Về vị trí đang xem</button>
+        {onClearAnchor && <button type="button" data-glass-exclude onClick={onClearAnchor}>Bỏ chọn vị trí</button>}
         <p>Giữ nguyên các tin trong khu vực khi bạn xem tiện ích.</p>
       </div>}
       <div className="map-nearby-panel__categories" role="group" aria-label="Loại tiện ích">
