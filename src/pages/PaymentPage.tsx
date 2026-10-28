@@ -22,6 +22,7 @@ import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MapToast } from '../components/map/MapToast'
 import { RevealText } from '../components/motion/RevealText'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
+import { PremiumListingPreview } from '../components/payments/PremiumListingPreview'
 import { marketplaceHref } from '../components/shell/navigation'
 import { ShellIcon } from '../components/shell/ShellIcons'
 import { PaymentsSkeleton } from '../components/skeletons/PageSkeletons'
@@ -354,6 +355,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       {tab === 'plans' ? (
         <div className="pay-plans">
+          <PremiumListingPreview />
           <div className="pay-plan-grid" style={{ ['--pay-cols' as string]: String(Math.max(1, Math.min(4, displayPlans.length))) }}>
             {displayPlans.map((plan, index) => {
               const view = getPlanDisplay(plan)
@@ -480,6 +482,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa 10</td></tr>
                 <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 tin/lần</td><td>Tối đa 3 tin/lần</td></tr>
                 <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td>Có</td></tr>
+                <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td>Có, kèm hiệu ứng nhẹ</td></tr>
                 <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td>Có</td></tr>
               </tbody>
             </table>

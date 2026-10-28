@@ -4,6 +4,7 @@ import { formatListingRent, formatListingArea, rentalPostTypeLabel } from '../li
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import './RentalPostCard.css'
 import { RentalConsiderationToggle } from './ai/RentalConsiderationToggle'
+import { PremiumBadge } from './PremiumBadge'
 
 type Props = {
   post: RentalPostSummary
@@ -16,7 +17,7 @@ type Props = {
 
 export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, saveBusy = false }: Props) {
   return (
-    <article className="post-card card">
+    <article className={`post-card card${post.isOwnerPremium === true ? ' premium-listing' : ''}`}>
       <Link to={mapPostUrl(post.id)} className="post-card-link">
         <div className="post-card-image">
           {post.thumbnailPath ? (
@@ -27,6 +28,7 @@ export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, save
           <span className="badge badge-green post-card-type">
             {rentalPostTypeLabel[post.type]}
           </span>
+          {post.isOwnerPremium === true && <PremiumBadge />}
         </div>
         <div className="post-card-body">
           <h3>{post.title || 'Tin đăng mới'}</h3>

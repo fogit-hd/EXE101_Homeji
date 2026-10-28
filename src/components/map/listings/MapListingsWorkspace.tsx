@@ -12,6 +12,7 @@ import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
+import { PremiumBadge } from '../../PremiumBadge'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
@@ -156,7 +157,7 @@ export function MapListingsWorkspace({
     const hovered = hoveredListingId === id
     return (
         <article
-          className={`map-listings__card${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
+          className={`map-listings__card${!marketMode && view.isPremium ? ' premium-listing' : ''}${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
         >
           <button
             type="button"
@@ -181,6 +182,7 @@ export function MapListingsWorkspace({
             }}
           >
             <span className="map-listings__card-photo">
+              {!marketMode && view.isPremium && <PremiumBadge />}
               <span className="map-listings__card-photo-empty">Chưa có ảnh</span>
               {view.thumbnailUrl ? (
                 <img
@@ -203,7 +205,7 @@ export function MapListingsWorkspace({
                 {view.areaLabel ? <span>{view.areaLabel}</span> : null}
                 {view.typeLabel ? <span>{view.typeLabel}</span> : null}
                 {view.highlightTag ? <span>{view.highlightTag}</span> : null}
-                {!marketMode && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
+                {!marketMode && !view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
               </span>
             </span>
           </button>
@@ -551,7 +553,7 @@ function PreviewCard({
   considerationPost?: { id: string; title: string }
 }) {
   return (
-    <article className="map-listings__preview" aria-label="Phòng đang chọn">
+    <article className={`map-listings__preview${view.isPremium ? ' premium-listing' : ''}`} aria-label="Phòng đang chọn">
       <div className="map-listings__preview-top">
         <div className="map-listings__preview-photo">
           {view.thumbnailUrl ? <img src={view.thumbnailUrl} alt="" /> : null}
@@ -584,7 +586,7 @@ function PreviewCard({
         {view.areaLabel ? <span>{view.areaLabel}</span> : null}
         {view.typeLabel ? <span>{view.typeLabel}</span> : null}
         {view.highlightTag ? <span>{view.highlightTag}</span> : null}
-        {view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
+        {view.isPremium ? <PremiumBadge /> : view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
       </div>
       {considerationPost ? <RentalConsiderationToggle post={considerationPost} /> : null}
       <button type="button" className="map-listings__preview-open" onClick={onOpen}>

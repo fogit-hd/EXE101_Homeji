@@ -8,6 +8,7 @@ const LEGACY_BENEFITS: Record<string, string> = {
   'Có badge Premium trên bài đăng': 'Hiển thị nhãn Premium trên tin đăng',
   'Có badge Cao cấp trên bài đăng': 'Hiển thị nhãn Premium trên tin đăng',
   'Bài đăng được ưu tiên hiển thị theo điểm boost': 'Tin đăng được ưu tiên hiển thị',
+  'Tăng khả năng xuất hiện trong đề xuất AI': 'Khung viền nổi bật cho tin phòng',
 }
 
 /** Show the payable total and exact catalog duration; never infer popularity or savings. */

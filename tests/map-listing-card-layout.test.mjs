@@ -11,7 +11,8 @@ test('listing thumbnails keep a uniform frame without cropping image edges', () 
 })
 
 test('listing badge and price use the requested image corners', () => {
-  assert.match(component, /map-listing-card-corner-tag is-premium/)
-  assert.match(styles, /\.map-listing-card-corner-tag\s*\{[^}]*top:\s*6px;[^}]*right:\s*6px;/s)
+  assert.match(component, /post\.isOwnerPremium === true \? <PremiumBadge/)
+  const premiumStyles = readFileSync(new URL('../src/components/PremiumBadge.css', import.meta.url), 'utf8')
+  assert.match(premiumStyles, /\.map-listing-card-image > \.premium-badge\s*\{[^}]*top:\s*8px;[^}]*right:\s*8px;/s)
   assert.match(styles, /\.map-listing-card-price\s*\{[^}]*bottom:\s*6px;[^}]*right:\s*6px;/s)
 })

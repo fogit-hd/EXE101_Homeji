@@ -3,6 +3,7 @@ import { type RentalPostSummary } from '../api/types'
 import { formatPrice, rentalPostTypeLabel } from '../lib/labels'
 import './MapListingCard.css'
 import { shortListingAddress, shortListingTitle } from "./MapListingCard.logic"
+import { PremiumBadge } from './PremiumBadge'
 
 type Props = {
   post: RentalPostSummary
@@ -30,6 +31,7 @@ export const MapListingCard = memo(function MapListingCard({
     <article
       className={[
         'map-listing-card',
+        post.isOwnerPremium === true ? 'premium-listing' : '',
         active ? 'is-active' : '',
         highlighted ? 'is-highlighted' : '',
       ]
@@ -58,7 +60,7 @@ export const MapListingCard = memo(function MapListingCard({
             —
           </div>
         )}
-        {post.isOwnerPremium ? <span className="map-listing-card-corner-tag is-premium">Nổi bật</span> : null}
+        {post.isOwnerPremium === true ? <PremiumBadge /> : null}
         <span className="map-listing-card-price">{formatPrice(post.price)}/tháng</span>
       </div>
       <div className="map-listing-card-body">

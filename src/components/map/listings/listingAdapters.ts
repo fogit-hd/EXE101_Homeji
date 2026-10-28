@@ -86,6 +86,7 @@ export type ListingViewModel = {
   typeLabel: string
   highlightTag: string | null
   ownerBadge: string | null
+  isPremium: boolean
 }
 
 export type FilterConfig = {
@@ -118,6 +119,7 @@ export function mapBackendListingToListingViewModel(post: RentalPostSummary): Li
     typeLabel: rentalPostTypeLabel[post.type] ?? '',
     highlightTag: post.highlightTag?.trim() || null,
     ownerBadge: post.ownerBadge?.trim() || null,
+    isPremium: post.isOwnerPremium === true,
   }
 }
 
@@ -156,6 +158,7 @@ export function mapMarketplacePostToListingViewModel(post: MarketplacePost): Lis
     typeLabel: post.category?.trim() || 'Chợ đồ',
     highlightTag: null,
     ownerBadge: post.sellerDisplayName?.trim() || null,
+    isPremium: false,
   }
 }
 

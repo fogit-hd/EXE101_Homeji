@@ -850,3 +850,17 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid #278c7e; out
 .pay-compare table { table-layout: fixed; }
 .pay-compare th:first-child { width: 44%; }
 .pay-compare th, .pay-compare td { overflow-wrap: anywhere; vertical-align: top; }
+
+.pay-premium-value { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:28px; padding:24px; margin-bottom:24px; border:1px solid var(--border); border-radius:14px; background:var(--surface-elevated); }
+.pay-premium-value h2 { margin:8px 0 12px; color:var(--text-heading); font-size:24px; line-height:1.35; letter-spacing:-.02em; }
+.pay-premium-value__copy > p { color:var(--text-secondary); font-size:14px; line-height:1.75; }
+.pay-premium-value__copy > .pay-premium-value__note { font-size:12px; }
+.pay-premium-value__examples { display:grid; gap:12px; min-width:0; }
+.pay-premium-value__label { margin:0 0 6px; color:var(--text-secondary); font-size:12px; font-weight:600; }
+.pay-listing-preview { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-elevated); }
+.pay-listing-preview__photo { display:grid; place-items:center; width:64px; height:72px; flex:0 0 64px; border-radius:6px; background:var(--surface-muted); color:var(--text-secondary); }
+.pay-listing-preview > div:last-child { min-width:0; }
+.pay-listing-preview strong { display:block; margin:6px 0 3px; font-size:14px; color:var(--text-heading); }
+.pay-listing-preview__type,.pay-listing-preview > div > span:last-child { color:var(--text-secondary); font-size:12px; }
+.pay-premium-value__caption { margin:0; font-size:11px; line-height:1.6; color:var(--text-secondary); }
+@media(max-width:700px) { .pay-premium-value { grid-template-columns:1fr; padding:18px; gap:18px; } .pay-premium-value h2 { font-size:21px; } }

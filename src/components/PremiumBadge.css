@@ -1,0 +1,20 @@
+/* No size change: premium decoration must preserve card layout and hit targets. */
+.premium-listing.premium-listing {
+  border-color:#aa792b;
+  box-shadow:inset 0 0 0 1px #aa792b26,0 2px 12px #aa792b12;
+  animation:premium-edge 6s ease-in-out 2;
+}
+/* Match the existing workspace card skin while keeping selected/focus rings separate. */
+html:root #root .premium-listing.premium-listing { border-color:var(--premium-edge-color,#aa792b); }
+[data-theme=dark] .premium-listing { --premium-edge-color:#c29b55; }
+.premium-badge { display:inline-flex; align-items:center; gap:4px; max-width:100%; padding:3px 7px; border:1px solid #b8843040; border-radius:5px; background:#fff3d7; color:#73501a; font:650 11px/1.4 var(--font-ui); white-space:nowrap; vertical-align:middle; }
+.premium-badge > span { font-size:12px; }
+.premium-listing:is(.is-active,.is-selected) { outline:2px solid var(--action-primary); outline-offset:2px; }
+.post-card-image > .premium-badge,.map-listing-card-image > .premium-badge { position:absolute; top:8px; right:8px; }
+.map-listings__card-photo > .premium-badge { position:absolute; left:8px; bottom:8px; z-index:1; }
+.ai-rental-result > .premium-badge { margin-bottom:10px; }
+[data-theme=dark] .premium-badge { color:#f4d49a; background:#382b16; border-color:#ae874a; }
+[data-theme=dark] .premium-listing.premium-listing { border-color:#c29b55; }
+@keyframes premium-edge { 0%,100% { box-shadow:inset 0 0 0 1px #aa792b26,0 2px 12px #aa792b12; } 50% { box-shadow:inset 0 0 0 1px #d4aa5d70,0 2px 14px #aa792b30; } }
+@media(prefers-reduced-motion:reduce) { .premium-listing.premium-listing { animation:none; } }
+@media(forced-colors:active) { html:root #root .premium-listing.premium-listing { border-color:Highlight; animation:none; } .premium-badge { border-color:CanvasText; } }

@@ -5,6 +5,7 @@ import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel
 import { RentalConsiderationToggle } from './RentalConsiderationToggle'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import './AiRentalResultCard.css'
+import { PremiumBadge } from '../PremiumBadge'
 
 export function AiRentalResultCard({ item, index, onOpen, onRefine, requiredAmenities = [], children }: {
   item: AiHighlightedRentalPost; index: number; onOpen?: () => void
@@ -15,7 +16,8 @@ export function AiRentalResultCard({ item, index, onOpen, onRefine, requiredAmen
   const evidence = item.reasonEvidence?.filter(reason => reason.postId === post.id && reason.sourceType === 'listing') ?? []
   const amenities = [...new Set(evidence.filter(reason => reason.field === 'amenities').map(reason => reason.value))]
   const updated = item.updatedAt && Number.isFinite(Date.parse(item.updatedAt)) ? new Date(item.updatedAt) : null
-  return <article className="ai-rental-result" aria-label={`Lựa chọn ${index + 1}: ${post.title}`} data-glass-exclude>
+  return <article className={`ai-rental-result${post.isOwnerPremium === true ? ' premium-listing' : ''}`} aria-label={`Lựa chọn ${index + 1}: ${post.title}`} data-glass-exclude>
+    {post.isOwnerPremium === true && <PremiumBadge />}
     <header className="ai-rental-result__heading">
       <span className="ai-rental-result__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
       <div><span className="ai-rental-result__type">{rentalPostTypeLabel[post.type] || 'Tin phòng'}</span>
@@ -30,7 +32,7 @@ export function AiRentalResultCard({ item, index, onOpen, onRefine, requiredAmen
     <p className="ai-rental-result__location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></svg><span>{post.address || 'Chưa có địa chỉ'}</span></p>
     {amenities.length ? <ul className="ai-rental-result__amenities" aria-label="Tiện ích theo tin đăng">{amenities.slice(0, 3).map(value => <li key={value}>{amenityLabel(value)}</li>)}{amenities.length > 3 ? <li>+{amenities.length - 3} tiện ích</li> : null}</ul> : null}
     {post.type === RentalPostType.RoomTransfer ? <p className="ai-rental-result__notice">Vị trí gần đúng của tin pass phòng. Cần hỏi lại đường đi từ cửa phòng.</p> : null}
-    {post.isOwnerPremium ? <p className="ai-rental-result__notice">Người đăng dùng gói Premium; tin có thể được ưu tiên hiển thị. Nhãn này không đánh giá mức phù hợp với bạn.</p> : null}
+    {post.isOwnerPremium ? <p className="ai-rental-result__notice">Người đăng dùng gói Premium. Kết quả AI vẫn được xếp theo tiêu chí tìm phòng của bạn; nhãn này không đánh giá mức phù hợp.</p> : null}
     <div className="ai-rental-result__actions">
       <Link className="ai-rental-result__open" to={target} onClick={onOpen}>Xem phòng <span aria-hidden="true">↗</span></Link>
       <RentalConsiderationToggle post={post} compact />

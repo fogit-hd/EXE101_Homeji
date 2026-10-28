@@ -10,6 +10,7 @@ import {
   listingMetaLine,
 } from './mapExploreFormat'
 import './MapExploreListingCard.css'
+import { PremiumBadge } from '../../PremiumBadge'
 
 type Props = {
   post: RentalPostSummary
@@ -45,6 +46,7 @@ export const MapExploreListingCard = memo(function MapExploreListingCard({
     <article
       className={[
         'map-explore-card',
+        post.isOwnerPremium === true ? 'premium-listing' : '',
         active ? 'is-active' : '',
         highlighted ? 'is-highlighted' : '',
       ]
@@ -97,6 +99,7 @@ export const MapExploreListingCard = memo(function MapExploreListingCard({
               </button>
             ) : null}
           </div>
+          {post.isOwnerPremium === true && <PremiumBadge />}
           <p className="map-explore-card__title">{title}</p>
           {district ? <p className="map-explore-card__district">{district}</p> : null}
         </div>
