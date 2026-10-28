@@ -170,6 +170,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     token: number
     /** Chat window that opened this pin — cleared when that window closes. */
     conversationId?: string
+    sourceContextKey?: string
   } | null>(null)
   const [navigationRequest, setNavigationRequest] = useState<{
     origin: { lat: number; lng: number }
@@ -346,14 +347,14 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const selectedPlacePin = useMemo(() => {
     if (selectedPost) return null
     // Chat shared pin owns the map marker — avoid a duplicate red place pin.
-    if (sharedLocationPin) return null
+    if (sharedLocationPin && sharedLocationPin.sourceContextKey !== nearbyContextKey) return null
     if (!selectedPlace?.location) return null
     return {
       lat: selectedPlace.location.lat,
       lng: selectedPlace.location.lng,
       title: selectedPlace.name,
     }
-  }, [selectedPost, selectedPlace, sharedLocationPin])
+  }, [selectedPost, selectedPlace, sharedLocationPin, nearbyContextKey])
 
   const mapFocus = nearbyFocus ?? focus
   const mapFocusToken = nearbyFocus ? nearbyToken : focusToken
@@ -755,8 +756,15 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     setNearbyFocus({ lat: place.lat, lng: place.lng, zoom: MAP_FOCUS_ZOOM })
     setNearbyToken((n) => n + 1)
     setSharedLocationPin((prev) => ({ lat: place.lat, lng: place.lng,
-      title: place.title, kindLabel: place.typeLabel, token: (prev?.token ?? 0) + 1 }))
-  }, [])
+      title: place.title, kindLabel: place.typeLabel, sourceContextKey: nearbyAnchor?.contextKey, token: (prev?.token ?? 0) + 1 }))
+  }, [nearbyAnchor])
+
+  const handleReturnToAnchor = useCallback(() => {
+    if (!nearbyAnchor) return
+    setSharedLocationPin(null)
+    setNearbyFocus({ lat: nearbyAnchor.lat, lng: nearbyAnchor.lng, zoom: MAP_FOCUS_ZOOM })
+    setNearbyToken((token) => token + 1)
+  }, [nearbyAnchor])
 
   const toggleSavedPost = useCallback(
     async (postId: string) => {
@@ -894,6 +902,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         )
       : omnibox
 
+  // Moving the camera to an amenity must not replace the source area's listings.
+  const viewportPaused = detailOpen || Boolean(sharedLocationPin) || Boolean(navigationRequest)
   const handleViewportIdle = useCallback(
     (bounds: {
       minLatitude: number
@@ -901,7 +911,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       minLongitude: number
       maxLongitude: number
     }) => {
-      if (!destinationMode || !isMapMode) return
+      if (!destinationMode || !isMapMode || viewportPaused) return
       const current = parseFiltersFromURL(searchParams)
       if (!current.searchOnMove) return
       const round = (value: number) => Math.round(value * 1e4) / 1e4
@@ -920,7 +930,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         setSearchParams(next, { replace: true })
       }
     },
-    [destinationMode, isMapMode, searchParams, setSearchParams],
+    [destinationMode, isMapMode, viewportPaused, searchParams, setSearchParams],
   )
 
   const mapStage = (
@@ -1009,6 +1019,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const nearbyPanel = nearbyVisible && nearbyAnchor ? (
     <MapNearbyPanel key={nearbyAnchor.contextKey} anchor={nearbyAnchor}
       category={nearbyCategory} onCategoryChange={setNearbyCategory}
+      onReturnToAnchor={handleReturnToAnchor}
       onClose={() => setNearbyDismissedKey(nearbyContextKey)} onPick={handlePickNearby} />
   ) : null
 
@@ -1076,6 +1087,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             ) : null
           }
           contextPanel={nearbyPanel}
+          viewportPaused={viewportPaused}
           onHoverListing={handleCardHover}
           onLeaveListing={handleCardLeave}
           onSelectListing={handleSelectPost}

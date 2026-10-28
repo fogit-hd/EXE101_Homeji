@@ -46,6 +46,7 @@ type Props = {
   mapNode: ReactNode | null
   /** Contextual map content shares the results slot, outside the map's isolated layer. */
   contextPanel?: ReactNode
+  viewportPaused?: boolean
   unreadNotifications?: number
   onHoverListing: (id: string) => void
   onLeaveListing: () => void
@@ -62,6 +63,7 @@ const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
 ]
 
 export function MapListingsWorkspace({
+  viewportPaused = false,
   posts,
   marketPosts = [],
   selectedListingId,
@@ -334,6 +336,8 @@ export function MapListingsWorkspace({
                 type="button"
                 className={`map-listings__move${query.searchOnMove ? ' is-on' : ''}`}
                 data-glass-exclude aria-pressed={query.searchOnMove}
+                disabled={viewportPaused}
+                title={viewportPaused ? 'Đóng vị trí đang xem để tiếp tục tìm tin khi di chuyển bản đồ.' : undefined}
                 onClick={() =>
                   writeQuery({
                     searchOnMove: !query.searchOnMove,
@@ -344,7 +348,7 @@ export function MapListingsWorkspace({
                 <span className="map-listings__move-check" aria-hidden>
                   {query.searchOnMove ? <img src="/figma/map/check.svg" alt="" width={11} height={11} /> : null}
                 </span>
-                Tìm khi di chuyển bản đồ
+                {viewportPaused ? 'Đang giữ khu vực tìm kiếm' : 'Tìm khi di chuyển bản đồ'}
               </button>
             {selected && query.view !== 'list' ? (
               <PreviewCard
