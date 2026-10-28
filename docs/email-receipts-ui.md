@@ -8,7 +8,7 @@ Frontend production: https://homeji.onrender.com. Backend: https://homeji-be.onr
 
 Chi tiết HTML lấy qua API có Authorization rồi hiển thị trong iframe sandbox rỗng, không cho chạy script. Nút tải tạo file HTML phía trình duyệt. Chủ sở hữu được kiểm tra ở backend, không dựa vào điều kiện giao diện.
 
-Backend cần triển khai migration và hai cờ `Email__RegistrationOtpEnabled`, `Email__Receipts__Enabled`; bật OTP sau khi frontend mới đã live. Luồng quên mật khẩu tiếp tục chuyển về `/reset-password` trên domain mới.
+Backend cần triển khai migration và các cờ tính năng kích hoạt OTP đăng ký cũng như gửi biên nhận giao dịch; bật OTP sau khi frontend mới đã live. Luồng quên mật khẩu tiếp tục chuyển về `/reset-password` trên domain mới.
 
 ## Kiểm chứng local
 

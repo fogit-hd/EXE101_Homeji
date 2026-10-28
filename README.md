@@ -58,6 +58,7 @@ Route được khai báo trong [src/App.tsx](src/App.tsx). Phần lớn màn hì
 | Hoạt động | `/activities` | Mở panel hoạt động |
 | Tin đã lưu | `/saved` | Mở panel tin đã lưu |
 | Hồ sơ | `/profile` | Mở panel hồ sơ cá nhân |
+| Mời bạn & Quà tặng | `/referrals` | Mời bạn cùng phòng nhận bộ 4 voucher 50.000đ, quản lý ví voucher |
 | Thông báo · Lời mời | `/notifications`, `/invitations` | Mở panel thông báo realtime (SignalR) và lời mời |
 | Thanh toán | `/payments`, `/payments/wait` | Mở panel thanh toán; trang chờ xác nhận thanh toán |
 | Xem chi tiết tin | `/posts/:postId` | Chuyển về bản đồ và mở thông tin tin trong panel |

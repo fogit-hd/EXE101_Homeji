@@ -4,7 +4,7 @@ Ngày kiểm tra: 05/10/2026. Đây là hướng dẫn chạy kiểm chứng, kh
 
 ## Gemini
 
-Backend đọc khóa từ `Ai:Gemini:ApiKey`; biến môi trường tương ứng là `Ai__Gemini__ApiKey`. Không đưa khóa vào frontend, Git, ảnh hoặc tin nhắn. Cấu hình hiện tại chưa có giá trị này. Biến `GOOGLE_API_KEY` khác đang có trong môi trường trả HTTP 400 khi kiểm tra quyền đọc model; không tự sao chép nó vào cấu hình dự án hoặc dùng làm khóa Maps cho browser.
+Backend quản lý khóa API Gemini an toàn qua server secrets của nền tảng triển khai. Không đưa khóa vào frontend, Git, ảnh hoặc tin nhắn. Cấu hình hiện tại chưa có giá trị này. Biến `GOOGLE_API_KEY` khác đang có trong môi trường trả HTTP 400 khi kiểm tra quyền đọc model; không tự sao chép nó vào cấu hình dự án hoặc dùng làm khóa Maps cho browser.
 
 Sau khi có cấu hình hợp lệ, kiểm tra endpoint/model được tài khoản cho phép, rồi chạy câu tìm phòng tổng hợp không có dữ liệu người dùng. Xác nhận parser thực trả được schema, grounding vẫn chỉ lấy tin Active đúng phạm vi, fallback khi provider lỗi và latency từng stage. Không gửi liên hệ/chứng từ/profile người thuê vào parser.
 
