@@ -125,6 +125,10 @@ export function getErrorMessage(err?: unknown, fallback?: string): string {
     }
     const fromErrors = firstValidationMessage(err.body.errors)
     if (fromErrors && !isTechnicalMessage(fromErrors)) return localizeApiMessage(fromErrors)
+    if (!err.body.detail && err.body.title) {
+      const translated = localizeApiMessage(err.body.title)
+      if (translated !== err.body.title.trim()) return translated
+    }
     if (err.body.detail && !isTechnicalMessage(err.body.detail)) {
       return localizeApiMessage(err.body.detail)
     }
@@ -135,7 +139,7 @@ export function getErrorMessage(err?: unknown, fallback?: string): string {
     return fallback || SYSTEM_ERROR_MESSAGE
   }
   if (err instanceof Error && err.message && !isTechnicalMessage(err.message)) {
-    return err.message
+    return localizeApiMessage(err.message)
   }
   return fallback || SYSTEM_ERROR_MESSAGE
 }

@@ -1,4 +1,10 @@
 const API_MESSAGE_VI: Record<string, string> = {
+  'Invalid login credentials': 'Thông tin tài khoản hoặc mật khẩu không chính xác.',
+  'Invalid credentials': 'Thông tin tài khoản hoặc mật khẩu không chính xác.',
+  'Email not confirmed': 'Bạn chưa xác nhận email. Hãy mở email Homeji gửi để xác nhận rồi đăng nhập lại.',
+  'User already registered': 'Email này đã có tài khoản. Hãy đăng nhập hoặc chọn quên mật khẩu.',
+  'Email rate limit exceeded': 'Bạn đã yêu cầu gửi email nhiều lần. Hãy chờ một chút rồi thử lại.',
+  'Signup requires a valid password': 'Vui lòng nhập mật khẩu để tạo tài khoản.',
   'The viewing time must be in the future.': 'Chọn giờ xem phòng sau thời điểm hiện tại.',
   'This viewing appointment can no longer be cancelled.':
     'Lịch xem phòng này không còn hủy được nữa.',
@@ -19,5 +25,7 @@ const API_MESSAGE_VI: Record<string, string> = {
 /** Đổi thông báo lỗi tiếng Anh từ API sang tiếng Việt khi có bản dịch. */
 export function localizeApiMessage(message: string): string {
   const trimmed = message.trim()
-  return API_MESSAGE_VI[trimmed] ?? trimmed
+  const normalized = trimmed.replace(/[.!]+$/, '').toLowerCase()
+  const match = Object.entries(API_MESSAGE_VI).find(([source]) => source.replace(/[.!]+$/, '').toLowerCase() === normalized)
+  return match?.[1] ?? trimmed
 }

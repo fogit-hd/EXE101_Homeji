@@ -147,8 +147,6 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
           if ((object as SkinnedMesh).morphTargetDictionary) faces.push(object as SkinnedMesh)
         })
         const eyes = faces.find((face) => !Array.isArray(face.material) && face.material.name === 'Black')
-        const eyePositions = eyes?.geometry.getAttribute('position')
-        const openEyes = eyePositions ? Float32Array.from(eyePositions.array) : undefined
         // Two-joint CCD keeps the existing rig: move palms to the face in world coordinates.
         const end = new T.Vector3(), jointPosition = new T.Vector3()
         const from = new T.Vector3(), to = new T.Vector3()
@@ -166,9 +164,19 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
           const hide = current === 'password' || current === 'peek'
           conceal = reduced.matches ? Number(hide) : T.MathUtils.damp(conceal, Number(hide), 12, dt)
           const time = reduced.matches ? 0 : now / 1000
+          // Restore the base pose before animation and concealment on every frame.
+          // Idle does not animate every arm joint, so the previous override must not accumulate.
+          arms.forEach(({ upper, lower, rest }) => {
+            if (upper && rest[0]) upper.quaternion.copy(rest[0])
+            if (lower && rest[1]) lower.quaternion.copy(rest[1])
+          })
           if (!reduced.matches) {
+            if (hide) {
+              wave?.stop()
+              nextWave = now + 12000
+            }
             mixer?.update(dt)
-            if (!hide && now >= nextWave) {
+            if (!hide && conceal < 0.001 && now >= nextWave) {
               wave?.reset().setEffectiveWeight(0.8).play()
               nextWave = now + 12000
             }
@@ -185,18 +193,6 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
             if (dictionary.Surprised !== undefined) weights[dictionary.Surprised] = face === eyes ? 0 : hide ? 0.65 : current === 'typing' ? 0.18 : 0
             if (dictionary.Sad !== undefined) weights[dictionary.Sad] = current === 'error' ? 0.5 : 0
           }
-          if (eyePositions && openEyes) {
-            const blinkPhase = time % 4.5
-            const blink = !reduced.matches && blinkPhase > 4.25 ? Math.sin((blinkPhase - 4.25) / 0.25 * Math.PI) : 0
-            const eyelids = Math.max(conceal, blink)
-            for (let index = 0; index < eyePositions.count; index++) {
-              const x = openEyes[index * 3], y = openEyes[index * 3 + 1], z = openEyes[index * 3 + 2]
-              if (Math.abs(x) >= 0.0032 && Math.abs(x) <= 0.011 && y < -0.005 && z < 0.0035) {
-                eyePositions.setZ(index, -0.00059 + (z + 0.00059) * (1 - eyelids * 0.93))
-              }
-            }
-            eyePositions.needsUpdate = true
-          }
           arms.forEach((arm, index) => {
             const { upper, lower, palm, rest } = arm
             if (!upper || !lower || !palm || !rest[0] || !rest[1] || !head) return
@@ -209,8 +205,8 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
             upper.quaternion.copy(rest[0]); lower.quaternion.copy(rest[1])
             model!.updateMatrixWorld(true)
             head.getWorldPosition(target)
-            target.x += index === 0 ? 0.27 : -0.27
-            target.y += 0.6
+            target.x += index === 0 ? 0.5 : -0.5
+            target.y += 0.28
             target.z += 1.15
             for (let step = 0; step < 32; step++) for (const joint of [lower, upper]) {
               joint.getWorldPosition(jointPosition)

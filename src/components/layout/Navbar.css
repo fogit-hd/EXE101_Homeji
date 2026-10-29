@@ -223,3 +223,45 @@
     opacity: 1;
   }
 }
+
+/* Shared navigation for pages outside the map workspace. */
+.navbar { background: var(--surface-elevated); box-shadow: none; }
+.navbar-inner { max-width: 1320px; width: 100%; padding-inline: 32px; gap: 28px; }
+.navbar-brand__logo { width: 33px; height: 36px; }
+.navbar-brand__word { font-size: 22px; letter-spacing: -.8px; line-height: 1.1; }
+.navbar-brand__word > span { display: block; margin-top: 5px; font-size: 9px; font-weight: 500; letter-spacing: .25px; color: var(--text-secondary); }
+.navbar-links { align-self: stretch; gap: 5px; overflow: visible; }
+.navbar-links a { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; font-size: 13px; font-weight: 550; color: var(--text-secondary); }
+.navbar-links a:hover { color: var(--text-heading); background: color-mix(in srgb, var(--text-primary) 3%, transparent); }
+.navbar-links a.active { color: var(--text-heading); text-decoration: none; }
+.navbar-links a.active::after { content: ''; position: absolute; bottom: 0; left: 11px; right: 11px; height: 3px; border-radius: 3px 3px 0 0; background: #138b8b; }
+.navbar-gift-dot { width: 5px; height: 5px; border-radius: 50%; background: #c19640; }
+.navbar-account { position: relative; }
+.navbar-profile { display: flex; align-items: center; gap: 9px; font-size: 12px; cursor: pointer; list-style: none; }
+.navbar-profile::-webkit-details-marker { display: none; }
+.navbar-avatar { display: grid; place-content: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: color-mix(in srgb, #178c8b 12%, var(--surface)); color: var(--text-heading); font-size: 14px; text-transform: uppercase; }
+.navbar-account__name { max-width: 135px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navbar-account__panel { position: absolute; top: calc(100% + 18px); right: 0; width: 210px; padding: 8px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); box-shadow: 0 12px 36px #0b323b18; }
+.navbar-account__panel > a, .navbar-account__panel > button { display: block; width: 100%; padding: 11px 12px; border: 0; border-radius: 8px; background: transparent; text-align: left; font: inherit; font-size: 13px; color: var(--text-primary); cursor: pointer; text-decoration: none; }
+.navbar-account__panel > :hover { background: var(--surface); }
+.navbar-account__panel > button { color: var(--danger, #bc4444); border-top: 1px solid var(--border); border-radius: 0; }
+.navbar :is(a, button, summary):focus-visible { outline: 3px solid #46b6bd; outline-offset: 3px; }
+@media (min-width: 769px) and (max-width: 1150px) {
+  .navbar-inner { gap: 15px; padding-inline: 20px; }
+  .navbar-links { gap: 0; }
+  .navbar-links a { padding-inline: 7px; font-size: 12px; }
+  .navbar-account__name { display: none; }
+  .navbar-brand__word { font-size: 19px; }
+}
+@media (max-width: 900px) and (min-width: 769px) { .navbar-brand__word { display: none; } }
+@media (max-width: 768px) {
+  .navbar-inner { padding-inline: 20px; }
+  .navbar-brand__word { font-size: 20px; }
+}
+body:has(.navbar) #root .theme-switch--floating { display: none; }
+@media (max-width: 768px) {
+  .navbar-inner > .theme-switch { margin-left: auto; }
+  .navbar-menu-btn { margin-left: 0; }
+}
+.navbar-menu-btn { flex-shrink: 0; }
+.navbar-menu-btn span { flex-shrink: 0; }

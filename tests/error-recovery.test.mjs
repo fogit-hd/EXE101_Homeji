@@ -42,3 +42,18 @@ test('actual internal errors remain hidden and transient failures remain retryab
   assert.equal(errors.getErrorMessage(error), errors.SYSTEM_ERROR_MESSAGE)
   assert.equal(errors.isServiceDisruption(error), true)
 })
+
+test('invalid login credentials are shown in clear Vietnamese', () => {
+  for (const detail of ['Invalid login credentials', 'Invalid login credentials.']) {
+    assert.equal(errors.getErrorMessage(new ApiRequestError(400, { detail })), 'Thông tin tài khoản hoặc mật khẩu không chính xác.')
+    assert.equal(errors.getErrorMessage(new ApiRequestError(401, { detail })), 'Thông tin tài khoản hoặc mật khẩu không chính xác.')
+    assert.equal(errors.getErrorMessage(new ApiRequestError(401, { title: detail })), 'Thông tin tài khoản hoặc mật khẩu không chính xác.')
+    assert.equal(errors.getErrorMessage(new Error(detail)), 'Thông tin tài khoản hoặc mật khẩu không chính xác.')
+  }
+})
+
+test('email confirmation and existing accounts give different recovery instructions', () => {
+  assert.match(errors.getErrorMessage(new ApiRequestError(400, { detail: 'Email not confirmed' })), /chưa xác nhận email/)
+  assert.match(errors.getErrorMessage(new ApiRequestError(400, { detail: 'User already registered' })), /Email này đã có tài khoản/)
+  assert.equal(errors.getErrorMessage(new ApiRequestError(401, {})), 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+})

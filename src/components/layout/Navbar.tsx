@@ -1,10 +1,19 @@
 import { SellerOrderAlertsSlot } from '../marketplace/SellerOrderAlerts'
-import { useState } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useState, type ComponentProps } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { UserRole } from '../../api/types'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
+import { ThemeSwitch } from '../theme/ThemeSwitch'
 import './Navbar.css'
+
+function NavLink({ to, className = '', ...props }: ComponentProps<typeof Link>) {
+  const location = useLocation()
+  const target = typeof to === 'string' ? to : `${to.pathname ?? location.pathname}${to.search ?? ''}`
+  const [pathname, search = ''] = target.split('?')
+  const active = pathname === location.pathname && new URLSearchParams(search).get('section') === new URLSearchParams(location.search).get('section')
+  return <Link {...props} to={to} className={`${className}${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} />
+}
 
 export function Navbar() {
   const { isAuthenticated, profile, logout } = useAuth()
@@ -27,7 +36,7 @@ export function Navbar() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header className="navbar">
+    <header className="navbar" data-glass-exclude>
       <div className="container navbar-inner">
         <Link to="/" className="navbar-brand" onClick={closeMenu}>
           <img
@@ -37,10 +46,11 @@ export function Navbar() {
             width={140}
             height={40}
           />
+          <span className="navbar-brand__word">Homeji<span>Ở gần, sống vui.</span></span>
         </Link>
 
-        <nav className="navbar-links navbar-links--desktop">
-          <NavLink to={isAuthenticated ? '/' : '/explore'} end={isAuthenticated}>
+        <nav className="navbar-links navbar-links--desktop" aria-label="Điều hướng chính">
+          <NavLink to={isAuthenticated ? '/' : '/explore'}>
             Tìm phòng
           </NavLink>
           {isAuthenticated && (
@@ -49,6 +59,7 @@ export function Navbar() {
               <NavLink to={mapSectionUrl('invitations')}>Ở ghép</NavLink>
               <NavLink to={mapSectionUrl('notifications')}>Thông báo</NavLink>
               <NavLink to={mapSectionUrl('payments')}>Thanh toán</NavLink>
+              <NavLink to="/referrals">Mời bạn <span className="navbar-gift-dot" aria-hidden="true" /></NavLink>
               {profile?.role === UserRole.Landlord && (
                 <NavLink to="/posts/new">Đăng tin</NavLink>
               )}
@@ -61,14 +72,26 @@ export function Navbar() {
 
         <div className="navbar-actions navbar-actions--desktop">
           {isAuthenticated ? (
-            <>
-              <NavLink to={mapSectionUrl('profile')} className="navbar-profile">
-                {profile?.displayName ?? 'Hồ sơ'}
-              </NavLink>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogout}>
-                Đăng xuất
-              </button>
-            </>
+            <details className="navbar-account" key={location.key}
+              onBlur={event => {
+                if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false
+              }}
+              onKeyDown={event => {
+                if (event.key === 'Escape') {
+                  event.currentTarget.open = false
+                  event.currentTarget.querySelector('summary')?.focus()
+                }
+              }}>
+              <summary className="navbar-profile">
+                <span className="navbar-avatar" aria-hidden="true">{(profile?.displayName ?? 'H').trim().split(/\s+/).slice(-1)[0]?.slice(0, 1)}</span>
+                <span className="navbar-account__name">{profile?.displayName ?? 'Hồ sơ'}</span><span aria-hidden="true">⌄</span>
+              </summary>
+              <div className="navbar-account__panel">
+                <Link to={mapSectionUrl('profile')}>Hồ sơ của bạn</Link>
+                <Link to="/referrals">Mời bạn & voucher</Link>
+                <button type="button" onClick={handleLogout}>Đăng xuất</button>
+              </div>
+            </details>
           ) : (
             <>
               <Link to="/login" className="btn btn-ghost">
@@ -82,6 +105,7 @@ export function Navbar() {
         </div>
 
         {isAuthenticated ? <SellerOrderAlertsSlot /> : null}
+        <ThemeSwitch />
         <button
           type="button"
           className={`navbar-menu-btn${menuOpen ? ' is-open' : ''}`}
@@ -107,7 +131,7 @@ export function Navbar() {
             <nav className="navbar-drawer__nav">
               {isAuthenticated ? (
                 <>
-                  <NavLink to="/" end onClick={closeMenu}>
+                  <NavLink to="/" onClick={closeMenu}>
                     Tìm phòng
                   </NavLink>
                   <NavLink to={mapSectionUrl('saved')} onClick={closeMenu}>
@@ -122,6 +146,7 @@ export function Navbar() {
                   <NavLink to={mapSectionUrl('payments')} onClick={closeMenu}>
                     Thanh toán
                   </NavLink>
+                  <NavLink to="/referrals" onClick={closeMenu}>Mời bạn & voucher</NavLink>
                   {profile?.role === UserRole.Landlord && (
                     <NavLink to="/posts/new" onClick={closeMenu}>
                       Đăng tin
