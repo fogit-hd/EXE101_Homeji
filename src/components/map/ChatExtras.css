@@ -1,0 +1,35 @@
+.chat-premium{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #c99e45;border-radius:999px;background:linear-gradient(110deg,#fff5d8,#f8e3ac);color:#765016;font-size:10px;font-weight:800;white-space:nowrap;vertical-align:middle}
+.map-messages__row.is-premium{box-shadow:inset 3px 0 #c99e45;background:linear-gradient(100deg,#c99e4515,transparent)}
+.map-messages .map-messages__row.is-premium .map-messages__avatar{outline:2px solid #c99e45;outline-offset:2px}
+.map-messages .map-messages__meta-top>.chat-premium{flex-shrink:0;margin-left:4px}
+.map-messages__thread-head.is-premium{border-top:2px solid #c99e45;background:linear-gradient(100deg,#c99e4512,transparent)}
+.chat-profile-link{border:0;background:none;padding:0;color:inherit;cursor:pointer;text-align:left;min-width:0}
+.chat-profile-link:focus-visible{outline:2px solid var(--color-primary,#087e8b);outline-offset:4px}
+.chat-media{display:flex;align-items:center;gap:3px;position:relative;flex-shrink:0}
+.chat-media button{border:0;background:var(--surface-muted,#eef5f3);color:var(--text-primary,#16464b);border-radius:10px;min-width:30px;min-height:34px;cursor:pointer;font-weight:700}
+.chat-media button:disabled{opacity:.5;cursor:wait}
+.chat-media__picker{position:absolute;bottom:calc(100% + 18px);left:0;width:min(320px,calc(100vw - 64px));max-height:380px;overflow:auto;z-index:20;border:1px solid var(--border-color,#d4e2df);background:var(--surface,#fff);color:var(--text-primary,#16464b);border-radius:18px;padding:12px;box-shadow:0 12px 44px #123b3729}
+.chat-media__picker header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.chat-media__picker input{width:100%;box-sizing:border-box;border:1px solid #b6ccca;border-radius:9px;padding:9px;background:transparent;color:inherit}
+.chat-media__emojis{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.chat-media__emojis button{font-size:24px;padding:5px;background:transparent}
+.chat-media__gifs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.chat-media__gifs img{width:100%;height:100px;object-fit:cover;border-radius:8px}
+.chat-media__picker a{font-size:11px;color:inherit}
+.chat-gif{max-width:220px;width:100%;border-radius:12px;display:block}
+.chat-gif-credit{display:block;font-size:10px;color:inherit;margin-top:4px}
+.chat-profile{position:fixed;inset:0;margin:auto;width:min(360px,calc(100vw - 40px));box-sizing:border-box;border:1px solid var(--border-color,#d5e4df);border-radius:24px;padding:36px 24px;text-align:center;background:var(--surface,#fff);color:var(--text-primary,#16464b);box-shadow:0 20px 80px #0003}
+.chat-profile::backdrop{background:#062d3877;backdrop-filter:blur(5px)}
+.chat-profile.is-premium{border:2px solid #c99e45;background:linear-gradient(150deg,#c99e4525,transparent 60%),var(--surface,#fff)}
+.chat-profile__close{position:absolute;right:12px;top:10px;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer}
+.chat-profile__avatar{height:80px;width:80px;margin:0 auto 16px;display:grid;place-items:center;background:#e2efed;border-radius:50%;font-size:27px;color:#086b75;overflow:hidden}
+.chat-profile__avatar img{width:100%;height:100%;object-fit:cover}
+.chat-profile p{font-size:14px}.chat-profile small{font-size:12px;opacity:.8}
+@media(max-width:600px){.chat-media__picker{left:-45px}.chat-media{gap:1px}.chat-media button{min-width:27px;padding:3px}.chat-gif{max-width:180px}}
+@media(max-width:600px){
+  .map-messages.map-messages .map-messages__composer{display:grid;grid-template-columns:36px minmax(0,1fr) 40px;gap:6px}
+  .map-messages.map-messages .map-messages__composer>.map-messages__attach-btn{grid-column:1;grid-row:1;width:34px;height:34px}
+  .map-messages.map-messages .map-messages__composer>.chat-media{grid-column:2/4;grid-row:1;justify-self:start}
+  .map-messages.map-messages .map-messages__composer>textarea{grid-column:1/3;grid-row:2;box-sizing:border-box;min-width:0;width:100%;height:54px;min-height:54px}
+  .map-messages.map-messages .map-messages__composer>.map-messages__send{grid-column:3;grid-row:2}
+}

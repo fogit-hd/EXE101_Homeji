@@ -528,6 +528,7 @@ export interface PostConversation {
   otherParticipantId: string
   otherParticipantName: string
   otherParticipantAvatarPath: string | null
+  otherParticipantIsPremium?: boolean
   createdAt: string
   updatedAt: string
   lastMessage: string | null

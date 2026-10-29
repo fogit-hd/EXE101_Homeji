@@ -1,4 +1,5 @@
 import { SellerOrderAlertsProvider } from '../marketplace/SellerOrderAlerts'
+import { VoiceCallProvider } from '../../contexts/VoiceCallContext'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { Suspense, useLayoutEffect } from 'react'
 import { useAnimate } from 'motion/react'
@@ -51,7 +52,7 @@ export function AppLayout() {
   }, [destination, isMapPeer, animateOutlet, outletRef])
 
   return (
-    <SellerOrderAlertsProvider enabled={isAuthenticated && !isAuthCinema}>
+    <VoiceCallProvider><SellerOrderAlertsProvider enabled={isAuthenticated && !isAuthCinema}>
     <div
       className={[
         'app-shell',
@@ -84,6 +85,6 @@ export function AppLayout() {
       </main>
       <SiteFooter compact={isMapPeer || isMessagesWorkspace} />
     </div>
-    </SellerOrderAlertsProvider>
+    </SellerOrderAlertsProvider></VoiceCallProvider>
   )
 }

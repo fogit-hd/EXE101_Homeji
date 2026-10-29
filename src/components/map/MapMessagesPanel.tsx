@@ -38,7 +38,11 @@ import { LiquidTabList } from '../ui/LiquidTabList'
 import { AddressAutocomplete, type PlaceResult } from './AddressAutocomplete'
 import { useAuth } from '../../contexts/AuthContext'
 import { RentalMessageDraftNotice } from './RentalMessageDraftNotice'
+import { ChatGifMessage, ChatMediaPicker, PremiumBadge, PublicProfile } from './ChatExtras'
+import { parseChatGif } from '../../lib/chatGif'
+import { useVoiceCalls } from '../../contexts/voice-call'
 import './MapMessagesPanel.css'
+import './ChatExtras.css'
 
 type InboxFilter = 'all' | 'unread' | 'rental'
 
@@ -204,6 +208,8 @@ function highlightText(text: string, query: string): ReactNode {
 }
 
 function messageSearchText(body: string): string {
+  const gif = parseChatGif(body)
+  if (gif) return 'GIF'
   const loc = parseChatLocation(body)
   if (!loc) return body
   return [loc.title, loc.address, loc.kind].filter(Boolean).join(' ')
@@ -216,7 +222,7 @@ function conversationPreview(
 ): { text: string; muted: boolean } {
   if (!body?.trim()) return { text: 'Bắt đầu trò chuyện', muted: true }
   const loc = parseChatLocation(body)
-  const text = loc ? '📍 Đã gửi một vị trí' : body.trim()
+  const text = loc ? '📍 Đã gửi một vị trí' : parseChatGif(body) ? 'Đã gửi một GIF' : body.trim()
   if (myId && senderId && senderId === myId) return { text: `Bạn: ${text}`, muted: false }
   return { text, muted: false }
 }
@@ -421,6 +427,9 @@ export function MapMessagesPanel({
   /** FeatureWorkspace page (not map dock): split inbox | thread. */
   const isWorkspace = embedded && !isFloating
   const { profile } = useAuth()
+  const voice = useVoiceCalls()
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const composerRef = useRef<HTMLTextAreaElement>(null)
 
   const [conversations, setConversations] = useState<PostConversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
@@ -921,7 +930,7 @@ export function MapMessagesPanel({
                 type="button"
                 data-glass-exclude=""
                 aria-current={activeId === c.id ? 'true' : undefined}
-                className={`map-messages__row${activeId === c.id ? ' is-active' : ''}${
+                className={`map-messages__row${c.otherParticipantIsPremium ? ' is-premium' : ''}${activeId === c.id ? ' is-active' : ''}${
                   (c.unreadCount ?? 0) > 0 ? ' is-unread' : ''
                 }`}
                 onClick={() => openThread(c.id)}
@@ -930,6 +939,7 @@ export function MapMessagesPanel({
                 <span className="map-messages__meta">
                   <span className="map-messages__meta-top">
                     <strong title={c.otherParticipantName || 'Người dùng'}>{c.otherParticipantName || 'Người dùng'}</strong>
+                    {c.otherParticipantIsPremium && <PremiumBadge compact />}
                     <time className="map-messages__time" dateTime={c.updatedAt}>
                       {relativeTime(c.updatedAt)}
                     </time>
@@ -969,16 +979,16 @@ export function MapMessagesPanel({
           </div>
         ) : (
           <>
-        <header className="map-messages__thread-head">
+        <header className={`map-messages__thread-head${active?.otherParticipantIsPremium ? ' is-premium' : ''}`}>
           {isFloatingThread ? null : (
             <button type="button" className="map-messages__back map-motion-press" onClick={closeThread} aria-label="Quay lại hộp thư">
               <svg viewBox="0 0 24 24" aria-hidden><path d="m15 6-6 6 6 6" /></svg>
             </button>
           )}
-          <Avatar name={peerName} seed={active?.otherParticipantId || activeId || peerName} small />
+          <button type="button" className="chat-profile-link" aria-label={`Xem hồ sơ ${peerName}`} disabled={!active} onClick={() => active && setProfileId(active.otherParticipantId)}><Avatar name={peerName} seed={active?.otherParticipantId || activeId || peerName} small /></button>
           <div className="map-messages__thread-titles">
             <strong className="map-messages__peer-name" title={peerName}>
-              {peerName}
+              <button type="button" className="chat-profile-link" onClick={() => active && setProfileId(active.otherParticipantId)}>{peerName}</button> {active?.otherParticipantIsPremium && <PremiumBadge />}
             </strong>
             {active && subjectTag[active.subjectType] ? (
               <small className="map-messages__peer-sub">{subjectTag[active.subjectType].label}</small>
@@ -1025,6 +1035,12 @@ export function MapMessagesPanel({
           ) : null}
 
           <div className="map-messages__thread-actions">
+            <button type="button" className="map-messages__icon-btn" aria-label={`Gọi thoại cho ${peerName}`} title="Gọi thoại" disabled={!active || voice.busy || !voice.ready} onClick={() => active && voice.startCall(active.id, peerName)}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 1-1 2-2 2C10 21 3 14 3 5c0-1 1-2 2-2Z" /></svg>
+            </button>
+            <button type="button" className="map-messages__icon-btn" aria-label={`Mở hồ sơ ${peerName}`} title="Xem hồ sơ" disabled={!active} onClick={() => active && setProfileId(active.otherParticipantId)}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></svg>
+            </button>
             <button
               ref={searchToggleRef}
               type="button"
@@ -1109,6 +1125,7 @@ export function MapMessagesPanel({
           {messages.map((m, idx) => {
             const mine = me != null && m.senderId === me
             const location = parseChatLocation(m.body)
+            const gif = parseChatGif(m.body)
             const isHit = matchedIds.includes(m.id)
             const isCurrent =
               isHit && matchedIds[Math.min(matchIndex, matchedIds.length - 1)] === m.id
@@ -1119,7 +1136,7 @@ export function MapMessagesPanel({
             const joinsPrev = !newDay && prev?.senderId === m.senderId && t - new Date(prev.sentAt).getTime() < GROUP_GAP_MS
             const nextNewDay = !next || startOfDay(new Date(next.sentAt)) !== startOfDay(new Date(m.sentAt))
             const joinsNext = !nextNewDay && next?.senderId === m.senderId && new Date(next.sentAt).getTime() - t < GROUP_GAP_MS
-            const hasText = !location && m.body.trim().length > 0
+            const hasText = !location && !gif && m.body.trim().length > 0
             return (
               <Fragment key={m.id}>
               {newDay ? <div className="map-messages__day" role="separator">{dayLabel(m.sentAt)}</div> : null}
@@ -1139,6 +1156,7 @@ export function MapMessagesPanel({
                   <span className="map-messages__bubble-avatar"><Avatar name={peerName} seed={m.senderId} small /></span>
                 ) : null}
                 <div className="map-messages__bubble-body">
+                {gif && <ChatGifMessage key={gif.id} id={gif.id} />}
                 {m.attachments?.length ? (
                   <div className="map-messages__images">
                     {m.attachments.map((attachment) => (
@@ -1364,7 +1382,18 @@ export function MapMessagesPanel({
             >
               <svg viewBox="0 0 24 24" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
+            {activeId && <ChatMediaPicker key={activeId} conversationId={activeId} disabled={sending || imageFiles.length > 0}
+              onEmoji={emoji => {
+                const input = composerRef.current
+                const start = input?.selectionStart ?? draft.length, end = input?.selectionEnd ?? draft.length
+                const next = draft.slice(0, start) + emoji + draft.slice(end)
+                if (next.length > 2000) return
+                setDraft(next)
+                requestAnimationFrame(() => { input?.focus(); input?.setSelectionRange(start + emoji.length, start + emoji.length) })
+              }}
+              onSent={message => { setMessages(previous => [...previous, message]); void loadConversations({ soft: true }) }} onError={setError} />}
             <textarea
+              ref={composerRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               rows={2}
@@ -1396,6 +1425,7 @@ export function MapMessagesPanel({
       </div>
       ) : null}
       </div>
+      {profileId && <PublicProfile key={profileId} userId={profileId} onClose={() => setProfileId(null)} />}
     </div>
   )
 }
