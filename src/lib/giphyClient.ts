@@ -2,11 +2,12 @@ import { apiRequest } from '../api/client'
 import type { ResolvedChatGif } from './chatGif'
 
 export function readGiphyItem(data: unknown): ResolvedChatGif {
-  const item = data as { id?: unknown; title?: unknown; rating?: unknown; images?: { fixed_height?: { url?: unknown } } }
+  const item = data as { id?: unknown; title?: unknown; rating?: unknown; username?: unknown; user?: { display_name?: unknown }; images?: { fixed_height?: { url?: unknown } } }
   if (!item || typeof item.id !== 'string' || !/^[a-zA-Z0-9]{1,80}$/.test(item.id) || item.rating !== 'g' || typeof item.title !== 'string' || typeof item.images?.fixed_height?.url !== 'string') throw new Error('GIF này không còn khả dụng.')
   const uri = new URL(item.images.fixed_height.url)
   if (uri.protocol !== 'https:' || !/^media\d*\.giphy\.com$/.test(uri.hostname) || uri.username || uri.password || uri.port) throw new Error('Đường dẫn GIF không hợp lệ.')
-  return { id: item.id, title: item.title, url: item.images.fixed_height.url }
+  const author = item.user?.display_name || item.username
+  return { id: item.id, title: item.title, url: item.images.fixed_height.url, creator: typeof author === 'string' ? author.slice(0, 80) : undefined }
 }
 
 async function request(path: string, params: URLSearchParams, signal: AbortSignal): Promise<{ data: unknown }> {

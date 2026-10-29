@@ -1,3 +1,4 @@
+import { VoiceMessageRecorder } from './VoiceMessageRecorder'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { AnimatePresence, motion } from 'motion/react'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -92,7 +93,7 @@ const attachmentContextLabel: Record<number, string> = {
   [MessageAttachmentContext.ExistingDamage]: 'Hư hỏng hiện hữu',
 }
 
-function SecureMessageImage({
+function SecureMessageAttachment({
   attachment,
   conversationId,
   messageId,
@@ -131,22 +132,22 @@ function SecureMessageImage({
   }, [attachment.contentPath, attachment.status])
 
   if (attachment.status === MessageAttachmentStatus.Deleted) {
-    return <span className="map-messages__image-deleted">Ảnh đã được người gửi xóa</span>
+    return <span className="map-messages__image-deleted">Tệp đã được người gửi xóa</span>
   }
 
   return (
     <figure className="map-messages__image">
-      {src ? (
+      {src && attachment.mimeType === 'audio/wav' ? <audio className="chat-voice-message" controls preload="metadata" src={src} aria-label="Tin nhắn thoại" /> : src ? (
         <button type="button" onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}>
           <img src={src} alt={attachmentContextLabel[attachment.context] ?? 'Ảnh trong tin nhắn'} />
         </button>
       ) : (
         <span className="map-messages__image-loading">
-          {loadFailed ? 'Không tải được ảnh' : 'Đang tải ảnh…'}
+          {loadFailed ? 'Không tải được tệp' : 'Đang tải…'}
         </span>
       )}
       <figcaption>
-        {attachmentContextLabel[attachment.context] ?? 'Ảnh khác'}
+        {attachment.mimeType === 'audio/wav' ? '🎙 Tin nhắn thoại' : attachmentContextLabel[attachment.context] ?? 'Ảnh khác'}
         {mine ? (
           <button
             type="button"
@@ -161,7 +162,7 @@ function SecureMessageImage({
                 )
                 onDeleted()
               } catch (error) {
-                onError(getErrorMessage(error, 'Không xóa được ảnh'))
+                onError(getErrorMessage(error, 'Không xóa được tệp'))
               } finally {
                 setDeleting(false)
               }
@@ -282,8 +283,8 @@ const clock = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour:
 const GROUP_GAP_MS = 5 * 60_000
 
 const subjectTag: Record<number, { label: string; tone: string }> = {
-  [ConversationSubjectType.RentalPost]: { label: 'Phòng thuê', tone: 'room' },
-  [ConversationSubjectType.MarketplacePost]: { label: 'Chợ đồ', tone: 'market' },
+  [ConversationSubjectType.RentalPost]: { label: '⌂ Phòng thuê', tone: 'room' },
+  [ConversationSubjectType.MarketplacePost]: { label: '▣ Chợ đồ', tone: 'market' },
   [ConversationSubjectType.WantedPost]: { label: 'Tin cần tìm', tone: 'wanted' },
 }
 
@@ -939,7 +940,6 @@ export function MapMessagesPanel({
                 <span className="map-messages__meta">
                   <span className="map-messages__meta-top">
                     <strong title={c.otherParticipantName || 'Người dùng'}>{c.otherParticipantName || 'Người dùng'}</strong>
-                    {c.otherParticipantIsPremium && <PremiumBadge compact />}
                     <time className="map-messages__time" dateTime={c.updatedAt}>
                       {relativeTime(c.updatedAt)}
                     </time>
@@ -955,9 +955,10 @@ export function MapMessagesPanel({
                       </span>
                     ) : null}
                   </span>
-                  {subjectTag[c.subjectType] ? (
-                    <span className={`map-messages__tag is-${subjectTag[c.subjectType].tone}`}>{subjectTag[c.subjectType].label}</span>
-                  ) : null}
+                  <span className="chat-conversation-labels">
+                    {subjectTag[c.subjectType] && <span className={`map-messages__tag is-${subjectTag[c.subjectType].tone}`}>{subjectTag[c.subjectType].label}</span>}
+                    {c.otherParticipantIsPremium && <PremiumBadge />}
+                  </span>
                 </span>
               </button>
             </li>
@@ -1136,7 +1137,7 @@ export function MapMessagesPanel({
             const joinsPrev = !newDay && prev?.senderId === m.senderId && t - new Date(prev.sentAt).getTime() < GROUP_GAP_MS
             const nextNewDay = !next || startOfDay(new Date(next.sentAt)) !== startOfDay(new Date(m.sentAt))
             const joinsNext = !nextNewDay && next?.senderId === m.senderId && new Date(next.sentAt).getTime() - t < GROUP_GAP_MS
-            const hasText = !location && !gif && m.body.trim().length > 0
+            const hasText = !location && !gif && !m.attachments?.some(a => a.mimeType === 'audio/wav') && m.body.trim().length > 0
             return (
               <Fragment key={m.id}>
               {newDay ? <div className="map-messages__day" role="separator">{dayLabel(m.sentAt)}</div> : null}
@@ -1160,7 +1161,7 @@ export function MapMessagesPanel({
                 {m.attachments?.length ? (
                   <div className="map-messages__images">
                     {m.attachments.map((attachment) => (
-                      <SecureMessageImage
+                      <SecureMessageAttachment
                         key={attachment.id}
                         attachment={attachment}
                         conversationId={m.conversationId}
@@ -1391,6 +1392,8 @@ export function MapMessagesPanel({
                 setDraft(next)
                 requestAnimationFrame(() => { input?.focus(); input?.setSelectionRange(start + emoji.length, start + emoji.length) })
               }}
+              onSent={message => { setMessages(previous => [...previous, message]); void loadConversations({ soft: true }) }} onError={setError} />}
+            {activeId && <VoiceMessageRecorder key={`voice-${activeId}-${voice.busy}`} conversationId={activeId} disabled={sending || imageFiles.length > 0}
               onSent={message => { setMessages(previous => [...previous, message]); void loadConversations({ soft: true }) }} onError={setError} />}
             <textarea
               ref={composerRef}

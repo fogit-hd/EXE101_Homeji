@@ -1,3 +1,4 @@
+import { CallTone } from '../lib/callTone'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { VoiceCalls } from './voice-call'
 import { HubConnectionBuilder, HubConnectionState, LogLevel, type HubConnection } from '@microsoft/signalr'
@@ -20,6 +21,7 @@ export function VoiceCallProvider({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState('')
   const [elapsed, setElapsed] = useState(0)
   const [audioBlocked, setAudioBlocked] = useState(false)
+  const tone = useRef<CallTone | null>(null)
   const hub = useRef<HubConnection | null>(null)
   const current = useRef<Call | null>(null)
   const peer = useRef<RTCPeerConnection | null>(null)
@@ -32,6 +34,7 @@ export function VoiceCallProvider({ children }: { children: ReactNode }) {
 
   const update = useCallback((value: Call | null) => { current.current = value; setCall(value) }, [])
   const reset = useCallback(() => {
+    tone.current?.stop()
     generation.current++
     if (timer.current) clearTimeout(timer.current)
     timer.current = null
@@ -165,9 +168,29 @@ export function VoiceCallProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval)
   }, [call?.phase])
 
+  useEffect(() => {
+    if (call?.phase === 'ringing') { tone.current ??= new CallTone(); tone.current.start(call.incoming) }
+    else tone.current?.stop()
+    return () => tone.current?.stop()
+  }, [call?.id, call?.phase, call?.incoming])
+  useEffect(() => {
+    if (!ownerId) return
+    // Browsers allow incoming ringtones only after a user gesture on this page.
+    const unlock = () => { tone.current ??= new CallTone(); tone.current.unlock() }
+    window.addEventListener('pointerdown', unlock, { once: true, capture: true })
+    window.addEventListener('keydown', unlock, { once: true, capture: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock, true)
+      window.removeEventListener('keydown', unlock, true)
+      tone.current?.close(); tone.current = null
+    }
+  }, [ownerId])
+  useEffect(() => () => { tone.current?.close(); tone.current = null }, [])
+
   async function startCall(conversationId: string, name: string) {
     if (locked.current) return
     if (hub.current?.state !== HubConnectionState.Connected) { setNotice('Đang kết nối dịch vụ gọi thoại. Vui lòng thử lại sau ít giây.'); return }
+    tone.current ??= new CallTone(); tone.current.unlock()
     locked.current = true; setBusy(true); setNotice('Đang chuẩn bị micro…')
     const version = ++generation.current
     const connection = hub.current

@@ -1,5 +1,5 @@
 export type ChatGif = { id: string }
-export type ResolvedChatGif = ChatGif & { title: string; url: string }
+export type ResolvedChatGif = ChatGif & { title: string; url: string; creator?: string }
 const prefix = 'homeji:gif:v1:'
 export function parseChatGif(body: string): ChatGif | null {
   if (!body.startsWith(prefix) || body.length > 2000) return null

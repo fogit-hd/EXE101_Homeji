@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { chatEmojiGroups } from '../../lib/chatEmojis'
 import { apiRequest } from '../../api/client'
 import type { PostMessage } from '../../api'
 import type { ResolvedChatGif } from '../../lib/chatGif'
@@ -6,7 +7,7 @@ import { resolveChatGif, searchChatGifs } from '../../lib/giphyClient'
 import { getErrorMessage } from '../../lib/errors'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 
-export function PremiumBadge({ compact = false }: { compact?: boolean }) { return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium">{compact ? '✦' : '✦ Premium'}</span> }
+export function PremiumBadge({ compact = false }: { compact?: boolean }) { return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium"><span aria-hidden>♛</span><span>{compact ? 'PRO' : 'Premium'}</span></span> }
 
 export function PublicProfile({ userId, onClose }: { userId: string; onClose: () => void }) {
   const [profile, setProfile] = useState<{ id: string; displayName: string; avatarPath: string | null; createdAt: string; isPremium: boolean } | null>(null)
@@ -33,8 +34,6 @@ export function PublicProfile({ userId, onClose }: { userId: string; onClose: ()
   </dialog>
 }
 
-const emojis = ['😀', '😊', '😂', '🥰', '😍', '😎', '🥳', '🤔', '😢', '🙏', '👍', '👎', '❤️', '🔥', '🎉', '✅', '🏠', '📍', '👋', '🤝', '💯', '✨', '☕', '🍜']
-
 export function ChatGifMessage({ id }: { id: string }) {
   const [gif, setGif] = useState<ResolvedChatGif | null>(null)
   const [error, setError] = useState('')
@@ -46,13 +45,14 @@ export function ChatGifMessage({ id }: { id: string }) {
     return () => controller.abort()
   }, [id])
   return <div>{gif ? <img className="chat-gif" src={gif.url} alt={gif.title || 'GIF'} loading="lazy" referrerPolicy="no-referrer" /> : <span role="status">{error || 'Đang tải GIF…'}</span>}
-    {gif && <a className="chat-gif-credit" href={`https://giphy.com/gifs/${id}`} target="_blank" rel="noopener noreferrer">GIPHY · {gif.title || 'GIF'}</a>}
+    {gif && <small className="chat-gif-credit">{gif.creator ? `${gif.creator} · ` : ''}Powered by GIPHY</small>}
   </div>
 }
 
 export function ChatMediaPicker({ conversationId, disabled, onEmoji, onSent, onError }: {
   conversationId: string; disabled: boolean; onEmoji: (emoji: string) => void; onSent: (message: PostMessage) => void; onError: (error: string) => void
 }) {
+  const [emojiGroup, setEmojiGroup] = useState(0)
   const [mode, setMode] = useState<'emoji' | 'gif' | null>(null)
   const [query, setQuery] = useState('')
   const [gifs, setGifs] = useState<ResolvedChatGif[]>([])
@@ -92,10 +92,10 @@ export function ChatMediaPicker({ conversationId, disabled, onEmoji, onSent, onE
     <button type="button" disabled={disabled} aria-label="Chọn GIF" aria-expanded={mode === 'gif'} onClick={() => setMode(mode === 'gif' ? null : 'gif')}>GIF</button>
     {mode && <section className="chat-media__picker" role="dialog" aria-label={mode === 'emoji' ? 'Emoji' : 'GIF'}>
       <header><strong>{mode === 'emoji' ? 'Thêm cảm xúc' : 'Tìm GIF'}</strong><button type="button" onClick={() => setMode(null)} aria-label="Đóng bộ chọn">✕</button></header>
-      {mode === 'emoji' ? <div className="chat-media__emojis">{emojis.map(emoji => <button type="button" key={emoji} aria-label={emoji} onClick={() => onEmoji(emoji)}>{emoji}</button>)}</div> : <>
+      {mode === 'emoji' ? <><nav className="chat-media__categories" aria-label="Nhóm emoji">{chatEmojiGroups.map((group, index) => <button type="button" key={group.name} aria-label={group.name} aria-pressed={index === emojiGroup} onClick={() => setEmojiGroup(index)}>{group.icon}</button>)}</nav><p className="chat-media__group-name">{chatEmojiGroups[emojiGroup].name} · {chatEmojiGroups[emojiGroup].emojis.length} emoji</p><div className="chat-media__emojis">{chatEmojiGroups[emojiGroup].emojis.map(emoji => <button type="button" key={emoji} aria-label={emoji} onClick={() => onEmoji(emoji)}>{emoji}</button>)}</div></> : <>
         <input autoFocus value={query} onChange={e => setQuery(e.target.value)} maxLength={50} aria-label="Tìm GIF" placeholder="Tìm cảm xúc, lời chào…" />
         {loading ? <p role="status">Đang tìm GIF…</p> : error ? <p role="alert">{error}</p> : <div className="chat-media__gifs">{gifs.map(gif => <button type="button" key={gif.id} disabled={sending} onClick={() => void send(gif)} aria-label={`Gửi GIF: ${gif.title}`}><img src={gif.url} alt={gif.title} loading="lazy" referrerPolicy="no-referrer" /></button>)}{!gifs.length && <p>Chưa có GIF phù hợp.</p>}</div>}
-        <a href="https://giphy.com" target="_blank" rel="noopener noreferrer">Powered by GIPHY</a>
+        <small className="chat-gif-credit">Powered by GIPHY</small>
       </>}
     </section>}
   </div>

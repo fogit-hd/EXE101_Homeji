@@ -1593,12 +1593,12 @@ html:root #root .map-messages .map-messages__row .map-messages__preview {
 html:root #root .map-messages .map-messages__row.is-unread .map-messages__meta-top strong,
 html:root #root .map-messages .map-messages__row.is-unread .map-messages__preview { color: var(--text-heading); font-weight: 700; }
 html:root #root .map-messages .map-messages__row .map-messages__tag {
-  padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent;
-  color: var(--text-secondary); font: 500 10px/1.4 var(--font-ui); letter-spacing: .035em;
-  gap: 5px;
+  padding: 3px 7px; margin: 0; border: 1px solid color-mix(in srgb,var(--hj-accent) 25%,transparent); border-radius: 7px;
+  background: color-mix(in srgb,var(--hj-accent) 13%,var(--surface-elevated));
+  color: var(--text-heading); font: 700 11px/1.4 var(--font-ui); letter-spacing: 0; gap: 5px;
 }
 html:root #root .map-messages .map-messages__row .map-messages__tag::before {
-  content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--hj-accent);
+  display: none;
 }
 html:root #root .map-messages .map-messages__row .map-messages__unread-badge {
   background: var(--hj-accent); color: #fff; min-width: 18px; height: 18px;
@@ -1642,3 +1642,11 @@ html:root #root .map-messages .map-messages__row .map-messages__unread-badge {
   cursor: pointer;
 }
 .map-messages__draft-notice button:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
+
+html:root #root .map-messages .map-messages__row .map-messages__tag.is-market {
+  background: color-mix(in srgb,#e6a33d 17%,var(--surface-elevated));
+  border-color: #c58a3950; color: var(--text-heading);
+}
+html:root #root .map-messages .map-messages__row .map-messages__tag.is-wanted {
+  background: color-mix(in srgb,#9771d0 16%,var(--surface-elevated)); border-color: #9771d050;
+}

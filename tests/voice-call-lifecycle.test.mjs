@@ -27,6 +27,8 @@ let source = await readFile(new URL('../src/contexts/VoiceCallContext.tsx', impo
 source = source.replace("import './VoiceCallContext.css'", '')
 for (const name of ['@microsoft/signalr', '../api/client', '../api/sessionRefresh', './AuthContext', '../lib/errors']) source = source.replaceAll(`'${name}'`, JSON.stringify(mocksUrl))
 source = source.replace("'./voice-call'", JSON.stringify(contextUrl))
+const toneSource = await readFile(new URL('../src/lib/callTone.ts', import.meta.url), 'utf8')
+source = source.replace("'../lib/callTone'", JSON.stringify(url(compile(toneSource))))
 const { VoiceCallProvider } = await import(url(reactImports(compile(source))))
 const { useVoiceCalls } = await import(contextUrl)
 

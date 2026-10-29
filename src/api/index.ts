@@ -280,6 +280,12 @@ export const sendConversationImages = (
   return apiUpload<PostMessage>(`/api/conversations/${conversationId}/messages/images`, form)
 }
 
+export const sendConversationVoice = (conversationId: string, recording: Blob) => {
+  const form = new FormData()
+  form.append('file', recording, 'homeji-voice.wav')
+  return apiUpload<PostMessage>(`/api/conversations/${encodeURIComponent(conversationId)}/messages/voice`, form)
+}
+
 export const downloadConversationAttachment = (contentPath: string) => apiDownload(contentPath)
 
 export const deleteConversationAttachment = (
