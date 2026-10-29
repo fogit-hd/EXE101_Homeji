@@ -7,7 +7,14 @@ import { resolveChatGif, searchChatGifs } from '../../lib/giphyClient'
 import { getErrorMessage } from '../../lib/errors'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 
-export function PremiumBadge({ compact = false }: { compact?: boolean }) { return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium"><span aria-hidden>♛</span><span>{compact ? 'PRO' : 'Premium'}</span></span> }
+export function PremiumBadge({ compact = false }: { compact?: boolean }) {
+  return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium">
+    <span className="chat-premium__crown" aria-hidden>♛</span><span>{compact ? 'PRO' : 'Premium'}</span>
+    <span className="chat-premium__stars" aria-hidden>{[0, 1, 2].map(star => <span className="chat-premium__star" key={star}>
+      {[0, 1, 2, 3].map(frame => <i className="chat-premium__frame" key={frame} />)}
+    </span>)}</span>
+  </span>
+}
 
 export function PublicProfile({ userId, onClose }: { userId: string; onClose: () => void }) {
   const [profile, setProfile] = useState<{ id: string; displayName: string; avatarPath: string | null; createdAt: string; isPremium: boolean } | null>(null)
