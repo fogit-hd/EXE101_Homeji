@@ -18,7 +18,7 @@ source = source.replace("'../../lib/voiceRecording'", JSON.stringify(dataUrl(com
 source = compile(source).replaceAll("'react'", JSON.stringify(pathToFileURL(require.resolve('react')).href)).replaceAll('"react/jsx-runtime"', JSON.stringify(pathToFileURL(require.resolve('react/jsx-runtime')).href))
 const { VoiceMessageRecorder } = await import(dataUrl(source))
 
-async function fixture(media, send = async () => ({ id: 'sent' })) {
+async function fixture(media, send = async () => ({ id: 'sent' }), addModule = async () => {}) {
   const dom = new JSDOM('<div id="root"></div>')
   globalThis.window = dom.window; globalThis.document = dom.window.document; globalThis.IS_REACT_ACT_ENVIRONMENT = true
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { mediaDevices: { getUserMedia: media } } })
@@ -26,7 +26,7 @@ async function fixture(media, send = async () => ({ id: 'sent' })) {
   globalThis.__recorder = { send }
   globalThis.AudioContext = class {
     state = 'running'
-    constructor() { contexts.push(this); this.audioWorklet = { addModule: async () => {} } }
+    constructor() { contexts.push(this); this.audioWorklet = { addModule } }
     async resume() {}
     async close() { this.state = 'closed' }
     createMediaStreamSource() { return { connect() {}, disconnect() {} } }
@@ -53,6 +53,15 @@ test('cancel while permission is pending closes audio context and stops a late m
     assert.equal(f.contexts[0].state, 'closed')
     await act(async () => resolve(mic.stream))
     assert.equal(mic.track.stopped, true); assert.equal(f.nodes.length, 0)
+  } finally { await f.close() }
+})
+
+test('cancel while the worklet script is loading releases the microphone immediately', async () => {
+  let resolve; const mic = local(), f = await fixture(async () => mic.stream, undefined, () => new Promise(done => { resolve = done }))
+  try {
+    await f.click('Ghi âm tin nhắn'); assert.equal(mic.track.stopped, false)
+    await f.click('Hủy'); assert.equal(mic.track.stopped, true)
+    await act(async () => resolve()); assert.equal(f.nodes.length, 0)
   } finally { await f.close() }
 })
 

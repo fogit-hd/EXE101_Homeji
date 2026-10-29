@@ -13,6 +13,7 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
   const [preview, setPreview] = useState('')
   const blob = useRef<Blob | null>(null)
   const pendingContext = useRef<AudioContext | null>(null)
+  const pendingStream = useRef<MediaStream | null>(null)
   const uploading = useRef(false)
   const resource = useRef<{ stream: MediaStream; context: AudioContext; source: MediaStreamAudioSourceNode; node: AudioWorkletNode } | null>(null)
   const chunks = useRef<Int16Array[]>([])
@@ -21,6 +22,7 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
   const url = useRef('')
   const samples = useRef(0)
   const release = useCallback(() => {
+    pendingStream.current?.getTracks().forEach(track => track.stop()); pendingStream.current = null
     const pending = pendingContext.current; pendingContext.current = null
     if (pending && pending.state !== 'closed') void pending.close().catch(() => {})
     const value = resource.current; resource.current = null
@@ -50,10 +52,11 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
       if (current !== version.current) return
       stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }, video: false })
       if (current !== version.current) { stream.getTracks().forEach(t => t.stop()); if (context.state !== 'closed') await context.close(); return }
+      pendingStream.current = stream
       await context.audioWorklet.addModule('/audio/voice-capture.js')
       if (current !== version.current) { stream.getTracks().forEach(t => t.stop()); if (context.state !== 'closed') await context.close(); return }
       const source = context.createMediaStreamSource(stream), node = new AudioWorkletNode(context, 'homeji-voice-capture', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1 })
-      pendingContext.current = null; resource.current = { stream, context, source, node }; chunks.current = []; samples.current = 0
+      pendingContext.current = null; pendingStream.current = null; resource.current = { stream, context, source, node }; chunks.current = []; samples.current = 0
       node.port.onmessage = event => {
         if (current !== version.current) return
         if (event.data.samples instanceof ArrayBuffer) {
