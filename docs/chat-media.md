@@ -1,6 +1,6 @@
 # Chat media and Premium presentation
 
-The emoji picker contains seven categorized Unicode collections, loaded locally without an external emoji service. GIF messages show concise plain-text provider/creator credit instead of a hyperlink and long title. The picker retains GIPHY attribution; GIF requests and image URLs remain direct to GIPHY.
+The emoji picker contains seven categorized Unicode collections, loaded locally without an external emoji service. GIF messages and the picker display no provider/creator attribution at the user's explicit request. This differs from GIPHY's attribution requirements. GIF requests and image URLs remain direct to GIPHY.
 
 Call waiting and incoming ringtones are synthesized locally with Web Audio. Ringing stops on acceptance, connection, cancellation, timeout and teardown. Browsers can block incoming sound before the first page interaction; outgoing calls unlock audio during the button gesture.
 

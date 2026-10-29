@@ -52,7 +52,6 @@ export function ChatGifMessage({ id }: { id: string }) {
     return () => controller.abort()
   }, [id])
   return <div>{gif ? <img className="chat-gif" src={gif.url} alt={gif.title || 'GIF'} loading="lazy" referrerPolicy="no-referrer" /> : <span role="status">{error || 'Đang tải GIF…'}</span>}
-    {gif && <small className="chat-gif-credit">{gif.creator ? `${gif.creator} · ` : ''}Powered by GIPHY</small>}
   </div>
 }
 
@@ -102,7 +101,6 @@ export function ChatMediaPicker({ conversationId, disabled, onEmoji, onSent, onE
       {mode === 'emoji' ? <><nav className="chat-media__categories" aria-label="Nhóm emoji">{chatEmojiGroups.map((group, index) => <button type="button" key={group.name} aria-label={group.name} aria-pressed={index === emojiGroup} onClick={() => setEmojiGroup(index)}>{group.icon}</button>)}</nav><p className="chat-media__group-name">{chatEmojiGroups[emojiGroup].name} · {chatEmojiGroups[emojiGroup].emojis.length} emoji</p><div className="chat-media__emojis">{chatEmojiGroups[emojiGroup].emojis.map(emoji => <button type="button" key={emoji} aria-label={emoji} onClick={() => onEmoji(emoji)}>{emoji}</button>)}</div></> : <>
         <input autoFocus value={query} onChange={e => setQuery(e.target.value)} maxLength={50} aria-label="Tìm GIF" placeholder="Tìm cảm xúc, lời chào…" />
         {loading ? <p role="status">Đang tìm GIF…</p> : error ? <p role="alert">{error}</p> : <div className="chat-media__gifs">{gifs.map(gif => <button type="button" key={gif.id} disabled={sending} onClick={() => void send(gif)} aria-label={`Gửi GIF: ${gif.title}`}><img src={gif.url} alt={gif.title} loading="lazy" referrerPolicy="no-referrer" /></button>)}{!gifs.length && <p>Chưa có GIF phù hợp.</p>}</div>}
-        <small className="chat-gif-credit">Powered by GIPHY</small>
       </>}
     </section>}
   </div>
