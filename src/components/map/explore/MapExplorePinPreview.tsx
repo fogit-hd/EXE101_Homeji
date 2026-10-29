@@ -1,3 +1,4 @@
+import { PremiumBadge } from '../../PremiumBadge'
 import { memo } from 'react'
 import type { RentalPostSummary } from '../../../api/types'
 import { shortListingAddress, shortListingTitle } from "../../MapListingCard.logic"
@@ -25,7 +26,7 @@ export const MapExplorePinPreview = memo(function MapExplorePinPreview({
   const addressLine = [address, meta].filter(Boolean).join(' · ')
 
   return (
-    <div className="map-explore-preview" role="dialog" aria-label="Chi tiết ghim">
+    <div className={`map-explore-preview${post.isOwnerPremium === true ? ' premium-listing' : ''}`} role="dialog" aria-label="Chi tiết ghim">
       <button
         type="button"
         className="map-explore-preview__hit"
@@ -40,6 +41,7 @@ export const MapExplorePinPreview = memo(function MapExplorePinPreview({
           )}
         </div>
         <div className="map-explore-preview__info">
+          {post.isOwnerPremium === true && <PremiumBadge />}
           {post.highlightTag ? (
             <span className="map-explore-preview__tag">{post.highlightTag}</span>
           ) : null}

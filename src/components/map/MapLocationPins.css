@@ -24,6 +24,7 @@
 }
 
 .map-price-pill__bubble {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -37,6 +38,13 @@
   box-shadow: 0 4px 10px rgba(24, 35, 29, 0.2);
   transition: transform 0.15s ease, background 0.15s ease;
 }
+
+/* Premium keeps the pin's coordinate, hit target and room/roommate color intact. */
+.map-price-pill.is-premium .map-price-pill__bubble{border:2px solid #e4b749;box-shadow:0 0 0 2px #fff5d459,0 4px 12px #7e581a40}
+:is(.map-rental-pin,.map-roommate-pin).is-premium :is(.map-rental-pin__graphic,.map-roommate-pin__graphic){position:relative}
+:is(.map-rental-pin,.map-roommate-pin).is-premium :is(.map-rental-pin__svg,.map-roommate-pin__svg){filter:drop-shadow(0 0 2px #ffd26a) drop-shadow(0 0 1px #a86b16)}
+:is(.map-rental-pin,.map-roommate-pin).is-premium .premium-stars{inset:0 -2px 30%}
+@media(forced-colors:active){.map-price-pill.is-premium .map-price-pill__bubble{border-color:Highlight}.premium-stars{display:none}}
 
 .map-price-pill.is-selected .map-price-pill__bubble {
   background: #e65c3a;

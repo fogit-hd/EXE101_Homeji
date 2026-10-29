@@ -129,7 +129,7 @@
   margin: 8px 0 0;
 }
 
-.map-detail-panel__owner-badges span {
+.map-detail-panel__owner-badges > span:not(.premium-badge) {
   padding: 3px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface-input, #f1f3f4) 76%, transparent);

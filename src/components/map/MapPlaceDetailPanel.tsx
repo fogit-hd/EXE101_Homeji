@@ -1,3 +1,4 @@
+import { PremiumBadge } from '../PremiumBadge'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { PhoneAction } from '../ui/PhoneAction'
 import { LiquidTabList } from '../ui/LiquidTabList'
@@ -588,10 +589,10 @@ export function MapPlaceDetailPanel({
   const ownerBadge =
     listing?.ownerBadge || listingSummary?.ownerBadge || null
   const isPremium =
-    listing?.isOwnerPremium || listingSummary?.isOwnerPremium || false
+    (listing ? listing.isOwnerPremium : listingSummary?.isOwnerPremium) === true
   const ownerBadgeText = ownerBadge?.trim() || ''
   const ownerBadgeIsPremium = /premium/i.test(ownerBadgeText)
-  const showPremiumBadge = isPremium || ownerBadgeIsPremium
+  const showPremiumBadge = isPremium
   const showOwnerBadge = ownerBadgeText.length > 0 && !ownerBadgeIsPremium
   const showPhotoOverlayChrome = collapsed
   const canOpenPhotoBrowser = tab === 'overview' && photoSourceUrls.length > 0
@@ -681,7 +682,7 @@ export function MapPlaceDetailPanel({
           {isListing && (showPremiumBadge || showOwnerBadge || listing?.isOwnerVerified) ? (
             <p className="map-detail-panel__owner-badges">
               {listing?.isOwnerVerified ? <span className="is-verified">Hồ sơ chủ nhà đã được duyệt</span> : null}
-              {showPremiumBadge ? <span className="is-premium">Premium</span> : null}
+              {showPremiumBadge ? <PremiumBadge /> : null}
               {showOwnerBadge ? <span className="is-owner">{ownerBadgeText}</span> : null}
             </p>
           ) : null}

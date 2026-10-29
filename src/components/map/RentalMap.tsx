@@ -173,7 +173,7 @@ function styleFor(
   const kind = roommate ? 'roommate' : 'vacant'
   return {
     kind,
-    key: `${kind}|${selected ? 'sel' : hot ? 'hot' : 'idle'}`,
+    key: `${kind}|${selected ? 'sel' : hot ? 'hot' : 'idle'}|${post.isOwnerPremium === true ? 'premium' : 'standard'}`,
     // Same base z for vacant & roommate — neither layer should feel prioritized.
     z: selected ? 1000 : hot ? 500 : 40,
   }
@@ -340,12 +340,14 @@ function RentalMapComponent({
           ? createPricePillPinContent({
               label: priceLabel,
               title: post.title || 'Tin đăng Homeji',
+              premium: post.isOwnerPremium === true,
               selected,
               hot: Boolean(hot),
             })
           : createRentalPinContent({
               kind: s.kind,
               title: post.title || 'Tin đăng Homeji',
+              premium: post.isOwnerPremium === true,
               selected,
               hot: Boolean(hot),
             })

@@ -1,3 +1,4 @@
+import { PremiumStars } from '../PremiumStars'
 import { useEffect, useRef, useState } from 'react'
 import { chatEmojiGroups } from '../../lib/chatEmojis'
 import { apiRequest } from '../../api/client'
@@ -10,9 +11,7 @@ import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 export function PremiumBadge({ compact = false }: { compact?: boolean }) {
   return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium">
     <span className="chat-premium__crown" aria-hidden>♛</span><span>{compact ? 'PRO' : 'Premium'}</span>
-    <span className="chat-premium__stars" aria-hidden>{[0, 1, 2].map(star => <span className="chat-premium__star" key={star}>
-      {[0, 1, 2, 3].map(frame => <i className="chat-premium__frame" key={frame} />)}
-    </span>)}</span>
+    <PremiumStars />
   </span>
 }
 

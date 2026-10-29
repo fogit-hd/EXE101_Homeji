@@ -72,18 +72,3 @@ html:root #root .map-messages .map-messages__row.is-premium .map-messages__avata
 .chat-conversation-labels{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .chat-premium{position:relative;isolation:isolate;overflow:visible}
 html:root[data-theme='dark'] #root .map-messages .map-messages__row.is-premium.is-active{background:linear-gradient(115deg,#d5aa422b,#0a899b12),var(--surface-elevated) !important}
-
-/* Four original sprite frames: 13×13, 13×13, 9×9, 7×7, stacked in the source atlas. */
-.chat-premium__stars{position:absolute;inset:-5px -6px;pointer-events:none;overflow:visible}
-.chat-premium__star{--star-delay:0s;position:absolute;width:13px;height:13px;left:-2px;top:-1px;filter:sepia(1) saturate(2.4) drop-shadow(0 0 2px #ffe29780)}
-.chat-premium__star:nth-child(2){--star-delay:-.55s;left:auto;right:0;top:1px}
-.chat-premium__star:nth-child(3){--star-delay:-1.1s;left:55%;top:auto;bottom:-2px;transform:scale(.75)}
-.chat-premium__frame{position:absolute;display:block;width:13px;height:13px;left:0;top:0;background:url('/images/chat/premium-stars.png') no-repeat;background-position:0 0;opacity:0;animation:premium-star-frames 2.4s steps(1,end) infinite;animation-delay:var(--star-delay)}
-.chat-premium__frame:nth-child(2){background-position:0 -13px;animation-name:premium-star-frame-two}
-.chat-premium__frame:nth-child(3){width:9px;height:9px;left:2px;top:2px;background-position:0 -26px;animation-name:premium-star-frame-three}
-.chat-premium__frame:nth-child(4){width:7px;height:7px;left:3px;top:3px;background-position:0 -35px;animation-name:premium-star-frame-four}
-@keyframes premium-star-frames{0%,48%,100%{opacity:0}40%{opacity:1}}
-@keyframes premium-star-frame-two{0%,40%,56%,100%{opacity:0}32%,48%{opacity:1}}
-@keyframes premium-star-frame-three{0%,32%,64%,100%{opacity:0}24%,56%{opacity:1}}
-@keyframes premium-star-frame-four{0%,24%,72%,100%{opacity:0}16%,64%{opacity:1}}
-@media(prefers-reduced-motion:reduce){.chat-premium__frame{animation:none;opacity:0}.chat-premium__frame:nth-child(3){opacity:.8}}

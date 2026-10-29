@@ -1,4 +1,5 @@
 import './MapLocationPins.css'
+import { createPremiumStarsElement } from '../../lib/premiumStarsElement'
 
 export type MapPinContentHandle = {
   element: HTMLDivElement
@@ -259,6 +260,7 @@ export function createPricePillPinContent(options: {
   title: string
   selected?: boolean
   hot?: boolean
+  premium?: boolean
 }): MapPinContentHandle {
   const selected = Boolean(options.selected)
   const hot = Boolean(options.hot)
@@ -271,6 +273,10 @@ export function createPricePillPinContent(options: {
   const bubble = document.createElement('div')
   bubble.className = 'map-price-pill__bubble'
   bubble.textContent = options.label
+  if (options.premium === true) {
+    root.classList.add('is-premium')
+    bubble.appendChild(createPremiumStarsElement())
+  }
   mount.appendChild(bubble)
 
   return {
@@ -289,6 +295,7 @@ export function createRentalPinContent(options: {
   title: string
   selected?: boolean
   hot?: boolean
+  premium?: boolean
   size?: number
 }): MapPinContentHandle {
   const kind = options.kind
@@ -329,6 +336,10 @@ export function createRentalPinContent(options: {
       <g transform="translate(0,-1)">${theme.glyph}</g>
     </svg>
   `
+  if (options.premium === true) {
+    root.classList.add('is-premium')
+    pinWrap.appendChild(createPremiumStarsElement())
+  }
   mount.appendChild(pinWrap)
 
   return {
