@@ -36,6 +36,7 @@ import { AdminAnalyticsSkeleton, AdminSkeleton } from '../components/skeletons/P
 import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { AdminWorkspaceNav } from '../components/admin/AdminWorkspaceNav'
+import { AiListingReviewPanel } from '../components/admin/AiListingReviewPanel'
 import './AdminWorkspace.css'
 import { useAuth } from '../contexts/AuthContext'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
@@ -65,7 +66,7 @@ export function AdminModerationPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
   const [analyticsError, setAnalyticsError] = useState('')
   const [analyticsAttempt, setAnalyticsAttempt] = useState(0)
-  const [tab, setTab] = useState<'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'>('overview')
+  const [tab, setTab] = useState<'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance' | 'aiReviews'>('overview')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
   const [withdrawalNotes, setWithdrawalNotes] = useState<Record<string, string>>({})
@@ -333,6 +334,7 @@ export function AdminModerationPage() {
   const counts = { posts: pendingPosts.length, reports: reports.length, verifications: verifications.length,
     withdrawals: withdrawals.length, active: activeUsers.filter(user => user.isOnline).length }
   const sectionInfo = {
+    aiReviews: ['AI kiểm tra tin', 'Kiểm tra lần lượt, giới hạn lượt gọi và xem lại kết quả.'],
     overview: ['Tổng quan sản phẩm', 'Hàng chờ, hoạt động và thị trường.'],
     posts: ['Tin chờ duyệt', 'Kiểm tra thông tin và sự đồng ý của chủ nhà trước khi duyệt.'],
     reports: ['Báo cáo', 'Đọc nội dung bị báo cáo, ghi lại kết quả kiểm tra rồi đưa ra kết luận.'],
@@ -350,7 +352,7 @@ export function AdminModerationPage() {
   const visibleUsers = activeUsers.filter(user => matches(user.displayName))
   const visibleCounts = { posts: visiblePosts.length, reports: visibleReports.length, verifications: visibleVerifications.length,
     withdrawals: visibleWithdrawals.length, active: visibleUsers.length }
-  const searchable = tab !== 'overview' && tab !== 'maintenance'
+  const searchable = tab !== 'overview' && tab !== 'maintenance' && tab !== 'aiReviews'
 
   return (
     <PageFrame title="Điều hành Homeji" eyebrow="HOMEJI / ADMIN" lead="Nắm tình hình. Xử lý đúng việc."
@@ -359,7 +361,7 @@ export function AdminModerationPage() {
       <div className="admin-layout" data-glass-exclude>
       <AdminWorkspaceNav selected={tab} counts={showLoader || loadError ? {} : counts} onSelect={selectTab} />
       <section className="admin-content" aria-label={sectionInfo[tab][0]}>
-      {tab !== 'overview' ? <header className="admin-section-heading">
+      {tab !== 'overview' && tab !== 'aiReviews' ? <header className="admin-section-heading">
         <div><span className="admin-section-kicker">Quản lý</span><h2>{sectionInfo[tab][0]}</h2><p>{sectionInfo[tab][1]}</p></div>
         <button type="button" className="btn btn-secondary btn-sm" disabled={showLoader || pendingAction !== null} onClick={() => void reload()}>Làm mới</button>
       </header> : null}
@@ -386,7 +388,8 @@ export function AdminModerationPage() {
         </>
       ) : null}
 
-      {tab !== 'overview' && (showLoader ? (
+      {tab === 'aiReviews' ? <AiListingReviewPanel /> : null}
+      {tab !== 'overview' && tab !== 'aiReviews' && (showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={loadError} />
           : <AdminSkeleton withHeader={false} />

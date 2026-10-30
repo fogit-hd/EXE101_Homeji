@@ -1,10 +1,11 @@
 import { useId, useRef, useState } from 'react'
 
-type AdminSection = 'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance'
+type AdminSection = 'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance' | 'aiReviews'
 
 const sections: { id: AdminSection; label: string; symbol: string }[] = [
   { id: 'overview', label: 'Tổng quan', symbol: '▦' },
   { id: 'posts', label: 'Tin chờ duyệt', symbol: '▤' },
+  { id: 'aiReviews', label: 'AI kiểm tra tin', symbol: 'AI' },
   { id: 'reports', label: 'Báo cáo', symbol: '⚑' },
   { id: 'verifications', label: 'Xác minh chủ nhà', symbol: '◇' },
   { id: 'withdrawals', label: 'Rút tiền', symbol: '↗' },
