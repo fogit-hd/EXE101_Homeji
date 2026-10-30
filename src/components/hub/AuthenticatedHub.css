@@ -1,6 +1,6 @@
 .hub-home {
   --hub-ink: var(--text-heading);
-  --hub-body: #1c241f;
+  --hub-body: var(--text-primary);
   --hub-muted: var(--text-secondary);
   --hub-line: var(--border);
   --hub-paper: var(--surface-muted);
@@ -142,7 +142,7 @@
   text-decoration: none;
 }
 
-.hub-card,
+.hub-section,
 .hub-alert,
 .hub-safety {
   border: 1px solid var(--hub-line);
@@ -191,11 +191,11 @@
   background: var(--hub-coral);
 }
 
-.hub-card {
+.hub-section {
   padding: 16px;
 }
 
-.hub-card header {
+.hub-section header {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -204,7 +204,7 @@
   margin-bottom: 12px;
 }
 
-.hub-card h2 {
+.hub-section h2 {
   margin: 0;
   color: var(--hub-ink);
   font-family: var(--font-ui);
@@ -213,7 +213,7 @@
   line-height: 32px;
 }
 
-.hub-card header a {
+.hub-section header a {
   color: var(--hub-coral);
   font-size: 13px;
   font-weight: 600;
@@ -551,7 +551,7 @@
 .hub-room__price small { color: var(--hub-muted); font-size: 12px; }
 
 .hub-side { grid-column: span 4; order: 4; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.hub-side .hub-card h2 { font-size: 20px; line-height: 28px; }
+.hub-side .hub-section h2 { font-size: 20px; line-height: 28px; }
 
 .hub-roommates li {
   display: grid;

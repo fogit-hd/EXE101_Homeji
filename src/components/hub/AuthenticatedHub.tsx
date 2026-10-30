@@ -256,7 +256,7 @@ export function AuthenticatedHub() {
 
       {phase === 'ready' && bundle ? (
         <>
-          {bundle.failed.appointments || upcoming.length > 0 ? <section className="hub-card hub-viewings" aria-labelledby="hub-viewings">
+          {bundle.failed.appointments || upcoming.length > 0 ? <section className="hub-section hub-viewings" aria-labelledby="hub-viewings">
             <header>
               <h2 id="hub-viewings">Lịch xem phòng sắp tới</h2>
               <Link to={mapSectionUrl('appointments')}>
@@ -278,37 +278,6 @@ export function AuthenticatedHub() {
             </ul>
           </section> : null}
 
-          {bundle.failed.conversations || chats.length > 0 ? <section className="hub-card hub-messages" aria-labelledby="hub-messages">
-            <header>
-              <h2 id="hub-messages">Tin nhắn gần đây</h2>
-              <Link to={mapSectionUrl('messages')}>
-                {unreadMessages > 0 ? `${unreadMessages} mới` : 'Mở hộp thư'}
-              </Link>
-            </header>
-            {bundle.failed.conversations ? <p className="hub-quiet">Không tải được tin nhắn.</p> : null}
-            <ul>
-              {chats.map((chat) => (
-                <li key={chat.id}>
-                  <Link to={mapSectionUrl('messages')}>
-                    {chat.otherParticipantAvatarPath ? (
-                      <img src={chat.otherParticipantAvatarPath} alt="" />
-                    ) : (
-                      <b>{initials(chat.otherParticipantName)}</b>
-                    )}
-                    <span>
-                      <strong>{chat.otherParticipantName}</strong>
-                      <em>{messagePreview(chat.lastMessage)}</em>
-                    </span>
-                    <small>
-                      {whenLabel(chat.updatedAt)}
-                      {chat.unreadCount > 0 ? <i>{chat.unreadCount}</i> : null}
-                    </small>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section> : null}
-
           {savedAlerts[0] ? (
             <Link className="hub-update" to={mapSectionUrl('notifications')}>
               <span className="hub-update__dot" aria-hidden="true" />
@@ -318,7 +287,7 @@ export function AuthenticatedHub() {
             </Link>
           ) : null}
 
-          <section className={`hub-card hub-rooms${hasSide ? '' : ' hub-rooms--full'}`} aria-labelledby="hub-rooms">
+          <section className="hub-section hub-rooms" aria-labelledby="hub-rooms">
             <header>
               <div>
                 <h2 id="hub-rooms">Phòng đang mở</h2>
@@ -368,72 +337,107 @@ export function AuthenticatedHub() {
             </ul>
           </section>
 
-          {hasSide ? (
-            <div className="hub-side">
-              {bundle.candidates.length > 0 || bundle.invitations.length > 0 ? (
-                <section className="hub-card hub-roommates" aria-labelledby="hub-roommates">
-                  <header>
-                    <h2 id="hub-roommates">Ở ghép</h2>
-                    <Link to={mapSectionUrl('invitations')}>Xem lời mời →</Link>
-                  </header>
-                  {bundle.candidates.length > 0 ? (
-                    <ul>
-                      {bundle.candidates.map((person) => (
-                        <li key={person.userId}>
-                          <b aria-hidden="true">{initials(person.displayName)}</b>
-                          <span>
-                            <strong>{person.displayName}</strong>
-                            {person.preferredArea ? <small>{person.preferredArea}</small> : null}
-                          </span>
-                          {Number.isFinite(person.matchScore) ? <em>{person.matchScore}%</em> : null}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="hub-roommates__count">
-                      <strong>{bundle.invitations.length}</strong>
-                      <span>lời mời ở ghép<br />đang chờ bạn phản hồi</span>
-                    </div>
-                  )}
-                  {bundle.candidates.length === 0 ? (
-                    <Link className="hub-roommates__cta liquid-action" to={mapSectionUrl('invitations')}>Xem lời mời</Link>
-                  ) : null}
-                </section>
-              ) : null}
+          {bundle.failed.conversations || chats.length > 0 || hasSide ? (
+            <div className={`hub-community${(bundle.failed.conversations || chats.length > 0) && hasSide ? '' : ' hub-community--single'}`}>
+              {bundle.failed.conversations || chats.length > 0 ? <section className="hub-section hub-messages" aria-labelledby="hub-messages">
+                <header>
+                  <h2 id="hub-messages">Tin nhắn gần đây</h2>
+                  <Link to={mapSectionUrl('messages')}>
+                    {unreadMessages > 0 ? `${unreadMessages} mới` : 'Mở hộp thư'}
+                  </Link>
+                </header>
+                {bundle.failed.conversations ? <p className="hub-quiet">Không tải được tin nhắn.</p> : null}
+                <ul>
+                  {chats.map((chat) => (
+                    <li key={chat.id}>
+                      <Link to={mapSectionUrl('messages')}>
+                        {chat.otherParticipantAvatarPath ? (
+                          <img src={chat.otherParticipantAvatarPath} alt="" />
+                        ) : (
+                          <b>{initials(chat.otherParticipantName)}</b>
+                        )}
+                        <span>
+                          <strong>{chat.otherParticipantName}</strong>
+                          <em>{messagePreview(chat.lastMessage)}</em>
+                        </span>
+                        <small>
+                          {whenLabel(chat.updatedAt)}
+                          {chat.unreadCount > 0 ? <i>{chat.unreadCount}</i> : null}
+                        </small>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section> : null}
 
-              {bundle.failed.market || bundle.market.length > 0 ? (
-                <section className="hub-card hub-market" aria-labelledby="hub-market">
-                  <header>
-                    <h2 id="hub-market">Chợ đồ khu phố</h2>
-                    <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ →</Link>
-                  </header>
-                  {bundle.failed.market ? (
-                    <p className="hub-quiet">Không tải được món quanh khu phố.</p>
-                  ) : (
-                    <ul>
-                      {bundle.market.map((item) => (
-                        <li key={item.id}>
-                          <Link to={mapSectionUrl('marketplace')}>
-                            <span className="hub-market__thumb">
-                              {item.mediaUrls[0] ? (
-                                <img
-                                  src={item.mediaUrls[0]}
-                                  alt=""
-                                  loading="lazy"
-                                  onError={(event) => {
-                                    event.currentTarget.hidden = true
-                                  }}
-                                />
-                              ) : null}
-                            </span>
-                            <b>{item.title}</b>
-                            <strong>{formatPrice(item.price)}</strong>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
+              {hasSide ? (
+                <div className="hub-side">
+                  {bundle.candidates.length > 0 || bundle.invitations.length > 0 ? (
+                    <section className="hub-section hub-roommates" aria-labelledby="hub-roommates">
+                      <header>
+                        <h2 id="hub-roommates">Ở ghép</h2>
+                        <Link to={mapSectionUrl('invitations')}>Xem lời mời →</Link>
+                      </header>
+                      {bundle.candidates.length > 0 ? (
+                        <ul>
+                          {bundle.candidates.map((person) => (
+                            <li key={person.userId}>
+                              <b aria-hidden="true">{initials(person.displayName)}</b>
+                              <span>
+                                <strong>{person.displayName}</strong>
+                                {person.preferredArea ? <small>{person.preferredArea}</small> : null}
+                              </span>
+                              {Number.isFinite(person.matchScore) ? <em>{person.matchScore}%</em> : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="hub-roommates__count">
+                          <strong>{bundle.invitations.length}</strong>
+                          <span>lời mời ở ghép<br />đang chờ bạn phản hồi</span>
+                        </div>
+                      )}
+                      {bundle.candidates.length === 0 ? (
+                        <Link className="hub-roommates__cta liquid-action" to={mapSectionUrl('invitations')}>Xem lời mời</Link>
+                      ) : null}
+                    </section>
+                  ) : null}
+
+                  {bundle.failed.market || bundle.market.length > 0 ? (
+                    <section className="hub-section hub-market" aria-labelledby="hub-market">
+                      <header>
+                        <h2 id="hub-market">Chợ đồ khu phố</h2>
+                        <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ →</Link>
+                      </header>
+                      {bundle.failed.market ? (
+                        <p className="hub-quiet">Không tải được món quanh khu phố.</p>
+                      ) : (
+                        <ul>
+                          {bundle.market.map((item) => (
+                            <li key={item.id}>
+                              <Link to={mapSectionUrl('marketplace')}>
+                                <span className="hub-market__thumb">
+                                  {item.mediaUrls[0] ? (
+                                    <img
+                                      src={item.mediaUrls[0]}
+                                      alt=""
+                                      loading="lazy"
+                                      onError={(event) => {
+                                        event.currentTarget.hidden = true
+                                      }}
+                                    />
+                                  ) : null}
+                                </span>
+                                <b>{item.title}</b>
+                                <strong>{formatPrice(item.price)}</strong>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </section>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           ) : null}
