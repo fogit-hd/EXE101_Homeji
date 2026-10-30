@@ -11,8 +11,9 @@ type FoodSourcePlace = {
 function safeLink(raw: string, maps = false): string | null {
   try {
     const url = new URL(raw)
-    const hosts = maps ? ['www.google.com'] : ['www.nhatot.com', 'shopeefood.vn', 'vinwonders.com']
+    const hosts = maps ? ['www.google.com'] : ['www.nhatot.com', 'shopeefood.vn', 'vinwonders.com', 'www.tiemcomvien.com', 'www.google.com']
     return url.protocol === 'https:' && !url.username && !url.password && hosts.includes(url.hostname)
+      && (url.hostname !== 'www.google.com' || url.pathname.startsWith('/maps/'))
       && (!maps || url.pathname === '/maps/search/') ? url.href : null
   } catch { return null }
 }

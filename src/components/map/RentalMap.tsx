@@ -1,3 +1,4 @@
+import { useSourceCatalogMap } from './useSourceCatalogMap'
 import {
   MarkerClusterer,
   SuperClusterAlgorithm,
@@ -78,6 +79,7 @@ type BaseMapMode = 'roadmap' | 'satellite'
 type MapDisplayMode = BaseMapMode | 'streetview-select' | 'streetview'
 
 type RentalMapProps = {
+  showSourceCatalog?: boolean
   posts: RentalPostSummary[]
   selectedPostId: string | null
   hoveredPostId?: string | null
@@ -186,6 +188,7 @@ function styleFor(
  * Location selection uses Location Lottie via AdvancedMarker content.
  */
 function RentalMapComponent({
+  showSourceCatalog = false,
   posts,
   selectedPostId,
   hoveredPostId = null,
@@ -268,6 +271,7 @@ function RentalMapComponent({
   const placeFetchSeqRef = useRef(0)
 
   const [mapReady, setMapReady] = useState(false)
+  const sourceCatalogCount = useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers)
   const [displayMode, setDisplayMode] = useState<MapDisplayMode>('roadmap')
   const [streetViewBusy, setStreetViewBusy] = useState(false)
   const [streetViewError, setStreetViewError] = useState<string | null>(null)
@@ -1312,6 +1316,7 @@ function RentalMapComponent({
         </div>
       ) : null}
 
+      {sourceCatalogCount > 0 && <span className="source-catalog-legend">{sourceCatalogCount} ghim từ nguồn công khai</span>}
       {mapReady && !hideViewSwitcher ? (
         <div className="rental-map__view-switcher-wrap">
           {displayMode === 'streetview-select' ? (
@@ -1447,6 +1452,7 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.marketplacePins === next.marketplacePins &&
     prev.selectedMarketplaceId === next.selectedMarketplaceId &&
     prev.onSelectMarketplace === next.onSelectMarketplace &&
+    prev.showSourceCatalog === next.showSourceCatalog &&
     prev.pinLayers?.vacant === next.pinLayers?.vacant &&
     prev.pinLayers?.roommate === next.pinLayers?.roommate &&
     prev.pinLayers?.marketplace === next.pinLayers?.marketplace &&

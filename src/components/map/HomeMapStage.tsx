@@ -95,6 +95,7 @@ export const HomeMapStage = memo(function HomeMapStage({
 }: HomeMapStageProps) {
   return (
     <RentalMap
+      showSourceCatalog
       posts={posts}
       selectedPostId={selectedPostId}
       hoveredPostId={hoveredPostId}

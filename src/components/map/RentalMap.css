@@ -721,3 +721,8 @@
     animation: none;
   }
 }
+
+.source-catalog-legend{position:absolute;left:12px;bottom:40px;z-index:5;pointer-events:none;background:var(--surface,#fff);color:var(--text-primary,#173944);border:1px solid var(--border,#d5dfda);padding:6px 10px;border-radius:8px;font-size:11px;box-shadow:0 2px 8px #1232}
+.source-catalog-popup{max-width:260px;color:#173944;font-family:var(--font-ui,sans-serif);line-height:1.5;padding:3px}
+.source-catalog-popup img{width:100%;max-height:130px;object-fit:cover;border-radius:9px;margin-bottom:8px}
+.source-catalog-popup strong{font-size:14px}.source-catalog-popup p{margin:7px 0;font-size:12px}.source-catalog-popup small{display:block;font-size:11px;color:#52656c}.source-catalog-popup a{display:inline-block;margin-top:10px;color:#087e8b;font-size:13px;font-weight:700}

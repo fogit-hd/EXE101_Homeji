@@ -1,3 +1,4 @@
+import { RentalSourceBrowser } from '../../ai/RentalSourceBrowser'
 import {
   useLayoutEffect,
   useMemo,
@@ -419,6 +420,7 @@ export function MapListingsWorkspace({
                   {cards.map(({ id, view }) => <li key={id}>{renderListingCard(id, view)}</li>)}
                 </ul>
               )}
+              {!marketMode && <RentalSourceBrowser />}
               {query.page > 1 || cards.length >= PAGE_SIZE ? (
                 <div className="map-listings__pager">
                   {query.page > 1 ? (

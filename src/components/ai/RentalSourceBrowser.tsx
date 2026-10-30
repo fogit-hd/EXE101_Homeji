@@ -4,6 +4,7 @@ import { rentalSourceHref, searchRentalSources, type RentalSourceListing } from 
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice } from '../../lib/labels'
 import { rentalSourceFreshness } from '../../lib/rentalSourceFreshness'
+import './RentalSourceBrowser.css'
 
 const dateLabel = (value: string | null) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleDateString('vi-VN') : 'Chưa có thông tin'
 
@@ -34,7 +35,7 @@ export function RentalSourceBrowser() {
     finally { if (current === request.current) setLoading(false) }
   }
   const changeFilters = () => { request.current += 1; setItems([]); setPage(0); setLoading(false); setError('') }
-  return <details className="rental-source-browser"><summary>Tin từ nguồn ngoài · tham khảo và kiểm tra nguồn</summary>
+  return <details className="rental-source-browser" onToggle={event => { if (event.currentTarget.open && page === 0 && !loading) void load(1) }}><summary>Thêm tin phòng từ nguồn công khai</summary>
     <p>Đây là quảng cáo được thu thập từ website khác. Homeji chưa xác minh phòng còn trống, người cho thuê, địa chỉ hoặc phí. Tin nguồn không được coi là tin phòng đã duyệt để đặt lịch hay đặt cọc.</p>
     <form onSubmit={event => { event.preventDefault(); void load(1) }}>
       <label htmlFor="source-keyword">Từ khóa tin nguồn</label><input id="source-keyword" maxLength={200} value={keyword} onChange={event => { changeFilters(); setKeyword(event.target.value) }} />
