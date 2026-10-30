@@ -5,6 +5,7 @@ import { buildRentalOwnerDraft, normalizeRentalOwnerDraft, RENTAL_OWNER_DRAFT_MA
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import './RentalDetailAssistant.css'
+import './RentalAccordion.css'
 import { RentalConsiderationToggle } from './RentalConsiderationToggle'
 
 type RentalDetailAssistantProps = {
@@ -40,12 +41,14 @@ function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = tru
       ? 'Giá mỗi người có thể đã gồm một số khoản. Cần hỏi cách chia phí trước khi tính tổng.'
       : basis === 'unknown' ? 'Cần hỏi giá theo người hay cả phòng trước khi tính tổng.'
         : 'Tiền thuê chưa phải tổng chi phí hằng tháng. Tiền cọc không cộng vào phí hằng tháng.'}</p>
-    <details className="rental-detail-assistant__fees"><summary>Những khoản cần xác nhận</summary>
+    <details className="rental-detail-assistant__fees rental-accordion" data-glass-exclude><summary>Những khoản cần xác nhận</summary>
+      <div className="rental-accordion__body">
       <ul>{fees.map(([label, amount]) => <li key={label}><strong>{label}:</strong> {validAmount(amount)
         ? `${formatPrice(amount!)} theo tin · chưa rõ đơn vị tính và khoản đã bao gồm.`
         : 'Chưa xác nhận mức phí và đơn vị tính.'}</li>)}
         <li>Giữ xe, vệ sinh, dịch vụ và phí ban đầu: cần hỏi người đăng.</li>
       </ul><p>Khoản ghi 0 hoặc bỏ trống chưa được coi là miễn phí.</p>
+      </div>
     </details>
     {basis === 'room' ? <RentalCostCalculator rent={post.price} depositHint={post.deposit} /> : null}
     {draft === null ? <button type="button" className="btn btn-secondary rental-detail-assistant__prepare" onClick={() => setDraft(buildRentalOwnerDraft(post, basis))}>Soạn câu hỏi cho người đăng</button>

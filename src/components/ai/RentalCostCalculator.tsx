@@ -3,6 +3,7 @@ import { useId, useState } from 'react'
 import { calculateRentalCost, type RentalFee, type RentalFeeUnit } from '../../lib/rentalCost'
 import { formatPrice } from '../../lib/labels'
 import './RentalCostCalculator.css'
+import './RentalAccordion.css'
 
 const emptyFee: RentalFee = { rate: null, unit: 'unknown', usage: null }
 const amount = (value: string) => value.trim() === '' ? null : Number(value)
@@ -38,18 +39,19 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
     {fee.unit === 'usage' ? <><label htmlFor={`${id}-${label}-usage`}>{label === 'Điện' ? 'kWh' : 'm³'} dùng mỗi tháng</label>
       <input id={`${id}-${label}-usage`} type="number" min="0" max="100000" value={fee.usage ?? ''} onChange={event => update(setFee, { ...fee, usage: amount(event.target.value) })} /></> : null}
   </fieldset>
-  return <details className="rental-cost"><summary>Ước tính tiền cần trả mỗi tháng</summary>
+  return <details className="rental-cost rental-accordion" data-glass-exclude><summary>Ước tính tiền cần trả mỗi tháng</summary>
+    <div className="rental-accordion__body rental-cost__body">
     <p>Giá thuê lấy từ tin. Nhập các khoản bạn đã hỏi chủ phòng; nhập 0 khi đã xác nhận miễn phí. Bỏ trống giữ trạng thái chưa biết.</p>
     {knownRent === null ? <p role="status">Tin chưa có giá thuê hợp lệ. Chưa thể xác nhận tổng chi phí; cần người đăng cập nhật giá.</p> : null}
-    <label htmlFor={`${id}-people`}>Số người</label><input id={`${id}-people`} type="number" min="1" max="20" value={people} onChange={event => update(setPeople, Number(event.target.value))} />
-    {feeFields('Điện', electricity, setElectricity)}{feeFields('Nước', water, setWater)}
-    {([
+    <div className="rental-cost__people"><label htmlFor={`${id}-people`}>Số người</label><input id={`${id}-people`} type="number" min="1" max="20" value={people} onChange={event => update(setPeople, Number(event.target.value))} /></div>
+    <div className="rental-cost__grid">{feeFields('Điện', electricity, setElectricity)}{feeFields('Nước', water, setWater)}</div>
+    <div className="rental-cost__grid">{([
       ['internet', 'Internet / phòng / tháng (VND)', internet, setInternet],
       ['other', 'Phí khác / phòng / tháng (VND)', other, setOther],
       ['deposit', `Tiền cọc đã xác nhận (VND)${depositHint && depositHint > 0 ? ` · tin ghi ${formatPrice(depositHint)}` : ''}`, deposit, setDeposit],
       ['initial', 'Phí ban đầu khác đã xác nhận (VND)', initialFees, setInitialFees],
     ] as const).map(([key, label, value, setter]) => <div key={key}><label htmlFor={`${id}-${key}`}>{label}</label>
-      <input id={`${id}-${key}`} type="number" min="0" max="1000000000" value={value ?? ''} onChange={event => update(setter, amount(event.target.value))} /></div>)}
+      <input id={`${id}-${key}`} type="number" min="0" max="1000000000" value={value ?? ''} onChange={event => update(setter, amount(event.target.value))} /></div>)}</div>
     <output aria-live="polite">{result ? <>
       <p>Hằng tháng: <strong>{result.monthly == null ? `${formatPrice(result.knownMonthly)} đã biết + khoản chưa có thông tin` : formatPrice(result.monthly)}</strong></p>
       <p>Ban đầu (cọc + thuê đầu kỳ + phí ban đầu): <strong>{result.initial == null ? 'Chưa có đủ thông tin' : formatPrice(result.initial)}</strong></p>
@@ -59,5 +61,6 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
       if (result?.monthly != null) onConfirmMonthly(result.monthly)
     }}>Dùng các khoản này để tính</button> : null}
     <small>Ước tính từ thông tin bạn nhập. Hãy xác nhận các khoản còn thiếu với người đăng.</small>
+    </div>
   </details>
 }

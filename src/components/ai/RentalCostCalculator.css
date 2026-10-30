@@ -1,7 +1,21 @@
-.rental-cost { margin-top: 16px; min-width: 0; font-size: 12px; line-height: 1.6; }
-.rental-cost summary { cursor: pointer; font-weight: 700; }
-.rental-cost label { display: block; margin: 10px 0 4px; }
-.rental-cost :is(input, select) { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 9px; padding: 9px; background: var(--surface); color: var(--text-primary); font: inherit; }
-.rental-cost fieldset { min-width: 0; margin: 14px 0; padding: 12px; border: 1px solid var(--border); border-radius: 9px; }
-.rental-cost small { display: block; color: var(--text-muted); }
+﻿.rental-cost { min-width: 0; font-size: 14px; line-height: 1.7; }
+.rental-cost__body { display: flex; flex-direction: column; gap: 20px; }
+.rental-cost__body > p { margin: 0; color: var(--text-secondary); }
+.rental-cost__people { width: min(100%, 220px); }
+.rental-cost__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.rental-cost__grid > div { min-width: 0; }
+.rental-cost label { display: block; margin: 0 0 8px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.rental-cost :is(input, select, .choice-picker__trigger) { width: 100%; min-width: 0; min-height: 46px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; background: var(--surface); color: var(--text-primary); font: inherit; font-size: 16px; box-shadow: none; }
+.rental-cost input:focus-visible { outline: 2px solid var(--action-primary, #087f8c); outline-offset: 2px; }
+.rental-cost fieldset { min-width: 0; margin: 0; padding: 16px 0 0; border: 0; border-top: 1px solid var(--border); }
+.rental-cost legend { padding: 0 10px 0 0; color: var(--text-heading); font-size: 14px; font-weight: 600; }
+.rental-cost fieldset label:not(:first-of-type) { margin-top: 16px; }
+.rental-cost output { display: block; padding: 16px 18px; border-left: 3px solid var(--action-primary, #087f8c); border-radius: 0 8px 8px 0; background: var(--surface-muted); }
+.rental-cost output p { margin: 0; }
+.rental-cost output p + p { margin-top: 10px; }
+.rental-cost small { display: block; color: var(--text-secondary); font-size: 12px; line-height: 1.8; }
 .rental-cost button { max-width: 100%; white-space: normal; }
+@media (max-width: 600px) {
+  .rental-cost__grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .rental-cost__people { width: 100%; }
+}
