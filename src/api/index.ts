@@ -298,6 +298,12 @@ export const deleteConversationAttachment = (
 )
 
 // Viewing appointments
+export const setViewingAppointmentReminder = (id: string, minutesBefore: number | null) =>
+  apiRequest<ViewingAppointment>(`/api/viewing-appointments/${id}/reminder`, {
+    method: 'PUT',
+    body: { minutesBefore },
+  })
+
 export const getViewingAppointments = () =>
   apiRequest<ViewingAppointment[]>('/api/viewing-appointments')
 

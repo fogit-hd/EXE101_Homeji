@@ -16,6 +16,7 @@ import { AppointmentListSkeleton } from '../skeletons/PageSkeletons'
 import { viewingAppointmentStatusLabel } from '../../lib/labels'
 import { isoToLocalInputValue } from '../../lib/scheduleDateTime'
 import './MapAppointmentsPanel.css'
+import { AppointmentEmailReminder } from './AppointmentEmailReminder'
 
 type Props = {
   embedded?: boolean
@@ -101,6 +102,11 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
   const displayName = profile?.displayName?.trim()?.split(/\s+/).pop() || 'bạn'
   const [items, setItems] = useState<ViewingAppointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 15_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [rescheduleId, setRescheduleId] = useState<string | null>(null)
@@ -320,6 +326,11 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
                 </button>
               ) : null}
             </div>
+
+            {isRequester && (pending || confirmed) && new Date(item.scheduledAt).getTime() > now ? (
+              <AppointmentEmailReminder key={`${item.id}:${item.scheduledAt}`} now={now} appointment={item} disabled={busyId === item.id}
+                onUpdated={updated => setItems(prev => prev.map(value => value.id === updated.id ? updated : value))} />
+            ) : null}
 
             {rescheduleId === item.id ? (
               <div className="map-appointments__reschedule">

@@ -1,0 +1,8 @@
+﻿.appointment-reminder { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color, #dbe5df); font-size: 13px; }
+.appointment-reminder p { margin: 6px 0; line-height: 1.6; }
+.appointment-reminder button { min-height: 40px; margin: 4px 8px 4px 0; padding: 8px 12px; border: 1px solid var(--border-color, #dbe5df); border-radius: 8px; background: var(--surface, #fff); color: var(--text-primary, #193737); cursor: pointer; font: inherit; }
+.appointment-reminder button:disabled { opacity: .55; cursor: default; }
+.appointment-reminder__form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.appointment-reminder__form p { flex-basis: 100%; }
+.appointment-reminder select { min-height: 40px; max-width: 100%; padding: 8px; border: 1px solid var(--border-color, #dbe5df); border-radius: 8px; background: var(--surface, #fff); color: var(--text-primary, #193737); font: inherit; }
+.appointment-reminder__error { color: var(--danger, #b42318); }

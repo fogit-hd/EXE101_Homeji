@@ -560,6 +560,10 @@ export interface PostMessageAttachment {
 }
 
 export interface ViewingAppointment {
+  reminderMinutesBefore?: number | null
+  reminderDueAt?: string | null
+  reminderSentAt?: string | null
+  reminderFailed?: boolean
   id: string
   rentalPostId: string
   rentalPostTitle: string
