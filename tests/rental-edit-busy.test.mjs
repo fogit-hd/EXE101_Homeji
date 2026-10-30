@@ -74,7 +74,8 @@ async function editSession() {
     '../components/map/LocationPickerMap': components(['LocationPickerMap']),
     '../contexts/AuthContext': { useAuth: () => ({ profile: { id: 'owner-1', role: 2 } }) },
     '../contexts/GoogleMapsProvider.logic': { useGoogleMaps: () => ({ isLoaded: true }) },
-    '../lib/googleMaps': { geocodeAddress: (...args) => geocode(...args), isValidCoord: (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng) },
+    '../lib/homejiServiceArea': { isInHomejiServiceArea: (lat, lng) => lat >= 10.7 && lat <= 10.93 && lng >= 106.72 && lng <= 106.9 },
+    '../lib/googleMaps': { DEFAULT_MAP_CENTER: { lat: 10.87, lng: 106.8 }, geocodeAddress: (...args) => geocode(...args), isValidCoord: (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng) },
     '../lib/errors': { getErrorMessage: error => error.message },
     '../lib/labels': { AMENITY_OPTIONS: ['WIFI', 'KITCHEN'], amenityLabel: value => value, normalizeAmenityCode: value => value, rentalPostTypeLabel: { 1: 'Room' } },
     '../lib/mapDeepLinks': { mapSectionUrl: section => `/?section=${section}` },
@@ -132,7 +133,7 @@ test('pending save disables editable fields and a failed save unlocks without lo
   const request = session.save()
   session.render()
   assert.equal(session.field('rental-title').disabled, true)
-  assert.equal(session.button('KITCHEN').disabled, true)
+  assert.equal(session.button('+KITCHEN').disabled, true)
   assert.equal(session.component('AddressAutocomplete').disabled, true)
   pending.reject(new Error('Save rejected'))
   await request
@@ -190,26 +191,28 @@ for (const operation of ['archiveRentalPost', 'deleteRentalPostMedia']) {
   })
 }
 
-test('late geocode cannot replace a newer typed address', async () => {
+test('geocode locks address edits until the selected location is ready', async () => {
   const session = await editSession(), pending = deferred()
   session.geocode(() => pending.promise)
-  session.button('Lấy tọa độ từ địa chỉ').node.props.onClick()
+  session.button('Tìm vị trí từ địa chỉ').node.props.onClick()
   session.component('AddressAutocomplete').node.props.onChange('Newer address')
   session.render()
   pending.resolve({ formattedAddress: 'Old geocode result', lat: 10.9, lng: 106.9 })
   await flush(); session.render()
-  assert.equal(session.component('AddressAutocomplete').node.props.value, 'Newer address')
+  assert.equal(session.component('AddressAutocomplete').node.props.value, 'Old geocode result')
+  assert.equal(session.component('AddressAutocomplete').node.props.disabled, false)
 })
 
-test('geocode started before a mutation cannot overwrite the saved location after it completes', async () => {
+test('save waits for an in-flight geocode instead of writing an old location', async () => {
   const session = await editSession(), pending = deferred()
   session.geocode(() => pending.promise)
-  session.button('Lấy tọa độ từ địa chỉ').node.props.onClick()
+  session.button('Tìm vị trí từ địa chỉ').node.props.onClick()
   await session.save()
+  assert.equal(session.count('updateRentalPost'), 0)
   session.render()
   pending.resolve({ formattedAddress: 'Old geocode result', lat: 10.9, lng: 106.9 })
   await flush(); session.render()
-  assert.equal(session.component('AddressAutocomplete').node.props.value, 'Original address')
+  assert.equal(session.component('AddressAutocomplete').node.props.value, 'Old geocode result')
 })
 
 test('map callbacks cannot mutate the location while save is pending', async () => {
@@ -235,7 +238,7 @@ test('editing an address invalidates old coordinates until a valid place is sele
   await session.save()
   session.render()
   assert.equal(session.count('updateRentalPost'), 0)
-  assert.ok(session.notices().includes('Chọn địa chỉ hoặc vị trí hợp lệ trước khi lưu.'))
+  assert.ok(session.notices().some(message => message?.includes('Chưa tìm thấy vị trí.')))
   session.component('AddressAutocomplete').node.props.onPlaceSelect({ address: 'New resolved address', lat: 10.88, lng: 106.82 })
   session.render()
   await session.save()
@@ -305,6 +308,7 @@ async function addressSession({ pick = true } = {}) {
   if (pick) { option.props.onClick(); render() }
   return { props, render, pending, changes, selections,
     input: () => flatten(tree).find(node => node.type === 'input'),
+    settle: async () => { while (timers.length) timers.shift()(); await flush(); render() },
     options: () => flatten(tree).filter(node => node.type === 'button' && node.props.role === 'option'),
     unmount: () => { for (const hook of hooks) hook?.cleanup?.() } }
 }
@@ -351,7 +355,7 @@ test('typing an ordinary address keeps suggestions open across controlled parent
     session.input().props.onChange({ target: { value: address } })
     session.props.value = session.changes.at(-1)
     // React repeats the render when selectionScope updates during rendering.
-    session.render(); session.render()
+    session.render(); session.render(); await session.settle()
     assert.equal(session.input().props.value, address)
     assert.equal(session.input().props['aria-expanded'], true)
     assert.equal(session.options().length, 1)
@@ -361,7 +365,8 @@ test('typing an ordinary address keeps suggestions open across controlled parent
 
 test('place provider failure releases resolving so the user can enter an address manually', async () => {
   const session = await addressSession()
-  assert.equal(session.input().props.disabled, true)
+  assert.equal(session.input().props.disabled, false)
+  assert.equal(session.input().props['aria-busy'], true)
   session.pending.reject(new Error('Optional provider unavailable'))
   await flush(); session.render()
   assert.equal(session.input().props.disabled, false)

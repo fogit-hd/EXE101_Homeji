@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { isInHomejiServiceArea } from '../src/lib/homejiServiceArea.ts'
 
 // Execute the actual save handler against a captured API boundary, without HTTP writes.
 const source = readFileSync(new URL('../src/pages/EditRentalPostPage.tsx', import.meta.url), 'utf8')
@@ -15,7 +16,7 @@ async function captureSave(post, overrides = {}) {
     deposit: '1000000', area: '20', address: 'Existing address', amenities: [],
     availableFrom: '2026-10-05', transferKind: 1, originalLeaseEndsOn: '',
     passFee: '0', transferReason: '', ownerConsentConfirmed: false, ownerConsentContact: '',
-    isValidCoord: () => true, normalizeAmenityCode: value => value,
+    isInHomejiServiceArea, isValidCoord: () => true, normalizeAmenityCode: value => value,
     RentalPostType: { RoomTransfer: 3 }, isRenterShare: false, maxOccupants: '', availableSlots: '',
     updateRentalPost: async (_id, payload) => { request = payload; return { ...post, ...payload } },
     setPost: () => {}, ...overrides,
