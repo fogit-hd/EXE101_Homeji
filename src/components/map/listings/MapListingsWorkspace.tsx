@@ -14,6 +14,7 @@ import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
 import { PremiumBadge } from '../../PremiumBadge'
+import { VerifiedOwnerBadge } from '../../VerifiedOwnerBadge'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
@@ -198,6 +199,7 @@ export function MapListingsWorkspace({
             <span className="map-listings__card-copy">
               <span className="map-listings__price">{view.priceLabel}{!marketMode ? <small> / tháng</small> : null}</span>
               <span className="map-listings__name">{view.title}</span>
+              {view.isOwnerVerified ? <VerifiedOwnerBadge /> : null}
                 <span className="map-listings__address">
                   <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
                   <span className="map-listings__address-text" title={view.address}>{shortListingAddress(view.address) || 'Chưa có địa chỉ'}</span>
@@ -585,6 +587,7 @@ function PreviewCard({
         </div>
       </div>
       <div className="map-listings__preview-tags">
+        {view.isOwnerVerified ? <VerifiedOwnerBadge /> : null}
         {view.areaLabel ? <span>{view.areaLabel}</span> : null}
         {view.typeLabel ? <span>{view.typeLabel}</span> : null}
         {view.highlightTag ? <span>{view.highlightTag}</span> : null}

@@ -1,0 +1,18 @@
+html:root #root .verified-owner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 8px;
+  margin-block: 5px;
+  border: 1px solid #9ccfbe;
+  border-radius: 6px;
+  background: #e8f6ef;
+  color: #176348;
+  font: 700 12px/1.4 var(--font-ui);
+  white-space: normal;
+}
+.verified-owner-badge svg { flex-shrink: 0; }
+html[data-theme='dark']:root #root .verified-owner-badge { background: #173c32; color: #a5ebcd; border-color: #477f6b; --verified-check: #173c32; }
+@media (forced-colors: active) { html:root #root .verified-owner-badge { border-color: CanvasText; color: CanvasText; background: Canvas; --verified-check: Canvas; } }

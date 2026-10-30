@@ -926,8 +926,8 @@
   gap: 6px;
 }
 
-.map-listings__preview-tags span,
-.map-listings__meta span {
+.map-listings__preview-tags > span:not(.premium-badge):not(.verified-owner-badge),
+.map-listings__meta > span {
   padding: 4px 9px;
   border-radius: 999px;
   background: #faf6ee;

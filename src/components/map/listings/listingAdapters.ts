@@ -87,6 +87,7 @@ export type ListingViewModel = {
   highlightTag: string | null
   ownerBadge: string | null
   isPremium: boolean
+  isOwnerVerified: boolean
 }
 
 export type FilterConfig = {
@@ -120,6 +121,7 @@ export function mapBackendListingToListingViewModel(post: RentalPostSummary): Li
     highlightTag: post.highlightTag?.trim() || null,
     ownerBadge: post.ownerBadge?.trim() || null,
     isPremium: post.isOwnerPremium === true,
+    isOwnerVerified: post.isOwnerVerified === true,
   }
 }
 
@@ -159,6 +161,7 @@ export function mapMarketplacePostToListingViewModel(post: MarketplacePost): Lis
     highlightTag: null,
     ownerBadge: post.sellerDisplayName?.trim() || null,
     isPremium: false,
+    isOwnerVerified: false,
   }
 }
 

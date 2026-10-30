@@ -29,7 +29,7 @@ html:root #root .hub-market__thumb { grid-row: span 2; width: 48px; height: 48px
 html:root #root .hub-market li b { color: var(--text-heading); white-space: normal; line-height: 1.5; }
 html:root #root .hub-market li strong { grid-column: 2; color: var(--hj-accent); font-size: 13px; }
 html:root #root .hub-market li + li { border-color: var(--border); }
-html:root #root .map-listings__meta span { background: var(--surface-input); color: var(--text-secondary); border-radius: 5px; border: 1px solid var(--border); }
+html:root #root .map-listings__meta > span { background: var(--surface-input); color: var(--text-secondary); border-radius: 5px; border: 1px solid var(--border); }
 html:root #root .map-listings__save { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 10px; color: var(--hj-accent); box-shadow: 0 2px 6px rgb(0 0 0 / .12); }
 html:root #root .map-listings__save svg { display: block; }
 html:root #root .map-listings__catalog { gap: 24px; background: transparent; border: 0; border-radius: 0; }
@@ -49,7 +49,7 @@ html:root #root .hj-notify__tabs > button[role='tab'] { min-height: 48px; paddin
 html:root #root .hj-notify__tabs > button[role='tab'][aria-selected='true'] { color: var(--hj-accent); border-bottom-color: var(--hj-accent); }
 html:root #root .hj-notify__mark-all { color: var(--hj-accent); background: transparent; border: 0; border-radius: 6px; min-height: 44px; box-shadow: none; }
 html:root #root .map-listings__preview-price button { display: grid; place-items: center; min-width: 40px; min-height: 40px; background: var(--surface-elevated); color: var(--hj-accent); border: 1px solid var(--border); border-radius: 10px; box-shadow: none; }
-html:root #root .map-listings__preview-tags span { background: var(--surface-input); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 5px; }
+html:root #root .map-listings__preview-tags > span:not(.premium-badge):not(.verified-owner-badge) { background: var(--surface-input); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 5px; }
 html:root #root .map-listings__move { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 2px 6px rgb(0 0 0 / .1); min-height: 44px; }
 html:root #root :is(.map-listings__save,.map-listings__preview-price button) { min-width: 44px; min-height: 44px; }
 html:root #root .hub-market { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); }

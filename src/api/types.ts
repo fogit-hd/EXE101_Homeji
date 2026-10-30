@@ -365,6 +365,7 @@ export interface RentalPostSummary {
   viewCount: number
   saveCount: number
   isOwnerPremium?: boolean
+  isOwnerVerified?: boolean
   ownerBadge?: string | null
   boostScore?: number
   highlightTag?: string | null
