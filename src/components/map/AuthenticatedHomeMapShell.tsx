@@ -969,7 +969,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       userLocation={userLocation}
       onLocate={onLocate}
       locating={locating}
-      markerVariant={destinationMode && isMapMode ? 'price-pill' : 'pin'}
+      markerVariant="price-pill"
       hideViewSwitcher={destinationMode && isMapMode}
       onViewportIdle={destinationMode && isMapMode ? handleViewportIdle : undefined}
     />

@@ -89,7 +89,7 @@ export const HomeMapStage = memo(function HomeMapStage({
   userLocation,
   onLocate,
   locating,
-  markerVariant = 'pin',
+  markerVariant = 'price-pill',
   hideViewSwitcher = false,
   onViewportIdle,
 }: HomeMapStageProps) {

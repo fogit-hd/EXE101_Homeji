@@ -208,7 +208,7 @@ function RentalMapComponent({
   locating = false,
   selectionPad = DEFAULT_PAD,
   focusToken = 0,
-  markerVariant = 'pin',
+  markerVariant = 'price-pill',
   hideViewSwitcher = false,
   listingsFitToken = 0,
   navigationRequest = null,
