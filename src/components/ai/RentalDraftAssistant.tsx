@@ -4,12 +4,18 @@ import { getErrorMessage } from '../../lib/errors'
 import { type RentalDraftFacts } from '../../lib/rentalDraft'
 import './RentalDraftAssistant.css'
 
-export function RentalDraftAssistant({ facts, title, description, disabled, onApply }: {
-  facts: RentalDraftFacts; title: string; description: string; disabled: boolean
-  onApply: (draft: { title: string; description: string }) => void
-}) {
+type Props = {
+  field: 'title' | 'description'
+  facts: RentalDraftFacts
+  title: string
+  description: string
+  disabled: boolean
+  onApply: (text: string) => void
+}
+
+export function RentalDraftAssistant({ field, facts, title, description, disabled, onApply }: Props) {
   const panelId = useId()
-  const [expanded, setExpanded] = useState(false)
+  const label = field === 'title' ? 'tiêu đề' : 'mô tả'
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof generateRentalDraft>> | null>(null)
   const [snapshot, setSnapshot] = useState('')
   const [busy, setBusy] = useState(false)
@@ -26,51 +32,48 @@ export function RentalDraftAssistant({ facts, title, description, disabled, onAp
   const version = JSON.stringify({ facts, title, description })
   const stale = snapshot !== version
   const generate = async () => {
-    if (busy || disabled) return
+    if (pending.current || disabled) return
     const current = ++requestId.current
     const controller = new AbortController()
-    pending.current?.abort()
     pending.current = controller
-    setBusy(true); setError(''); setPreview(null)
+    setBusy(true)
+    setError('')
+    setPreview(null)
     try {
       const result = await generateRentalDraft(facts, controller.signal)
       if (requestId.current === current) { setPreview(result); setSnapshot(version) }
     } catch (reason) {
-      if (requestId.current === current) setError(getErrorMessage(reason, 'Gemini chưa tạo được bản nháp. Vui lòng thử lại.'))
-    } finally { if (requestId.current === current) { pending.current = null; setBusy(false) } }
+      if (requestId.current === current) setError(getErrorMessage(reason, 'Chưa tạo được gợi ý. Hãy thử lại.'))
+    } finally {
+      if (requestId.current === current) { pending.current = null; setBusy(false) }
+    }
   }
-  return <section className="rental-draft-tool" aria-labelledby={`${panelId}-title`}>
-    <header className="rental-draft-tool__header">
-      <span className="rental-draft-tool__icon" aria-hidden="true">✦</span>
-      <div className="rental-draft-tool__intro">
-        <h3 id={`${panelId}-title`}>Trợ lý soạn tin</h3>
-        <p>Gợi ý tiêu đề và mô tả từ thông tin bạn đã điền. Bạn xem trước rồi quyết định áp dụng.</p>
-      </div>
-      <button type="button" className="rental-draft-tool__toggle" data-glass-exclude=""
-        aria-expanded={expanded} aria-controls={panelId} onClick={() => {
-          if (expanded) cancel()
-          setExpanded(!expanded)
-        }}>
-        {expanded ? 'Thu gọn' : 'Mở trợ lý'}
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d={expanded ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  return <section className="rental-draft-tool" data-glass-exclude aria-label={`AI gợi ý ${label}`}>
+    <div className="rental-draft-tool__actions">
+      <button type="button" className="rental-draft-tool__generate" disabled={disabled || busy}
+        aria-busy={busy} aria-controls={panelId} onClick={() => void generate()}>
+        {busy ? `Đang viết ${label}…` : `AI gợi ý ${label}`}
       </button>
-    </header>
-    <div id={panelId} className="rental-draft-tool__body" hidden={!expanded}>
-    <p>Gemini gợi ý cách trình bày từ thông tin bạn đã điền. Bản nháp không xác minh giá, tiện ích hay tình trạng phòng. Ảnh không được dùng để đo diện tích hoặc suy ra tiện ích. Bạn kiểm tra lại trước khi áp dụng.</p>
-    <button type="button" className="btn btn-secondary btn-sm ai-spectrum-button" disabled={disabled || busy} aria-busy={busy} onClick={() => void generate()}>{busy ? 'Gemini đang soạn…' : 'Tạo bản gợi ý bằng Gemini'}</button>
-    {busy ? <button type="button" className="btn btn-ghost btn-sm" onClick={cancel}>Hủy soạn</button> : null}
-    {busy ? <p role="status">Đang soạn từ thông tin bạn cung cấp…</p> : null}
-    {error ? <p role="alert">{error}</p> : null}
-    {preview ? <>
-      <div className="rental-draft-assistant__preview">
-        <section><h3>Hiện tại</h3><strong>{title || 'Chưa có tiêu đề'}</strong><p>{description || 'Chưa có mô tả'}</p></section>
-        <section><h3>Bản gợi ý</h3><strong>{preview.title}</strong><p>{preview.description}</p></section>
-      </div>
-      <strong>Thông tin cần bổ sung / kiểm tra</strong><ul>{preview.missing.map(item => <li key={item}>{item}</li>)}</ul>
-      {stale ? <p role="status">Thông tin đã thay đổi. Tạo lại bản gợi ý trước khi áp dụng.</p> : null}
-      <button type="button" className="btn btn-primary btn-sm ai-spectrum-button" disabled={disabled || stale} onClick={() => { onApply(preview); setPreview(null) }}>Xác nhận thay tiêu đề và mô tả trong biểu mẫu</button>
-      <p>Bạn vẫn cần nhấn Lưu hoặc Gửi duyệt để cập nhật tin.</p>
-    </> : null}
+      {busy ? <button type="button" className="rental-draft-tool__cancel" onClick={cancel}>Hủy</button> : null}
+      <span className="rental-draft-tool__hint">Dựa trên thông tin phòng bạn đã điền.</span>
+    </div>
+    <div id={panelId}>
+      {error ? <p className="rental-draft-tool__error" role="alert">{error}</p> : null}
+      {preview ? <div className="rental-draft-tool__preview">
+        <strong>Gợi ý {label}</strong>
+        <p className="rental-draft-tool__text">{preview[field]}</p>
+        {field === 'description' && preview.missing.length > 0 ? <details className="rental-draft-tool__missing">
+          <summary>Thông tin cần bổ sung</summary>
+          <ul>{preview.missing.map(item => <li key={item}>{item}</li>)}</ul>
+        </details> : null}
+        {stale ? <p role="status">Bạn vừa sửa thông tin. Hãy tạo lại gợi ý trước khi áp dụng.</p> : null}
+        <div className="rental-draft-tool__actions">
+          <button type="button" className="btn btn-secondary btn-sm" disabled={disabled || stale || busy}
+            onClick={() => { onApply(preview[field]); setPreview(null) }}>Dùng {label} này</button>
+          <button type="button" className="rental-draft-tool__cancel" onClick={() => setPreview(null)}>Bỏ qua</button>
+        </div>
+        <p className="rental-draft-tool__hint">Kiểm tra nội dung rồi bấm Lưu nháp hoặc Gửi duyệt.</p>
+      </div> : null}
     </div>
   </section>
 }

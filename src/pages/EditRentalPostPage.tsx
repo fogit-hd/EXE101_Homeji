@@ -313,6 +313,11 @@ export function EditRentalPostPage() {
 
   const latNum = latitude.trim() ? Number(latitude) : Number.NaN
   const lngNum = longitude.trim() ? Number(longitude) : Number.NaN
+  const draftFacts = {
+    typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
+    priceBasis: rentalPriceBasis({ type, ownerRole: post?.ownerRole ?? profile?.role }),
+    amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0,
+  }
 
   if (showLoader) {
     return disrupted ? (
@@ -350,11 +355,6 @@ export function EditRentalPostPage() {
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
       <fieldset disabled={busy} aria-label="Thông tin và ảnh tin đăng" style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <form ref={formRef} className="card rental-edit-form" data-glass-exclude onSubmit={handleSave}>
-        {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant facts={{ typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
-          priceBasis: rentalPriceBasis({ type, ownerRole: post?.ownerRole ?? profile?.role }),
-          amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0 }}
-          title={title} description={description} disabled={busy}
-          onApply={draft => { setTitle(draft.title); setDescription(draft.description) }} /> : null}
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">
             <div className="room-transfer-form__notice">
@@ -419,10 +419,14 @@ export function EditRentalPostPage() {
         <div className="form-group">
           <label className="form-label" htmlFor="rental-title">Tiêu đề</label>
           <input id="rental-title" className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
+          {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant field="title" facts={draftFacts}
+            title={title} description={description} disabled={busy} onApply={setTitle} /> : null}
         </div>
         <div className="form-group">
           <label className="form-label" htmlFor="rental-description">{isRenterShare ? 'Giới thiệu bản thân và chỗ ở' : 'Mô tả'}</label>
           <textarea id="rental-description" className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={4000} required />
+          {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant field="description" facts={draftFacts}
+            title={title} description={description} disabled={busy} onApply={setDescription} /> : null}
         </div>
         <div className="form-row">
           <div className="form-group">
