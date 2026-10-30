@@ -38,6 +38,7 @@ export function CreateRentalPostPage() {
     [profile?.role],
   )
   const selectedType = availableTypes.includes(type) ? type : availableTypes[0]
+  const visibleTypes = [...new Set([...availableTypes, RentalPostType.RoomTransfer])]
 
   const handleCreate = async () => {
     if (createLock.current) return
@@ -66,20 +67,20 @@ export function CreateRentalPostPage() {
       <PageNotice message={error} tone="error" />
 
       <div className="type-selector" role="group" aria-label="Loại tin đăng">
-        {availableTypes.map((t) => (
+        {visibleTypes.map((t) => (
           <button
             key={t}
             type="button"
             className={`type-card card ${selectedType === t ? 'selected' : ''}`}
             data-glass-exclude=""
             aria-pressed={selectedType === t}
-            disabled={loading}
+            disabled={loading || !availableTypes.includes(t)}
             onClick={() => setType(t)}
           >
             <span className="type-card__state" aria-hidden="true">{selectedType === t ? '✓ Đã chọn' : 'Chọn loại tin'}</span>
             <h3>{rentalPostTypeLabel[t]}</h3>
             {t === RentalPostType.RoomTransfer ? (
-              <p>Chuyển hợp đồng hoặc cho thuê lại có xác nhận của chủ nhà</p>
+              <p>{availableTypes.includes(t) ? 'Chuyển hợp đồng hoặc cho thuê lại có xác nhận của chủ nhà' : 'Dành cho tài khoản người thuê đang muốn nhượng lại phòng. Tài khoản chủ nhà dùng mục Phòng trống để đăng cho thuê.'}</p>
             ) : (
               <p>
                 {t === RentalPostType.VacantRoom

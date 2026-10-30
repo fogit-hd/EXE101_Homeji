@@ -231,7 +231,7 @@ export async function fetchPlacePredictions(
           language?: string
           locationRestriction?: google.maps.LatLngBoundsLiteral
           locationBias?: {
-            circle: { center: google.maps.LatLngLiteral; radius: number }
+            center: google.maps.LatLngLiteral; radius: number
           }
         }) => Promise<{ suggestions?: Array<{ placePrediction?: unknown }> }>
       }
@@ -248,7 +248,7 @@ export async function fetchPlacePredictions(
           south: HOMEJI_SERVICE_AREA.minLatitude, north: HOMEJI_SERVICE_AREA.maxLatitude,
           west: HOMEJI_SERVICE_AREA.minLongitude, east: HOMEJI_SERVICE_AREA.maxLongitude,
         } } : { locationBias: {
-          circle: { center: DEFAULT_MAP_CENTER, radius: 25000 },
+          center: DEFAULT_MAP_CENTER, radius: 25000,
         } }),
       })
 

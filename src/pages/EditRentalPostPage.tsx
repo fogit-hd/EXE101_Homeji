@@ -20,6 +20,7 @@ import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { PostFormSkeleton } from '../components/skeletons/PageSkeletons'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
+import { MoneyInput } from '../components/ui/MoneyInput'
 import { useAuth } from '../contexts/AuthContext'
 import { useGoogleMaps } from "../contexts/GoogleMapsProvider.logic"
 
@@ -386,7 +387,7 @@ export function EditRentalPostPage() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label" htmlFor="pass-fee">Phí pass (VND, nếu có)</label>
-                <input id="pass-fee" className="form-input" type="number" min="0" value={passFee} onChange={(event) => setPassFee(event.target.value)} />
+                <MoneyInput id="pass-fee" className="form-input" value={passFee} onValueChange={setPassFee} maxLength={19} />
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="owner-contact">Kênh để Homeji xác minh chủ nhà</label>
@@ -431,11 +432,11 @@ export function EditRentalPostPage() {
         <div className="form-row">
           <div className="form-group">
             <label className="form-label" htmlFor="rental-price">{isRenterShare ? 'Chi phí dự kiến/người/tháng (VND)' : 'Giá thuê (VND / tháng)'}</label>
-            <input id="rental-price" className="form-input" type="number" min="1" step="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            <MoneyInput id="rental-price" className="form-input" value={price} onValueChange={setPrice} min={1} maxLength={19} required />
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="rental-deposit">Tiền cọc (VND)</label>
-            <input id="rental-deposit" className="form-input" type="number" min="0" step="1" value={deposit} onChange={(e) => setDeposit(e.target.value)} required />
+            <MoneyInput id="rental-deposit" className="form-input" value={deposit} onValueChange={setDeposit} maxLength={19} required />
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="rental-area">Diện tích (m²)</label>
