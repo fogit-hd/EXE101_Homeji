@@ -4,7 +4,7 @@ html:root #root .verified-owner-badge {
   gap: 6px;
   width: fit-content;
   max-width: 100%;
-  padding: 5px 8px;
+  padding: 3px 8px 3px 5px;
   margin-block: 5px;
   border: 1px solid #9ccfbe;
   border-radius: 6px;
@@ -14,5 +14,17 @@ html:root #root .verified-owner-badge {
   white-space: normal;
 }
 .verified-owner-badge svg { flex-shrink: 0; }
+.verified-owner-badge__icon { position: relative; display: inline-grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; }
+.verified-owner-badge__icon svg { position: relative; z-index: 1; }
+html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring { position: absolute; inset: 0; width: 26px; height: 26px; object-fit: contain; opacity: 0; animation: verified-owner-ring-one 1.6s steps(1, end) 2; }
+html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:first-child { opacity: 1; }
+html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:nth-child(2) { animation-name: verified-owner-ring-two; }
+html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:nth-child(3) { animation-name: verified-owner-ring-three; }
+html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:nth-child(4) { animation-name: verified-owner-ring-four; }
+@keyframes verified-owner-ring-one { 0% { opacity: 1; } 25%, 100% { opacity: 0; } }
+@keyframes verified-owner-ring-two { 0% { opacity: 0; } 25% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes verified-owner-ring-three { 0% { opacity: 0; } 50% { opacity: 1; } 75%, 100% { opacity: 0; } }
+@keyframes verified-owner-ring-four { 0% { opacity: 0; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:nth-child(n) { animation: none; } }
 html[data-theme='dark']:root #root .verified-owner-badge { background: #173c32; color: #a5ebcd; border-color: #477f6b; --verified-check: #173c32; }
-@media (forced-colors: active) { html:root #root .verified-owner-badge { border-color: CanvasText; color: CanvasText; background: Canvas; --verified-check: Canvas; } }
+@media (forced-colors: active) { html:root #root .verified-owner-badge { border-color: CanvasText; color: CanvasText; background: Canvas; --verified-check: Canvas; } html:root #root .verified-owner-badge__ring { display: none; } }

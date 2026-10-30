@@ -32,6 +32,25 @@ try {
   await nonPremium.waitFor()
   assert.equal(await nonPremium.getByText('Chủ nhà đã xác minh', { exact: true }).isVisible(), true)
   assert.equal(await nonPremium.locator('.premium-badge').count(), 0, 'Owner verification must not depend on buying Premium')
+  const ring = nonPremium.locator('.verified-owner-badge__ring')
+  await page.waitForFunction(() => [...document.querySelectorAll('.map-listings__preview .verified-owner-badge__ring')].every(img => img.complete && img.naturalWidth > 0))
+  assert.deepEqual(await ring.evaluateAll(images => images.map(img => getComputedStyle(img).animationName)), ['none', 'none', 'none', 'none'], 'Reduced motion must keep the ring static')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const frames = await ring.evaluateAll(images => {
+    const animations = images.map(img => img.getAnimations()[0])
+    const timings = animations.map(animation => ({ duration: animation.effect.getTiming().duration, iterations: animation.effect.getTiming().iterations }))
+    const visible = [100, 500, 900, 1300].map(time => {
+      animations.forEach(animation => { animation.pause(); animation.currentTime = time })
+      return images.map(img => getComputedStyle(img).opacity)
+    })
+    animations.forEach(animation => animation.finish())
+    return { timings, visible, stopped: images.map(img => getComputedStyle(img).opacity) }
+  })
+  assert.ok(frames.timings.every(timing => timing.duration === 1600 && timing.iterations === 2), 'Animation must stop after two cycles')
+  assert.deepEqual(frames.visible, [['1', '0', '0', '0'], ['0', '1', '0', '0'], ['0', '0', '1', '0'], ['0', '0', '0', '1']])
+  assert.deepEqual(frames.stopped, ['1', '0', '0', '0'])
+  await page.evaluate(() => document.documentElement.dataset.theme = 'light')
+  await nonPremium.screenshot({ path: out + '/badge-preview.png' })
   assert.deepEqual(errors, [])
   console.log('PASS: Premium label stays visible; verified owners independently appear on map/list cards in light/dark and 320–1100px; unverified accounts get no badge')
 } finally { await browser.close() }
