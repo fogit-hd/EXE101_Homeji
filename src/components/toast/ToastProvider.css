@@ -70,3 +70,8 @@
 .app-toast__close:hover {
   background: rgba(20, 39, 31, 0.06);
 }
+
+.app-toast p { color: inherit; }
+html[data-theme='dark'] .app-toast--error { color: #ffc4bb; background: #42272b; border-color: #855157; }
+html[data-theme='dark'] .app-toast--success { color: #b5ead1; background: #183c32; border-color: #396c59; }
+html[data-theme='dark'] .app-toast--warning { color: #f5dfaa; background: #403722; border-color: #78653a; }

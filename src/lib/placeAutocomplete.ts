@@ -214,7 +214,7 @@ async function requestNearbyPlaces(
  */
 export async function fetchPlacePredictions(
   input: string,
-  options?: { limit?: number; concreteLocalPlaces?: boolean },
+  options?: { limit?: number; concreteLocalPlaces?: boolean; throwOnError?: boolean },
 ): Promise<PlacePredictionItem[]> {
   const q = input.trim()
   if (q.length < 2) return []
@@ -275,21 +275,27 @@ export async function fetchPlacePredictions(
         if (out.length >= limit) break
       }
       return out
-    } catch {
+    } catch (error) {
+      if (options?.throwOnError) throw error
       return []
     }
   }
 
   // No legacy AutocompleteService / PlacesService — those warn for new Maps customers.
+  if (options?.throwOnError) throw new Error('Address suggestions are unavailable')
   return []
 }
 
 /** Resolve a Place ID to coordinates for map focus + nearby listing search. */
 export async function resolvePlaceCoordinates(
   placeId: string,
+  options?: { throwOnError?: boolean },
 ): Promise<ResolvedPlaceLocation | null> {
   const { Place } = await importPlacesLibrary()
-  if (!Place) return null
+  if (!Place) {
+    if (options?.throwOnError) throw new Error('Place lookup is unavailable')
+    return null
+  }
 
   try {
     const place = new Place({ id: placeId })
@@ -313,7 +319,8 @@ export async function resolvePlaceCoordinates(
       lat: coords.lat,
       lng: coords.lng,
     }
-  } catch {
+  } catch (error) {
+    if (options?.throwOnError) throw error
     return null
   }
 }

@@ -30,11 +30,13 @@ import { getErrorMessage } from '../lib/errors'
 import { geocodeAddress, isValidCoord } from '../lib/googleMaps'
 import { AMENITY_OPTIONS, amenityLabel, normalizeAmenityCode, rentalPostTypeLabel } from '../lib/labels'
 import { mapSectionUrl } from '../lib/mapDeepLinks'
+import { DEFAULT_MAP_CENTER } from '../lib/googleMaps'
+import { isInHomejiServiceArea } from '../lib/homejiServiceArea'
 
 export function EditRentalPostPage() {
   const { postId } = useParams<{ postId: string }>()
   const navigate = useNavigate()
-  const { isLoaded: mapsLoaded } = useGoogleMaps()
+  const { isLoaded: mapsLoaded, loadError: mapsLoadError } = useGoogleMaps()
   const { profile } = useAuth()
 
   const [post, setPost] = useState<RentalPost | null>(null)
@@ -56,9 +58,10 @@ export function EditRentalPostPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const [findingLocation, setFindingLocation] = useState(false)
   const operationLock = useRef(false)
   const addressVersion = useRef(0)
-  const busy = saving || uploadingMedia
+  const busy = saving || uploadingMedia || findingLocation
   const formRef = useRef<HTMLFormElement>(null)
   const [availableFrom, setAvailableFrom] = useState('')
   const [originalLeaseEndsOn, setOriginalLeaseEndsOn] = useState('')
@@ -102,7 +105,18 @@ export function EditRentalPostPage() {
 
   const persistDraft = async () => {
     if (!postId) throw new Error('Không tìm thấy tin đăng.')
-    if (!isValidCoord(latNum, lngNum)) throw new Error('Chọn địa chỉ hoặc vị trí hợp lệ trước khi lưu.')
+    let coordinates = { lat: latNum, lng: lngNum }
+    if (!isValidCoord(coordinates.lat, coordinates.lng)) {
+      if (!mapsLoaded) throw new Error('Chưa dùng được bản đồ để tìm vị trí. Nội dung bạn nhập vẫn được giữ trên trang; hãy thử lại khi bản đồ tải xong.')
+      const resolved = await geocodeAddress(address, { throwOnError: true }).catch(() => {
+        throw new Error('Chưa kết nối được dịch vụ tìm vị trí. Hãy thử lại hoặc chọn vị trí trên bản đồ; tin chưa được lưu.')
+      })
+      if (!resolved) throw new Error('Chưa tìm thấy vị trí. Hãy nhập đủ số nhà, tên đường, phường/xã hoặc chọn vị trí trên bản đồ rồi lưu lại.')
+      coordinates = resolved
+      setLatitude(String(resolved.lat))
+      setLongitude(String(resolved.lng))
+    }
+    if (!isInHomejiServiceArea(coordinates.lat, coordinates.lng)) throw new Error('Homeji hiện hỗ trợ khu vực Thủ Đức và Quận 9 cũ. Hãy chọn vị trí trong khu vực này.')
     if (isRenterShare && (!Number.isInteger(Number(maxOccupants)) || Number(maxOccupants) < 1
       || !Number.isInteger(Number(availableSlots)) || Number(availableSlots) < 1
       || Number(availableSlots) > Number(maxOccupants))) {
@@ -116,8 +130,8 @@ export function EditRentalPostPage() {
         deposit: Number(deposit),
         area: Number(area),
         address,
-        latitude: isValidCoord(latNum, lngNum) ? latNum : Number(latitude),
-        longitude: isValidCoord(latNum, lngNum) ? lngNum : Number(longitude),
+        latitude: coordinates.lat,
+        longitude: coordinates.lng,
         amenities: amenities.map((a) => normalizeAmenityCode(a)),
         // PUT replaces these terms even though this form does not edit them.
         electricityPrice: post?.electricityPrice ?? 0,
@@ -144,6 +158,7 @@ export function EditRentalPostPage() {
     operationLock.current = true
     addressVersion.current += 1
     setError('')
+    setMessage('')
     setSaving(true)
     try {
       await persistDraft()
@@ -236,14 +251,14 @@ export function EditRentalPostPage() {
   }
 
   const handleArchive = async () => {
-    if (!postId || operationLock.current || !confirm('Lưu trữ tin đăng này?')) return
+    if (!postId || operationLock.current || !confirm('Cất tin này vào mục lưu trữ? Các thay đổi chưa lưu sẽ không được giữ lại.')) return
     operationLock.current = true
     addressVersion.current += 1
     setSaving(true)
     setError('')
     try {
       await archiveRentalPost(postId)
-      navigate('/')
+      navigate(mapSectionUrl('myPosts'))
     } catch (err) {
       setError(getErrorMessage(err, 'Lưu trữ thất bại'))
     } finally {
@@ -268,12 +283,16 @@ export function EditRentalPostPage() {
   }
 
   const handleGeocodeAddress = async () => {
-    if (operationLock.current || !mapsLoaded || !address.trim()) return
+    if (operationLock.current) return
+    if (!address.trim()) { setError('Nhập địa chỉ trước khi tìm vị trí.'); return }
+    if (!mapsLoaded) { setError(mapsLoadError ? 'Chưa tải được bản đồ. Hãy kiểm tra kết nối rồi tải lại trang.' : 'Bản đồ chưa sẵn sàng. Hãy đợi một chút rồi thử lại.'); return }
+    operationLock.current = true
+    setFindingLocation(true)
     const version = ++addressVersion.current
     setError('')
     try {
-      const result = await geocodeAddress(address)
-      if (version !== addressVersion.current || operationLock.current) return
+      const result = await geocodeAddress(address, { throwOnError: true })
+      if (version !== addressVersion.current) return
       if (!result) {
         setError('Không tìm thấy tọa độ cho địa chỉ này.')
         return
@@ -283,9 +302,12 @@ export function EditRentalPostPage() {
       setLongitude(String(result.lng))
       setMapPickerOpen(true)
       setMessage('Đã cập nhật tọa độ từ địa chỉ.')
-    } catch (err) {
-      if (version === addressVersion.current && !operationLock.current)
-        setError(getErrorMessage(err, 'Không lấy được tọa độ. Vui lòng thử lại.'))
+    } catch {
+      if (version === addressVersion.current)
+        setError('Chưa kết nối được dịch vụ tìm vị trí. Hãy thử lại hoặc chọn vị trí trên bản đồ.')
+    } finally {
+      operationLock.current = false
+      setFindingLocation(false)
     }
   }
 
@@ -327,7 +349,7 @@ export function EditRentalPostPage() {
 
       <nav className="post-steps" aria-label="Quy trình đăng tin"><span>1. Chọn loại tin</span><strong>2. Thông tin & ảnh</strong><span>3. Gửi duyệt</span></nav>
       <fieldset disabled={busy} aria-label="Thông tin và ảnh tin đăng" style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <form ref={formRef} className="card rental-edit-form" onSubmit={handleSave}>
+      <form ref={formRef} className="card rental-edit-form" data-glass-exclude onSubmit={handleSave}>
         {aiFeatureFlags.draftAssistant ? <RentalDraftAssistant facts={{ typeLabel: rentalPostTypeLabel[type], address, rent: price, area,
           priceBasis: rentalPriceBasis({ type, ownerRole: post?.ownerRole ?? profile?.role }),
           amenities: amenities.map(amenityLabel), imageCount: post?.media.length ?? 0 }}
@@ -431,11 +453,11 @@ export function EditRentalPostPage() {
             }}
             required
             onPlaceSelect={handlePlaceSelect}
-            placeholder="Nhập địa chỉ — gợi ý tự động (Places API)"
+            placeholder="Ví dụ: 12 đường số 8, phường Linh Trung, Thủ Đức"
           />
           <div className="post-form-address-actions">
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleGeocodeAddress()}>
-              Lấy tọa độ từ địa chỉ
+              {findingLocation ? 'Đang tìm vị trí…' : 'Tìm vị trí từ địa chỉ'}
             </button>
             {isValidCoord(latNum, lngNum) ? (
               <span className="map-coord-hint">
@@ -451,7 +473,7 @@ export function EditRentalPostPage() {
               <span className="form-label" id="edit-post-map-label">
                 Vị trí trên bản đồ
               </span>
-              <p className="form-hint">Khối phụ — chỉ mở khi cần chỉnh pin. Địa chỉ phía trên là chính.</p>
+              <p className="form-hint">Chọn một địa chỉ gợi ý hoặc đánh dấu đúng chỗ ở trên bản đồ trước khi lưu.</p>
             </div>
             <button
               type="button"
@@ -466,8 +488,8 @@ export function EditRentalPostPage() {
           <div id="edit-post-map-picker">
             <DeferredMapBlock visible={mapPickerOpen} label="Chọn vị trí trên bản đồ">
               <LocationPickerMap
-                latitude={isValidCoord(latNum, lngNum) ? latNum : 10.7769}
-                longitude={isValidCoord(latNum, lngNum) ? lngNum : 106.7009}
+                latitude={isValidCoord(latNum, lngNum) ? latNum : DEFAULT_MAP_CENTER.lat}
+                longitude={isValidCoord(latNum, lngNum) ? lngNum : DEFAULT_MAP_CENTER.lng}
                 onLocationChange={(lat, lng) => {
                   if (operationLock.current) return
                   addressVersion.current += 1
@@ -487,9 +509,10 @@ export function EditRentalPostPage() {
                 key={a}
                 type="button"
                 className={`amenity-chip ${amenities.includes(a) ? 'active' : ''}`}
+                aria-pressed={amenities.includes(a)}
                 onClick={() => toggleAmenity(a)}
               >
-                {amenityLabel(a)}
+                <span className="amenity-chip__check" aria-hidden="true">{amenities.includes(a) ? '✓' : '+'}</span>{amenityLabel(a)}
               </button>
             ))}
           </div>

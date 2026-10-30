@@ -201,6 +201,7 @@ export function readAdvancedMarkerLatLng(
 
 export async function geocodeAddress(
   address: string,
+  options?: { throwOnError?: boolean },
 ): Promise<{
   lat: number
   lng: number
@@ -225,7 +226,8 @@ export async function geocodeAddress(
       formattedAddress: result.formatted_address ?? address,
       types: result.types ?? [],
     }
-  } catch {
+  } catch (error) {
+    if (options?.throwOnError && !(error && typeof error === 'object' && 'code' in error && error.code === 'ZERO_RESULTS')) throw error
     return null
   }
 }

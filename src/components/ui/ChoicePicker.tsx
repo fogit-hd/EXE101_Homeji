@@ -36,7 +36,7 @@ function associatedLabel(button: HTMLButtonElement | null) {
 }
 
 /** Keeps a real select for form submission, validation and existing change handlers. */
-export function ChoicePicker({ children, className = '', id: suppliedId, value, defaultValue, disabled, onChange, onInvalid, disableGlass = false, ...props }: Props) {
+export function ChoicePicker({ children, className = '', id: suppliedId, value, defaultValue, disabled, onChange, onInvalid, disableGlass = true, ...props }: Props) {
   const generatedId = useId()
   const id = suppliedId ?? `choice-${generatedId}`
   const ariaLabel = props['aria-label']

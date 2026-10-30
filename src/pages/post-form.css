@@ -126,3 +126,11 @@
 }
 .type-card.selected .type-card__state { color: var(--action-on-soft, var(--grab-blue)); }
 .type-card:disabled { cursor: wait; }
+
+.rental-edit-form .amenity-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.rental-edit-form .amenity-chip { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--text-primary); text-align: left; font: inherit; font-size: 14px; cursor: pointer; }
+.rental-edit-form .amenity-chip.active { border-color: var(--text-accent, #12858b); background: color-mix(in srgb, #12858b 12%, var(--surface-elevated)); color: var(--text-heading); font-weight: 600; }
+.amenity-chip__check { display: grid; place-content: center; width: 20px; height: 20px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 5px; font-size: 16px; }
+.amenity-chip.active .amenity-chip__check { background: var(--text-accent, #12858b); color: var(--surface-elevated); border-color: transparent; }
+.rental-edit-form .amenity-chip:focus-visible { outline: 3px solid var(--text-accent, #12858b); outline-offset: 3px; }
+@media (max-width: 420px) { .rental-edit-form .amenity-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -40,7 +40,7 @@ export function AddressAutocomplete({
   required,
   disabled = false,
 }: Props) {
-  const { apiKey, isLoaded } = useGoogleMaps()
+  const { apiKey, isLoaded, loadError } = useGoogleMaps()
   const listId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -52,6 +52,7 @@ export function AddressAutocomplete({
   const [items, setItems] = useState<PlacePredictionItem[]>([])
   const [activeIndex, setActiveIndex] = useState(-1)
   const [resolving, setResolving] = useState(false)
+  const [lookupError, setLookupError] = useState('')
   const selectionVersion = useRef(0)
   const disabledRef = useRef(disabled)
   useEffect(() => {
@@ -84,7 +85,8 @@ export function AddressAutocomplete({
         return
       }
       setLoading(true)
-      void fetchPlacePredictions(q, { limit: 6 }).then((next) => {
+      setLookupError('')
+      void fetchPlacePredictions(q, { limit: 6, throwOnError: true }).then((next) => {
         if (cancelled) return
         setItems(next)
         setLoading(false)
@@ -93,6 +95,7 @@ export function AddressAutocomplete({
         if (cancelled) return
         setItems([])
         setLoading(false)
+        setLookupError('Chưa tải được gợi ý địa chỉ. Bạn có thể nhập đầy đủ địa chỉ rồi chọn vị trí trên bản đồ.')
       })
     }, 220)
 
@@ -108,7 +111,7 @@ export function AddressAutocomplete({
     setOpen(false)
     setResolving(true)
     try {
-      const resolved = await resolvePlaceCoordinates(item.placeId)
+      const resolved = await resolvePlaceCoordinates(item.placeId, { throwOnError: true })
       if (version !== selectionVersion.current || disabledRef.current) return
       if (resolved) {
         const address = resolved.address || resolved.name || item.title
@@ -119,11 +122,17 @@ export function AddressAutocomplete({
           lng: resolved.lng,
         })
       } else {
-        onChangeRef.current(item.title)
+        setItems([])
+        setLookupError('Chưa tìm được vị trí của địa chỉ này. Hãy chọn vị trí trên bản đồ.')
+        setOpen(true)
       }
     } catch {
       // Keep manual address entry usable if the optional provider lookup fails.
-      if (version === selectionVersion.current) setOpen(false)
+      if (version === selectionVersion.current) {
+        setItems([])
+        setLookupError('Chưa lấy được vị trí. Hãy thử chọn lại địa chỉ hoặc chọn vị trí trên bản đồ.')
+        setOpen(true)
+      }
     } finally {
       if (version === selectionVersion.current) setResolving(false)
     }
@@ -132,7 +141,7 @@ export function AddressAutocomplete({
   const showList = !disabled && open && (loading || items.length > 0 || value.trim().length >= 2)
 
   return (
-    <div ref={rootRef} className="address-autocomplete">
+    <div ref={rootRef} className="address-autocomplete" data-glass-exclude>
       <input
         id={id}
         ref={inputRef}
@@ -140,6 +149,10 @@ export function AddressAutocomplete({
         value={value}
         onChange={(e) => {
           selectionVersion.current += 1
+          setItems([])
+          setActiveIndex(-1)
+          setLookupError('')
+          setLoading(e.target.value.trim().length >= 2 && isLoaded && !!apiKey)
           onChange(e.target.value)
           setOpen(true)
         }}
@@ -154,7 +167,8 @@ export function AddressAutocomplete({
                 : placeholder
         }
         required={required}
-        disabled={disabled || (apiKey ? !isLoaded || resolving : false)}
+        disabled={disabled}
+        aria-busy={resolving || loading}
         autoComplete="off"
         role="combobox"
         aria-expanded={showList}
@@ -190,7 +204,10 @@ export function AddressAutocomplete({
           ) : null}
           {!loading && items.length === 0 ? (
             <li className="address-autocomplete__empty" role="presentation">
-              <span role="status">Không tìm thấy địa chỉ phù hợp</span>
+              <span role="status">{lookupError || (loadError || !apiKey
+                ? 'Gợi ý địa chỉ chưa dùng được. Bạn vẫn có thể nhập địa chỉ thủ công.'
+                : !isLoaded ? 'Đang tải gợi ý địa chỉ…'
+                : 'Chưa tìm thấy địa chỉ. Hãy nhập số nhà, tên đường và phường/xã.')}</span>
             </li>
           ) : null}
           {items.map((item, index) => (
