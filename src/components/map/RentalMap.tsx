@@ -271,7 +271,7 @@ function RentalMapComponent({
   const placeFetchSeqRef = useRef(0)
 
   const [mapReady, setMapReady] = useState(false)
-  const sourceCatalogCount = useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers)
+  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant)
   const [displayMode, setDisplayMode] = useState<MapDisplayMode>('roadmap')
   const [streetViewBusy, setStreetViewBusy] = useState(false)
   const [streetViewError, setStreetViewError] = useState<string | null>(null)
@@ -1316,7 +1316,6 @@ function RentalMapComponent({
         </div>
       ) : null}
 
-      {sourceCatalogCount > 0 && <span className="source-catalog-legend">{sourceCatalogCount} ghim từ nguồn công khai</span>}
       {mapReady && !hideViewSwitcher ? (
         <div className="rental-map__view-switcher-wrap">
           {displayMode === 'streetview-select' ? (

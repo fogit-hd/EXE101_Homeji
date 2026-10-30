@@ -1,7 +1,8 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { apiRequest } from '../../api/client'
 import { readSourceCatalogPins, type SourceCatalogPin } from '../../lib/sourceCatalog'
-import { createMarketplacePinContent, createRentalPinContent } from './mapLocationPins'
+import { createMarketplacePinContent, createPricePillPinContent, createRentalPinContent } from './mapLocationPins'
+import { formatCompactPriceTr } from './explore/mapExploreFormat'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
 
 function popupContent(pin: SourceCatalogPin): HTMLDivElement {
@@ -19,7 +20,7 @@ function popupContent(pin: SourceCatalogPin): HTMLDivElement {
   root.append(note, link); return root
 }
 
-export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers) {
+export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill') {
   const [count, setCount] = useState(0)
   useEffect(() => {
     if (!ready || !enabled) return
@@ -36,8 +37,11 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       const pins = results.flatMap((result, index) => result.status === 'fulfilled' ? readSourceCatalogPins(result.value, index === 0 ? 'rental' : 'food') : [])
         .filter(pin => pin.kind === 'food' ? layers.marketplace : layers.vacant)
       for (const pin of pins) {
-        const content = pin.kind === 'food' ? createMarketplacePinContent({ title: pin.title }) : createRentalPinContent({ title: pin.title, kind: 'vacant' })
-        content.element.classList.add('is-source-catalog')
+        const content = pin.kind === 'food'
+          ? createMarketplacePinContent({ title: pin.title })
+          : markerVariant === 'price-pill' && pin.price !== null
+            ? createPricePillPinContent({ title: pin.title, label: formatCompactPriceTr(pin.price) })
+            : createRentalPinContent({ title: pin.title, kind: 'vacant' })
         const marker = new library.AdvancedMarkerElement({ map, position: { lat: pin.lat, lng: pin.lng }, title: pin.title, content: content.element, gmpClickable: true, zIndex: 35 })
         const listener = marker.addListener('gmp-click', () => { popup.setContent(popupContent(pin)); popup.open({ map, anchor: marker, shouldFocus: false }) })
         handles.push({ marker, dispose: content.dispose, listener })
@@ -45,6 +49,6 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       setCount(handles.length)
     }).catch(() => { if (!controller.signal.aborted) setCount(handles.length) })
     return () => { controller.abort(); popup.close(); for (const handle of handles) { handle.listener.remove(); handle.marker.map = null; handle.dispose() } }
-  }, [mapRef, libraryRef, ready, enabled, layers.marketplace, layers.vacant])
+  }, [mapRef, libraryRef, ready, enabled, layers.marketplace, layers.vacant, markerVariant])
   return enabled && ready ? count : 0
 }
