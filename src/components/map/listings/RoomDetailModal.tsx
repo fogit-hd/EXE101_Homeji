@@ -1,3 +1,4 @@
+import { OwnerSocialContacts } from '../../profile/OwnerSocialContacts'
 import { PhoneAction } from '../../ui/PhoneAction'
 import { useMotionPresence } from '../../motion/useMotionPresence'
 import { useChangedInputs } from '../../../hooks/useChangedInputs'
@@ -569,6 +570,7 @@ function OwnerProfile({ post, phone, isStudentShare }: { post: RentalPost; phone
           {post.isOwnerVerified ? <span className="room-detail__owner-verified">✓ Hồ sơ chủ nhà đã được duyệt</span> : null}
         </div>
       </div>
+      <OwnerSocialContacts key={post.ownerId} userId={post.ownerId} />
       <div className={`room-detail__owner-phone${revealed ? ' is-revealed' : ''}`}>
         <div>
           <span className="room-detail__owner-label">Số điện thoại</span>

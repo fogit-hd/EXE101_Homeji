@@ -1,3 +1,4 @@
+import { PremiumContactEditor } from '../components/profile/PremiumContactEditor'
 import { ProfileOverview } from '../components/profile/ProfileOverview'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -300,7 +301,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         </div>
         <Link className="profile-account-header__home" to="/">← Về trang chủ</Link>
       </header>}
-      {!lifestyleOnly && !editing && !needsProfileSetup ? <ProfileOverview profile={profile!} verificationStatus={verifyStatus} onEdit={next => { setTab(next); setEditing(true); setSaveError('') }} /> : null}
+      {!lifestyleOnly && !editing && !needsProfileSetup ? <ProfileOverview contactEditor={<PremiumContactEditor key={profile!.id} />} profile={profile!} verificationStatus={verifyStatus} onEdit={next => { setTab(next); setEditing(true); setSaveError('') }} /> : null}
       <div className="profile-workspace__content" hidden={!lifestyleOnly && !editing && !needsProfileSetup}>
       {!lifestyleOnly && <header className="profile-editor-heading">
         {!needsProfileSetup && <button type="button" className="profile-text-action" disabled={savingProfile || savingLifestyle || verifyBusy} onClick={() => { setEditing(false); setSaveError('') }}>← Tổng quan tài khoản</button>}

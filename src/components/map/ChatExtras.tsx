@@ -1,3 +1,5 @@
+import { SocialContactLinks } from '../profile/SocialContactLinks'
+import type { PublicContactProfile } from '../../api/profileContacts'
 import { PremiumStars } from '../PremiumStars'
 import { useEffect, useRef, useState } from 'react'
 import { chatEmojiGroups } from '../../lib/chatEmojis'
@@ -16,7 +18,7 @@ export function PremiumBadge({ compact = false }: { compact?: boolean }) {
 }
 
 export function PublicProfile({ userId, onClose }: { userId: string; onClose: () => void }) {
-  const [profile, setProfile] = useState<{ id: string; displayName: string; avatarPath: string | null; createdAt: string; isPremium: boolean } | null>(null)
+  const [profile, setProfile] = useState<PublicContactProfile | null>(null)
   const [error, setError] = useState('')
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
@@ -34,8 +36,7 @@ export function PublicProfile({ userId, onClose }: { userId: string; onClose: ()
       <div className="chat-profile__avatar">{profile.avatarPath && /^https:\/\//.test(profile.avatarPath) ? <img src={profile.avatarPath} alt="" /> : profile.displayName.slice(0, 2).toUpperCase()}</div>
       {profile.isPremium && <PremiumBadge />}
       <h2>{profile.displayName}</h2>
-      <p>Tham gia Homeji từ {new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}</p>
-      <small>Thông tin liên hệ cá nhân được giữ riêng tư.</small>
+      <SocialContactLinks {...profile} />
     </> : <p role="status">Đang tải hồ sơ…</p>}
   </dialog>
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { UserProfile } from '../../api/types'
 import { LandlordVerificationStatus, UserRole } from '../../api/types'
@@ -5,6 +6,7 @@ import { formatPrice, landlordVerificationLabel, sleepHabitLabel, petPreferenceL
 import './ProfileOverview.css'
 
 type Props = {
+  contactEditor?: ReactNode
   profile: UserProfile
   verificationStatus: LandlordVerificationStatus
   onEdit: (section: 'basic' | 'lifestyle' | 'verify') => void
@@ -19,7 +21,7 @@ function SectionIcon({ kind }: { kind: 'person' | 'home' | 'check' | 'gift' | 's
   }
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[kind]} /></svg>
 }
-export function ProfileOverview({ profile, verificationStatus, onEdit }: Props) {
+export function ProfileOverview({ profile, verificationStatus, onEdit, contactEditor }: Props) {
   return <div className="profile-overview">
     <div className="profile-ready"><span className="profile-ready__icon"><SectionIcon kind="check" /></span><p><strong>Thông tin cơ bản đã lưu</strong><span>Bạn có thể nạp tiền và thanh toán. Lối sống là phần tùy chọn.</span></p></div>
     <div className="profile-details">
@@ -44,6 +46,7 @@ export function ProfileOverview({ profile, verificationStatus, onEdit }: Props) 
       </section>
       {profile.role === UserRole.Landlord && <section className="profile-information profile-information--verification" aria-labelledby="profile-verification-heading"><div className="profile-information__title"><span className="profile-section-icon"><SectionIcon kind="check" /></span><div><h2 id="profile-verification-heading">Xác minh chủ nhà</h2><p>{landlordVerificationLabel[verificationStatus]}</p></div></div><button type="button" className="profile-edit-button" onClick={() => onEdit('verify')}>Xem yêu cầu <span aria-hidden="true">→</span></button></section>}
     </div>
+    {contactEditor}
     <section className="profile-account-links" aria-label="Tiện ích tài khoản">
       <Link to="/referrals"><span className="profile-link-icon"><SectionIcon kind="gift" /></span><span><strong>Mời bạn & voucher</strong><small>Link mời, quà đã nhận và ưu đãi của bạn</small></span><span className="profile-link-arrow" aria-hidden="true">↗</span></Link>
       <Link to="/?section=payments"><span className="profile-link-icon"><SectionIcon kind="star" /></span><span><strong>{profile.isPremium ? 'Gói Premium của bạn' : 'Khám phá Premium'}</strong><small>{profile.isPremium ? 'Xem quyền lợi và thời hạn gói' : 'Chọn gói phù hợp với nhu cầu'}</small></span><span className="profile-link-arrow" aria-hidden="true">↗</span></Link>
