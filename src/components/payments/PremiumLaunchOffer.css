@@ -1,1 +1,44 @@
-.premium-launch-offer{position:fixed;z-index:1100;left:24px;bottom:28px;width:320px;box-sizing:border-box;border-radius:26px;border:1px solid #d4e4df;padding:24px;background:radial-gradient(ellipse at 100% 0,#c2eee3,transparent 65%),linear-gradient(135deg,#fcfffd,#eef6f4);color:#163f43;box-shadow:0 18px 60px #103d3829;isolation:isolate}.premium-launch-offer__eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;color:#147565}.premium-launch-offer>strong{display:block;font-size:28px;letter-spacing:-.04em;line-height:1.15;margin:12px 0}.premium-launch-offer>p{font-size:13px;line-height:1.6;margin:12px 0;color:#4c696b}.premium-launch-offer__price{display:flex;align-items:baseline;gap:10px;margin-top:16px}.premium-launch-offer__price del{font-size:13px;color:#6f8583}.premium-launch-offer__price b{font-size:29px;letter-spacing:-.04em}.premium-launch-offer__price span{font-size:12px}.premium-launch-offer>small{display:block;font-size:10px;line-height:1.6;color:#53726f}.premium-launch-offer__close{position:absolute;top:12px;right:12px;width:32px;height:32px;border:1px solid #c2d8d2;border-radius:50%;background:#ffffff9c;color:#315e58;cursor:pointer;font-size:22px}.premium-launch-offer__cta{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:18px;padding:13px 18px;border-radius:30px;background:#145f58;color:#fff;border:1px solid #145f58;font-weight:750;cursor:pointer;box-shadow:inset 0 1px #ffffff3b,0 4px 12px #194c4320}.premium-launch-offer button:focus-visible{outline:3px solid #41968d;outline-offset:3px}@media(max-width:600px){.premium-launch-offer{left:12px;bottom:88px;width:min(320px,calc(100vw - 24px));padding:20px;border-radius:22px}.premium-launch-offer>strong{font-size:24px}.premium-launch-offer>p{margin:8px 0}.premium-launch-offer__cta{margin-top:12px}}[data-theme=dark] .premium-launch-offer{background:radial-gradient(ellipse at 100% 0,#225850,transparent 70%),#112f30;color:#effff8;border-color:#41685f}[data-theme=dark] .premium-launch-offer :is(p,small,.premium-launch-offer__price del){color:#bdd5ce}
+.premium-launch-offer {
+  position: fixed; inset: 0; margin: auto;
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+  overflow: auto; box-sizing: border-box; padding: 46px;
+  border: 1px solid #edc471; border-radius: 32px;
+  background: radial-gradient(ellipse at 100% 0, #ffe59b, transparent 55%), radial-gradient(ellipse at 0 100%, #ffd6bd, transparent 60%), #fffaf0;
+  color: #692c21; box-shadow: 0 32px 120px #4e140c45, inset 0 1px #fff;
+  text-align: center; font-family: var(--font-ui, sans-serif);
+}
+.premium-launch-offer::backdrop { background: #32130b85; backdrop-filter: blur(5px); }
+.premium-launch-offer__eyebrow { display: block; margin-top: 14px; color: #9a4430; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.premium-launch-offer__discount {
+  display: table; margin: 20px auto 0; padding: 10px 22px;
+  border: 1px solid #ad2824; border-radius: 999px;
+  background: linear-gradient(135deg, #d92f24, #b51c24); color: #fff3b1;
+  font-size: 22px; font-weight: 900; letter-spacing: .035em;
+  box-shadow: 0 6px 18px #bd33232b, inset 0 1px #ffffff59;
+}
+.premium-launch-offer h2 { margin: 20px 0 16px; color: #6d281e; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.045em; line-height: 1.15; text-wrap: balance; }
+.premium-launch-offer > p { margin: 14px 0; color: #795447; font-size: 15px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.premium-launch-offer__price { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 12px; margin: 22px 0 0; padding: 18px 10px 12px; border-top: 1px solid #e9c18b; }
+.premium-launch-offer__price del { color: #937367; font-size: 17px; }
+.premium-launch-offer__price b { color: #be2922; font-size: 44px; letter-spacing: -.04em; }
+.premium-launch-offer__price span { color: #795447; font-size: 13px; }
+.premium-launch-offer > p.premium-launch-offer__saving { margin: 0 0 14px; color: #a93624; font-size: 14px; font-weight: 750; }
+.premium-launch-offer > small { display: block; color: #896444; font-size: 12px; line-height: 1.6; }
+.premium-launch-offer__close { position: absolute; top: 16px; right: 16px; width: 38px; height: 38px; border: 1px solid #e3c7a0; border-radius: 50%; background: #fff9e8; color: #7d4b35; cursor: pointer; font-size: 25px; }
+.premium-launch-offer__cta { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; margin-top: 28px; padding: 16px 22px; border: 1px solid #b52a23; border-radius: 18px; background: linear-gradient(115deg, #ce3024, #ac2025); color: #fff7d0; box-shadow: inset 0 1px #ffffff47, 0 7px 20px #b62c232b; cursor: pointer; font: 750 15px var(--font-ui, sans-serif); }
+.premium-launch-offer__later { display: block; margin: 16px auto 0; padding: 9px; border: 0; background: none; color: #8b5c43; cursor: pointer; font: 500 13px var(--font-ui, sans-serif); }
+.premium-launch-offer button:focus-visible { outline: 3px solid #c57a24; outline-offset: 3px; }
+.premium-launch-offer.is-increase .premium-launch-offer__discount { background: #ffe8ad; color: #7d391e; border-color: #e4b25b; box-shadow: none; font-size: 16px; }
+@media (max-width: 600px) {
+  .premium-launch-offer { padding: 25px 22px; border-radius: 26px; }
+  .premium-launch-offer__discount { margin-top: 18px; font-size: 20px; }
+  .premium-launch-offer h2 { margin: 18px 0 12px; font-size: 28px; }
+  .premium-launch-offer > p { font-size: 14px; line-height: 1.65; }
+  .premium-launch-offer__price b { font-size: 36px; }
+  .premium-launch-offer__cta { margin-top: 20px; }
+}
+[data-theme=dark] .premium-launch-offer { background: radial-gradient(ellipse at 100% 0, #683a1d, transparent 70%), #35251e; color: #ffe7bc; border-color: #a77b3d; }
+[data-theme=dark] .premium-launch-offer h2 { color: #ffe7bc; }
+[data-theme=dark] .premium-launch-offer :is(p, small, .premium-launch-offer__price del, .premium-launch-offer__later, .premium-launch-offer__price span) { color: #dfc4a4; }
+[data-theme=dark] .premium-launch-offer .premium-launch-offer__price b { color: #ffb46b; }
+[data-theme=dark] .premium-launch-offer .premium-launch-offer__saving { color: #ffca7c; }

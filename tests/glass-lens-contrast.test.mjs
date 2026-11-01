@@ -61,8 +61,10 @@ test('MarketplaceHeader button text contrast meets WCAG AA standard (>= 4.5:1) i
 
 test('LiquidTabList active tab lens meets Liquid Glass V2 styling requirements', async () => {
   const css = await readFile(new URL('../src/components/ui/LiquidTabList.css', import.meta.url), 'utf8')
-  // Backdrop filter must connect to SVG lens filter with real optical blur
-  assert.match(css, /backdrop-filter:\s*var\(--glass-lens-filter[\s\S]*?blur\(12px\)/, 'Lens must connect to SVG lens filter with 12px optical blur')
+  // Heavy frosting hides refraction; retain a connected lens and at most 1px softness.
+  assert.match(css, /backdrop-filter:\s*var\(--glass-lens-filter/)
+  const blurAmounts = [...css.matchAll(/blur\(([\d.]+)px\)/g)].map(match => Number(match[1]))
+  assert.ok(blurAmounts.length > 0 && blurAmounts.every(value => value <= 1), 'Tab refraction must remain visible through the optical surface')
   // Subtly defined specular highlight rim (1px gradient highlight on top edge)
   assert.match(css, /\.liquid-tabs__lens::before[\s\S]*?padding:\s*1px/, 'Specular highlight rim must use 1px padding')
   // Ensure muddy claymorphic shadow (rgb(12 65 53)) is eliminated

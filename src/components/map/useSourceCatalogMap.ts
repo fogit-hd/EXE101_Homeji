@@ -9,6 +9,7 @@ import { readSourceCatalogPins, type SourceCatalogPin } from '../../lib/sourceCa
 import { createMapClusterContent, createMarketplacePinContent, createPricePillPinContent, createRentalPinContent } from './mapLocationPins'
 import { formatCompactPriceTr } from './explore/mapExploreFormat'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
+import { useCatalogRefresh } from '../../lib/useCatalogRefresh'
 
 function popupContent(pin: SourceCatalogPin, onOpen: (id: string) => void): HTMLDivElement {
   const root = document.createElement('div'); root.className = 'source-catalog-popup'
@@ -31,21 +32,33 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
   const [params] = useSearchParams()
   const query = useMemo(() => parseFiltersFromURL(params), [params])
   const [count, setCount] = useState(0)
+  const revision = useCatalogRefresh(ready && enabled)
+  const [rentalRows, setRentalRows] = useState<Awaited<ReturnType<typeof getRentalSourceCatalog>>>([])
+  const [foodRows, setFoodRows] = useState<unknown>([])
+  useEffect(() => {
+    if (!ready || !enabled) return
+    const controller = new AbortController()
+    void Promise.allSettled([
+      getRentalSourceCatalog(),
+      apiRequest<unknown>('/api/food-source-places', { auth: false, signal: controller.signal }),
+    ]).then(([rentals, food]) => {
+      if (controller.signal.aborted) return
+      if (rentals.status === 'fulfilled') setRentalRows(rentals.value)
+      if (food.status === 'fulfilled') setFoodRows(food.value)
+    })
+    return () => controller.abort()
+  }, [ready, enabled, revision])
+  const pins = useMemo(() => [
+    ...readSourceCatalogPins(filterRentalSources(rentalRows, query), 'rental'),
+    ...readSourceCatalogPins(foodRows, 'food'),
+  ].filter(pin => pin.kind === 'food' ? layers.marketplace : layers.vacant), [rentalRows, foodRows, query, layers.marketplace, layers.vacant])
   useEffect(() => {
     if (!ready || !enabled) return
     const map = mapRef.current, library = libraryRef.current
     if (!map || !library) return
-    const controller = new AbortController()
     const handles: Array<{ marker: google.maps.marker.AdvancedMarkerElement; dispose: () => void; listener: google.maps.MapsEventListener }> = []
     const popup = new google.maps.InfoWindow()
     let clusterer: MarkerClusterer | null = null
-    void Promise.allSettled([
-      getRentalSourceCatalog(),
-      apiRequest<unknown>('/api/food-source-places', { auth: false, signal: controller.signal }),
-    ]).then(results => {
-      if (controller.signal.aborted) return
-      const pins = results.flatMap((result, index) => result.status === 'fulfilled' ? readSourceCatalogPins(index === 0 ? filterRentalSources(result.value as Awaited<ReturnType<typeof getRentalSourceCatalog>>, query) : result.value, index === 0 ? 'rental' : 'food') : [])
-        .filter(pin => pin.kind === 'food' ? layers.marketplace : layers.vacant)
       for (const pin of pins) {
         const content = pin.kind === 'food'
           ? createMarketplacePinContent({ title: pin.title })
@@ -57,16 +70,33 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
         handles.push({ marker, dispose: content.dispose, listener })
       }
       const kinds = new Map(handles.map((handle, index) => [handle.marker, pins[index].kind]))
+      const pinByMarker = new Map(handles.map((handle, index) => [handle.marker, pins[index]]))
       clusterer = new MarkerClusterer({ map, markers: handles.map(handle => handle.marker), algorithm: new SuperClusterAlgorithm({ radius: 72, maxZoom: 19 }), renderer: {
         render: cluster => {
           const rentals = cluster.markers.filter(marker => kinds.get(marker as google.maps.marker.AdvancedMarkerElement) === 'rental').length
           return new library.AdvancedMarkerElement({ position: cluster.position, gmpClickable: true, zIndex: 2500 + cluster.count,
-            title: `${cluster.count} vị trí gần nhau. Nhấn để phóng to.`, content: createMapClusterContent({ count: cluster.count, kindCounts: { vacant: rentals, roommate: 0, marketplace: cluster.count - rentals } }) })
+            title: `${cluster.count} tin gần nhau. Nhấn để xem từng tin.`, content: createMapClusterContent({ count: cluster.count, kindCounts: { vacant: rentals, roommate: 0, marketplace: cluster.count - rentals } }) })
         },
+      }, onClusterClick: (_event, cluster, clusterMap) => {
+        const root = document.createElement('div')
+        root.className = 'source-catalog-cluster'
+        const title = document.createElement('strong')
+        title.textContent = `${cluster.count} tin trong khu vực này`
+        const list = document.createElement('div')
+        list.className = 'source-catalog-cluster__list'
+        for (const marker of cluster.markers) {
+          const pin = pinByMarker.get(marker as google.maps.marker.AdvancedMarkerElement)
+          if (pin) list.append(popupContent(pin, id => navigate(sourceRoomHref(id))))
+        }
+        const zoom = document.createElement('button')
+        zoom.type = 'button'; zoom.textContent = 'Phóng to khu vực'
+        zoom.addEventListener('click', () => { if (cluster.bounds) clusterMap.fitBounds(cluster.bounds, 72) })
+        root.append(title, zoom, list)
+        popup.setContent(root); popup.setPosition(cluster.position)
+        popup.open({ map: clusterMap, shouldFocus: true })
       } })
       setCount(handles.length)
-    }).catch(() => { if (!controller.signal.aborted) setCount(handles.length) })
-    return () => { controller.abort(); popup.close(); clusterer?.clearMarkers(); clusterer?.setMap(null); for (const handle of handles) { handle.listener.remove(); handle.marker.map = null; handle.dispose() } }
-  }, [mapRef, libraryRef, ready, enabled, layers.marketplace, layers.vacant, markerVariant, query, navigate])
+    return () => { popup.close(); clusterer?.clearMarkers(); clusterer?.setMap(null); for (const handle of handles) { handle.listener.remove(); handle.marker.map = null; handle.dispose() } }
+  }, [mapRef, libraryRef, ready, enabled, markerVariant, pins, navigate])
   return enabled && ready ? count : 0
 }

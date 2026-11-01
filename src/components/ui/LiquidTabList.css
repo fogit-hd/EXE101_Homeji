@@ -113,8 +113,8 @@
     inset 0 -1px 1px 0 rgba(18, 50, 42, 0.05),
     0 2px 6px -1px rgba(18, 50, 42, 0.08),
     0 6px 16px -4px rgba(18, 50, 42, 0.1);
-  -webkit-backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(12px) saturate(1.25);
-  backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(12px) saturate(1.25);
+  -webkit-backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(.35px) saturate(1.12);
+  backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(.35px) saturate(1.12);
 }
 /* Subtle 1px specular highlight rim along the top and curved edge */
 #root .liquid-tabs__lens::before {
@@ -204,8 +204,8 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { scale: 1.025 .99; transition: scale 180ms ease; }
 #root .liquid-tabs[data-lens-travel] > .liquid-tabs__lens { z-index: 1; scale: 1; }
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(14px) saturate(1.3);
-  backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(.5px) saturate(1.15);
+  backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(.5px) saturate(1.15);
 }
 @media(prefers-reduced-motion:reduce) {
   #root .liquid-tabs > .liquid-tabs__lens { --lens-specular-x: 26%; }

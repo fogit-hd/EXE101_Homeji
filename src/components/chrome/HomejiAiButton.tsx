@@ -21,7 +21,7 @@ export function HomejiAiButton({ tone = 'light' }: { tone?: 'light' | 'glass' })
       aria-expanded={open}
       aria-haspopup="dialog"
       aria-controls={HOMEJI_AI_PANEL_ID}
-      aria-label="Hỏi Homeji AI"
+      aria-label="Homeji AI"
       {...{ [HOMEJI_AI_TRIGGER_ATTR]: '' }}
       onClick={() => toggleHomejiAi(ref.current)}
     >
@@ -30,7 +30,7 @@ export function HomejiAiButton({ tone = 'light' }: { tone?: 'light' | 'glass' })
         <path d="M12 3.5 13.7 8.3 18.5 10 13.7 11.7 12 16.5 10.3 11.7 5.5 10 10.3 8.3Z" />
         <path d="M18.5 15.5 19.2 17.3 21 18 19.2 18.7 18.5 20.5 17.8 18.7 16 18 17.8 17.3Z" />
       </svg>
-      <span className="hj-ai-btn__label">Hỏi Homeji AI</span>
+      <span className="hj-ai-btn__label">Homeji AI</span>
     </button>
   )
 }

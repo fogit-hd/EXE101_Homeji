@@ -394,7 +394,7 @@ export function MapListingsWorkspace({
                     Thử lại
                   </button>
                 </div>
-              ) : loading && cards.length === 0 ? (
+              ) : loading && cards.length === 0 && marketMode ? (
                 <ul className="map-listings__cards sk-screen" role="status" aria-busy="true" aria-label={marketMode ? 'Đang tải chợ đồ…' : 'Đang tải phòng…'}>
                   {Array.from({ length: 8 }, (_, i) => (
                     <li key={i}>
@@ -410,7 +410,7 @@ export function MapListingsWorkspace({
                     </li>
                   ))}
                 </ul>
-              ) : cards.length === 0 ? (
+              ) : cards.length === 0 && marketMode ? (
                 <div className="map-listings__state" role="status">
                   <p>{marketMode ? 'Không có tin chợ khớp bộ lọc.' : 'Không có phòng khớp bộ lọc.'}</p>
                   <button type="button" onClick={resetFilters}>
@@ -420,11 +420,9 @@ export function MapListingsWorkspace({
               ) : (
                 marketMode ? <MarketplaceSellerCatalog posts={marketPosts} layout="list"
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
-                <ul className="map-listings__cards">
-                  {cards.map(({ id, view }) => <li key={id}>{renderListingCard(id, view)}</li>)}
-                </ul>
+                null
               )}
-              {!marketMode && <RentalSourceResults query={query} onCount={setSourceCounts} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              {!marketMode && <RentalSourceResults nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} query={query} onCount={setSourceCounts} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
               {query.page > 1 || cards.length >= PAGE_SIZE ? (
                 <div className="map-listings__pager">
                   {query.page > 1 ? (

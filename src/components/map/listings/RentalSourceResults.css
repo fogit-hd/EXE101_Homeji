@@ -1,4 +1,4 @@
-.source-results { display: grid; gap: 14px; min-width: 0; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.source-results { display: grid; gap: 14px; min-width: 0; margin-top: 0; padding-top: 0; }
 .source-results > header strong { font-size: 17px; color: var(--text-heading); }
 .source-results > header p, .source-results__note { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--text-secondary); }
 .source-results__card { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: start; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-elevated); }
@@ -13,3 +13,4 @@
 .source-results__actions :is(button,a) { border: 0; background: none; padding: 0; color: var(--action-on-soft); font: 600 12px/1.6 var(--font-ui); cursor: pointer; }
 .source-results__more { padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated); color: var(--text-heading); font-weight: 600; cursor: pointer; }
 @media (max-width: 380px) { .source-results__card { grid-template-columns: 80px minmax(0,1fr); gap: 10px; padding: 12px; } .source-results__card > img { width: 80px; height: 105px; } .source-results__price { font-size: 17px; } }
+.source-results__card:not(:has(> img)){grid-template-columns:minmax(0,1fr)}

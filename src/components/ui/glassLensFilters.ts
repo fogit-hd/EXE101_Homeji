@@ -63,12 +63,38 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
     // Equal pixel units on X and Y avoid aspect-dependent vertical stretching.
     // For text and control variants, restrict distortion to the 2-3px outer meniscus edge.
     const isControl = variant === 'control' || variant === 'control-active' || variant === 'tab-rest' || variant === 'tab-active'
-    const scale = isControl
+    const tab = variant === 'tab-rest' || variant === 'tab-active'
+    const scale = tab ? Math.min(18, height * (variant === 'tab-active' ? .3 : .23)) : isControl
       ? Math.min(3, Math.max(1, GLASS_LENS_DEPTHS[variant] * Math.min(width, height)))
       : GLASS_LENS_DEPTHS[variant] * Math.min(width, height)
     Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(scale),
       xChannelSelector: 'R', yChannelSelector: 'G', result: 'refracted-scene' }).forEach(([key, value]) => warp.setAttribute(key, value))
-    filter.append(normals, warp)
+    filter.append(normals)
+    if (!tab) filter.append(warp)
+    // Sample the real backdrop separately for R/G/B. Different displacement
+    // depths model dispersion along the capsule normal instead of a painted rainbow.
+    if (tab) {
+      for (const [channel, factor, matrix] of [
+        ['red', 1.12, '1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'],
+        ['green', 1, '0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0'],
+        ['blue', .88, '0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0'],
+      ] as const) {
+        const displacement = document.createElementNS(svg, 'feDisplacementMap')
+        Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(scale * factor),
+          xChannelSelector: 'R', yChannelSelector: 'G', result: `dispersed-${channel}` })
+          .forEach(([key, value]) => displacement.setAttribute(key, value))
+        const mask = document.createElementNS(svg, 'feColorMatrix')
+        Object.entries({ in: `dispersed-${channel}`, type: 'matrix', values: matrix, result: `channel-${channel}` })
+          .forEach(([key, value]) => mask.setAttribute(key, value))
+        filter.append(displacement, mask)
+      }
+      for (const [first, second, result] of [['channel-red', 'channel-green', 'red-green'], ['red-green', 'channel-blue', 'refracted-scene']]) {
+        const sum = document.createElementNS(svg, 'feComposite')
+        Object.entries({ in: first, in2: second, operator: 'arithmetic', k1: '0', k2: '1', k3: '1', k4: '0', result })
+          .forEach(([key, value]) => sum.setAttribute(key, value))
+        filter.append(sum)
+      }
+    }
     let illumination: SVGFEColorMatrixElement | undefined
     let illuminationCap: SVGFEFuncAElement | undefined
     if (glassLensHasSceneReflection(variant)) {

@@ -37,6 +37,7 @@ import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { AdminWorkspaceNav, type AdminSection } from '../components/admin/AdminWorkspaceNav'
 import { AdminRegistrationsPanel } from '../components/admin/AdminRegistrationsPanel'
+import { AdminPremiumPricingPanel } from '../components/admin/AdminPremiumPricingPanel'
 import { AdminExportsPanel } from '../components/admin/AdminExportsPanel'
 import { AiListingReviewPanel } from '../components/admin/AiListingReviewPanel'
 import './AdminWorkspace.css'
@@ -338,6 +339,7 @@ export function AdminModerationPage() {
   const sectionInfo = {
     registrations: ['Tài khoản & thành viên', 'Xem người đã đăng ký tài khoản, lịch sử mua gói và thời hạn thành viên.'],
     exports: ['Báo cáo Excel', 'Tạo báo cáo, theo dõi email và tải lại các file đã xuất.'],
+    pricing: ['Giá gói thành viên', 'Sửa giá, nêu lý do và công bố cho người xem.'],
     aiReviews: ['AI kiểm tra tin', 'Kiểm tra lần lượt, giới hạn lượt gọi và xem lại kết quả.'],
     overview: ['Tổng quan sản phẩm', 'Hàng chờ, hoạt động và thị trường.'],
     posts: ['Tin chờ duyệt', 'Kiểm tra thông tin và sự đồng ý của chủ nhà trước khi duyệt.'],
@@ -356,7 +358,7 @@ export function AdminModerationPage() {
   const visibleUsers = activeUsers.filter(user => matches(user.displayName))
   const visibleCounts = { posts: visiblePosts.length, reports: visibleReports.length, verifications: visibleVerifications.length,
     withdrawals: visibleWithdrawals.length, active: visibleUsers.length }
-  const searchable = tab !== 'overview' && tab !== 'maintenance' && tab !== 'aiReviews' && tab !== 'registrations' && tab !== 'exports'
+  const searchable = tab !== 'overview' && tab !== 'maintenance' && tab !== 'aiReviews' && tab !== 'registrations' && tab !== 'exports' && tab !== 'pricing'
 
   return (
     <PageFrame title="Quản trị Homeji" eyebrow="HOMEJI / ADMIN" lead="Theo dõi tài khoản, thành viên và vận hành trong cùng một nơi."
@@ -367,7 +369,7 @@ export function AdminModerationPage() {
       <section className="admin-content" aria-label={sectionInfo[tab][0]}>
       {tab !== 'overview' && tab !== 'aiReviews' ? <header className="admin-section-heading">
         <div><span className="admin-section-kicker">Quản lý</span><h2>{sectionInfo[tab][0]}</h2><p>{sectionInfo[tab][1]}</p></div>
-        {tab !== 'registrations' && tab !== 'exports' ? <button type="button" className="btn btn-secondary btn-sm" disabled={showLoader || pendingAction !== null} onClick={() => void reload()}>Làm mới</button> : null}
+        {tab !== 'registrations' && tab !== 'exports' && tab !== 'pricing' ? <button type="button" className="btn btn-secondary btn-sm" disabled={showLoader || pendingAction !== null} onClick={() => void reload()}>Làm mới</button> : null}
       </header> : null}
       {searchable ? <div className="admin-queue-tools"><label htmlFor="admin-queue-search">Tìm trong danh sách</label>
         <div className="admin-queue-search"><input id="admin-queue-search" type="search" className="form-input" placeholder={tab === 'withdrawals' ? 'Tên, ngân hàng hoặc số tài khoản…' : 'Nhập tên hoặc nội dung…'} value={query} onChange={event => setQuery(event.target.value)} />
@@ -394,8 +396,9 @@ export function AdminModerationPage() {
 
       {tab === 'aiReviews' ? <AiListingReviewPanel /> : null}
       {tab === 'registrations' ? <AdminRegistrationsPanel /> : null}
+      {tab === 'pricing' ? <AdminPremiumPricingPanel /> : null}
       {tab === 'exports' ? <AdminExportsPanel /> : null}
-      {tab !== 'overview' && tab !== 'aiReviews' && tab !== 'registrations' && tab !== 'exports' && (showLoader ? (
+      {tab !== 'overview' && tab !== 'aiReviews' && tab !== 'registrations' && tab !== 'exports' && tab !== 'pricing' && (showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={loadError} />
           : <AdminSkeleton withHeader={false} />

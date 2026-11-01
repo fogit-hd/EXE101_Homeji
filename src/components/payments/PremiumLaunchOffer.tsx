@@ -1,35 +1,76 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getSubscriptionPackages, type SubscriptionPackage } from '../../api'
+import { getPremiumPriceAnnouncements, type PremiumPriceAnnouncement } from '../../api/premiumPricing'
+import { formatPrice } from '../../lib/labels'
 import './PremiumLaunchOffer.css'
 
+const seenKey = 'homeji-seen-price-announcements'
+function readSeen(): string[] { try { const value: unknown = JSON.parse(localStorage.getItem(seenKey) || '[]'); return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [] } catch { return [] } }
 export function PremiumLaunchOffer() {
   const [plan, setPlan] = useState<SubscriptionPackage | null>(null)
+  const [changes, setChanges] = useState<PremiumPriceAnnouncement[]>([])
+  const [seen, setSeen] = useState(readSeen)
   const [dismissed, setDismissed] = useState(false)
   const [now, setNow] = useState(Date.now)
+  const dialog = useRef<HTMLDialogElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
   useEffect(() => {
     let active = true
-    void getSubscriptionPackages().then(plans => {
-      const offer = plans.find(row => row.code === 'PREMIUM_MONTHLY' && row.originalPrice === 99000 && row.price === 49000 && row.offerEndsAt)
-      if (active && offer) {
+    const load = () => {
+      void getSubscriptionPackages().then(plans => {
+        if (!active) return
+        const offer = plans.find(row => row.code === 'PREMIUM_MONTHLY' && row.originalPrice && row.offerEndsAt) ?? null
         setPlan(offer)
-        try { setDismissed(sessionStorage.getItem('homeji-premium-offer-dismissed') === offer.offerEndsAt) } catch { /* Private browser storage may be unavailable. */ }
-      }
-    }).catch(() => { /* A promotion is optional; do not block the page when pricing is unavailable. */ })
-    const timer = setInterval(() => setNow(Date.now()), 30000)
-    return () => { active = false; clearInterval(timer) }
+        if (offer) { try { setDismissed(sessionStorage.getItem('homeji-premium-offer-dismissed') === offer.offerEndsAt) } catch { /* Optional preference. */ } }
+      }).catch(() => {})
+      void getPremiumPriceAnnouncements().then(rows => { if (active) setChanges(rows) }).catch(() => {})
+      setNow(Date.now())
+    }
+    load()
+    const timer = setInterval(load, 60_000)
+    window.addEventListener('focus', load)
+    return () => { active = false; clearInterval(timer); window.removeEventListener('focus', load) }
   }, [])
-  if (!plan?.offerEndsAt || dismissed || now >= Date.parse(plan.offerEndsAt) || location.pathname.startsWith('/admin') || new URLSearchParams(location.search).get('section') === 'payments') return null
-  const end = new Date(plan.offerEndsAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-  return <aside className="premium-launch-offer" aria-label="Ưu đãi ra mắt Homeji Agent">
-    <button className="premium-launch-offer__close" type="button" aria-label="Đóng ưu đãi Premium" onClick={() => { setDismissed(true); try { sessionStorage.setItem('homeji-premium-offer-dismissed', plan.offerEndsAt!) } catch { /* Optional preference. */ } }}>×</button>
-    <span className="premium-launch-offer__eyebrow">MỚI · HOMEJI AGENT</span>
-    <strong>Bạn gửi ảnh.<br />Homeji soạn bài.</strong>
-    <p>Xem trước, chỉnh sửa và xác nhận để AI đăng lên Chợ đồ.</p>
-    <div className="premium-launch-offer__price"><del>99.000đ</del><b>49.000đ</b><span>/ 30 ngày</span></div>
-    <small>Ưu đãi ra mắt 7 ngày · đến {end} (giờ Việt Nam)</small>
-    <button className="premium-launch-offer__cta" type="button" onClick={() => { setDismissed(true); navigate('/?section=payments') }}>Khám phá Premium <span aria-hidden>↗</span></button>
-  </aside>
+  // Each published revision gets its own acknowledgement, including a price
+  // changed back to an earlier value. No announcement invents an expiry date.
+  const announcement = changes.filter(row => !seen.includes(row.id)).at(-1)
+  const showOffer = !!plan?.offerEndsAt && !dismissed && now < Date.parse(plan.offerEndsAt)
+  const visible = !!(announcement || showOffer) && !location.pathname.startsWith('/admin') && new URLSearchParams(location.search).get('section') !== 'payments'
+  useEffect(() => {
+    const node = dialog.current
+    if (visible && node && !node.open) node.showModal()
+    else if (!visible && node?.open) node.close()
+  }, [visible, announcement?.id])
+  const dismiss = () => {
+    if (announcement) {
+      const next = [...readSeen(), announcement.id].slice(-100)
+      setSeen(next)
+      try { localStorage.setItem(seenKey, JSON.stringify(next)) } catch { /* Still dismissed in memory. */ }
+    } else {
+      setDismissed(true)
+      try { sessionStorage.setItem('homeji-premium-offer-dismissed', plan!.offerEndsAt!) } catch { /* Optional preference. */ }
+    }
+  }
+  if (!visible) return null
+  const previousPrice = announcement?.previousPrice ?? plan!.originalPrice!
+  const currentPrice = announcement?.price ?? plan!.price
+  const saving = previousPrice - currentPrice
+  const percent = previousPrice > 0 ? Math.round(Math.abs(saving) / previousPrice * 100) : 0
+  const reduced = saving > 0
+  const end = plan?.offerEndsAt ? new Date(plan.offerEndsAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
+  return createPortal(<dialog ref={dialog} className={`premium-launch-offer ${reduced ? 'is-reduction' : 'is-increase'}`} aria-labelledby="premium-offer-title" aria-describedby="premium-offer-description" onCancel={event => { event.preventDefault(); dismiss() }}>
+    <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo Premium" autoFocus onClick={dismiss}>×</button>
+    <span className="premium-launch-offer__eyebrow">{announcement ? 'HOMEJI PREMIUM · CẬP NHẬT GIÁ' : 'MỚI · HOMEJI AGENT'}</span>
+    <span className="premium-launch-offer__discount">{reduced ? `GIẢM ${percent}%` : `ĐIỀU CHỈNH TĂNG ${percent}%`}</span>
+    <h2 id="premium-offer-title">{announcement ? `Giá mới cho ${announcement.packageName}` : <>Bạn gửi ảnh.<br />Homeji lo bản nháp.</>}</h2>
+    <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ đồ.'}</p>
+    <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{!announcement ? <span>/ {plan!.durationDays} ngày</span> : null}</div>
+    <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
+    <small>{announcement ? `Áp dụng từ ${new Date(announcement.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · Giờ Việt Nam` : `Ưu đãi đến ${end} · Giờ Việt Nam`}</small>
+    <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
+    <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
+  </dialog>, document.body)
 }

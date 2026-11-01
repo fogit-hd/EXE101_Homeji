@@ -1,10 +1,11 @@
 import { useId, useRef, useState } from 'react'
 
-export type AdminSection = 'overview' | 'registrations' | 'exports' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance' | 'aiReviews'
+export type AdminSection = 'pricing' | 'overview' | 'registrations' | 'exports' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance' | 'aiReviews'
 
 const sections: { id: AdminSection; label: string; group: string }[] = [
   { id: 'overview', label: 'Tổng quan', group: 'Điều hành' },
   { id: 'registrations', label: 'Tài khoản & thành viên', group: 'Điều hành' },
+  { id: 'pricing', label: 'Giá gói thành viên', group: 'Điều hành' },
   { id: 'exports', label: 'Báo cáo Excel', group: 'Điều hành' },
   { id: 'posts', label: 'Tin chờ duyệt', group: 'Nội dung & giao dịch' },
   { id: 'aiReviews', label: 'AI kiểm tra tin', group: 'Nội dung & giao dịch' },
