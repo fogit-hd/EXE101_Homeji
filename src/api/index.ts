@@ -373,13 +373,16 @@ export const getChatbotMessages = (conversationId: string) =>
 export const transcribeChatbotAudio = (audio: ChatbotAttachment, signal?: AbortSignal) =>
   apiRequest<{ text: string }>('/api/chatbot/transcriptions', { method: 'POST', body: { audio }, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS })
 
-export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal) =>
+export const sendChatbotMessage = (data: { postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     signal,
     body: {
       message: data.message,
+      ...(data.postingAgent ? { postingAgent: true } : {}),
+      ...(data.agentDraftId ? { agentDraftId: data.agentDraftId } : {}),
+      ...(data.sessionMessages ? { sessionMessages: data.sessionMessages.slice(-6).map(row => ({ ...row, content: row.content.slice(0, 1000) })) } : {}),
       ...(data.attachments?.length ? { attachments: data.attachments.map(({ mimeType, data }) => ({ mimeType, data })) } : {}),
       saveHistory: data.saveHistory === true,
       ...(data.foodContext ? { foodContext: { latitude: data.foodContext.latitude, longitude: data.foodContext.longitude, radiusKm: data.foodContext.radiusKm } } : {}),
@@ -414,13 +417,15 @@ export const createPremiumWalletPayment = (packageCode: string, requestId: strin
     method: 'POST', body: { requestId, expectedAmount, voucherId },
   }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
-export const createPremiumMomoPayment = (packageCode: string) =>
+export const createPremiumMomoPayment = (packageCode: string, expectedAmount?: number) =>
   apiRequest<MomoPaymentResponse>(`/api/subscriptions/premium/${packageCode}/momo/create`, {
+    params: { expectedAmount },
     method: 'POST',
   })
 
-export const createPremiumPayOsPayment = (packageCode: string) =>
+export const createPremiumPayOsPayment = (packageCode: string, expectedAmount?: number) =>
   apiRequest<PayOsPaymentResponse>(`/api/subscriptions/premium/${packageCode}/payos/create`, {
+    params: { expectedAmount },
     method: 'POST',
   })
 

@@ -203,8 +203,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     setBusyMethod(method)
     try {
       const res = method === 'momo'
-        ? await createPremiumMomoPayment(packageCode)
-        : await createPremiumPayOsPayment(packageCode)
+        ? await createPremiumMomoPayment(packageCode, packages.find(plan => plan.code === packageCode)?.price)
+        : await createPremiumPayOsPayment(packageCode, packages.find(plan => plan.code === packageCode)?.price)
       setPayPickerCode(null)
       navigate(paymentWaitingUrl(res.paymentId))
     } catch (err) {
@@ -408,10 +408,12 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
                   </p>
                   <p className="pay-plan__price">
+                    {plan.originalPrice ? <del style={{ fontSize: 16, display: 'block', opacity: .6 }}>{formatPrice(plan.originalPrice)}</del> : null}
                     {view.headlinePrice}
                     <small>{view.headlineSuffix}</small>
                   </p>
                   <p className="pay-plan__equivalent">{view.equivalentPrice ?? (isPremium ? 'Thanh toán một lần · Dùng đủ thời hạn' : 'Bắt đầu mà không cần trả phí')}</p>
+                  {plan.offerEndsAt ? <p className="pay-plan__equivalent">Ưu đãi đến {new Date(plan.offerEndsAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} (giờ Việt Nam)</p> : null}
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>

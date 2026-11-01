@@ -708,6 +708,9 @@ export interface ChatbotNavigationAction {
 }
 
 export interface ChatbotReply {
+  agentRequested?: boolean
+  agentDraft?: import("./chatbotAgent").AgentPostDraft | null
+  upgradeRequired?: boolean
   conversationId: string
   userMessage: ChatbotMessage
   assistantMessage: ChatbotMessage
@@ -750,6 +753,8 @@ export interface UploadImageResult {
 }
 
 export interface SubscriptionPackage {
+  originalPrice?: number | null
+  offerEndsAt?: string | null
   code: string
   name: string
   tier: SubscriptionTier

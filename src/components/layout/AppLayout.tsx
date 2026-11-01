@@ -1,4 +1,5 @@
 import { SellerOrderAlertsProvider } from '../marketplace/SellerOrderAlerts'
+import { PremiumLaunchOffer } from '../payments/PremiumLaunchOffer'
 import { VoiceCallProvider } from '../../contexts/VoiceCallContext'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { Suspense, useLayoutEffect } from 'react'
@@ -67,6 +68,7 @@ export function AppLayout() {
         .join(' ')}
     >
       {isAuthedApp ? <AppShell /> : <Navbar />}
+      {!isAuthCinema ? <PremiumLaunchOffer /> : null}
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
         {isAuthenticated && needsProfileSetup && !isProfile && !isAuthCinema ? <ProfileSetupNotice /> : null}
         <div
