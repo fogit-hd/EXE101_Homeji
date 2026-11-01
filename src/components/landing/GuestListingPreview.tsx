@@ -4,7 +4,7 @@ import { getRentalPost, MediaType, RentalPostType, searchRentalPosts, type Renta
 import { rentalPriceBasis, rentalPriceLabel } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
-import { rentalSourceHref, rentalSourceImageHref, rentalSourceLabel, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
+import { rentalSourceHref, rentalSourceImageHref, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
 import { SourceRoomDetail } from '../map/listings/SourceRoomDetail'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import './GuestListingPreview.css'
@@ -64,7 +64,7 @@ export function GuestListingPreview() {
         </div>
         {!loading ? <span className="guest-preview__count" role="status">{filtered.length} lựa chọn trong danh sách</span> : null}
       </div>
-      <p className="guest-preview__note">Giá và thông tin theo người đăng hoặc nguồn công khai. Xác nhận tình trạng phòng trước khi liên hệ.</p>
+      <p className="guest-preview__note">Giá và thông tin theo người đăng. Xác nhận tình trạng phòng trước khi liên hệ.</p>
       {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
       <ul className="guest-preview__rail" aria-label="Danh sách phòng nổi bật" aria-busy={loading}>
         {loading ? Array.from({ length: 8 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
@@ -78,7 +78,7 @@ export function GuestListingPreview() {
                 <span className="guest-preview__photo">
                   <span>Chưa có ảnh</span>
                   {photos[0] ? <img src={photos[0]} alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
-                  <span className="guest-preview__source-badge">{item.kind === 'source' ? rentalSourceLabel(item.data.source) : item.data.type === RentalPostType.VacantRoom ? 'Cho thuê' : rentalPostTypeLabel[item.data.type]}</span>
+                  <span className="guest-preview__source-badge">{item.kind === 'source' ? 'Phòng cho thuê' : item.data.type === RentalPostType.VacantRoom ? 'Cho thuê' : rentalPostTypeLabel[item.data.type]}</span>
                   {item.kind === 'source' && photos.length > 1 ? <span className="guest-preview__photo-count">{photos.length} ảnh</span> : null}
                 </span>
                 <span className="guest-preview__copy">
@@ -87,7 +87,7 @@ export function GuestListingPreview() {
                   <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
                   <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'post' && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
                   {item.kind === 'post' && item.data.descriptionExcerpt ? <span className="guest-preview__excerpt">{item.data.descriptionExcerpt}</span> : null}
-                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : item.data.publisherName?.trim() || rentalSourceLabel(item.data.source)}</span><strong>Xem chi tiết <Arrow /></strong></span>
+                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : item.data.publisherName?.trim() || 'Chưa có tên người đăng'}</span><strong>Xem chi tiết <Arrow /></strong></span>
                 </span>
               </button>
             </article>

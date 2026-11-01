@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useId, useRef, useState } from 'react'
-import { getRentalSource, rentalSourceImageHref, rentalSourceLabel, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSource, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { formatListingArea, formatListingRent } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
 import { getErrorMessage } from '../../../lib/errors'
@@ -38,7 +38,6 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   const phone = loaded && /^0\d{9,10}$/.test(listing?.contactPhone ?? '') ? listing!.contactPhone! : null
   const expired = Boolean(listing?.sourceExpiresAt && Date.parse(listing.sourceExpiresAt) <= now)
   const publisher = listing?.publisherName?.trim() || 'Chưa có tên người đăng'
-  const source = listing ? rentalSourceLabel(listing.source) : ''
   const date = listing?.detailsCollectedAt ?? listing?.collectedAt
   async function copyPhone() {
     if (!phone) return
@@ -64,20 +63,20 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
           </div>
           {images.length > 1 ? <div className="source-room-detail__thumbnails" aria-label="Chọn ảnh phòng">{images.map((image, index) => <button type="button" key={image} aria-label={`Xem ảnh ${index + 1}`} aria-pressed={index === photo} onClick={() => setPhoto(index)}><img src={image} loading="lazy" alt="" referrerPolicy="no-referrer" /></button>)}</div> : null}
           <div className="source-room-detail__intro"><p className="source-room-detail__price">{formatListingRent(listing.price)}<small> / tháng</small></p><h1>{listing.title}</h1><p>{listing.address}</p>
-            <dl><div><dt>Diện tích</dt><dd>{formatListingArea(listing.area)}</dd></div><div><dt>Khu vực</dt><dd>{listing.district === 'quan-9' ? 'Quận 9' : 'Thủ Đức'}</dd></div><div><dt>Mã tin</dt><dd>{listingReference(listing.id, listing.source, listing.sourceId)}</dd></div></dl>
+            <dl><div><dt>Diện tích</dt><dd>{formatListingArea(listing.area)}</dd></div><div><dt>Khu vực</dt><dd>{listing.district === 'quan-9' ? 'Quận 9' : 'Thủ Đức'}</dd></div><div><dt>Mã tin</dt><dd>{listingReference(listing.id)}</dd></div></dl>
           </div>
-          <section className="source-room-detail__description"><h2>Không gian & thông tin phòng</h2><p>{loaded ? listing.description || 'Nguồn đăng chưa cung cấp mô tả chi tiết cho phòng này.' : 'Đang tải mô tả…'}</p></section>
-          <section className="source-room-detail__provenance"><h2>Thông tin cập nhật</h2><p>Dữ liệu từ {source}{date ? ` · lưu tại Homeji ngày ${new Date(date).toLocaleDateString('vi-VN')}` : ''}.</p><p>{expired ? 'Tin đã hết hạn tại nguồn đăng. Liên hệ để kiểm tra lại trước khi đến.' : 'Tình trạng còn phòng và các chi phí cần được xác nhận với người đăng.'}</p></section>
+          <section className="source-room-detail__description"><h2>Không gian & thông tin phòng</h2><p>{loaded ? listing.description || 'Chưa có mô tả chi tiết cho phòng này.' : 'Đang tải mô tả…'}</p></section>
+          <section className="source-room-detail__provenance"><h2>Thông tin cập nhật</h2><p>{date ? `Cập nhật ngày ${new Date(date).toLocaleDateString('vi-VN')}.` : 'Chưa có ngày cập nhật.'}</p><p>{expired ? 'Tin đã hết hạn. Liên hệ để kiểm tra lại trước khi đến.' : 'Tình trạng còn phòng và các chi phí cần được xác nhận với người đăng.'}</p></section>
         </> : null}
       </section>
       <aside className="source-room-detail__contact" id={`${labelId}-contact`} aria-label="Thông tin liên hệ">
-        <div className="source-room-detail__contact-card"><span className="source-room-detail__eyebrow">LIÊN HỆ NGƯỜI ĐĂNG</span><div className="source-room-detail__person"><span aria-hidden>{publisher.charAt(0)}</span><div><h2>{publisher}</h2><p>Người đăng trên {source || 'nguồn dữ liệu'}</p></div></div>
+        <div className="source-room-detail__contact-card"><span className="source-room-detail__eyebrow">LIÊN HỆ NGƯỜI ĐĂNG</span><div className="source-room-detail__person"><span aria-hidden>{publisher.charAt(0)}</span><div><h2>{publisher}</h2><p>Thông tin liên hệ</p></div></div>
           <p className="source-room-detail__verification">Chưa xác minh danh tính trên Homeji</p>
-          {phone ? <><button type="button" className="source-room-detail__phone" onClick={() => setRevealed(true)}>{revealed ? phone : `${phone.slice(0, 4)} ••• •••`}<small>{revealed ? 'Số công khai trong tin đăng' : 'Nhấn để hiện số'}</small></button>{revealed ? <div className="source-room-detail__contact-actions"><a href={`tel:${phone}`}>Gọi người đăng</a><button type="button" onClick={() => void copyPhone()}>Sao chép số</button></div> : null}</> : <p className="source-room-detail__missing" role="status">{loaded ? 'Chưa có số liên hệ công khai của người đăng trong dữ liệu thu thập.' : error ? 'Chưa tải được thông tin liên hệ.' : 'Đang tải thông tin liên hệ…'}</p>}
+          {phone ? <><button type="button" className="source-room-detail__phone" onClick={() => setRevealed(true)}>{revealed ? phone : `${phone.slice(0, 4)} ••• •••`}<small>{revealed ? 'Số công khai trong tin đăng' : 'Nhấn để hiện số'}</small></button>{revealed ? <div className="source-room-detail__contact-actions"><a href={`tel:${phone}`}>Gọi người đăng</a><button type="button" onClick={() => void copyPhone()}>Sao chép số</button></div> : null}</> : <p className="source-room-detail__missing" role="status">{loaded ? 'Chưa có số điện thoại để liên hệ.' : error ? 'Chưa tải được thông tin liên hệ.' : 'Đang tải thông tin liên hệ…'}</p>}
           {copyState ? <p role="status">{copyState}</p> : null}
           <div className="source-room-detail__contact-note"><strong>Trao đổi trước khi đến xem</strong><p>Hỏi lại giá thuê, tiền cọc, điện nước và thời gian xem phòng. Chưa liên kết tài khoản người đăng với chat Homeji.</p></div>
         </div>
-        <small className="source-room-detail__attribution">Thông tin và ảnh được lưu từ {source}. Homeji không thay mặt người đăng cam kết tình trạng phòng.</small>
+        <small className="source-room-detail__attribution">Xác nhận tình trạng phòng và chi phí với người đăng trước khi đặt lịch hoặc đặt cọc.</small>
       </aside>
     </div>
   </dialog>, document.body)

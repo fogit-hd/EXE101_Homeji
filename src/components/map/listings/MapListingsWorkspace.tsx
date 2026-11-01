@@ -383,7 +383,7 @@ export function MapListingsWorkspace({
             aria-label="Danh sách kết quả"
           >
             {query.view === 'split' ? <div className="map-listings__panel-head">
-              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : 'Phòng trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : marketMode ? `${cards.length} tin đang hiển thị` : `${cards.length} tin Homeji · ${sourceCounts.total} tin khác`}</p></div>
+              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : 'Phòng trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : marketMode ? `${cards.length} tin đang hiển thị` : `${cards.length + sourceCounts.total} tin trong danh sách`}</p></div>
               <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>Thu gọn</button>
             </div> : null}
             <div className="map-listings__panel-body">

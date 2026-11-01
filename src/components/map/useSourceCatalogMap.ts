@@ -19,9 +19,9 @@ function popupContent(pin: SourceCatalogPin, onOpen: (id: string) => void): HTML
   const title = document.createElement('strong'); title.textContent = pin.title
   const address = document.createElement('p'); address.textContent = pin.address
   root.append(title, address)
-  if (pin.price) { const price = document.createElement('p'); price.textContent = `${pin.price.toLocaleString('vi-VN')} đ/tháng · Giá trên tin gốc`; root.append(price) }
+  if (pin.price) { const price = document.createElement('p'); price.textContent = `${pin.price.toLocaleString('vi-VN')} đ/tháng · Giá thuê`; root.append(price) }
   if (pin.publisherName) { const author = document.createElement('p'); author.textContent = `Người đăng: ${pin.publisherName}`; root.append(author) }
-  const note = document.createElement('small'); note.textContent = pin.kind === 'food' ? 'Xem thông tin quán trước khi ghé.' : 'Vị trí theo tin gốc. Kiểm tra tình trạng phòng với người đăng trước khi đến.'
+  const note = document.createElement('small'); note.textContent = pin.kind === 'food' ? 'Xem thông tin quán trước khi ghé.' : 'Kiểm tra tình trạng phòng với người đăng trước khi đến.'
   const link = document.createElement('a'); link.href = pin.kind === 'food' ? pin.sourceUrl : sourceRoomHref(pin.id.slice('rental:'.length)); link.textContent = pin.kind === 'food' ? 'Xem thông tin quán' : 'Xem chi tiết & liên hệ'; if (pin.kind === 'food') { link.target = '_blank'; link.rel = 'noopener noreferrer' } else link.addEventListener('click', event => { event.preventDefault(); onOpen(pin.id.slice('rental:'.length)) })
   root.append(note, link); return root
 }

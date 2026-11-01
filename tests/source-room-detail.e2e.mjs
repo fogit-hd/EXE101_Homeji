@@ -34,7 +34,7 @@ try{
   await page.screenshot({path:out+'/contact-'+width+'.png'})
   await dialog.getByRole('button',{name:'Đóng chi tiết phòng'}).click();await dialog.waitFor({state:'detached'});assert.equal(await page.getByRole('dialog').count(),0)
  }
- missing=true;await page.getByRole('link',{name:'Mở phòng'}).click();await page.getByRole('tab',{name:'Liên hệ',exact:true}).click();await page.getByText('Chưa có số liên hệ công khai của người đăng trong dữ liệu thu thập.').waitFor();assert.equal(await page.getByRole('link',{name:'Gọi người đăng'}).count(),0)
+ missing=true;await page.getByRole('link',{name:'Mở phòng'}).click();await page.getByRole('tab',{name:'Liên hệ',exact:true}).click();await page.getByText('Chưa có số điện thoại để liên hệ.').waitFor();assert.equal(await page.getByRole('link',{name:'Gọi người đăng'}).count(),0)
  await page.getByRole('button',{name:'Đóng chi tiết phòng'}).click();fail=true;await page.getByRole('link',{name:'Mở phòng'}).click();await page.getByRole('alert').waitFor();fail=false;await page.getByRole('button',{name:'Thử lại',exact:true}).click();await page.getByText('Thông tin phòng 40:',{exact:false}).waitFor()
  await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'detached'});assert.equal(await page.getByRole('dialog').count(),0)
  assert.deepEqual(errors,[]);console.log('PASS desktop independent room scroll/fixed contact, mobile tabs, internal detail, public phone, missing data, retry, Escape and 320–1440 layouts')
