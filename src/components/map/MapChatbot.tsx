@@ -1,3 +1,4 @@
+import { AgentRoommateResults } from '../ai/AgentRoommateResults'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -113,6 +114,7 @@ type ChatRequest = {
 }
 
 type DisplayMessage = ChatbotMessage & {
+  roommateCandidates?: import('../../api/chatbotAgent').AgentRoommateCandidate[] | null
   nearbyRooms?: ChatbotNearbyResponse | null
   agentDraft?: AgentPostDraft | null
   upgradeRequired?: boolean
@@ -555,7 +557,7 @@ export function MapChatbot({
         const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
           content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở Chợ đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
-          nearbyRooms: reply.nearbyRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
+          roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
           actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở Chợ đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
             target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
@@ -758,8 +760,9 @@ export function MapChatbot({
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
-                        {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => { setDraftWorkspaceOpen(true); setExpanded(true) }}><span>Ảnh · nội dung · giá bán · địa chỉ</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
-                        {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=payments"); setOpen(false) }}>Khám phá Premium</button><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=marketplace"); setOpen(false) }}>Tự đăng bài</button></div> : null}
+                        {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => { setDraftWorkspaceOpen(true); setExpanded(true) }}><span>Loại tin · nội dung · chi phí · vị trí</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
+                        {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=payments"); setOpen(false) }}>Khám phá Premium</button><button className="map-chatbot__action" type="button" onClick={() => { if (m.actions?.[0]) handleNavigationAction(m.actions[0]); else { navigate("/?section=marketplace"); setOpen(false) } }}>Tự đăng bài</button></div> : null}
+                        {m.roommateCandidates ? <AgentRoommateResults items={m.roommateCandidates} onOpen={() => setOpen(false)} /> : null}
                         {m.nearbyRooms ? <ChatbotNearbyResults data={m.nearbyRooms} onOpen={() => setOpen(false)} /> : null}
                         {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
@@ -776,7 +779,7 @@ export function MapChatbot({
               <div ref={bottomRef} />
             </div>
             {isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
-            {agentMode ? <div className="homeji-agent-context"><span>{agentDraftId ? "Đang sửa bản nháp" : "Soạn bài từ ảnh"}</span><button className="map-chatbot__action" type="button" onClick={() => { setAgentDraftId(undefined); setAgentMode(false) }}>Kết thúc chỉnh sửa</button></div> : null}
+            {agentMode ? <div className="homeji-agent-context"><span>{agentDraftId ? "Đang sửa bản nháp" : "Chọn nhu cầu · duyệt rồi thực hiện"}</span><button className="map-chatbot__action" type="button" onClick={() => { setAgentDraftId(undefined); setAgentMode(false) }}>Kết thúc chỉnh sửa</button></div> : null}
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
             {copyStatus ? <p className="homeji-assistant__feedback" role="status">{copyStatus}</p> : null}
             <div className="homeji-assistant__wait-tools" hidden={!showTyping}>

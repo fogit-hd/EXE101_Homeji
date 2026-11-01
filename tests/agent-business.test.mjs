@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import{agentMissingFields}from'../src/lib/agentPostBusiness.ts'
+const details={title:'Phòng thật',description:'Mô tả do người dùng cung cấp',price:8000000,condition:'',category:'',address:'Lê Văn Việt',latitude:10.84,longitude:106.8}
+test('rental draft requires actual deposit area and occupancy instead of secondhand fields',()=>{assert.deepEqual(agentMissingFields({...details,kind:'rental'}),['tiền cọc','diện tích','số người tối đa','chỗ trống']);assert.deepEqual(agentMissingFields({...details,kind:'rental',deposit:16000000,area:54,maxOccupants:2,availableSlots:2}),[])})
+test('transfer cannot confirm until owner consent is explicitly checked',()=>{const pass={...details,kind:'roomTransfer',deposit:0,area:26,maxOccupants:2,availableSlots:1,availableFrom:'2026-12-01',originalLeaseEndsOn:'2027-12-01',transferKind:1,passFee:0,transferReason:'Chuyển nơi học',ownerConsentContact:'0901234567'};assert.ok(agentMissingFields(pass).includes('xác nhận và liên hệ chủ nhà'));assert.deepEqual(agentMissingFields({...pass,ownerConsentConfirmed:true}),[])})
+test('food and wanted drafts have independent required fields',()=>{assert.deepEqual(agentMissingFields({...details,kind:'food'}),['số lượng','đơn vị bán','thời gian chuẩn bị']);assert.deepEqual(agentMissingFields({...details,kind:'wanted',latitude:0,longitude:0,maxOccupants:2,availableFrom:'2026-12-01'}),[])})

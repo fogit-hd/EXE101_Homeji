@@ -83,11 +83,11 @@ try {
   await page.getByRole('button', { name: 'Tự đăng bài', exact: true }).waitFor()
   for (const width of [1200, 390, 320]) {
     await page.setViewportSize({ width, height: 900 }); await page.goto(base + '/' + out + '/index.html?banner')
-    await page.getByRole('complementary', { name: 'Ưu đãi ra mắt Homeji Agent' }).waitFor()
+    await page.locator('.premium-launch-offer').waitFor()
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     await page.screenshot({ path: out + '/offer-' + width + '.png' })
   }
-  await page.getByRole('button', { name: 'Đóng ưu đãi Premium' }).click(); await page.reload()
+  await page.getByRole('button', { name: 'Đóng thông báo Premium' }).click(); await page.reload()
   assert.equal(await page.locator('.premium-launch-offer').count(), 0)
   assert.deepEqual(errors, [])
   console.log('PASS preview/edit/approve, duplicate click guard, retry recovery, bounded context, Basic upgrade, responsive offer and dismissal')
