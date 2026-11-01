@@ -86,7 +86,7 @@ try {
     }
     assert.equal(await page.locator('.admin-nav button[aria-current="page"]').count(), 1)
     assert.equal(await page.locator('.admin-queues__grid button').count(), 4)
-    for (const [key, name] of [['posts', 'Tin chờ duyệt'], ['reports', 'Báo cáo'], ['verifications', 'Xác minh chủ nhà'], ['withdrawals', 'Rút tiền'], ['active', 'Đang hoạt động'], ['maintenance', 'Bảo trì']]) {
+    for (const [key, name] of [['posts', 'Tin chờ duyệt'], ['reports', 'Báo cáo vi phạm'], ['verifications', 'Xác minh chủ nhà'], ['withdrawals', 'Rút tiền'], ['active', 'Đang hoạt động'], ['maintenance', 'Bảo trì']]) {
       await openSection(name)
       if (key !== 'maintenance') await page.locator('.admin-item').first().waitFor()
       await capture(`${key}-${theme}-${width}`)
@@ -126,7 +126,7 @@ try {
   failAnalytics = false; await page.getByRole('button', { name: 'Thử lại', exact: true }).click(); await ready()
   await openSection('Tin chờ duyệt'); await page.getByText('Không có tin chờ duyệt.', { exact: true }).waitFor()
   await openSection('Tổng quan')
-  const navButton = page.getByRole('navigation', { name: 'Mục quản trị' }).getByRole('button', { name: 'Báo cáo' })
+  const navButton = page.getByRole('navigation', { name: 'Mục quản trị' }).getByRole('button', { name: /^Báo cáo vi phạm/ })
   await navButton.focus(); await page.keyboard.press('Enter'); assert.equal(await navButton.getAttribute('aria-current'), 'page')
   assert.deepEqual(errors, [])
   console.log('PASS: Admin desktop/mobile light/dark, all sections, search, isolated notes, duplicate lock, error retry, empty state, confirmation cancellation and exact assistant task focus. API writes were intercepted fixtures.')

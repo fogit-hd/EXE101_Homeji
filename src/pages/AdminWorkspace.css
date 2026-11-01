@@ -1,16 +1,17 @@
 /* Operational surfaces keep crisp text and one clear selected state. */
 #root .admin-workspace { max-width: 1600px; }
-.admin-layout { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 28px; align-items: start; }
+.admin-layout { display: grid; grid-template-columns: 246px minmax(0, 1fr); gap: 32px; align-items: start; }
 .admin-content { min-width: 0; display: grid; gap: 20px; }
-.admin-nav { position: sticky; top: calc(var(--hj-header-h, 80px) + 20px); padding: 16px 0; }
-.admin-nav__heading { display: block; padding: 0 12px 18px; color: var(--text-secondary); font-size: 12px; font-weight: 650; }
+.admin-nav { position: sticky; top: calc(var(--hj-header-h, 80px) + 20px); padding: 20px 12px; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 20px; }
+.admin-nav__heading { display: block; padding: 0 12px 12px; color: var(--text-heading); font-size: 14px; font-weight: 750; }
+.admin-nav__group { display: block; padding: 20px 12px 8px; color: var(--text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .03em; }
+.admin-nav li:first-child .admin-nav__group { padding-top: 6px; }
 .admin-nav ul { display: grid; gap: 5px; list-style: none; padding: 0; margin: 0; }
 .admin-nav li { min-width: 0; }
 #root .admin-nav .admin-nav__toggle { display: none; }
 #root .admin-nav button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-secondary); text-align: left; font: 550 14px/1.5 var(--font-ui); cursor: pointer; }
 #root .admin-nav button:hover { background: var(--surface-input); color: var(--text-heading); }
 #root .admin-nav button[aria-current] { background: var(--action-soft); border-color: var(--border); color: var(--action-on-soft); font-weight: 750; }
-.admin-nav__icon { font-size: 18px; width: 20px; flex: 0 0 20px; text-align: center; }
 .admin-nav__count { margin-left: auto; min-width: 24px; padding: 2px 5px; border-radius: 5px; background: var(--surface-elevated); color: var(--text-heading); text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
 .admin-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .admin-section-kicker { display: block; color: var(--action-on-soft); font-size: 11px; line-height: 1.5; letter-spacing: .09em; text-transform: uppercase; font-weight: 750; margin-bottom: 5px; }
@@ -91,7 +92,7 @@ html[data-theme='dark'] .admin-workspace .admin-price-signal.is-hold { backgroun
 .admin-workspace details summary::before { content: '+'; font-size: 20px; }
 .admin-workspace details[open] summary::before { content: '−'; }
 @media (max-width: 1180px) {
-  .admin-layout { grid-template-columns: 190px minmax(0, 1fr); gap: 20px; }
+  .admin-layout { grid-template-columns: 224px minmax(0, 1fr); gap: 20px; }
   .admin-queues__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-workspace .admin-analytics__primary-grid { grid-template-columns: 1fr; }
   .admin-assistant__heading { align-items: flex-start; flex-direction: column; }
@@ -100,14 +101,14 @@ html[data-theme='dark'] .admin-workspace .admin-price-signal.is-hold { backgroun
 }
 @media (max-width: 800px) {
   .admin-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .admin-nav { position: static; padding: 0 0 16px; border-bottom: 1px solid var(--border); }
+  .admin-nav { position: static; padding: 10px; border: 1px solid var(--border); border-radius: 14px; }
   .admin-nav__heading { display: none; }
   #root .admin-nav .admin-nav__toggle { display: flex; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--text-heading); justify-content: space-between; padding: 10px 14px; }
   .admin-nav__toggle small { display: block; font-size: 11px; color: var(--text-secondary); font-weight: 500; margin-bottom: 3px; }
   .admin-nav ul { display: none; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; }
   .admin-nav ul.is-expanded { display: grid; }
   #root .admin-nav button { height: 100%; font-size: 13px; padding: 8px; gap: 6px; }
-  .admin-nav__icon { display: none; }
+  .admin-nav__group { display: none; }
   .admin-workspace .admin-analytics__toolbar { flex-direction: column; }
 }
 @media (max-width: 540px) {

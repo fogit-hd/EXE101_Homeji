@@ -1,0 +1,32 @@
+.admin-register, .admin-exports { display: grid; gap: 20px; min-width: 0; }
+.admin-register__switch { display: flex; gap: 6px; padding: 5px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-muted); width: fit-content; }
+.admin-register__switch button { padding: 11px 18px; border: 0; border-radius: 10px; background: transparent; color: var(--text-secondary); font: inherit; font-weight: 650; cursor: pointer; }
+.admin-register__switch button[aria-pressed='true'] { background: var(--surface-elevated); color: var(--text-heading); box-shadow: 0 2px 6px #163a3610; }
+.admin-report-tools { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding: 18px; background: var(--surface-muted); border-radius: 14px; }
+.admin-report-tools label, .admin-export-create label { display: grid; gap: 8px; font-size: 13px; font-weight: 650; color: var(--text-secondary); }
+.admin-report-tools label:first-child { flex: 1; min-width: 180px; }
+.admin-report-note { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
+.admin-register__count { font-size: 14px; font-weight: 650; color: var(--text-heading); }
+.admin-data-table { max-width: 100%; overflow: auto; border: 1px solid var(--border); border-radius: 16px; }
+.admin-data-table table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+.admin-data-table th { padding: 14px 18px; text-align: left; background: var(--surface-muted); color: var(--text-secondary); font-size: 12px; font-weight: 700; }
+.admin-data-table td { padding: 18px; border-top: 1px solid var(--border); vertical-align: top; color: var(--text-heading); line-height: 1.6; }
+.admin-data-table td strong, .admin-data-table td small { display: block; }
+.admin-data-table td small { color: var(--text-secondary); font-size: 12px; margin-top: 5px; overflow-wrap: anywhere; }
+.admin-data-table td details summary { font-size: 12px; min-height: 30px; }
+.admin-state { display: inline-block; width: fit-content; margin: 4px 0; border-radius: 7px; padding: 4px 8px; font-size: 12px; font-weight: 650; color: var(--text-secondary); background: var(--surface-muted); }
+.admin-state.is-active { background: var(--action-soft); color: var(--action-on-soft); }
+.admin-report-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-secondary); font-size: 13px; }
+.admin-export-create { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 30px; padding: 26px; border: 1px solid var(--border); border-radius: 20px; background: linear-gradient(125deg, var(--action-soft), var(--surface-elevated) 65%); }
+.admin-export-create h3 { margin: 6px 0 12px; font-size: 23px; line-height: 1.4; color: var(--text-heading); }
+.admin-export-create p { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.admin-export-create__action { display: grid; gap: 14px; align-content: center; }
+.admin-export-create__action button { width: 100%; white-space: normal; }
+.admin-export-list { display: grid; gap: 12px; }
+.admin-export-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 220px) auto; align-items: center; gap: 22px; padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); }
+.admin-export-row strong { font-size: 14px; overflow-wrap: anywhere; }
+.admin-export-row span, .admin-export-row small { display: block; margin-top: 6px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); overflow-wrap: anywhere; }
+.admin-export-row .admin-state.is-active { color: var(--action-on-soft); }
+.admin-report-success { padding: 14px 18px; border-radius: 12px; background: var(--action-soft); color: var(--action-on-soft); font-size: 14px; line-height: 1.6; }
+@media (max-width: 1000px) { .admin-export-create { grid-template-columns: 1fr; } .admin-export-create__action { grid-template-columns: 1fr 1fr; align-items: end; } .admin-export-row { grid-template-columns: 1fr auto; } .admin-export-row > div:first-child { grid-column: 1 / -1; } }
+@media (max-width: 540px) { .admin-export-create { padding: 20px; } .admin-export-create__action { grid-template-columns: 1fr; } .admin-register__switch { width: 100%; } .admin-register__switch button { flex: 1; padding: 10px 12px; font-size: 13px; } .admin-report-pagination { flex-wrap: wrap; } .admin-export-row { padding: 16px; gap: 14px; } }

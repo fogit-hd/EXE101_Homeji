@@ -35,7 +35,9 @@ import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { AdminAnalyticsSkeleton, AdminSkeleton } from '../components/skeletons/PageSkeletons'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { AdminWorkspaceNav } from '../components/admin/AdminWorkspaceNav'
+import { AdminWorkspaceNav, type AdminSection } from '../components/admin/AdminWorkspaceNav'
+import { AdminRegistrationsPanel } from '../components/admin/AdminRegistrationsPanel'
+import { AdminExportsPanel } from '../components/admin/AdminExportsPanel'
 import { AiListingReviewPanel } from '../components/admin/AiListingReviewPanel'
 import './AdminWorkspace.css'
 import { useAuth } from '../contexts/AuthContext'
@@ -66,7 +68,7 @@ export function AdminModerationPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
   const [analyticsError, setAnalyticsError] = useState('')
   const [analyticsAttempt, setAnalyticsAttempt] = useState(0)
-  const [tab, setTab] = useState<'overview' | 'posts' | 'reports' | 'verifications' | 'withdrawals' | 'active' | 'maintenance' | 'aiReviews'>('overview')
+  const [tab, setTab] = useState<AdminSection>('overview')
   const [reportStatus, setReportStatus] = useState<ReportStatus | undefined>(ReportStatus.Pending)
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
   const [withdrawalNotes, setWithdrawalNotes] = useState<Record<string, string>>({})
@@ -334,10 +336,12 @@ export function AdminModerationPage() {
   const counts = { posts: pendingPosts.length, reports: reports.length, verifications: verifications.length,
     withdrawals: withdrawals.length, active: activeUsers.filter(user => user.isOnline).length }
   const sectionInfo = {
+    registrations: ['Tài khoản & thành viên', 'Xem người đã đăng ký tài khoản, lịch sử mua gói và thời hạn thành viên.'],
+    exports: ['Báo cáo Excel', 'Tạo báo cáo, theo dõi email và tải lại các file đã xuất.'],
     aiReviews: ['AI kiểm tra tin', 'Kiểm tra lần lượt, giới hạn lượt gọi và xem lại kết quả.'],
     overview: ['Tổng quan sản phẩm', 'Hàng chờ, hoạt động và thị trường.'],
     posts: ['Tin chờ duyệt', 'Kiểm tra thông tin và sự đồng ý của chủ nhà trước khi duyệt.'],
-    reports: ['Báo cáo', 'Đọc nội dung bị báo cáo, ghi lại kết quả kiểm tra rồi đưa ra kết luận.'],
+    reports: ['Báo cáo vi phạm', 'Đọc nội dung bị báo cáo, ghi lại kết quả kiểm tra rồi đưa ra kết luận.'],
     verifications: ['Xác minh chủ nhà', 'Đối chiếu giấy tờ và lưu ghi chú cho từng hồ sơ.'],
     withdrawals: ['Yêu cầu rút tiền', 'Đối chiếu người nhận và mã chuyển khoản trước khi xác nhận.'],
     active: ['Người đang hoạt động', 'Theo dõi kết nối và quản lý phiên đăng nhập.'],
@@ -352,10 +356,10 @@ export function AdminModerationPage() {
   const visibleUsers = activeUsers.filter(user => matches(user.displayName))
   const visibleCounts = { posts: visiblePosts.length, reports: visibleReports.length, verifications: visibleVerifications.length,
     withdrawals: visibleWithdrawals.length, active: visibleUsers.length }
-  const searchable = tab !== 'overview' && tab !== 'maintenance' && tab !== 'aiReviews'
+  const searchable = tab !== 'overview' && tab !== 'maintenance' && tab !== 'aiReviews' && tab !== 'registrations' && tab !== 'exports'
 
   return (
-    <PageFrame title="Điều hành Homeji" eyebrow="HOMEJI / ADMIN" lead="Nắm tình hình. Xử lý đúng việc."
+    <PageFrame title="Quản trị Homeji" eyebrow="HOMEJI / ADMIN" lead="Theo dõi tài khoản, thành viên và vận hành trong cùng một nơi."
       actions={<Link className="btn btn-secondary" to="/?section=listings&view=map">Xem trang tìm phòng ↗</Link>}
       className="account-surface admin-workspace">
       <div className="admin-layout" data-glass-exclude>
@@ -363,7 +367,7 @@ export function AdminModerationPage() {
       <section className="admin-content" aria-label={sectionInfo[tab][0]}>
       {tab !== 'overview' && tab !== 'aiReviews' ? <header className="admin-section-heading">
         <div><span className="admin-section-kicker">Quản lý</span><h2>{sectionInfo[tab][0]}</h2><p>{sectionInfo[tab][1]}</p></div>
-        <button type="button" className="btn btn-secondary btn-sm" disabled={showLoader || pendingAction !== null} onClick={() => void reload()}>Làm mới</button>
+        {tab !== 'registrations' && tab !== 'exports' ? <button type="button" className="btn btn-secondary btn-sm" disabled={showLoader || pendingAction !== null} onClick={() => void reload()}>Làm mới</button> : null}
       </header> : null}
       {searchable ? <div className="admin-queue-tools"><label htmlFor="admin-queue-search">Tìm trong danh sách</label>
         <div className="admin-queue-search"><input id="admin-queue-search" type="search" className="form-input" placeholder={tab === 'withdrawals' ? 'Tên, ngân hàng hoặc số tài khoản…' : 'Nhập tên hoặc nội dung…'} value={query} onChange={event => setQuery(event.target.value)} />
@@ -389,7 +393,9 @@ export function AdminModerationPage() {
       ) : null}
 
       {tab === 'aiReviews' ? <AiListingReviewPanel /> : null}
-      {tab !== 'overview' && tab !== 'aiReviews' && (showLoader ? (
+      {tab === 'registrations' ? <AdminRegistrationsPanel /> : null}
+      {tab === 'exports' ? <AdminExportsPanel /> : null}
+      {tab !== 'overview' && tab !== 'aiReviews' && tab !== 'registrations' && tab !== 'exports' && (showLoader ? (
         disrupted
           ? <HomejiLoader onIntroComplete={onIntroComplete} message={loadError} />
           : <AdminSkeleton withHeader={false} />
