@@ -63,11 +63,16 @@ export function PremiumLaunchOffer() {
   const percent = previousPrice > 0 ? Math.round(Math.abs(saving) / previousPrice * 100) : 0
   const reduced = saving > 0
   const end = plan?.offerEndsAt ? new Date(plan.offerEndsAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
-  return createPortal(<dialog ref={dialog} className={`premium-launch-offer ${reduced ? 'is-reduction' : 'is-increase'}`} aria-labelledby="premium-offer-title" aria-describedby="premium-offer-description" onCancel={event => { event.preventDefault(); dismiss() }}>
+  return createPortal(<dialog ref={dialog} data-glass-exclude className={`premium-launch-offer ${reduced ? 'is-reduction' : 'is-increase'}`} aria-labelledby="premium-offer-title" aria-describedby="premium-offer-description" onCancel={event => { event.preventDefault(); dismiss() }}>
     <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo Premium" autoFocus onClick={dismiss}>×</button>
+    <header className="premium-launch-offer__banner">
+    <div className="premium-launch-offer__banner-top">
     <span className="premium-launch-offer__eyebrow">{announcement ? 'HOMEJI PREMIUM · CẬP NHẬT GIÁ' : 'MỚI · HOMEJI AGENT'}</span>
     <span className="premium-launch-offer__discount">{reduced ? `GIẢM ${percent}%` : `ĐIỀU CHỈNH TĂNG ${percent}%`}</span>
+    </div>
     <h2 id="premium-offer-title">{announcement ? `Giá mới cho ${announcement.packageName}` : <>Bạn gửi ảnh.<br />Homeji lo bản nháp.</>}</h2>
+    </header>
+    <div className="premium-launch-offer__body">
     <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ đồ.'}</p>
     <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{!announcement ? <span>/ {plan!.durationDays} ngày</span> : null}</div>
     <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
@@ -75,6 +80,7 @@ export function PremiumLaunchOffer() {
     <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
     <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
     <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />
+    </div>
   </dialog>, document.body)
 }
 
