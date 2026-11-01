@@ -13,6 +13,7 @@ const dataUrl = source => `data:text/javascript;base64,${Buffer.from(source).toS
 const compile = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX } }).outputText
 const mockUrl = dataUrl(`export const useVoiceCalls=()=>({busy:false});export const sendConversationVoice=(...args)=>globalThis.__recorder.send(...args);export const getErrorMessage=(e)=>e.message`)
 let source = await readFile(new URL('../src/components/map/VoiceMessageRecorder.tsx', import.meta.url), 'utf8')
+source = source.replace("import './VoiceMessageRecorder.css'", '')
 for (const name of ['../../api', '../../lib/errors', '../../contexts/voice-call']) source = source.replaceAll(`'${name}'`, JSON.stringify(mockUrl))
 source = source.replace("'../../lib/voiceRecording'", JSON.stringify(dataUrl(compile(await readFile(new URL('../src/lib/voiceRecording.ts', import.meta.url), 'utf8')))))
 source = compile(source).replaceAll("'react'", JSON.stringify(pathToFileURL(require.resolve('react')).href)).replaceAll('"react/jsx-runtime"', JSON.stringify(pathToFileURL(require.resolve('react/jsx-runtime')).href))

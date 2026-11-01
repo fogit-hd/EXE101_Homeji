@@ -12,14 +12,15 @@ type Props<T extends string> = {
   idPrefix?: string
   panelId?: string
   renderLabel?: (id: T, label: string) => ReactNode
+  webglGlass?: boolean
 }
 
 /** A shared raised lens follows selection while preserving existing IDs and navigation. */
-export function MotionTabs<T extends string>({ items, value, onChange, label, className, buttonClassName = '', idPrefix, panelId, renderLabel }: Props<T>) {
+export function MotionTabs<T extends string>({ items, value, onChange, label, className, buttonClassName = '', idPrefix, panelId, renderLabel, webglGlass = false }: Props<T>) {
   const generatedId = useId()
   const prefix = idPrefix ?? `motion-tabs-${generatedId}`
   const containerRef = useRef<HTMLDivElement>(null)
-  return <LiquidTabList containerRef={containerRef} className={`motion-tabs ${className}`} role="tablist" aria-label={label}>
+  return <LiquidTabList webglGlass={webglGlass} containerRef={containerRef} className={`motion-tabs ${className}`} role="tablist" aria-label={label}>
     {items.map(item => <button key={item.id} type="button" role="tab" id={`${prefix}-${item.id}`}
       aria-selected={value === item.id} aria-controls={panelId} tabIndex={value === item.id ? 0 : -1}
       className={`${buttonClassName}${value === item.id ? ' is-active' : ''}`}

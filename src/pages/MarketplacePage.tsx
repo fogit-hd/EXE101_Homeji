@@ -1,3 +1,4 @@
+import { MoneyInput } from '../components/ui/MoneyInput'
 import './pages.css'
 import './post-form.css'
 import { VoucherPicker, type VoucherSelection } from '../components/marketplace/VoucherPicker'
@@ -1250,14 +1251,14 @@ export function MarketplacePage({
               {p.listingType === MarketplaceListingType.Food ? (
                 <label className="marketplace-quantity">
                   <span>Số lượng</span>
-                  <input
-                    type="number"
+                  <MoneyInput
+
                     min={1}
                     max={p.availableQuantity}
                     value={orderQuantities[p.id] ?? 1}
-                    onChange={(event) => setOrderQuantities((current) => ({
+                    onValueChange={value => setOrderQuantities((current) => ({
                       ...current,
-                      [p.id]: Math.max(1, Math.min(p.availableQuantity, Number(event.target.value) || 1)),
+                      [p.id]: Math.max(1, Math.min(p.availableQuantity, Number(value) || 1)),
                     }))}
                     aria-label={`Số lượng ${p.title}`}
                   />
@@ -1841,7 +1842,7 @@ export function MarketplacePage({
           <div className="marketplace-sell-grid">
             <div className="form-group">
               <label className="form-label" htmlFor="sale-price">Giá (VND)</label>
-              <input id="sale-price" className="form-input" aria-label="Giá bán" type="number" min={1} step={1} value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <MoneyInput id="sale-price" className="form-input" aria-label="Giá bán"  min={1} step={1} value={price} onValueChange={value => setPrice(value)} required />
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="sale-condition">Tình trạng</label>
@@ -1882,15 +1883,15 @@ export function MarketplacePage({
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="sale-quantity">Số lượng sẵn bán</label>
-              <input
+              <MoneyInput
                 id="sale-quantity"
                 className="form-input"
-                type="number"
+
                 aria-label="Số lượng sẵn bán"
                 min={1}
                 max={listingType === MarketplaceListingType.Food ? 100 : 1}
                 value={availableQuantity}
-                onChange={(e) => setAvailableQuantity(e.target.value)}
+                onValueChange={value => setAvailableQuantity(value)}
                 required
               />
             </div>
@@ -1910,15 +1911,15 @@ export function MarketplacePage({
             {listingType === MarketplaceListingType.Food ? (
               <div className="form-group">
                 <label className="form-label" htmlFor="sale-preparation">Thời gian chuẩn bị (phút)</label>
-                <input
+                <MoneyInput
                   id="sale-preparation"
                   className="form-input"
-                  type="number"
+
                   aria-label="Thời gian chuẩn bị (phút)"
                   min={0}
                   max={240}
                   value={preparationMinutes}
-                  onChange={(e) => setPreparationMinutes(e.target.value)}
+                  onValueChange={value => setPreparationMinutes(value)}
                 />
               </div>
             ) : null}

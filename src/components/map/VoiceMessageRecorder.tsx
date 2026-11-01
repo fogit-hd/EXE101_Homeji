@@ -3,13 +3,22 @@ import { sendConversationVoice, type PostMessage } from '../../api'
 import { getErrorMessage } from '../../lib/errors'
 import { encodeVoiceWav, VOICE_SAMPLE_RATE } from '../../lib/voiceRecording'
 import { useVoiceCalls } from '../../contexts/voice-call'
+import './VoiceMessageRecorder.css'
 
-export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError }: {
-  conversationId: string; disabled: boolean; onSent: (message: PostMessage) => void; onError: (message: string) => void
-}) {
+type RecorderProps = {
+  disabled: boolean
+  onError: (message: string) => void
+  allowTranscription?: boolean
+  transcribeOnStop?: boolean
+  onActivityChange?: (active: boolean) => void
+} & ({ conversationId: string; onSent: (message: PostMessage) => void; onRecorded?: never }
+  | { conversationId?: never; onSent?: never; onRecorded: (blob: Blob, mode: 'message' | 'dictation') => Promise<void> })
+
+export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError, onRecorded, allowTranscription = false, transcribeOnStop = false, onActivityChange }: RecorderProps) {
   const { busy } = useVoiceCalls()
   const [phase, setPhase] = useState<'idle' | 'starting' | 'recording' | 'preview' | 'sending'>('idle')
   const [seconds, setSeconds] = useState(0)
+  const [mode, setMode] = useState<'message' | 'dictation'>('message')
   const [preview, setPreview] = useState('')
   const blob = useRef<Blob | null>(null)
   const pendingContext = useRef<AudioContext | null>(null)
@@ -34,15 +43,19 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
     url.current = ''; setPreview(''); setSeconds(0); setPhase('idle')
   }, [release])
   useEffect(() => () => { version.current++; release(); if (url.current) URL.revokeObjectURL(url.current) }, [conversationId, release])
+  useEffect(() => { onActivityChange?.(phase !== 'idle') }, [phase, onActivityChange])
+  useEffect(() => () => { onActivityChange?.(false) }, [onActivityChange])
   function finish() {
     release()
     try {
       blob.current = encodeVoiceWav(chunks.current); chunks.current = []
       url.current = URL.createObjectURL(blob.current); setPreview(url.current); setPhase('preview')
+      if (transcribeOnStop) void deliver(blob.current, 'dictation')
     } catch (e) { clear(); onError(getErrorMessage(e, 'Không tạo được bản ghi.')) }
   }
-  async function start() {
+  async function start(nextMode: 'message' | 'dictation' = 'message') {
     if (gate.current || disabled || busy) return
+    setMode(nextMode)
     gate.current = true; setPhase('starting'); const current = ++version.current
     let stream: MediaStream | undefined, context: AudioContext | undefined
     try {
@@ -72,23 +85,33 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
     }
   }
   async function send() {
-    if (phase !== 'preview' || !blob.current || uploading.current) return
+    if (phase !== 'preview' || !blob.current || uploading.current || disabled || busy) return
+    await deliver(blob.current, transcribeOnStop ? 'dictation' : mode)
+  }
+  async function deliver(recording: Blob, recordingMode: 'message' | 'dictation') {
+    if (uploading.current) return
     uploading.current = true
     setPhase('sending'); const current = version.current
     try {
-      const message = await sendConversationVoice(conversationId, blob.current)
-      if (current === version.current) { clear(); onSent(message) }
+      if (onRecorded) {
+        await onRecorded(recording, recordingMode)
+        if (current === version.current) clear()
+      } else {
+        const message = await sendConversationVoice(conversationId!, recording)
+        if (current === version.current) { clear(); onSent?.(message) }
+      }
     } catch (e) { if (current === version.current) { setPhase('preview'); onError(getErrorMessage(e, 'Chưa gửi được bản ghi. Bạn có thể thử lại.')) } }
     finally { uploading.current = false }
   }
   return <div className={`chat-recorder ${phase !== 'idle' ? 'is-open' : ''}`}>
-    {phase === 'idle' ? <button type="button" className="chat-recorder__mic" aria-label="Ghi âm tin nhắn" disabled={disabled || busy} onClick={() => void start()}><svg viewBox="0 0 24 24" aria-hidden><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg></button> : <section className="chat-recorder__panel" aria-label="Ghi âm tin nhắn">
-      <strong>{phase === 'starting' ? 'Đang mở micro…' : phase === 'recording' ? '● Đang ghi âm' : phase === 'sending' ? 'Đang gửi âm thoại…' : 'Nghe lại trước khi gửi'}</strong>
+    {phase === 'idle' ? <><button type="button" className="chat-recorder__mic" aria-label="Ghi âm tin nhắn" disabled={disabled || busy} onClick={() => void start(transcribeOnStop ? 'dictation' : 'message')}><svg viewBox="0 0 24 24" aria-hidden><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>{allowTranscription || transcribeOnStop ? <span>Ghi âm</span> : null}</button>
+      {allowTranscription && !transcribeOnStop ? <button type="button" className="chat-recorder__dictation" disabled={disabled || busy} onClick={() => void start('dictation')}>Nói thành chữ</button> : null}</> : <section className="chat-recorder__panel" aria-label="Ghi âm tin nhắn">
+      <strong>{phase === 'starting' ? 'Đang mở micro…' : phase === 'recording' ? '● Đang ghi âm' : phase === 'sending' ? mode === 'dictation' ? 'Đang chuyển thành chữ…' : 'Đang xử lý bản ghi…' : 'Nghe lại trước khi gửi'}</strong>
       <span role="timer">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} / 2:00</span>
       {preview && <audio controls src={preview} preload="metadata" aria-label="Nghe lại bản ghi" />}
       <div><button type="button" onClick={clear} disabled={phase === 'sending'}>Hủy</button>
         {phase === 'recording' && <button type="button" onClick={() => resource.current?.node.port.postMessage('stop')}>Dừng ghi</button>}
-        {phase === 'preview' && <button type="button" onClick={() => void send()}>Gửi âm thoại</button>}
+        {phase === 'preview' && <button type="button" disabled={disabled || busy} onClick={() => void send()}>{mode === 'dictation' ? 'Chuyển thành chữ' : onRecorded ? 'Đính kèm bản ghi' : 'Gửi âm thoại'}</button>}
       </div>
     </section>}
   </div>

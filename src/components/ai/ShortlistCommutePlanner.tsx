@@ -1,3 +1,4 @@
+import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useRef, useState } from 'react'
 import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
 import { AddressAutocomplete, type PlaceResult } from '../map/AddressAutocomplete'
@@ -45,7 +46,7 @@ export function ShortlistCommutePlanner({ origins, destinationHint, modeHint, ce
     <label htmlFor="intent-commute-mode">Phương tiện</label><ChoicePicker id="intent-commute-mode" value={mode} onChange={event => { invalidate(); setMode(event.target.value as CommuteMode | '') }}>
       <option value="">Chọn phương tiện</option>{Object.entries(labels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
     </ChoicePicker>
-    <label htmlFor="intent-commute-ceiling">Thời gian tối đa (phút)</label><input id="intent-commute-ceiling" type="number" min="1" max="240" value={ceiling} onChange={event => { invalidate(); setCeiling(event.target.value) }} placeholder="Ví dụ: 20" />
+    <label htmlFor="intent-commute-ceiling">Thời gian tối đa (phút)</label><MoneyInput id="intent-commute-ceiling"  min="1" max="240" value={ceiling} onValueChange={value => { invalidate(); setCeiling(value) }} placeholder="Ví dụ: 20" />
     <label htmlFor="intent-commute-departure">Giờ đi (bỏ trống: bây giờ)</label><input id="intent-commute-departure" type="datetime-local" value={departure} disabled={mode === 'WALKING'} onChange={event => { invalidate(); setDeparture(event.target.value) }} />
     <p>Khi nhấn tính, tọa độ tối đa {origins.length} tin, điểm đến và giờ đi được gửi Google Maps. Kết quả ô tô không thể dùng để suy ra xe máy.</p>
     {!isLoaded ? <p role="status">Bản đồ chưa sẵn sàng; chưa thể xác nhận điều kiện đường đi.</p> : null}

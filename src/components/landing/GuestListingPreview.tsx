@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { observeElementResize } from '../../lib/observeElementResize'
 import { Link } from 'react-router-dom'
-import { getRentalPost, MediaType, searchRentalPosts, type RentalPost, type RentalPostSummary } from '../../api'
+import { getRentalPost, MediaType, RentalPostType, searchRentalPosts, type RentalPost, type RentalPostSummary } from '../../api'
 import { rentalPriceBasis, rentalPriceLabel } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
-import { searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
+import { rentalSourceHref, rentalSourceImageHref, rentalSourceLabel, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import './GuestListingPreview.css'
 
@@ -15,119 +14,87 @@ function Arrow({ previous = false }: { previous?: boolean }) {
   </svg>
 }
 
-/** Public API only. External advertisements and synthetic rooms are never substituted. */
+type PreviewItem = { kind: 'post'; data: RentalPostSummary } | { kind: 'source'; data: RentalSourceListing }
+const BUDGETS = [
+  { id: 'all', label: 'Tất cả' }, { id: 'low', label: 'Dưới 3 triệu' },
+  { id: 'mid', label: '3–5 triệu' }, { id: 'high', label: 'Trên 5 triệu' },
+] as const
+
+/** Public posts and labelled source listings; no synthetic inventory. */
 export function GuestListingPreview() {
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [sourceListings, setSourceListings] = useState<RentalSourceListing[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
+  const [budget, setBudget] = useState<(typeof BUDGETS)[number]['id']>('all')
+  const [visibleCount, setVisibleCount] = useState(8)
   const [selected, setSelected] = useState<RentalPostSummary | null>(null)
   const [selectedSource, setSelectedSource] = useState<RentalSourceListing | null>(null)
-  const rail = useRef<HTMLUListElement>(null)
-  const [arrows, setArrows] = useState({ previous: false, next: false })
 
   useEffect(() => {
     const controller = new AbortController()
-    void searchRentalPosts({ page: 1, pageSize: 6 }, { auth: false, signal: controller.signal })
-      .then(data => {
-        if (!controller.signal.aborted) setPosts(data.filter(post => !post.isSynthetic))
-      })
-      .catch(reason => {
-        if (!controller.signal.aborted) setError(getErrorMessage(reason, 'Chưa tải được phòng nổi bật.'))
-      })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    void Promise.allSettled([
+      searchRentalPosts({ page: 1, pageSize: 12 }, { auth: false, signal: controller.signal }),
+      searchRentalSources({ keyword: '', district: '', page: 1, pageSize: 24 }, controller.signal),
+    ]).then(([native, sourced]) => {
+      if (controller.signal.aborted) return
+      setPosts(native.status === 'fulfilled' ? [...new Map(native.value.filter(post => !post.isSynthetic).map(post => [post.id, post])).values()] : [])
+      setSourceListings(sourced.status === 'fulfilled' ? [...new Map(sourced.value.filter(item => rentalSourceHref(item.sourceUrl)).map(item => [item.sourceUrl, item])).values()] : [])
+      setError(native.status === 'rejected' || sourced.status === 'rejected' ? 'Một phần danh sách chưa tải được. Bạn có thể thử lại.' : '')
+      setLoading(false)
+    })
     return () => controller.abort()
   }, [attempt])
 
-  useEffect(() => {
-    let active = true
-    void searchRentalSources({ keyword: '', district: 'quan-9', page: 1 })
-      .then(data => { if (active) setSourceListings(data.filter(item => item.source === 'mogi').slice(0, 6)) })
-      .catch(() => { if (active) setSourceListings([]) })
-    return () => { active = false }
-  }, [])
-
-  useEffect(() => {
-    const element = rail.current
-    if (!element) return
-    const update = () => setArrows({
-      previous: element.scrollLeft > 2,
-      next: element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
-    })
-    const frame = requestAnimationFrame(update)
-    const stopObserving = observeElementResize([element], update)
-    element.addEventListener('scroll', update, { passive: true })
-    return () => {
-      cancelAnimationFrame(frame)
-      stopObserving()
-      element.removeEventListener('scroll', update)
-    }
-  }, [posts.length, sourceListings.length, loading, error])
-
-  const scroll = (direction: number) => {
-    const element = rail.current
-    if (element) element.scrollBy({ left: direction * element.clientWidth * .85, behavior: 'smooth' })
-  }
+  const items: PreviewItem[] = [...posts.map(data => ({ kind: 'post' as const, data })), ...sourceListings.map(data => ({ kind: 'source' as const, data }))]
+  const filtered = items.filter(({ data: { price } }) => budget === 'all' || price > 0 && (budget === 'low' ? price < 3_000_000 : budget === 'mid' ? price >= 3_000_000 && price <= 5_000_000 : price > 5_000_000))
+  const shown = filtered.slice(0, visibleCount)
 
   return <section className="guest-preview" id="listings" aria-labelledby="guest-featured-title">
     <div className="guest-preview__inner">
       <header className="guest-preview__heading">
-        <h2 id="guest-featured-title">Phòng nổi bật</h2>
-        {arrows.previous || arrows.next ? <div className="guest-preview__arrows">
-          <button type="button" aria-label="Xem phòng phía trước" disabled={!arrows.previous} onClick={() => scroll(-1)}><Arrow previous /></button>
-          <button type="button" aria-label="Xem phòng tiếp theo" disabled={!arrows.next} onClick={() => scroll(1)}><Arrow /></button>
-        </div> : null}
+        <div><span className="guest-preview__eyebrow">KHÔNG GIAN CHO BẠN</span><h2 id="guest-featured-title">Một góc nhà, nhiều lựa chọn.</h2></div>
+        <Link to="/explore" className="guest-preview__explore">Khám phá bản đồ <Arrow /></Link>
       </header>
-      <p className="guest-preview__note">Căn hộ tham khảo được lưu trong Homeji từ dữ liệu Mogi. Mở thẻ để xem chi tiết tại đây; Homeji chưa xác minh tình trạng phòng.</p>
-      {error ? <div className="guest-preview__state" role="alert">
-        <p>{error}</p>
-        <button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button>
-      </div> : null}
-      <ul
-        ref={rail} className="guest-preview__rail" aria-label="Danh sách phòng nổi bật" aria-busy={loading} tabIndex={0}
-        onKeyDown={event => {
-          if (event.target !== event.currentTarget || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return
-          event.preventDefault()
-          scroll(event.key === 'ArrowLeft' ? -1 : 1)
-        }}>
-        {loading ? Array.from({ length: 3 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true">
-          <div /><span /><span />
-        </li>) : <>{posts.map(post => <li key={post.id}>
-          <article className="guest-preview__card">
-            <button type="button" className="guest-preview__card-open" aria-label={`Xem phòng: ${post.title}`} onClick={() => setSelected(post)}>
-              <span className="guest-preview__photo">
-                <span>Chưa có ảnh</span>
-                {post.thumbnailPath ? <img src={post.thumbnailPath} alt="" loading="lazy" decoding="async" onError={event => { event.currentTarget.hidden = true }} /> : null}
-              </span>
-              <span className="guest-preview__copy">
-                <span className="guest-preview__price">{formatListingRent(post.price)}
-                  {post.price > 0 ? <small>{rentalPriceBasis(post) === 'person' ? ' / người / tháng' : rentalPriceBasis(post) === 'room' ? ' / tháng' : ' · theo tin'}</small> : null}
+      <div className="guest-preview__toolbar">
+        <div className="guest-preview__budgets" role="group" aria-label="Lọc theo giá trong tin">
+          {BUDGETS.map(option => <button key={option.id} type="button" aria-pressed={budget === option.id} onClick={() => { setBudget(option.id); setVisibleCount(8) }}>{option.label}</button>)}
+        </div>
+        {!loading ? <span className="guest-preview__count" role="status">{filtered.length} lựa chọn trong danh sách</span> : null}
+      </div>
+      <p className="guest-preview__note">Giá và thông tin theo người đăng hoặc nguồn công khai. Xác nhận tình trạng phòng trước khi liên hệ.</p>
+      {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
+      <ul className="guest-preview__rail" aria-label="Danh sách phòng nổi bật" aria-busy={loading}>
+        {loading ? Array.from({ length: 8 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
+          const data = item.data
+          const isSource = item.kind === 'source'
+          const photos = item.kind === 'source' ? item.data.imageUrls.map(rentalSourceImageHref).filter((url): url is string => Boolean(url)) : item.data.thumbnailPath ? [item.data.thumbnailPath] : []
+          const basis = item.kind === 'post' ? rentalPriceBasis(item.data) : 'unknown'
+          return <li key={`${item.kind}-${data.id}`}>
+            <article className="guest-preview__card" data-glass-exclude>
+              <button type="button" className="guest-preview__card-open" aria-label={`Xem ${isSource ? 'tin tham khảo' : 'phòng'}: ${data.title}`} onClick={() => item.kind === 'post' ? setSelected(item.data) : setSelectedSource(item.data)}>
+                <span className="guest-preview__photo">
+                  <span>Chưa có ảnh</span>
+                  {photos[0] ? <img src={photos[0]} alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
+                  <span className="guest-preview__source-badge">{item.kind === 'source' ? `Tham khảo · ${rentalSourceLabel(item.data.source)}` : item.data.type === RentalPostType.VacantRoom ? 'Cho thuê' : rentalPostTypeLabel[item.data.type]}</span>
+                  {item.kind === 'source' && photos.length > 1 ? <span className="guest-preview__photo-count">{photos.length} ảnh</span> : null}
                 </span>
-                <span className="guest-preview__name">{post.title}</span>
-                <span className="guest-preview__address">{post.address || 'Chưa có địa chỉ'}</span>
-                <span className="guest-preview__meta">{formatListingArea(post.area)}<span aria-hidden="true">·</span>{rentalPostTypeLabel[post.type]}</span>
-              </span>
-            </button>
-          </article>
-        </li>)}{sourceListings.map(listing => <li key={listing.id}>
-          <article className="guest-preview__card">
-            <button type="button" className="guest-preview__card-open guest-preview__source-button" onClick={() => setSelectedSource(listing)} aria-label={`Xem căn hộ tham khảo: ${listing.title}`}>
-              <span className="guest-preview__photo">
-                <span>Chưa có ảnh</span>
-                {listing.imageUrls[0] ? <img src={listing.imageUrls[0]} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
-                <span className="guest-preview__source-badge">Tin tham khảo · Mogi</span>
-              </span>
-              <span className="guest-preview__copy">
-                <span className="guest-preview__price">{formatListingRent(listing.price)}<small> / tháng</small></span>
-                <span className="guest-preview__name">{listing.title}</span>
-                <span className="guest-preview__address">{listing.address}</span>
-                <span className="guest-preview__meta">{formatListingArea(listing.area)}<span aria-hidden="true">·</span>Căn hộ · Xem chi tiết</span>
-              </span>
-            </button>
-          </article>
-        </li>)}</>}
+                <span className="guest-preview__copy">
+                  <span className="guest-preview__price">{formatListingRent(data.price)}<small>{basis === 'person' ? ' / người / tháng' : basis === 'room' ? ' / tháng' : data.price > 0 ? ' · theo tin' : ''}</small></span>
+                  <span className="guest-preview__name">{data.title}</span>
+                  <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
+                  <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'post' && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
+                  {item.kind === 'post' && item.data.descriptionExcerpt ? <span className="guest-preview__excerpt">{item.data.descriptionExcerpt}</span> : null}
+                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' && item.data.ownerDisplayName ? item.data.ownerDisplayName : isSource ? 'Tin từ nguồn công khai' : 'Tin trên Homeji'}</span><strong>Xem chi tiết <Arrow /></strong></span>
+                </span>
+              </button>
+            </article>
+          </li>
+        })}
       </ul>
+      {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin trong khoảng giá này. Thử một khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể khám phá khu vực trên bản đồ.'}</p> : null}
+      {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} lựa chọn <Arrow /></button></div> : null}
       {loading ? <span className="guest-preview__sr-only" role="status">Đang tải phòng nổi bật…</span> : null}
     </div>
     {selected ? <GuestRoomPreview key={selected.id} summary={selected} onClose={() => setSelected(null)} /> : null}
@@ -154,12 +121,8 @@ function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing
     }
   }, [])
 
-  const photos = listing.imageUrls.filter(raw => {
-    try {
-      const url = new URL(raw)
-      return url.protocol === 'https:' && url.hostname === 'cloud.mogi.vn' && !url.username && !url.password
-    } catch { return false }
-  })
+  const photos = listing.imageUrls.map(rentalSourceImageHref).filter((url): url is string => Boolean(url))
+  const sourceHref = rentalSourceHref(listing.sourceUrl)
 
   return <dialog ref={dialog} className="guest-preview-dialog" aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); onClose() }}
@@ -167,10 +130,10 @@ function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing
     <div className="guest-preview-dialog__inner">
       <header className="guest-preview-dialog__heading">
         <span></span>
-        <button type="button" aria-label="Đóng chi tiết căn hộ" onClick={onClose} autoFocus>×</button>
+        <button type="button" aria-label="Đóng chi tiết tin tham khảo" onClick={onClose} autoFocus>×</button>
       </header>
-      {photos.length ? <div className="guest-preview-dialog__gallery" aria-label="Ảnh căn hộ">
-        {photos.map((photo, index) => <img key={photo} src={photo} alt={`Ảnh căn hộ ${index + 1}`} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} />)}
+      {photos.length ? <div className="guest-preview-dialog__gallery" aria-label="Ảnh theo tin tham khảo">
+        {photos.map((photo, index) => <img key={photo} src={photo} alt={`Ảnh theo tin ${index + 1}`} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} />)}
       </div> : null}
       <div className="guest-preview-dialog__body">
         <h2 id={titleId}>{listing.title}</h2>
@@ -178,12 +141,12 @@ function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing
         <div className="guest-preview-dialog__facts">
           <div><span>Giá tham khảo / tháng</span><strong>{formatListingRent(listing.price)}</strong></div>
           <div><span>Diện tích</span><strong>{formatListingArea(listing.area)}</strong></div>
-          <div><span>Nguồn dữ liệu</span><strong>Mogi · {listing.sourceId}</strong></div>
+          <div><span>Nguồn dữ liệu</span><strong>{rentalSourceLabel(listing.source)} · {listing.sourceId}</strong></div>
         </div>
         <p className="guest-preview-dialog__description">Đây là tin tham khảo được lưu trong Homeji từ nguồn công khai. Giá, hình ảnh và tình trạng cho thuê do nguồn đăng cung cấp, Homeji chưa xác minh và không thể dùng tin này để đặt lịch xem phòng.</p>
         <footer className="guest-preview-dialog__footer">
           <span>Đã lưu dữ liệu trong Homeji · Cập nhật {new Date(listing.collectedAt).toLocaleDateString('vi-VN')}</span>
-          <Link to="/explore" className="liquid-action">Tìm phòng trên Homeji <Arrow /></Link>
+          {sourceHref ? <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="liquid-action">Xem tin gốc <Arrow /></a> : null}
         </footer>
       </div>
     </div>

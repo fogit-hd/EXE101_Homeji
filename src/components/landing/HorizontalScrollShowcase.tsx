@@ -24,9 +24,9 @@ const LOTTIE = {
 /** Desktop edge buffers — just a nudge to lock/unlock sticky */
 const DESKTOP = {
   startHold: 0.12,
-  horiz: 12.5,
+  horiz: 6.5,
   endHold: 0.18,
-  scrub: 0.9,
+  scrub: 0.45,
 } as const
 
 /**
@@ -90,11 +90,11 @@ function ProtectionPanel({
       <div className="dxh-panel__copy" data-reveal="shield-copy">
         <span className="dxh-step">04</span>
         <span className="dxh-eyebrow">Thông tin để quyết định</span>
-        <h2>Xem thông tin trước khi liên hệ</h2>
+        <h2>Chọn phòng bằng thông tin rõ ràng.</h2>
         <div className="dxh-hairline" />
         <p>
-          Đọc giá thuê, vị trí và tiện ích do người đăng cung cấp. Khi xem phòng, hãy xác nhận chi phí,
-          người cho thuê và điều khoản trước khi quyết định.
+          So sánh giá thuê, tiền cọc và tiện ích trước khi chọn. Khi đi xem phòng, xác nhận lại
+          chi phí, người cho thuê và điều khoản để quyết định chắc chắn hơn.
         </p>
       </div>
     </article>
@@ -534,7 +534,6 @@ export function HorizontalScrollShowcase() {
         <div className="dxh-track-ui" aria-hidden="true">
           {mobileViewport ? (
             <div className="dxh-mobile-chrome">
-              <p className="dxh-swipe-hint">Vuốt ngang để xem tiếp</p>
               <div className="dxh-panel-dots">
                 {Array.from({ length: PANEL_COUNT }, (_, i) => (
                   <span key={i} className={`dxh-panel-dot${i === 0 ? ' is-on' : ''}`} />
@@ -551,12 +550,12 @@ export function HorizontalScrollShowcase() {
           <article className="dxh-panel dxh-panel--ask">
             <div className="dxh-panel__copy" data-reveal="ask-copy">
               <span className="dxh-step">01</span>
-              <span className="dxh-eyebrow">Câu hỏi mở đầu</span>
-              <h2>Bạn đang muốn tìm nhà nhưng chưa biết tìm ở đâu?</h2>
+              <span className="dxh-eyebrow">Bắt đầu một góc sống mới</span>
+              <h2>Một nơi vừa túi tiền. Một góc sống của riêng bạn.</h2>
               <div className="dxh-hairline" />
               <p>
-                Homeji giúp sinh viên quanh Thủ Đức & Q.9 bắt đầu từ đúng chỗ — rõ khu vực, rõ ngân
-                sách, rõ bạn cùng phòng và chủ nhà cho thuê.
+                So giá thuê, xem diện tích và vị trí. Lưu những căn bạn thích, tìm người ở ghép
+                và liên hệ khi đã chọn được nơi phù hợp.
               </p>
             </div>
             <div className="dxh-panel__media" data-reveal="ask-media">
@@ -588,12 +587,12 @@ export function HorizontalScrollShowcase() {
               <span className="dxh-watermark" aria-hidden="true">
                 02
               </span>
-              <span className="dxh-eyebrow">Bản đồ đầy đủ</span>
-              <h2>Bạn đang muốn tìm nhà ở chỗ nào?</h2>
+              <span className="dxh-eyebrow">Hình dung nơi mình sẽ sống</span>
+              <h2>Gần trường hơn. Dễ hình dung hơn.</h2>
               <div className="dxh-hairline" />
               <p>
-                Homeji hỗ trợ bản đồ đầy đủ quanh Thủ Đức & Q.9 — xem vị trí phòng, khoảng cách tới
-                trường và tiện ích xung quanh trước khi quyết định.
+                Xem các tin có tọa độ trên bản đồ, đối chiếu vị trí trường và tiện ích quanh phòng.
+                Hiểu khu vực trước khi dành thời gian đi xem.
               </p>
             </div>
           </article>
@@ -602,11 +601,11 @@ export function HorizontalScrollShowcase() {
             <div className="dxh-panel__copy dxh-panel__copy--quote" data-reveal="search-copy">
               <span className="dxh-step">03</span>
               <span className="dxh-eyebrow">Bạn cùng phòng</span>
-              <h2>Đang tra cứu từng người… và còn đầy thắc mắc?</h2>
+              <h2>Ở cùng người hợp nhịp sống.</h2>
               <div className="dxh-hairline" />
               <p>
-                So sánh hồ sơ, thói quen và kỳ vọng ở chung không phải chuyện dễ. Homeji giúp bạn xem
-                thông tin rõ ràng hơn, gửi lời mời và theo dõi phản hồi — bớt đoán mò.
+                Xem hồ sơ, thói quen và nhu cầu ở ghép. Gửi lời mời, trò chuyện rồi cùng cân nhắc,
+                để tìm bạn cùng nhà có thêm cơ sở.
               </p>
             </div>
             <div className="dxh-panel__media" data-reveal="search-media">

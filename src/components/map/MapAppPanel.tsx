@@ -11,6 +11,7 @@ import {
   WantedPostsPage,
 } from '../../pages/deferredPages'
 import { SectionSkeleton } from '../skeletons/RouteSkeleton'
+import { ProfileGate } from '../auth/ProfileGate'
 import './MapAppPanel.css'
 import { WIDE_MAP_SECTIONS, type MapAppSection } from "./MapAppPanel.logic"
 import './MapMotion.css'
@@ -90,6 +91,13 @@ type Props = {
 
 const OUTSIDE_CLOSE_IGNORE =
   '.home-list-panel, .food-cart-backdrop, .gmaps-nav-rail, .gmaps-nav-drawer, .gmaps-nav-backdrop, .gmaps-account, .gmaps-account__popover, .gmaps-omnibox__top-actions, .gmaps-omnibox__notify, .mobile-tabbar, .map-chatbot'
+
+const PROFILE_ACTIONS: Partial<Record<MapAppSection, string>> = {
+  saved: 'xem phòng đã lưu', invitations: 'tìm bạn ở ghép', notifications: 'xem thông báo',
+  appointments: 'đặt và quản lý lịch xem phòng', payments: 'sử dụng thanh toán',
+  marketplace: 'mua bán trên Chợ Homeji', wanted: 'đăng và quản lý nhu cầu tìm phòng',
+  activities: 'xem hoạt động của bạn', myPosts: 'quản lý tin đã đăng',
+}
 
 export function MapAppPanel({
   section,
@@ -220,6 +228,7 @@ export function MapAppPanel({
         >
           <Suspense key={displayed} fallback={<SectionSkeleton section={displayed} />}>
           {displayed === 'listings' ? listingsContent : null}
+          {displayed !== 'profile' && displayed !== 'listings' ? <ProfileGate action={PROFILE_ACTIONS[displayed]}>
           {displayed === 'saved' ? <SavedPostsPage embedded /> : null}
           {displayed === 'invitations' ? (
             <RoommateWorkspace onOpenConversation={onOpenConversation} />
@@ -234,7 +243,6 @@ export function MapAppPanel({
           ) : null}
           {displayed === 'appointments' ? <MapAppointmentsPanel embedded /> : null}
           {displayed === 'payments' ? <PaymentPage embedded /> : null}
-          {displayed === 'profile' ? <ProfilePage embedded /> : null}
           {displayed === 'marketplace' ? (
             <MarketplacePage
               embedded
@@ -251,6 +259,8 @@ export function MapAppPanel({
           {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}
           {displayed === 'activities' ? <ActivitiesPage embedded /> : null}
           {displayed === 'myPosts' ? <MyPostsPage embedded /> : null}
+          </ProfileGate> : null}
+          {displayed === 'profile' ? <ProfilePage embedded /> : null}
           </Suspense>
         </div>
       </div>

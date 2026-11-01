@@ -398,7 +398,7 @@ export function ReferralsPage() {
           ) : (
             <div className="referrals-create-box">
               <p className="referrals-create-desc">
-                Bạn chưa có mã mời. Nhấn nút bên dưới để tạo mã giới thiệu độc quyền của bạn ngay bây giờ.
+                Bạn chưa có mã mời.
               </p>
               <button
                 type="button"

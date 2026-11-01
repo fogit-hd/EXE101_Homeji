@@ -14,7 +14,9 @@ import {
   type RentalPost,
 } from '../../../api'
 import { useAuth } from '../../../contexts/AuthContext'
-import { getErrorMessage } from '../../../lib/errors'
+import { getErrorMessage, isProfileRequiredError } from '../../../lib/errors'
+import { ProfileSetupNotice } from '../../auth/ProfileSetupNotice'
+import { useLocation } from 'react-router-dom'
 import { gallerySwipeDirection } from '../../../lib/gallerySwipe'
 import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
@@ -41,7 +43,7 @@ type Props = {
   onOpenAppointments?: () => void
 }
 
-type LoadState = 'loading' | 'ready' | 'error' | 'missing'
+type LoadState = 'loading' | 'ready' | 'error' | 'missing' | 'profile-required'
 
 const rentFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
 const areaFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 })
@@ -84,7 +86,9 @@ export function RoomDetailModal({
   onOpenMessages,
   onOpenAppointments,
 }: Props) {
-  const { isAuthenticated, profile } = useAuth()
+  const { isAuthenticated, profile, needsProfileSetup, isLoading: authLoading } = useAuth()
+  const location = useLocation()
+  const profileRequired = isAuthenticated && needsProfileSetup
   const isRenter = profile?.role === UserRole.Renter
   const { present, ...presence } = useMotionPresence(Boolean(listingId), 'fade')
   const titleId = useId()
@@ -102,6 +106,7 @@ export function RoomDetailModal({
     attempt: number
     state: Exclude<LoadState, 'loading'>
     post: RentalPost | null
+    message?: string
   } | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
   const [notice, setNotice] = useState<{ id: string; message: string; tone: 'ok' | 'err' } | null>(null)
@@ -111,7 +116,7 @@ export function RoomDetailModal({
 
   const viewerId = profile?.id ?? 'guest'
   const matched = result && result.viewerId === viewerId && (result.id === listingId || (!listingId && present)) && result.attempt === attempt ? result : null
-  const loadState: LoadState = matched?.state ?? 'loading'
+  const loadState: LoadState = profileRequired ? 'profile-required' : matched?.state ?? 'loading'
   const post = matched?.state === 'ready' ? matched.post : null
   useRentalAssistantSelection(post && listingId ? { postId: post.id, title: post.title } : null)
   const openRentalAssistant = useRentalAssistantOpener()
@@ -134,7 +139,7 @@ export function RoomDetailModal({
   }, [listingId, onClose, profile?.id])
 
   useEffect(() => {
-    if (!listingId) return undefined
+    if (!listingId || profileRequired || authLoading) return undefined
     const controller = new AbortController()
     const seq = ++requestSeq.current
     const id = listingId
@@ -149,15 +154,19 @@ export function RoomDetailModal({
         if (seq !== requestSeq.current) return
         if (controller.signal.aborted) return
         if (error instanceof DOMException && error.name === 'AbortError') return
+        if (isProfileRequiredError(error)) {
+          setResult({ id, viewerId, attempt: currentAttempt, state: 'profile-required', post: null })
+          return
+        }
         if (error instanceof ApiRequestError && (error.status === 404 || error.status === 410)) {
           setResult({ id, viewerId, attempt: currentAttempt, state: 'missing', post: null })
           return
         }
-        setResult({ id, viewerId, attempt: currentAttempt, state: 'error', post: null })
+        setResult({ id, viewerId, attempt: currentAttempt, state: 'error', post: null, message: getErrorMessage(error, 'Chưa tải được thông tin phòng. Vui lòng thử lại.') })
       })
 
     return () => controller.abort()
-  }, [listingId, isAuthenticated, viewerId, attempt])
+  }, [listingId, isAuthenticated, viewerId, attempt, profileRequired, authLoading])
 
   useEffect(() => {
     if (!listingId) return undefined
@@ -354,13 +363,19 @@ export function RoomDetailModal({
           </div>
         ) : null}
 
+        {loadState === 'profile-required' ? <ProfileSetupNotice action="xem thông tin phòng" onNavigate={onClose} returnTo={(() => {
+          const params = new URLSearchParams(location.search)
+          if (listingId) params.set('post', listingId)
+          return `${location.pathname}?${params}${location.hash}`
+        })()} /> : null}
+
         {loadState === 'error' ? (
           <div className="room-detail__status" role="alert">
             <div className="room-detail__status-icon">
               <img src={circleAlertUrl} alt="" width={24} height={24} />
             </div>
             <h3>Không tải được chi tiết</h3>
-            <p>Vui lòng thử lại. Bạn vẫn có thể đóng popup để tiếp tục tìm phòng.</p>
+            <p>{matched?.message ?? 'Chưa tải được thông tin phòng. Vui lòng thử lại.'}</p>
             <button type="button" className="room-detail__retry" onClick={() => setAttempt((value) => value + 1)}>
               Thử lại
             </button>
@@ -753,7 +768,6 @@ function PhotoGallery({ urls }: { urls: string[] }) {
           <img key={current} className="room-photo-viewer__image" src={current} alt={`Ảnh phòng ${safeIndex + 1}`} draggable={false}
             style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }} />
         </div>
-        <p className="room-photo-viewer__hint">Vuốt ngang hoặc dùng nút để đổi ảnh · Khi phóng to, kéo để di chuyển · Nhấp đúp để zoom</p>
         {visible.length > 1 ? (
           <div className="room-photo-viewer__navigation">
             <button type="button" onClick={() => movePhoto(-1)}>← Ảnh trước</button>

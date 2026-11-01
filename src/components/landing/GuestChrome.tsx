@@ -177,12 +177,13 @@ function useVerticalCoast() {
     let raf = 0
     let running = false
 
-    // Tuned to feel close to horizontal ScrollTrigger scrub (~0.85–1s ease-out)
-    const FRICTION = 0.96
-    const WHEEL_SCALE = 0.11
-    const DIRECT = 0.48
+    // Faster wheel response; integrate momentum in time, not display frames.
+    const FRICTION = 0.95
+    const WHEEL_SCALE = 0.17
+    const DIRECT = 0.9
     const MIN_V = 0.05
-    const MAX_V = 11
+    const MAX_V = 24
+    let lastFrame = 0
 
     const maxY = () =>
       Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
@@ -197,7 +198,7 @@ function useVerticalCoast() {
       y = window.scrollY
     }
 
-    const tick = () => {
+    const tick = (now: number) => {
       if (isGuestCoastPaused()) {
         velocity = 0
         running = false
@@ -206,8 +207,10 @@ function useVerticalCoast() {
         return
       }
 
-      y += velocity
-      velocity *= FRICTION
+      const step = Math.min(2, Math.max(0, (now - lastFrame) / (1000 / 60)))
+      lastFrame = now
+      y += velocity * step
+      velocity *= FRICTION ** step
 
       const limit = maxY()
       if (y < 0) {
@@ -228,13 +231,13 @@ function useVerticalCoast() {
     }
 
     const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey) return
+      if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
       // Let Google Maps / listing panel own the wheel — don't steal for page coast.
       const target = e.target
       if (
         target instanceof Element &&
         target.closest(
-          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style, .guest-preview__rail, .guest-preview-dialog',
+          '.rental-map, .guest-map__map, .guest-map__list, .guest-map__list-scroll, .gm-style, dialog, [role="dialog"], input, textarea, select, [contenteditable="true"]',
         )
       ) {
         stop()
@@ -243,15 +246,19 @@ function useVerticalCoast() {
       e.preventDefault()
       if (isGuestCoastPaused()) return
 
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1
+      const delta = Math.max(-window.innerHeight, Math.min(window.innerHeight, e.deltaY * unit))
+
       y = window.scrollY
-      y = Math.max(0, Math.min(maxY(), y + e.deltaY * DIRECT))
+      y = Math.max(0, Math.min(maxY(), y + delta * DIRECT))
       window.scrollTo(0, y)
 
-      velocity = velocity * 0.2 + e.deltaY * WHEEL_SCALE
+      velocity = velocity * 0.2 + delta * WHEEL_SCALE
       velocity = Math.max(-MAX_V, Math.min(MAX_V, velocity))
 
       if (!running) {
         running = true
+        lastFrame = performance.now()
         raf = requestAnimationFrame(tick)
       }
     }

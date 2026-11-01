@@ -11,19 +11,20 @@ import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import { buildRentalSearchChips } from './rentalSearchChips'
 
-export function AiSearchReview({ result, onApply, onRefine, onOpenListing, variant = 'full' }: {
+export function AiSearchReview({ result, onApply, onRefine, onOpenListing, variant = 'full', applied = false }: {
   result: AiHighlightResponse
   onApply: (result: AiHighlightResponse) => void
   onRefine?: (message: string) => void
   onOpenListing?: () => void
   /** `compact` is the minimalist search-bar panel: summary, chips, small cards, caveats collapsed. */
   variant?: 'full' | 'compact'
+  applied?: boolean
 }) {
-  return <AiSearchReviewSession key={JSON.stringify(result)} result={result} onApply={onApply} onRefine={onRefine} onOpenListing={onOpenListing} variant={variant} />
+  return <AiSearchReviewSession key={JSON.stringify(result)} result={result} onApply={onApply} onRefine={onRefine} onOpenListing={onOpenListing} variant={variant} applied={applied} />
 }
 
-function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, variant }: {
-  result: AiHighlightResponse; onApply: (result: AiHighlightResponse) => void; onRefine?: (message: string) => void; onOpenListing?: () => void; variant: 'full' | 'compact'
+function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, variant, applied }: {
+  result: AiHighlightResponse; onApply: (result: AiHighlightResponse) => void; onRefine?: (message: string) => void; onOpenListing?: () => void; variant: 'full' | 'compact'; applied: boolean
 }) {
   const [caveatsOpen, setCaveatsOpen] = useState(false)
   const [commute, setCommute] = useState<CommuteConfirmation | null>(null)
@@ -126,6 +127,6 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
       destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
     {unresolved && routedPosts.length ? <strong>Các tin dưới đây chưa đủ thông tin về phí hoặc đường đi để xác nhận phù hợp với yêu cầu của bạn.</strong> : null}
     {shownPosts.slice(0, 5).map(renderListing)}
-    {!unresolved ? <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Xác nhận · áp dụng lên bản đồ</button></div> : null}
+    {!unresolved ? applied ? <p role="status">Đã áp dụng bộ lọc lên bản đồ. Bạn có thể tiếp tục xem phòng và sửa yêu cầu ngay trong chat.</p> : <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Áp dụng lên bản đồ</button></div> : null}
   </section>
 }

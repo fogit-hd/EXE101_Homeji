@@ -1,3 +1,4 @@
+import { MoneyInput } from '../ui/MoneyInput'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { useId, useState } from 'react'
 import { calculateRentalCost, type RentalFee, type RentalFeeUnit } from '../../lib/rentalCost'
@@ -35,9 +36,9 @@ export function RentalCostCalculator({ rent, depositHint, occupantsHint = 1, mon
       <option value="person">VND / người / tháng</option><option value="usage">{label === 'Điện' ? 'VND / kWh' : 'VND / m³'}</option>
     </ChoicePicker>
     <label htmlFor={`${id}-${label}-rate`}>Đơn giá (VND)</label>
-    <input id={`${id}-${label}-rate`} type="number" min="0" max="1000000000" value={fee.rate ?? ''} onChange={event => update(setFee, { ...fee, rate: amount(event.target.value) })} />
+    <MoneyInput id={`${id}-${label}-rate`}  min="0" max="1000000000" value={fee.rate ?? ''} onValueChange={value => update(setFee, { ...fee, rate: amount(value) })} />
     {fee.unit === 'usage' ? <><label htmlFor={`${id}-${label}-usage`}>{label === 'Điện' ? 'kWh' : 'm³'} dùng mỗi tháng</label>
-      <input id={`${id}-${label}-usage`} type="number" min="0" max="100000" value={fee.usage ?? ''} onChange={event => update(setFee, { ...fee, usage: amount(event.target.value) })} /></> : null}
+      <input type="number" id={`${id}-${label}-usage`}  min="0" max="100000" value={fee.usage ?? ''} onChange={event => update(setFee, { ...fee, usage: amount(event.target.value) })} /></> : null}
   </fieldset>
   return <details className="rental-cost rental-accordion" data-glass-exclude><summary>Ước tính tiền cần trả mỗi tháng</summary>
     <div className="rental-accordion__body rental-cost__body">

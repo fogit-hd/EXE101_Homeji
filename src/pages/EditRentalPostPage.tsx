@@ -1,3 +1,4 @@
+import { MoneyInput } from '../components/ui/MoneyInput'
 import './post-form.css'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -20,7 +21,6 @@ import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { PostFormSkeleton } from '../components/skeletons/PageSkeletons'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
-import { MoneyInput } from '../components/ui/MoneyInput'
 import { useAuth } from '../contexts/AuthContext'
 import { useGoogleMaps } from "../contexts/GoogleMapsProvider.logic"
 
@@ -412,9 +412,9 @@ export function EditRentalPostPage() {
           <p className="form-hint">Chi phí bên dưới là phần dự kiến mỗi người trả hàng tháng. Nêu rõ điện, nước và khoản phát sinh trong mô tả. Tin chỉ công khai sau khi được duyệt.</p>
           <div className="form-row">
             <div className="form-group"><label className="form-label" htmlFor="share-capacity">Tổng số người có thể ở</label>
-              <input id="share-capacity" className="form-input" type="number" min="1" step="1" required value={maxOccupants} onChange={event => setMaxOccupants(event.target.value)} /></div>
+              <MoneyInput id="share-capacity" className="form-input"  min="1" step="1" required value={maxOccupants} onValueChange={value => setMaxOccupants(value)} /></div>
             <div className="form-group"><label className="form-label" htmlFor="share-slots">Số người đang cần ghép thêm</label>
-              <input id="share-slots" className="form-input" type="number" min="1" max={Number(maxOccupants) > 0 ? Number(maxOccupants) : undefined} step="1" required value={availableSlots} onChange={event => setAvailableSlots(event.target.value)} /></div>
+              <MoneyInput id="share-slots" className="form-input"  min="1" max={Number(maxOccupants) > 0 ? Number(maxOccupants) : undefined} step="1" required value={availableSlots} onValueChange={value => setAvailableSlots(value)} /></div>
           </div>
         </section> : null}
         <div className="form-group">

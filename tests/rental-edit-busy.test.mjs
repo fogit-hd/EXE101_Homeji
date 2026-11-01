@@ -308,6 +308,7 @@ async function addressSession({ pick = true } = {}) {
   assert.ok(option, 'The real autocomplete must offer the fixture prediction')
   if (pick) { option.props.onClick(); render() }
   return { props, render, pending, changes, selections,
+    flushPredictions: async () => { while (timers.length) timers.shift()(); await flush(); render() },
     input: () => flatten(tree).find(node => node.type === 'input'),
     settle: async () => { while (timers.length) timers.shift()(); await flush(); render() },
     options: () => flatten(tree).filter(node => node.type === 'button' && node.props.role === 'option'),

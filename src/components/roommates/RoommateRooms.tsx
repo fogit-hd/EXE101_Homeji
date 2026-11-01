@@ -1,3 +1,4 @@
+import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { searchRentalPosts, startRentalPostConversation, type RentalPostSummary } from '../../api'
@@ -89,8 +90,8 @@ export function RoommateRooms({ initialKeyword = '', onOpenConversation }: Props
     <form className="roommate-workspace__filters" onSubmit={search}>
       <label>Đường, trường hoặc nội dung tin<input className="form-input" value={draftKeyword}
         maxLength={200} onChange={event => setDraftKeyword(event.target.value)} placeholder="VD: Võ Văn Ngân, UEL, không hút thuốc" /></label>
-      <label>Chi phí tối đa/người/tháng<input className="form-input" type="number" min="1" step="1"
-        value={draftBudget} onChange={event => setDraftBudget(event.target.value)} placeholder="Không giới hạn" /></label>
+      <label>Chi phí tối đa/người/tháng<MoneyInput className="form-input"  min="1" step="1"
+        value={draftBudget} onValueChange={value => setDraftBudget(value)} placeholder="Không giới hạn" /></label>
       <button type="submit" className="btn btn-primary">Tìm tin</button>
     </form>
     {actionError ? <p role="alert" className="roommate-workspace__error">{actionError}</p> : null}

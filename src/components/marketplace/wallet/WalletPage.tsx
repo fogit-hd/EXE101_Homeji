@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../ui/MoneyInput'
 import { BankNameInput } from './BankNameInput'
 import { LiquidTabList } from '../../ui/LiquidTabList'
 import { ChoicePicker } from '../../ui/ChoicePicker'
@@ -388,7 +389,6 @@ function DepositPanel({
   onDeposit: Props['onDeposit']
 }) {
   const [amountText, setAmountText] = useState('200000')
-  const [editingAmount, setEditingAmount] = useState(false)
   const [method, setMethod] = useState<DepositMethod | ''>('momo')
   const [error, setError] = useState('')
   const [phase, setPhase] = useState<'idle' | 'processing' | 'failed'>('idle')
@@ -434,14 +434,11 @@ function DepositPanel({
         <label className="wallet-field">
           <span>Bạn muốn nạp bao nhiêu?</span>
           <span data-glass-exclude className="wallet-input wallet-deposit__amount">
-            <input
-              inputMode="numeric"
+            <MoneyInput
               autoComplete="off"
-              value={editingAmount ? amountText : amountText.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-              onFocus={() => setEditingAmount(true)}
-              onBlur={() => setEditingAmount(false)}
-              onChange={(event) => {
-                setAmountText(event.target.value.replace(/[^\d]/g, ''))
+              value={amountText}
+              onValueChange={value => {
+                setAmountText(value)
                 setError('')
               }}
               aria-invalid={Boolean(error)}
@@ -687,11 +684,10 @@ function WithdrawPanel({
             <span>Số tiền muốn rút</span>
             <span data-glass-exclude className="wallet-input">
               <Icon src={WALLET_ASSETS.banknote} />
-              <input
-                inputMode="numeric"
+              <MoneyInput
                 value={amountText}
                 aria-invalid={Boolean(fieldError.amount)}
-                onChange={(event) => setAmountText(event.target.value.replace(/[^\d]/g, ''))}
+                onValueChange={setAmountText}
               />
             </span>
             <small className={fieldError.amount ? 'is-error' : undefined}>

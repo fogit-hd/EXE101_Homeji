@@ -100,7 +100,6 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
         {result || asked ? <button type="button" className="natural-rental-search__reset" disabled={loading} onClick={startOver}>Làm mới</button> : null}
         <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={close}>×</button>
       </header>
-      {!asked ? <p className="natural-rental-search__hint">Mô tả nhu cầu, Homeji lọc tin phù hợp cho bạn.</p> : null}
       {asked ? <motion.p className="natural-rental-search__bubble" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>{asked}</motion.p> : null}
       {!asked ? form : null}
       {!asked && !text.trim() ? <div className="natural-rental-search__examples" aria-label="Ví dụ nhu cầu">

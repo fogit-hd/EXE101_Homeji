@@ -1,3 +1,4 @@
+import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { compareRentalPosts, getRentalPost, RentalPostType, type CompareRentalPostItem } from '../../api'
@@ -97,7 +98,7 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
         <label htmlFor="compare-departure">Giờ đi (bỏ trống: bây giờ)</label>
         <input id="compare-departure" type="datetime-local" value={departure} disabled={mode === 'WALKING'} onChange={event => { setDeparture(event.target.value); invalidateRoutes() }} />
         <label htmlFor="compare-ceiling">Mốc thời gian muốn kiểm tra (phút)</label>
-        <input id="compare-ceiling" type="number" min="1" max="240" value={minuteCeiling} onChange={event => setMinuteCeiling(event.target.value)} placeholder="Ví dụ: 20" />
+        <MoneyInput id="compare-ceiling"  min="1" max="240" value={minuteCeiling} onValueChange={value => setMinuteCeiling(value)} placeholder="Ví dụ: 20" />
         <button type="button" className="btn btn-secondary" disabled={!destination || !mode || !mapsLoaded || routing || items.length === 0} onClick={() => void computeRoutes()}>{routing ? 'Đang tính…' : `Tính ${items.length} tuyến đến điểm đã chọn`}</button>
         <small>Khi nhấn tính, tọa độ các tin, giờ đi và điểm đến được gửi Google Maps; tối đa 3 tuyến. Giờ đi cần từ hiện tại trở đi; đi bộ không dùng giờ xuất phát. Ô tô không được dùng để suy ra thời gian xe máy.</small>
       </div> : null}

@@ -21,6 +21,8 @@ import {
 } from '../../api'
 import { getStoredSession } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLocation } from 'react-router-dom'
+import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, rentalPostTypeLabel, amenityLabel } from '../../lib/labels'
 import { maneuverGlyph, type MapRouteStep } from '../../lib/mapRoutes'
@@ -47,6 +49,8 @@ const PLACE_PHOTO_TAB_OPTIONS: ReadonlyArray<{ id: PlacePhotoTab; label: string 
 ]
 
 type MapPlaceDetailPanelProps = {
+  listingId?: string | null
+  onProfileSetup?: () => void
   open: boolean
   collapsed?: boolean
   place?: MapPlaceDetails | null
@@ -166,7 +170,21 @@ function isLikelyFoodPlace(primaryType: string | null, typeLabel: string | null)
   )
 }
 
-export function MapPlaceDetailPanel({
+export function MapPlaceDetailPanel(props: MapPlaceDetailPanelProps) {
+  const { isAuthenticated, needsProfileSetup } = useAuth()
+  const location = useLocation()
+  if (isAuthenticated && needsProfileSetup && (props.listingId || props.listing || props.listingSummary)) {
+    const params = new URLSearchParams(location.search)
+    const id = props.listingId ?? props.listing?.id ?? props.listingSummary?.id
+    if (id) params.set('post', id)
+    return <aside className={`map-detail-panel is-listing${props.open ? ' is-visible' : ''}${props.collapsed ? ' is-collapsed' : ''}`} aria-hidden={!props.open || props.collapsed}>
+      <ProfileSetupNotice action="xem thông tin phòng" onNavigate={props.onProfileSetup} returnTo={`${location.pathname}?${params}${location.hash}`} />
+    </aside>
+  }
+  return <MapPlaceDetailPanelContent {...props} />
+}
+
+function MapPlaceDetailPanelContent({
   open,
   collapsed = false,
   place = null,

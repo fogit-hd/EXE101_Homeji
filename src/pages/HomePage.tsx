@@ -185,7 +185,7 @@ function HomePageComponent() {
     setListingsPanelOpen(true)
   }
   useEffect(() => {
-    if (!isAuthenticated || isLoading || !urlPostId) return
+    if (!isAuthenticated || isLoading || needsProfileSetup || !urlPostId) return
     let cancelled = false
     void getRentalPost(urlPostId, { auth: true })
       .then((post) => {
@@ -202,7 +202,7 @@ function HomePageComponent() {
         /* keep selection; detail panel will show load error state */
       })
     return () => { cancelled = true }
-  }, [isAuthenticated, isLoading, urlPostId])
+  }, [isAuthenticated, isLoading, urlPostId, needsProfileSetup])
 
   if (useChangedInputs([isHubView]) && isHubView) {
     setSelectedPostId(null)

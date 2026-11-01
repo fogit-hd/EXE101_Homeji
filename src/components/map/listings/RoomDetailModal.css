@@ -251,13 +251,6 @@
   cursor: grabbing;
 }
 
-.room-photo-viewer__hint {
-  margin: 0;
-  color: #c8d2ca;
-  text-align: center;
-  font-size: 12px;
-}
-
 .room-photo-viewer button:disabled {
   opacity: 0.4;
   cursor: default;

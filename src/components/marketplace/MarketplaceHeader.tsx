@@ -3,6 +3,7 @@ import { primaryOf, type MarketplacePrimary, type MarketplaceTab } from '../../l
 import { formatAvailableBalance } from '../../lib/walletMoney'
 import { SegmentedTabs } from '../motion/SegmentedTabs'
 import { MotionTabs } from '../motion/MotionTabs'
+import { GameLauncher } from '../games/GameLauncher'
 import './MarketplaceHeader.css'
 
 const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
@@ -107,6 +108,7 @@ export function MarketplaceHeader({
         <div className="marketplace-header__utilities">
           <PersistentWalletBalance availableBalance={availableBalance} status={walletStatus} />
           <div className="marketplace-header__utility-actions">
+            <GameLauncher className="marketplace-header__utility-action marketplace-header__game" />
             {walletStatus !== 'loading' ? (
               <button type="button" className="marketplace-header__topup marketplace-header__utility-action"
                 onPointerMove={reflectUtilityAction} onClick={onTopUp}>
@@ -123,7 +125,7 @@ export function MarketplaceHeader({
         </div>
       </div>
 
-      <MotionTabs items={PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
+      <MotionTabs webglGlass items={PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
         className="marketplace-header__tabs" buttonClassName="marketplace-header__tab"
         idPrefix="marketplace-primary" panelId="marketplace-panel" />
 
@@ -144,9 +146,6 @@ export function MarketplaceHeader({
               {id === 'sales' && sellerActionCount > 0 ? <span className="marketplace-header__alert" aria-label={`${sellerActionCount} đơn cần xử lý`}>{sellerActionCount}</span> : null}
             </>} />
           )}
-          {primary === 'shopping' && tab === 'browse' ? (
-            <p className="marketplace-header__subhint">Đơn bán thuộc Quản lý cửa hàng</p>
-          ) : null}
         </div>
       ) : null}
     </header>

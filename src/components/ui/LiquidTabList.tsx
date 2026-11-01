@@ -6,10 +6,10 @@ import './LiquidTabList.css'
 type Drag = { pointerId: number; x: number; y: number; left: number; width: number; height: number; top: number; moved: boolean; capture: HTMLButtonElement }
 const tabsOf = (root: HTMLElement) => [...root.querySelectorAll<HTMLButtonElement>(':scope > button[role="tab"]:not(:disabled)')]
 
-type Props = HTMLAttributes<HTMLDivElement> & { containerRef?: RefObject<HTMLDivElement | null> }
+type Props = HTMLAttributes<HTMLDivElement> & { containerRef?: RefObject<HTMLDivElement | null>; webglGlass?: boolean }
 
 /** Presentation and keyboard navigation only; callers keep selection and API state. */
-export function LiquidTabList({ children, className = '', containerRef, onKeyDown, onKeyUp, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onClick, onClickCapture, ...props }: Props) {
+export function LiquidTabList({ children, className = '', containerRef, webglGlass = false, onKeyDown, onKeyUp, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onClick, onClickCapture, ...props }: Props) {
   const localRef = useRef<HTMLDivElement>(null)
   const rootRef = containerRef ?? localRef
   const lensRef = useRef<HTMLSpanElement>(null)
@@ -18,6 +18,15 @@ export function LiquidTabList({ children, className = '', containerRef, onKeyDow
   const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const suppressClickUntil = useRef(0)
   const restore = useRef<() => void>(() => {})
+  useEffect(() => {
+    if (!webglGlass) return
+    let cancelled = false
+    let dispose: (() => void) | undefined
+    void import('./webglTabGlass').then(({ attachWebglTabGlass }) => {
+      if (!cancelled && rootRef.current && lensRef.current) dispose = attachWebglTabGlass(rootRef.current, lensRef.current)
+    }).catch(() => { /* HTML controls and CSS optics remain available if enhancement cannot load. */ })
+    return () => { cancelled = true; dispose?.() }
+  }, [webglGlass, rootRef])
   const engage = () => {
     clearTimeout(settleTimer.current)
     if (rootRef.current) rootRef.current.dataset.lensEngaged = 'true'

@@ -2,9 +2,10 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { UserRole } from '../api/types'
 import { useAuth } from '../contexts/AuthContext'
 import { RouteSkeleton } from './skeletons/RouteSkeleton'
+import { ProfileSetupNotice } from './auth/ProfileSetupNotice'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, needsProfileSetup } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
@@ -21,6 +22,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
+  if (needsProfileSetup && location.pathname !== '/profile') return <ProfileSetupNotice />
   return children
 }
 

@@ -317,22 +317,6 @@
     margin-bottom: 10px;
   }
 
-  .dxh-swipe-hint {
-    margin: 0;
-    font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.55);
-    transition: opacity 0.35s ease;
-  }
-
-  .dxh-scroll-sticky.has-h-swiped .dxh-swipe-hint {
-    opacity: 0;
-    pointer-events: none;
-  }
-
   .dxh-panel-dots {
     display: flex;
     align-items: center;

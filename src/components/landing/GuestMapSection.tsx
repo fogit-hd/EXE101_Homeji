@@ -346,11 +346,6 @@ export function GuestMapSection() {
             </div>
           </form>
 
-          <p className="guest-map__hint">
-            {/* Đang lọc: <strong>{school?.label || ward?.label || district.label}</strong> */}
-            {/* {' · '} */}
-            {/* Danh sách trường: {schoolSource === 'google' ? 'Google Maps' : 'danh sách Homeji'} */}
-          </p>
         </div>
 
         <div className="guest-map__workspace">

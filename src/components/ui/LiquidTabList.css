@@ -1,6 +1,7 @@
 /* Keep the standard backdrop-filter AFTER its WebKit fallback: the production
    optimizer can otherwise retain only the prefixed property, which Chrome ignores.
    The moving face always stays below the unfiltered label plane. */
+.liquid-tabs__webgl { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
 #root .liquid-tabs {
   --tabs-track: rgba(28, 111, 96, 0.07);
   --tabs-track-light: rgba(255, 255, 255, 0.55);

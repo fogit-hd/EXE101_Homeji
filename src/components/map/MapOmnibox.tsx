@@ -1,3 +1,4 @@
+import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { RentalPostSummary, UserProfile } from '../../api/types'
@@ -931,22 +932,22 @@ export function MapOmnibox({
                   <div className="gmaps-omnibox__price">
                     <label>
                       <span>Giá tối thiểu</span>
-                      <input
-                        type="number"
+                      <MoneyInput
+
                         inputMode="numeric"
                         placeholder="VND"
                         value={minPrice}
-                        onChange={(e) => onMinPriceChange(e.target.value)}
+                        onValueChange={value => onMinPriceChange(value)}
                       />
                     </label>
                     <label>
                       <span>Giá tối đa</span>
-                      <input
-                        type="number"
+                      <MoneyInput
+
                         inputMode="numeric"
                         placeholder="VND"
                         value={maxPrice}
-                        onChange={(e) => onMaxPriceChange(e.target.value)}
+                        onValueChange={value => onMaxPriceChange(value)}
                       />
                     </label>
                     <button

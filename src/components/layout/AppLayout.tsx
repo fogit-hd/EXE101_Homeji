@@ -52,7 +52,7 @@ export function AppLayout() {
   }, [destination, isMapPeer, animateOutlet, outletRef])
 
   return (
-    <VoiceCallProvider><SellerOrderAlertsProvider enabled={isAuthenticated && !isAuthCinema}>
+    <VoiceCallProvider><SellerOrderAlertsProvider enabled={isAuthenticated && !needsProfileSetup && !isAuthCinema}>
     <div
       className={[
         'app-shell',

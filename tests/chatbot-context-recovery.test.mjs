@@ -17,6 +17,8 @@ export const sendChatbotMessage=(body,signal)=>new Promise((resolve,reject)=>glo
 export const useAuth=()=>globalThis.__chatFixture.auth;
 export const useAuthModal=()=>({isOpen:false,openAuthModal:()=>{}});
 export const useNavigate=()=>target=>globalThis.__chatFixture.navigations.push(target);
+export const useLocation=()=>({pathname:'/',search:'',hash:''});
+export const Link=()=>null;
 `)
 const overrides = {
   '../../api': fixtureUrl,
@@ -29,6 +31,8 @@ const overrides = {
   '../../lib/marketplaceNavigation': moduleUrl('export const requestMarketplaceCart=()=>{};export const requestMarketplaceTab=()=>{}'),
   '../../lib/nearbyChatIntent': moduleUrl('export const nearbyChatIntent=()=>null'),
   './ChatbotMessageContent': moduleUrl(`import React from '${reactUrl}';export const ChatbotMessageContent=({content})=>React.createElement('p',null,content)`),
+  './ChatbotMediaComposer': moduleUrl('export const ChatbotMediaComposer=()=>null;export const ChatbotMediaPreview=()=>null'),
+  '../games/GameLauncher': moduleUrl('export const GameLauncher=()=>null'),
   '../ai/AiSearchReview': moduleUrl('export const AiSearchReview=()=>null'),
   '../ai/RentalContextCard': moduleUrl(`import React from '${reactUrl}';export const RentalContextCard=({data})=>React.createElement('p',null,data.posts.map(item=>item.post.title).join(', '))`),
   '../ai/FoodDiscoveryCard': moduleUrl(`import React from '${reactUrl}';export const FoodDiscoveryCard=({data,onSearch,busy})=>React.createElement('section',{'aria-label':'Gợi ý món ăn'},data.items.map(item=>React.createElement('p',{key:item.id},item.title)),React.createElement('button',{disabled:busy,onClick:()=>onSearch({latitude:10.84,longitude:106.8,radiusKm:3})},'Tìm quanh mốc kiểm thử'))`),
@@ -700,3 +704,22 @@ test('a deferred disabled configuration releases mobile modal locks and publishe
     assert.equal(states.at(-1), false)
   } finally { await env.cleanup() }
 })
+
+for (const unknown of [[], ['feeUnits'], ['commute']]) {
+  test(`chat immediately applies resolved rental filters without closing; unknown=${unknown}`, async () => {
+    const env = await environment(), updates = []
+    try {
+      await render(env.root, { rentalContext: null, onSearchUpdate: value => updates.push(value) })
+      await typeDraft('Tìm phòng có máy lạnh, nước nóng dưới 3 triệu')
+      await keydown(composer(), { key: 'Enter' })
+      const pending = globalThis.__chatFixture.requests[0]
+      const searchUpdate = { criteria: { priceMax: 3000000, requiredAmenities: ['AIR_CONDITIONER', 'WATER_HEATER'], criteria: [], unknown }, posts: [] }
+      await act(async () => pending.resolve({ ...reply(pending, 'Kết quả tìm phòng'), rentalDecision: null, searchUpdate }))
+      assert.equal(updates.length, unknown.length ? 0 : 1)
+      assert.ok(document.querySelector('[data-homeji-ai-panel="open"]'))
+      assert.match(document.body.textContent, /Kết quả tìm phòng/)
+      await typeDraft('Tiếp tục chỉnh tiêu chí')
+      assert.equal(updates.length, unknown.length ? 0 : 1, 'Rendering or typing cannot apply the result again')
+    } finally { await env.cleanup() }
+  })
+}

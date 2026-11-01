@@ -271,6 +271,12 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     setHomieDismiss((n) => n + 1)
   }, [])
 
+  const keepChatForSearch = useRef(false)
+  const applySearchFromChat = useCallback((update: import('../../api').AiHighlightResponse) => {
+    keepChatForSearch.current = true
+    onAiSearchUpdate?.(update)
+  }, [onAiSearchUpdate])
+
   const openAppSectionMobileSafe = useCallback(
     (section: MapAppSection) => {
       if (isMobileSheetViewport()) dismissHomie()
@@ -289,8 +295,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   useEffect(() => {
     if (!isMobileSheetViewport() || !panelOpen) return
+    if (keepChatForSearch.current) return
     dismissHomie()
   }, [panelOpen, panelSection, dismissHomie])
+  useEffect(() => { keepChatForSearch.current = false })
 
   const handleNotificationReadStateChange = useCallback((change: NotificationReadChange) => {
     if (change.kind === 'all') {
@@ -494,7 +502,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   // Fetch full listing when a pin/card is selected.
   useEffect(() => {
-    if (!selectedPostId || marketMode) {
+    if (!selectedPostId || marketMode || needsProfileSetup) {
       setListingSnapshot(null)
       setListingLoading(false)
       return
@@ -514,10 +522,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         setListingLoading(false)
       })
     return () => controller.abort()
-  }, [selectedPostId, isAuthenticated, listingViewer, marketMode])
+  }, [selectedPostId, isAuthenticated, listingViewer, marketMode, needsProfileSetup])
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || needsProfileSetup) {
       setSavedIds(new Set())
       return
     }
@@ -532,7 +540,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, needsProfileSetup])
 
   const handleClearMapSelection = useCallback(() => {
     setNearbyDismissedKey(null)
@@ -984,6 +992,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       listing={selectedPostId ? listingDetail : null}
       listingSummary={selectedPost ?? listingDetail}
       listingLoading={!!selectedPostId && listingLoading}
+      listingId={selectedPostId}
+      onProfileSetup={handleClearMapSelection}
       userLocation={userLocation}
       onNearby={handleNearby}
       onDirections={startInMapDirections}
@@ -1009,7 +1019,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     return true
   }, [nearbyAnchor, detailOpen, uiCollapsed, setNearbyCategory])
   useChatbotSurface({
-    onSearchUpdate: onAiSearchUpdate,
+    onSearchUpdate: onAiSearchUpdate ? applySearchFromChat : undefined,
     onOpenSection: handleOpenAppSection,
     onNearbyRequest: handleNearbyRequest,
     dismissSignal: homieDismiss,
@@ -1100,7 +1110,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         />
         {needsProfileSetup ? (
           <div className="home-map-banner home-map-banner--dest">
-            Chào mừng! <Link to="/?section=profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
+            Vui lòng <Link to="/?section=profile">cập nhật hồ sơ</Link> trước khi xem chi tiết phòng và dùng các tính năng tài khoản.
           </div>
         ) : null}
         {chatAndOverlays}
@@ -1132,7 +1142,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         {omniboxNode}
         {needsProfileSetup && (
           <div className="home-map-banner">
-            Chào mừng! <Link to="/?section=profile">Hoàn thiện hồ sơ</Link> để được gợi ý phòng tốt hơn.
+            Vui lòng <Link to="/?section=profile">cập nhật hồ sơ</Link> trước khi xem chi tiết phòng và dùng các tính năng tài khoản.
           </div>
         )}
         <GlassDensityControl className="glass-density-control--docked" />

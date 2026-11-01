@@ -1,4 +1,5 @@
 import { VoiceMessageRecorder } from './VoiceMessageRecorder'
+import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { AnimatePresence, motion } from 'motion/react'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -408,7 +409,16 @@ function ContextCard({ item, onPicked }: { item: ContextItem; onPicked?: () => v
   )
 }
 
-export function MapMessagesPanel({
+export function MapMessagesPanel(props: Props) {
+  const { isAuthenticated, needsProfileSetup } = useAuth()
+  if (isAuthenticated && needsProfileSetup) return <section className={`map-messages${props.embedded ? ' map-messages--embedded' : ''}${props.layout?.startsWith('floating-') ? ' is-floating' : ''}${props.layout === 'floating-inbox' ? ' is-floating-inbox' : ''}`}>
+    {props.onCloseWindow ? <button type="button" className="map-messages__icon-btn" aria-label="Đóng tin nhắn" onClick={props.onCloseWindow}>×</button> : null}
+    <ProfileSetupNotice action="xem và gửi tin nhắn" onNavigate={props.onCloseWindow} />
+  </section>
+  return <MapMessagesPanelContent {...props} />
+}
+
+function MapMessagesPanelContent({
   embedded = false,
   layout = 'panel',
   initialConversationId = null,
@@ -1409,7 +1419,6 @@ export function MapMessagesPanel({
               }}
               placeholder={activeId ? `Nhắn cho ${peerName}…` : 'Nhập tin nhắn…'}
               aria-label="Nội dung tin nhắn"
-              title="Enter để gửi, Shift + Enter để xuống dòng"
               disabled={!activeId}
             />
             <button

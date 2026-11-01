@@ -1,3 +1,4 @@
+import { amountInputModule } from './helpers/amount-input-module.mjs'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -18,6 +19,7 @@ async function render(commute) {
   const bindings = `
     import React, { useEffect, useRef, useState } from '${pathToFileURL(require.resolve('react')).href}';
     import { ChoicePicker } from '${choicePickerModule}';
+import { MoneyInput } from '${amountInputModule}';
     const aiFeatureFlags = { commute: ${commute} };
     const AddressAutocomplete = () => null;
     const Link = () => null;

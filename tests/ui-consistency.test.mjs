@@ -166,7 +166,7 @@ test('rental coordinates do not interpret empty input as the origin', () => {
 
 test('sale price accepts normal VND amounts without a step mismatch', () => {
   const source = read('pages/MarketplacePage.tsx')
-  const priceInput = source.match(/<input id="sale-price"[^>]+>/)?.[0]
+  const priceInput = source.match(/<MoneyInput id="sale-price"[^>]+>/)?.[0]
   assert.ok(priceInput)
   const min = Number(priceInput.match(/min=\{(\d+)\}/)?.[1])
   const step = Number(priceInput.match(/step=\{(\d+)\}/)?.[1])

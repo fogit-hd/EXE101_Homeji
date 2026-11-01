@@ -1,10 +1,13 @@
 import type { AiParsedSearchCriteria } from '../../api/types'
-import { amenityLabel, formatPrice } from '../../lib/labels'
+import { amenityLabel, formatPrice, normalizeAmenityCode } from '../../lib/labels'
 
 export type RentalSearchChip = { text: string; edit: string }
 
 /** Refinements edit the existing intent; only the explicit new-search action resets its constraints. */
 export function buildRentalSearchChips(c: AiParsedSearchCriteria): RentalSearchChip[] {
+  const required = [...new Set((c.requiredAmenities ?? []).map(normalizeAmenityCode))]
+  const excluded = [...new Set((c.excludedAmenities ?? []).map(normalizeAmenityCode))]
+  const optional = [...new Set((c.criteria ?? []).map(normalizeAmenityCode))].filter(code => !required.includes(code) && !excluded.includes(code))
   return [
     ...(c.keyword?.trim() ? [{ text: `Từ khóa: ${c.keyword.trim()}`, edit: 'Bỏ từ khóa' }] : []),
     ...(c.location ? [{ text: c.location, edit: 'Đổi khu vực sang ' }] : []),
@@ -16,9 +19,9 @@ export function buildRentalSearchChips(c: AiParsedSearchCriteria): RentalSearchC
     ...(c.destination ? [{ text: `Điểm đến: ${c.destination}`, edit: 'Bỏ điểm đến' }] : []),
     ...(c.maxCommuteMinutes ? [{ text: `Đường đi ≤ ${c.maxCommuteMinutes} phút`, edit: 'Bỏ điểm đến' }] : []),
     ...(c.travelMode ? [{ text: c.travelMode === 'DRIVING' ? 'Ô tô' : c.travelMode === 'WALKING' ? 'Đi bộ' : 'Phương tiện công cộng', edit: 'Phương tiện đi học: ' }] : []),
-    ...(c.requiredAmenities ?? []).map(code => ({ text: `Cần ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
-    ...(c.criteria ?? []).map(code => ({ text: `Ưu tiên ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
-    ...(c.excludedAmenities ?? []).map(code => ({ text: `Không có ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
+    ...required.map(code => ({ text: `Cần ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
+    ...optional.map(code => ({ text: `Ưu tiên ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
+    ...excluded.map(code => ({ text: `Không có ${amenityLabel(code)}`, edit: `Không cần ${amenityLabel(code)}` })),
     ...(c.excludeRoommateShare ? [{ text: 'Không ở ghép', edit: 'Chấp nhận ở ghép' }] : []),
   ]
 }

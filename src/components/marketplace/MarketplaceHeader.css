@@ -290,13 +290,6 @@
   outline-offset: 2px;
 }
 
-.marketplace-header__subhint {
-  margin: 0;
-  color: var(--mh-muted);
-  font: 400 13px/18px var(--font-ui);
-  white-space: nowrap;
-}
-
 .marketplace-header__alert {
   display: inline-grid;
   place-items: center;
@@ -341,10 +334,6 @@
     width: 100%;
     align-items: center;
     justify-content: space-between;
-  }
-
-  .marketplace-header__subhint {
-    display: none;
   }
 
   .marketplace-header__actions {
@@ -493,3 +482,5 @@ html:root #root .marketplace-header .marketplace-header__utility-action:focus-vi
   :is(html:root #root,html:root body) .marketplace-header .marketplace-header__utility-action[data-glass-control] { background: ButtonFace; color: ButtonText; }
 }
 
+.marketplace-header__game { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 18px; color: var(--text-primary); background: var(--surface-elevated); font: inherit; font-size: 12px; cursor: pointer; }
+@media (max-width: 600px) { #root .marketplace-header__utility-actions { flex-wrap: wrap; } }

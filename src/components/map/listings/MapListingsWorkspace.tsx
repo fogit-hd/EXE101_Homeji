@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../ui/MoneyInput'
 import { RentalSourceBrowser } from '../../ai/RentalSourceBrowser'
 import {
   useLayoutEffect,
@@ -525,14 +526,18 @@ function FilterPopover({
 function FilterRange({ label, unit, draft, onChange }: {
   label: string; unit: string; draft: RangeDraft; onChange: (draft: RangeDraft) => void
 }) {
+  const field = (bound: 'min' | 'max') => {
+    const props = { 'aria-label': `${label} ${bound === 'min' ? 'tối thiểu' : 'tối đa'}`, placeholder: 'Không giới hạn', value: draft[bound] }
+    return unit === 'đ'
+      ? <MoneyInput {...props} min={bound === 'min' ? '0' : draft.min || '0'} onValueChange={value => onChange({ ...draft, [bound]: value })} />
+      : <input {...props} type="number" min={bound === 'min' ? '0' : draft.min || '0'} step="any" inputMode="decimal" onChange={event => onChange({ ...draft, [bound]: event.target.value })} />
+  }
   return <fieldset className="map-listings__range-group">
     <legend>{label}</legend>
     <div className="map-listings__range-inputs" data-glass-exclude>
-      <label>Từ<div><input type="number" min="0" step="any" inputMode="decimal" aria-label={`${label} tối thiểu`}
-        placeholder="Không giới hạn" value={draft.min} onChange={event => onChange({ ...draft, min: event.target.value })} /><span>{unit}</span></div></label>
+      <label>Từ<div>{field('min')}<span>{unit}</span></div></label>
       <span className="map-listings__range-dash" aria-hidden="true">—</span>
-      <label>Đến<div><input type="number" min={draft.min || '0'} step="any" inputMode="decimal" aria-label={`${label} tối đa`}
-        placeholder="Không giới hạn" value={draft.max} onChange={event => onChange({ ...draft, max: event.target.value })} /><span>{unit}</span></div></label>
+      <label>Đến<div>{field('max')}<span>{unit}</span></div></label>
     </div>
   </fieldset>
 }

@@ -1,3 +1,4 @@
+import { MoneyInput } from '../components/ui/MoneyInput'
 import './pages.css'
 import './post-form.css'
 import { useCallback, useState } from 'react'
@@ -174,12 +175,12 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
           onChange={(e) => setArea(e.target.value)}
           aria-label="Lọc khu vực"
         />
-        <input
+        <MoneyInput
           className="form-input"
-          type="number"
+
           placeholder="Ngân sách tối đa…"
           value={maxBudgetFilter}
-          onChange={(e) => setMaxBudgetFilter(e.target.value)}
+          onValueChange={value => setMaxBudgetFilter(value)}
           aria-label="Lọc ngân sách"
         />
       </>
@@ -271,12 +272,12 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="wanted-budget">Ngân sách tối đa (đ/tháng)</label>
-              <input
+              <MoneyInput
                 id="wanted-budget"
                 className="form-input"
-                type="number"
+
                 value={maxBudget}
-                onChange={(e) => setMaxBudget(e.target.value)}
+                onValueChange={value => setMaxBudget(value)}
                 required
                 min={1}
                 step={1}
@@ -284,12 +285,12 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="wanted-occupants">Số người</label>
-              <input
+              <MoneyInput
                 id="wanted-occupants"
                 className="form-input"
-                type="number"
+
                 value={occupantCount}
-                onChange={(e) => setOccupantCount(e.target.value)}
+                onValueChange={value => setOccupantCount(value)}
                 required
                 min={1}
                 step={1}

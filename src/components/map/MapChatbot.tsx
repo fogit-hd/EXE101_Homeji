@@ -27,6 +27,7 @@ import { isFoodChat, isFoodDiscoveryChat, isFoodRefinement, foodCriteriaSnapshot
 import { FoodDiscoveryCard } from '../ai/FoodDiscoveryCard'
 import type { NearbyPlaceCategory } from '../../lib/placeAutocomplete'
 import { AiSearchReview } from '../ai/AiSearchReview'
+import { rentalPriceBasis } from '../ai/rentalPriceBasis'
 import { ChatbotMessageContent } from './ChatbotMessageContent'
 import type { MapAppSection } from "./MapAppPanel.logic"
 
@@ -41,6 +42,10 @@ import type { DecisionResponse } from '../../api/rentalAssistant'
 import type { RentalAssistantSelection, RentalAssistantComparison } from '../../contexts/rental-assistant-context'
 import { decisionMatchesChoices, rentalScenarioSnapshot } from '../../lib/rentalJourney'
 import { isVisibleFocusTarget } from '../../lib/isVisibleFocusTarget'
+import { ChatbotMediaComposer, ChatbotMediaPreview } from './ChatbotMediaComposer'
+import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
+import { GameLauncher } from '../games/GameLauncher'
+import { ProfileGate } from '../auth/ProfileGate'
 import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
@@ -86,6 +91,7 @@ type Props = {
 }
 
 type ChatRequest = {
+  attachments?: ChatbotDraftAttachment[]
   message: string
   context?: RentalAssistantSelection & { task?: ChatbotRentalContext['task'] }
   selection?: RentalAssistantComparison & { task?: 'compare' | 'cost' | 'questions' | 'details' }
@@ -97,6 +103,7 @@ type ChatRequest = {
 }
 
 type DisplayMessage = ChatbotMessage & {
+  attachments?: ChatbotDraftAttachment[]
   pending?: boolean
   retry?: ChatRequest
   failure?: string
@@ -176,7 +183,7 @@ export function MapChatbot({
   openRequestToken = 0,
 }: Props) {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, needsProfileSetup } = useAuth()
   const { openAuthModal } = useAuthModal()
   const reactId = useId()
   const [open, setOpen] = useState(false)
@@ -194,6 +201,10 @@ export function MapChatbot({
   const sessionFood = useRef<ChatbotFoodCriteria | undefined>(undefined)
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [draft, setDraft] = useState('')
+  const [attachments, setAttachments] = useState<ChatbotDraftAttachment[]>([])
+  const [mediaBusy, setMediaBusy] = useState(false)
+  const [recordingActive, setRecordingActive] = useState(false)
+  const [mediaSession, setMediaSession] = useState(0)
   const draftRevision = useRef(0)
   const activeRequest = useRef<{ controller: AbortController; pendingId: string; request: ChatRequest; draftRevision: number; restoreDraft: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -298,7 +309,7 @@ export function MapChatbot({
     let child: HTMLElement | null = panelRef.current?.parentElement ?? null
     while (child && child !== document.body) {
       for (const sibling of child.parentElement?.children ?? []) {
-        if (!(sibling instanceof HTMLElement) || sibling === child || sibling.matches('.auth-modal-overlay')) continue
+        if (!(sibling instanceof HTMLElement) || sibling === child || sibling.matches('.auth-modal-overlay,.homeji-memory')) continue
         const wasInert = sibling.hasAttribute('inert')
         sibling.setAttribute('inert', '')
         restore.push(() => { if (!wasInert) sibling.removeAttribute('inert') })
@@ -420,11 +431,14 @@ export function MapChatbot({
   }
 
   const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria) => {
-    const message = text.trim()
-    if (!message || busy || activeRequest.current) return
+    const selectedMedia = retryMessage?.retry?.attachments ?? (retryMessage ? [] : attachments)
+    const hasMedia = selectedMedia.length > 0
+    const message = text.trim() || (hasMedia ? 'Hãy xem hoặc nghe nội dung đính kèm và hỗ trợ mình.' : '')
+    if (!message || busy || mediaBusy || recordingActive || activeRequest.current) return
+    if (isAuthenticated && needsProfileSetup) return
     const previousFood = retryMessage?.retry?.previousFoodCriteria ?? foodCriteria ?? (isFoodRefinement(message) ? sessionFood.current : undefined)
-    const foodQuery = isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message))
-    const nearby = foodQuery ? null : nearbyChatIntent(message)
+    const foodQuery = !hasMedia && (isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message)))
+    const nearby = foodQuery || hasMedia ? null : nearbyChatIntent(message)
     if (nearby) {
       if (onNearbyRequest?.(nearby)) { closeChat(); setDraft(''); setError(null) }
       else setError('Hãy chọn ghim phòng trên bản đồ trước để tìm tiện ích quanh đúng phòng đó.')
@@ -443,11 +457,12 @@ export function MapChatbot({
     const refersToRoom = /\b(?:phong|tin|cho) (?:nay|dang xem)\b/.test(normalized)
     const startsSearch = /\b(?:tim|kiem|loc|goi y|de xuat)\b.*\b(?:phong|tro|o ghep|nha)\b|\b(?:phong|tro) khac\b|\b(?:tim lai|bat dau lai)\b/.test(normalized)
     const refersToChoices = /\b(?:(?:hai|ba|2|3|cac|nhung) (?:lua chon|phong|tin)|so sanh|danh sach (?:nay|can nhac))\b/.test(normalized)
-    const selection = !foodQuery && rentalSelection && !startsSearch && (task || refersToChoices)
+    const selection = !hasMedia && !foodQuery && rentalSelection && !startsSearch && (task || refersToChoices)
       ? { ...rentalSelection, postIds: [...rentalSelection.postIds], scenario: rentalScenarioSnapshot(rentalSelection.scenario), task } : undefined
-    const context = !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
+    const context = !hasMedia && !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
     const request: ChatRequest = retryMessage?.retry ?? {
       message, context, selection,
+      attachments: selectedMedia,
       conversationId: saveHistory ? conversationId : undefined,
       previousCriteria: saveHistory || context || selection || foodQuery ? undefined : sessionCriteria.current,
       foodContext: foodContext ? { ...foodContext } : undefined,
@@ -456,10 +471,10 @@ export function MapChatbot({
     }
     const pendingId = retryMessage?.id ?? `${reactId}-pending-${++pendingIdRef.current}`
     const pending = { controller: new AbortController(), pendingId, request, draftRevision: draftRevision.current,
-      restoreDraft: draft.trim() === message }
+      restoreDraft: !retryMessage && (draft.trim() === text.trim()) }
     activeRequest.current = pending
     setBusy(true); setError(null)
-    if (pending.restoreDraft) setDraft('')
+    if (pending.restoreDraft) { setDraft(''); setAttachments([]) }
     if (fromSuggestion) setToolsOpen(false)
     setCopyStatus('')
     const optimisticUser: DisplayMessage = {
@@ -469,6 +484,7 @@ export function MapChatbot({
       content: request.message,
       createdAt: new Date().toISOString(),
       pending: true,
+      attachments: request.attachments,
       rentalContext: request.context,
       rentalSelection: request.selection,
     }
@@ -477,18 +493,22 @@ export function MapChatbot({
 
     try {
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
+        attachments: request.attachments,
         previousCriteria: request.previousCriteria, foodContext: request.foodContext, previousFoodCriteria: request.previousFoodCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
         rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       const contextualUnavailable = request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
-      const foodExpected = isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message))
+      const foodExpected = !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
       const foodUnavailable = foodExpected && !reply.foodDiscovery
       sessionFood.current = reply.foodDiscovery && !request.context && !request.selection ? foodCriteriaSnapshot(reply.foodDiscovery) : undefined
-      if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) sessionCriteria.current = reply.searchUpdate.criteria
+      if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) {
+        sessionCriteria.current = reply.searchUpdate.criteria
+        if (!reply.searchUpdate.criteria.unknown?.length && !reply.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')) onSearchUpdate?.(reply.searchUpdate)
+      }
       setMessages((prev) => {
-        const userMessage = { ...reply.userMessage, rentalContext: request.context, rentalSelection: request.selection }
+        const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
           content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở Chợ đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
           actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở Chợ đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
@@ -514,7 +534,7 @@ export function MapChatbot({
     setBusy(true); setError(null)
     try {
       await deleteChatbotConversation(conversationId)
-      setConversationId(undefined); setMessages([]); setDraft(''); sessionCriteria.current = undefined; sessionFood.current = undefined
+      setConversationId(undefined); setMessages([]); setDraft(''); setAttachments([]); setMediaSession(value => value + 1); sessionCriteria.current = undefined; sessionFood.current = undefined
     } catch (reason) { setError(getErrorMessage(reason, 'Chưa xóa được hội thoại.')) }
     finally { setBusy(false) }
   }
@@ -557,6 +577,8 @@ export function MapChatbot({
     sessionFood.current = undefined
     setMessages([])
     setDraft('')
+    setAttachments([])
+    setMediaSession(value => value + 1)
     draftRevision.current += 1
     setError(null)
     setCopyStatus('')
@@ -682,10 +704,10 @@ export function MapChatbot({
                   <div className="map-chatbot__bubble">
                     {m.rentalContext ? <small className="map-chatbot__message-context">Về phòng: {m.rentalContext.title || 'Tin phòng đã chọn'}</small> : null}
                     {m.rentalSelection ? <small className="map-chatbot__message-context">Về lựa chọn: {m.rentalSelection.title}</small> : null}
-                    {isUser ? <><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
+                    {isUser ? <><ChatbotMediaPreview attachments={m.attachments ?? []} /><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy || mediaBusy || recordingActive} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
-                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} onApply={update => { onSearchUpdate?.(update); setOpen(false) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
+                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
                         {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
@@ -702,12 +724,26 @@ export function MapChatbot({
             </div>
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
             {copyStatus ? <p className="homeji-assistant__feedback" role="status">{copyStatus}</p> : null}
+            <div className="homeji-assistant__wait-tools" hidden={!showTyping}>
+              <GameLauncher waiting={showTyping} />
+            </div>
             {showTyping ? <div className="map-chatbot__request-status" role="status"><span>Đang xử lý · bạn vẫn có thể soạn tin</span><button type="button" onClick={stopRequest}>Dừng chờ</button></div> : null}
             <div className="homeji-assistant__composer-area">
+              <ProfileGate action="trò chuyện với trợ lý AI" onNavigate={closeChat}>
+              {open ? <ChatbotMediaComposer key={mediaSession} attachments={attachments} disabled={busy || mediaBusy}
+                onChange={setAttachments} onError={setError} onBusyChange={setMediaBusy} onRecordingChange={setRecordingActive}
+                onDictation={text => {
+                  if (!text.trim()) throw new Error('Không nghe rõ lời nói. Hãy ghi âm lại.')
+                  if (draft.length + text.length + (draft ? 1 : 0) > 1000) throw new Error('Nội dung vượt quá 1.000 ký tự. Hãy rút gọn tin nhắn hoặc bản ghi.')
+                  draftRevision.current += 1
+                  setDraft(current => current ? `${current} ${text}` : text)
+                  inputRef.current?.focus()
+                }} /> : null}
               <form className="map-chatbot__form" onSubmit={event => { event.preventDefault(); void send(draft) }}>
                 <textarea
                   ref={inputRef}
                   value={draft}
+                  readOnly={mediaBusy}
                   maxLength={1000}
                   rows={2}
                   onChange={event => {
@@ -717,25 +753,22 @@ export function MapChatbot({
                   onKeyDown={event => {
                     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) {
                       event.preventDefault()
-                      if (!busy && draft.trim()) event.currentTarget.form?.requestSubmit()
+                      if (!busy && !mediaBusy && !recordingActive && (draft.trim() || attachments.length)) event.currentTarget.form?.requestSubmit()
                     }
                   }}
                   placeholder={rentalContext ? 'Hỏi về phòng này, hoặc điều bạn cần…' : 'Kể Homeji nghe điều bạn đang cần…'}
                   aria-label="Nhập tin nhắn cho Homeji"
-                  aria-describedby={`${reactId}-composer-help`}
                 />
-                <button type="submit" className="map-chatbot__send" disabled={busy || !draft.trim()} aria-label="Gửi">
+                <button type="submit" className="map-chatbot__send" disabled={busy || mediaBusy || recordingActive || (!draft.trim() && !attachments.length)} aria-label="Gửi">
                   <span className="sr-only">Gửi</span>
                   <AssistantIcon name="send" />
                 </button>
               </form>
               <div className="homeji-assistant__composer-meta">
-                <div className="homeji-assistant__composer-hint" id={`${reactId}-composer-help`}>
-                  <span>Enter để gửi · Shift + Enter xuống dòng</span>
-                  {draft.length ? <span className="homeji-assistant__char-count">{draft.length}/1.000</span> : null}
-                </div>
+                {draft.length ? <span className="homeji-assistant__char-count">{draft.length}/1.000</span> : null}
                 <details className="map-chatbot__privacy" data-glass-exclude>
                   <summary>Quyền riêng tư & lịch sử</summary>
+                  <p>Ảnh và âm thanh bạn gửi được chuyển tới Gemini để xử lý. Homeji không lưu tệp gốc vào lịch sử chatbot. Bản chép lời chỉ được gửi vào hội thoại sau khi bạn bấm Gửi.</p>
                   <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
                   {config?.historyStorageEnabled ? (
                     <label>
@@ -765,6 +798,7 @@ export function MapChatbot({
                   ) : null}
                 </details>
               </div>
+              </ProfileGate>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { resultCountBucket } from '../lib/analyticsPolicy'
 import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
+import type { ChatbotAttachment } from '../lib/chatbotMedia'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
 import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload } from './client'
 import type {
@@ -366,13 +367,17 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria }, signal?: AbortSignal) =>
+export const transcribeChatbotAudio = (audio: ChatbotAttachment, signal?: AbortSignal) =>
+  apiRequest<{ text: string }>('/api/chatbot/transcriptions', { method: 'POST', body: { audio }, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS })
+
+export const sendChatbotMessage = (data: { conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     signal,
     body: {
       message: data.message,
+      ...(data.attachments?.length ? { attachments: data.attachments.map(({ mimeType, data }) => ({ mimeType, data })) } : {}),
       saveHistory: data.saveHistory === true,
       ...(data.foodContext ? { foodContext: { latitude: data.foodContext.latitude, longitude: data.foodContext.longitude, radiusKm: data.foodContext.radiusKm } } : {}),
       ...(data.previousFoodCriteria ? { previousFoodCriteria: foodCriteriaSnapshot(data.previousFoodCriteria) } : {}),

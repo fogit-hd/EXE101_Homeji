@@ -1,3 +1,4 @@
+import { amountInputModule } from './helpers/amount-input-module.mjs'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -19,6 +20,7 @@ const bindings = `
 import React, { useId, useState } from '${pathToFileURL(require.resolve('react')).href}';
 import { calculateRentalCost } from '${cost}';
 import { ChoicePicker } from '${choicePickerModule}';
+import { MoneyInput } from '${amountInputModule}';
 const formatPrice = value => String(value);
 `
 const { RentalCostCalculator } = await import(url(bindings + source))

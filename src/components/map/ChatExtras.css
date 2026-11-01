@@ -46,15 +46,6 @@ html:root #root .map-messages .map-messages__row.is-premium .map-messages__avata
 .map-messages.map-messages .map-messages__tag.is-room{color:#087582;background:#daf1f2;border-color:#80bec650}
 .map-messages.map-messages .map-messages__tag.is-market{color:#8b4d13;background:#fff0d6;border-color:#d5a05d60}
 .map-messages.map-messages .map-messages__tag.is-wanted{color:#6947a3;background:#efe7fa;border-color:#ad8dce50}
-.chat-recorder{position:relative;flex-shrink:0}
-.chat-recorder__mic{width:34px;height:36px;border:0;border-radius:10px;background:var(--surface-muted,#eef5f3);color:var(--text-primary,#16464b);cursor:pointer;display:grid;place-items:center}
-.chat-recorder__mic:disabled{opacity:.45;cursor:default}
-.chat-recorder__mic svg{width:19px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
-.chat-recorder__panel{position:absolute;bottom:calc(100% + 20px);left:-100px;width:min(300px,calc(100vw - 56px));padding:16px;box-sizing:border-box;border:1px solid var(--border-color,#cce0dd);border-radius:18px;background:var(--surface,#fff);color:var(--text-primary,#16464b);box-shadow:0 12px 36px #123b3733;z-index:25;display:grid;gap:12px}
-.chat-recorder__panel strong{font-size:14px}.chat-recorder__panel>span{font-size:13px;font-variant-numeric:tabular-nums}.chat-recorder__panel>div{display:flex;justify-content:space-between;gap:10px}
-.chat-recorder__panel button{border:0;background:var(--surface-muted,#e9f2f0);color:inherit;padding:8px 12px;border-radius:9px;cursor:pointer;font-weight:700}
-.chat-recorder__panel button:last-child:not(:first-child){background:#087f8c;color:white}
-.chat-recorder__panel audio,.chat-voice-message{width:100%;max-width:270px;min-width:190px;height:42px}
 .map-messages .map-messages__image:has(.chat-voice-message){width:min(270px,calc(100vw - 110px));max-width:100%;background:transparent}
 
 @media(prefers-reduced-motion:reduce){.map-messages.map-messages .map-messages__row.is-premium .map-messages__avatar::after{animation:none}.chat-media__emojis button{transition:none}}

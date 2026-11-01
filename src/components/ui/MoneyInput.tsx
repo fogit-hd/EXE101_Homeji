@@ -1,9 +1,8 @@
 import { useLayoutEffect, useRef, type InputHTMLAttributes } from 'react'
 
-type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange' | 'min'> & {
-  value: string
+type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange'> & {
+  value: string | number | null | undefined
   onValueChange: (value: string) => void
-  min?: number
 }
 
 function formatMoneyInput(value: string) {
@@ -11,13 +10,14 @@ function formatMoneyInput(value: string) {
 }
 
 /** Keep unformatted digits in form state and restore the caret after grouping. */
-export function MoneyInput({ value, onValueChange, min = 0, ...props }: Props) {
+export function MoneyInput({ value: suppliedValue, onValueChange, min = 0, max, ...props }: Props) {
+  const value = String(suppliedValue ?? '')
   const input = useRef<HTMLInputElement>(null)
   const caretDigits = useRef<number | null>(null)
   const formatted = formatMoneyInput(value)
   useLayoutEffect(() => {
-    input.current?.setCustomValidity(value && Number(value) < min ? `Số tiền phải từ ${formatMoneyInput(String(min))} đồng trở lên.` : '')
-  }, [value, min])
+    input.current?.setCustomValidity(value && (Number(value) < Number(min) || max != null && Number(value) > Number(max)) ? `Vui lòng nhập từ ${formatMoneyInput(String(min))}${max != null ? ` đến ${formatMoneyInput(String(max))}` : ' trở lên'}.` : '')
+  }, [value, min, max])
   useLayoutEffect(() => {
     if (caretDigits.current === null || !input.current) return
     let position = 0, digits = 0

@@ -66,7 +66,7 @@ export function isServiceDisruption(err: unknown): boolean {
 }
 
 export const PROFILE_INCOMPLETE_MESSAGE =
-  'Bạn chưa lưu thông tin tài khoản. Mở Hồ sơ → Thông tin cơ bản, nhập tên và chọn Lưu thông tin để tiếp tục.'
+  'Vui lòng cập nhật hồ sơ trước khi sử dụng tính năng này. Mở Hồ sơ → Thông tin cơ bản, nhập tên và chọn Lưu thông tin.'
 
 export function isProfileRequiredError(err: unknown): boolean {
   if (!(err instanceof ApiRequestError) || err.status !== 403) return false

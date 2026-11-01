@@ -30,7 +30,6 @@
 .natural-rental-search__close { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: #8a939c; font-size: 20px; line-height: 1; cursor: pointer; }
 .natural-rental-search__close:hover { background: var(--surface-muted); color: var(--text-heading); }
 
-.natural-rental-search__hint { margin: 0; padding: 0 16px 12px 50px; color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
 .natural-rental-search__bubble { width: fit-content; max-width: 82%; margin: 4px 16px 0 auto; padding: 8px 12px; border-radius: 14px 14px 4px 14px; background: var(--surface-input); font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
 
 .natural-rental-search__form { display: flex; align-items: flex-end; gap: 8px; margin: 0 16px; padding: 6px 6px 6px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated); transition: border-color .15s ease, box-shadow .15s ease; }

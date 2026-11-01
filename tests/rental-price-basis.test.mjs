@@ -66,7 +66,7 @@ const require = createRequire(import.meta.url)
 const reviewSource = (await readFile(new URL('../src/components/ai/AiSearchReview.tsx', import.meta.url), 'utf8'))
   .replace(/^import .*\r?\n/gm, '')
 const reviewJs = ts.transpileModule(reviewSource, { compilerOptions: { module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.React } }).outputText
-const chipLabelsUrl = compileUrl(`export const amenityLabel = value => value; export const formatPrice = value => String(value);`)
+const chipLabelsUrl = compileUrl(`export const normalizeAmenityCode = value => value; export const amenityLabel = value => value; export const formatPrice = value => String(value);`)
 const chipsUrl = compileUrl((await readFile(new URL('../src/components/ai/rentalSearchChips.ts', import.meta.url), 'utf8'))
   .replace('../../lib/labels', chipLabelsUrl))
 const cardUrl = reactDomModule('src/components/ai/AiRentalResultCard.tsx', {

@@ -1,0 +1,51 @@
+.homeji-memory {
+  --game-bg: #f6faf8; --game-ink: #173e36; --game-muted: #536f66; --game-line: #cdded5; --game-accent: #176754;
+  color: var(--game-ink); background: var(--game-bg); border: 1px solid var(--game-line);
+  width: min(540px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); padding: 26px;
+  box-sizing: border-box; border-radius: 28px; overflow: auto;
+  font-family: var(--font-ui, system-ui, sans-serif); box-shadow: 0 28px 100px #0b302b40;
+}
+.homeji-memory::backdrop { background: #102c296b; backdrop-filter: blur(5px); }
+html[data-theme='dark'] .homeji-memory { --game-bg: #152c28; --game-ink: #e2f3e9; --game-muted: #b2c9bd; --game-line: #3a5c50; --game-accent: #9cddbd; color-scheme: dark; }
+.homeji-memory button { color: inherit; font: inherit; cursor: pointer; touch-action: manipulation; }
+.homeji-memory button:focus-visible { outline: 3px solid var(--game-accent); outline-offset: 3px; }
+.homeji-memory__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.homeji-memory__eyebrow { color: var(--game-muted); font-size: 10px; letter-spacing: .16em; font-weight: 700; }
+.homeji-memory h2 { font-size: 25px; letter-spacing: -.04em; margin: 5px 0 0; font-weight: 750; }
+.homeji-memory__close { width: 40px; height: 40px; border: 1px solid var(--game-line); background: transparent; border-radius: 50%; font-size: 24px !important; }
+.homeji-memory__intro { margin: 14px 0 20px; color: var(--game-muted); font-size: 13px; line-height: 1.6; }
+.homeji-memory__score { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; border-block: 1px solid var(--game-line); padding: 14px 0; }
+.homeji-memory__score > span { display: grid; gap: 5px; font-size: 10px; color: var(--game-muted); text-align: center; }
+.homeji-memory__score strong { font-size: 23px; color: var(--game-ink); font-variant-numeric: tabular-nums; }
+.homeji-memory__score small { font-size: 13px; font-weight: 400; color: var(--game-muted); margin-left: 2px; }
+.homeji-memory__board { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; padding-top: 23px; }
+.homeji-memory__card { min-width: 0; aspect-ratio: .77; padding: 0; border: 0; background: transparent; border-radius: 17px; perspective: 650px; }
+.homeji-memory__card-inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 320ms cubic-bezier(.2,.8,.2,1); }
+.homeji-memory__card.is-revealed .homeji-memory__card-inner { transform: rotateY(180deg); }
+.homeji-memory__front,.homeji-memory__back { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 17px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.homeji-memory__back { color: #d9f1e7; border: 1px solid #a3d3c0; background: radial-gradient(ellipse at 20% 0%,#60ac8d80,transparent 80%),linear-gradient(145deg,#216b5b,#164638); box-shadow: inset 0 1px 1px #ffffff70,inset 0 -3px 3px #071e2840,0 4px 0 #0a362a; }
+.homeji-memory__back > svg { width: 34px; height: 34px; opacity: .85; }
+.homeji-memory__back > span { font-size: 10px; letter-spacing: .08em; margin-top: 5px; opacity: .7; }
+.homeji-memory__front { transform: rotateY(180deg); color: #214d41; background: linear-gradient(145deg,#fffef5,#e3eee4); border: 1px solid #c7d7c7; box-shadow: inset 0 1px #fff,0 4px 0 #acbfae; }
+.homeji-memory__front > svg { width: 85%; height: auto; max-height: 80%; }
+.homeji-memory__front > span { font-size: 10px; font-weight: 650; }
+.homeji-memory__card.is-matched .homeji-memory__front { border-color: #65aa85; background: #edf8e9; box-shadow: inset 0 0 0 2px #65aa8533; }
+.homeji-memory .homeji-memory__card[aria-disabled='true'] { opacity: 1; cursor: default; }
+.homeji-memory__status { min-height: 38px; display: grid; place-items: center; text-align: center; font-size: 12px; color: var(--game-muted); margin: 18px 0 10px; line-height: 1.5; }
+.homeji-memory__footer { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.homeji-memory__footer button { min-height: 42px; padding: 9px 17px; border: 1px solid var(--game-line); border-radius: 16px; background: transparent; font-size: 12px; }
+.homeji-memory__footer .homeji-memory__restart { background: var(--game-accent); color: var(--game-bg); border-color: transparent; }
+.homeji-memory__ready { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 18px; padding: 10px; border: 1px solid var(--game-line); border-radius: 12px; font-size: 12px; }
+.homeji-memory__ready button { background: transparent; border: 0; text-decoration: underline; min-height: 32px; }
+@media(max-width:420px) {
+  .homeji-memory { padding: 20px 15px; border-radius: 22px; }
+  .homeji-memory h2 { font-size: 22px; }
+  .homeji-memory__board { gap: 9px; }
+  .homeji-memory__front > span { font-size: 9px; }
+  .homeji-memory__footer button { padding: 9px 12px; }
+}
+@media(prefers-reduced-motion:reduce) { .homeji-memory__card-inner { transition: none; } }
+@media(forced-colors:active) {
+  .homeji-memory__back,.homeji-memory__front { background: Canvas; color: CanvasText; border: 1px solid ButtonText; }
+  .homeji-memory__card.is-matched { outline: 2px solid Highlight; }
+}

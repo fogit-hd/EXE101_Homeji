@@ -1,3 +1,4 @@
+import { MoneyInput } from '../ui/MoneyInput'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { getRentalDecision, type CostScenario, type CommuteDestination, type DecisionResponse } from '../../api/rentalAssistant'
@@ -77,13 +78,13 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
     <div className="rental-assistant__fields">
       {([
         ['occupants', 'Số người', 1, 50], ['electricityKwh', 'Điện dự kiến (kWh/tháng)', 0, 10000], ['waterM3', 'Nước dự kiến (m³/tháng)', 0, 1000],
-      ] as const).map(([field, label, min, max]) => <label key={field}>{label}<input type="number" min={min} max={max} value={scenario[field]} onChange={e => setScenario(s => ({ ...s, [field]: Number(e.target.value) }))} /></label>)}
+      ] as const).map(([field, label, min, max]) => <label key={field}>{label}<input type="number"  min={min} max={max} value={scenario[field]} onChange={event => setScenario(s => ({ ...s, [field]: Number(event.target.value) }))} /></label>)}
       {(['electricityUnit', 'waterUnit', 'internetUnit'] as const).map((field, i) => <label key={field}>{['Đơn vị điện', 'Đơn vị nước', 'Đơn vị internet'][i]}
         <ChoicePicker value={scenario[field]} onChange={e => setScenario(s => ({ ...s, [field]: e.target.value }))}>
           <option value="unknown">Chưa xác nhận</option><option value="month">đồng/tháng</option><option value="person">đồng/người/tháng</option>
           {field === 'electricityUnit' ? <option value="kwh">đồng/kWh</option> : field === 'waterUnit' ? <option value="m3">đồng/m³</option> : null}
         </ChoicePicker></label>)}
-      {(['otherMonthlyFees', 'otherInitialFees'] as const).map((field, i) => <label key={field}>{i === 0 ? 'Phí cố định khác / tháng (đồng)' : 'Khoản thu ban đầu khác (đồng)'}<input type="number" min="0" max="100000000" value={scenario[field] ?? ''} placeholder="Chưa xác nhận" onChange={e => setScenario(s => ({ ...s, [field]: e.target.value === '' ? null : Number(e.target.value) }))} /></label>)}
+      {(['otherMonthlyFees', 'otherInitialFees'] as const).map((field, i) => <label key={field}>{i === 0 ? 'Phí cố định khác / tháng (đồng)' : 'Khoản thu ban đầu khác (đồng)'}<MoneyInput min="0" max="100000000" value={scenario[field] ?? ''} placeholder="Chưa xác nhận" onValueChange={value => setScenario(s => ({ ...s, [field]: value === '' ? null : Number(value) }))} /></label>)}
     </div>
     <details><summary>Xác nhận khoản bằng 0 trong kịch bản</summary><p>Chỉ chọn sau khi đã hỏi chủ phòng. Đây là xác nhận của bạn cho kịch bản, không phải Homeji xác minh.</p>
       {(['electricityFreeConfirmed', 'waterFreeConfirmed', 'internetFreeConfirmed', 'depositFreeConfirmed'] as const).map((field, i) => <label key={field}><span><input type="checkbox" checked={scenario[field] ?? false} onChange={e => setScenario(s => ({ ...s, [field]: e.target.checked }))} /> {['Điện miễn phí', 'Nước miễn phí', 'Internet miễn phí', 'Không thu cọc'][i]}</span></label>)}
