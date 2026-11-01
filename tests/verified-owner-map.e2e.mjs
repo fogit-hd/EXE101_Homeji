@@ -17,14 +17,24 @@ try {
   const decoration = await badge.locator('.premium-stars').evaluate(e => { const s = getComputedStyle(e); return { border: s.borderTopWidth, padding: s.paddingTop, background: s.backgroundColor } })
   assert.deepEqual(decoration, { border: '0px', padding: '0px', background: 'rgba(0, 0, 0, 0)' }, 'Premium decoration must not become an opaque empty tag covering the label')
   assert.ok(await badge.evaluate(e => getComputedStyle(e).backgroundImage.includes('gradient')), 'Premium label must keep its own readable background')
-  for (const width of [1100, 390, 320]) for (const theme of ['light', 'dark']) for (const view of ['map', 'list']) for (const verified of [true, false]) {
+  for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) for (const view of ['map', 'list', 'split']) for (const verified of [true, false]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`${base}/${out}/index.html?view=${view}&verified=${verified}`)
     await page.evaluate(t => document.documentElement.dataset.theme = t, theme)
+    if (view === 'split') { const toggle = page.getByRole('group', {name:'Bản đồ hoặc danh sách'}).getByRole('button', {name:'Danh sách',exact:true}); if (await toggle.isVisible()) await toggle.click(); const open = page.getByRole('button', {name:'Danh sách',exact:true}); if (await open.count() === 1 && await open.isVisible()) await open.click() }
     const scope = page.locator(view === 'map' ? '.map-listings__preview' : '.map-listings__card')
     await scope.waitFor()
     assert.equal(await scope.getByText('Chủ nhà đã xác minh', { exact: true }).count(), Number(verified))
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No horizontal page overflow')
+    const trust = scope.locator('.listing-trust-badges')
+    assert.equal(await trust.count(), 1)
+    if (view !== 'map') assert.equal(await scope.locator('.map-listings__card-photo .premium-badge').count(), 0, 'Badges must not cover the room photo')
+    const fits = await trust.evaluate(element => {
+      const row = element.getBoundingClientRect()
+      return [...element.children].every(badge => { const box = badge.getBoundingClientRect(); return box.left >= row.left - 1 && box.right <= row.right + 1 && box.height <= 34 && getComputedStyle(badge).whiteSpace === 'nowrap' })
+    })
+    assert.ok(fits, 'Each label stays on one line and fits its own row')
+    if (verified) await scope.screenshot({ path: `${out}/${theme}-${width}-${view}-badges.png` })
     if (verified && view === 'map') await page.screenshot({ path: `${out}/${theme}-${width}.png`, fullPage: true })
   }
   await page.goto(`${base}/${out}/index.html?view=map&verified=true&premium=false`)

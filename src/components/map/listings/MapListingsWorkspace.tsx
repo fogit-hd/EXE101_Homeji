@@ -14,8 +14,7 @@ import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
-import { PremiumBadge } from '../../PremiumBadge'
-import { VerifiedOwnerBadge } from '../../VerifiedOwnerBadge'
+import { ListingTrustBadges } from '../../ListingTrustBadges'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
@@ -185,7 +184,6 @@ export function MapListingsWorkspace({
             }}
           >
             <span className="map-listings__card-photo">
-              {!marketMode && view.isPremium && <PremiumBadge />}
               <span className="map-listings__card-photo-empty">Chưa có ảnh</span>
               {view.thumbnailUrl ? (
                 <img
@@ -200,7 +198,6 @@ export function MapListingsWorkspace({
             <span className="map-listings__card-copy">
               <span className="map-listings__price">{view.priceLabel}{!marketMode ? <small> / tháng</small> : null}</span>
               <span className="map-listings__name">{view.title}</span>
-              {view.isOwnerVerified ? <VerifiedOwnerBadge /> : null}
                 <span className="map-listings__address">
                   <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
                   <span className="map-listings__address-text" title={view.address}>{shortListingAddress(view.address) || 'Chưa có địa chỉ'}</span>
@@ -213,6 +210,7 @@ export function MapListingsWorkspace({
               </span>
             </span>
           </button>
+          <ListingTrustBadges premium={!marketMode && view.isPremium} verified={view.isOwnerVerified} />
           {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
           {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></button> : null}
           {!marketMode && onToggleSave ? (
@@ -591,12 +589,12 @@ function PreviewCard({
           </p>
         </div>
       </div>
+      <ListingTrustBadges premium={view.isPremium} verified={view.isOwnerVerified} />
       <div className="map-listings__preview-tags">
-        {view.isOwnerVerified ? <VerifiedOwnerBadge /> : null}
         {view.areaLabel ? <span>{view.areaLabel}</span> : null}
         {view.typeLabel ? <span>{view.typeLabel}</span> : null}
         {view.highlightTag ? <span>{view.highlightTag}</span> : null}
-        {view.isPremium ? <PremiumBadge /> : view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
+        {!view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
       </div>
       {considerationPost ? <RentalConsiderationToggle post={considerationPost} /> : null}
       <button type="button" className="map-listings__preview-open" onClick={onOpen}>
