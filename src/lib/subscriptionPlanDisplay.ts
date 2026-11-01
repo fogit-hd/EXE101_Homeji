@@ -18,7 +18,6 @@ export function getPlanDisplay(plan: SubscriptionPackage) {
     title: basic ? 'Miễn phí' : plan.name,
     headlinePrice: plan.price > 0 ? formatPrice(plan.price) : 'Miễn phí',
     headlineSuffix: !basic && plan.durationDays > 0 ? `/ ${plan.durationDays} ngày` : '',
-    totalLine: basic ? 'Dành cho mọi tài khoản' : 'Thanh toán một lần cho thời hạn đã chọn.',
     tone: basic ? 'free' : plan.durationDays <= 30 ? 'mint' : plan.durationDays <= 180 ? 'ocean' : 'gold',
     equivalentPrice: !basic && plan.price > 0 && plan.durationDays > 30
       ? `Khoảng ${formatPrice(Math.round(plan.price * 30 / plan.durationDays))} / 30 ngày`

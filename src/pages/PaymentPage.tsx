@@ -412,8 +412,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     {view.headlinePrice}
                     <small>{view.headlineSuffix}</small>
                   </p>
-                  <p className="pay-plan__equivalent">{view.equivalentPrice ?? (isPremium ? 'Thanh toán một lần · Dùng đủ thời hạn' : 'Bắt đầu mà không cần trả phí')}</p>
-                  {plan.offerEndsAt ? <p className="pay-plan__equivalent">Ưu đãi đến {new Date(plan.offerEndsAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} (giờ Việt Nam)</p> : null}
+                  {view.equivalentPrice ? <p className="pay-plan__equivalent">{view.equivalentPrice}</p> : null}
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>
@@ -501,7 +500,6 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               </tbody>
             </table>
           </section>
-          <p className="pay-foot">Thanh toán một lần cho thời hạn gói đã chọn. Ưu tiên hiển thị không bảo đảm tin đứng đầu hay luôn phù hợp với người tìm phòng.</p>
           <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo hoặc PayOS · Đơn chờ MoMo/PayOS tự hủy sau 15 phút</p>
         </div>
       ) : null}

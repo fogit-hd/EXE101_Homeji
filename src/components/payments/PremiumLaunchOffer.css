@@ -28,6 +28,17 @@
 .premium-launch-offer button:focus-visible { outline: 2px solid #375b70; outline-offset: 3px; }
 .premium-launch-offer.is-increase .premium-launch-offer__discount { background: #f5df9e; color: #6b4d15; white-space: normal; }
 .premium-launch-offer__body > .premium-launch-offer__countdown { margin-top: 4px; font-size: 10px; text-align: center; }
+.maintenance-banner .premium-launch-offer__banner { background: linear-gradient(115deg, #e2f5ef, #f3faf8); border-color: #d3e9e1; }
+.maintenance-banner h2, .maintenance-banner .premium-launch-offer__eyebrow { color: #17594b; }
+.maintenance-banner .premium-launch-offer__cta { background: #175e51; border-color: #175e51; }
+.maintenance-banner .premium-launch-offer__cta:hover { background: #124b41; }
+.maintenance-banner__schedule { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin-top: 20px; padding: 16px; border: 1px solid #e1eae7; border-radius: 12px; font-size: 13px; }
+.maintenance-banner__schedule span { color: #62727c; }
+.maintenance-banner__schedule strong { text-align: right; font-weight: 650; }
+[data-theme=dark] .maintenance-banner .premium-launch-offer__banner { background: #1c3932; border-color: #36554a; }
+[data-theme=dark] .maintenance-banner h2, [data-theme=dark] .maintenance-banner .premium-launch-offer__eyebrow { color: #bce7d8; }
+[data-theme=dark] .maintenance-banner__schedule { border-color: #3b4c55; }
+[data-theme=dark] .maintenance-banner__schedule span { color: #becbd3; }
 @media (max-width: 600px) {
   .premium-launch-offer { border-radius: 20px; }
   .premium-launch-offer__banner { padding: 36px 22px 22px; }

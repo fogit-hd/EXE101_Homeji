@@ -207,7 +207,7 @@ export function AdminModerationPage() {
         scheduledStartAt: maintenanceStart ? new Date(maintenanceStart).toISOString() : undefined,
         scheduledEndAt: maintenanceEnd ? new Date(maintenanceEnd).toISOString() : undefined,
       })
-      setMessage(`Đã gửi thông báo bảo trì đến ${result.recipientCount.toLocaleString('vi-VN')} tài khoản (${result.onlineRecipientCount.toLocaleString('vi-VN')} đang online).`)
+      setMessage(`Đã công bố banner bảo trì và gửi thông báo đến ${result.recipientCount.toLocaleString('vi-VN')} tài khoản.`)
       setMaintenanceMessage('')
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể gửi thông báo bảo trì'))
@@ -411,7 +411,7 @@ export function AdminModerationPage() {
             <span className="admin-maintenance-icon" aria-hidden>⚡</span>
             <div>
               <h2 id="maintenance-heading">Thông báo bảo trì toàn hệ thống</h2>
-              <p>Gửi vào hộp thông báo của tất cả tài khoản và hiện ngay cho người đang online.</p>
+              <p>Hiện banner cho người xem web và gửi vào hộp thông báo của tất cả tài khoản.</p>
             </div>
           </div>
           <div className="admin-maintenance-form">
@@ -430,9 +430,9 @@ export function AdminModerationPage() {
               </div>
             </div>
             <div className="admin-maintenance-footer">
-              <small>Thông báo được lưu lại để người offline đọc sau khi đăng nhập.</small>
+              <small>Banner hiển thị đến khi kết thúc bảo trì. Nếu chưa đặt giờ kết thúc, banner hiển thị trong 24 giờ từ lúc bắt đầu hoặc công bố.</small>
               <button type="button" className="btn btn-primary" disabled={sendingMaintenance} onClick={() => void handleSendMaintenance()}>
-                {sendingMaintenance ? 'Đang gửi…' : 'Gửi thông báo cho tất cả tài khoản'}
+                {sendingMaintenance ? 'Đang công bố…' : 'Công bố banner & gửi thông báo'}
               </button>
             </div>
           </div>

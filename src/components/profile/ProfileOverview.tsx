@@ -23,7 +23,7 @@ function SectionIcon({ kind }: { kind: 'person' | 'home' | 'check' | 'gift' | 's
 }
 export function ProfileOverview({ profile, verificationStatus, onEdit, contactEditor }: Props) {
   return <div className="profile-overview">
-    <div className="profile-ready"><span className="profile-ready__icon"><SectionIcon kind="check" /></span><p><strong>Thông tin cơ bản đã lưu</strong><span>Bạn có thể nạp tiền và thanh toán. Lối sống là phần tùy chọn.</span></p></div>
+    <div className="profile-ready"><span className="profile-ready__icon"><SectionIcon kind="check" /></span><p><strong>Thông tin cơ bản đã lưu</strong></p></div>
     <div className="profile-details">
       <section className="profile-information profile-information--personal" aria-labelledby="profile-personal-heading">
         <header className="profile-information__heading"><div className="profile-information__title"><span className="profile-section-icon"><SectionIcon kind="person" /></span><h2 id="profile-personal-heading">Thông tin cá nhân</h2></div><button type="button" className="profile-edit-button" onClick={() => onEdit('basic')}>Chỉnh sửa <span aria-hidden="true">↗</span></button></header>
