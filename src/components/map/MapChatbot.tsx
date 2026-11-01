@@ -174,9 +174,9 @@ function assistantViewport() {
 
 function navPanelLayout(expanded: boolean, sheet: boolean, viewport: ReturnType<typeof assistantViewport>): PanelLayout {
   const { width: vw, height: vh, offsetTop } = viewport
-  const margin = sheet ? expanded ? 0 : 8 : expanded ? 24 : VIEW_MARGIN
-  const width = sheet ? vw - margin * 2 : Math.min(expanded ? 1160 : 460, vw - margin * 2)
-  const height = Math.max(0, Math.min(sheet ? expanded ? vh : vh * 0.92 : expanded ? 840 : 740, vh - margin * 2))
+  const margin = sheet ? expanded ? 0 : 8 : expanded ? 12 : VIEW_MARGIN
+  const width = sheet ? vw - margin * 2 : Math.min(expanded ? 1480 : 480, vw - margin * 2)
+  const height = Math.max(0, Math.min(sheet ? expanded ? vh : vh * 0.92 : expanded ? vh : 780, vh - margin * 2))
   const top = offsetTop + (sheet ? vh - height - margin : expanded ? (vh - height) / 2 : Math.min(80, Math.max(margin, vh - height - margin)))
   const left = sheet || expanded ? (vw - width) / 2 : vw - width - margin
   const maxHeight = height
@@ -216,7 +216,11 @@ export function MapChatbot({
   const [sharedLocation, setSharedLocation] = useState<ChatbotLocation | null>(null)
   const awaitingLocation = useRef<string | null>(null)
   const [agentMode, setAgentMode] = useState(false)
+  const [draftWorkspaceId, setDraftWorkspaceId] = useState<string | null>(null)
+  const [draftWorkspaceOpen, setDraftWorkspaceOpen] = useState(false)
+  const draftWorkspaceClose = useRef<HTMLButtonElement>(null)
   const [agentDraftId, setAgentDraftId] = useState<string | undefined>()
+  const workspaceDraft = messages.find(message => message.agentDraft?.id === draftWorkspaceId)?.agentDraft
   const [draft, setDraft] = useState('')
   const [attachments, setAttachments] = useState<ChatbotDraftAttachment[]>([])
   const [mediaBusy, setMediaBusy] = useState(false)
@@ -227,6 +231,7 @@ export function MapChatbot({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sheetMode, setSheetMode] = useState(isSheetViewport)
+  const draftOverlay = Boolean(workspaceDraft && draftWorkspaceOpen && (sheetMode || !expanded))
   const bottomRef = useRef<HTMLDivElement>(null)
   const latestMessageRef = useRef<HTMLElement | null>(null)
   const lastScrolledMessage = useRef<string | null>(null)
@@ -237,6 +242,12 @@ export function MapChatbot({
   if (useChangedInputs([openRequestToken]) && openRequestToken) {
     setOpen(true)
   }
+
+  useEffect(() => { if (draftOverlay) draftWorkspaceClose.current?.focus() }, [draftOverlay, draftWorkspaceId])
+  useLayoutEffect(() => {
+    const input = inputRef.current
+    if (input) { input.style.height = 'auto'; input.style.height = `${Math.min(100, Math.max(28, input.scrollHeight))}px` }
+  }, [draft, expanded])
 
   useEffect(() => () => {
     activeRequest.current?.controller.abort()
@@ -393,7 +404,10 @@ export function MapChatbot({
     const closeOnEscape = (event: KeyboardEvent) => {
       const panel = panelRef.current
       if (event.target instanceof Element && event.target.closest('[role="dialog"]') && !panel?.contains(event.target)) return
-      if (event.key === 'Escape') closeChat()
+      if (event.key === 'Escape') {
+        if (panel?.querySelector('.homeji-assistant__conversation[inert]')) { event.preventDefault(); setDraftWorkspaceOpen(false); requestAnimationFrame(() => inputRef.current?.focus()) }
+        else closeChat()
+      }
       if (event.key !== 'Tab' || !(panel?.getAttribute('aria-modal') === 'true' || document.querySelector('.room-detail[aria-modal="true"]'))) return
       if (!panel?.contains(document.activeElement)) return
       const nodes = [...panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
@@ -523,7 +537,7 @@ export function MapChatbot({
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       setAgentMode(reply.agentRequested === true || Boolean(reply.agentDraft) || request.postingAgent === true && !reply.upgradeRequired)
       if (reply.nearbyRooms?.status === "locationRequired" || reply.foodDiscovery?.status === "locationRequired") awaitingLocation.current = request.message
-      if (reply.agentDraft) setAgentDraftId(reply.agentDraft.id)
+      if (reply.agentDraft) { setAgentDraftId(reply.agentDraft.id); setDraftWorkspaceId(reply.agentDraft.id); setDraftWorkspaceOpen(true); setExpanded(true) }
       else if (reply.upgradeRequired) setAgentDraftId(undefined)
       const contextualUnavailable = reply.agentDraft || reply.agentRequested || reply.nearbyRooms ? false : request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
@@ -689,7 +703,7 @@ export function MapChatbot({
             <button type="button" className="map-chatbot__close homeji-assistant__icon-button" onClick={closeChat} aria-label="Đóng Homeji" title="Đóng Homeji"><AssistantIcon name="close" /></button>
           </div>
         </header>
-        <div className={`homeji-assistant__workspace${showTools ? ' has-tools' : ''}`}>
+        <div className={`homeji-assistant__workspace${showTools ? ' has-tools' : ''}${workspaceDraft && draftWorkspaceOpen ? ' has-draft-workspace' : ''}`}>
           {showTools ? <aside className="homeji-assistant__tools" aria-label="Công cụ Homeji" id={`${reactId}-tools`}>
             <div className="homeji-assistant__tools-heading"><span>LỐI TẮT CỦA BẠN</span><button type="button" className="homeji-assistant__icon-button" onClick={() => { setToolsOpen(false); toolsButtonRef.current?.focus() }} aria-label="Đóng công cụ"><AssistantIcon name="close" /></button></div>
             <p>Đi thẳng đến việc bạn cần.</p>
@@ -698,7 +712,7 @@ export function MapChatbot({
               <AssistantIcon name={item.icon} /><span>{item.label}</span><AssistantIcon name="arrow" />
             </button>)}</nav>
           </aside> : null}
-          <div className="homeji-assistant__conversation">
+          <div className="homeji-assistant__conversation" inert={draftOverlay} aria-hidden={draftOverlay || undefined}>
             <AgentModeSwitch active={agentMode} busy={busy || mediaBusy || recordingActive} enabled={panelVisible} authenticated={isAuthenticated} onChange={setAgentMode} onUpgrade={() => { setOpen(false); if (!isAuthenticated) openAuthModal({ intent: 'premium', onSuccess: () => navigate('/?section=payments') }); else navigate('/?section=payments') }} />
             {resetRequested ? <div className="homeji-assistant__reset" role="alert">
               <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.</p>
@@ -741,7 +755,7 @@ export function MapChatbot({
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
-                        {m.agentDraft ? <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={agentDraftId === m.agentDraft.id} onFinished={() => { setAgentDraftId(undefined) }} /> : null}
+                        {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => { setDraftWorkspaceOpen(true); setExpanded(true) }}><span>Ảnh · nội dung · giá bán · địa chỉ</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
                         {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=payments"); setOpen(false) }}>Khám phá Premium</button><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=marketplace"); setOpen(false) }}>Tự đăng bài</button></div> : null}
                         {m.nearbyRooms ? <ChatbotNearbyResults data={m.nearbyRooms} onOpen={() => setOpen(false)} /> : null}
                         {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
@@ -783,7 +797,7 @@ export function MapChatbot({
                   value={draft}
                   readOnly={mediaBusy}
                   maxLength={1000}
-                  rows={2}
+                  rows={1}
                   onChange={event => {
                     draftRevision.current += 1
                     setDraft(event.target.value)
@@ -839,6 +853,10 @@ export function MapChatbot({
               </ProfileGate>
             </div>
           </div>
+          {workspaceDraft ? <aside className="homeji-assistant__draft-workspace" aria-label="Bản nháp đang duyệt" hidden={!draftWorkspaceOpen}>
+            <header><div><small>KHÔNG GIAN DUYỆT BÀI</small><strong>Bản nháp của bạn</strong></div><button ref={draftWorkspaceClose} type="button" aria-label="Về hội thoại" onClick={() => { setDraftWorkspaceOpen(false); requestAnimationFrame(() => inputRef.current?.focus()) }}>Về hội thoại <span aria-hidden>×</span></button></header>
+            <AgentPostPreview key={workspaceDraft.id} draft={workspaceDraft} sharedLocation={sharedLocation} active={agentDraftId === workspaceDraft.id} onFinished={() => setAgentDraftId(current => current === workspaceDraft.id ? undefined : current)} />
+          </aside> : null}
         </div>
       </div>
     </div>

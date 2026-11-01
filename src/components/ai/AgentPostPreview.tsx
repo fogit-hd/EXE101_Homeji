@@ -33,6 +33,7 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
   if (status === 'cancelled') return <p role="status">Đã hủy bản nháp. Chưa đăng bài.</p>
   return <section className="agent-post-preview" aria-label="Xác nhận bài đăng AI">
     <header><span>HOMEJI AGENT · PREMIUM</span><strong>Bài đăng của bạn, sẵn sàng để duyệt</strong><small>{expired ? 'Bản nháp đã hết hạn' : !active ? 'Bản nháp cũ · xem bản mới nhất bên dưới' : 'Chưa đăng · chỉ đăng khi bạn xác nhận'}</small></header>
+    <div className="agent-post-preview__editor">
     <div className="agent-post-preview__images">{draft.images.map((src, i) => <img key={i} src={src} alt={`Ảnh món đồ ${i + 1} sẽ được đăng`} />)}</div>
     <fieldset disabled={disabled}>
       <label>Tiêu đề<input value={details.title} maxLength={200} onChange={e => setDetails({ ...details, title: e.target.value })} /></label>
@@ -42,6 +43,8 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
       <label>Địa chỉ giao dịch<AddressAutocomplete value={details.address} onChange={address => setDetails({ ...details, address, latitude: 0, longitude: 0 })} onPlaceSelect={place => setDetails({ ...details, address: place.address, latitude: place.lat, longitude: place.lng })} placeholder="Chọn địa chỉ từ gợi ý" disabled={disabled} /></label>
     </fieldset>
     {error ? <p role="alert">{error}</p> : null}
-    {active && !expired ? <><p className="agent-post-preview__note">Ảnh và thông tin trên sẽ hiển thị công khai. Các điều kiện đăng bán của Chợ đồ vẫn được áp dụng.</p><footer><button type="button" disabled={disabled} onClick={() => void finish(false)}>Hủy bản nháp</button><button type="button" disabled={disabled || !details.title.trim() || !details.description.trim() || !details.address.trim() || details.price <= 0 || !details.latitude || !details.longitude} onClick={() => void finish(true)}>{status === 'publishing' ? 'Đang xử lý…' : 'Xác nhận đăng bài'}</button></footer></> : null}
+    {active && !expired ? <p className="agent-post-preview__note">Ảnh và thông tin trên sẽ hiển thị công khai. Kiểm tra trước khi xác nhận.</p> : null}
+    </div>
+    {active && !expired ? <footer><button type="button" disabled={disabled} onClick={() => void finish(false)}>Hủy bản nháp</button><button type="button" disabled={disabled || !details.title.trim() || !details.description.trim() || !details.address.trim() || details.price <= 0 || !details.latitude || !details.longitude} onClick={() => void finish(true)}>{status === 'publishing' ? 'Đang xử lý…' : 'Xác nhận đăng bài'}</button></footer> : null}
   </section>
 }

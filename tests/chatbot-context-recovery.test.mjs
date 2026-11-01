@@ -457,7 +457,6 @@ test('multiline composer preserves Shift+Enter and IME input, then sends one exp
     await render(env.root)
     const input = composer()
     assert.equal(input.tagName, 'TEXTAREA')
-    assert.equal(input.rows, 2)
     assert.equal(input.maxLength, 1000)
     await typeDraft('Tìm phòng dưới 3 triệu\nGần trường và có bếp')
     await keydown(input, { key: 'Enter', shiftKey: true })
