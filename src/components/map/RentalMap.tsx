@@ -1,7 +1,8 @@
 import { useSourceCatalogMap } from './useSourceCatalogMap'
+import { createClusterListings, type ClusterListing, type CatalogClusterMarker } from './clusterListings'
+import { ListingClusterAlgorithm } from './listingClusterAlgorithm'
 import {
   MarkerClusterer,
-  SuperClusterAlgorithm,
   type Renderer,
 } from '@googlemaps/markerclusterer'
 import {
@@ -224,6 +225,10 @@ function RentalMapComponent({
   const markersRef = useRef<Map<string, MarkerEntry>>(new Map())
   const marketplaceMarkersRef = useRef<Map<string, MarkerEntry>>(new Map())
   const markerClustererRef = useRef<MarkerClusterer | null>(null)
+  const clusterAlgorithmRef = useRef<ListingClusterAlgorithm | null>(null)
+  const catalogMarkersRef = useRef<CatalogClusterMarker[]>([])
+  const clusterPopupRef = useRef<google.maps.InfoWindow | null>(null)
+  const clusterListingsRef = useRef(new WeakMap<google.maps.marker.AdvancedMarkerElement, ClusterListing>())
   const markerKindsRef = useRef<WeakMap<google.maps.marker.AdvancedMarkerElement, MapClusterKind>>(
     new WeakMap(),
   )
@@ -271,7 +276,6 @@ function RentalMapComponent({
   const placeFetchSeqRef = useRef(0)
 
   const [mapReady, setMapReady] = useState(false)
-  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant)
   const [displayMode, setDisplayMode] = useState<MapDisplayMode>('roadmap')
   const [streetViewBusy, setStreetViewBusy] = useState(false)
   const [streetViewError, setStreetViewError] = useState<string | null>(null)
@@ -302,16 +306,29 @@ function RentalMapComponent({
   const refreshClusters = useCallback(() => {
     const clusterer = markerClustererRef.current
     if (!clusterer) return
+    clusterPopupRef.current?.close()
     const markers = [
       ...Array.from(markersRef.current.values(), (entry) => entry.marker),
       ...Array.from(marketplaceMarkersRef.current.values(), (entry) => entry.marker),
+      ...catalogMarkersRef.current.map(entry => entry.marker),
     ]
     clusterer.clearMarkers(true)
     clusterer.addMarkers(markers, true)
+    clusterAlgorithmRef.current?.invalidateListings()
     clusterer.render()
     ;(window as Window & { __HOMEJI_CLUSTERED_MARKER_COUNT?: number })
       .__HOMEJI_CLUSTERED_MARKER_COUNT = markers.length
   }, [])
+
+  const onCatalogMarkersChange = useCallback((entries: CatalogClusterMarker[]) => {
+    catalogMarkersRef.current = entries
+    for (const entry of entries) {
+      markerKindsRef.current.set(entry.marker, entry.listing.kind)
+      clusterListingsRef.current.set(entry.marker, entry.listing)
+    }
+    refreshClusters()
+  }, [refreshClusters])
+  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange)
 
   const syncMarkers = useCallback(() => {
     const map = mapRef.current
@@ -398,6 +415,14 @@ function RentalMapComponent({
         }
         entry.marker.zIndex = s.z
       }
+      const marker = markersRef.current.get(post.id)!.marker
+      markerKindsRef.current.set(marker, s.kind)
+      clusterListingsRef.current.set(marker, {
+        id: post.id, kind: s.kind, title: post.title, address: post.address,
+        priceLabel: `${post.price.toLocaleString('vi-VN')} đ / tháng`, imageUrl: post.thumbnailPath,
+        premium: post.isOwnerPremium === true,
+        open: () => { clusterPopupRef.current?.close(); onSelectPostRef.current(post.id) },
+      })
     }
 
     ;(window as Window & { __HOMEJI_MARKER_COUNT?: number }).__HOMEJI_MARKER_COUNT =
@@ -496,6 +521,11 @@ function RentalMapComponent({
         }
         entry.marker.zIndex = selected ? 2700 : 900
       }
+      clusterListingsRef.current.set(marketplaceMarkersRef.current.get(item.id)!.marker, {
+        id: item.id, kind: 'marketplace', title: item.title, address: '',
+        priceLabel: `${item.itemCount} món`, premium: false,
+        open: () => { clusterPopupRef.current?.close(); onSelectMarketplaceRef.current?.(item.id) },
+      })
     }
     refreshClusters()
   }, [visibleMarketplacePins, selectedMarketplaceId, refreshClusters])
@@ -643,6 +673,7 @@ function RentalMapComponent({
       const lib = await loadMarkerLibrary()
       if (cancelled) return
       libRef.current = lib
+      clusterPopupRef.current = new google.maps.InfoWindow()
       const clusterRenderer: Renderer = {
         render: (cluster) => {
           const kindCounts: Record<MapClusterKind, number> = {
@@ -650,29 +681,30 @@ function RentalMapComponent({
             roommate: 0,
             marketplace: 0,
           }
+          let premiumCount = 0
           for (const marker of cluster.markers) {
             const kind = markerKindsRef.current.get(
               marker as google.maps.marker.AdvancedMarkerElement,
             )
             if (kind) kindCounts[kind] += 1
+            if (clusterListingsRef.current.get(marker as google.maps.marker.AdvancedMarkerElement)?.premium === true) premiumCount += 1
           }
-          const content = createMapClusterContent({ count: cluster.count, kindCounts })
+          const content = createMapClusterContent({ count: cluster.count, kindCounts, premiumCount })
           return new lib.AdvancedMarkerElement({
             position: cluster.position,
             content,
-            title: `${cluster.count} vị trí gần nhau. Nhấn để phóng to.`,
+            title: content.title,
             zIndex: 3000 + cluster.count,
             gmpClickable: true,
           })
         },
       }
+      const clusterAlgorithm = new ListingClusterAlgorithm({ radius: 96, maxZoom: 22 })
+      clusterAlgorithmRef.current = clusterAlgorithm
       markerClustererRef.current = new MarkerClusterer({
         map,
         markers: [],
-        algorithm: new SuperClusterAlgorithm({
-          radius: 96,
-          maxZoom: 22,
-        }),
+        algorithm: clusterAlgorithm,
         renderer: clusterRenderer,
         onClusterClick: (event, cluster, clusterMap) => {
           // MarkerClusterer may emit different click event shapes depending on marker type/version.
@@ -691,8 +723,16 @@ function RentalMapComponent({
           evt.preventDefault?.()
           evt.domEvent?.stopPropagation?.()
           evt.domEvent?.preventDefault?.()
-          const bounds = cluster.bounds
-          if (bounds) clusterMap.fitBounds(bounds, 72)
+          const entries = cluster.markers.flatMap(marker => {
+            const listing = clusterListingsRef.current.get(marker as google.maps.marker.AdvancedMarkerElement)
+            return listing ? [{ ...listing, open: () => { clusterPopupRef.current?.close(); listing.open() } }] : []
+          })
+          const zoom = () => { clusterPopupRef.current?.close(); if (cluster.bounds) clusterMap.fitBounds(cluster.bounds, 72) }
+          if (!entries.length) { zoom(); return }
+          const popup = clusterPopupRef.current
+          popup?.setContent(createClusterListings(entries, zoom))
+          popup?.setPosition(cluster.position)
+          popup?.open({ map: clusterMap, shouldFocus: true })
         },
       })
       syncMarkersRef.current()
@@ -704,9 +744,12 @@ function RentalMapComponent({
       listeners.forEach((l) => google.maps.event.removeListener(l))
       cameraRef.current?.dispose()
       cameraRef.current = null
+      clusterPopupRef.current?.close()
+      clusterPopupRef.current = null
       markerClustererRef.current?.clearMarkers(true)
       markerClustererRef.current?.setMap(null)
       markerClustererRef.current = null
+      clusterAlgorithmRef.current = null
       ownedMarkers.forEach((e) => {
         e.marker.map = null
         e.dispose?.()

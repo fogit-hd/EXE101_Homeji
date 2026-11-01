@@ -124,6 +124,9 @@
   font-weight: 900;
   letter-spacing: -0.03em;
 }
+.map-pin-cluster--premium .map-pin-cluster__bubble { box-shadow: 0 0 0 2px #d5ac45, 0 4px 14px #0f172a60; }
+.map-pin-cluster--premium .map-pin-cluster__lift:hover .map-pin-cluster__bubble { box-shadow: 0 0 0 3px #d5ac45, 0 7px 20px #0f172a70; }
+.map-pin-cluster__vip { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); padding: 4px 7px; border: 1px solid #c79c32; border-radius: 8px; background: #fff2c7; color: #6b4913; font: 750 10px/1 var(--font-ui, sans-serif); white-space: nowrap; pointer-events: none; }
 
 .map-pin-cluster__label {
   display: block;

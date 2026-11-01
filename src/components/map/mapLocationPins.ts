@@ -50,9 +50,11 @@ const CLUSTER_COLORS: Record<MapClusterKind, string> = {
 export function createMapClusterContent(options: {
   count: number
   kindCounts: Record<MapClusterKind, number>
+  premiumCount?: number
 }): HTMLDivElement {
   const count = Math.max(2, Math.round(options.count))
-  const title = `${count} vị trí gần nhau. Nhấn để phóng to.`
+  const premiumCount = Math.min(count, Math.max(0, Math.floor(options.premiumCount ?? 0)))
+  const title = `${count} tin gần nhau${premiumCount > 0 ? `, có ${premiumCount} tin VIP` : ''}. Nhấn để xem danh sách.`
   const { root, mount } = coordinateAnchorRoot(title, 'map-pin-cluster', {
     interactive: true,
   })
@@ -87,6 +89,13 @@ export function createMapClusterContent(options: {
   label.textContent = 'vị trí'
   bubble.append(value, label)
   mount.appendChild(bubble)
+  if (premiumCount > 0) {
+    root.classList.add('map-pin-cluster--premium')
+    const badge = document.createElement('span')
+    badge.className = 'map-pin-cluster__vip'
+    badge.textContent = `★ ${premiumCount} VIP`
+    mount.append(badge)
+  }
   return root
 }
 
