@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getSubscriptionPackages, type SubscriptionPackage } from '../../api'
@@ -44,14 +44,16 @@ export function PremiumLaunchOffer() {
     if (visible && node && !node.open) node.showModal()
     else if (!visible && node?.open) node.close()
   }, [visible, announcement?.id])
+  const announcementId = announcement?.id
+  const offerEndsAt = plan?.offerEndsAt
   const dismiss = () => {
-    if (announcement) {
-      const next = [...readSeen(), announcement.id].slice(-100)
+    if (announcementId) {
+      const next = [...readSeen(), announcementId].slice(-100)
       setSeen(next)
       try { localStorage.setItem(seenKey, JSON.stringify(next)) } catch { /* Still dismissed in memory. */ }
     } else {
       setDismissed(true)
-      try { sessionStorage.setItem('homeji-premium-offer-dismissed', plan!.offerEndsAt!) } catch { /* Optional preference. */ }
+      try { if (offerEndsAt) sessionStorage.setItem('homeji-premium-offer-dismissed', offerEndsAt) } catch { /* Optional preference. */ }
     }
   }
   if (!visible) return null
@@ -72,5 +74,18 @@ export function PremiumLaunchOffer() {
     <small>{announcement ? `Áp dụng từ ${new Date(announcement.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · Giờ Việt Nam` : `Ưu đãi đến ${end} · Giờ Việt Nam`}</small>
     <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
     <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
+    <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />
   </dialog>, document.body)
+}
+
+function PopupAutoClose({ onClose }: { onClose: () => void }) {
+  const [seconds, setSeconds] = useState(15)
+  const close = useEffectEvent(onClose)
+  useEffect(() => {
+    const deadline = Date.now() + 15_000
+    const timeout = setTimeout(() => close(), 15_000)
+    const interval = setInterval(() => setSeconds(Math.max(0, Math.ceil((deadline - Date.now()) / 1000))), 1000)
+    return () => { clearTimeout(timeout); clearInterval(interval) }
+  }, [])
+  return <small className="premium-launch-offer__countdown" aria-live="off">Tự đóng sau {seconds} giây</small>
 }

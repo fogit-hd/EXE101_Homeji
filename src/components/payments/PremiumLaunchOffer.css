@@ -42,3 +42,4 @@
 [data-theme=dark] .premium-launch-offer :is(p, small, .premium-launch-offer__price del, .premium-launch-offer__later, .premium-launch-offer__price span) { color: #dfc4a4; }
 [data-theme=dark] .premium-launch-offer .premium-launch-offer__price b { color: #ffb46b; }
 [data-theme=dark] .premium-launch-offer .premium-launch-offer__saving { color: #ffca7c; }
+.premium-launch-offer > .premium-launch-offer__countdown { margin-top: 8px; font-size: 11px; }
