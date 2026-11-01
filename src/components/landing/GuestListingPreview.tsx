@@ -5,6 +5,7 @@ import { rentalPriceBasis, rentalPriceLabel } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
 import { rentalSourceHref, rentalSourceImageHref, rentalSourceLabel, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
+import { listingReference } from '../../lib/listingReference'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import './GuestListingPreview.css'
 
@@ -86,7 +87,7 @@ export function GuestListingPreview() {
                   <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
                   <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'post' && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
                   {item.kind === 'post' && item.data.descriptionExcerpt ? <span className="guest-preview__excerpt">{item.data.descriptionExcerpt}</span> : null}
-                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' && item.data.ownerDisplayName ? item.data.ownerDisplayName : isSource ? 'Tin từ nguồn công khai' : 'Tin trên Homeji'}</span><strong>Xem chi tiết <Arrow /></strong></span>
+                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : item.data.publisherName?.trim() || rentalSourceLabel(item.data.source)}</span><strong>Xem chi tiết <Arrow /></strong></span>
                 </span>
               </button>
             </article>
@@ -139,6 +140,8 @@ function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing
         <h2 id={titleId}>{listing.title}</h2>
         <p className="guest-preview-dialog__address">{listing.address}</p>
         <div className="guest-preview-dialog__facts">
+          <div><span>Mã tin</span><strong>{listingReference(listing.id, listing.source, listing.sourceId)}</strong></div>
+          <div><span>Người đăng</span><strong>{listing.publisherName?.trim() || rentalSourceLabel(listing.source)}</strong></div>
           <div><span>Giá thuê / tháng</span><strong>{formatListingRent(listing.price)}</strong></div>
           <div><span>Diện tích</span><strong>{formatListingArea(listing.area)}</strong></div>
           <div><span>Nguồn dữ liệu</span><strong>{rentalSourceLabel(listing.source)} · {listing.sourceId}</strong></div>

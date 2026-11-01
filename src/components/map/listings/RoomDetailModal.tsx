@@ -21,6 +21,7 @@ import { gallerySwipeDirection } from '../../../lib/gallerySwipe'
 import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
 import { rentalPriceBasis, rentalPriceLabel } from '../../ai/rentalPriceBasis'
+import { listingReference } from '../../../lib/listingReference'
 import { RentalDetailAssistant } from '../../ai/RentalDetailAssistant'
 import { useRentalAssistantOpener, useRentalAssistantSelection } from '../../../contexts/rental-assistant-context'
 import { rentalDraftTarget, rentalMessageDraftStore } from '../../../lib/rentalMessageDraft'
@@ -399,6 +400,7 @@ export function RoomDetailModal({
                 <div className="room-detail__summary">
                   <p className="room-detail__eyebrow">{isStudentShare ? 'TÌM BẠN Ở GHÉP' : 'THÔNG TIN CHO THUÊ'}</p>
                   <h3>{post.title?.trim() || 'Tin đăng'}</h3>
+                  {listingReference(post.id) ? <p className="room-detail__muted">Mã tin: {listingReference(post.id)}</p> : null}
                   {isStudentShare ? <p className="room-detail__muted">
                     {post.ownerDisplayName || 'Người đăng'}{post.ownerSchool ? ` · ${post.ownerSchool}` : ''}
                     {post.availableSlots ? ` · Cần thêm ${post.availableSlots} người ghép` : ''}

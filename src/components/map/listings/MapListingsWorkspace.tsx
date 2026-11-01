@@ -1,5 +1,5 @@
 import { MoneyInput } from '../../ui/MoneyInput'
-import { RentalSourceBrowser } from '../../ai/RentalSourceBrowser'
+import { RentalSourceResults } from './RentalSourceResults'
 import {
   useLayoutEffect,
   useMemo,
@@ -58,6 +58,7 @@ type Props = {
   onToggleSave?: (id: string) => void
   onResetFilters: () => void
   onUserSearch?: () => void
+  onFocusSource?: (location: { lat: number; lng: number }) => void
 }
 
 const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
@@ -84,7 +85,9 @@ export function MapListingsWorkspace({
   onToggleSave,
   onResetFilters,
   onUserSearch,
+  onFocusSource,
 }: Props) {
+  const [sourceCounts, setSourceCounts] = useState({ total: 0, mapped: 0 })
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
@@ -380,7 +383,7 @@ export function MapListingsWorkspace({
             aria-label="Danh sách kết quả"
           >
             {query.view === 'split' ? <div className="map-listings__panel-head">
-              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : 'Phòng trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : `${cards.length} tin đang hiển thị`}</p></div>
+              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : 'Phòng trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : marketMode ? `${cards.length} tin đang hiển thị` : `${cards.length} tin Homeji · ${sourceCounts.total} tin khác`}</p></div>
               <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>Thu gọn</button>
             </div> : null}
             <div className="map-listings__panel-body">
@@ -421,7 +424,7 @@ export function MapListingsWorkspace({
                   {cards.map(({ id, view }) => <li key={id}>{renderListingCard(id, view)}</li>)}
                 </ul>
               )}
-              {!marketMode && <RentalSourceBrowser />}
+              {!marketMode && <RentalSourceResults query={query} onCount={setSourceCounts} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
               {query.page > 1 || cards.length >= PAGE_SIZE ? (
                 <div className="map-listings__pager">
                   {query.page > 1 ? (

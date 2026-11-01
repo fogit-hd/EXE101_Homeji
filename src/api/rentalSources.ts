@@ -5,6 +5,26 @@ export interface RentalSourceListing {
   address: string; district: string; price: number; area: number
   imageUrls: string[]; sourceUpdatedAt: string | null; collectedAt: string
   sourceExpiresAt?: string | null; sourceCheckedAt?: string | null
+  publisherName?: string | null; latitude?: number | null; longitude?: number | null
+}
+
+let catalog: { rows: RentalSourceListing[]; at: number } | null = null
+let catalogRequest: Promise<RentalSourceListing[]> | null = null
+
+/** Public inventory shared by the map and list. Read every page before claiming a complete count. */
+export function getRentalSourceCatalog(): Promise<RentalSourceListing[]> {
+  if (catalog && Date.now() - catalog.at < 60_000) return Promise.resolve(catalog.rows)
+  if (catalogRequest) return catalogRequest
+  catalogRequest = (async () => {
+    const rows = new Map<string, RentalSourceListing>()
+    for (let page = 1; page <= 20; page++) {
+      const chunk = await searchRentalSources({ keyword: '', district: '', page, pageSize: 50 })
+      for (const row of chunk) rows.set(row.id, row)
+      if (chunk.length < 50) { const result = [...rows.values()]; catalog = { rows: result, at: Date.now() }; return result }
+    }
+    throw new Error('Danh sách vượt quá giới hạn tải bản đồ. Cần chia nhỏ khu vực để tải đủ tin.')
+  })().finally(() => { catalogRequest = null })
+  return catalogRequest
 }
 
 export function searchRentalSources({ keyword, district, page, pageSize = 10 }: { keyword: string; district: string; page: number; pageSize?: number }, signal?: AbortSignal) {

@@ -1104,6 +1104,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           onHoverListing={handleCardHover}
           onLeaveListing={handleCardLeave}
           onSelectListing={handleSelectPost}
+          onFocusSource={handleMarketplaceFocusMap}
           onOpenRoomDetail={openRoomDetail}
           onToggleSave={isAuthenticated ? handleMapExploreToggleSave : undefined}
           onResetFilters={onResetFilters}

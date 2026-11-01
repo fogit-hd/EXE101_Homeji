@@ -41,6 +41,7 @@ export function RentalSourceBrowser() {
       const freshness = rentalSourceFreshness(item.sourceExpiresAt, item.sourceCheckedAt)
       return <article key={item.id} className="ai-search-review__listing">
         <strong>{item.title}</strong><span>{item.address}</span>
+        <span>Người đăng: {item.publisherName?.trim() || rentalSourceLabel(item.source)}</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{item.imageUrls.map(rentalSourceImageHref).filter((url): url is string => url !== null).slice(0, 3).map(url =>
           <a key={url} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`Ảnh từ tin nguồn: ${item.title}`} loading="lazy" referrerPolicy="no-referrer" style={{ width: 160, height: 110, objectFit: 'cover', borderRadius: 8 }} onError={event => { event.currentTarget.hidden = true }} /></a>
         )}</div>
