@@ -256,6 +256,9 @@ export const cancelInvitation = (invitationId: string) =>
 // Conversations
 export const getConversations = () => apiRequest<PostConversation[]>('/api/conversations')
 
+export const setConversationUserBlocked = (conversationId: string, blocked: boolean) =>
+  apiRequest<{ otherParticipantId: string; isBlockedByMe: boolean; isBlockedByOther: boolean }>(`/api/conversations/${encodeURIComponent(conversationId)}/block`, { method: blocked ? 'PUT' : 'DELETE' })
+
 export const startRentalPostConversation = (postId: string) =>
   apiRequest<PostConversation>(`/api/conversations/rental-posts/${postId}`, { method: 'POST' })
 

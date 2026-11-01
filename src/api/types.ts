@@ -530,6 +530,8 @@ export interface PostConversation {
   otherParticipantName: string
   otherParticipantAvatarPath: string | null
   otherParticipantIsPremium?: boolean
+  isBlockedByMe?: boolean
+  isBlockedByOther?: boolean
   createdAt: string
   updatedAt: string
   lastMessage: string | null

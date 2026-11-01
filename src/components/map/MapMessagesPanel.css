@@ -1650,3 +1650,13 @@ html:root #root .map-messages .map-messages__row .map-messages__tag.is-market {
 html:root #root .map-messages .map-messages__row .map-messages__tag.is-wanted {
   background: color-mix(in srgb,#9771d0 16%,var(--surface-elevated)); border-color: #9771d050;
 }
+.map-messages__block-notice {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #d5e2e1);
+  border-radius: 12px;
+  background: var(--surface-muted, #f2f7f6);
+  color: var(--text-secondary, #526968);
+  font-size: 13px;
+  line-height: 1.5;
+}

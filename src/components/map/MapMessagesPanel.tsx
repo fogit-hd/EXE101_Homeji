@@ -2,13 +2,12 @@ import { VoiceMessageRecorder } from './VoiceMessageRecorder'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useIncomingConversationMessages } from '../../hooks/useIncomingConversationMessages'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useInView } from 'motion/react'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   ConversationSubjectType,
   deleteConversationAttachment,
   downloadConversationAttachment,
-  getConversationMessages,
   getConversations,
   getMarketplacePost,
   getRentalPost,
@@ -16,6 +15,7 @@ import {
   MessageAttachmentStatus,
   sendConversationImages,
   sendConversationMessage,
+  setConversationUserBlocked,
   type PostConversation,
   type PostMessage,
   type PostMessageAttachment,
@@ -114,9 +114,11 @@ function SecureMessageAttachment({
   const [src, setSrc] = useState<string | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const attachmentRef = useRef<HTMLElement>(null)
+  const nearViewport = useInView(attachmentRef, { once: true, margin: '300px' })
 
   useEffect(() => {
-    if (attachment.status !== MessageAttachmentStatus.Ready) return
+    if (!nearViewport || attachment.status !== MessageAttachmentStatus.Ready) return
     let cancelled = false
     let objectUrl: string | null = null
     void downloadConversationAttachment(attachment.contentPath)
@@ -132,14 +134,14 @@ function SecureMessageAttachment({
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [attachment.contentPath, attachment.status])
+  }, [attachment.contentPath, attachment.status, nearViewport])
 
   if (attachment.status === MessageAttachmentStatus.Deleted) {
     return <span className="map-messages__image-deleted">Tệp đã được người gửi xóa</span>
   }
 
   return (
-    <figure className="map-messages__image">
+    <figure ref={attachmentRef} className="map-messages__image">
       {src && attachment.mimeType === 'audio/wav' ? <audio className="chat-voice-message" controls preload="metadata" src={src} aria-label="Tin nhắn thoại" /> : src ? (
         <button type="button" onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}>
           <img src={src} alt={attachmentContextLabel[attachment.context] ?? 'Ảnh trong tin nhắn'} />
@@ -457,6 +459,8 @@ function MapMessagesPanelContent({
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [blocking, setBlocking] = useState(false)
+  const blockGate = useRef(createAsyncActionGate())
   const sendGate = useRef(createAsyncActionGate())
   const gpsGate = useRef(createAsyncActionGate())
   const [error, setError] = useState<string | null>(null)
@@ -536,7 +540,7 @@ function MapMessagesPanelContent({
     setConversations(prev => prev.map(c => c.id === activeId ? { ...c, unreadCount: 0 } : c))
   }
   const refreshInbox = useCallback(() => { void loadConversations({ soft: true }) }, [loadConversations])
-  useIncomingConversationMessages({ conversationId: threadVisible ? activeId : null, ownerId: me, setMessages, refreshInbox })
+  const history = useIncomingConversationMessages({ conversationId: threadVisible ? activeId : null, ownerId: me, setMessages, refreshInbox })
 
   useEffect(() => {
     if (searchQuery.trim()) return
@@ -561,6 +565,31 @@ function MapMessagesPanelContent({
 
   const active = conversations.find((c) => c.id === activeId) ?? null
   const peerName = active?.otherParticipantName?.trim() || 'Người dùng'
+  const blocked = Boolean(active?.isBlockedByMe || active?.isBlockedByOther)
+  const cannotSend = !active || blocked || blocking
+
+  const changeUserBlock = () => blockGate.current(async () => {
+    if (!active || sending) return
+    const conversation = active
+    const nextBlocked = !conversation.isBlockedByMe
+    if (nextBlocked && !window.confirm(`Chặn ${peerName}? Hai người sẽ không thể gửi tin nhắn hoặc gọi cho nhau. Lịch sử trò chuyện vẫn được giữ lại.`)) return
+    const ownerId = me
+    setBlocking(true)
+    setError(null)
+    try {
+      const state = await setConversationUserBlocked(conversation.id, nextBlocked)
+      if (getStoredSession()?.userId !== ownerId) return
+      inboxLoadVersion.current++
+      setConversations(previous => previous.map(item => item.otherParticipantId === state.otherParticipantId
+        ? { ...item, isBlockedByMe: state.isBlockedByMe, isBlockedByOther: state.isBlockedByOther } : item))
+      if (currentThread.current.id === conversation.id) {
+        setAttachMode(null)
+        setImageFiles([])
+      }
+    } catch (error) {
+      if (getStoredSession()?.userId === ownerId && currentThread.current.id === conversation.id) setError(getErrorMessage(error, 'Chưa cập nhật được trạng thái chặn. Vui lòng thử lại.'))
+    } finally { setBlocking(false) }
+  })
 
   // Conversation subject (room / item) for the header context card.
   const [subject, setSubject] = useState<SubjectInfo | null>(null)
@@ -659,8 +688,7 @@ function MapMessagesPanelContent({
     )
     if (onPickConversation) {
       onPickConversation(id)
-      // Opening a floating thread marks read via getConversationMessages.
-      void getConversationMessages(id).catch(() => undefined)
+      // The opened thread fetches history and marks it read itself.
       return
     }
     setActiveId(id)
@@ -704,7 +732,7 @@ function MapMessagesPanelContent({
   }
 
   const sendBody = async (body: string) => sendGate.current(async () => {
-    if (!activeId || currentThread.current.id !== activeId || !body.trim() || sending) return
+    if (!activeId || cannotSend || currentThread.current.id !== activeId || !body.trim() || sending) return
     const thread = { ...currentThread.current }
     setSending(true)
     setError(null)
@@ -746,7 +774,7 @@ function MapMessagesPanelContent({
   }
 
   const handleSendImages = async () => sendGate.current(async () => {
-    if (!activeId || currentThread.current.id !== activeId || imageFiles.length === 0 || sending) return
+    if (!activeId || cannotSend || currentThread.current.id !== activeId || imageFiles.length === 0 || sending) return
     const thread = { ...currentThread.current }
     setSending(true)
     setError(null)
@@ -1039,7 +1067,10 @@ function MapMessagesPanelContent({
           ) : null}
 
           <div className="map-messages__thread-actions">
-            <button type="button" className="map-messages__icon-btn" aria-label={`Gọi thoại cho ${peerName}`} title="Gọi thoại" disabled={!active || voice.busy || !voice.ready} onClick={() => active && voice.startCall(active.id, peerName)}>
+            <button type="button" className="map-messages__icon-btn" aria-label={active?.isBlockedByMe ? 'Bỏ chặn người dùng' : 'Chặn người dùng'} title={active?.isBlockedByMe ? 'Bỏ chặn người dùng' : 'Chặn người dùng'} aria-pressed={Boolean(active?.isBlockedByMe)} disabled={!active || blocking || sending} onClick={() => void changeUserBlock()}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="12" r="8" /><path d="m6.5 6.5 11 11" /></svg>
+            </button>
+            <button type="button" className="map-messages__icon-btn" aria-label={`Gọi thoại cho ${peerName}`} title="Gọi thoại" disabled={cannotSend || voice.busy || !voice.ready} onClick={() => active && voice.startCall(active.id, peerName)}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 1-1 2-2 2C10 21 3 14 3 5c0-1 1-2 2-2Z" /></svg>
             </button>
             <button type="button" className="map-messages__icon-btn" aria-label={`Mở hồ sơ ${peerName}`} title="Xem hồ sơ" disabled={!active} onClick={() => active && setProfileId(active.otherParticipantId)}>
@@ -1125,6 +1156,8 @@ function MapMessagesPanelContent({
         ) : null}
 
         <div className="map-messages__bubbles">
+          {history.loading && !messages.length ? <p className="map-messages__empty" role="status">Đang tải tin nhắn…</p> : null}
+          {history.error ? <div className="map-messages__block-notice" role="alert">{history.error} <button type="button" onClick={history.retry}>Thử lại</button></div> : null}
           <AnimatePresence initial={false}>
           {messages.map((m, idx) => {
             const mine = me != null && m.senderId === me
@@ -1367,7 +1400,10 @@ function MapMessagesPanelContent({
             </form>
           ) : null}
 
-          <RentalMessageDraftNotice userId={me && me === profile?.id ? me : undefined} conversation={active} existingDraft={draft}
+          {blocked ? <p className="map-messages__block-notice" role="status">{active?.isBlockedByMe
+            ? 'Bạn đã chặn người này. Bỏ chặn để tiếp tục nhắn tin và gọi thoại.'
+            : 'Hiện không thể gửi tin nhắn hoặc gọi thoại trong cuộc trò chuyện này.'}</p> : null}
+          <RentalMessageDraftNotice userId={me && me === profile?.id ? me : undefined} conversation={blocked ? null : active} existingDraft={draft}
             onUse={body => { setDraft(body) }} />
           <form
             className="map-messages__composer"
@@ -1381,12 +1417,12 @@ function MapMessagesPanelContent({
               className={`map-messages__attach-btn map-motion-press${attachMode ? ' is-open' : ''}`}
               aria-label="Đính kèm vị trí hoặc địa chỉ"
               aria-expanded={attachMode != null}
-              disabled={!activeId || sending}
+              disabled={cannotSend || sending}
               onClick={() => setAttachMode((m) => (m ? null : 'menu'))}
             >
               <svg viewBox="0 0 24 24" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
-            {activeId && <ChatMediaPicker key={activeId} conversationId={activeId} disabled={sending || imageFiles.length > 0}
+            {activeId && <ChatMediaPicker key={`${activeId}-${blocked}`} conversationId={activeId} disabled={cannotSend || sending || imageFiles.length > 0}
               onEmoji={emoji => {
                 const input = composerRef.current
                 const start = input?.selectionStart ?? draft.length, end = input?.selectionEnd ?? draft.length
@@ -1396,7 +1432,7 @@ function MapMessagesPanelContent({
                 requestAnimationFrame(() => { input?.focus(); input?.setSelectionRange(start + emoji.length, start + emoji.length) })
               }}
               onSent={message => { setMessages(previous => [...previous, message]); void loadConversations({ soft: true }) }} onError={setError} />}
-            {activeId && <VoiceMessageRecorder key={`voice-${activeId}-${voice.busy}`} conversationId={activeId} disabled={sending || imageFiles.length > 0}
+            {activeId && <VoiceMessageRecorder key={`voice-${activeId}-${voice.busy}-${blocked}`} conversationId={activeId} disabled={cannotSend || sending || imageFiles.length > 0}
               onSent={message => { setMessages(previous => [...previous, message]); void loadConversations({ soft: true }) }} onError={setError} />}
             <textarea
               ref={composerRef}
@@ -1412,14 +1448,14 @@ function MapMessagesPanelContent({
               }}
               placeholder={activeId ? `Nhắn cho ${peerName}…` : 'Nhập tin nhắn…'}
               aria-label="Nội dung tin nhắn"
-              disabled={!activeId}
+              disabled={cannotSend}
             />
             <button
               type="submit"
               className="map-messages__send map-motion-press"
               aria-label="Gửi"
               title="Gửi"
-              disabled={(imageFiles.length === 0 && !draft.trim()) || sending}
+              disabled={cannotSend || (imageFiles.length === 0 && !draft.trim()) || sending}
             >
               <svg viewBox="0 0 24 24" aria-hidden><path d="M5 12h13M13 6l6 6-6 6" /></svg>
             </button>
