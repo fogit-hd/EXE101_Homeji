@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, type RefObject } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { parseFiltersFromURL } from './listings/listingAdapters'
 import { filterRentalSources } from '../../lib/rentalSourceFilters'
 import { apiRequest } from '../../api/client'
-import { getRentalSourceCatalog } from '../../api/rentalSources'
+import { getRentalSourceCatalog, sourceRoomHref } from '../../api/rentalSources'
 import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markerclusterer'
 import { readSourceCatalogPins, type SourceCatalogPin } from '../../lib/sourceCatalog'
 import { createMapClusterContent, createMarketplacePinContent, createPricePillPinContent, createRentalPinContent } from './mapLocationPins'
 import { formatCompactPriceTr } from './explore/mapExploreFormat'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
 
-function popupContent(pin: SourceCatalogPin): HTMLDivElement {
+function popupContent(pin: SourceCatalogPin, onOpen: (id: string) => void): HTMLDivElement {
   const root = document.createElement('div'); root.className = 'source-catalog-popup'
   if (pin.imageUrl) {
     const image = document.createElement('img'); image.src = pin.imageUrl; image.alt = ''; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer'
@@ -22,11 +22,12 @@ function popupContent(pin: SourceCatalogPin): HTMLDivElement {
   if (pin.price) { const price = document.createElement('p'); price.textContent = `${pin.price.toLocaleString('vi-VN')} đ/tháng · Giá trên tin gốc`; root.append(price) }
   if (pin.publisherName) { const author = document.createElement('p'); author.textContent = `Người đăng: ${pin.publisherName}`; root.append(author) }
   const note = document.createElement('small'); note.textContent = pin.kind === 'food' ? 'Xem thông tin quán trước khi ghé.' : 'Vị trí theo tin gốc. Kiểm tra tình trạng phòng với người đăng trước khi đến.'
-  const link = document.createElement('a'); link.href = pin.sourceUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = pin.kind === 'food' ? 'Xem thông tin quán' : 'Xem tin gốc'
+  const link = document.createElement('a'); link.href = pin.kind === 'food' ? pin.sourceUrl : sourceRoomHref(pin.id.slice('rental:'.length)); link.textContent = pin.kind === 'food' ? 'Xem thông tin quán' : 'Xem chi tiết & liên hệ'; if (pin.kind === 'food') { link.target = '_blank'; link.rel = 'noopener noreferrer' } else link.addEventListener('click', event => { event.preventDefault(); onOpen(pin.id.slice('rental:'.length)) })
   root.append(note, link); return root
 }
 
 export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill') {
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const query = useMemo(() => parseFiltersFromURL(params), [params])
   const [count, setCount] = useState(0)
@@ -52,7 +53,7 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
             ? createPricePillPinContent({ title: pin.title, label: formatCompactPriceTr(pin.price) })
             : createRentalPinContent({ title: pin.title, kind: 'vacant' })
         const marker = new library.AdvancedMarkerElement({ position: { lat: pin.lat, lng: pin.lng }, title: pin.title, content: content.element, gmpClickable: true, zIndex: 35 })
-        const listener = marker.addListener('gmp-click', () => { popup.setContent(popupContent(pin)); popup.open({ map, anchor: marker, shouldFocus: false }) })
+        const listener = marker.addListener('gmp-click', () => { popup.setContent(popupContent(pin, id => navigate(sourceRoomHref(id)))); popup.open({ map, anchor: marker, shouldFocus: false }) })
         handles.push({ marker, dispose: content.dispose, listener })
       }
       const kinds = new Map(handles.map((handle, index) => [handle.marker, pins[index].kind]))
@@ -66,6 +67,6 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       setCount(handles.length)
     }).catch(() => { if (!controller.signal.aborted) setCount(handles.length) })
     return () => { controller.abort(); popup.close(); clusterer?.clearMarkers(); clusterer?.setMap(null); for (const handle of handles) { handle.listener.remove(); handle.marker.map = null; handle.dispose() } }
-  }, [mapRef, libraryRef, ready, enabled, layers.marketplace, layers.vacant, markerVariant, query])
+  }, [mapRef, libraryRef, ready, enabled, layers.marketplace, layers.vacant, markerVariant, query, navigate])
   return enabled && ready ? count : 0
 }

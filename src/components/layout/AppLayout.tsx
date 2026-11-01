@@ -1,5 +1,6 @@
 import { SellerOrderAlertsProvider } from '../marketplace/SellerOrderAlerts'
 import { PremiumLaunchOffer } from '../payments/PremiumLaunchOffer'
+import { SourceRoomDetailsHost } from '../map/listings/SourceRoomDetailsHost'
 import { VoiceCallProvider } from '../../contexts/VoiceCallContext'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { Suspense, useLayoutEffect } from 'react'
@@ -69,6 +70,7 @@ export function AppLayout() {
     >
       {isAuthedApp ? <AppShell /> : <Navbar />}
       {!isAuthCinema ? <PremiumLaunchOffer /> : null}
+      <SourceRoomDetailsHost />
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
         {isAuthenticated && needsProfileSetup && !isProfile && !isAuthCinema ? <ProfileSetupNotice /> : null}
         <div

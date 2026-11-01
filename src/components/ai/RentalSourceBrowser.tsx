@@ -1,6 +1,7 @@
+import { Link } from 'react-router-dom'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
-import { rentalSourceHref, rentalSourceImageHref, rentalSourceLabel, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
+import { sourceRoomHref, rentalSourceImageHref, rentalSourceLabel, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice } from '../../lib/labels'
 import { rentalSourceFreshness } from '../../lib/rentalSourceFreshness'
@@ -37,7 +38,6 @@ export function RentalSourceBrowser() {
     {error ? <p role="alert">{error}</p> : null}
     {page > 0 && !loading && !items.length ? <p>Không có tin nguồn cho trang này.</p> : null}
     {items.map(item => {
-      const href = rentalSourceHref(item.sourceUrl)
       const freshness = rentalSourceFreshness(item.sourceExpiresAt, item.sourceCheckedAt)
       return <article key={item.id} className="ai-search-review__listing">
         <strong>{item.title}</strong><span>{item.address}</span>
@@ -52,7 +52,7 @@ export function RentalSourceBrowser() {
         <small>{freshness === 'expired' ? 'Theo dữ liệu nguồn đã kiểm tra: quảng cáo đã quá ngày hết hạn.' : freshness === 'notExpired' ? 'Chưa quá ngày hết hạn đã ghi nhận; chưa xác nhận phòng còn trống.' : 'Chưa có thông tin kiểm tra thời hạn quảng cáo.'}</small>
         {item.sourceCheckedAt ? <small>Kiểm tra nguồn: {dateLabel(item.sourceCheckedAt)} · ngày hết hạn ghi nhận: {dateLabel(item.sourceExpiresAt ?? null)}</small> : null}
         <small>Chưa có thông tin xác nhận về tiền cọc, đơn vị điện/nước, tiện ích và số người.</small>
-        {href ? <a href={href} target="_blank" rel="noopener noreferrer">Mở quảng cáo gốc để kiểm tra</a> : <span>Đường dẫn nguồn không hợp lệ.</span>}
+        <Link to={sourceRoomHref(item.id)}>Xem chi tiết & liên hệ</Link>
       </article>
     })}
     {page > 0 ? <div><button type="button" disabled={loading || page <= 1} onClick={() => void load(page - 1)}>Trang trước</button> <span>Trang {page}</span> <button type="button" disabled={loading || items.length < 10 || page >= 1000} onClick={() => void load(page + 1)}>Trang sau</button></div> : null}

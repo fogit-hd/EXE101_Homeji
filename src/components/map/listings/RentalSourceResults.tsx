@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
-import { getRentalSourceCatalog, rentalSourceHref, rentalSourceImageHref, rentalSourceLabel, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSourceCatalog, sourceRoomHref, rentalSourceImageHref, rentalSourceLabel, type RentalSourceListing } from '../../../api/rentalSources'
 import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
@@ -34,7 +35,6 @@ export function RentalSourceResults({ query, onCount, onFocus }: {
     {unsupported ? <p className="source-results__note">Tin từ các website khác chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
     {filtered.slice(0, visible).map(row => {
-      const href = rentalSourceHref(row.sourceUrl)
       const photo = row.imageUrls.map(rentalSourceImageHref).find(Boolean)
       return <article className="source-results__card" key={row.id}>
         {photo ? <img src={photo} alt={row.title} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
@@ -42,7 +42,7 @@ export function RentalSourceResults({ query, onCount, onFocus }: {
           <span>{row.area} m² · {listingReference(row.id, row.source, row.sourceId)}</span>
           <p className="source-results__publisher">{row.publisherName?.trim() || rentalSourceLabel(row.source)}</p>
           <small>{sourceHasLocation(row) ? 'Vị trí theo tin gốc' : 'Chưa có vị trí trên bản đồ'}</small>
-          <div className="source-results__actions">{onFocus && sourceHasLocation(row) ? <button type="button" onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí</button> : null}{href ? <a href={href} target="_blank" rel="noopener noreferrer">Xem tin gốc · {rentalSourceLabel(row.source)}</a> : null}</div>
+          <div className="source-results__actions">{onFocus && sourceHasLocation(row) ? <button type="button" onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí</button> : null}<Link to={sourceRoomHref(row.id)}>Xem chi tiết & liên hệ</Link></div>
         </div>
       </article>
     })}

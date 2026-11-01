@@ -26,7 +26,8 @@ export function readSourceCatalogPins(rows: unknown, kind: SourceCatalogPin['kin
     let imageUrl: string | null = null
     try {
       const image = new URL(row.imageUrls?.[0])
-      if (image.protocol === 'https:' && ['pt123.cdn.static123.com', 'cloud.mogi.vn', 'file.phongtro.vn'].includes(image.hostname) && !image.username && !image.password && !image.port) imageUrl = image.href
+      const trusted = ['pt123.cdn.static123.com', 'cloud.mogi.vn', 'file.phongtro.vn'].includes(image.hostname) || image.hostname === 'res.cloudinary.com' && image.pathname.startsWith('/dv4y7cdpi/image/upload/')
+      if (image.protocol === 'https:' && trusted && !image.username && !image.password && !image.port) imageUrl = image.href
     } catch { /* A sourced place can legitimately have no photograph. */ }
     return [{ id: `${kind}:${row.id}`, kind, title: title.slice(0, 200), address: row.address.slice(0, 500), lat, lng, sourceUrl, imageUrl, price: kind === 'rental' && typeof row.price === 'number' && row.price > 0 ? row.price : null,
       publisherName: typeof row.publisherName === 'string' && row.publisherName.trim() ? row.publisherName.trim().slice(0, 100) : null }]

@@ -5,7 +5,7 @@ import { rentalPriceBasis, rentalPriceLabel } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
 import { rentalSourceHref, rentalSourceImageHref, rentalSourceLabel, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
-import { listingReference } from '../../lib/listingReference'
+import { SourceRoomDetail } from '../map/listings/SourceRoomDetail'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import './GuestListingPreview.css'
 
@@ -104,56 +104,7 @@ export function GuestListingPreview() {
 }
 
 function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing; onClose: () => void }) {
-  const dialog = useRef<HTMLDialogElement>(null)
-  const titleId = useId()
-
-  useEffect(() => {
-    const element = dialog.current
-    if (!element) return
-    const previousOverflow = document.body.style.overflow
-    const wasPaused = isGuestCoastPaused()
-    pauseGuestCoast()
-    document.body.style.overflow = 'hidden'
-    element.showModal()
-    return () => {
-      element.close()
-      document.body.style.overflow = previousOverflow
-      if (!wasPaused) resumeGuestCoast()
-    }
-  }, [])
-
-  const photos = listing.imageUrls.map(rentalSourceImageHref).filter((url): url is string => Boolean(url))
-  const sourceHref = rentalSourceHref(listing.sourceUrl)
-
-  return <dialog ref={dialog} className="guest-preview-dialog" aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); onClose() }}
-    onClick={event => { if (event.target === event.currentTarget) onClose() }}>
-    <div className="guest-preview-dialog__inner">
-      <header className="guest-preview-dialog__heading">
-        <span></span>
-        <button type="button" aria-label="Đóng chi tiết tin phòng" onClick={onClose} autoFocus>×</button>
-      </header>
-      {photos.length ? <div className="guest-preview-dialog__gallery" aria-label="Ảnh từ tin đăng">
-        {photos.map((photo, index) => <img key={photo} src={photo} alt={`Ảnh theo tin ${index + 1}`} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} />)}
-      </div> : null}
-      <div className="guest-preview-dialog__body">
-        <h2 id={titleId}>{listing.title}</h2>
-        <p className="guest-preview-dialog__address">{listing.address}</p>
-        <div className="guest-preview-dialog__facts">
-          <div><span>Mã tin</span><strong>{listingReference(listing.id, listing.source, listing.sourceId)}</strong></div>
-          <div><span>Người đăng</span><strong>{listing.publisherName?.trim() || rentalSourceLabel(listing.source)}</strong></div>
-          <div><span>Giá thuê / tháng</span><strong>{formatListingRent(listing.price)}</strong></div>
-          <div><span>Diện tích</span><strong>{formatListingArea(listing.area)}</strong></div>
-          <div><span>Nguồn dữ liệu</span><strong>{rentalSourceLabel(listing.source)} · {listing.sourceId}</strong></div>
-        </div>
-        <p className="guest-preview-dialog__description">Tin được lưu trong Homeji từ nguồn công khai. Giá, hình ảnh và tình trạng cho thuê do nguồn đăng cung cấp, Homeji chưa xác minh và không thể dùng tin này để đặt lịch xem phòng.</p>
-        <footer className="guest-preview-dialog__footer">
-          <span>Đã lưu dữ liệu trong Homeji · Cập nhật {new Date(listing.collectedAt).toLocaleDateString('vi-VN')}</span>
-          {sourceHref ? <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="liquid-action">Xem tin gốc <Arrow /></a> : null}
-        </footer>
-      </div>
-    </div>
-  </dialog>
+  return <SourceRoomDetail id={listing.id} summary={listing} onClose={onClose} />
 }
 
 function GuestRoomPreview({ summary, onClose }: { summary: RentalPostSummary; onClose: () => void }) {

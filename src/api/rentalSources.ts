@@ -6,6 +6,15 @@ export interface RentalSourceListing {
   imageUrls: string[]; sourceUpdatedAt: string | null; collectedAt: string
   sourceExpiresAt?: string | null; sourceCheckedAt?: string | null
   publisherName?: string | null; latitude?: number | null; longitude?: number | null
+  description?: string | null; contactPhone?: string | null; detailsCollectedAt?: string | null
+}
+
+export const getRentalSource = (id: string, signal?: AbortSignal) => apiRequest<RentalSourceListing>(`/api/rental-source-listings/${encodeURIComponent(id)}`, { auth: false, signal })
+
+export function sourceRoomHref(id: string) {
+  const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)
+  params.set('source', id)
+  return `?${params}`
 }
 
 let catalog: { rows: RentalSourceListing[]; at: number } | null = null
@@ -37,7 +46,8 @@ export function rentalSourceImageHref(raw: string): string | null {
   try {
     const url = new URL(raw)
     return url.protocol === 'https:' && !url.username && !url.password && !url.port
-      && ['cloud.mogi.vn', 'pt123.cdn.static123.com', 'file.phongtro.vn'].includes(url.hostname) ? url.href : null
+      && (['cloud.mogi.vn', 'pt123.cdn.static123.com', 'file.phongtro.vn'].includes(url.hostname)
+        || url.hostname === 'res.cloudinary.com' && url.pathname.startsWith('/dv4y7cdpi/image/upload/')) ? url.href : null
   } catch { return null }
 }
 
