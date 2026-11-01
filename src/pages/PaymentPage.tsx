@@ -23,6 +23,7 @@ import { MapToast } from '../components/map/MapToast'
 import { RevealText } from '../components/motion/RevealText'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
 import { PremiumListingPreview } from '../components/payments/PremiumListingPreview'
+import { PremiumPurchaseConfirmation, type PremiumPurchase } from '../components/payments/PremiumPurchaseConfirmation'
 import { marketplaceHref } from '../components/shell/navigation'
 import { ShellIcon } from '../components/shell/ShellIcons'
 import { PaymentsSkeleton } from '../components/skeletons/PageSkeletons'
@@ -70,7 +71,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [walletError, setWalletError] = useState('')
   const [walletLoading, setWalletLoading] = useState(true)
   const [historyLoading, setHistoryLoading] = useState(true)
-  const [walletConfirmCode, setWalletConfirmCode] = useState<string | null>(null)
+  const [purchaseConfirmation, setPurchaseConfirmation] = useState<PremiumPurchase | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [checking, setChecking] = useState(false)
@@ -195,7 +196,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const startCheckout = async (packageCode: string, method: 'momo' | 'payos') => {
-    if (busyCode || needsProfileSetup) return
+    if (checkoutGuard.current || busyCode || needsProfileSetup) return
+    checkoutGuard.current = true
     trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     setBusyCode(packageCode)
     setBusyMethod(method)
@@ -210,11 +212,14 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     } finally {
       setBusyCode(null)
       setBusyMethod(null)
+      checkoutGuard.current = false
+      setPurchaseConfirmation(null)
     }
   }
 
-  const checkoutWithWallet = async (plan: SubscriptionPackage) => {
+  const checkoutWithWallet = async (purchase: PremiumPurchase) => {
     if (checkoutGuard.current || needsProfileSetup || vipVoucher?.pending) return
+    const { plan } = purchase
     trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     checkoutGuard.current = true
     setBusyCode(plan.code)
@@ -225,12 +230,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       const storageKey = `homeji-premium-wallet:${plan.code}`
       let requestId = sessionStorage.getItem(storageKey)
       if (!requestId) { requestId = crypto.randomUUID(); sessionStorage.setItem(storageKey, requestId) }
-      await createPremiumWalletPayment(plan.code, requestId, plan.price - (vipVoucher?.packageCode === plan.code && vipVoucher.amount === plan.price ? vipVoucher.discount : 0), vipVoucher?.packageCode === plan.code && vipVoucher.amount === plan.price ? vipVoucher.id : undefined)
+      await createPremiumWalletPayment(plan.code, requestId, purchase.amountDue, purchase.voucherId)
       paid = true
       setVipVoucher(null)
       try { sessionStorage.removeItem(storageKey) } catch { /* A retained key remains safe to replay. */ }
       setPayPickerCode(null)
-      setWalletConfirmCode(null)
       showToast('Thanh toán bằng ví thành công. Gói Premium đã được kích hoạt.', 'success')
     } catch (err) {
       const uncertain = err instanceof ApiRequestError && (err.status === 0 || err.status === 408 || err.status >= 500)
@@ -243,7 +247,18 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       setBusyCode(null)
       setBusyMethod(null)
       checkoutGuard.current = false
+      setPurchaseConfirmation(null)
     }
+  }
+
+  const confirmPurchase = (plan: SubscriptionPackage, method: PremiumPurchase['method']) => {
+    if (checkoutGuard.current || busyCode || needsProfileSetup) return
+    const voucher = vipVoucher?.packageCode === plan.code && vipVoucher.amount === plan.price ? vipVoucher : null
+    if (voucher?.pending || (method !== 'wallet' && voucher)) return
+    const discount = method === 'wallet' ? voucher?.discount ?? 0 : 0
+    const amountDue = plan.price - discount
+    if (method === 'wallet' && (walletLoading || walletBalance === null || walletBalance < amountDue)) return
+    setPurchaseConfirmation({ plan, method, amountDue, discount, voucherId: method === 'wallet' ? voucher?.id : undefined })
   }
 
   const refreshActivePayment = async () => {
@@ -304,6 +319,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={`payment-page pay-v2${embedded ? ' payment-embed map-embed' : ' container page'}`}>
+      {purchaseConfirmation ? <PremiumPurchaseConfirmation purchase={purchaseConfirmation} walletBalance={walletBalance} busy={busyCode !== null}
+        onCancel={() => { if (!checkoutGuard.current) setPurchaseConfirmation(null) }}
+        onConfirm={() => { if (purchaseConfirmation.method === 'wallet') void checkoutWithWallet(purchaseConfirmation); else void startCheckout(purchaseConfirmation.plan.code, purchaseConfirmation.method) }} /> : null}
       <header className="pay-head">
         <RevealText as="h1" className="pay-head__title" text="Gói thành viên" />
         <p className="pay-head__lead">
@@ -420,19 +438,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         role="group"
                         aria-label="Chọn hình thức thanh toán"
                       >
-                        <VoucherPicker key={plan.code + ':' + plan.price} purpose="vip" amount={plan.price} disabled={busy || walletConfirmCode === plan.code} onChange={value => setVipVoucher(value ? { ...value, packageCode: plan.code } : null)} />
+                        <VoucherPicker key={plan.code + ':' + plan.price} purpose="vip" amount={plan.price} disabled={busy || purchaseConfirmation !== null} onChange={value => setVipVoucher(value ? { ...value, packageCode: plan.code } : null)} />
                         {planVoucher && !planVoucher.pending && <p>Voucher giảm {formatPrice(planVoucher.discount)} · Còn trả {formatPrice(amountDue)} bằng ví.</p>}
-                        {walletConfirmCode === plan.code ? <div className="pay-wallet-confirm" aria-live="polite">
-                          <strong>Xác nhận thanh toán bằng ví</strong>
-                          <p>{plan.name} · {plan.durationDays} ngày</p>
-                          <p>Trừ {formatPrice(amountDue)} từ ví Homeji.</p>
-                          <p>Số dư sau thanh toán: {walletBalance === null ? 'Chưa kiểm tra được' : formatPrice(Math.max(0, walletBalance - amountDue))}</p>
-                          <button type="button" className="pay-btn pay-btn--primary" disabled={busy || Boolean(planVoucher?.pending) || walletLoading || walletBalance === null || walletBalance < amountDue} onClick={() => void checkoutWithWallet(plan)}>
-                            {busy && busyMethod === 'wallet' ? 'Đang thanh toán…' : `Xác nhận trả ${formatPrice(amountDue)}`}
-                          </button>
-                          <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => setWalletConfirmCode(null)}>Quay lại</button>
-                        </div> : <>
-                        <button type="button" className="pay-method pay-wallet-method" disabled={busy || Boolean(planVoucher?.pending) || walletLoading || walletBalance === null || walletBalance < amountDue} onClick={() => setWalletConfirmCode(plan.code)}>
+                        <button type="button" className="pay-method pay-wallet-method" disabled={busy || Boolean(planVoucher?.pending) || walletLoading || walletBalance === null || walletBalance < amountDue} onClick={() => confirmPurchase(plan, 'wallet')}>
                           Số dư ví Homeji
                           <small>{walletBalance === null ? (walletLoading ? 'Đang tải số dư…' : 'Chưa tải được số dư') : `${formatPrice(walletBalance)}${walletBalance < amountDue ? ' · Không đủ số dư' : ''}`}</small>
                         </button>
@@ -440,15 +448,14 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         {walletBalance !== null && walletBalance < amountDue && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp tiền vào ví</Link>}
                         {planVoucher && <small>Voucher VIP áp dụng khi thanh toán bằng ví. Bỏ chọn voucher nếu muốn trả qua MoMo/PayOS.</small>}
                         <div>
-                          <button type="button" className="pay-method is-momo" disabled={busy || Boolean(planVoucher)} onClick={() => void startCheckout(plan.code, 'momo')}>
+                          <button type="button" className="pay-method is-momo" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'momo')}>
                             {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
                           </button>
-                          <button type="button" className="pay-method is-payos" disabled={busy || Boolean(planVoucher)} onClick={() => void startCheckout(plan.code, 'payos')}>
+                          <button type="button" className="pay-method is-payos" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'payos')}>
                             {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
                           </button>
                         </div>
-                        </>}
-                        <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setVipVoucher(null); setPayPickerCode(null); setWalletConfirmCode(null) }}>
+                        <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setVipVoucher(null); setPayPickerCode(null) }}>
                           Hủy
                         </button>
                       </motion.div>
