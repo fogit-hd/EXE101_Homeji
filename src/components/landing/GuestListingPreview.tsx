@@ -73,11 +73,11 @@ export function GuestListingPreview() {
           const basis = item.kind === 'post' ? rentalPriceBasis(item.data) : 'unknown'
           return <li key={`${item.kind}-${data.id}`}>
             <article className="guest-preview__card" data-glass-exclude>
-              <button type="button" className="guest-preview__card-open" aria-label={`Xem ${isSource ? 'tin tham khảo' : 'phòng'}: ${data.title}`} onClick={() => item.kind === 'post' ? setSelected(item.data) : setSelectedSource(item.data)}>
+              <button type="button" className="guest-preview__card-open" aria-label={`Xem ${isSource ? 'tin phòng' : 'phòng'}: ${data.title}`} onClick={() => item.kind === 'post' ? setSelected(item.data) : setSelectedSource(item.data)}>
                 <span className="guest-preview__photo">
                   <span>Chưa có ảnh</span>
                   {photos[0] ? <img src={photos[0]} alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
-                  <span className="guest-preview__source-badge">{item.kind === 'source' ? `Tham khảo · ${rentalSourceLabel(item.data.source)}` : item.data.type === RentalPostType.VacantRoom ? 'Cho thuê' : rentalPostTypeLabel[item.data.type]}</span>
+                  <span className="guest-preview__source-badge">{item.kind === 'source' ? rentalSourceLabel(item.data.source) : item.data.type === RentalPostType.VacantRoom ? 'Cho thuê' : rentalPostTypeLabel[item.data.type]}</span>
                   {item.kind === 'source' && photos.length > 1 ? <span className="guest-preview__photo-count">{photos.length} ảnh</span> : null}
                 </span>
                 <span className="guest-preview__copy">
@@ -130,20 +130,20 @@ function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing
     <div className="guest-preview-dialog__inner">
       <header className="guest-preview-dialog__heading">
         <span></span>
-        <button type="button" aria-label="Đóng chi tiết tin tham khảo" onClick={onClose} autoFocus>×</button>
+        <button type="button" aria-label="Đóng chi tiết tin phòng" onClick={onClose} autoFocus>×</button>
       </header>
-      {photos.length ? <div className="guest-preview-dialog__gallery" aria-label="Ảnh theo tin tham khảo">
+      {photos.length ? <div className="guest-preview-dialog__gallery" aria-label="Ảnh từ tin đăng">
         {photos.map((photo, index) => <img key={photo} src={photo} alt={`Ảnh theo tin ${index + 1}`} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} />)}
       </div> : null}
       <div className="guest-preview-dialog__body">
         <h2 id={titleId}>{listing.title}</h2>
         <p className="guest-preview-dialog__address">{listing.address}</p>
         <div className="guest-preview-dialog__facts">
-          <div><span>Giá tham khảo / tháng</span><strong>{formatListingRent(listing.price)}</strong></div>
+          <div><span>Giá thuê / tháng</span><strong>{formatListingRent(listing.price)}</strong></div>
           <div><span>Diện tích</span><strong>{formatListingArea(listing.area)}</strong></div>
           <div><span>Nguồn dữ liệu</span><strong>{rentalSourceLabel(listing.source)} · {listing.sourceId}</strong></div>
         </div>
-        <p className="guest-preview-dialog__description">Đây là tin tham khảo được lưu trong Homeji từ nguồn công khai. Giá, hình ảnh và tình trạng cho thuê do nguồn đăng cung cấp, Homeji chưa xác minh và không thể dùng tin này để đặt lịch xem phòng.</p>
+        <p className="guest-preview-dialog__description">Tin được lưu trong Homeji từ nguồn công khai. Giá, hình ảnh và tình trạng cho thuê do nguồn đăng cung cấp, Homeji chưa xác minh và không thể dùng tin này để đặt lịch xem phòng.</p>
         <footer className="guest-preview-dialog__footer">
           <span>Đã lưu dữ liệu trong Homeji · Cập nhật {new Date(listing.collectedAt).toLocaleDateString('vi-VN')}</span>
           {sourceHref ? <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="liquid-action">Xem tin gốc <Arrow /></a> : null}

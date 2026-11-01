@@ -42,7 +42,7 @@ try {
     const sourceRequest = requests.find(url => url.pathname === '/api/rental-source-listings')
     assert.equal(sourceRequest.searchParams.get('pageSize'), '24')
     assert.equal(sourceRequest.searchParams.has('district'), false)
-    assert.ok(await page.getByText('Tham khảo · Phongtro123', { exact: true }).count())
+    assert.ok(await page.getByText('Phongtro123', { exact: true }).count())
     assert.equal(await page.getByText('synthetic', { exact: true }).count(), 0)
     if (partial) await page.getByRole('alert').waitFor()
     await page.getByRole('button', { name: 'Xem thêm 8 lựa chọn', exact: true }).click()
