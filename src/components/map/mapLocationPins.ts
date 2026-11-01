@@ -54,7 +54,7 @@ export function createMapClusterContent(options: {
 }): HTMLDivElement {
   const count = Math.max(2, Math.round(options.count))
   const premiumCount = Math.min(count, Math.max(0, Math.floor(options.premiumCount ?? 0)))
-  const title = `${count} tin gần nhau${premiumCount > 0 ? `, có ${premiumCount} tin VIP` : ''}. Nhấn để xem danh sách.`
+  const title = `${count} tin gần nhau${premiumCount > 0 ? `, có ${premiumCount} tin Premium` : ''}. Nhấn để xem danh sách.`
   const { root, mount } = coordinateAnchorRoot(title, 'map-pin-cluster', {
     interactive: true,
   })
@@ -93,7 +93,7 @@ export function createMapClusterContent(options: {
     root.classList.add('map-pin-cluster--premium')
     const badge = document.createElement('span')
     badge.className = 'map-pin-cluster__vip'
-    badge.textContent = `★ ${premiumCount} VIP`
+    badge.textContent = `★ ${premiumCount} Premium`
     mount.append(badge)
   }
   return root

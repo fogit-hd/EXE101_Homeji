@@ -14,7 +14,7 @@ export type ClusterListing = {
 
 export type CatalogClusterMarker = { marker: google.maps.marker.AdvancedMarkerElement; listing: ClusterListing }
 
-/** Preserve the total inventory; VIP is an explicit filter, not an implicit sort. */
+/** Preserve the total inventory; Premium is an explicit filter, not an implicit sort. */
 export function createClusterListings(listings: ClusterListing[], onZoom: () => void): HTMLDivElement {
   const root = document.createElement('div')
   root.className = 'map-cluster-listings'
@@ -49,7 +49,7 @@ export function createClusterListings(listings: ClusterListing[], onZoom: () => 
     const price = document.createElement('b'); price.textContent = listing.priceLabel
     const address = document.createElement('span'); address.textContent = listing.address
     if (listing.premium) {
-      const badge = document.createElement('small'); badge.className = 'map-cluster-listings__vip'; badge.textContent = '★ VIP'
+      const badge = document.createElement('small'); badge.className = 'map-cluster-listings__vip'; badge.textContent = '★ Premium'
       body.append(badge)
     }
     body.append(title, price, address); card.append(body)
@@ -60,11 +60,11 @@ export function createClusterListings(listings: ClusterListing[], onZoom: () => 
   if (premiumCount > 0) {
     const filter = document.createElement('button')
     filter.type = 'button'; filter.className = 'map-cluster-listings__filter'
-    filter.textContent = `Xem VIP (${premiumCount})`; filter.setAttribute('aria-pressed', 'false')
+    filter.textContent = `Xem Premium (${premiumCount})`; filter.setAttribute('aria-pressed', 'false')
     filter.addEventListener('click', () => {
       const vipOnly = filter.getAttribute('aria-pressed') !== 'true'
       filter.setAttribute('aria-pressed', String(vipOnly))
-      filter.textContent = vipOnly ? `Xem tất cả (${listings.length})` : `Xem VIP (${premiumCount})`
+      filter.textContent = vipOnly ? `Xem tất cả (${listings.length})` : `Xem Premium (${premiumCount})`
       for (const item of cards) item.card.hidden = vipOnly && !item.premium
     })
     toolbar.append(filter)

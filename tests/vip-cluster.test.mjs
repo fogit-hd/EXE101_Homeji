@@ -23,15 +23,15 @@ test('listing changes invalidate cached cluster metadata even when marker coordi
   } finally { base.calculate = calculate }
 })
 
-test('mixed cluster preserves total, shows exact VIP count and filters without losing entries', () => {
+test('mixed cluster preserves total, shows exact Premium count and filters without losing entries', () => {
   const dom = new JSDOM('', { url: 'http://localhost/' })
   globalThis.window = dom.window; globalThis.document = dom.window.document
   let selected = null, zoomed = false
   const entries = Array.from({ length: 17 }, (_, i) => ({ id: String(i), kind: 'vacant', title: i === 0 ? '<script>unsafe</script>' : `Phòng ${i}`, address: 'Lê Văn Việt', priceLabel: '3.000.000 đ / tháng', premium: i === 1 || i === 16, imageUrl: 'javascript:alert(1)', open: () => { selected = i } }))
   const marker = createMapClusterContent({ count: 17, kindCounts: { vacant: 17, roommate: 0, marketplace: 0 }, premiumCount: 2 })
   assert.equal(marker.querySelector('.map-pin-cluster__count').textContent, '17')
-  assert.equal(marker.querySelector('.map-pin-cluster__vip').textContent, '★ 2 VIP')
-  assert.match(marker.title, /17 tin.*2 tin VIP/)
+  assert.equal(marker.querySelector('.map-pin-cluster__vip').textContent, '★ 2 Premium')
+  assert.match(marker.title, /17 tin.*2 tin Premium/)
   const list = createClusterListings(entries, () => { zoomed = true })
   assert.equal(list.querySelectorAll('script,img').length, 0)
   assert.equal(list.querySelectorAll('.map-cluster-listings__vip').length, 2)
