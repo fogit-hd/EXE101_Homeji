@@ -47,6 +47,9 @@ import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
 import { GameLauncher } from '../games/GameLauncher'
 import { ProfileGate } from '../auth/ProfileGate'
 import { AgentPostPreview } from '../ai/AgentPostPreview'
+import { ChatbotLocationControl } from '../ai/ChatbotLocationControl'
+import { ChatbotNearbyResults, type ChatbotNearbyResponse } from '../ai/ChatbotNearbyResults'
+import { freshChatbotLocation, type ChatbotLocation } from '../../lib/chatbotLocation'
 import { AgentModeSwitch } from '../ai/AgentModeSwitch'
 import type { AgentPostDraft } from '../../api/chatbotAgent'
 import './MapChatbot.css'
@@ -94,6 +97,7 @@ type Props = {
 }
 
 type ChatRequest = {
+  location?: ChatbotLocation
   agentDraftId?: string
   postingAgent?: boolean
   sessionMessages?: ChatbotMessage[]
@@ -109,6 +113,7 @@ type ChatRequest = {
 }
 
 type DisplayMessage = ChatbotMessage & {
+  nearbyRooms?: ChatbotNearbyResponse | null
   agentDraft?: AgentPostDraft | null
   upgradeRequired?: boolean
   attachments?: ChatbotDraftAttachment[]
@@ -208,6 +213,8 @@ export function MapChatbot({
   const sessionCriteria = useRef<AiParsedSearchCriteria | undefined>(undefined)
   const sessionFood = useRef<ChatbotFoodCriteria | undefined>(undefined)
   const [messages, setMessages] = useState<DisplayMessage[]>([])
+  const [sharedLocation, setSharedLocation] = useState<ChatbotLocation | null>(null)
+  const awaitingLocation = useRef<string | null>(null)
   const [agentMode, setAgentMode] = useState(false)
   const [agentDraftId, setAgentDraftId] = useState<string | undefined>()
   const [draft, setDraft] = useState('')
@@ -440,12 +447,14 @@ export function MapChatbot({
     inputRef.current?.focus()
   }
 
-  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria) => {
+  const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria, locationOverride?: ChatbotLocation) => {
     const selectedMedia = retryMessage?.retry?.attachments ?? (retryMessage ? [] : attachments)
     const hasMedia = selectedMedia.length > 0
     const message = text.trim() || (hasMedia ? 'Hãy xem hoặc nghe nội dung đính kèm và hỗ trợ mình.' : '')
     if (!message || busy || mediaBusy || recordingActive || activeRequest.current) return
     if (isAuthenticated && needsProfileSetup) return
+    if (!locationOverride) awaitingLocation.current = null
+    const selectedLocation = freshChatbotLocation(locationOverride ?? sharedLocation)
     const previousFood = retryMessage?.retry?.previousFoodCriteria ?? foodCriteria ?? (isFoodRefinement(message) ? sessionFood.current : undefined)
     const foodQuery = !agentMode && !hasMedia && (isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message)))
     const nearby = agentMode || foodQuery || hasMedia ? null : nearbyChatIntent(message)
@@ -475,10 +484,11 @@ export function MapChatbot({
       attachments: selectedMedia,
       agentDraftId: agentMode ? agentDraftId : undefined,
       postingAgent: agentMode,
+      location: selectedLocation,
       sessionMessages: messages.filter(row => !row.pending && !row.failure).slice(-6).map(({ id, conversationId, sender, content, createdAt }) => ({ id, conversationId, sender, content: content.slice(0, 1000), createdAt })),
       conversationId: saveHistory ? conversationId : undefined,
       previousCriteria: saveHistory || context || selection || foodQuery ? undefined : sessionCriteria.current,
-      foodContext: foodContext ? { ...foodContext } : undefined,
+      foodContext: foodContext ? { ...foodContext } : foodQuery && selectedLocation ? { latitude: selectedLocation.latitude, longitude: selectedLocation.longitude, radiusKm: 3 } : undefined,
       previousFoodCriteria: previousFood ? foodCriteriaSnapshot(previousFood) : undefined,
       saveHistory,
     }
@@ -506,17 +516,18 @@ export function MapChatbot({
 
     try {
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
-        attachments: request.attachments, agentDraftId: request.agentDraftId, postingAgent: request.postingAgent, sessionMessages: request.sessionMessages,
+        attachments: request.attachments, agentDraftId: request.agentDraftId, postingAgent: request.postingAgent, location: request.location, sessionMessages: request.sessionMessages,
         previousCriteria: request.previousCriteria, foodContext: request.foodContext, previousFoodCriteria: request.previousFoodCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
         rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
-      setAgentMode(reply.agentRequested === true || Boolean(reply.agentDraft))
+      setAgentMode(reply.agentRequested === true || Boolean(reply.agentDraft) || request.postingAgent === true && !reply.upgradeRequired)
+      if (reply.nearbyRooms?.status === "locationRequired" || reply.foodDiscovery?.status === "locationRequired") awaitingLocation.current = request.message
       if (reply.agentDraft) setAgentDraftId(reply.agentDraft.id)
       else if (reply.upgradeRequired) setAgentDraftId(undefined)
-      const contextualUnavailable = request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
+      const contextualUnavailable = reply.agentDraft || reply.agentRequested || reply.nearbyRooms ? false : request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
-      const foodExpected = !request.postingAgent && !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
+      const foodExpected = !reply.agentRequested && !reply.agentDraft && !reply.upgradeRequired && !reply.nearbyRooms && !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
       const foodUnavailable = foodExpected && !reply.foodDiscovery
       sessionFood.current = reply.foodDiscovery && !request.context && !request.selection ? foodCriteriaSnapshot(reply.foodDiscovery) : undefined
       if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) {
@@ -527,7 +538,7 @@ export function MapChatbot({
         const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
           content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở Chợ đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
-          agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
+          nearbyRooms: reply.nearbyRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
           actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở Chợ đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
             target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
@@ -594,6 +605,8 @@ export function MapChatbot({
     sessionFood.current = undefined
     setAgentDraftId(undefined)
     setAgentMode(false)
+    awaitingLocation.current = null
+    setSharedLocation(null)
     setMessages([])
     setDraft('')
     setAttachments([])
@@ -728,8 +741,9 @@ export function MapChatbot({
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
-                        {m.agentDraft ? <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} active={agentDraftId === m.agentDraft.id} onFinished={() => { setAgentDraftId(undefined) }} /> : null}
+                        {m.agentDraft ? <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={agentDraftId === m.agentDraft.id} onFinished={() => { setAgentDraftId(undefined) }} /> : null}
                         {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=payments"); setOpen(false) }}>Khám phá Premium</button><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=marketplace"); setOpen(false) }}>Tự đăng bài</button></div> : null}
+                        {m.nearbyRooms ? <ChatbotNearbyResults data={m.nearbyRooms} onOpen={() => setOpen(false)} /> : null}
                         {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
@@ -744,6 +758,7 @@ export function MapChatbot({
               {showTyping ? <div className="homeji-assistant__thinking" role="status"><span aria-hidden><i /><i /><i /></span>Homeji đang tìm câu trả lời…</div> : null}
               <div ref={bottomRef} />
             </div>
+            {isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
             {agentMode ? <div className="homeji-agent-context"><span>{agentDraftId ? "Đang sửa bản nháp" : "Soạn bài từ ảnh"}</span><button className="map-chatbot__action" type="button" onClick={() => { setAgentDraftId(undefined); setAgentMode(false) }}>Kết thúc chỉnh sửa</button></div> : null}
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
             {copyStatus ? <p className="homeji-assistant__feedback" role="status">{copyStatus}</p> : null}

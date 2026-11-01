@@ -373,13 +373,14 @@ export const getChatbotMessages = (conversationId: string) =>
 export const transcribeChatbotAudio = (audio: ChatbotAttachment, signal?: AbortSignal) =>
   apiRequest<{ text: string }>('/api/chatbot/transcriptions', { method: 'POST', body: { audio }, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS })
 
-export const sendChatbotMessage = (data: { postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal) =>
+export const sendChatbotMessage = (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     signal,
     body: {
       message: data.message,
+      ...(data.location ? { location: data.location } : {}),
       ...(data.postingAgent ? { postingAgent: true } : {}),
       ...(data.agentDraftId ? { agentDraftId: data.agentDraftId } : {}),
       ...(data.sessionMessages ? { sessionMessages: data.sessionMessages.slice(-6).map(row => ({ ...row, content: row.content.slice(0, 1000) })) } : {}),

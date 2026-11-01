@@ -3,8 +3,10 @@ import { cancelAgentPost, confirmAgentPost, type AgentPostDraft } from '../../ap
 import { getErrorMessage } from '../../lib/errors'
 import { AddressAutocomplete } from '../map/AddressAutocomplete'
 import './AgentPostPreview.css'
+import type { ChatbotLocation } from '../../lib/chatbotLocation'
+import { useChangedInputs } from '../../hooks/useChangedInputs'
 
-export function AgentPostPreview({ draft, active, onFinished }: { draft: AgentPostDraft; active: boolean; onFinished: () => void }) {
+export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: { draft: AgentPostDraft; active: boolean; sharedLocation?: ChatbotLocation | null; onFinished: () => void }) {
   const [details, setDetails] = useState(draft.details)
   const [status, setStatus] = useState<'draft' | 'publishing' | 'published' | 'cancelled'>('draft')
   const [postId, setPostId] = useState(draft.publishedPostId)
@@ -14,6 +16,9 @@ export function AgentPostPreview({ draft, active, onFinished }: { draft: AgentPo
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(timer) }, [])
   const expired = now >= Date.parse(draft.expiresAt)
   const disabled = !active || expired || status !== 'draft'
+  if (useChangedInputs([sharedLocation?.capturedAt]) && sharedLocation && active && status === 'draft' && (!details.latitude || !details.address.trim()) && (sharedLocation.accuracyMeters == null || sharedLocation.accuracyMeters <= 1000)) {
+    setDetails({ ...details, address: sharedLocation.address || details.address, latitude: sharedLocation.latitude, longitude: sharedLocation.longitude })
+  }
   async function finish(publish: boolean) {
     if (lock.current || disabled) return
     lock.current = true; setStatus('publishing'); setError('')

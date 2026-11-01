@@ -49,7 +49,7 @@ export function AgentModeSwitch({ active, busy, enabled, authenticated, onChange
     </div>
     <div className="agent-mode-switch__description" key={active ? 'agent' : 'chat'}>
       <span className="agent-mode-switch__status" aria-hidden="true"><i /><i /><i /></span>
-      <p>{active ? busy ? 'Agent đang soạn bản nháp…' : 'Gửi ảnh, mình soạn bài. Bạn duyệt rồi mới đăng.' : loading ? 'Đang kiểm tra quyền sử dụng Agent…' : access?.kind === 'error' ? 'Chưa kiểm tra được gói thành viên.' : premium ? 'Trò chuyện, tìm phòng hoặc bật Agent để soạn bài.' : 'Agent dành cho Premium · soạn bài từ ảnh, đăng khi bạn xác nhận.'}</p>
+      <p>{active ? busy ? 'Agent đang thực hiện yêu cầu…' : 'Đăng đồ từ ảnh, tìm phòng và món ăn quanh bạn. Bạn duyệt rồi mới đăng.' : loading ? 'Đang kiểm tra quyền sử dụng Agent…' : access?.kind === 'error' ? 'Chưa kiểm tra được gói thành viên.' : premium ? 'Trò chuyện, tìm phòng hoặc bật Agent để soạn bài.' : 'Agent dành cho Premium · soạn bài từ ảnh, đăng khi bạn xác nhận.'}</p>
       {!active && !loading && !premium ? <button type="button" className="agent-mode-switch__upgrade" disabled={busy} onClick={() => access?.kind === 'error' ? setAttempt(value => value + 1) : onUpgrade()}>{access?.kind === 'error' ? 'Thử lại' : 'Mở khóa'}</button> : null}
     </div>
   </section>
