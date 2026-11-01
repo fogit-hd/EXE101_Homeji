@@ -18,6 +18,7 @@ await page.route('**/api/**', async route => {
   const path = new URL(route.request().url()).pathname
   if (!path.startsWith('/api/')) return route.continue()
   if (path === '/api/chatbot/popup-config') return route.fulfill({ json: { enabled: true, title: 'Homeji', greeting: 'Gửi ảnh để Homeji soạn bài.', suggestedPrompts: [] } })
+  if (path === '/api/subscriptions/me') return route.fulfill({ json: { isPremium: !basic, premiumExpiresAt: !basic ? '2099-11-08T00:00:00Z' : null } })
   if (path === '/api/subscriptions/packages') return route.fulfill({ json: [{ code: 'PREMIUM_MONTHLY', name: 'Gói Trải Nghiệm', price: 49000, originalPrice: 99000, offerEndsAt: '2099-11-08T08:00:00Z', durationDays: 30, tier: 2, benefits: [] }] })
   if (path.endsWith('/confirm')) { approvals.push(route.request().postDataJSON()); await new Promise(resolve => setTimeout(resolve, 200)); return route.fulfill(reject ? { status: 400, json: { detail: 'Vui lòng kiểm tra lại địa chỉ.' } } : { json: { postId: 'posted-id' } }) }
   if (path === '/api/chatbot/messages') {
@@ -33,9 +34,12 @@ try {
   await page.locator('#homeji-ai-conversation').waitFor({ state: 'attached' })
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('homeji-ai:toggle', { detail: { open: true, anchor: null } })))
   const input = page.getByRole('textbox', { name: 'Nhập tin nhắn cho Homeji' })
-  await input.fill('Tự đăng bài ghế trong ảnh giá 500k'); await input.press('Enter')
+  await page.waitForFunction(() => !document.querySelector('[aria-label="Agent · Premium"]').disabled)
+  await page.getByRole('button', { name: 'Agent · Premium', exact: true }).click()
+  await input.fill('Soạn bài cho ghế trong ảnh giá 500k'); await input.press('Enter')
   await page.getByRole('region', { name: 'Xác nhận bài đăng AI' }).waitFor()
   assert.equal(approvals.length, 0, 'Preview must not publish')
+  assert.equal(requests[0].postingAgent, true, 'Selecting Agent routes the request to the protected agent flow')
   await input.fill('Sửa lại mô tả ngắn hơn'); await input.press('Enter')
   await page.locator('.agent-post-preview').nth(1).waitFor()
   assert.equal(requests[1].agentDraftId, 'draft-1')

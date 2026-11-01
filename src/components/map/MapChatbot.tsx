@@ -47,6 +47,7 @@ import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
 import { GameLauncher } from '../games/GameLauncher'
 import { ProfileGate } from '../auth/ProfileGate'
 import { AgentPostPreview } from '../ai/AgentPostPreview'
+import { AgentModeSwitch } from '../ai/AgentModeSwitch'
 import type { AgentPostDraft } from '../../api/chatbotAgent'
 import './MapChatbot.css'
 
@@ -446,8 +447,8 @@ export function MapChatbot({
     if (!message || busy || mediaBusy || recordingActive || activeRequest.current) return
     if (isAuthenticated && needsProfileSetup) return
     const previousFood = retryMessage?.retry?.previousFoodCriteria ?? foodCriteria ?? (isFoodRefinement(message) ? sessionFood.current : undefined)
-    const foodQuery = !hasMedia && (isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message)))
-    const nearby = foodQuery || hasMedia ? null : nearbyChatIntent(message)
+    const foodQuery = !agentMode && !hasMedia && (isFoodChat(message) || Boolean(previousFood && isFoodRefinement(message)))
+    const nearby = agentMode || foodQuery || hasMedia ? null : nearbyChatIntent(message)
     if (nearby) {
       if (onNearbyRequest?.(nearby)) { closeChat(); setDraft(''); setError(null) }
       else setError('Hãy chọn ghim phòng trên bản đồ trước để tìm tiện ích quanh đúng phòng đó.')
@@ -466,14 +467,14 @@ export function MapChatbot({
     const refersToRoom = /\b(?:phong|tin|cho) (?:nay|dang xem)\b/.test(normalized)
     const startsSearch = /\b(?:tim|kiem|loc|goi y|de xuat)\b.*\b(?:phong|tro|o ghep|nha)\b|\b(?:phong|tro) khac\b|\b(?:tim lai|bat dau lai)\b/.test(normalized)
     const refersToChoices = /\b(?:(?:hai|ba|2|3|cac|nhung) (?:lua chon|phong|tin)|so sanh|danh sach (?:nay|can nhac))\b/.test(normalized)
-    const selection = !hasMedia && !foodQuery && rentalSelection && !startsSearch && (task || refersToChoices)
+    const selection = !agentMode && !hasMedia && !foodQuery && rentalSelection && !startsSearch && (task || refersToChoices)
       ? { ...rentalSelection, postIds: [...rentalSelection.postIds], scenario: rentalScenarioSnapshot(rentalSelection.scenario), task } : undefined
-    const context = !hasMedia && !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
+    const context = !agentMode && !hasMedia && !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
     const request: ChatRequest = retryMessage?.retry ?? {
       message, context, selection,
       attachments: selectedMedia,
-      agentDraftId: !context && !selection && !foodQuery ? agentDraftId : undefined,
-      postingAgent: !context && !selection && !foodQuery && agentMode,
+      agentDraftId: agentMode ? agentDraftId : undefined,
+      postingAgent: agentMode,
       sessionMessages: messages.filter(row => !row.pending && !row.failure).slice(-6).map(({ id, conversationId, sender, content, createdAt }) => ({ id, conversationId, sender, content: content.slice(0, 1000), createdAt })),
       conversationId: saveHistory ? conversationId : undefined,
       previousCriteria: saveHistory || context || selection || foodQuery ? undefined : sessionCriteria.current,
@@ -512,10 +513,10 @@ export function MapChatbot({
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       setAgentMode(reply.agentRequested === true || Boolean(reply.agentDraft))
       if (reply.agentDraft) setAgentDraftId(reply.agentDraft.id)
-      else if (!reply.agentRequested) setAgentDraftId(undefined)
+      else if (reply.upgradeRequired) setAgentDraftId(undefined)
       const contextualUnavailable = request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
-      const foodExpected = !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
+      const foodExpected = !request.postingAgent && !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
       const foodUnavailable = foodExpected && !reply.foodDiscovery
       sessionFood.current = reply.foodDiscovery && !request.context && !request.selection ? foodCriteriaSnapshot(reply.foodDiscovery) : undefined
       if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) {
@@ -685,6 +686,7 @@ export function MapChatbot({
             </button>)}</nav>
           </aside> : null}
           <div className="homeji-assistant__conversation">
+            <AgentModeSwitch active={agentMode} busy={busy || mediaBusy || recordingActive} enabled={panelVisible} authenticated={isAuthenticated} onChange={setAgentMode} onUpgrade={() => { setOpen(false); if (!isAuthenticated) openAuthModal({ intent: 'premium', onSuccess: () => navigate('/?section=payments') }); else navigate('/?section=payments') }} />
             {resetRequested ? <div className="homeji-assistant__reset" role="alert">
               <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.</p>
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
@@ -726,7 +728,7 @@ export function MapChatbot({
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
-                        {m.agentDraft ? <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} active={agentDraftId === m.agentDraft.id} onFinished={() => { setAgentDraftId(undefined); setAgentMode(false) }} /> : null}
+                        {m.agentDraft ? <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} active={agentDraftId === m.agentDraft.id} onFinished={() => { setAgentDraftId(undefined) }} /> : null}
                         {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=payments"); setOpen(false) }}>Khám phá Premium</button><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=marketplace"); setOpen(false) }}>Tự đăng bài</button></div> : null}
                         {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
                         {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
