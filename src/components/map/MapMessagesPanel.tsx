@@ -1,6 +1,7 @@
 import { VoiceMessageRecorder } from './VoiceMessageRecorder'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
+import { useIncomingConversationMessages } from '../../hooks/useIncomingConversationMessages'
 import { AnimatePresence, motion } from 'motion/react'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
@@ -502,16 +503,17 @@ function MapMessagesPanelContent({
     }
   }
 
+  const inboxLoadVersion = useRef(0)
   const loadConversations = useCallback(async (opts?: { soft?: boolean }) => {
-    if (!opts?.soft) setLoading(true)
-    setError(null)
+    const version = ++inboxLoadVersion.current
+    if (!opts?.soft) { setLoading(true); setError(null) }
     try {
       const list = await getConversations()
-      setConversations(list)
+      if (version === inboxLoadVersion.current) setConversations(list)
     } catch (e) {
-      setError(getErrorMessage(e, 'Không tải được tin nhắn'))
+      if (!opts?.soft && version === inboxLoadVersion.current) setError(getErrorMessage(e, 'Không tải được tin nhắn'))
     } finally {
-      if (!opts?.soft) setLoading(false)
+      if (version === inboxLoadVersion.current) setLoading(false)
     }
   }, [])
 
@@ -530,20 +532,8 @@ function MapMessagesPanelContent({
     setMessages([])
     setConversations(prev => prev.map(c => c.id === activeId ? { ...c, unreadCount: 0 } : c))
   }
-  useEffect(() => {
-    if (!activeId) return
-    let cancelled = false
-    void getConversationMessages(activeId)
-      .then((msgs) => {
-        if (!cancelled) setMessages(msgs)
-      })
-      .catch(() => {
-        if (!cancelled) setMessages([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [activeId])
+  const refreshInbox = useCallback(() => { void loadConversations({ soft: true }) }, [loadConversations])
+  useIncomingConversationMessages({ conversationId: threadVisible ? activeId : null, ownerId: me, setMessages, refreshInbox })
 
   useEffect(() => {
     if (searchQuery.trim()) return
