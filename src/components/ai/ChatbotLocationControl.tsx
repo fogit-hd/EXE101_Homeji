@@ -22,6 +22,7 @@ export function ChatbotLocationControl({ value, onChange, disabled }: { value: C
     <div><p>Chia sẻ vị trí trong phiên chat để tìm phòng, món ăn quanh bạn và điền bản nháp. Địa chỉ chỉ công khai sau khi bạn xác nhận đăng bài.</p>
       <button type="button" disabled={disabled || busy} onClick={() => void locate()}>{busy ? 'Đang lấy vị trí…' : 'Dùng vị trí của tôi'}</button>
       <AddressAutocomplete value={address} onChange={setAddress} onPlaceSelect={place => { generation.current++; setBusy(false); setError(''); setAddress(place.address); onChange({ latitude: place.lat, longitude: place.lng, address: place.address, capturedAt: new Date().toISOString(), accuracyMeters: null }) }} disabled={disabled} placeholder="Hoặc chọn địa chỉ bạn muốn dùng" />
+      {value && !value.address ? <small>Đã có tọa độ. Chọn thêm địa chỉ bên trên để tự điền nơi giao dịch.</small> : null}
       {value ? <><small>{value.accuracyMeters != null ? `Sai số thiết bị khoảng ${Math.round(value.accuracyMeters)} m. ` : ''}{value.accuracyMeters != null && value.accuracyMeters > 1000 ? 'Vị trí chưa đủ chính xác để tự điền địa chỉ đăng bán; hãy chọn địa chỉ.' : 'Kiểm tra lại địa chỉ trong bản nháp trước khi đăng.'}</small><button type="button" disabled={disabled} onClick={() => { generation.current++; setBusy(false); onChange(null); setAddress('') }}>Ngừng chia sẻ vị trí</button></> : null}
       {error ? <p role="alert">{error}</p> : null}
     </div>
