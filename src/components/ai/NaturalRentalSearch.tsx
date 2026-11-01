@@ -1,3 +1,4 @@
+import { HomejiAgentMark } from './HomejiAgentMark'
 import { motion } from 'motion/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -88,14 +89,14 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
     }
     if (open) cancelSearch()
     setOpen(value => !value)
-  }}><span className="ai-spectrum-launcher__edge" aria-hidden="true" /><SparkIcon />Gợi ý AI</button>
+  }}><span className="ai-spectrum-launcher__edge" aria-hidden="true" /><HomejiAgentMark />Gợi ý AI</button>
   return <div className="natural-rental-search">
     {renderTrigger ? renderTrigger(trigger) : trigger}
     {present ? <section {...presence} id="natural-rental-search-panel" className={`natural-rental-search__panel${loading ? ' is-thinking' : ''}`} role="dialog" aria-busy={loading} aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
       if (event.key === 'Escape') { event.stopPropagation(); close() }
     }}>
       <header className="natural-rental-search__head">
-        <span className="natural-rental-search__mark" aria-hidden="true"><SparkIcon /></span>
+        <span className="natural-rental-search__mark" aria-hidden="true"><HomejiAgentMark /></span>
         <h2>Gợi ý AI tìm phòng</h2>
         {result || asked ? <button type="button" className="natural-rental-search__reset" disabled={loading} onClick={startOver}>Làm mới</button> : null}
         <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={close}>×</button>
@@ -115,7 +116,3 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
 }
 
 const EXAMPLES = ['Dưới 3 triệu gần ĐH Bách Khoa', '2 người, có bếp, không ở ghép', 'Ở ghép Thủ Đức dưới 2 triệu']
-
-function SparkIcon() {
-  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /></svg>
-}

@@ -8,22 +8,28 @@ export function ChatbotLocationControl({ value, onChange, disabled }: { value: C
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const generation = useRef(0)
+  const panel = useRef<HTMLDetailsElement>(null)
   useEffect(() => () => { generation.current++ }, [])
+  function close() { if (panel.current) panel.current.open = false }
+  useEffect(() => {
+    const outside = (event: PointerEvent) => { if (panel.current?.open && event.target instanceof Node && !panel.current.contains(event.target)) panel.current.open = false }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [])
   async function locate() {
     if (busy || disabled) return
     const current = ++generation.current
     setBusy(true); setError('')
-    try { const location = await locateForChat(); if (current === generation.current) onChange(location) }
+    try { const location = await locateForChat(); if (current === generation.current) { onChange(location); close() } }
     catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : 'Chưa lấy được vị trí.') }
     finally { if (current === generation.current) setBusy(false) }
   }
-  return <details className="chatbot-location-control">
-    <summary><span aria-hidden>⌖</span><span>{value ? value.address || 'Đã chọn vị trí thiết bị' : 'Vị trí · chưa chia sẻ'}</span><small>{value ? 'Đổi' : 'Thêm vị trí'}</small></summary>
-    <div><p>Chia sẻ vị trí trong phiên chat để tìm phòng, món ăn quanh bạn và điền bản nháp. Địa chỉ chỉ công khai sau khi bạn xác nhận đăng bài.</p>
-      <button type="button" disabled={disabled || busy} onClick={() => void locate()}>{busy ? 'Đang lấy vị trí…' : 'Dùng vị trí của tôi'}</button>
-      <AddressAutocomplete value={address} onChange={setAddress} onPlaceSelect={place => { generation.current++; setBusy(false); setError(''); setAddress(place.address); onChange({ latitude: place.lat, longitude: place.lng, address: place.address, capturedAt: new Date().toISOString(), accuracyMeters: null }) }} disabled={disabled} placeholder="Hoặc chọn địa chỉ bạn muốn dùng" />
-      {value && !value.address ? <small>Đã có tọa độ. Chọn thêm địa chỉ bên trên để tự điền nơi giao dịch.</small> : null}
-      {value ? <><small>{value.accuracyMeters != null ? `Sai số thiết bị khoảng ${Math.round(value.accuracyMeters)} m. ` : ''}{value.accuracyMeters != null && value.accuracyMeters > 1000 ? 'Vị trí chưa đủ chính xác để tự điền địa chỉ đăng bán; hãy chọn địa chỉ.' : 'Kiểm tra lại địa chỉ trong bản nháp trước khi đăng.'}</small><button type="button" disabled={disabled} onClick={() => { generation.current++; setBusy(false); onChange(null); setAddress('') }}>Ngừng chia sẻ vị trí</button></> : null}
+  return <details ref={panel} className="chatbot-location-control" data-glass-exclude onKeyDown={event => { if (event.key === 'Escape') { close(); panel.current?.querySelector('summary')?.focus(); event.stopPropagation() } }}>
+    <summary onClick={event => { if (disabled) event.preventDefault() }}><span aria-hidden>⌖</span><span>{value ? value.address?.split(',').slice(0, 2).join(',') || 'Vị trí hiện tại' : 'Chọn vị trí'}</span><small>{value ? 'Thay đổi' : 'Tùy chọn'}</small></summary>
+    <div className="chatbot-location-control__panel">
+      <button type="button" disabled={disabled || busy} onClick={() => void locate()}>{busy ? 'Đang định vị…' : 'Dùng vị trí hiện tại'}</button>
+      <AddressAutocomplete value={address} onChange={setAddress} onPlaceSelect={place => { generation.current++; setBusy(false); setError(''); setAddress(place.address); onChange({ latitude: place.lat, longitude: place.lng, address: place.address, capturedAt: new Date().toISOString(), accuracyMeters: null }); close() }} disabled={disabled} placeholder="Chọn địa chỉ khác" />
+      {value ? <button className="chatbot-location-control__clear" type="button" disabled={disabled} onClick={() => { generation.current++; setBusy(false); onChange(null); setAddress(''); setError(''); close() }}>Ngừng dùng vị trí</button> : null}
       {error ? <p role="alert">{error}</p> : null}
     </div>
   </details>

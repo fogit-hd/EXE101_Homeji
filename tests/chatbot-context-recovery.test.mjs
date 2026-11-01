@@ -589,7 +589,7 @@ test('copy answer reports clipboard success and failure without sending again', 
 })
 
 
-test('starter cards and suggested prompts prepare an editable draft without calling the assistant', async () => {
+test('compact starter cards prepare an editable draft without duplicate suggested prompts or assistant calls', async () => {
   const env = await environment()
   try {
     globalThis.__chatFixture.config = { suggestedPrompts: ['Tìm phòng có bếp ở Thủ Đức'] }
@@ -602,8 +602,7 @@ test('starter cards and suggested prompts prepare an editable draft without call
       assert.equal(document.activeElement, composer())
       assert.equal(globalThis.__chatFixture.requests.length, 0)
     }
-    await click(button('Tìm phòng có bếp ở Thủ Đức'))
-    assert.equal(composer().value, 'Tìm phòng có bếp ở Thủ Đức')
+    assert.equal(document.querySelectorAll('.map-chatbot__suggestions').length, 0)
     await typeDraft('Tìm phòng có bếp ở Thủ Đức, dưới 4 triệu')
     assert.equal(composer().value, 'Tìm phòng có bếp ở Thủ Đức, dưới 4 triệu')
     assert.equal(globalThis.__chatFixture.requests.length, 0)

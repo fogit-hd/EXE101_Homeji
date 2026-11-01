@@ -1,3 +1,4 @@
+import { HomejiAgentMark } from './HomejiAgentMark'
 import { useId, useState } from 'react'
 import type { RentalPost } from '../../api/types'
 import { formatListingRent, formatPrice } from '../../lib/labels'
@@ -29,7 +30,7 @@ function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = tru
 
   return <section className="rental-detail-assistant" aria-labelledby={`${id}-heading`}>
     <div className="rental-detail-assistant__heading">
-      <span aria-hidden="true">✦</span><h3 id={`${id}-heading`}>Hiểu chi phí, hỏi đúng điều cần biết</h3>
+      <HomejiAgentMark /><h3 id={`${id}-heading`}>Hiểu chi phí, hỏi đúng điều cần biết</h3>
     </div>
     <p className="rental-detail-assistant__source">Dữ liệu do người đăng cung cấp{Number.isNaN(updatedAt.getTime()) ? '' : ` · cập nhật ${updatedAt.toLocaleDateString('vi-VN')}`}. Chưa xác minh tình trạng còn phòng.</p>
     <RentalConsiderationToggle post={post} />

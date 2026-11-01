@@ -1,3 +1,4 @@
+import { SiteLocationBootstrap } from './SiteLocationBootstrap'
 import { SellerOrderAlertsProvider } from '../marketplace/SellerOrderAlerts'
 import { PremiumLaunchOffer } from '../payments/PremiumLaunchOffer'
 import { SourceRoomDetailsHost } from '../map/listings/SourceRoomDetailsHost'
@@ -69,6 +70,7 @@ export function AppLayout() {
         .join(' ')}
     >
       {isAuthedApp ? <AppShell /> : <Navbar />}
+      <SiteLocationBootstrap enabled={!isAuthCinema} />
       {!isAuthCinema ? <PremiumLaunchOffer /> : null}
       <SourceRoomDetailsHost />
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>

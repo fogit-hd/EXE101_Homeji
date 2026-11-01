@@ -1,5 +1,6 @@
+import { siteLocationSnapshot, subscribeSiteLocation, setSiteLocation as setSharedLocation } from '../../lib/siteLocation'
 import { AgentRoommateResults } from '../ai/AgentRoommateResults'
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ChatMessageSender,
@@ -215,7 +216,7 @@ export function MapChatbot({
   const sessionCriteria = useRef<AiParsedSearchCriteria | undefined>(undefined)
   const sessionFood = useRef<ChatbotFoodCriteria | undefined>(undefined)
   const [messages, setMessages] = useState<DisplayMessage[]>([])
-  const [sharedLocation, setSharedLocation] = useState<ChatbotLocation | null>(null)
+  const sharedLocation = useSyncExternalStore(subscribeSiteLocation, siteLocationSnapshot, () => null)
   const awaitingLocation = useRef<string | null>(null)
   const [agentMode, setAgentMode] = useState(false)
   const [draftWorkspaceId, setDraftWorkspaceId] = useState<string | null>(null)
@@ -736,16 +737,13 @@ export function MapChatbot({
               </section> : null}
               {showGreeting ? <div className="map-chatbot__greeting">
                 <div className="homeji-assistant__welcome-mark" aria-hidden="true"><img src="/brand/homeji-logo2.png" alt="" draggable={false} /></div>
-                <span className="homeji-assistant__eyebrow">BẮT ĐẦU TỪ ĐIỀU BẠN CẦN</span>
-                <h2>Bạn đang tìm<br />một nơi như thế nào?</h2>
-                <p>{config?.greeting ?? HOMEJI_GREETING}</p>
+                <h2>Homeji giúp gì cho bạn?</h2>
                 <div className="homeji-assistant__starters">
-                  <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><span>Khu vực, ngân sách, số người</span><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}><AssistantIcon name="home" /><strong>Hiểu trước khi thuê</strong><span>Chi phí, tiền cọc, điều cần hỏi</span><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}><AssistantIcon name="bag" /><strong>Khám phá chợ Homeji</strong><span>Hiểu cách mua và theo dõi đơn</span><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}><AssistantIcon name="chat" /><strong>Hỏi điều bạn muốn</strong><span>Cùng gỡ từng câu hỏi nhỏ</span><b aria-hidden>↗</b></button>
+                  <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><b aria-hidden>↗</b></button>
+                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}><AssistantIcon name="home" /><strong>Hiểu trước khi thuê</strong><b aria-hidden>↗</b></button>
+                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}><AssistantIcon name="bag" /><strong>Khám phá chợ Homeji</strong><b aria-hidden>↗</b></button>
+                  <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}><AssistantIcon name="chat" /><strong>Hỏi điều bạn muốn</strong><b aria-hidden>↗</b></button>
                 </div>
-                {(config?.suggestedPrompts ?? []).length ? <div className="map-chatbot__suggestions"><span>Hoặc thử hỏi</span>{config!.suggestedPrompts.slice(0, 3).map(prompt => <button type="button" key={prompt} className="map-chatbot__chip" onClick={() => prepareDraft(prompt)}>{prompt}<span aria-hidden>↗</span></button>)}</div> : null}
               </div> : null}
               {messages.map((m, index) => {
                 const isUser = m.sender === ChatMessageSender.User
@@ -779,7 +777,6 @@ export function MapChatbot({
               <div ref={bottomRef} />
             </div>
             {isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
-            {agentMode ? <div className="homeji-agent-context"><span>{agentDraftId ? "Đang sửa bản nháp" : "Chọn nhu cầu · duyệt rồi thực hiện"}</span><button className="map-chatbot__action" type="button" onClick={() => { setAgentDraftId(undefined); setAgentMode(false) }}>Kết thúc chỉnh sửa</button></div> : null}
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
             {copyStatus ? <p className="homeji-assistant__feedback" role="status">{copyStatus}</p> : null}
             <div className="homeji-assistant__wait-tools" hidden={!showTyping}>
@@ -827,7 +824,7 @@ export function MapChatbot({
                 <details className="map-chatbot__privacy" data-glass-exclude>
                   <summary>Quyền riêng tư & lịch sử</summary>
                   <p>Ảnh và âm thanh bạn gửi được chuyển tới Gemini để xử lý. Homeji không lưu tệp gốc vào lịch sử chatbot. Bản chép lời chỉ được gửi vào hội thoại sau khi bạn bấm Gửi.</p>
-                  <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; không tự lấy vị trí thiết bị. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
+                  <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; chỉ dùng vị trí thiết bị sau khi bạn cho phép. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
                   {config?.historyStorageEnabled ? (
                     <label>
                       <input

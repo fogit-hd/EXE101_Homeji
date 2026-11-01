@@ -402,7 +402,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     isCurrent ? 'is-current' : '',
                   ].filter(Boolean).join(' ')}
                 >
-                  <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '✦' : '○'}</span><small>{isPremium ? 'PREMIUM' : 'CƠ BẢN'}</small>{isCurrent && <em>Đang dùng</em>}</div>
+                  <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '♛' : '○'}</span><small>{isPremium ? 'PREMIUM' : 'CƠ BẢN'}</small>{isCurrent && <em>Đang dùng</em>}</div>
                   <h3>{view.title}</h3>
                   <p className="pay-plan__duration">
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
