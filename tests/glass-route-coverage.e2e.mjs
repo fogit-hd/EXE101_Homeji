@@ -10,16 +10,18 @@ await mkdir(out, { recursive: true })
 const browser = await chromium.launch({ headless: true, executablePath: process.env.HOMEJI_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
 const id = '11111111-1111-4111-8111-111111111111'
 const results = []
+const theme = process.env.HOMEJI_GLASS_THEME === 'dark' ? 'dark' : 'light'
 try {
   for (const authenticated of [false, true]) {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' })
-    await context.addInitScript(({ id, authenticated }) => {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce', colorScheme: theme })
+    await context.addInitScript(({ id, authenticated, theme }) => {
+      localStorage.setItem('homeji_theme', theme)
       localStorage.setItem('hj-intro-seen', '1')
       if (authenticated) {
         localStorage.setItem('homeji_access_token', 'glass-coverage-fixture'); localStorage.setItem('homeji_user_id', id)
         localStorage.setItem('homeji:map-search-recent', JSON.stringify([{ keyword: 'Thủ Đức' }]))
       }
-    }, { id, authenticated })
+    }, { id, authenticated, theme })
     await context.route('**/*', route => {
       const url = new URL(route.request().url())
       if (url.origin !== new URL(base).origin) return route.abort()
@@ -49,13 +51,13 @@ try {
       await page.waitForFunction(() => document.querySelector('[data-glass-control]'))
       await page.locator('.screen-pending').waitFor({ state: 'hidden' })
       if (authenticated && path === '/') {
-        await page.locator('.hub-banner__cta[data-glass-control]').waitFor()
-        await page.locator('.hub-search a[data-glass-control]').waitFor()
+        await page.locator('.hub-home[data-glass-exclude]').waitFor()
+        assert.equal(await page.locator('.hub-home [data-glass-control]').count(), 0, 'Dashboard content remains outside optical controls')
       }
       if (path === '/?section=notifications') {
         const trigger = page.locator('.hj-notify__trigger')
         if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click()
-        await page.locator('.hj-notify__pop[data-glass-surface]').waitFor()
+        await page.locator('.hj-notify__pop[data-glass-exclude]').waitFor()
       }
       const state = await page.evaluate(() => ({
         controls: document.querySelectorAll('[data-glass-control]').length,
@@ -69,14 +71,14 @@ try {
       assert.equal(state.foregroundFilters, 0, path)
       assert.ok(state.bodyText > 50, path)
       assert.deepEqual(errors, [], path)
-      results.push({ path, ...state })
+      results.push({ path, theme, ...state })
       if (['/', '/login', '/?section=profile', '/?section=marketplace&market=wallet&wallet=withdraw'].includes(path)) {
-        await page.screenshot({ path: `${out}/route-${results.length}.png`, fullPage: true })
+        await page.screenshot({ path: `${out}/route-${theme}-${results.length}.png`, fullPage: true })
       }
       page.off('pageerror', onError)
     }
     await context.close()
   }
-  await writeFile(`${out}/results.json`, JSON.stringify(results, null, 2))
+  await writeFile(`${out}/results-${theme}.json`, JSON.stringify(results, null, 2))
   console.log(`PASS: ${results.length} actual route renders with fixture APIs; shared controls registered; dense exceptions and editable text preserved. This is UI coverage, not live business-flow verification.`)
 } finally { await browser.close() }

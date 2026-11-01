@@ -16,7 +16,7 @@ export type LiquidSwitchProps = {
 
 /**
  * LiquidSwitch: A universal toggle switch featuring a 3D translucent
- * convex droplet thumb with specular highlights, ambient occlusion shadow,
+ * raised glass lip with specular highlights, ambient occlusion shadow,
  * and backdrop-filter refraction bending the track underneath.
  */
 export function LiquidSwitch({
@@ -63,6 +63,7 @@ export function LiquidSwitch({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
+      <span className="liquid-switch__track" aria-hidden="true" />
       {offContent && (
         <span
           className={`liquid-switch__content liquid-switch__content--off${

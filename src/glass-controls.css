@@ -2,6 +2,16 @@
    enforced by LiquidGlassEffects before an element receives these markers. */
 /* Clear convex material: the scene bends behind the surface; ink stays above it. */
 :root { --control-glass-fill: var(--glass-clear-fill); --control-glass-edge: var(--glass-clear-edge); }
+/* Clear glass transmits its scene in either theme. Ink follows known CSS paint,
+   rather than making every dark-mode face an opaque black backing. */
+:is(html:root #root,html:root body) [data-glass-scene='light'] {
+  --glass-ink: #18343e; --text-heading: #18343e; --text-secondary: #485d65;
+  --tabs-ink: #14352e; --tabs-muted-ink: #385953;
+}
+:is(html:root #root,html:root body) [data-glass-scene='dark'] {
+  --glass-ink: #f0f7fa; --text-heading: #f0f7fa; --text-secondary: #d8e5eb;
+  --tabs-ink: #f0fdf9; --tabs-muted-ink: #d1e7df;
+}
 :is(html:root #root,html:root body) :is([data-glass-content], [data-glass-exclude], [data-glass-exclude] button, .food-rail__checkout, .food-rail__locate, .food-qty__btn, .food-rail__clear, .food-rail__remove) {
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important; filter: none;
   background-image: none; box-shadow: none;

@@ -67,7 +67,8 @@ try {
   const data = JSON.parse(await page.locator('body').getAttribute('data-submitted'))
   assert.deepEqual(data, { name: 'Nguyễn Văn An', email: 'an@example.com', note: 'Nội dung giữ nguyên nét.', consent: 'on', intent: 'friend' })
   await page.getByRole('combobox', { name: 'Chọn khu vực thử', exact: true }).click()
-  await page.locator('.choice-picker__panel[data-glass-surface]').waitFor()
+  await page.locator('.choice-picker-layer[open] .choice-picker__panel').waitFor()
+  assert.equal(await page.locator('.choice-picker__panel').getAttribute('data-glass-control'), null, 'Portaled picker rows stay readable inside the native dialog')
   await page.getByRole('option', { name: 'Khu vực d', exact: true }).click()
   assert.match(await page.getByRole('combobox', { name: 'Chọn khu vực thử', exact: true }).innerText(), /Khu vực d/)
   for (const theme of ['light', 'dark']) for (const width of [1000, 390]) {

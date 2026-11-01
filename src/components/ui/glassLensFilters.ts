@@ -8,7 +8,7 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
   const filters = new Map<string, { node: SVGFilterElement; users: number; illumination?: SVGFEColorMatrixElement; illuminationCap?: SVGFEFuncAElement }>()
   let dark = document.documentElement.dataset.theme === 'dark'
   const illuminationValues = () => dark
-    ? '0 0 0 0 .06 0 0 0 0 .1 0 0 0 0 .12 .19134 .64368 .06498 0 .06'
+    ? '.7874 -.7152 -.0722 0 .86 -.2126 .2848 -.0722 0 .86 -.2126 -.7152 .9278 0 .86 0 0 0 0 .18'
     : [
       // Neutral scenes lift towards a light reflection (.92). Subtracting luminance
       // preserves local chroma and ensures frosted glass stays bright without dark mud.
@@ -61,12 +61,10 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
       .forEach(([key, value]) => normals.setAttribute(key, value))
     const warp = document.createElementNS(svg, 'feDisplacementMap')
     // Equal pixel units on X and Y avoid aspect-dependent vertical stretching.
-    // For text and control variants, restrict distortion to the 2-3px outer meniscus edge.
-    const isControl = variant === 'control' || variant === 'control-active' || variant === 'tab-rest' || variant === 'tab-active'
+    // The map confines bending to its shoulder; scale follows the photographed
+    // geometry instead of a fixed 3px cap that flattened large controls.
     const tab = variant === 'tab-rest' || variant === 'tab-active'
-    const scale = tab ? Math.min(18, height * (variant === 'tab-active' ? .3 : .23)) : isControl
-      ? Math.min(3, Math.max(1, GLASS_LENS_DEPTHS[variant] * Math.min(width, height)))
-      : GLASS_LENS_DEPTHS[variant] * Math.min(width, height)
+    const scale = GLASS_LENS_DEPTHS[variant] * Math.min(width, height)
     Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(scale),
       xChannelSelector: 'R', yChannelSelector: 'G', result: 'refracted-scene' }).forEach(([key, value]) => warp.setAttribute(key, value))
     filter.append(normals)
@@ -99,8 +97,8 @@ export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: Le
     let illuminationCap: SVGFEFuncAElement | undefined
     if (glassLensHasSceneReflection(variant)) {
       // Mix a broad local scene color into bright text backdrops. This softens
-      // contrast without painting every scene white; dark mode protects ink
-      // with a dark tint instead. The foreground is never input.
+      // contrast without painting every scene white. Dark mode adds only a
+      // faint reflection, never an opaque dark fill. Foreground is never input.
       const light = document.createElementNS(svg, 'feGaussianBlur')
       Object.entries({ in: 'SourceGraphic', stdDeviation: String(Math.min(20, height * .3)), edgeMode: 'duplicate', result: 'scene-light' })
         .forEach(([key, value]) => light.setAttribute(key, value))

@@ -8,6 +8,7 @@ import beadHorizontalStemMap from './liquid-lens-bead-map-stem-horizontal.png'
 import { observeGlassActivity } from './glassActivity'
 import { nearestLensRatio } from './glassLensGeometry'
 import { createGlassLensFilters } from './glassLensFilters'
+import { glassSceneTone, type GlassSceneTone } from './glassSceneTone'
 import { GLASS_CANDIDATES, glassControlKind, type GlassControlKind } from './glassControlScope'
 
 const maps = {
@@ -30,6 +31,7 @@ export function LiquidGlassEffects() {
     const observed = new Set<HTMLElement>()
     const kinds = new Map<HTMLElement, GlassControlKind>()
     const profiles = new Map<HTMLElement, 'surface' | 'bead' | 'control'>()
+    const sceneTones = new Map<Element, GlassSceneTone>()
     const pending = new Map<HTMLElement, { width: number; height: number }>()
     let frame = 0
     const resize = new ResizeObserver(entries => {
@@ -63,6 +65,8 @@ export function LiquidGlassEffects() {
       element.style.removeProperty('--glass-lens-filter')
       element.style.removeProperty('--glass-lens-active-filter')
       for (const key of ['glassControl', 'glassFace', 'glassPosition', 'glassSearch', 'glassField', 'glassToggle', 'glassSurface', 'glassContent', 'glassProfile']) delete element.dataset[key]
+      delete element.dataset.glassScene
+      if (element.matches('.liquid-tabs__lens')) delete element.parentElement?.dataset.glassScene
     }
     const forget = (element: HTMLElement) => {
       resize.unobserve(element); pending.delete(element); observed.delete(element)
@@ -70,6 +74,13 @@ export function LiquidGlassEffects() {
     }
     const reconcile = (element: HTMLElement) => {
       const kind = glassControlKind(element)
+      const updateSceneTone = () => {
+        if (kind !== 'skip' && kind !== 'content') {
+          const tone = glassSceneTone(element, sceneTones)
+          element.dataset.glassScene = tone
+          if (element.matches('.liquid-tabs__lens') && element.parentElement) element.parentElement.dataset.glassScene = tone
+        }
+      }
       const profile = kind === 'surface' || kind === 'field' || kind === 'toggle' || element.matches('.theme-switch,.liquid-switch')
         ? 'surface'
         : element.matches('.theme-switch__thumb,.liquid-switch__thumb,[data-glass-profile="bead"]')
@@ -77,10 +88,11 @@ export function LiquidGlassEffects() {
         : element.matches('[role="switch"]') && !element.matches('.theme-switch,.liquid-switch')
         ? 'bead'
         : 'control'
-      if (kinds.get(element) === kind && profiles.get(element) === profile) return
+      if (kinds.get(element) === kind && profiles.get(element) === profile) { updateSceneTone(); return }
       if (observed.has(element)) forget(element)
       else { kinds.delete(element); profiles.delete(element); clearMarkers(element) }
       if (kind === 'skip') return
+      updateSceneTone()
       kinds.set(element, kind)
       profiles.set(element, profile)
       if (kind === 'content') { element.dataset.glassContent = ''; return }
@@ -107,9 +119,14 @@ export function LiquidGlassEffects() {
     register(document.body)
     const stopActivity = observeGlassActivity(document)
     const mutations = new MutationObserver(records => {
+      sceneTones.clear()
       const removals = new Set<Element>()
       for (const record of records) {
-        if (record.target === document.documentElement) { bank.setTheme(document.documentElement.dataset.theme === 'dark'); continue }
+        if (record.target === document.documentElement) {
+          bank.setTheme(document.documentElement.dataset.theme === 'dark')
+          register(document.body)
+          continue
+        }
         if (record.type === 'attributes' && record.target instanceof Element) register(record.target)
         if (record.type === 'childList') {
           record.addedNodes.forEach(node => { if (node instanceof Element) register(node) })

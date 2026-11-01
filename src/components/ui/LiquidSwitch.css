@@ -1,5 +1,6 @@
-/* Universal LiquidSwitch with 3D translucent convex droplet thumb */
+/* Universal LiquidSwitch with a clear raised lip over the state track */
 .liquid-switch {
+  --control-glass-fill: transparent;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -24,6 +25,8 @@
     box-shadow 220ms ease;
   user-select: none;
 }
+.liquid-switch__track { position: absolute; inset: 5px 4px; z-index: 0; border-radius: 999px; background: #a7b2ae; pointer-events: none; transition: background-color 220ms ease; }
+.liquid-switch--checked .liquid-switch__track { background: #34c759; }
 
 .liquid-switch--checked {
   background-color: rgb(52 199 89 / 0.82);
@@ -59,17 +62,17 @@
   opacity: 0.42;
 }
 
-/* 3D translucent convex droplet thumb:
+/* Clear raised-lip thumb:
  * Translucent liquid glass material that lets track colors show through and magnify,
  * with specular highlight along the upper rim and ambient occlusion shadow underneath.
  */
 .liquid-switch__thumb {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 32px;
+  border-radius: 999px;
   z-index: 1;
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.16) 48%, rgba(255, 255, 255, 0.02) 100%);
   border: 1px solid rgba(255, 255, 255, 0.72);
@@ -85,7 +88,7 @@
 }
 
 .liquid-switch--checked .liquid-switch__thumb {
-  transform: translateX(26px);
+  transform: translateX(14px);
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.18) 48%, rgba(255, 255, 255, 0.03) 100%);
   box-shadow:
     inset 0 2px 2px -1px #ffffff,
