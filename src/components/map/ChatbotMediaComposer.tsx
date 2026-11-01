@@ -52,9 +52,13 @@ export function ChatbotMediaComposer({ attachments, disabled, onChange, onDictat
         const files = Array.from(event.target.files ?? [])
         event.target.value = ''
         if (!files.length) return
-        if (files.length + attachments.filter(file => file.mimeType !== 'audio/wav').length > 3) { onError('Mỗi tin nhắn tối đa 3 ảnh.'); return }
+        if (files.length + attachments.filter(file => file.mimeType !== 'audio/wav').length > 5) { onError('Mỗi tin nhắn tối đa 5 ảnh.'); return }
         void process(async signal => {
-          const prepared = await Promise.all(files.map(file => prepareChatbotAttachment(file, file.name)))
+          const prepared: ChatbotDraftAttachment[] = []
+          for (const file of files) {
+            if (signal.aborted) return
+            prepared.push(await prepareChatbotAttachment(file, file.name))
+          }
           const next = [...attachments, ...prepared]
           validateChatbotAttachments(next)
           if (!signal.aborted) onChange(next)

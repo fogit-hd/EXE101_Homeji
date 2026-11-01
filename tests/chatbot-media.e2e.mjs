@@ -46,7 +46,7 @@ try {
     page.on('pageerror', error => { errors.push(error.message); console.error(error.message) })
     page.on('console', message => { if (message.type() === 'error') console.error(message.text()) })
     page.setDefaultTimeout(15000)
-    await page.goto(`${base}/${out}/index.html`)
+    await page.goto(`${base}/${out}/index.html`, { waitUntil: 'domcontentloaded', timeout: 45000 })
     await page.locator('.homeji-assistant').waitFor({ state: 'attached' })
     await page.getByRole('button', { name: 'Mở chat kiểm thử' }).click()
     const composer = page.getByRole('textbox', { name: 'Nhập tin nhắn cho Homeji' })
@@ -58,13 +58,14 @@ try {
       return canvas.toDataURL('image/png').split(',')[1]
     }), 'base64')
     const upload = page.getByLabel('Chọn ảnh gửi Homeji')
-    await upload.setInputFiles({ name: 'phong.png', mimeType: 'image/png', buffer: png })
+    await upload.setInputFiles(Array.from({ length: 5 }, (_, index) => ({ name: index === 0 ? 'phong.png' : `phong-${index}.png`, mimeType: 'image/png', buffer: png })))
     await page.getByRole('button', { name: 'Gỡ phong.png' }).waitFor()
     await page.getByRole('button', { name: 'Gửi', exact: true }).click()
     await page.getByRole('button', { name: 'Thử lại câu hỏi này' }).click()
     await page.getByText('Phản hồi giả lập cho kiểm thử giao diện.', { exact: true }).waitFor()
     assert.deepEqual(requests[1].attachments, requests[0].attachments, 'Retry must preserve image bytes')
-    assert.equal(requests[1].attachments[0].mimeType, 'image/png')
+    assert.equal(requests[1].attachments.length, 5)
+    assert.equal(requests[1].attachments[0].mimeType, 'image/jpeg')
     await page.screenshot({ path: `${out}/${width}-${theme}-image.png`, fullPage: true })
 
     async function record(button) {
