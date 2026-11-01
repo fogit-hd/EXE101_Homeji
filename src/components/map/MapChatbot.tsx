@@ -400,7 +400,10 @@ export function MapChatbot({
   useEffect(() => {
     if (!panelVisible) return
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const focusFrame = window.requestAnimationFrame(() => inputRef.current?.focus())
+    const focusFrame = window.requestAnimationFrame(() => {
+      if (panelRef.current?.querySelector('.homeji-assistant__conversation[inert]')) draftWorkspaceClose.current?.focus()
+      else inputRef.current?.focus()
+    })
     const closeOnEscape = (event: KeyboardEvent) => {
       const panel = panelRef.current
       if (event.target instanceof Element && event.target.closest('[role="dialog"]') && !panel?.contains(event.target)) return
@@ -675,7 +678,7 @@ export function MapChatbot({
               ref={toolsButtonRef}
               type="button"
               className="homeji-assistant__tools-trigger"
-              onClick={() => setToolsOpen(value => !value)}
+              onClick={() => { setDraftWorkspaceOpen(false); setToolsOpen(value => !value) }}
               aria-expanded={showTools}
               aria-controls={showTools ? `${reactId}-tools` : undefined}
             >
@@ -695,7 +698,7 @@ export function MapChatbot({
                 <span className="homeji-assistant__scroll-arrow" aria-hidden="true">↓</span>
               </button>
             ) : null}
-            <button type="button" className="homeji-assistant__icon-button" disabled={busy} onClick={() => setResetRequested(true)}
+            <button type="button" className="homeji-assistant__icon-button" disabled={busy} onClick={() => { setDraftWorkspaceOpen(false); setResetRequested(true) }}
               aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><AssistantIcon name="plus" /></button>
             <button type="button" className="homeji-assistant__icon-button" onClick={() => setExpanded(value => !value)}
               aria-pressed={expanded} aria-label={expanded ? 'Thu gọn cuộc trò chuyện' : 'Mở rộng cuộc trò chuyện'}
