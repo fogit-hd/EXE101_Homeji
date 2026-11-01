@@ -161,6 +161,7 @@ export function MapListingsWorkspace({
         <article
           className={`map-listings__card${!marketMode && view.isPremium ? ' premium-listing' : ''}${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
         >
+          <ListingTrustBadges premium={!marketMode && view.isPremium} verified={view.isOwnerVerified} />
           <button
             type="button"
             className="map-listings__card-hit"
@@ -210,7 +211,6 @@ export function MapListingsWorkspace({
               </span>
             </span>
           </button>
-          <ListingTrustBadges premium={!marketMode && view.isPremium} verified={view.isOwnerVerified} />
           {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
           {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></button> : null}
           {!marketMode && onToggleSave ? (
@@ -561,6 +561,7 @@ function PreviewCard({
 }) {
   return (
     <article className={`map-listings__preview${view.isPremium ? ' premium-listing' : ''}`} aria-label="Phòng đang chọn">
+      <ListingTrustBadges premium={view.isPremium} verified={view.isOwnerVerified} />
       <div className="map-listings__preview-top">
         <div className="map-listings__preview-photo">
           {view.thumbnailUrl ? <img src={view.thumbnailUrl} alt="" /> : null}
@@ -589,7 +590,6 @@ function PreviewCard({
           </p>
         </div>
       </div>
-      <ListingTrustBadges premium={view.isPremium} verified={view.isOwnerVerified} />
       <div className="map-listings__preview-tags">
         {view.areaLabel ? <span>{view.areaLabel}</span> : null}
         {view.typeLabel ? <span>{view.typeLabel}</span> : null}

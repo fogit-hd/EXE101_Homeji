@@ -6,7 +6,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('L
 const out = 'output/verification/verified-owner-map'
 await mkdir(out, { recursive: true })
 await writeFile(out + '/index.html', '<!doctype html><html lang="vi"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out + '/scene.tsx', `import React from 'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapListingsWorkspace}from'/src/components/map/listings/MapListingsWorkspace.tsx';import'/src/index.css';import'/src/ui-consistency.css';import'/src/liquid-glass.css';import'/src/components/theme/dark-theme.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';import'/src/home-refinement.css';const q=new URLSearchParams(location.search);const post={id:'room',type:1,title:'Phòng trống · 54 m²',price:6000000,area:54,address:'12 đường số 8, Linh Trung, Thủ Đức',latitude:10.8,longitude:106.7,thumbnailPath:'/landing/bloom-hero-bg2.jpg',isOwnerPremium:q.get('premium')!=='false',isOwnerVerified:q.get('verified')==='true',ownerBadge:'Premium'};createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={['/?section=listings&view='+q.get('view')]}><div style={{height:'100dvh'}}><MapListingsWorkspace posts={[post]} selectedListingId="room" hoveredListingId={null} loading={false} error="" mapNode={<div style={{height:'100%',background:'#cadfda'}}/>} onHoverListing={()=>{}} onLeaveListing={()=>{}} onSelectListing={()=>{}} onOpenRoomDetail={()=>{}} onResetFilters={()=>{}}/></div></MemoryRouter>);`)
+await writeFile(out + '/scene.tsx', `import React from 'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapListingsWorkspace}from'/src/components/map/listings/MapListingsWorkspace.tsx';import'/src/index.css';import'/src/ui-consistency.css';import'/src/liquid-glass.css';import'/src/components/theme/dark-theme.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';import'/src/home-refinement.css';const q=new URLSearchParams(location.search);const post={id:'room',type:1,title:'Phòng trống · 54 m²',price:6000000,area:54,address:'12 đường số 8, Linh Trung, Thủ Đức',latitude:10.8,longitude:106.7,thumbnailPath:'/landing/bloom-hero-bg2.jpg',isOwnerPremium:q.get('premium')!=='false',isOwnerVerified:q.get('verified')==='true',ownerBadge:'Premium'};createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={['/?section=listings&view='+q.get('view')]}><div style={{height:'100dvh'}}><MapListingsWorkspace posts={[post]} selectedListingId="room" hoveredListingId={null} loading={false} error="" mapNode={<div style={{height:'100%',background:'#cadfda'}}/>} onHoverListing={()=>{}} onLeaveListing={()=>{}} onSelectListing={()=>{}} onOpenRoomDetail={()=>{}} onToggleSave={()=>{}} onResetFilters={()=>{}}/></div></MemoryRouter>);`)
 const browser = await chromium.launch({ channel: 'msedge', headless: true })
 const page = await browser.newPage({ viewport: { width: 1100, height: 900 }, reducedMotion: 'reduce' })
 const errors = []; page.on('pageerror', e => errors.push(e.message))
@@ -28,12 +28,17 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No horizontal page overflow')
     const trust = scope.locator('.listing-trust-badges')
     assert.equal(await trust.count(), 1)
+    assert.equal(await scope.evaluate(element => element.firstElementChild?.classList.contains('listing-trust-badges')), true, 'Trust labels must be the first row of the card')
     if (view !== 'map') assert.equal(await scope.locator('.map-listings__card-photo .premium-badge').count(), 0, 'Badges must not cover the room photo')
     const fits = await trust.evaluate(element => {
       const row = element.getBoundingClientRect()
       return [...element.children].every(badge => { const box = badge.getBoundingClientRect(); return box.left >= row.left - 1 && box.right <= row.right + 1 && box.height <= 34 && getComputedStyle(badge).whiteSpace === 'nowrap' })
     })
     assert.ok(fits, 'Each label stays on one line and fits its own row')
+    if (view !== 'map') assert.ok(await scope.evaluate(element => {
+      const save = element.querySelector('.map-listings__save').getBoundingClientRect()
+      return [...element.querySelector('.listing-trust-badges').children].every(badge => badge.getBoundingClientRect().right <= save.left - 6)
+    }), 'Labels must reserve space for the save button')
     if (verified) await scope.screenshot({ path: `${out}/${theme}-${width}-${view}-badges.png` })
     if (verified && view === 'map') await page.screenshot({ path: `${out}/${theme}-${width}.png`, fullPage: true })
   }
@@ -62,5 +67,5 @@ try {
   await page.evaluate(() => document.documentElement.dataset.theme = 'light')
   await nonPremium.screenshot({ path: out + '/badge-preview.png' })
   assert.deepEqual(errors, [])
-  console.log('PASS: Premium label stays visible; verified owners independently appear on map/list cards in light/dark and 320–1100px; unverified accounts get no badge')
+  console.log('PASS: Premium label stays visible; verified owners independently appear on map/list cards in light/dark and 320–1440px; unverified accounts get no badge')
 } finally { await browser.close() }

@@ -25,8 +25,9 @@ html:root #root .listing-trust-badges > .premium-badge {
   border-color: #dec587;
 }
 
-.map-listings__card > .listing-trust-badges { margin: 0 14px 12px; }
-.map-listings__preview > .listing-trust-badges { margin: 12px 0; }
+.map-listings__card > .listing-trust-badges { margin: 12px 14px 0; }
+.map-listings__card:has(> .map-listings__save) > .listing-trust-badges { min-height: 44px; margin-right: 70px; }
+.map-listings__preview > .listing-trust-badges { margin: 0 0 12px; }
 
 html[data-theme='dark']:root #root .listing-trust-badges > .premium-badge {
   background: linear-gradient(135deg, #3c321e, #45371e);
