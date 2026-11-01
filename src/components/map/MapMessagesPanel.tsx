@@ -22,6 +22,7 @@ import {
 } from '../../api'
 import { getStoredSession } from '../../api/client'
 import { createAsyncActionGate } from '../../lib/asyncActionGate'
+import { sortConversationsByActivity } from '../../lib/conversationOrder'
 import {
   chatLocationKindLabel,
   encodeChatLocation,
@@ -446,6 +447,7 @@ function MapMessagesPanelContent({
   const [conversations, setConversations] = useState<PostConversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
   const [appliedInitialId, setAppliedInitialId] = useState(initialConversationId)
+  const [contactedAt, setContactedAt] = useState<Record<string, number>>(() => initialConversationId ? { [initialConversationId]: Date.now() } : {})
   const currentThread = useRef({ id: activeId, version: 0 })
   useLayoutEffect(() => {
     currentThread.current = { id: activeId, version: currentThread.current.version + 1 }
@@ -495,6 +497,7 @@ function MapMessagesPanelContent({
   if (initialConversationId !== appliedInitialId) {
     setAppliedInitialId(initialConversationId)
     if (initialConversationId) {
+      setContactedAt(previous => ({ ...previous, [initialConversationId]: Date.now() }))
       setActiveId(initialConversationId)
       setThreadVisible(true)
     } else {
@@ -690,7 +693,7 @@ function MapMessagesPanelContent({
   const appendSentMessage = (msg: PostMessage) => {
     setConversations((prev) => {
       const next = prev.map(c => c.id === msg.conversationId ? { ...c, lastMessage: msg.body, lastMessageSenderId: msg.senderId, updatedAt: msg.sentAt, unreadCount: 0 } : c)
-      return next.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      return sortConversationsByActivity(next)
     })
   }
 
@@ -819,14 +822,14 @@ function MapMessagesPanelContent({
   const unreadTotal = conversations.reduce((n, c) => n + (c.unreadCount ?? 0), 0)
   const filteredConversations = useMemo(() => {
     const q = inboxQuery.trim().toLowerCase()
-    return conversations.filter((c) => {
+    return sortConversationsByActivity(conversations, contactedAt).filter((c) => {
       if (inboxFilter === 'unread' && !(c.unreadCount > 0)) return false
       if (inboxFilter === 'rental' && c.subjectType !== 1) return false
       if (!q) return true
       const hay = `${c.otherParticipantName ?? ''} ${c.lastMessage ?? ''}`.toLowerCase()
       return hay.includes(q)
     })
-  }, [conversations, inboxFilter, inboxQuery])
+  }, [conversations, contactedAt, inboxFilter, inboxQuery])
 
 
   return (
