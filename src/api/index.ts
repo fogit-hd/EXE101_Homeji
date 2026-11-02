@@ -1,4 +1,4 @@
-import { resultCountBucket } from '../lib/analyticsPolicy'
+import { resultCountBucket, type FunnelEvent } from '../lib/analyticsPolicy'
 import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
 import type { ChatbotAttachment } from '../lib/chatbotMedia'
@@ -86,9 +86,12 @@ export const resetPassword = (data: { accessToken: string; newPassword: string }
 export const getGoogleLoginUrl = (redirectTo?: string) =>
   apiRequest<AuthUrl>('/api/account/google/url', { auth: false, params: { redirectTo } })
 
-export const googleLoginWithIdToken = (data: { idToken: string }) =>
+export const googleLoginWithIdToken = (
+  data: { idToken: string },
+  funnelEvent: Extract<FunnelEvent, 'login' | 'sign_up'> = 'login',
+) =>
   apiRequest<AuthSession>('/api/account/google/id-token', { method: 'POST', body: data, auth: false })
-    .then(session => { if (session.accessToken) trackFunnelEvent('login'); return session })
+    .then(session => { if (session.accessToken) trackFunnelEvent(funnelEvent); return session })
 
 export const checkEmail = (data: { email: string }) =>
   apiRequest<EmailAvailabilityResult>('/api/account/email-availability', {

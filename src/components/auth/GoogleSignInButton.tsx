@@ -8,10 +8,11 @@ type Props = {
   onSuccess: (response: CredentialResponse) => void
   onError: () => void
   maxWidth?: number
+  text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
 }
 
 /** Renders nothing when VITE_GOOGLE_CLIENT_ID is empty so login stays usable. */
-export function GoogleSignInButton({ onSuccess, onError, maxWidth = 280 }: Props) {
+export function GoogleSignInButton({ onSuccess, onError, maxWidth = 280, text = 'signin_with' }: Props) {
   const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const [buttonWidth, setButtonWidth] = useState(280)
@@ -35,7 +36,7 @@ export function GoogleSignInButton({ onSuccess, onError, maxWidth = 280 }: Props
       shape="pill"
       theme={theme === 'dark' ? 'filled_black' : 'outline'}
       size="large"
-      text="signin_with"
+      text={text}
       width={String(buttonWidth)}
     />
       <small>Tiếp tục an toàn với tài khoản Google</small>

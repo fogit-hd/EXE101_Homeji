@@ -128,17 +128,20 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
-      setError('Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
+      setError(mode === 'register' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
       return
     }
     setError('')
     setSubmitting(true)
     try {
-      const session = await googleLoginWithIdToken({ idToken: credentialResponse.credential })
+      const session = await googleLoginWithIdToken(
+        { idToken: credentialResponse.credential },
+        mode === 'register' ? 'sign_up' : 'login',
+      )
       await setSessionFromAuth(session)
       onSuccess()
     } catch (err) {
-      setError(getErrorMessage(err, 'Đăng nhập Google thất bại'))
+      setError(getErrorMessage(err, mode === 'register' ? 'Đăng ký bằng Google thất bại' : 'Đăng nhập Google thất bại'))
     } finally {
       setSubmitting(false)
     }
@@ -231,6 +234,18 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
             <p className="auth-modal__subtitle">{subtitle ?? 'Tạo tài khoản Homeji miễn phí'}</p>
             <PageNotice message={error} tone="error" />
             <PageNotice message={message} tone="success" />
+            {googleOAuthClientId ? (
+              <>
+                <div className="auth-modal__divider">hoặc</div>
+                <div className="auth-modal__google-wrap">
+                  <GoogleSignInButton
+                    text="signup_with"
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError('Đăng ký bằng Google thất bại')}
+                  />
+                </div>
+              </>
+            ) : null}
             <form onSubmit={(e) => void handleRegister(e)}>
               <div className="form-group">
                 <label className="form-label" htmlFor="auth-modal-name">

@@ -952,16 +952,19 @@ export function AuthPage({ initialMode }: AuthPageProps) {
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
-      setError('Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
+      setError(mode === 'signup' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
       return
     }
     setError('')
     setSubmitting(true)
     try {
-      const session = await googleLoginWithIdToken({ idToken: credentialResponse.credential })
+      const session = await googleLoginWithIdToken(
+        { idToken: credentialResponse.credential },
+        mode === 'signup' ? 'sign_up' : 'login',
+      )
       await setSessionFromAuth(session)
     } catch (err) {
-      setError(getErrorMessage(err, 'Đăng nhập Google thất bại'))
+      setError(getErrorMessage(err, mode === 'signup' ? 'Đăng ký bằng Google thất bại' : 'Đăng nhập Google thất bại'))
     } finally {
       setSubmitting(false)
     }
@@ -1734,6 +1737,19 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                   ) : null}
                   {message ? (
                     <div className="auth-cinema__alert auth-cinema__alert--ok" role="status">{message}</div>
+                  ) : null}
+                  {googleOAuthClientId ? (
+                    <>
+                      <div className="auth-modal__google-wrap">
+                        <GoogleSignInButton
+                          maxWidth={380}
+                          text="signup_with"
+                          onSuccess={handleGoogleSuccess}
+                          onError={() => setError('Đăng ký bằng Google thất bại')}
+                        />
+                      </div>
+                      <div className="auth-cinema__divider">hoặc đăng ký bằng email</div>
+                    </>
                   ) : null}
                   <form aria-busy={submitting} aria-describedby={error ? 'auth-form-error' : undefined} onSubmit={(e) => void handleSignUpCard(e)}>
                     <div className="auth-cinema__field">
