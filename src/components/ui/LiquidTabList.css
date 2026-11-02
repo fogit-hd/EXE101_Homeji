@@ -194,9 +194,16 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
   #root .liquid-tabs::before { background: var(--surface-elevated); border-color: var(--text-secondary); }
-  #root .liquid-tabs > .liquid-tabs__lens { background: #124c43; border-color: #fff; box-shadow: none; }
-  #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { color: var(--text-heading); }
-  #root .liquid-tabs > button[role='tab'][aria-selected='true'] { color: #fff; }
+  #root .liquid-tabs > .liquid-tabs__lens { display: none; }
+  #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) {
+    color: var(--tabs-muted-ink);
+    border-color: transparent;
+  }
+  #root .liquid-tabs > button[role='tab'][aria-selected='true'] {
+    color: var(--tabs-ink);
+    background: var(--hj-accent-soft);
+    border-color: var(--hj-accent);
+  }
 }
 
 /* Keep the optical face behind labels; tab text is always rendered directly. */
