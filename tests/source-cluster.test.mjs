@@ -25,7 +25,7 @@ const list=createClusterListings(entries.map(entry=>entry.listing),()=>{zoomed=t
 assert.equal(list.querySelectorAll('.map-cluster-listings__card').length,17)
 list.querySelectorAll('.map-cluster-listings__card')[16].click()
 assert.equal(popup.opened,true)
-popup.content.querySelector('button').click()
+popup.content.querySelector('a.source-catalog-popup__action').click()
 assert.equal(opened,'?source='+pins[16].id.slice(7))
 list.querySelector('button').click();assert.equal(zoomed,true)
 await act(async()=>root.unmount());assert.equal(entries.length,0)

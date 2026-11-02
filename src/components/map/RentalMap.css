@@ -746,6 +746,7 @@
 .source-catalog-popup__publisher{color:var(--source-popup-ink);font-size:11px;font-weight:650}
 .source-catalog-popup__note{display:block;margin-top:5px;color:var(--source-popup-muted);font-size:10px}
 .source-catalog-popup__action{position:sticky;bottom:0;display:flex;justify-content:center;align-items:center;flex-shrink:0;width:calc(100% - 24px);min-height:42px;margin:0 12px 12px;padding:8px 12px;border:1px solid var(--source-popup-accent);border-radius:999px;background:var(--source-popup-accent);color:#fff;font:700 12px var(--font-ui,sans-serif);cursor:pointer;box-shadow:0 4px 12px #10333926;transition:filter .16s,transform .16s}
+.source-catalog-popup__action{text-decoration:none;box-sizing:border-box}
 .source-catalog-popup__action:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .source-catalog-popup :is(a,button):focus-visible{outline:3px solid #52a99a;outline-offset:2px}
 .rental-map .gm-style-iw-c:has(.source-catalog-popup--rental){padding:0!important;border:0!important;border-radius:18px!important;background:transparent!important;box-shadow:none!important}

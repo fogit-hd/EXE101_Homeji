@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ListingsSkeleton } from '../components/skeletons/PageSkeletons'
 
@@ -8,6 +8,7 @@ import { ListingsSkeleton } from '../components/skeletons/PageSkeletons'
  */
 export function ExplorePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const location = useLocation()
 
   if (authLoading) {
     return (
@@ -18,8 +19,8 @@ export function ExplorePage() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />
+    return <Navigate to={{ pathname: '/', search: location.search, hash: location.hash }} replace />
   }
 
-  return <Navigate to="/#map" replace />
+  return <Navigate to={{ pathname: '/', search: location.search, hash: '#map' }} replace />
 }

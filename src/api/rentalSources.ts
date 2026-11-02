@@ -1,4 +1,5 @@
 import { apiRequest } from './client'
+export { sourceRoomHref } from '../lib/sourceRoomLink'
 
 export interface RentalSourceListing {
   id: string; source: string; sourceId: string; sourceUrl: string; title: string
@@ -13,12 +14,6 @@ export interface RentalSourceListing {
 export const getRentalSource = (id: string, signal?: AbortSignal) => apiRequest<RentalSourceListing>(`/api/rental-source-listings/${encodeURIComponent(id)}`, { auth: false, signal })
 export const getRentalSourceContact = (id: string, signal?: AbortSignal) =>
   apiRequest<{ phone: string | null; phones?: string[] }>(`/api/rental-source-listings/${encodeURIComponent(id)}/contact`, { signal })
-
-export function sourceRoomHref(id: string) {
-  const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)
-  params.set('source', id)
-  return `?${params}`
-}
 
 let catalog: { rows: RentalSourceListing[]; at: number } | null = null
 let catalogRequest: Promise<RentalSourceListing[]> | null = null

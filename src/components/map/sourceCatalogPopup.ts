@@ -1,5 +1,6 @@
 import type { SourceCatalogPin } from '../../lib/sourceCatalog'
 import { formatPrice } from '../../lib/labels'
+import { sourceRoomHref } from '../../lib/sourceRoomLink'
 
 export function createSourceCatalogPopup(pin: SourceCatalogPin, onOpen: (id: string) => void): HTMLDivElement {
   const root = document.createElement('div'); root.className = `source-catalog-popup source-catalog-popup--${pin.kind}`
@@ -49,8 +50,12 @@ export function createSourceCatalogPopup(pin: SourceCatalogPin, onOpen: (id: str
   const author = document.createElement('p'); author.className = 'source-catalog-popup__publisher'; author.textContent = `Người đăng: ${pin.publisherName?.trim() || 'Chưa có tên người đăng'}`; body.append(author)
   const note = document.createElement('small'); note.className = 'source-catalog-popup__note'; note.textContent = 'Kiểm tra chi tiết phòng và đăng nhập để liên hệ.'; body.append(note)
   root.append(body)
-  const button = document.createElement('button'); button.type = 'button'; button.className = 'source-catalog-popup__action'; button.textContent = 'Xem phòng & liên hệ'
-  button.addEventListener('click', () => onOpen(pin.id.slice('rental:'.length))); root.append(button)
+  const id = pin.id.slice('rental:'.length)
+  const link = document.createElement('a'); link.href = sourceRoomHref(id); link.className = 'source-catalog-popup__action'; link.textContent = 'Xem phòng & liên hệ'
+  link.addEventListener('click', event => {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+    event.preventDefault(); event.stopPropagation(); onOpen(id)
+  }); root.append(link)
   return root
 }
 
