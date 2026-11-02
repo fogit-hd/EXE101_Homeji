@@ -96,6 +96,8 @@
 .map-listings__sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .map-listings__panel-caption { font-size: 16px; font-weight: 650; color: var(--ml-ink); }
 .map-listings__result-count { margin: 4px 0 0; font-size: 11px; color: var(--ml-muted); }
+.map-listings__facts { display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
+.map-listings__facts > :is(span,time) { max-width:100%; padding:3px 7px; border:1px solid var(--ml-line); border-radius:7px; background:var(--ml-paper); color:var(--ml-muted); font-size:10px; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 .map-listings__popover.map-listings__filter-sheet {
   width: 420px;

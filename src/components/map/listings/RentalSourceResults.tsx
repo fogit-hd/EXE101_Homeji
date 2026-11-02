@@ -10,6 +10,14 @@ import './RentalSourceResults.css'
 import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
 
 type Counts = { total: number; mapped: number }
+function formatSourceDate(value: string | null | undefined): string | null {
+  if (!value) return null
+  const timestamp = Date.parse(value)
+  return Number.isFinite(timestamp)
+    ? new Intl.DateTimeFormat('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }).format(timestamp)
+    : null
+}
+
 export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] }: {
   nativeCards?: ReactNode[]
   query: ListingQuery
@@ -49,10 +57,12 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
       if (!item.row) return <li key={item.key}>{item.native}</li>
       const row = item.row
       const photo = row.imageUrls.map(rentalSourceImageHref).find(Boolean)
+      const updatedAt = formatSourceDate(row.sourceUpdatedAt)
       return <li key={row.id}><article className="source-results__card">
         {photo ? <img src={photo} alt={row.title} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
         <div><strong className="source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong><h3>{row.title}</h3><p>{row.address}</p>
-          <span>{row.area} m² · {listingReference(row.id)}</span>
+          <div className="source-results__facts"><span>{row.area} m²</span>{row.depositLabel ? <span>{row.depositLabel}</span> : null}{(row.amenityHighlights ?? []).slice(0, 4).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
+          <small className="source-results__reference">{listingReference(row.id)}</small>
           <p className="source-results__publisher">{row.publisherName?.trim() || 'Chưa có tên người đăng'}</p>
           <small>{sourceHasLocation(row) ? 'Đã có vị trí trên bản đồ' : 'Chưa có vị trí trên bản đồ'}</small>
           <div className="source-results__actions">{onFocus && sourceHasLocation(row) ? <button type="button" onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí</button> : null}<Link to={sourceRoomHref(row.id)}>Xem chi tiết & liên hệ</Link></div>

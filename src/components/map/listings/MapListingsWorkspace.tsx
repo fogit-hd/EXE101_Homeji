@@ -62,9 +62,17 @@ type Props = {
 }
 
 const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
-  { id: 'rooms', label: 'Phòng' },
+  { id: 'rooms', label: 'Phòng trọ' },
+  { id: 'apartments', label: 'Căn hộ' },
   { id: 'market', label: 'Chợ đồ' },
 ]
+
+function formatListingDate(value: string): string | null {
+  const timestamp = Date.parse(value)
+  return Number.isFinite(timestamp)
+    ? new Intl.DateTimeFormat('vi-VN', { day: 'numeric', month: 'numeric' }).format(timestamp)
+    : null
+}
 
 export function MapListingsWorkspace({
   viewportPaused = false,
@@ -93,6 +101,7 @@ export function MapListingsWorkspace({
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
+  const apartmentMode = query.catalog === 'apartments'
   const cards = useMemo(
     () =>
       marketMode
@@ -212,6 +221,10 @@ export function MapListingsWorkspace({
                 {view.highlightTag ? <span>{view.highlightTag}</span> : null}
                 {!marketMode && !view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
               </span>
+              {view.facts.length || view.updatedAt ? <span className="map-listings__facts">
+                {view.facts.map(fact => <span key={fact}>{fact}</span>)}
+                {view.updatedAt && formatListingDate(view.updatedAt) ? <time dateTime={view.updatedAt}>Cập nhật {formatListingDate(view.updatedAt)}</time> : null}
+              </span> : null}
             </span>
           </button>
           {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
@@ -383,7 +396,7 @@ export function MapListingsWorkspace({
             aria-label="Danh sách kết quả"
           >
             {query.view === 'split' ? <div className="map-listings__panel-head">
-              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : 'Phòng trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : marketMode ? `${cards.length} tin đang hiển thị` : `${cards.length + sourceCounts.total} tin trong danh sách`}</p></div>
+              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : apartmentMode ? 'Căn hộ trong khu vực' : 'Phòng trọ trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : marketMode ? `${cards.length} tin đang hiển thị` : `${cards.length + sourceCounts.total} tin trong danh sách`}</p></div>
               <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>Thu gọn</button>
             </div> : null}
             <div className="map-listings__panel-body">

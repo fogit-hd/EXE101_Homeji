@@ -7,6 +7,7 @@ export interface RentalSourceListing {
   sourceExpiresAt?: string | null; sourceCheckedAt?: string | null
   publisherName?: string | null; latitude?: number | null; longitude?: number | null
   description?: string | null; contactPhone?: string | null; detailsCollectedAt?: string | null
+  depositLabel?: string | null; amenityHighlights?: string[]
 }
 
 export const getRentalSource = (id: string, signal?: AbortSignal) => apiRequest<RentalSourceListing>(`/api/rental-source-listings/${encodeURIComponent(id)}`, { auth: false, signal })
@@ -38,9 +39,9 @@ export function getRentalSourceCatalog(): Promise<RentalSourceListing[]> {
   return catalogRequest
 }
 
-export function searchRentalSources({ keyword, district, page, pageSize = 10 }: { keyword: string; district: string; page: number; pageSize?: number }, signal?: AbortSignal) {
+export function searchRentalSources({ keyword, district, page, pageSize = 10, propertyCategory }: { keyword: string; district: string; page: number; pageSize?: number; propertyCategory?: 'room' | 'apartment' }, signal?: AbortSignal) {
   return apiRequest<RentalSourceListing[]>('/api/rental-source-listings', {
-    auth: false, signal, params: { keyword: keyword.trim().slice(0, 200) || undefined, district: district || undefined, page, pageSize },
+    auth: false, signal, params: { keyword: keyword.trim().slice(0, 200) || undefined, district: district || undefined, page, pageSize, propertyCategory },
   })
 }
 

@@ -3,7 +3,7 @@ import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
 import type { ChatbotAttachment } from '../lib/chatbotMedia'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
-import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload } from './client'
+import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload, getStoredSession } from './client'
 import type {
   AccountMessage,
   AdminActiveUser,
@@ -412,7 +412,7 @@ export const uploadImages = (files: File[], folder?: string) => {
 
 // Subscriptions
 export const getSubscriptionPackages = () =>
-  apiRequest<SubscriptionPackage[]>('/api/subscriptions/packages', { auth: false })
+  apiRequest<SubscriptionPackage[]>('/api/subscriptions/packages', { auth: Boolean(getStoredSession()?.accessToken) })
 
 export const getMySubscription = () => apiRequest<MySubscription>('/api/subscriptions/me')
 

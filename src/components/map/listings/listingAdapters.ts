@@ -53,7 +53,7 @@ export type MapListingsView = 'split' | 'map' | 'list'
  * `market` is GET /api/marketplace-posts.
  * Roommate has no search param and no separate listing endpoint, so it is not a catalog value.
  */
-export type ListingCatalog = 'rooms' | 'market'
+export type ListingCatalog = 'rooms' | 'apartments' | 'market'
 
 export type ListingQuery = {
   placeId?: string
@@ -88,6 +88,8 @@ export type ListingViewModel = {
   ownerBadge: string | null
   isPremium: boolean
   isOwnerVerified: boolean
+  facts: string[]
+  updatedAt: string | null
 }
 
 export type FilterConfig = {
@@ -122,6 +124,11 @@ export function mapBackendListingToListingViewModel(post: RentalPostSummary): Li
     ownerBadge: post.ownerBadge?.trim() || null,
     isPremium: post.isOwnerPremium === true,
     isOwnerVerified: post.isOwnerVerified === true,
+    facts: [
+      post.deposit == null ? '' : post.deposit > 0 ? `Cọc ${formatPrice(post.deposit)}` : 'Không cọc',
+      ...(post.amenities ?? []).slice(0, 3).map(code => amenityLabel(code)),
+    ].filter(Boolean),
+    updatedAt: post.updatedAt ?? null,
   }
 }
 
@@ -162,6 +169,8 @@ export function mapMarketplacePostToListingViewModel(post: MarketplacePost): Lis
     ownerBadge: post.sellerDisplayName?.trim() || null,
     isPremium: false,
     isOwnerVerified: false,
+    facts: [],
+    updatedAt: null,
   }
 }
 
@@ -226,7 +235,7 @@ export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
     excludeRoommateShare: params.get('excludeRoommateShare') === 'true',
     minAvailableSlots: readNumber(params, 'minAvailableSlots'),
     ids: params.getAll('ids'),
-    catalog: params.get('catalog') === 'market' ? 'market' : 'rooms',
+    catalog: params.get('catalog') === 'market' ? 'market' : params.get('catalog') === 'apartments' ? 'apartments' : 'rooms',
     keyword: params.get('keyword')?.trim() ?? '',
     minPrice: readNumber(params, 'minPrice'),
     maxPrice: readNumber(params, 'maxPrice'),
@@ -247,6 +256,7 @@ export function listingQueryToSearchParams(query: ListingQuery): RentalPostSearc
   const params: RentalPostSearchParams = {
     page: query.page,
     pageSize: 20,
+    propertyCategory: query.catalog === 'apartments' ? 'apartment' : 'room',
   }
   if (query.excludedAmenities?.length) params.excludedAmenities = query.excludedAmenities
   if (query.excludeRoommateShare) params.excludeRoommateShare = true
@@ -356,7 +366,7 @@ export function nonBoundsSignature(query: ListingQuery): string {
   void maxLatitude
   void minLongitude
   void maxLongitude
-  return JSON.stringify({ catalog: 'rooms', ...rest })
+  return JSON.stringify({ catalog: query.catalog, ...rest })
 }
 
 function copyKeys(from: URLSearchParams, to: URLSearchParams, keys: readonly string[]) {
@@ -380,7 +390,7 @@ export function serializeFiltersToQuery(
   else if (query.view === 'list') next.set('view', 'list')
   else next.delete('view')
 
-  if (query.catalog === 'market') next.set('catalog', 'market')
+  if (query.catalog === 'market' || query.catalog === 'apartments') next.set('catalog', query.catalog)
   else next.delete('catalog')
 
   if (query.searchOnMove) next.delete('searchOnMove')

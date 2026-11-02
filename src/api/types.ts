@@ -352,6 +352,9 @@ export interface RentalPostSummary {
   ownerAvatarPath?: string | null
   ownerSchool?: string | null
   descriptionExcerpt?: string | null
+  deposit?: number | null
+  amenities?: string[]
+  updatedAt?: string | null
   maxOccupants?: number
   availableSlots?: number
   type: RentalPostType
@@ -501,6 +504,7 @@ export interface PayOsPaymentResponse {
 }
 
 export interface RentalPostSearchParams {
+  propertyCategory?: 'room' | 'apartment'
   type?: RentalPostType
   ownerRole?: UserRole
   excludedAmenities?: string[]
@@ -758,6 +762,7 @@ export interface UploadImageResult {
 export interface SubscriptionPackage {
   originalPrice?: number | null
   offerEndsAt?: string | null
+  offerUsed?: boolean
   code: string
   name: string
   tier: SubscriptionTier

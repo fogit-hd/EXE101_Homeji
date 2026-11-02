@@ -834,6 +834,22 @@
 .pay-wallet-method { width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; border-color:var(--brand, #087f88); }
 .pay-wallet-method small, .pay-wallet-note { font-size:12px; line-height:1.5; font-weight:400; }
 .pay-wallet-method:disabled { opacity:.65; }
+.pay-plan__offer-used { margin:6px 0 0; color:var(--pay-muted); font-size:12px; line-height:1.5; }
+.pay-voucher-panel { display:grid; gap:12px; min-width:0; padding:14px; border:1px solid var(--pay-line); border-radius:14px; background:var(--pay-surface); }
+.pay-voucher-panel__copy strong { display:block; color:var(--pay-ink); font-size:14px; }
+.pay-voucher-panel__copy p { margin:4px 0 0; color:var(--pay-muted); font-size:12px; line-height:1.5; }
+.pay-v2 .voucher-picker { display:grid; gap:7px; min-width:0; width:100%; }
+.pay-v2 .voucher-picker label { color:var(--pay-ink); font-size:12px; font-weight:650; }
+.pay-v2 .voucher-picker select { display:block; width:100%; min-width:0; min-height:46px; box-sizing:border-box; padding:9px 38px 9px 12px; border:1px solid var(--pay-line); border-radius:11px; background-color:var(--surface-elevated); color:var(--pay-ink); font:inherit; font-size:13px; line-height:1.4; }
+.pay-v2 .voucher-picker small,.pay-v2 .voucher-picker [role=alert] { margin:0; color:var(--pay-muted); font-size:12px; line-height:1.55; overflow-wrap:anywhere; }
+.pay-wallet-card { display:grid; gap:10px; min-width:0; padding:13px; border:1px solid var(--pay-line); border-radius:14px; background:var(--surface-elevated); }
+.pay-wallet-card__balance { display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--pay-muted); font-size:13px; }
+.pay-wallet-card__balance strong { color:var(--pay-ink); font-size:14px; font-weight:700; text-align:right; }
+.pay-wallet-method { min-height:46px; padding:8px 12px; }
+.pay-wallet-method:disabled { cursor:not-allowed; }
+.pay-wallet-note { display:block; margin:0; color:var(--pay-green-hover); text-align:center; }
+.pay-wallet-note.is-error { color:var(--danger,#b42318); }
+.pay-wallet-note:hover { text-decoration:underline; text-underline-offset:3px; }
 .pay-wallet-confirm { padding:14px; border:1px solid #b7dcd3; border-radius:12px; background:var(--surface, #f3faf7); text-align:left; }
 .pay-wallet-confirm p { margin:8px 0; font-size:13px; line-height:1.6; }
 .pay-wallet-confirm .pay-btn { width:100%; }
