@@ -11,7 +11,7 @@ const LEGACY_BENEFITS: Record<string, string> = {
   'Tăng khả năng xuất hiện trong đề xuất AI': 'Khung viền nổi bật cho tin phòng',
 }
 
-/** Show the payable total and exact catalog duration; never infer popularity or savings. */
+/** Keep the payable total and duration visible when showing a daily equivalent. */
 export function getPlanDisplay(plan: SubscriptionPackage) {
   const basic = plan.tier === SubscriptionTier.Basic
   return {
@@ -19,11 +19,14 @@ export function getPlanDisplay(plan: SubscriptionPackage) {
     headlinePrice: plan.price > 0 ? formatPrice(plan.price) : 'Miễn phí',
     headlineSuffix: !basic && plan.durationDays > 0 ? `/ ${plan.durationDays} ngày` : '',
     tone: basic ? 'free' : plan.durationDays <= 30 ? 'mint' : plan.durationDays <= 180 ? 'ocean' : 'gold',
-    equivalentPrice: !basic && plan.price > 0 && plan.durationDays > 30
-      ? `Khoảng ${formatPrice(Math.round(plan.price * 30 / plan.durationDays))} / 30 ngày`
-      : null,
+    dailyEquivalentPrice: !basic ? formatDailyEquivalentPrice(plan.price, plan.durationDays) : null,
     benefits: (plan.benefits ?? []).map(benefit => LEGACY_BENEFITS[benefit] ?? benefit),
   }
+}
+
+export function formatDailyEquivalentPrice(amount: number, durationDays: number): string | null {
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(durationDays) || durationDays <= 0) return null
+  return `Khoảng ${formatPrice(Math.round(amount / durationDays))} / ngày`
 }
 
 export function sortPlansForDisplay(plans: SubscriptionPackage[]): SubscriptionPackage[] {

@@ -95,6 +95,7 @@
 .premium-launch-offer__price b { color: #ba2725; font-size: clamp(30px, 6vw, 40px); font-weight: 850; letter-spacing: -.055em; line-height: 1; }
 .premium-launch-offer__price span { color: #665a53; font-size: 11px; white-space: nowrap; }
 .premium-launch-offer__body .premium-launch-offer__saving { display: table; margin: 9px 0 0; padding: 5px 9px; border: 1px solid #ead183; border-radius: 999px; background: #f8e7ae; color: #754b18; font-size: 11px; font-weight: 750; line-height: 1.35; }
+.premium-launch-offer__body > .premium-launch-offer__daily { margin-top: 9px; color: #665a53; font-size: 12px; line-height: 1.55; }
 .premium-launch-offer.is-increase .premium-launch-offer__saving { border-color: #e8d8ad; background: #f5edda; color: #66532e; }
 .premium-launch-offer__cta {
   display: flex;
@@ -143,6 +144,7 @@
 [data-theme=dark] .premium-launch-offer__price b { color: #ff9e86; }
 [data-theme=dark] .premium-launch-offer__price span, [data-theme=dark] .premium-launch-offer__later { color: #c9bdb4; }
 [data-theme=dark] .premium-launch-offer__body .premium-launch-offer__saving { border-color: #826333; background: #514126; color: #f4d78e; }
+[data-theme=dark] .premium-launch-offer__body > .premium-launch-offer__daily { color: #d3c3b7; }
 [data-theme=dark] .premium-launch-offer.is-increase .premium-launch-offer__saving { border-color: #685b42; background: #41392d; color: #d9c89e; }
 [data-theme=dark] .premium-launch-offer__body > .premium-launch-offer__countdown { color: #b3a69d; }
 [data-theme=dark] .maintenance-banner .premium-launch-offer__body { background: linear-gradient(180deg, #172b29, #1c302d); }

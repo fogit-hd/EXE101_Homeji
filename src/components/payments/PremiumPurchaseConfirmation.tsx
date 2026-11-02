@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { SubscriptionPackage } from '../../api'
 import { formatPrice } from '../../lib/labels'
+import { formatDailyEquivalentPrice } from '../../lib/subscriptionPlanDisplay'
 import './PremiumPurchaseConfirmation.css'
 
 export type PremiumPurchase = {
@@ -25,6 +26,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
   const cancel = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const descriptionId = useId()
+  const dailyEquivalentPrice = formatDailyEquivalentPrice(purchase.amountDue, purchase.plan.durationDays)
   useEffect(() => {
     const element = dialog.current
     if (!element) return
@@ -43,6 +45,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
       <div><dt>Thanh toán bằng</dt><dd>{methodNames[purchase.method]}</dd></div>
       <div><dt>Giá gói</dt><dd>{formatPrice(purchase.plan.price)}</dd></div>
       {purchase.discount > 0 ? <div><dt>Voucher giảm</dt><dd>−{formatPrice(purchase.discount)}</dd></div> : null}
+      {dailyEquivalentPrice ? <div><dt>Bình quân mỗi ngày</dt><dd>{dailyEquivalentPrice}</dd></div> : null}
       <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
     </dl>
     <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'

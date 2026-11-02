@@ -6,6 +6,7 @@ import { getPremiumPriceAnnouncements, type PremiumPriceAnnouncement } from '../
 import { getMaintenanceAnnouncements, type MaintenanceAnnouncement } from '../../api/maintenance'
 import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../../lib/sellerOrderAlerts'
 import { formatPrice } from '../../lib/labels'
+import { formatDailyEquivalentPrice } from '../../lib/subscriptionPlanDisplay'
 import { useBrandIntroComplete } from '../../hooks/useBrandIntroComplete'
 import './PremiumLaunchOffer.css'
 
@@ -13,6 +14,7 @@ const seenKey = 'homeji-seen-price-announcements'
 function readSeen(): string[] { try { const value: unknown = JSON.parse(localStorage.getItem(seenKey) || '[]'); return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [] } catch { return [] } }
 export function PremiumLaunchOffer() {
   const [plan, setPlan] = useState<SubscriptionPackage | null>(null)
+  const [catalog, setCatalog] = useState<SubscriptionPackage[]>([])
   const [changes, setChanges] = useState<PremiumPriceAnnouncement[]>([])
   const [maintenanceNotices, setMaintenanceNotices] = useState<MaintenanceAnnouncement[]>([])
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
@@ -52,6 +54,7 @@ export function PremiumLaunchOffer() {
     const load = () => {
       void getSubscriptionPackages().then(plans => {
         if (!active) return
+        setCatalog(plans)
         const offer = plans.find(row => row.code === 'PREMIUM_MONTHLY' && row.originalPrice && row.offerEndsAt) ?? null
         setPlan(offer)
         if (offer) { try { setDismissed(sessionStorage.getItem('homeji-premium-offer-dismissed') === offer.offerEndsAt) } catch { /* Optional preference. */ } }
@@ -106,6 +109,9 @@ export function PremiumLaunchOffer() {
   </dialog>, document.body)
   const previousPrice = announcement?.previousPrice ?? plan!.originalPrice!
   const currentPrice = announcement?.price ?? plan!.price
+  const pricePlan = announcement ? catalog.find(row => row.code === announcement.packageCode) : plan
+  const durationDays = pricePlan?.durationDays ?? 0
+  const dailyEquivalent = formatDailyEquivalentPrice(currentPrice, durationDays)
   const saving = previousPrice - currentPrice
   const percent = previousPrice > 0 ? Math.round(Math.abs(saving) / previousPrice * 100) : 0
   const reduced = saving > 0
@@ -128,8 +134,9 @@ export function PremiumLaunchOffer() {
         <span>{announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
         <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
       </div>
-      <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{!announcement ? <span>/ {plan!.durationDays} ngày</span> : null}</div>
+      <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{durationDays > 0 ? <span>/ {durationDays} ngày</span> : null}</div>
     </div>
+    {dailyEquivalent ? <p className="premium-launch-offer__daily">{dailyEquivalent.replace(/^Khoảng\s*/, 'Tương đương ')}; thanh toán một lần cho toàn bộ {durationDays} ngày.</p> : null}
     <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
     <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
     <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />

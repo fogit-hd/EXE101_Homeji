@@ -41,7 +41,7 @@ import {
 } from '../lib/labels'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
 import { paymentReturnUrl } from '../lib/paymentReturn'
-import { getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
+import { formatDailyEquivalentPrice, getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import './MarketplacePage.css'
 import './PaymentPage.css'
 
@@ -386,6 +386,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               const busy = busyCode !== null || needsProfileSetup
               const planVoucher = vipVoucher?.packageCode === plan.code && vipVoucher.amount === plan.price ? vipVoucher : null
               const amountDue = plan.price - (planVoucher?.discount ?? 0)
+              const dailyEquivalentPrice = amountDue === plan.price
+                ? view.dailyEquivalentPrice
+                : formatDailyEquivalentPrice(amountDue, plan.durationDays)
               const pickingPay = payPickerCode === plan.code
 
 
@@ -413,7 +416,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     <small>{view.headlineSuffix}</small>
                   </p>
                   {plan.offerUsed ? <p className="pay-plan__offer-used">Ưu đãi đợt này đã dùng. Bạn vẫn có thể gia hạn với giá thường.</p> : null}
-                  {view.equivalentPrice ? <p className="pay-plan__equivalent">{view.equivalentPrice}</p> : null}
+                  {isPremium && dailyEquivalentPrice ? <p className="pay-plan__equivalent">{dailyEquivalentPrice} · tính trên toàn bộ thời hạn gói</p> : null}
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>
