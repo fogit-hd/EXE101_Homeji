@@ -1,3 +1,4 @@
+import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
 import { OwnerSocialContacts } from '../../profile/OwnerSocialContacts'
 import { PhoneAction } from '../../ui/PhoneAction'
 import { useMotionPresence } from '../../motion/useMotionPresence'
@@ -586,7 +587,7 @@ function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, 
           {post.isOwnerVerified ? <span className="room-detail__owner-verified">✓ Hồ sơ chủ nhà đã được duyệt</span> : null}
         </div>
       </div>
-      {isAuthenticated ? <OwnerSocialContacts key={post.ownerId} userId={post.ownerId} /> : null}
+      <OwnerSocialContacts key={post.ownerId} userId={post.ownerId} />
       <div className={`room-detail__owner-phone${phoneVisible ? ' is-revealed' : ''}`}>
         <div>
           <span className="room-detail__owner-label">Số điện thoại</span>
@@ -598,7 +599,7 @@ function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, 
         </div>
         {hasPhone ? <button
           type="button"
-          className={`room-detail__reveal-phone${phoneVisible ? ' is-lit' : ''}`}
+          className={`room-detail__flashlight${phoneVisible ? ' is-lit' : ''}`}
           aria-label={phoneVisible ? 'Ẩn số điện thoại' : isAuthenticated ? 'Hiện số điện thoại' : 'Đăng nhập để xem số điện thoại'}
           aria-pressed={phoneVisible}
           aria-controls={phoneId}
@@ -607,7 +608,7 @@ function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, 
             setRevealed(value => !value)
           }}
         >
-          {phoneVisible ? 'Ẩn số' : 'Xem số'}
+          <ContactFlashlightIcon />
         </button> : null}
       </div>
       {hasPhone ? <p className="room-detail__phone-hint">{phoneVisible ? 'Nhấn số điện thoại để gọi người đăng' : isAuthenticated ? 'Xem số để liên hệ trực tiếp' : 'Đăng nhập để xem số và liên hệ'}</p>

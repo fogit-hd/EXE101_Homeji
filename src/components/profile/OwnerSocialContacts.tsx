@@ -4,6 +4,8 @@ import { getErrorMessage } from '../../lib/errors'
 import { SocialContactLinks } from './SocialContactLinks'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAuthModal } from '../../contexts/AuthModalContext.logic'
+import { ContactBrandIcon } from './ContactBrandIcon'
+import './SocialContactLinks.css'
 
 export function OwnerSocialContacts({ userId }: { userId: string }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -20,8 +22,9 @@ export function OwnerSocialContacts({ userId }: { userId: string }) {
   }, [userId, attempt, isAuthenticated])
   if (isLoading) return <p className="social-contact-links__tenure" role="status">Đang kiểm tra đăng nhập…</p>
   if (!isAuthenticated) return <div className="social-contact-links social-contact-links__login-prompt">
-    <p className="social-contact-links__tenure">Đăng nhập để xem thông tin liên hệ của người đăng.</p>
-    <button type="button" className="btn btn-secondary btn-sm" onClick={() => openAuthModal({ intent: 'contact' })}>Đăng nhập để liên hệ</button>
+    <div className="social-contact-links__actions">
+      {(['facebook', 'zalo'] as const).map(brand => <button key={brand} type="button" className={`social-contact-links__${brand}`} aria-label={`Đăng nhập để xem liên hệ ${brand === 'facebook' ? 'Facebook' : 'Zalo'}`} onClick={() => openAuthModal({ intent: 'contact' })}><ContactBrandIcon brand={brand} />{brand === 'facebook' ? 'Facebook' : 'Zalo'}</button>)}
+    </div>
   </div>
   return error ? <p className="social-contact-links__tenure" role="status">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p>
     : profile ? <SocialContactLinks {...profile} /> : <p className="social-contact-links__tenure" role="status">Đang tải thông tin người đăng…</p>

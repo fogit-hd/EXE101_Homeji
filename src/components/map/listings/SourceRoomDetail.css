@@ -7,3 +7,12 @@
 [data-theme=dark] .source-room-detail__contact-number{border-color:#477368!important;background:#14352f!important}
 [data-theme=dark] .source-room-detail__contact-number>a,[data-theme=dark] .source-room-detail__contact-number>button{color:#d9f2e7}
 [data-theme=dark] .source-room-detail__contact-number>button{border-color:#477368;background:#1a4940}
+
+.source-room-detail__phone{position:relative;isolation:isolate;overflow:hidden}
+.source-room-detail__phone>svg{float:right;transform:rotate(-90deg);color:currentColor}
+.source-room-detail__phone .room-detail__flashlight-beam,.source-room-detail__phone .room-detail__flashlight-rays{opacity:0}
+.source-room-detail__phone:is(:hover,:focus-visible,[aria-pressed=true]) .room-detail__flashlight-rays{opacity:1}
+.source-room-detail__phone:is(:hover,:focus-visible,[aria-pressed=true]) .room-detail__flashlight-beam{opacity:.3}
+.source-room-detail__phone::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(100deg,transparent,#ffe49c55);opacity:0;transition:opacity .25s}
+.source-room-detail__phone:is(:hover,:focus-visible,[aria-pressed=true])::before{opacity:1}
+@media(prefers-reduced-motion:reduce){.source-room-detail__phone::before{transition:none}}

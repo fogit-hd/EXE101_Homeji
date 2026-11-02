@@ -1,3 +1,4 @@
+import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
 import { createPortal } from 'react-dom'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
@@ -108,7 +109,8 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         {isAuthenticated && currentContact?.state === 'ready' && !phones.length
             ? <p className="source-room-detail__missing" role="status">Tin này chưa có số điện thoại để liên hệ.</p>
             : <>
-              <button type="button" className="source-room-detail__phone" disabled={currentContact?.state === 'loading'} onClick={handleRevealPhone}>
+              <button type="button" className="source-room-detail__phone" aria-pressed={phoneVisible} disabled={currentContact?.state === 'loading'} onClick={handleRevealPhone}>
+                <ContactFlashlightIcon />
                 {phoneVisible ? `Ẩn ${phones.length} số điện thoại` : !isAuthenticated ? 'Đăng nhập để xem số' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Nhấn để xem số điện thoại'}
                 <small>{phoneVisible ? 'Số công khai trong tin đăng' : isAuthenticated ? 'Xem thông tin liên hệ' : 'Cần đăng nhập để liên hệ'}</small>
               </button>
