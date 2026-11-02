@@ -699,5 +699,105 @@ html:root #root .homeji-assistant .map-chatbot__privacy summary {
 @media(max-width:900px){.homeji-assistant__draft-workspace .agent-post-preview__editor{display:block}.homeji-assistant__draft-workspace .agent-post-preview__images{margin-bottom:16px;min-height:160px}.homeji-assistant__draft-workspace .agent-post-preview__note{margin-top:16px}}
 
 .homeji-assistant__draft-workspace .agent-post-preview>header strong{display:none}.homeji-assistant__draft-workspace .agent-post-preview>header{padding-bottom:10px}.homeji-assistant__draft-workspace .agent-post-preview fieldset{gap:10px}
+
+/* Chat surfaces use their own semantic palette so both sides remain readable in dark mode. */
+html:root[data-theme='dark'] #root .homeji-assistant {
+  --assistant-bg: #162832;
+  --assistant-quiet: #203843;
+  --assistant-ink: #e7eff4;
+  --assistant-muted: #b6c7d0;
+  --assistant-line: #3c5662;
+  --assistant-accent: #9adfd0;
+  --assistant-on-accent: #103531;
+  --assistant-text: #e7eff4;
+}
+html:root[data-theme='dark'] #root .homeji-assistant :is(.homeji-assistant__window,.map-chatbot__head,.homeji-assistant__composer-area,.homeji-assistant__draft-workspace) {
+  background-color: var(--assistant-bg);
+  color: var(--assistant-ink);
+  border-color: var(--assistant-line);
+}
+html:root[data-theme='dark'] #root .homeji-assistant :is(.map-chatbot__brand strong,.homeji-assistant__message-author,.map-chatbot__bubble,.map-chatbot__formatted-content,.homeji-assistant__draft-workspace>header strong) {
+  color: var(--assistant-ink);
+}
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__msg.is-user .map-chatbot__bubble {
+  background: #203843;
+  border-color: #49616c;
+  color: #edf4f7;
+}
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__msg.is-assistant .map-chatbot__bubble {
+  margin-left: 34px;
+  padding: 12px 14px;
+  border: 1px solid #344d59;
+  border-radius: 12px;
+  background: #192e38;
+  color: #e7eff4;
+}
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__message-context,
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__bubble :is(small,p,li,dt,dd) { color: #c0ced5; }
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__formatted-content a { color: #9be5e6; }
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__formatted-content :is(pre,code) {
+  border-color: #3d5965;
+  background: #10222b;
+  color: #e9f2f5;
+}
+html:root[data-theme='dark'] #root .homeji-assistant :is(.map-chatbot__context,.map-chatbot__decision,.homeji-assistant__reset,.map-chatbot__privacy[open],.homeji-assistant__draft-open) {
+  background: #1c333d;
+  border-color: #3c5662;
+  color: var(--assistant-ink);
+}
+html:root[data-theme='dark'] #root .homeji-assistant :is(.map-chatbot__context-prompts button,.map-chatbot__action,.map-chatbot__recovery button,.map-chatbot__request-status button,.homeji-assistant__reset button,.homeji-assistant__draft-workspace>header button,.map-chatbot__privacy button) {
+  background: #223b46;
+  border-color: #536d78;
+  color: #e7eff4;
+}
+html:root[data-theme='dark'] #root .homeji-assistant :is(.map-chatbot__chip,.map-chatbot__suggestions>span,.map-chatbot__request-status,.homeji-assistant__reply-actions button,.homeji-assistant__composer-meta,.map-chatbot__privacy summary) {
+  color: var(--assistant-muted);
+}
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__form {
+  background: #142832;
+  border-color: #5b7681;
+}
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__form textarea {
+  background: transparent;
+  color: #edf4f7;
+  caret-color: #9adfd0;
+}
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__form textarea::placeholder { color: #b6c7d0; opacity: 1; }
+html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__error { color: #ffc2ba; }
+html:root[data-theme='dark'] #root .homeji-assistant :is(.chatbot-location-control,.chat-recorder__panel,.chatbot-media-preview,.chatbot-media-composer) {
+  background-color: #1c333d;
+  color: var(--assistant-ink);
+  border-color: var(--assistant-line);
+}
+html:root[data-theme='dark'] #root .homeji-assistant .agent-mode-switch {
+  background: #162832;
+  border-color: var(--assistant-line);
+}
+html:root[data-theme='dark'] #root .homeji-assistant .agent-mode-switch__control { background: #10242d; border-color: #49616c; }
+html:root[data-theme='dark'] #root .homeji-assistant .agent-mode-switch__control button[aria-pressed='true'] { color: #e7eff4; }
+html:root[data-theme='dark'] #root .homeji-assistant .agent-mode-switch__description p { color: var(--assistant-muted); }
+html:root[data-theme='dark'] #root .homeji-assistant .homeji-assistant__draft-workspace .agent-post-preview {
+  background: #162832;
+  color: #e7eff4;
+  border-color: var(--assistant-line);
+}
+html:root[data-theme='dark'] #root .homeji-assistant .homeji-assistant__draft-workspace .agent-post-preview :is(input,textarea,select) {
+  background: #10232c;
+  color: #edf4f7;
+  border-color: #536d78;
+}
+html:root[data-theme='dark'] #root .homeji-assistant .homeji-assistant__draft-workspace .agent-post-preview :is(button,a) {
+  background: #223b46;
+  color: #e7eff4;
+  border-color: #536d78;
+}
+html:root[data-theme='dark'] #root .homeji-assistant .homeji-assistant__draft-workspace .agent-post-preview footer button:last-child {
+  background: #80d9c3;
+  color: #103531;
+  border-color: #80d9c3;
+}
+@media (max-width: 900px) {
+  html:root[data-theme='dark'] #root .homeji-assistant .map-chatbot__msg.is-assistant .map-chatbot__bubble { margin-left: 0; }
+}
 /* Keep empty-state choices quiet; the composer remains the primary action. */
 .homeji-assistant .homeji-assistant__starters{gap:8px}.homeji-assistant .homeji-assistant__starters>button{display:flex;align-items:center;gap:10px;min-height:46px;padding:12px 14px;border:1px solid var(--assistant-line,#dce6e3);border-radius:12px;background:var(--assistant-bg,#fff);box-shadow:none}.homeji-assistant .homeji-assistant__starters>button::before{display:none}.homeji-assistant .homeji-assistant__starters>button strong{font-size:13px;font-weight:550}.homeji-assistant .homeji-assistant__starters>button b{position:static;margin-left:auto;font-size:12px}.homeji-assistant .map-chatbot__greeting h2{font-size:24px;line-height:1.35;letter-spacing:-.03em}.homeji-assistant .homeji-assistant__welcome-mark{width:36px;height:36px;margin-bottom:12px}

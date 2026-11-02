@@ -55,7 +55,7 @@ export function PremiumContactEditor() {
         {premium ? <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu liên hệ'}</button> : <p className="premium-contact-editor__locked">Mở Facebook và Zalo trên hồ sơ với Premium. <Link to="/?section=payments&tab=plans">Xem gói thành viên ↗</Link></p>}
       </form>
       {!premium && (profile.facebookUrl || profile.zaloPhone) ? <button className="btn btn-secondary" type="button" disabled={saving} onClick={() => void save(true)}>Xóa liên hệ đã lưu</button> : null}
-      <div className="premium-contact-editor__preview"><strong>Khách khác sẽ thấy</strong><SocialContactLinks facebookUrl={facebook} zaloPhone={zalo} createdAt={profile.createdAt} isPremium={!!premium} /></div>
+      <div className="premium-contact-editor__preview"><strong>Khách khác sẽ thấy</strong><SocialContactLinks facebookUrl={facebook} zaloPhone={zalo} createdAt={profile.createdAt} isPremium={!!premium} requireAuth={false} /></div>
     </>}
   </section>
 }

@@ -1040,7 +1040,7 @@ function MapPlaceDetailPanelContent({
               ) : null}
               {place.address ? <InfoRow icon="📍"><p>{place.address}</p></InfoRow> : null}
               {place.phone ? (
-                <InfoRow icon="📞"><PhoneAction phone={place.phone}>{place.phone}</PhoneAction></InfoRow>
+                <InfoRow icon="📞"><PhoneAction className="map-detail-panel__contact-phone" phone={place.phone}>{place.phone}</PhoneAction></InfoRow>
               ) : null}
             </div>
           ) : null}

@@ -9,6 +9,7 @@ let homeReady = false
 const listeners = new Set<Listener>()
 
 export const INTRO_SESSION_KEY = 'hj-intro-seen'
+export const BRAND_INTRO_FINISHED_EVENT = 'homeji:brand-intro-finished'
 
 export function markHomeReady() {
   if (homeReady) return
@@ -26,4 +27,14 @@ export function whenHomeReady(fn: Listener): () => void {
 /** Decided once by the inline boot script in index.html; SPA navigation does not replay it. */
 export function introRequested(): boolean {
   return typeof document !== 'undefined' && document.documentElement.dataset.intro === '1'
+}
+
+/** Release startup overlays only after the brand animation has handed off. */
+export function completeBrandIntro() {
+  if (typeof document === 'undefined') return
+  const wasRequested = introRequested()
+  delete document.documentElement.dataset.intro
+  if (wasRequested && typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(BRAND_INTRO_FINISHED_EVENT))
+  }
 }

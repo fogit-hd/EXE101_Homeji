@@ -159,6 +159,11 @@ export function LiquidGlassEffects() {
     }
   }, [])
   return <svg className="liquid-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <defs ref={defsRef} />
+    <defs ref={defsRef}>
+      <filter id="homeji-liquid-tab-text-refraction" x="-8%" y="-24%" width="116%" height="148%" colorInterpolationFilters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035 0.075" numOctaves="1" seed="8" result="ink-ripple" />
+        <feDisplacementMap in="SourceGraphic" in2="ink-ripple" scale="1.15" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
   </svg>
 }

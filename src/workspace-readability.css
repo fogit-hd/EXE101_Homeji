@@ -169,3 +169,66 @@ html:root #root .wallet-cards { display: block; }
 html:root #root .wallet-cards .wallet-tx { min-width: 0; }
 html:root #root .wallet-cards .wallet-tx strong { font-size: 15px; }
 html:root #root .wallet-cards .wallet-tx small { display: block; line-height: 1.6; }
+
+/* Messaging workspace: opaque surfaces and explicit foregrounds keep incoming and sent messages distinct. */
+html:root[data-theme='dark'] #root .map-messages {
+  --mm-green: #8fd9b9;
+  --mm-green-ink: #a6e5ca;
+  --mm-ink: #e0eaf0;
+  --mm-mint: #1d3a3d;
+  --mm-line: #405966;
+  --mm-bg: #0e1922;
+  --mm-text: #e0eaf0;
+  --mm-muted: #b8c8d1;
+  --mm-faint: #a7bac5;
+  color: var(--text-primary);
+  background: var(--surface-muted);
+}
+html:root[data-theme='dark'] #root .map-messages.is-workspace { background: var(--surface-muted) !important; }
+html:root[data-theme='dark'] #root .map-messages.map-messages.is-workspace :is(.map-messages__inbox,.map-messages__thread) {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary);
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox,.map-messages__thread,.map-messages__bubbles,.map-messages__thread-head,.map-messages__composer-wrap,.map-messages__search-bar) {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-title,.map-messages__peer-name,.map-messages__meta-top strong,.map-messages__ctx-copy strong,.map-messages__loc-title,.map-messages__bubble p) {
+  color: var(--text-heading) !important;
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__empty,.map-messages__meta small,.map-messages__peer-sub,.map-messages__time,.map-messages__preview,.map-messages__bubble time,.map-messages__image figcaption,.map-messages__loc-address,.map-messages__loc-coords,.map-messages__ctx-copy small) {
+  color: var(--text-secondary) !important;
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row:hover,.map-messages__row.is-active) { background: #1d3a3d !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__row.is-active :is(strong,small,time) { color: var(--text-heading) !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button { color: var(--text-secondary) !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button.is-active { background: #d0e5e6 !important; color: #16353c !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search input,.map-messages__search-input,.map-messages__composer textarea,.map-messages__address-input,.map-messages__image-review select) {
+  background-color: var(--surface-input) !important;
+  border-color: #516a77 !important;
+  color: var(--text-primary) !important;
+  caret-color: #91dfe0;
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search input,.map-messages__search-input,.map-messages__composer textarea)::placeholder { color: #b1c2cc !important; opacity: 1; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__composer { background: var(--surface) !important; border-color: #506975 !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble:not(.is-mine) { background: #223944 !important; color: #e0eaf0 !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body {
+  background: #17565a !important;
+  color: #f2ffff !important;
+}
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body p { color: #f2ffff !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__day,.map-messages__ctx-card,.map-messages__ctx-pop,.map-messages__attach-menu,.map-messages__image-review,.map-messages__address-form) {
+  background: var(--surface-elevated) !important;
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__attach-menu button,.map-messages__address-form button,.map-messages__image-review button,.map-messages__thread-actions button,.map-messages__attach-btn,.map-messages__new-icon,.map-messages__icon-btn) {
+  background: var(--surface-input) !important;
+  color: var(--text-primary) !important;
+  border-color: #516a77;
+}
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn,.map-messages__send) { background: #80d9db !important; color: #103039 !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn.is-ghost,.map-messages__icon-btn.is-active) { background: #1d3a3d !important; color: #b4eded !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__block-notice,.map-messages__error,.map-messages__address-hint) { color: #f0c8a1; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__mark { background: #665624; color: #fff2bd; }

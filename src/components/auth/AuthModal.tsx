@@ -37,7 +37,7 @@ function intentCopy(intent: AuthModalIntent | null): string | null {
     case 'browse':
       return 'Đăng nhập để mở bộ lọc nâng cao và đầy đủ tính năng tìm phòng'
     case 'contact':
-      return 'Đăng nhập để xem số điện thoại chủ nhà'
+      return 'Đăng nhập để xem số điện thoại và liên hệ với người đăng qua Zalo hoặc Facebook'
     case 'invite':
       return 'Đăng nhập để nhắn tin / gửi lời mời ở ghép'
     case 'save':

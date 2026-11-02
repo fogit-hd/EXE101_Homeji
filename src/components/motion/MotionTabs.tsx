@@ -34,6 +34,8 @@ export function MotionTabs<T extends string>({ items, value, onChange, label, cl
         const button = containerRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]
         button?.focus({ preventScroll: true })
         button?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
-      }}>{renderLabel ? renderLabel(item.id, item.label) : item.label}</button>)}
+      }}>{webglGlass
+        ? <span className="liquid-tabs__refracted-text">{renderLabel ? renderLabel(item.id, item.label) : item.label}</span>
+        : renderLabel ? renderLabel(item.id, item.label) : item.label}</button>)}
   </LiquidTabList>
 }

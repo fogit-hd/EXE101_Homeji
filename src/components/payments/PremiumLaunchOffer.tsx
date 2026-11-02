@@ -6,6 +6,7 @@ import { getPremiumPriceAnnouncements, type PremiumPriceAnnouncement } from '../
 import { getMaintenanceAnnouncements, type MaintenanceAnnouncement } from '../../api/maintenance'
 import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../../lib/sellerOrderAlerts'
 import { formatPrice } from '../../lib/labels'
+import { useBrandIntroComplete } from '../../hooks/useBrandIntroComplete'
 import './PremiumLaunchOffer.css'
 
 const seenKey = 'homeji-seen-price-announcements'
@@ -21,6 +22,7 @@ export function PremiumLaunchOffer() {
   const dialog = useRef<HTMLDialogElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
+  const brandIntroComplete = useBrandIntroComplete()
   useEffect(() => {
     let active = true
     const load = () => {
@@ -67,7 +69,7 @@ export function PremiumLaunchOffer() {
   const announcement = changes.filter(row => !seen.includes(row.id)).at(-1)
   const maintenance = maintenanceNotices.find(row => !seen.includes(row.id) && Date.parse(row.expiresAt) > now)
   const showOffer = !!plan?.offerEndsAt && !dismissed && now < Date.parse(plan.offerEndsAt)
-  const visible = maintenanceLoaded && !!(maintenance || announcement || showOffer) && !location.pathname.startsWith('/admin') && (maintenance || new URLSearchParams(location.search).get('section') !== 'payments')
+  const visible = brandIntroComplete && maintenanceLoaded && !!(maintenance || announcement || showOffer) && !location.pathname.startsWith('/admin') && (maintenance || new URLSearchParams(location.search).get('section') !== 'payments')
   useEffect(() => {
     const node = dialog.current
     if (visible && node && !node.open) node.showModal()

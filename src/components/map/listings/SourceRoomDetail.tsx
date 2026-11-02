@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useId, useRef, useState } from 'react'
-import { getRentalSource, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
+import { useAuth } from '../../../contexts/AuthContext'
+import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
+import { getRentalSource, getRentalSourceContact, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { formatListingArea, formatListingRent } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
 import { getErrorMessage } from '../../../lib/errors'
@@ -18,7 +20,13 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   const [photo, setPhoto] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [copyState, setCopyState] = useState('')
+  const [contactRequest, setContactRequest] = useState<{ id: string; state: 'loading' | 'ready' | 'error'; phone: string | null; error?: string } | null>(null)
   const [now] = useState(Date.now)
+  const { isAuthenticated } = useAuth()
+  const { openAuthModal } = useAuthModal()
+  const currentContact = contactRequest?.id === id ? contactRequest : null
+  const phone = currentContact?.state === 'ready' && /^0\d{9,10}$/.test(currentContact.phone ?? '') ? currentContact.phone : null
+  const phoneVisible = isAuthenticated && revealed && Boolean(phone)
   useEffect(() => {
     const element = dialog.current
     if (!element) return
@@ -34,15 +42,38 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
       .catch(reason => { if (!controller.signal.aborted) setError(getErrorMessage(reason, 'Chưa tải được thông tin phòng. Bạn thử lại.')) })
     return () => controller.abort()
   }, [id, attempt])
+  useEffect(() => {
+    if (!isAuthenticated || !revealed || currentContact?.state !== 'loading') return undefined
+    const controller = new AbortController()
+    void getRentalSourceContact(id, controller.signal)
+      .then(result => { if (!controller.signal.aborted) setContactRequest({ id, state: 'ready', phone: result.phone }) })
+      .catch(reason => { if (!controller.signal.aborted) setContactRequest({ id, state: 'error', phone: null, error: getErrorMessage(reason, 'Chưa tải được số điện thoại. Vui lòng thử lại.') }) })
+    return () => controller.abort()
+  }, [id, isAuthenticated, revealed, currentContact?.state])
   const images = listing?.imageUrls.map(rentalSourceImageHref).filter((value): value is string => Boolean(value)) ?? []
-  const phone = loaded && /^0\d{9,10}$/.test(listing?.contactPhone ?? '') ? listing!.contactPhone! : null
   const expired = Boolean(listing?.sourceExpiresAt && Date.parse(listing.sourceExpiresAt) <= now)
   const publisher = listing?.publisherName?.trim() || 'Chưa có tên người đăng'
   const date = listing?.detailsCollectedAt ?? listing?.collectedAt
   async function copyPhone() {
     if (!phone) return
+    if (!isAuthenticated) {
+      openAuthModal({ intent: 'contact', onSuccess: requestPhone })
+      return
+    }
     try { await navigator.clipboard.writeText(phone); setCopyState('Đã sao chép số điện thoại') }
     catch { setCopyState('Chưa sao chép được. Bạn có thể chọn số điện thoại để sao chép.') }
+  }
+  function requestPhone() {
+    setRevealed(true)
+    setContactRequest({ id, state: 'loading', phone: null })
+  }
+  function handleRevealPhone() {
+    if (!isAuthenticated) {
+      openAuthModal({ intent: 'contact', onSuccess: requestPhone })
+      return
+    }
+    if (currentContact?.state === 'ready' && phone) { setRevealed(value => !value); return }
+    requestPhone()
   }
   return createPortal(<dialog ref={dialog} className="source-room-detail" aria-labelledby={labelId}
     onCancel={event => { event.preventDefault(); onClose() }} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
@@ -72,7 +103,16 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
       <aside className="source-room-detail__contact" id={`${labelId}-contact`} aria-label="Thông tin liên hệ">
         <div className="source-room-detail__contact-card"><span className="source-room-detail__eyebrow">LIÊN HỆ NGƯỜI ĐĂNG</span><div className="source-room-detail__person"><span aria-hidden>{publisher.charAt(0)}</span><div><h2>{publisher}</h2><p>Thông tin liên hệ</p></div></div>
           <p className="source-room-detail__verification">Chưa xác minh danh tính trên Homeji</p>
-          {phone ? <><button type="button" className="source-room-detail__phone" onClick={() => setRevealed(true)}>{revealed ? phone : `${phone.slice(0, 4)} ••• •••`}<small>{revealed ? 'Số công khai trong tin đăng' : 'Nhấn để hiện số'}</small></button>{revealed ? <div className="source-room-detail__contact-actions"><a href={`tel:${phone}`}>Gọi người đăng</a><button type="button" onClick={() => void copyPhone()}>Sao chép số</button></div> : null}</> : <p className="source-room-detail__missing" role="status">{loaded ? 'Chưa có số điện thoại để liên hệ.' : error ? 'Chưa tải được thông tin liên hệ.' : 'Đang tải thông tin liên hệ…'}</p>}
+          {isAuthenticated && currentContact?.state === 'ready' && !phone
+            ? <p className="source-room-detail__missing" role="status">Tin này chưa có số điện thoại để liên hệ.</p>
+            : <>
+              <button type="button" className="source-room-detail__phone" disabled={currentContact?.state === 'loading'} onClick={handleRevealPhone}>
+                {phoneVisible ? phone : !isAuthenticated ? 'Đăng nhập để xem số' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : phone ? `${phone.slice(0, 4)} ••• •••` : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Nhấn để xem số'}
+                <small>{phoneVisible ? 'Số công khai trong tin đăng' : isAuthenticated ? 'Xem thông tin liên hệ' : 'Cần đăng nhập để liên hệ'}</small>
+              </button>
+              {phoneVisible && phone ? <div className="source-room-detail__contact-actions"><a href={`tel:${phone}`}>Gọi người đăng</a><button type="button" onClick={() => void copyPhone()}>Sao chép số</button></div> : null}
+              {currentContact?.state === 'error' ? <p className="source-room-detail__missing" role="alert">{currentContact.error}</p> : null}
+            </>}
           {copyState ? <p role="status">{copyState}</p> : null}
           <div className="source-room-detail__contact-note"><strong>Trao đổi trước khi đến xem</strong><p>Hỏi lại giá thuê, tiền cọc, điện nước và thời gian xem phòng. Chưa liên kết tài khoản người đăng với chat Homeji.</p></div>
         </div>

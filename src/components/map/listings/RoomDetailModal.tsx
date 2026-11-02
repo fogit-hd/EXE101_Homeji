@@ -15,6 +15,7 @@ import {
   type RentalPost,
 } from '../../../api'
 import { useAuth } from '../../../contexts/AuthContext'
+import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
 import { getErrorMessage, isProfileRequiredError } from '../../../lib/errors'
 import { ProfileSetupNotice } from '../../auth/ProfileSetupNotice'
 import { useLocation } from 'react-router-dom'
@@ -115,6 +116,7 @@ export function RoomDetailModal({
   const [scheduleListingId, setScheduleListingId] = useState<string | null>(null)
   const [scheduleAt, setScheduleAt] = useState('')
   const [scheduleNote, setScheduleNote] = useState('')
+  const [revealPhoneForPost, setRevealPhoneForPost] = useState<string | null>(null)
 
   const viewerId = profile?.id ?? 'guest'
   const matched = result && result.viewerId === viewerId && (result.id === listingId || (!listingId && present)) && result.attempt === attempt ? result : null
@@ -128,6 +130,7 @@ export function RoomDetailModal({
   const actionTone = notice?.tone ?? 'ok'
   const scheduleOpen = scheduleListingId != null && scheduleListingId === listingId
   if (useChangedInputs([listingId, viewerId])) setActionBusy(false)
+  if (useChangedInputs([listingId])) setRevealPhoneForPost(null)
 
   useLayoutEffect(() => {
     messageEpoch.current += 1
@@ -311,6 +314,7 @@ export function RoomDetailModal({
   const areaMissing = !post || !(post.area > 0)
   const phone = post?.ownerPhone?.trim().replace(/[\s().-]/g, '') ?? ''
   const phoneHref = /^\+?\d{8,15}$/.test(phone) ? `tel:${phone}` : null
+  const hasOwnerPhone = Boolean(post?.hasOwnerPhone || phoneHref)
 
   const onBackdrop = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onClose()
@@ -397,7 +401,7 @@ export function RoomDetailModal({
         {loadState === 'ready' && post ? (
           <>
             <div className="room-detail__body">
-              <div className="room-detail__main">
+              <div className="room-detail__main" role="region" aria-label="Thông tin chi tiết phòng" tabIndex={0}>
                 <div className="room-detail__summary">
                   <p className="room-detail__eyebrow">{isStudentShare ? 'TÌM BẠN Ở GHÉP' : 'THÔNG TIN CHO THUÊ'}</p>
                   <h3>{post.title?.trim() || 'Tin đăng'}</h3>
@@ -450,7 +454,7 @@ export function RoomDetailModal({
                 {aiFeatureFlags.decisionTools && openRentalAssistant ? <button type="button" className="btn btn-secondary btn-sm"
                   onClick={openRentalAssistant}>Hỏi trợ lý về phòng đang xem</button> : null}
               </div>
-              <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ">
+              <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ" tabIndex={0}>
                 <div className="room-detail__price">
                   <p className="room-detail__kicker">{rentalPriceLabel(priceBasis)}</p>
                   <p className="room-detail__amount">{rentLabel ?? 'Chưa cung cấp'}</p>
@@ -470,7 +474,8 @@ export function RoomDetailModal({
                 </section>
                 <hr />
                 <div className="room-detail__contact" data-glass-exclude>
-                  <OwnerProfile key={`${post.id}:${phone}`} post={post} phone={phoneHref ? phone : ''} isStudentShare={isStudentShare} />
+                  <OwnerProfile key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone} isStudentShare={isStudentShare}
+                    revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
                 </div>
                 <div className="room-detail__note">
@@ -520,7 +525,7 @@ export function RoomDetailModal({
                 <button type="button" className="room-detail__message" disabled={actionBusy} onClick={() => void handleMessage()}>
                   <img src={messageCircleUrl} alt="" width={19} height={19} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin ngay'}
                 </button>
-                {phoneHref ? <PhoneAction className="room-detail__call" phone={phone}>
+                {hasOwnerPhone ? <PhoneAction className="room-detail__call" phone={phone} hasPhone={hasOwnerPhone} onAuthenticated={() => setRevealPhoneForPost(post.id)}>
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>Gọi điện
                 </PhoneAction> : null}
                 <button
@@ -547,13 +552,16 @@ export function RoomDetailModal({
   )
 }
 
-function OwnerProfile({ post, phone, isStudentShare }: { post: RentalPost; phone: string; isStudentShare: boolean }) {
+function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, onAuthenticatedContact }: { post: RentalPost; phone: string; hasPhone: boolean; isStudentShare: boolean; revealRequested: boolean; onAuthenticatedContact: () => void }) {
   const [revealed, setRevealed] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
+  const { isAuthenticated } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const phoneId = useId()
+  const phoneVisible = isAuthenticated && (revealed || revealRequested)
   const name = post.ownerDisplayName?.trim() || 'Chưa cập nhật'
   const digits = phone.replace(/\D/g, '')
-  const maskedPhone = `${phone.startsWith('+') ? '+' : ''}${digits.slice(0, 3)}${'•'.repeat(Math.max(0, digits.length - 3))}`
+  const maskedPhone = digits ? `${phone.startsWith('+') ? '+' : ''}${digits.slice(0, 3)}${'•'.repeat(Math.max(0, digits.length - 3))}` : '••• ••• ••••'
 
   return (
     <section className="room-detail__owner-profile" aria-label={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'}>
@@ -571,22 +579,25 @@ function OwnerProfile({ post, phone, isStudentShare }: { post: RentalPost; phone
         </div>
       </div>
       <OwnerSocialContacts key={post.ownerId} userId={post.ownerId} />
-      <div className={`room-detail__owner-phone${revealed ? ' is-revealed' : ''}`}>
+      <div className={`room-detail__owner-phone${phoneVisible ? ' is-revealed' : ''}`}>
         <div>
           <span className="room-detail__owner-label">Số điện thoại</span>
           <span id={phoneId} className="room-detail__phone-value" aria-live="polite" aria-atomic="true">
-            {!phone ? 'Chưa cập nhật' : revealed
+            {!hasPhone ? 'Chưa cập nhật' : phoneVisible && phone
               ? <a href={`tel:${phone}`}>{phone}</a>
-              : <span aria-label={`Số điện thoại bắt đầu bằng ${digits.slice(0, 3)}, các số còn lại đang ẩn`}>{maskedPhone}</span>}
+              : <span aria-label={isAuthenticated ? `Số điện thoại bắt đầu bằng ${digits.slice(0, 3)}, các số còn lại đang ẩn` : 'Số điện thoại cần đăng nhập để xem'}>{isAuthenticated ? maskedPhone : 'Đăng nhập để xem số'}</span>}
           </span>
         </div>
-        {phone ? <button
+        {hasPhone ? <button
           type="button"
-          className={`room-detail__flashlight${revealed ? ' is-lit' : ''}`}
-          aria-label={revealed ? 'Tắt đèn pin, ẩn số điện thoại' : 'Bật đèn pin, hiện số điện thoại'}
-          aria-pressed={revealed}
+          className={`room-detail__flashlight${phoneVisible ? ' is-lit' : ''}`}
+          aria-label={phoneVisible ? 'Tắt đèn pin, ẩn số điện thoại' : isAuthenticated ? 'Bật đèn pin, hiện số điện thoại' : 'Đăng nhập để xem số điện thoại'}
+          aria-pressed={phoneVisible}
           aria-controls={phoneId}
-          onClick={() => setRevealed(value => !value)}
+          onClick={() => {
+            if (!isAuthenticated) { openAuthModal({ intent: 'contact', onSuccess: () => { setRevealed(true); onAuthenticatedContact() } }); return }
+            setRevealed(value => !value)
+          }}
         >
           <svg width="26" height="30" viewBox="0 0 28 34" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path className="room-detail__flashlight-beam" d="M8 11 4 2h20l-4 9" stroke="none" fill="currentColor" />
@@ -595,7 +606,7 @@ function OwnerProfile({ post, phone, isStudentShare }: { post: RentalPost; phone
           </svg>
         </button> : null}
       </div>
-      {phone ? <p className="room-detail__phone-hint">{revealed ? 'Nhấp vào số để gọi · Tắt đèn để ẩn' : 'Bật đèn pin để xem số liên hệ'}</p>
+      {hasPhone ? <p className="room-detail__phone-hint">{phoneVisible ? 'Nhấp vào số để gọi · Tắt đèn để ẩn' : isAuthenticated ? 'Bật đèn pin để xem số liên hệ' : 'Đăng nhập để xem số và liên hệ'}</p>
         : <p className="room-detail__phone-hint">Liên hệ qua tin nhắn trên Homeji.</p>}
     </section>
   )

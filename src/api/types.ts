@@ -399,6 +399,7 @@ export interface RentalPost extends RentalPostSummary {
   updatedAt: string
   ownerDisplayName?: string | null
   ownerPhone?: string | null
+  hasOwnerPhone?: boolean
   ownerAvatarPath?: string | null
   isOwnerVerified?: boolean
 }

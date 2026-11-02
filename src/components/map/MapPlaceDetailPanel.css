@@ -809,6 +809,18 @@
   width: 100%;
 }
 
+.map-detail-panel__contact-phone {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hj-accent, #087f8c);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .map-detail-menu {
   gap: 10px;
   padding: 0 12px 12px;

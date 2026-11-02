@@ -79,10 +79,16 @@
 .map-place-preview__phone {
   display: inline-block;
   margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   font-size: 13px;
   font-weight: 700;
   color: var(--grab-blue);
+  font-family: inherit;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .map-place-preview__note {

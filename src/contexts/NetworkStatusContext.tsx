@@ -7,6 +7,7 @@ import {
   type ReactNode
 } from 'react'
 import '../components/NetworkStatusBanner.css'
+import { useBrandIntroComplete } from '../hooks/useBrandIntroComplete'
 import { NetworkStatusContext, reconnectListeners, type NetworkStatus, type NetworkStatusContextValue } from "./NetworkStatusContext.logic"
 
 const PROBE_INTERVAL_OFFLINE_MS = 2500
@@ -88,6 +89,7 @@ async function probeConnectivity(signal?: AbortSignal): Promise<boolean> {
 }
 
 export function NetworkStatusProvider({ children }: { children: ReactNode }) {
+  const brandIntroComplete = useBrandIntroComplete()
   const [status, setStatus] = useState<NetworkStatus>(() =>
     typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'online',
   )
@@ -189,10 +191,10 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   }, [check, goOffline, goReconnecting])
 
   useEffect(() => {
-    if (!showRestored) return
+    if (!showRestored || !brandIntroComplete) return
     const t = window.setTimeout(() => setShowRestored(false), RESTORED_BANNER_MS)
     return () => window.clearTimeout(t)
-  }, [showRestored])
+  }, [showRestored, brandIntroComplete])
 
   const value = useMemo<NetworkStatusContextValue>(
     () => ({
@@ -205,7 +207,7 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   return (
     <NetworkStatusContext.Provider value={value}>
       {children}
-      <NetworkStatusBanner status={status} showRestored={showRestored} />
+      <NetworkStatusBanner status={status} showRestored={showRestored} brandIntroComplete={brandIntroComplete} />
     </NetworkStatusContext.Provider>
   )
 }
@@ -213,10 +215,13 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
 function NetworkStatusBanner({
   status,
   showRestored,
+  brandIntroComplete,
 }: {
   status: NetworkStatus
   showRestored: boolean
+  brandIntroComplete: boolean
 }) {
+  if (!brandIntroComplete) return null
   if (status === 'online' && !showRestored) return null
 
   let text = ''

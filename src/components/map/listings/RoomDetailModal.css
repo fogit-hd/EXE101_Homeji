@@ -109,32 +109,42 @@
 .room-detail__body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 292px;
+  grid-template-rows: minmax(0, 1fr);
   gap: 28px;
   padding: 24px;
   flex: 1;
   min-height: 0;
   min-width: 0;
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
 .room-detail__main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .room-detail__aside {
   width: auto;
   flex-shrink: 0;
+  min-height: 0;
   background: var(--rd-bg);
   border: 1px solid var(--rd-border);
   border-radius: 14px;
-  align-self: start;
+  align-self: stretch;
+  max-height: 100%;
   padding: 22px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .room-detail__aside hr {
@@ -575,7 +585,8 @@ html:root body .room-detail__contact .room-detail__phone-hint { margin: -8px 0 0
 .room-detail__main > .room-detail__section { margin-top: 16px; border-top: 1px solid var(--rd-border); }
 .room-detail__footer-copy .room-detail__footer-price { font-size: 22px; font-variant-numeric: tabular-nums; }
 .room-detail__footer-price small { color: var(--rd-muted); font-size: 12px; font-weight: 400; }
-.room-detail__call { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 20px; text-decoration: none; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.room-detail__call { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 20px; border: 1px solid var(--rd-border); border-radius: 8px; background: var(--rd-surface); color: var(--rd-forest); font: 600 14px/20px var(--font-ui); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.room-detail__call:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
 :is(html:root #root,html:root body) .room-detail .room-detail__footer-actions > .room-detail__message {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   background: #175c57; color: #fff; border: 1px solid #175c57;
@@ -721,6 +732,9 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
   .room-detail__aside {
     width: auto;
     flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .room-detail__aside {

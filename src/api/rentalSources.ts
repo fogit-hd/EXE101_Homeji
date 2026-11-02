@@ -10,6 +10,8 @@ export interface RentalSourceListing {
 }
 
 export const getRentalSource = (id: string, signal?: AbortSignal) => apiRequest<RentalSourceListing>(`/api/rental-source-listings/${encodeURIComponent(id)}`, { auth: false, signal })
+export const getRentalSourceContact = (id: string, signal?: AbortSignal) =>
+  apiRequest<{ phone: string | null }>(`/api/rental-source-listings/${encodeURIComponent(id)}/contact`, { signal })
 
 export function sourceRoomHref(id: string) {
   const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)

@@ -4,7 +4,7 @@ import { gsap } from 'gsap'
 import { useLocation } from 'react-router-dom'
 import { readAuthTokenState } from '../../api/authSession'
 import { brandIntroPlaybackRate, isBrandIntroLanding } from '../../lib/brandIntroPlayback'
-import { INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
+import { completeBrandIntro, INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
 import { HOMEJI_MARK_H, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
 import { SLOGAN_BOTTOM, SLOGAN_GLYPHS, SLOGAN_TOP, SLOGAN_WIDTH } from './sloganGlyphs'
 import './BrandIntro.css'
@@ -57,7 +57,7 @@ export function BrandIntro() {
   useLayoutEffect(() => {
     if (!allowed) {
       document.getElementById('hj-boot')?.remove()
-      delete document.documentElement.dataset.intro
+      completeBrandIntro()
     }
   }, [allowed])
   return allowed ? <BrandIntroOverlay /> : null
@@ -81,7 +81,7 @@ function BrandIntroOverlay() {
   useLayoutEffect(() => {
     // React's overlay paints the identical first frame, so drop the static boot layer.
     document.getElementById('hj-boot')?.remove()
-    if (!active) delete document.documentElement.dataset.intro
+    if (!active) completeBrandIntro()
   }, [active])
 
   useEffect(() => {
@@ -89,7 +89,6 @@ function BrandIntroOverlay() {
     if (!active || !node) return
     const assets = warmAssets()
     const q = gsap.utils.selector(node)
-    const html = document.documentElement
     const hero = q('.hj-intro__hero')[0] as HTMLElement
     const body = q('.hj-intro__body')[0] as HTMLElement
     const slogan = node.querySelector<SVGSVGElement>('.hj-intro__slogan')!
@@ -106,7 +105,7 @@ function BrandIntroOverlay() {
       finished = true
       try { sessionStorage.setItem(INTRO_SESSION_KEY, '1') } catch { /* private mode */ }
       if (hiddenTarget) hiddenTarget.style.removeProperty('visibility')
-      delete html.dataset.intro
+      completeBrandIntro()
       setActive(false)
     }
 
@@ -392,7 +391,7 @@ function BrandIntroOverlay() {
       cancelAnimationFrame(raf)
       ctx?.revert()
       if (hiddenTarget) hiddenTarget.style.removeProperty('visibility')
-      delete document.documentElement.dataset.intro
+      completeBrandIntro()
     }
   }, [active, playback])
 

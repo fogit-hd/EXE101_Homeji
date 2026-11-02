@@ -1,5 +1,4 @@
 import { siteLocationSnapshot, subscribeSiteLocation, setSiteLocation as setSharedLocation } from '../../lib/siteLocation'
-import { AgentRoommateResults } from '../ai/AgentRoommateResults'
 import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -10,12 +9,10 @@ import {
   sendChatbotMessage,
   type AiHighlightResponse,
   type AiParsedSearchCriteria,
-  type ChatbotMessage,
   type ChatbotNavigationAction,
   type ChatbotPopupConfig,
   type ChatbotRentalContext,
   type ChatbotFoodContext,
-  type ChatbotFoodResponse,
   type ChatbotFoodCriteria,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -26,11 +23,7 @@ import { getErrorMessage } from '../../lib/errors'
 import { requestMarketplaceCart, requestMarketplaceTab } from '../../lib/marketplaceNavigation'
 import { nearbyChatIntent } from '../../lib/nearbyChatIntent'
 import { isFoodChat, isFoodDiscoveryChat, isFoodRefinement, foodCriteriaSnapshot } from '../../lib/foodChatIntent'
-import { FoodDiscoveryCard } from '../ai/FoodDiscoveryCard'
 import type { NearbyPlaceCategory } from '../../lib/placeAutocomplete'
-import { AiSearchReview } from '../ai/AiSearchReview'
-import { rentalPriceBasis } from '../ai/rentalPriceBasis'
-import { ChatbotMessageContent } from './ChatbotMessageContent'
 import type { MapAppSection } from "./MapAppPanel.logic"
 
 import {
@@ -39,21 +32,22 @@ import {
   onHomejiAiToggle,
   publishHomejiAiOpen,
 } from '../../lib/homejiAiLauncher'
-import { RentalContextCard } from '../ai/RentalContextCard'
-import type { DecisionResponse } from '../../api/rentalAssistant'
 import type { RentalAssistantSelection, RentalAssistantComparison } from '../../contexts/rental-assistant-context'
 import { decisionMatchesChoices, rentalScenarioSnapshot } from '../../lib/rentalJourney'
 import { isVisibleFocusTarget } from '../../lib/isVisibleFocusTarget'
-import { ChatbotMediaComposer, ChatbotMediaPreview } from './ChatbotMediaComposer'
 import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
 import { GameLauncher } from '../games/GameLauncher'
-import { ProfileGate } from '../auth/ProfileGate'
-import { AgentPostPreview } from '../ai/AgentPostPreview'
+import { AgentDraftWorkspace } from './AgentDraftWorkspace'
+import { useChatbotAgentWorkflow } from './useChatbotAgentWorkflow'
 import { ChatbotLocationControl } from '../ai/ChatbotLocationControl'
-import { ChatbotNearbyResults, type ChatbotNearbyResponse } from '../ai/ChatbotNearbyResults'
+import { rentalPriceBasis } from '../ai/rentalPriceBasis'
 import { freshChatbotLocation, type ChatbotLocation } from '../../lib/chatbotLocation'
 import { AgentModeSwitch } from '../ai/AgentModeSwitch'
-import type { AgentPostDraft } from '../../api/chatbotAgent'
+import { ChatbotTranscript } from './chatbot/ChatbotTranscript'
+import { ChatbotComposer } from './ChatbotComposer'
+import { AssistantIcon, HomejiAvatar, type AssistantIconName } from './ChatbotVisuals'
+import { rentalTargetKey } from './chatbot/chatbotModels'
+import type { ChatRequest, DisplayMessage } from './chatbot/ChatbotMessageTypes'
 import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
@@ -98,75 +92,11 @@ type Props = {
   openRequestToken?: number
 }
 
-type ChatRequest = {
-  location?: ChatbotLocation
-  agentDraftId?: string
-  postingAgent?: boolean
-  sessionMessages?: ChatbotMessage[]
-  attachments?: ChatbotDraftAttachment[]
-  message: string
-  context?: RentalAssistantSelection & { task?: ChatbotRentalContext['task'] }
-  selection?: RentalAssistantComparison & { task?: 'compare' | 'cost' | 'questions' | 'details' }
-  conversationId?: string
-  previousCriteria?: AiParsedSearchCriteria
-  saveHistory: boolean
-  foodContext?: ChatbotFoodContext
-  previousFoodCriteria?: ChatbotFoodCriteria
-}
-
-type DisplayMessage = ChatbotMessage & {
-  roommateCandidates?: import('../../api/chatbotAgent').AgentRoommateCandidate[] | null
-  nearbyRooms?: ChatbotNearbyResponse | null
-  agentDraft?: AgentPostDraft | null
-  upgradeRequired?: boolean
-  attachments?: ChatbotDraftAttachment[]
-  pending?: boolean
-  retry?: ChatRequest
-  failure?: string
-  rentalContext?: RentalAssistantSelection
-  rentalSelection?: RentalAssistantComparison
-  rentalDecision?: DecisionResponse | null
-  actions?: ChatbotNavigationAction[]
-  searchUpdate?: AiHighlightResponse | null
-  foodDiscovery?: ChatbotFoodResponse | null
-  foodQuery?: string
-}
-
 type PanelLayout = {
   left: number
   top: number
   width: number
   maxHeight: number
-}
-
-type AssistantIconName = 'expand' | 'shrink' | 'plus' | 'tools' | 'close' | 'send' | 'copy' | 'search' | 'home' | 'bag' | 'bookmark' | 'chat' | 'calendar' | 'arrow'
-function AssistantIcon({ name }: { name: AssistantIconName }) {
-  const paths: Record<AssistantIconName, string> = {
-    expand: 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6',
-    shrink: 'M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5M8 8 3 3m13 5 5-5M8 16l-5 5m13-5 5 5',
-    plus: 'M12 5v14M5 12h14', tools: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
-    close: 'm6 6 12 12M6 18 18 6', send: 'M12 19V5m-6 6 6-6 6 6',
-    copy: 'M9 9h12v12H9zM15 9V3H3v12h6', search: 'M16 16l5 5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
-    home: 'm3 10 9-7 9 7v11H3zm6 11v-7h6v7', bag: 'M4 7h16l1 14H3zm4 0V5a4 4 0 0 1 8 0v2',
-    bookmark: 'M6 3h12v18l-6-4-6 4z', chat: 'M21 11a9 9 0 0 1-9 9H3l1-5a9 9 0 1 1 17-4',
-    calendar: 'M3 5h18v16H3zM7 3v4m10-4v4M3 10h18M7 14h3m4 0h3', arrow: 'M5 12h14m-5-5 5 5-5 5',
-  }
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
-}
-
-function HomejiAvatar({ inline = false }: { inline?: boolean }) {
-  return (
-    <span
-      className={`map-chatbot__avatar${inline ? ' map-chatbot__avatar--inline' : ''}`}
-      aria-hidden
-    >
-      <img src="/brand/homeji-logo2.png" alt="" draggable={false} />
-    </span>
-  )
-}
-
-function rentalTargetKey(room?: RentalAssistantSelection | null, selection?: RentalAssistantComparison | null) {
-  return selection ? `choices:${JSON.stringify([selection.postIds, rentalScenarioSnapshot(selection.scenario)])}` : room ? `room:${room.postId}` : ''
 }
 
 /** Compact docks at the right; expanded centers within the available keyboard-safe viewport. */
@@ -218,12 +148,6 @@ export function MapChatbot({
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const sharedLocation = useSyncExternalStore(subscribeSiteLocation, siteLocationSnapshot, () => null)
   const awaitingLocation = useRef<string | null>(null)
-  const [agentMode, setAgentMode] = useState(false)
-  const [draftWorkspaceId, setDraftWorkspaceId] = useState<string | null>(null)
-  const [draftWorkspaceOpen, setDraftWorkspaceOpen] = useState(false)
-  const draftWorkspaceClose = useRef<HTMLButtonElement>(null)
-  const [agentDraftId, setAgentDraftId] = useState<string | undefined>()
-  const workspaceDraft = messages.find(message => message.agentDraft?.id === draftWorkspaceId)?.agentDraft
   const [draft, setDraft] = useState('')
   const [attachments, setAttachments] = useState<ChatbotDraftAttachment[]>([])
   const [mediaBusy, setMediaBusy] = useState(false)
@@ -234,7 +158,8 @@ export function MapChatbot({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sheetMode, setSheetMode] = useState(isSheetViewport)
-  const draftOverlay = Boolean(workspaceDraft && draftWorkspaceOpen && (sheetMode || !expanded))
+  const agentFlow = useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheetMode })
+  const { agentMode, setAgentMode, agentDraftId, workspaceDraft, draftWorkspaceId, draftOverlay, workspaceCloseRef, closeDraftWorkspace } = agentFlow
   const bottomRef = useRef<HTMLDivElement>(null)
   const latestMessageRef = useRef<HTMLElement | null>(null)
   const lastScrolledMessage = useRef<string | null>(null)
@@ -246,7 +171,6 @@ export function MapChatbot({
     setOpen(true)
   }
 
-  useEffect(() => { if (draftOverlay) draftWorkspaceClose.current?.focus() }, [draftOverlay, draftWorkspaceId])
   useLayoutEffect(() => {
     const input = inputRef.current
     if (input) { input.style.height = 'auto'; input.style.height = `${Math.min(100, Math.max(28, input.scrollHeight))}px` }
@@ -404,14 +328,14 @@ export function MapChatbot({
     if (!panelVisible) return
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const focusFrame = window.requestAnimationFrame(() => {
-      if (panelRef.current?.querySelector('.homeji-assistant__conversation[inert]')) draftWorkspaceClose.current?.focus()
+      if (panelRef.current?.querySelector('.homeji-assistant__conversation[inert]')) workspaceCloseRef.current?.focus()
       else inputRef.current?.focus()
     })
     const closeOnEscape = (event: KeyboardEvent) => {
       const panel = panelRef.current
       if (event.target instanceof Element && event.target.closest('[role="dialog"]') && !panel?.contains(event.target)) return
       if (event.key === 'Escape') {
-        if (panel?.querySelector('.homeji-assistant__conversation[inert]')) { event.preventDefault(); setDraftWorkspaceOpen(false); requestAnimationFrame(() => inputRef.current?.focus()) }
+        if (panel?.querySelector('.homeji-assistant__conversation[inert]')) { event.preventDefault(); closeDraftWorkspace(); requestAnimationFrame(() => inputRef.current?.focus()) }
         else closeChat()
       }
       if (event.key !== 'Tab' || !(panel?.getAttribute('aria-modal') === 'true' || document.querySelector('.room-detail[aria-modal="true"]'))) return
@@ -434,7 +358,7 @@ export function MapChatbot({
       document.removeEventListener('keydown', closeOnEscape)
       if (opener?.isConnected) opener.focus()
     }
-  }, [panelVisible])
+  }, [panelVisible, closeDraftWorkspace, workspaceCloseRef])
 
   useEffect(() => {
     onOpenChange?.(panelVisible)
@@ -541,10 +465,8 @@ export function MapChatbot({
         rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
-      setAgentMode(reply.agentRequested === true || Boolean(reply.agentDraft) || request.postingAgent === true && !reply.upgradeRequired)
+      agentFlow.acceptReply(reply, request.postingAgent === true)
       if (reply.nearbyRooms?.status === "locationRequired" || reply.foodDiscovery?.status === "locationRequired") awaitingLocation.current = request.message
-      if (reply.agentDraft) { setAgentDraftId(reply.agentDraft.id); setDraftWorkspaceId(reply.agentDraft.id); setDraftWorkspaceOpen(true); setExpanded(true) }
-      else if (reply.upgradeRequired) setAgentDraftId(undefined)
       const contextualUnavailable = reply.agentDraft || reply.agentRequested || reply.nearbyRooms ? false : request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
       const foodExpected = !reply.agentRequested && !reply.agentDraft && !reply.upgradeRequired && !reply.nearbyRooms && !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
@@ -582,7 +504,7 @@ export function MapChatbot({
     setBusy(true); setError(null)
     try {
       await deleteChatbotConversation(conversationId)
-      setConversationId(undefined); setAgentDraftId(undefined); setAgentMode(false); setMessages([]); setDraft(''); setAttachments([]); setMediaSession(value => value + 1); sessionCriteria.current = undefined; sessionFood.current = undefined
+      setConversationId(undefined); agentFlow.reset(); setMessages([]); setDraft(''); setAttachments([]); setMediaSession(value => value + 1); sessionCriteria.current = undefined; sessionFood.current = undefined
     } catch (reason) { setError(getErrorMessage(reason, 'Chưa xóa được hội thoại.')) }
     finally { setBusy(false) }
   }
@@ -623,8 +545,7 @@ export function MapChatbot({
     setConversationId(undefined)
     sessionCriteria.current = undefined
     sessionFood.current = undefined
-    setAgentDraftId(undefined)
-    setAgentMode(false)
+    agentFlow.reset()
     awaitingLocation.current = null
     setSharedLocation(null)
     setMessages([])
@@ -681,7 +602,7 @@ export function MapChatbot({
               ref={toolsButtonRef}
               type="button"
               className="homeji-assistant__tools-trigger"
-              onClick={() => { setDraftWorkspaceOpen(false); setToolsOpen(value => !value) }}
+              onClick={() => { agentFlow.closeDraftWorkspace(); setToolsOpen(value => !value) }}
               aria-expanded={showTools}
               aria-controls={showTools ? `${reactId}-tools` : undefined}
             >
@@ -701,7 +622,7 @@ export function MapChatbot({
                 <span className="homeji-assistant__scroll-arrow" aria-hidden="true">↓</span>
               </button>
             ) : null}
-            <button type="button" className="homeji-assistant__icon-button" disabled={busy} onClick={() => { setDraftWorkspaceOpen(false); setResetRequested(true) }}
+            <button type="button" className="homeji-assistant__icon-button" disabled={busy} onClick={() => { agentFlow.closeDraftWorkspace(); setResetRequested(true) }}
               aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><AssistantIcon name="plus" /></button>
             <button type="button" className="homeji-assistant__icon-button" onClick={() => setExpanded(value => !value)}
               aria-pressed={expanded} aria-label={expanded ? 'Thu gọn cuộc trò chuyện' : 'Mở rộng cuộc trò chuyện'}
@@ -709,7 +630,7 @@ export function MapChatbot({
             <button type="button" className="map-chatbot__close homeji-assistant__icon-button" onClick={closeChat} aria-label="Đóng Homeji" title="Đóng Homeji"><AssistantIcon name="close" /></button>
           </div>
         </header>
-        <div className={`homeji-assistant__workspace${showTools ? ' has-tools' : ''}${workspaceDraft && draftWorkspaceOpen ? ' has-draft-workspace' : ''}`}>
+        <div className={`homeji-assistant__workspace${showTools ? ' has-tools' : ''}${workspaceDraft && agentFlow.workspaceOpen ? ' has-draft-workspace' : ''}`}>
           {showTools ? <aside className="homeji-assistant__tools" aria-label="Công cụ Homeji" id={`${reactId}-tools`}>
             <div className="homeji-assistant__tools-heading"><span>LỐI TẮT CỦA BẠN</span><button type="button" className="homeji-assistant__icon-button" onClick={() => { setToolsOpen(false); toolsButtonRef.current?.focus() }} aria-label="Đóng công cụ"><AssistantIcon name="close" /></button></div>
             <p>Đi thẳng đến việc bạn cần.</p>
@@ -725,56 +646,23 @@ export function MapChatbot({
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
             </div> : null}
             <div className="map-chatbot__body" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
-              {rentalSelection ? <section className="map-chatbot__context" aria-label="Các phòng đang hỗ trợ">
-                <div className="homeji-assistant__room-heading"><span className="homeji-assistant__room-icon"><AssistantIcon name="home" /></span><div><span>CÁC LỰA CHỌN ĐANG HỖ TRỢ</span><strong>{rentalSelection.title}</strong></div><button type="button" className="homeji-assistant__icon-button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh so sánh"><AssistantIcon name="close" /></button></div>
-                <div className="map-chatbot__context-prompts"><button type="button" disabled={busy} onClick={() => void send('So sánh các lựa chọn này', false, 'compare')}>So sánh các lựa chọn</button><button type="button" disabled={busy} onClick={() => void send('Những điều cần hỏi về các lựa chọn này', false, 'questions')}>Những điều cần hỏi</button></div>
-                <small>Cùng mức sử dụng cho {rentalSelection.scenario.occupants} người. Đổi phí hoặc danh sách tại màn so sánh; các khoản chưa xác nhận vẫn được giữ là chưa biết.</small>
-              </section> : null}
-              {rentalContext ? <section className="map-chatbot__context" aria-label="Phòng đang hỗ trợ">
-                <div className="homeji-assistant__room-heading"><span className="homeji-assistant__room-icon"><AssistantIcon name="home" /></span><div><span>PHÒNG ĐANG HỖ TRỢ</span><strong>{rentalContext.title || 'Tin phòng đang xem'}</strong></div><button type="button" className="homeji-assistant__icon-button" onClick={onDismissRentalContext} aria-label="Bỏ ngữ cảnh phòng đang xem"><AssistantIcon name="close" /></button></div>
-                <div className="map-chatbot__context-prompts"><button type="button" disabled={busy} onClick={() => void send('Tính tiền tháng của phòng này', false, 'cost')}>Tính tiền tháng <span aria-hidden>↗</span></button><button type="button" disabled={busy} onClick={() => void send('Những điều cần hỏi về phòng này', false, 'questions')}>Những điều cần hỏi <span aria-hidden>↗</span></button></div>
-                <small>Giá và phí lấy từ tin này. Khi tìm phòng mới, hãy nhập nhu cầu mới của bạn.</small>
-              </section> : null}
-              {showGreeting ? <div className="map-chatbot__greeting">
-                <div className="homeji-assistant__welcome-mark" aria-hidden="true"><img src="/brand/homeji-logo2.png" alt="" draggable={false} /></div>
-                <h2>Homeji giúp gì cho bạn?</h2>
-                <div className="homeji-assistant__starters">
-                  <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}><AssistantIcon name="home" /><strong>Hiểu trước khi thuê</strong><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}><AssistantIcon name="bag" /><strong>Khám phá chợ Homeji</strong><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}><AssistantIcon name="chat" /><strong>Hỏi điều bạn muốn</strong><b aria-hidden>↗</b></button>
-                </div>
-              </div> : null}
-              {messages.map((m, index) => {
-                const isUser = m.sender === ChatMessageSender.User
-                const needsRoomReselection = Boolean(m.rentalContext && m.rentalContext.postId !== rentalContext?.postId)
-                const needsChoiceReselection = Boolean(m.rentalSelection && rentalTargetKey(null, m.rentalSelection) !== rentalTargetKey(null, rentalSelection))
-                return <article key={m.id} ref={index === messages.length - 1 ? latestMessageRef : undefined} className={`map-chatbot__msg ${isUser ? 'is-user' : 'is-assistant'}${m.pending ? ' is-pending' : ''}${m.rentalDecision ? ' is-grounded' : ''}`}>
-                  <div className="homeji-assistant__message-author">{isUser ? <span className="homeji-assistant__you" aria-hidden>B</span> : <HomejiAvatar inline />}<strong>{isUser ? 'Bạn' : 'Homeji'}</strong>{!isUser ? <span>AI</span> : null}</div>
-                  <div className="map-chatbot__bubble">
-                    {m.rentalContext ? <small className="map-chatbot__message-context">Về phòng: {m.rentalContext.title || 'Tin phòng đã chọn'}</small> : null}
-                    {m.rentalSelection ? <small className="map-chatbot__message-context">Về lựa chọn: {m.rentalSelection.title}</small> : null}
-                    {isUser ? <><ChatbotMediaPreview attachments={m.attachments ?? []} /><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy || mediaBusy || recordingActive} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
-                      : <><ChatbotMessageContent content={m.content} />
-                        {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => setOpen(false)} /></section> : null}
-                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => setOpen(false)} /> : null}
-                        {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => { setDraftWorkspaceOpen(true); setExpanded(true) }}><span>Loại tin · nội dung · chi phí · vị trí</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
-                        {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={() => { navigate("/?section=payments"); setOpen(false) }}>Khám phá Premium</button><button className="map-chatbot__action" type="button" onClick={() => { if (m.actions?.[0]) handleNavigationAction(m.actions[0]); else { navigate("/?section=marketplace"); setOpen(false) } }}>Tự đăng bài</button></div> : null}
-                        {m.roommateCandidates ? <AgentRoommateResults items={m.roommateCandidates} onOpen={() => setOpen(false)} /> : null}
-                        {m.nearbyRooms ? <ChatbotNearbyResults data={m.nearbyRooms} onOpen={() => setOpen(false)} /> : null}
-                        {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => setOpen(false)} /> : null}
-                        {m.actions?.length ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
-                        <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
-                          if (needsChoiceReselection) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Chọn lại danh sách', description: '', target: '/?section=saved&view=considering' })
-                          else if (needsRoomReselection && m.rentalContext) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Mở lại phòng', description: '', target: `/?post=${encodeURIComponent(m.rentalContext.postId)}` })
-                          else prepareDraft(m.foodDiscovery ? 'Gợi ý đồ ăn ' : m.rentalSelection ? 'Về các lựa chọn này, mình muốn hỏi thêm: ' : m.rentalContext ? 'Về phòng này, mình muốn hỏi thêm: ' : 'Mình muốn hỏi thêm: ')
-                        }}><AssistantIcon name="chat" />{needsChoiceReselection ? 'Mở danh sách để chọn lại' : needsRoomReselection ? 'Mở lại phòng để hỏi tiếp' : 'Hỏi tiếp'}</button></div>
-                      </>}
-                  </div>
-                </article>
-              })}
-              {showTyping ? <div className="homeji-assistant__thinking" role="status"><span aria-hidden><i /><i /><i /></span>Homeji đang tìm câu trả lời…</div> : null}
-              <div ref={bottomRef} />
+            <ChatbotTranscript
+              state={{ messages, showGreeting, showTyping, busy, mediaBusy, recordingActive, draftWorkspaceId }}
+              context={{ rentalContext, rentalSelection, sharedLocation }}
+              refs={{ latestMessageRef, bottomRef }}
+              actions={{
+                onDismissRentalContext,
+                send,
+                prepareDraft,
+                openDraftWorkspace: agentFlow.openDraftWorkspace,
+                closeChat,
+                handleNavigationAction,
+                onSearchUpdate,
+                openPayments: () => { navigate('/?section=payments'); setOpen(false) },
+                openMarketplace: () => { navigate('/?section=marketplace'); setOpen(false) },
+                copyReply,
+              }}
+            />
             </div>
             {isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
@@ -783,83 +671,42 @@ export function MapChatbot({
               <GameLauncher waiting={showTyping} />
             </div>
             {showTyping ? <div className="map-chatbot__request-status" role="status"><span>Đang xử lý · bạn vẫn có thể soạn tin</span><button type="button" onClick={stopRequest}>Dừng chờ</button></div> : null}
-            <div className="homeji-assistant__composer-area">
-              <ProfileGate action="trò chuyện với trợ lý AI" onNavigate={closeChat}>
-              {open ? <ChatbotMediaComposer key={mediaSession} attachments={attachments} disabled={busy || mediaBusy}
-                onChange={setAttachments} onError={setError} onBusyChange={setMediaBusy} onRecordingChange={setRecordingActive}
-                onDictation={text => {
-                  if (!text.trim()) throw new Error('Không nghe rõ lời nói. Hãy ghi âm lại.')
-                  if (draft.length + text.length + (draft ? 1 : 0) > 1000) throw new Error('Nội dung vượt quá 1.000 ký tự. Hãy rút gọn tin nhắn hoặc bản ghi.')
-                  draftRevision.current += 1
-                  setDraft(current => current ? `${current} ${text}` : text)
-                  inputRef.current?.focus()
-                }} /> : null}
-              <form className="map-chatbot__form" onSubmit={event => { event.preventDefault(); void send(draft) }}>
-                <textarea
-                  ref={inputRef}
-                  value={draft}
-                  readOnly={mediaBusy}
-                  maxLength={1000}
-                  rows={1}
-                  onChange={event => {
-                    draftRevision.current += 1
-                    setDraft(event.target.value)
-                  }}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) {
-                      event.preventDefault()
-                      if (!busy && !mediaBusy && !recordingActive && (draft.trim() || attachments.length)) event.currentTarget.form?.requestSubmit()
-                    }
-                  }}
-                  placeholder={rentalContext ? 'Hỏi về phòng này, hoặc điều bạn cần…' : 'Kể Homeji nghe điều bạn đang cần…'}
-                  aria-label="Nhập tin nhắn cho Homeji"
-                />
-                <button type="submit" className="map-chatbot__send" disabled={busy || mediaBusy || recordingActive || (!draft.trim() && !attachments.length)} aria-label="Gửi">
-                  <span className="sr-only">Gửi</span>
-                  <AssistantIcon name="send" />
-                </button>
-              </form>
-              <div className="homeji-assistant__composer-meta">
-                {draft.length ? <span className="homeji-assistant__char-count">{draft.length}/1.000</span> : null}
-                <details className="map-chatbot__privacy" data-glass-exclude>
-                  <summary>Quyền riêng tư & lịch sử</summary>
-                  <p>Ảnh và âm thanh bạn gửi được chuyển tới Gemini để xử lý. Homeji không lưu tệp gốc vào lịch sử chatbot. Bản chép lời chỉ được gửi vào hội thoại sau khi bạn bấm Gửi.</p>
-                  <p>{saveHistory ? 'Bạn đã đồng ý lưu hội thoại thuộc tài khoản của mình.' : 'Homeji không lưu hội thoại này vào lịch sử chatbot của bạn.'} Homeji dùng tiêu chí bạn nhập để tìm phòng; chỉ dùng vị trí thiết bị sau khi bạn cho phép. Nội dung bạn nhập, kể cả yêu cầu tìm phòng, có thể được gửi tới Gemini để xử lý. Tránh nhập thông tin nhạy cảm.</p>
-                  {config?.historyStorageEnabled ? (
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={saveHistory}
-                        disabled={busy}
-                        onChange={event => {
-                          setSaveHistory(event.target.checked)
-                          startNewConversation()
-                        }}
-                      />
-                      Đồng ý lưu hội thoại và tiêu chí theo chính sách lưu lịch sử
-                    </label>
-                  ) : (
-                    <p>Lưu lịch sử hiện đang tắt.</p>
-                  )}
-                  {!saveHistory ? (
-                    <button type="button" disabled={busy} onClick={() => setResetRequested(true)}>
-                      Xóa nội dung phiên và tiêu chí
-                    </button>
-                  ) : null}
-                  {conversationId ? (
-                    <button type="button" disabled={busy} onClick={() => void deleteConversation()}>
-                      Xóa hội thoại và tiêu chí hiện tại
-                    </button>
-                  ) : null}
-                </details>
-              </div>
-              </ProfileGate>
-            </div>
+            <ChatbotComposer
+              open={open}
+              mediaSession={mediaSession}
+              attachments={attachments}
+              setAttachments={setAttachments}
+              busy={busy}
+              mediaBusy={mediaBusy}
+              setMediaBusy={setMediaBusy}
+              recordingActive={recordingActive}
+              setRecordingActive={setRecordingActive}
+              draft={draft}
+              setDraft={setDraft}
+              draftRevisionRef={draftRevision}
+              inputRef={inputRef}
+              setError={setError}
+              send={send}
+              saveHistory={saveHistory}
+              setSaveHistory={setSaveHistory}
+              config={config}
+              startNewConversation={startNewConversation}
+              setResetRequested={setResetRequested}
+              deleteConversation={deleteConversation}
+              conversationId={conversationId}
+              rentalContext={Boolean(rentalContext)}
+              closeChat={closeChat}
+            />
           </div>
-          {workspaceDraft ? <aside className="homeji-assistant__draft-workspace" aria-label="Bản nháp đang duyệt" hidden={!draftWorkspaceOpen}>
-            <header><div><small>KHÔNG GIAN DUYỆT BÀI</small><strong>Bản nháp của bạn</strong></div><button ref={draftWorkspaceClose} type="button" aria-label="Về hội thoại" onClick={() => { setDraftWorkspaceOpen(false); requestAnimationFrame(() => inputRef.current?.focus()) }}>Về hội thoại <span aria-hidden>×</span></button></header>
-            <AgentPostPreview key={workspaceDraft.id} draft={workspaceDraft} sharedLocation={sharedLocation} active={agentDraftId === workspaceDraft.id} onFinished={() => setAgentDraftId(current => current === workspaceDraft.id ? undefined : current)} />
-          </aside> : null}
+          {workspaceDraft ? <AgentDraftWorkspace
+            draft={workspaceDraft}
+            sharedLocation={sharedLocation}
+            active={agentDraftId === workspaceDraft.id}
+            open={agentFlow.workspaceOpen}
+            closeRef={agentFlow.workspaceCloseRef}
+            onReturnToChat={() => { agentFlow.closeDraftWorkspace(); requestAnimationFrame(() => inputRef.current?.focus()) }}
+            onFinished={() => agentFlow.finishDraft(workspaceDraft.id)}
+          /> : null}
         </div>
       </div>
     </div>
