@@ -20,13 +20,15 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   const [photo, setPhoto] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [copyState, setCopyState] = useState('')
-  const [contactRequest, setContactRequest] = useState<{ id: string; state: 'loading' | 'ready' | 'error'; phone: string | null; error?: string } | null>(null)
+  const [contactRequest, setContactRequest] = useState<{ id: string; state: 'loading' | 'ready' | 'error'; phone: string | null; phones: string[]; error?: string } | null>(null)
   const [now] = useState(Date.now)
   const { isAuthenticated } = useAuth()
   const { openAuthModal } = useAuthModal()
   const currentContact = contactRequest?.id === id ? contactRequest : null
-  const phone = currentContact?.state === 'ready' && /^0\d{9,10}$/.test(currentContact.phone ?? '') ? currentContact.phone : null
-  const phoneVisible = isAuthenticated && revealed && Boolean(phone)
+  const phones = currentContact?.state === 'ready'
+    ? [...new Set([...(currentContact.phones ?? []), currentContact.phone ?? ''].filter(value => /^0\d{9,10}$/.test(value)))]
+    : []
+  const phoneVisible = isAuthenticated && revealed && phones.length > 0
   useEffect(() => {
     const element = dialog.current
     if (!element) return
@@ -46,16 +48,16 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
     if (!isAuthenticated || !revealed || currentContact?.state !== 'loading') return undefined
     const controller = new AbortController()
     void getRentalSourceContact(id, controller.signal)
-      .then(result => { if (!controller.signal.aborted) setContactRequest({ id, state: 'ready', phone: result.phone }) })
-      .catch(reason => { if (!controller.signal.aborted) setContactRequest({ id, state: 'error', phone: null, error: getErrorMessage(reason, 'Chưa tải được số điện thoại. Vui lòng thử lại.') }) })
+      .then(result => { if (!controller.signal.aborted) setContactRequest({ id, state: 'ready', phone: result.phone, phones: result.phones ?? [] }) })
+      .catch(reason => { if (!controller.signal.aborted) setContactRequest({ id, state: 'error', phone: null, phones: [], error: getErrorMessage(reason, 'Chưa tải được số điện thoại. Vui lòng thử lại.') }) })
     return () => controller.abort()
   }, [id, isAuthenticated, revealed, currentContact?.state])
   const images = listing?.imageUrls.map(rentalSourceImageHref).filter((value): value is string => Boolean(value)) ?? []
   const expired = Boolean(listing?.sourceExpiresAt && Date.parse(listing.sourceExpiresAt) <= now)
   const publisher = listing?.publisherName?.trim() || 'Chưa có tên người đăng'
   const date = listing?.detailsCollectedAt ?? listing?.collectedAt
-  async function copyPhone() {
-    if (!phone) return
+  async function copyPhone(phone: string) {
+    if (!/^0\d{9,10}$/.test(phone)) return
     if (!isAuthenticated) {
       openAuthModal({ intent: 'contact', onSuccess: requestPhone })
       return
@@ -65,14 +67,14 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   }
   function requestPhone() {
     setRevealed(true)
-    setContactRequest({ id, state: 'loading', phone: null })
+    setContactRequest({ id, state: 'loading', phone: null, phones: [] })
   }
   function handleRevealPhone() {
     if (!isAuthenticated) {
       openAuthModal({ intent: 'contact', onSuccess: requestPhone })
       return
     }
-    if (currentContact?.state === 'ready' && phone) { setRevealed(value => !value); return }
+    if (currentContact?.state === 'ready' && phones.length) { setRevealed(value => !value); return }
     requestPhone()
   }
   return createPortal(<dialog ref={dialog} className="source-room-detail" aria-labelledby={labelId}
@@ -103,14 +105,19 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
       <aside className="source-room-detail__contact" id={`${labelId}-contact`} aria-label="Thông tin liên hệ">
         <div className="source-room-detail__contact-card"><span className="source-room-detail__eyebrow">LIÊN HỆ NGƯỜI ĐĂNG</span><div className="source-room-detail__person"><span aria-hidden>{publisher.charAt(0)}</span><div><h2>{publisher}</h2><p>Thông tin liên hệ</p></div></div>
           <p className="source-room-detail__verification">Chưa xác minh danh tính trên Homeji</p>
-          {isAuthenticated && currentContact?.state === 'ready' && !phone
+        {isAuthenticated && currentContact?.state === 'ready' && !phones.length
             ? <p className="source-room-detail__missing" role="status">Tin này chưa có số điện thoại để liên hệ.</p>
             : <>
               <button type="button" className="source-room-detail__phone" disabled={currentContact?.state === 'loading'} onClick={handleRevealPhone}>
-                {phoneVisible ? phone : !isAuthenticated ? 'Đăng nhập để xem số' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : phone ? `${phone.slice(0, 4)} ••• •••` : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Nhấn để xem số'}
+                {phoneVisible ? `Ẩn ${phones.length} số điện thoại` : !isAuthenticated ? 'Đăng nhập để xem số' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Nhấn để xem số điện thoại'}
                 <small>{phoneVisible ? 'Số công khai trong tin đăng' : isAuthenticated ? 'Xem thông tin liên hệ' : 'Cần đăng nhập để liên hệ'}</small>
               </button>
-              {phoneVisible && phone ? <div className="source-room-detail__contact-actions"><a href={`tel:${phone}`}>Gọi người đăng</a><button type="button" onClick={() => void copyPhone()}>Sao chép số</button></div> : null}
+              {phoneVisible ? <div className="source-room-detail__contact-actions" aria-label="Các số điện thoại người đăng">
+                {phones.map((phone, index) => <div className="source-room-detail__contact-number" key={phone}>
+                  <a href={`tel:${phone}`} aria-label={`Gọi người đăng, số ${index + 1}`}>{phone}</a>
+                  <button type="button" onClick={() => void copyPhone(phone)}>Sao chép</button>
+                </div>)}
+              </div> : null}
               {currentContact?.state === 'error' ? <p className="source-room-detail__missing" role="alert">{currentContact.error}</p> : null}
             </>}
           {copyState ? <p role="status">{copyState}</p> : null}

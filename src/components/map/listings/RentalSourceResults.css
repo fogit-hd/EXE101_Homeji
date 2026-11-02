@@ -16,4 +16,19 @@
 .source-results__actions :is(button,a) { border: 0; background: none; padding: 0; color: var(--action-on-soft); font: 600 12px/1.6 var(--font-ui); cursor: pointer; }
 .source-results__more { padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated); color: var(--text-heading); font-weight: 600; cursor: pointer; }
 @media (max-width: 380px) { .source-results__card { grid-template-columns: 80px minmax(0,1fr); gap: 10px; padding: 12px; } .source-results__card > img { width: 80px; height: 105px; } .source-results__price { font-size: 17px; } }
-.source-results__card:not(:has(> img)){grid-template-columns:minmax(0,1fr)}
+.source-results__card:not(:has(> .source-results__photo)){grid-template-columns:minmax(0,1fr)}
+
+.source-results__card{padding:16px;gap:16px;grid-template-columns:112px minmax(0,1fr);border-radius:18px;transition:border-color .15s,box-shadow .15s}
+.source-results__card:hover{border-color:var(--action-on-soft);box-shadow:0 6px 20px #173f4610}
+.source-results__photo{position:relative;width:112px;height:138px;overflow:hidden;border-radius:12px;background:var(--surface-muted)}
+.source-results__photo img{width:100%;height:100%;object-fit:cover}
+.source-results__photo>span{position:absolute;right:6px;bottom:6px;padding:3px 7px;border-radius:6px;background:#10252bd9;color:#fff;font-size:10px}
+.source-results__card h3{margin:0 0 10px;font-size:15px;font-weight:700;line-height:1.45}
+.source-results__metrics{display:flex;align-items:baseline;flex-wrap:wrap;gap:7px 12px;margin:0 0 8px}
+.source-results__metrics>strong{font-size:16px;color:var(--action-on-soft);font-variant-numeric:tabular-nums}
+.source-results__metrics>.source-results__price{font-size:20px}
+.source-results__metrics>span{padding:3px 8px;border-radius:6px;background:var(--surface-muted);border:1px solid var(--border);font-size:11px;color:var(--text-heading)}
+.source-results__facts{margin-top:10px}
+.source-results__reference{font-size:10px!important}
+.source-results__actions{padding-top:10px;border-top:1px solid var(--border)}
+@media(max-width:420px){.source-results__card{grid-template-columns:88px minmax(0,1fr);padding:12px;gap:12px}.source-results__photo{width:88px;height:116px}.source-results__metrics>.source-results__price{font-size:18px}.source-results__card h3{font-size:14px}}

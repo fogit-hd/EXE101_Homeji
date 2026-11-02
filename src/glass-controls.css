@@ -12,7 +12,9 @@
   --glass-ink: #f0f7fa; --text-heading: #f0f7fa; --text-secondary: #d8e5eb;
   --tabs-ink: #f0fdf9; --tabs-muted-ink: #d1e7df;
 }
-:is(html:root #root,html:root body) :is([data-glass-content], [data-glass-exclude], [data-glass-exclude] button, .food-rail__checkout, .food-rail__locate, .food-qty__btn, .food-rail__clear, .food-rail__remove) {
+/* Excluding a surface from glass must not erase the authored backgrounds of
+   buttons inside it (for example, the Premium offer and maintenance dialogs). */
+:is(html:root #root,html:root body) :is([data-glass-content], [data-glass-exclude], .food-rail__checkout, .food-rail__locate, .food-qty__btn, .food-rail__clear, .food-rail__remove) {
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important; filter: none;
   background-image: none; box-shadow: none;
 }

@@ -4,7 +4,7 @@ import { getRentalSourceCatalog, sourceRoomHref, rentalSourceImageHref, type Ren
 import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
-import { filterRentalSources, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
+import { filterRentalSourcesForList, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
 import type { ListingQuery } from './listingAdapters'
 import './RentalSourceResults.css'
 import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
@@ -36,7 +36,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
       .catch(reason => { if (active) { setLoaded(true); setError(getErrorMessage(reason, 'Chưa tải được danh sách phòng.')) } })
     return () => { active = false }
   }, [attempt, revision])
-  const filtered = useMemo(() => filterRentalSources(rows, query), [rows, query])
+  const filtered = useMemo(() => filterRentalSourcesForList(rows, query), [rows, query])
   const counts = useMemo(() => ({ total: filtered.length, mapped: filtered.filter(sourceHasLocation).length }), [filtered])
   useEffect(() => { onCount(counts) }, [onCount, counts])
   const unsupported = sourceHasUnsupportedFilters(query)
@@ -49,7 +49,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
   }
   return <section className="source-results" aria-label="Danh sách phòng">
     <header><p>{error ? 'Chưa tải được toàn bộ tin' : loaded ? `${combined.length} lựa chọn · Xem chi tiết và liên hệ ngay trên Homeji` : 'Đang tải toàn bộ danh sách…'}</p></header>
-    <p className="source-results__note">Các ghim gần nhau được gộp thành cụm. Tin chưa có vị trí vẫn xuất hiện bên dưới; tình trạng còn phòng cần kiểm tra với người đăng.</p>
+    <p className="source-results__note">Danh sách gồm mọi tin đang hoạt động khớp bộ lọc, kể cả tin chưa có tọa độ. Bản đồ chỉ gắn ghim cho vị trí đã được xác nhận; tình trạng còn phòng cần kiểm tra với người đăng.</p>
     {unsupported ? <p className="source-results__note">Một số tin chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
     {loaded && !error && combined.length === 0 ? <p role="status">Không có phòng khớp bộ lọc.</p> : null}
@@ -59,9 +59,9 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
       const photo = row.imageUrls.map(rentalSourceImageHref).find(Boolean)
       const updatedAt = formatSourceDate(row.sourceUpdatedAt)
       return <li key={row.id}><article className="source-results__card">
-        {photo ? <img src={photo} alt={row.title} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
-        <div><strong className="source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong><h3>{row.title}</h3><p>{row.address}</p>
-          <div className="source-results__facts"><span>{row.area} m²</span>{row.depositLabel ? <span>{row.depositLabel}</span> : null}{(row.amenityHighlights ?? []).slice(0, 4).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
+        {photo ? <div className="source-results__photo"><img src={photo} alt={row.title} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.opacity = '.2' }} /><span>{row.imageUrls.length} ảnh</span></div> : null}
+        <div><h3>{row.title}</h3><div className="source-results__metrics"><strong className="source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong><strong>{row.area} m²</strong>{row.depositLabel ? <span>{row.depositLabel}</span> : null}</div><p>{row.address}</p>
+          <div className="source-results__facts">{(row.amenityHighlights ?? []).slice(0, 4).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
           <small className="source-results__reference">{listingReference(row.id)}</small>
           <p className="source-results__publisher">{row.publisherName?.trim() || 'Chưa có tên người đăng'}</p>
           <small>{sourceHasLocation(row) ? 'Đã có vị trí trên bản đồ' : 'Chưa có vị trí trên bản đồ'}</small>

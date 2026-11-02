@@ -10,7 +10,7 @@ export function safeCatalogSource(raw: unknown): string | null {
   if (typeof raw !== 'string') return null
   try {
     const url = new URL(raw)
-    const allowed = ['phongtro123.com', 'mogi.vn', 'phongtro.vn', 'www.phongtro.vn', 'www.nhatot.com', 'shopeefood.vn', 'vinwonders.com', 'www.tiemcomvien.com', 'www.google.com']
+    const allowed = ['muaban.net', 'www.muaban.net', 'phongtro123.com', 'mogi.vn', 'phongtro.vn', 'www.phongtro.vn', 'www.nhatot.com', 'shopeefood.vn', 'vinwonders.com', 'www.tiemcomvien.com', 'www.google.com']
     if (url.protocol !== 'https:' || url.username || url.password || url.port || !allowed.includes(url.hostname)) return null
     if (url.hostname === 'www.google.com' && !url.pathname.startsWith('/maps/')) return null
     return url.href

@@ -1,4 +1,4 @@
-const normalize = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').toLowerCase()
+const normalize = (value: string) => value.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd')
 
 const APARTMENT_TERMS = [
   'can ho',
@@ -13,6 +13,7 @@ const APARTMENT_TERMS = [
 
 export function isApartmentListing(value: string): boolean {
   const normalized = normalize(value)
+  if (/(?:phong|master).*trong (?:can ho|chung cu)/.test(normalized)) return false
   return APARTMENT_TERMS.some(term => normalized.includes(term))
 }
 
