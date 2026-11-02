@@ -253,7 +253,7 @@ export function MapListingsWorkspace({
     <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}`}>
       <header className="map-listings__header">
         <div className="map-listings__toolbar" aria-label="Tùy chỉnh kết quả">
-          <div className="map-listings__catalog" role="group" aria-label="Nguồn tin" data-glass-exclude>
+          <div className="map-listings__catalog" role="group" aria-label="Loại tin" data-glass-exclude>
             {SOURCE_OPTIONS.map((option) => (
               <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
                 aria-pressed={query.catalog === option.id}

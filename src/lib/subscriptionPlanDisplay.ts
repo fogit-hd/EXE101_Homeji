@@ -19,14 +19,18 @@ export function getPlanDisplay(plan: SubscriptionPackage) {
     headlinePrice: plan.price > 0 ? formatPrice(plan.price) : 'Miễn phí',
     headlineSuffix: !basic && plan.durationDays > 0 ? `/ ${plan.durationDays} ngày` : '',
     tone: basic ? 'free' : plan.durationDays <= 30 ? 'mint' : plan.durationDays <= 180 ? 'ocean' : 'gold',
-    dailyEquivalentPrice: !basic ? formatDailyEquivalentPrice(plan.price, plan.durationDays) : null,
     benefits: (plan.benefits ?? []).map(benefit => LEGACY_BENEFITS[benefit] ?? benefit),
   }
 }
 
 export function formatDailyEquivalentPrice(amount: number, durationDays: number): string | null {
+  const dailyAmount = getDailyEquivalentAmount(amount, durationDays)
+  return dailyAmount === null ? null : `Khoảng ${formatPrice(dailyAmount)} / ngày`
+}
+
+export function getDailyEquivalentAmount(amount: number, durationDays: number): number | null {
   if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(durationDays) || durationDays <= 0) return null
-  return `Khoảng ${formatPrice(Math.round(amount / durationDays))} / ngày`
+  return Math.round(amount / durationDays)
 }
 
 export function sortPlansForDisplay(plans: SubscriptionPackage[]): SubscriptionPackage[] {

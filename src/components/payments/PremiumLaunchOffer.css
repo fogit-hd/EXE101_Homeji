@@ -96,6 +96,7 @@
 .premium-launch-offer__price span { color: #665a53; font-size: 11px; white-space: nowrap; }
 .premium-launch-offer__body .premium-launch-offer__saving { display: table; margin: 9px 0 0; padding: 5px 9px; border: 1px solid #ead183; border-radius: 999px; background: #f8e7ae; color: #754b18; font-size: 11px; font-weight: 750; line-height: 1.35; }
 .premium-launch-offer__body > .premium-launch-offer__daily { margin-top: 9px; color: #665a53; font-size: 12px; line-height: 1.55; }
+.premium-launch-offer__body > .premium-launch-offer__daily strong { color: #7f2021; font-weight: 800; }
 .premium-launch-offer.is-increase .premium-launch-offer__saving { border-color: #e8d8ad; background: #f5edda; color: #66532e; }
 .premium-launch-offer__cta {
   display: flex;

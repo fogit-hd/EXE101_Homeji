@@ -41,7 +41,7 @@ import {
 } from '../lib/labels'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
 import { paymentReturnUrl } from '../lib/paymentReturn'
-import { formatDailyEquivalentPrice, getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
+import { getDailyEquivalentAmount, getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import './MarketplacePage.css'
 import './PaymentPage.css'
 
@@ -386,9 +386,13 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               const busy = busyCode !== null || needsProfileSetup
               const planVoucher = vipVoucher?.packageCode === plan.code && vipVoucher.amount === plan.price ? vipVoucher : null
               const amountDue = plan.price - (planVoucher?.discount ?? 0)
-              const dailyEquivalentPrice = amountDue === plan.price
-                ? view.dailyEquivalentPrice
-                : formatDailyEquivalentPrice(amountDue, plan.durationDays)
+              const dailyAmount = isPremium ? getDailyEquivalentAmount(amountDue, plan.durationDays) : null
+              const previousDailyAmount = isPremium && plan.originalPrice && plan.originalPrice > plan.price
+                ? getDailyEquivalentAmount(plan.originalPrice, plan.durationDays)
+                : null
+              const discountPercent = plan.originalPrice && plan.originalPrice > plan.price
+                ? Math.round((plan.originalPrice - plan.price) / plan.originalPrice * 100)
+                : 0
               const pickingPay = payPickerCode === plan.code
 
 
@@ -410,18 +414,19 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <p className="pay-plan__duration">
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
                   </p>
-                  <p className="pay-plan__price">
-                    {plan.originalPrice ? <del style={{ fontSize: 16, display: 'block', opacity: .6 }}>{formatPrice(plan.originalPrice)}</del> : null}
-                    {view.headlinePrice}
-                    <small>{view.headlineSuffix}</small>
+                  {isPremium ? <p className="pay-plan__rate-label"><span>Chi phí bình quân</span>{discountPercent > 0 ? <strong>GIẢM {discountPercent}%</strong> : null}</p> : null}
+                  <p className={`pay-plan__price${isPremium ? ' is-daily-rate' : ''}`}>
+                    {isPremium && previousDailyAmount ? <del>{formatPrice(previousDailyAmount)}</del> : null}
+                    <strong>{isPremium && dailyAmount !== null ? formatPrice(dailyAmount) : view.headlinePrice}</strong>
+                    <small>{isPremium ? '/ ngày' : view.headlineSuffix}</small>
                   </p>
                   {plan.offerUsed ? <p className="pay-plan__offer-used">Ưu đãi đợt này đã dùng. Bạn vẫn có thể gia hạn với giá thường.</p> : null}
-                  {isPremium && dailyEquivalentPrice ? <p className="pay-plan__equivalent">{dailyEquivalentPrice} · tính trên toàn bộ thời hạn gói</p> : null}
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>
-                        Thanh toán {formatPrice(plan.price)}
-                        · thanh toán một lần
+                        <span>Thanh toán một lần</span>
+                        <strong>{formatPrice(amountDue)}</strong>
+                        <span>cho {plan.durationDays} ngày</span>
                       </>
                     ) : '\u00a0'}
                   </p>

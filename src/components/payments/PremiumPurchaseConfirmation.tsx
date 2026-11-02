@@ -45,7 +45,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
       <div><dt>Thanh toán bằng</dt><dd>{methodNames[purchase.method]}</dd></div>
       <div><dt>Giá gói</dt><dd>{formatPrice(purchase.plan.price)}</dd></div>
       {purchase.discount > 0 ? <div><dt>Voucher giảm</dt><dd>−{formatPrice(purchase.discount)}</dd></div> : null}
-      {dailyEquivalentPrice ? <div><dt>Bình quân mỗi ngày</dt><dd>{dailyEquivalentPrice}</dd></div> : null}
+      {dailyEquivalentPrice ? <div><dt>Bình quân/ngày · tham khảo</dt><dd>{dailyEquivalentPrice}</dd></div> : null}
       <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
     </dl>
     <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'

@@ -675,10 +675,15 @@
 .pay-plan__ribbon.is-dark { background: var(--pay-heading); }
 .pay-plan h3 { margin: 0; color: var(--pay-ink); font-size: 16px; font-weight: 700; }
 .pay-plan__duration { margin: 2px 0 0; color: var(--pay-muted); font-size: 13px; }
+.pay-plan__rate-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 -10px; color: var(--pay-muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.pay-plan__rate-label strong { padding: 4px 7px; border: 1px solid #e6bb63; border-radius: 999px; background: linear-gradient(135deg, #fff1bc, #f3d16d); color: #8f2624; font-size: 9px; font-weight: 900; letter-spacing: .04em; white-space: nowrap; }
 .pay-plan__price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; margin: 14px 0 0; color: var(--pay-ink); font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
 .pay-plan__price small { color: var(--pay-muted); font-size: 13px; font-weight: 500; letter-spacing: 0; }
-.pay-plan__total { min-height: 36px; margin: 2px 0 0; color: var(--pay-muted); font-size: 13px; line-height: 18px; }
-.pay-plan__total b { color: var(--pay-green-hover); font-weight: 700; }
+.pay-plan__price strong { font: inherit; }
+.pay-plan__price del { margin-right: 3px; color: var(--pay-muted); font-size: 14px; font-weight: 500; letter-spacing: 0; }
+.pay-plan__price.is-daily-rate { margin-top: 10px; color: var(--plan-accent, var(--pay-green-hover)); font-size: 32px; }
+.pay-plan__total { display: flex; min-height: 36px; align-items: baseline; flex-wrap: wrap; gap: 3px 5px; margin: 5px 0 0; color: var(--pay-muted); font-size: 12px; line-height: 18px; }
+.pay-plan__total strong { color: var(--pay-ink); font-size: 14px; font-weight: 750; }
 .pay-plan ul { display: flex; flex: 1; flex-direction: column; gap: 9px; margin: 14px 0 18px; padding: 0; list-style: none; }
 .pay-plan li { display: flex; gap: 8px; font-size: 13px; line-height: 18px; }
 .pay-plan li::before { content: '✓'; flex: none; color: var(--pay-green); font-weight: 800; }
@@ -897,7 +902,9 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid #278c7e; out
 .pay-v2 .pay-plan__identity em { margin-left:auto; font:600 10px/1.5 var(--font-ui); letter-spacing:0; }
 .pay-v2 .pay-plan h3 { font-size:18px; line-height:1.5; }
 .pay-v2 .pay-plan__price { font-size:30px; }
-.pay-v2 .pay-plan__equivalent { min-height:36px; margin:7px 0 0; color:var(--plan-accent); font-size:12px; line-height:1.5; font-weight:600; }
+.pay-v2 .pay-plan__rate-label { margin-top:16px; color:var(--plan-accent); }
+.pay-v2 .pay-plan__price.is-daily-rate { font-size:36px; }
+.pay-v2 .pay-plan__price.is-daily-rate small { color:var(--plan-accent); }
 .pay-v2 .pay-plan__total { font-size:12px; }
 .pay-v2 .pay-plan ul { padding-top:16px; border-top:1px solid var(--border); }
 .pay-v2 .pay-plan li::before { color:var(--plan-accent); }

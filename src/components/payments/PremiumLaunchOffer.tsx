@@ -6,7 +6,7 @@ import { getPremiumPriceAnnouncements, type PremiumPriceAnnouncement } from '../
 import { getMaintenanceAnnouncements, type MaintenanceAnnouncement } from '../../api/maintenance'
 import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../../lib/sellerOrderAlerts'
 import { formatPrice } from '../../lib/labels'
-import { formatDailyEquivalentPrice } from '../../lib/subscriptionPlanDisplay'
+import { formatDailyEquivalentPrice, getDailyEquivalentAmount } from '../../lib/subscriptionPlanDisplay'
 import { useBrandIntroComplete } from '../../hooks/useBrandIntroComplete'
 import './PremiumLaunchOffer.css'
 
@@ -112,6 +112,8 @@ export function PremiumLaunchOffer() {
   const pricePlan = announcement ? catalog.find(row => row.code === announcement.packageCode) : plan
   const durationDays = pricePlan?.durationDays ?? 0
   const dailyEquivalent = formatDailyEquivalentPrice(currentPrice, durationDays)
+  const currentDailyAmount = getDailyEquivalentAmount(currentPrice, durationDays)
+  const previousDailyAmount = getDailyEquivalentAmount(previousPrice, durationDays)
   const saving = previousPrice - currentPrice
   const percent = previousPrice > 0 ? Math.round(Math.abs(saving) / previousPrice * 100) : 0
   const reduced = saving > 0
@@ -131,12 +133,16 @@ export function PremiumLaunchOffer() {
     <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ đồ.'}</p>
     <div className="premium-launch-offer__price-card">
       <div className="premium-launch-offer__price-copy">
-        <span>{announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
+        <span>{durationDays > 0 ? 'CHI PHÍ BÌNH QUÂN / NGÀY' : announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
         <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
       </div>
-      <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{durationDays > 0 ? <span>/ {durationDays} ngày</span> : null}</div>
+      <div className="premium-launch-offer__price">
+        {previousDailyAmount !== null ? <del>{formatPrice(previousDailyAmount)} / ngày</del> : <del>{formatPrice(previousPrice)}</del>}
+        <b>{currentDailyAmount !== null ? formatPrice(currentDailyAmount) : formatPrice(currentPrice)}</b>
+        <span>{currentDailyAmount !== null ? '/ ngày' : durationDays > 0 ? `/ ${durationDays} ngày` : ''}</span>
+      </div>
     </div>
-    {dailyEquivalent ? <p className="premium-launch-offer__daily">{dailyEquivalent.replace(/^Khoảng\s*/, 'Tương đương ')}; thanh toán một lần cho toàn bộ {durationDays} ngày.</p> : null}
+    {dailyEquivalent ? <p className="premium-launch-offer__daily">Thanh toán một lần <strong>{formatPrice(currentPrice)}</strong> cho toàn bộ {durationDays} ngày. {dailyEquivalent} chỉ là mức quy đổi tham khảo.</p> : null}
     <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
     <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
     <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />
