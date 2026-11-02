@@ -5,7 +5,7 @@ import ts from 'typescript'
 
 async function load(path, removeImports = false) {
   let source = await readFile(new URL(path, import.meta.url), 'utf8')
-  if (removeImports) source = source.replace(/^import [^\r\n]*\r?\n/gm, '')
+  if (removeImports) source = source.replace(/^(?:import [^\r\n]*|export \{[^\r\n]*\} from [^\r\n]*)\r?\n/gm, '')
   const javascript = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText
   return import(`data:text/javascript;base64,${Buffer.from(javascript).toString('base64')}`)
 }

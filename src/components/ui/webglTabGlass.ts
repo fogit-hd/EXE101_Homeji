@@ -4,146 +4,185 @@ varying vec2 uv;
 void main() { uv = position * .5 + .5; gl_Position = vec4(position, 0., 1.); }
 `
 
-// Analytic 3D capsule surface: volume normals, Fresnel rim and two area-light
-// reflections. DOM backdrop refraction stays in the existing CSS/SVG layer.
+// Actual scene sampling through a convex capsule, with a plane back surface.
+// Each wavelength uses its own index of refraction (Snell's law via refract).
 const fragmentSource = `
-precision mediump float;
+precision highp float;
 varying vec2 uv;
-uniform vec2 size;
+uniform sampler2D scene;
+uniform vec2 sceneSize;
+uniform vec4 lensBox;
 uniform float lightX;
 uniform float dark;
-uniform float pressed;
+uniform float strength;
+vec2 sceneUv(vec2 pixel) { return clamp(vec2(pixel.x / sceneSize.x, 1. - pixel.y / sceneSize.y), vec2(.001), vec2(.999)); }
+vec2 trace(vec2 pixel, vec3 normal, float depth, float ior) {
+  vec3 inside = refract(vec3(0.,0.,-1.), normal, 1. / ior);
+  vec3 outside = refract(inside, vec3(0.,0.,1.), ior);
+  vec2 travel = inside.xy / max(.12, -inside.z) * depth;
+  travel += outside.xy / max(.12, -outside.z) * 8.;
+  return sceneUv(pixel + travel * strength);
+}
 void main() {
-  vec2 p = (uv - .5) * size;
-  float radius = size.y * .5 - 1.;
-  vec2 q = p - vec2(clamp(p.x, -size.x*.5+radius+1., size.x*.5-radius-1.), 0.);
+  vec2 pixel = vec2(uv.x, 1. - uv.y) * sceneSize;
+  vec4 base = texture2D(scene, sceneUv(pixel));
+  vec2 center = lensBox.xy + lensBox.zw * .5;
+  vec2 p = pixel - center;
+  float radius = max(1., lensBox.w * .5 - 1.);
+  vec2 q = p - vec2(clamp(p.x, -lensBox.z*.5+radius+1., lensBox.z*.5-radius-1.),0.);
   float d = length(q) / radius;
-  if (d >= 1.) { gl_FragColor = vec4(0.); return; }
-  float z = sqrt(max(0., 1.-d*d));
-  vec3 normal = normalize(vec3(q / radius * (.72 + pressed*.08), z));
-  vec3 key = normalize(vec3((lightX-.5)*1.8, .85, 1.2));
-  vec3 fill = normalize(vec3(.6, -.9, .75));
-  float reflection = pow(max(dot(reflect(-key,normal),vec3(0.,0.,1.)),0.),38.);
-  float secondary = pow(max(dot(reflect(-fill,normal),vec3(0.,0.,1.)),0.),52.);
-  float fresnel = .025 + .975*pow(1.-normal.z,4.);
-  float rim = smoothstep(.82,.985,d) * (1.-smoothstep(.985,1.,d));
-  float top = smoothstep(-.4,.7,normal.y);
-  vec3 tint = mix(vec3(.22,.55,.50),vec3(.30,.68,.62),dark);
-  vec3 color = mix(tint,vec3(1.),clamp(top*.65 + reflection + secondary*.5,0.,1.));
-  float alpha = .025 + rim*(.12+top*.32) + fresnel*.11 + reflection*.34 + secondary*.13;
-  alpha *= 1.-smoothstep(.975,1.,d);
-  gl_FragColor = vec4(color, min(alpha,.65));
+  if (d >= 1. || lensBox.z < 1.) { gl_FragColor = base; return; }
+  float z = sqrt(max(.001, 1.-d*d));
+  vec3 normal = normalize(vec3(q / radius * .68, z));
+  float depth = radius * (.24 + z * .38);
+  // Cauchy-like ordering: violet/blue bends more than red. These are material
+  // parameters, not RGB shadows or offset HTML copies.
+  vec4 red = texture2D(scene, trace(pixel, normal, depth, 1.506));
+  vec4 green = texture2D(scene, trace(pixel, normal, depth, 1.518));
+  vec4 blue = texture2D(scene, trace(pixel, normal, depth, 1.532));
+  vec3 transmitted = vec3(red.r, green.g, blue.b);
+  vec3 key = normalize(vec3((lightX-.5)*1.6,-.8,1.4));
+  float specular = pow(max(0.,dot(reflect(-key,normal),vec3(0.,0.,1.))),54.);
+  float fresnel = .04 + .96 * pow(1.-normal.z,5.);
+  float rim = smoothstep(.91,.985,d) * (1.-smoothstep(.985,1.,d));
+  vec3 tint = mix(vec3(.92,.98,.97),vec3(.49,.72,.68),dark);
+  vec3 color = mix(transmitted * mix(vec3(1.),tint,.035), mix(base.rgb,tint,.35), fresnel);
+  color += vec3(specular*.16 + rim*.10);
+  float edge = 1.-smoothstep(.975,1.,d);
+  gl_FragColor = vec4(mix(base.rgb, color, edge), max(base.a, edge));
 }
 `
 
-/** One small, on-demand canvas on one optical face; never replaces a control. */
+/** Bounded tab scene, not a screenshot of arbitrary page content. HTML remains
+ * the interaction/accessibility layer. Unsupported content keeps plain HTML. */
 export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
   if (typeof ResizeObserver === 'undefined') return () => {}
-  const preferences = window.matchMedia('(prefers-reduced-transparency: reduce), (forced-colors: active)')
-  if (preferences.matches) return () => {}
+  const preferences = window.matchMedia('(prefers-reduced-transparency: reduce), (forced-colors: active), (prefers-contrast: more)')
   const canvas = document.createElement('canvas')
   canvas.className = 'liquid-tabs__webgl'
   canvas.setAttribute('aria-hidden', 'true')
+  canvas.dataset.glassExclude = ''
   const gl = canvas.getContext('webgl', { alpha: true, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'low-power' })
-  if (!gl) { root.dataset.glassRenderer = 'fallback'; return () => { delete root.dataset.glassRenderer } }
-  let disposed = false, failed = false, visible = true, frame = 0
+  const textureScene = document.createElement('canvas'), ctx = textureScene.getContext('2d')
+  if (!gl || !ctx) { root.dataset.glassRenderer = 'fallback'; return () => { delete root.dataset.glassRenderer } }
+  let disposed = false, failed = false, visible = true, frame = 0, dirty = true, animateUntil = 0
+  let program: WebGLProgram | null = null, buffer: WebGLBuffer | null = null, texture: WebGLTexture | null = null
   const shaders: WebGLShader[] = []
-  let program: WebGLProgram | null = null
-  let buffer: WebGLBuffer | null = null
   const compile = (type: number, source: string) => {
     const shader = gl.createShader(type)
     if (!shader) throw new Error('Shader unavailable')
-    shaders.push(shader)
-    gl.shaderSource(shader, source)
-    gl.compileShader(shader)
+    shaders.push(shader); gl.shaderSource(shader, source); gl.compileShader(shader)
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error('Tab shader compilation failed')
     return shader
   }
-  try {
-    program = gl.createProgram()
-    if (!program) throw new Error('Program unavailable')
-    gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource))
-    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource))
-    gl.linkProgram(program)
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('Shader compilation failed')
-    buffer = gl.createBuffer()
-    if (!buffer) throw new Error('Buffer unavailable')
-    gl.useProgram(program)
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW)
-    const position = gl.getAttribLocation(program, 'position')
-    gl.enableVertexAttribArray(position)
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0)
-  } catch {
+  const releaseGpu = () => {
+    if (gl.isContextLost()) return
     shaders.forEach(shader => gl.deleteShader(shader))
-    if (program) gl.deleteProgram(program)
-    if (buffer) gl.deleteBuffer(buffer)
-    gl.getExtension('WEBGL_lose_context')?.loseContext()
-    root.dataset.glassRenderer = 'fallback'
+    gl.deleteProgram(program); gl.deleteBuffer(buffer); gl.deleteTexture(texture)
+  }
+  try {
+    program = gl.createProgram(); buffer = gl.createBuffer(); texture = gl.createTexture()
+    if (!program || !buffer || !texture) throw new Error('GPU resources unavailable')
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource)); gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource)); gl.linkProgram(program)
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('Tab shader link failed')
+    gl.useProgram(program); gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW)
+    const position = gl.getAttribLocation(program, 'position')
+    gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0)
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  } catch {
+    releaseGpu(); root.dataset.glassRenderer = 'fallback'
     return () => { delete root.dataset.glassRenderer }
   }
-  const sizeUniform = gl.getUniformLocation(program, 'size')
-  const lightUniform = gl.getUniformLocation(program, 'lightX')
-  const darkUniform = gl.getUniformLocation(program, 'dark')
-  const pressedUniform = gl.getUniformLocation(program, 'pressed')
-  lens.append(canvas)
-  root.dataset.glassRenderer = 'webgl'
-  const render = () => {
+  const uniforms = Object.fromEntries(['sceneSize','lensBox','lightX','dark','strength','scene'].map(name => [name, gl.getUniformLocation(program!, name)]))
+  root.append(canvas)
+  const tabs = () => [...root.querySelectorAll<HTMLButtonElement>(':scope > button[role="tab"]')]
+  const showHtml = () => { delete root.dataset.glassRenderer; canvas.hidden = true }
+  const paintScene = (width: number, height: number, ratio: number) => {
+    const buttons = tabs()
+    // This scene intentionally supports text tabs. Never replace an icon/image
+    // tab by an inaccurate flattening; keep its HTML visible instead.
+    if (!buttons.length || buttons.some(button => button.querySelector('img,svg,canvas,video'))) return false
+    textureScene.width = canvas.width; textureScene.height = canvas.height
+    ctx.setTransform(ratio,0,0,ratio,0,0)
+    const dark = document.documentElement.dataset.theme === 'dark'
+    ctx.fillStyle = dark ? '#1e343b' : '#f0f6f5'
+    ctx.fillRect(0,0,width,height)
+    const box = root.getBoundingClientRect()
+    for (const button of buttons) {
+      const range = document.createRange(); range.selectNodeContents(button)
+      const rect = range.getBoundingClientRect(), style = getComputedStyle(button)
+      const fontSize = parseFloat(style.fontSize)
+      ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+      ctx.fillStyle = style.color; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
+      ctx.globalAlpha = button.disabled ? .4 : 1
+      ctx.letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing
+      const text = button.textContent?.trim() ?? ''
+      const metrics = ctx.measureText(text)
+      const ascent = metrics.actualBoundingBoxAscent, descent = metrics.actualBoundingBoxDescent
+      ctx.fillText(text, rect.left-box.left+root.scrollLeft, rect.top-box.top+(rect.height+ascent-descent)*.5 || fontSize)
+      ctx.globalAlpha = 1
+      if (button.matches(':focus-visible')) {
+        const focus = button.getBoundingClientRect(); ctx.strokeStyle = style.color; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.roundRect(focus.left-box.left+root.scrollLeft+3,focus.top-box.top+3,focus.width-6,focus.height-6,20); ctx.stroke()
+      }
+    }
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureScene)
+    return true
+  }
+  const render = (now: number) => {
     frame = 0
-    if (disposed || failed || !visible || document.hidden || preferences.matches || lens.hidden) return
-    const width = lens.clientWidth, height = lens.clientHeight
-    if (width < 2 || height < 2) return
-    // Cap fill rate and backing-store memory on high-density phones.
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.5)
-    const w = Math.min(1024, Math.round(width * ratio)), h = Math.min(256, Math.round(height * ratio))
-    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
-    gl.viewport(0, 0, w, h)
-    gl.uniform2f(sizeUniform, width, height)
+    if (disposed || failed || !visible || document.hidden || preferences.matches) return
+    const width = root.scrollWidth, height = root.clientHeight
+    if (width < 2 || height < 2 || lens.hidden) { showHtml(); return }
+    const ratio = Math.min(window.devicePixelRatio || 1, 2, 2048/width, 256/height)
+    const w = Math.round(width*ratio), h = Math.round(height*ratio)
+    if (canvas.width !== w || canvas.height !== h) { canvas.width=w; canvas.height=h; canvas.style.width=`${width}px`; canvas.style.height=`${height}px`; dirty=true }
+    if (dirty) { if (!paintScene(width,height,ratio)) { showHtml(); return } dirty=false }
+    const box=root.getBoundingClientRect(), face=lens.getBoundingClientRect()
+    gl.viewport(0,0,w,h); gl.uniform1i(uniforms.scene,0); gl.uniform2f(uniforms.sceneSize,width,height)
+    gl.uniform4f(uniforms.lensBox,face.left-box.left+root.scrollLeft,face.top-box.top,face.width,face.height)
     const light = parseFloat(lens.style.getPropertyValue('--lens-light-x'))
-    gl.uniform1f(lightUniform, Number.isFinite(light) ? light / 100 : .26)
-    gl.uniform1f(darkUniform, document.documentElement.dataset.theme === 'dark' ? 1 : 0)
-    gl.uniform1f(pressedUniform, root.dataset.lensEngaged ? 1 : 0)
-    gl.drawArrays(gl.TRIANGLES, 0, 6)
+    gl.uniform1f(uniforms.lightX,Number.isFinite(light)?light/100:.26)
+    gl.uniform1f(uniforms.dark,document.documentElement.dataset.theme==='dark'?1:0)
+    gl.uniform1f(uniforms.strength,1)
+    gl.drawArrays(gl.TRIANGLES,0,6)
+    if (gl.getError() !== gl.NO_ERROR) { failed=true; showHtml(); return }
+    canvas.hidden=false; root.dataset.glassRenderer='webgl-refraction'
+    if (now < animateUntil) frame=requestAnimationFrame(render)
   }
-  const schedule = () => {
-    if (!frame && !disposed && !failed && visible && !document.hidden && !preferences.matches) frame = requestAnimationFrame(render)
-  }
-  const onPreference = () => { canvas.hidden = preferences.matches; schedule() }
-  const onLost = (event: Event) => {
-    event.preventDefault()
-    failed = true
-    canvas.hidden = true
-    root.dataset.glassRenderer = 'fallback'
-    cancelAnimationFrame(frame); frame = 0
-  }
-  const resize = new ResizeObserver(schedule)
-  resize.observe(lens)
-  const changes = new MutationObserver(schedule)
-  changes.observe(lens, { attributes: true, attributeFilter: ['style', 'hidden'] })
-  changes.observe(root, { attributes: true, attributeFilter: ['data-lens-engaged'] })
-  changes.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-  const intersection = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(entries => {
-    visible = entries[0]?.isIntersecting ?? false
-    if (visible) schedule()
-    else { cancelAnimationFrame(frame); frame = 0 }
+  const schedule = () => { if (!frame && !disposed && !failed && visible && !document.hidden && !preferences.matches) frame=requestAnimationFrame(render) }
+  const invalidate = () => { dirty=true; schedule() }
+  const animate = () => { animateUntil=performance.now()+750; schedule() }
+  const onPreference = () => { if (preferences.matches) showHtml(); else invalidate() }
+  const onLost = (event: Event) => { event.preventDefault(); failed=true; cancelAnimationFrame(frame); frame=0; showHtml(); root.dataset.glassRenderer='fallback' }
+  const resize=new ResizeObserver(invalidate); resize.observe(root); resize.observe(lens)
+  const changes=new MutationObserver(records => {
+    for (const record of records) {
+      if (record.target===canvas) continue
+      if (record.target===lens) animate()
+      else if (record.attributeName==='data-lens-engaged' || record.attributeName==='data-lens-travel') animate()
+      else if (record.target!==root || record.type==='childList') invalidate()
+    }
   })
+  changes.observe(root,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-selected','disabled','style','hidden','data-lens-engaged','data-lens-travel']})
+  const theme=new MutationObserver(invalidate); theme.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']})
+  const intersection=typeof IntersectionObserver==='undefined'?null:new IntersectionObserver(entries => { visible=entries[0]?.isIntersecting??false; if(visible) invalidate(); else { cancelAnimationFrame(frame);frame=0 } })
   intersection?.observe(root)
-  canvas.addEventListener('webglcontextlost', onLost)
-  preferences.addEventListener('change', onPreference)
-  document.addEventListener('visibilitychange', schedule)
+  for (const event of ['focusin','focusout','scroll']) root.addEventListener(event,invalidate)
+  root.addEventListener('pointermove',schedule); root.addEventListener('pointerdown',animate); root.addEventListener('pointerup',animate)
+  canvas.addEventListener('webglcontextlost',onLost); preferences.addEventListener('change',onPreference); document.addEventListener('visibilitychange',invalidate)
+  void document.fonts?.ready.then(() => { if(!disposed) invalidate() })
   schedule()
   return () => {
-    disposed = true
-    cancelAnimationFrame(frame)
-    resize.disconnect(); changes.disconnect(); intersection?.disconnect()
-    canvas.removeEventListener('webglcontextlost', onLost)
-    preferences.removeEventListener('change', onPreference)
-    document.removeEventListener('visibilitychange', schedule)
-    if (!gl.isContextLost()) {
-      shaders.forEach(shader => gl.deleteShader(shader))
-      gl.deleteProgram(program); gl.deleteBuffer(buffer)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
-    }
-    canvas.remove()
-    delete root.dataset.glassRenderer
+    disposed=true;cancelAnimationFrame(frame);resize.disconnect();changes.disconnect();theme.disconnect();intersection?.disconnect()
+    for (const event of ['focusin','focusout','scroll']) root.removeEventListener(event,invalidate)
+    root.removeEventListener('pointermove',schedule);root.removeEventListener('pointerdown',animate);root.removeEventListener('pointerup',animate)
+    canvas.removeEventListener('webglcontextlost',onLost);preferences.removeEventListener('change',onPreference);document.removeEventListener('visibilitychange',invalidate)
+    releaseGpu();canvas.remove();delete root.dataset.glassRenderer
   }
 }

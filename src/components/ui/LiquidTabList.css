@@ -206,7 +206,7 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
   }
 }
 
-/* Keep the optical face behind labels; tab text is always rendered directly. */
+/* Standard HTML tabs keep their face behind labels; the WebGL pilot below owns its scene. */
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1.015; }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { scale: 1.025 .99; transition: scale 180ms ease; }
 #root .liquid-tabs[data-lens-travel] > .liquid-tabs__lens { z-index: 1; scale: 1; }
@@ -225,3 +225,11 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
   }
 }
+
+/* The WebGL pilot paints its own bounded tab scene. No SVG displacement or
+   backdrop-filter participates, including its plain-HTML fallback. */
+#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens,#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens[data-glass-interacting]{filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--hj-accent-soft,var(--surface));box-shadow:none}
+#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens::before{display:none}
+#root .liquid-tabs[data-glass-renderer=webgl-refraction]>.liquid-tabs__lens{opacity:0}
+#root .liquid-tabs[data-glass-renderer=webgl-refraction]>button[role=tab]{opacity:0}
+#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__webgl{position:absolute;left:0;top:0;z-index:3;max-width:none;border-radius:999px;pointer-events:none;filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}

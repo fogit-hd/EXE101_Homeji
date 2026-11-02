@@ -8,7 +8,7 @@ export type GlassControlKind = 'lens' | 'control' | 'search' | 'field' | 'toggle
 
 /** Only appearance is classified here; native form and navigation behavior stays intact. */
 export function glassControlKind(element: Element): GlassControlKind {
-  if (element.closest('.gm-style,gmp-map,[data-glass-exclude],.food-rail,.food-qty,.food-cart-fab,.food-cart-sheet')) return 'skip'
+  if (element.closest('.gm-style,gmp-map,[data-glass-exclude],[data-glass-webgl],.food-rail,.food-qty,.food-cart-fab,.food-cart-sheet')) return 'skip'
   if (element.matches(lenses)) return 'lens'
   if (element.matches(GLASS_SEARCH_SURFACES)) return 'search'
   if (element.matches(panels)) return 'surface'

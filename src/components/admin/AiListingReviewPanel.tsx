@@ -19,12 +19,13 @@ export function AiListingReviewPanel() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
+  const [observedAt, setObservedAt] = useState(0)
   const [busy, setBusy] = useState(false)
   const lock = useRef(false)
   const mounted = useRef(true)
   const load = useCallback(async () => {
     const result = await getAiReviews()
-    if (mounted.current) { setData(result); setSettings(result.settings) }
+    if (mounted.current) { setData(result); setSettings(result.settings); setObservedAt(Date.now()) }
   }, [])
   useEffect(() => {
     mounted.current = true
@@ -39,7 +40,7 @@ export function AiListingReviewPanel() {
     finally { lock.current = false; if (mounted.current) setBusy(false) }
   }
   return <section className="ai-review-panel" aria-label="AI kiểm tra tin" data-glass-exclude>
-    <header><div><h2>AI kiểm tra tin</h2><p>Tin phòng, chợ đồ và đồ ăn được kiểm tra lần lượt. AI chỉ xem nội dung chữ; không xác nhận ảnh, người bán hay chất lượng thực phẩm.</p></div>
+    <header><div><h2>AI kiểm tra tin</h2><p>Kiểm tra nội dung và ảnh của tin phòng, chợ đồ, đồ ăn. Kết quả AI hỗ trợ người duyệt; không xác minh danh tính hay chất lượng sản phẩm.</p></div>
       <button type="button" className="btn btn-secondary btn-sm" disabled={busy || loading} onClick={() => void act(load, 'Đã cập nhật kết quả.')}>Làm mới kết quả</button></header>
     {error ? <p className="ai-review-panel__error" role="alert">{error}</p> : null}
     {notice ? <p role="status">{notice}</p> : null}
@@ -49,6 +50,10 @@ export function AiListingReviewPanel() {
         <div><strong>{data.pending}</strong><span>Tin đang chờ</span></div><div><strong>{data.needsReview}</strong><span>Cần người duyệt</span></div><div><strong>{data.blocked}</strong><span>AI đã ẩn, chờ xem lại</span></div>
         <div><strong>{data.requestsToday}/{data.settings.dailyRequestLimit}</strong><span>Lượt đã dùng hôm nay (UTC)</span></div>
       </div>
+      <p role="status">{data.lastHeartbeatAt
+        ? `Tiến trình kiểm tra phản hồi lúc ${new Date(data.lastHeartbeatAt).toLocaleString('vi-VN')}.${observedAt - new Date(data.lastHeartbeatAt).getTime() > 5 * 60_000 ? ' Phản hồi đã quá 5 phút tại lúc tải dữ liệu; cần kiểm tra máy chủ.' : ''}`
+        : 'Chưa nhận được phản hồi từ tiến trình kiểm tra.'}</p>
+      <p className="form-hint">Kiểm tra tin mới hoặc vừa chỉnh sửa của người dùng; không gọi AI lại cho nội dung đã kiểm tra và không thay đổi. Tin nhập từ website khác chưa nằm trong phạm vi này. Thời điểm phản hồi trên cho biết tiến trình còn hoạt động, không phải thời điểm AI duyệt xong một tin.</p>
       <p className="ai-review-panel__schedule">{!data.settings.enabled ? 'Đã tạm dừng kiểm tra tự động.' : data.pauseReason || `Lượt kiểm tra tiếp theo không sớm hơn ${new Date(data.nextAllowedAt).toLocaleString('vi-VN')}.`}</p>
       <p className="form-hint">Đã giữ ngân sách {data.tokensReservedToday.toLocaleString('vi-VN')} token cho các yêu cầu hôm nay. Đây là mức dự phòng, không phải số token tính phí thực tế. Hạn mức dùng chung với các tính năng AI khác nên hệ thống vẫn có thể phải nghỉ thêm khi cổng quá tải.</p>
       <form className="ai-review-panel__settings" onSubmit={event => { event.preventDefault(); void act(() => saveAiReviewSettings(settings), 'Đã lưu lịch kiểm tra.') }}>

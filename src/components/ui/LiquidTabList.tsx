@@ -24,7 +24,7 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
     let dispose: (() => void) | undefined
     void import('./webglTabGlass').then(({ attachWebglTabGlass }) => {
       if (!cancelled && rootRef.current && lensRef.current) dispose = attachWebglTabGlass(rootRef.current, lensRef.current)
-    }).catch(() => { /* HTML controls and CSS optics remain available if enhancement cannot load. */ })
+    }).catch(() => { /* Plain HTML tabs remain available when WebGL cannot load. */ })
     return () => { cancelled = true; dispose?.() }
   }, [webglGlass, rootRef])
   const engage = () => {
@@ -85,7 +85,7 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
     void document.fonts?.ready.then(measure)
     return () => { disposed = true; cancelAnimationFrame(frame); stopObserving() }
   }, [children, rootRef])
-  return <div {...props} ref={rootRef} className={`liquid-tabs ${className}`} role="tablist"
+  return <div {...props} ref={rootRef} data-glass-webgl={webglGlass ? '' : undefined} className={`liquid-tabs ${className}`} role="tablist"
     onPointerDown={event => {
       onPointerDown?.(event)
       if (event.defaultPrevented || !event.isPrimary || event.button !== 0 || drag.current) return
