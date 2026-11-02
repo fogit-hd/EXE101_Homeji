@@ -4,7 +4,7 @@ import { PremiumLaunchOffer } from '../payments/PremiumLaunchOffer'
 import { SourceRoomDetailsHost } from '../map/listings/SourceRoomDetailsHost'
 import { VoiceCallProvider } from '../../contexts/VoiceCallContext'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
-import { Suspense, useLayoutEffect } from 'react'
+import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useAnimate } from 'motion/react'
 import { transitions } from '../../lib/motionTokens'
 import { RouteSkeleton } from '../skeletons/RouteSkeleton'
@@ -12,11 +12,12 @@ import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { isExploreMapMode } from '../chrome/exploreMode'
 import { isMapSectionRedirectPath } from '../../lib/mapDeepLinks'
-import { AppShell } from '../shell/AppShell'
 import { Navbar } from './Navbar'
 import { SiteFooter } from './SiteFooter'
 import './footer.css'
 import './AppLayout.css'
+
+const AppShell = lazy(() => import('../shell/AppShell').then(module => ({ default: module.AppShell })))
 
 export function AppLayout() {
   const location = useLocation()
@@ -69,7 +70,7 @@ export function AppLayout() {
         .filter(Boolean)
         .join(' ')}
     >
-      {isAuthedApp ? <AppShell /> : <Navbar />}
+      {isAuthedApp ? <Suspense fallback={<div aria-hidden="true" style={{ height: 76 }} />}><AppShell /></Suspense> : <Navbar />}
       <SiteLocationBootstrap enabled={!isAuthCinema} />
       {!isAuthCinema ? <PremiumLaunchOffer /> : null}
       <SourceRoomDetailsHost />

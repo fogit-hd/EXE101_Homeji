@@ -6,12 +6,13 @@ import React,{act,useEffect,useMemo,useState} from 'react'
 import{createRoot}from'react-dom/client'
 const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/?view=split'});Object.assign(globalThis,{window:dom.window,document:dom.window.document,IS_REACT_ACT_ENVIRONMENT:true})
 let entries=[],popup,opened
-const pins=Array.from({length:17},(_,i)=>({id:'rental:'+crypto.randomUUID(),kind:'rental',title:'Phòng '+i,address:'Lê Văn Việt',price:2000000+i*10000,lat:10.84,lng:106.78,publisherName:'Người đăng '+i}))
+const pins=Array.from({length:17},(_,i)=>({id:'rental:'+crypto.randomUUID(),kind:'rental',title:'Phòng '+i,address:'Lê Văn Việt',price:2000000+i*10000,lat:10.84,lng:106.78,publisherName:'Người đăng '+i,area:25,amenityHighlights:[],sourceUpdatedAt:null}))
 class Marker{constructor(values){Object.assign(this,values)}addListener(){return{remove(){}}}}
 class Popup{constructor(){popup=this}setContent(value){this.content=value}setPosition(){}open(){this.opened=true}close(){}}
 const params=new URLSearchParams()
 globalThis.google={maps:{InfoWindow:Popup}}
 globalThis.__clusterFixture={useCatalogRefresh:()=>0,useEffect,useMemo,useState,useNavigate:()=>id=>{opened=id},useSearchParams:()=>[params],parseFiltersFromURL:()=>({}),filterRentalSources:rows=>rows,apiRequest:async()=>[],getRentalSourceCatalog:async()=>pins,sourceRoomHref:id=>'?source='+id,MarkerClusterer:class{constructor(config){options=config}clearMarkers(){}setMap(){}},SuperClusterAlgorithm:class{},readSourceCatalogPins:(rows,kind)=>kind==='rental'?rows:[],createMapClusterContent:()=>document.createElement('div'),createMarketplacePinContent:()=>({element:document.createElement('div'),dispose(){}}),createPricePillPinContent:()=>({element:document.createElement('div'),dispose(){}}),createRentalPinContent:()=>({element:document.createElement('div'),dispose(){}}),formatCompactPriceTr:String}
+globalThis.__clusterFixture.createSourceCatalogPopup=(await import((await import('./helpers/react-dom-module.mjs')).reactDomModule('src/components/map/sourceCatalogPopup.ts'))).createSourceCatalogPopup
 let source=await readFile('src/components/map/useSourceCatalogMap.ts','utf8');source=source.replace(/^import .*$/gm,'');const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText
 const bindings='const {'+Object.keys(globalThis.__clusterFixture).join(',')+'}=globalThis.__clusterFixture;\n'
 const{useSourceCatalogMap}=await import('data:text/javascript;base64,'+Buffer.from(bindings+js).toString('base64'))
@@ -24,7 +25,7 @@ const list=createClusterListings(entries.map(entry=>entry.listing),()=>{zoomed=t
 assert.equal(list.querySelectorAll('.map-cluster-listings__card').length,17)
 list.querySelectorAll('.map-cluster-listings__card')[16].click()
 assert.equal(popup.opened,true)
-popup.content.querySelector('a').click()
+popup.content.querySelector('button').click()
 assert.equal(opened,'?source='+pins[16].id.slice(7))
 list.querySelector('button').click();assert.equal(zoomed,true)
 await act(async()=>root.unmount());assert.equal(entries.length,0)

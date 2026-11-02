@@ -28,7 +28,7 @@ test('a resolved school destination survives normalization and searches by coord
   assert.equal(normalized.get('placeName'), 'Đại học FPT')
   assert.equal(normalized.get('searchOnMove'), '0')
   assert.deepEqual(listingQueryToSearchParams(parseFiltersFromURL(normalized)), {
-    page: 1, pageSize: 20, maxPrice: 4000000, amenities: ['KITCHEN'], ...bounds,
+    page: 1, pageSize: 20, propertyCategory: 'room', maxPrice: 4000000, amenities: ['KITCHEN'], ...bounds,
   })
   assert.equal(normalized.toString(), selected.toString())
   const cleared = new URLSearchParams(normalized)
@@ -42,7 +42,7 @@ test('AI exclusions, capacity and selected IDs survive URL reload and round trip
   const incoming = new URLSearchParams(`section=listings&maxPrice=4000000&amenities=KITCHEN&excludedAmenities=AIR_CONDITIONER&excludeRoommateShare=true&minAvailableSlots=2&ids=${id}`)
   const query = parseFiltersFromURL(incoming)
   const reloaded = parseFiltersFromURL(serializeFiltersToQuery(query, incoming))
-  assert.deepEqual(listingQueryToSearchParams(reloaded), { page: 1, pageSize: 20, maxPrice: 4000000, amenities: ['KITCHEN'], excludedAmenities: ['AIR_CONDITIONER'], excludeRoommateShare: true, minAvailableSlots: 2, ids: [id] })
+  assert.deepEqual(listingQueryToSearchParams(reloaded), { page: 1, pageSize: 20, propertyCategory: 'room', maxPrice: 4000000, amenities: ['KITCHEN'], excludedAmenities: ['AIR_CONDITIONER'], excludeRoommateShare: true, minAvailableSlots: 2, ids: [id] })
   assert.notEqual(nonBoundsSignature(query), nonBoundsSignature({ ...query, minAvailableSlots: 1 }))
   const empty = parseFiltersFromURL(new URLSearchParams('ids=00000000-0000-0000-0000-000000000000'))
   assert.deepEqual(listingQueryToSearchParams(empty).ids, ['00000000-0000-0000-0000-000000000000'])

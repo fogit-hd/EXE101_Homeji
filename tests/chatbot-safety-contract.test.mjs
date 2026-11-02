@@ -11,10 +11,13 @@ const marketplaceSource = await readFile(
   'utf8',
 )
 
-test('chatbot presents the Homeji name and logo', () => {
+test('chatbot presents the Homeji name and logo', async () => {
   assert.match(chatbotSource, /const HOMEJI_TITLE = 'Homeji'/)
-  assert.match(chatbotSource, /function HomejiAvatar/)
-  assert.match(chatbotSource, /src="\/brand\/homeji-logo2\.png"/)
+  const visuals = new URL('../src/components/map/ChatbotVisuals.tsx', import.meta.url)
+  const source = await readFile(visuals, 'utf8')
+  assert.match(chatbotSource, /import.*HomejiAvatar.*from '\.\/ChatbotVisuals'/)
+  assert.match(source, /function HomejiAvatar/)
+  assert.match(source, /src="\/brand\/homeji-logo2\.png"/)
   assert.doesNotMatch(chatbotSource, /\bHomie\b/)
 })
 

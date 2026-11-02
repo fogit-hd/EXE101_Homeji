@@ -414,7 +414,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <p className="pay-plan__duration">
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
                   </p>
-                  {isPremium ? <p className="pay-plan__rate-label"><span>Chi phí bình quân</span>{discountPercent > 0 ? <strong>GIẢM {discountPercent}%</strong> : null}</p> : null}
+                  {isPremium ? <p className="pay-plan__rate-label"><span>Mỗi ngày chỉ khoảng</span>{discountPercent > 0 ? <strong>GIẢM {discountPercent}%</strong> : null}</p> : null}
                   <p className={`pay-plan__price${isPremium ? ' is-daily-rate' : ''}`}>
                     {isPremium && previousDailyAmount ? <del>{formatPrice(previousDailyAmount)}</del> : null}
                     <strong>{isPremium && dailyAmount !== null ? formatPrice(dailyAmount) : view.headlinePrice}</strong>
@@ -424,7 +424,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <p className="pay-plan__total">
                     {isPremium ? (
                       <>
-                        <span>Thanh toán một lần</span>
+                        <span>Tổng</span>
                         <strong>{formatPrice(amountDue)}</strong>
                         <span>cho {plan.durationDays} ngày</span>
                       </>

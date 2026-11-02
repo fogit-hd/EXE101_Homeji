@@ -1,3 +1,11 @@
+/** Public listing text search accepts Vietnamese with or without diacritics. */
+export function matchesListingText(query: string, values: readonly (string | null | undefined)[]): boolean {
+  const fold = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const words = fold(query).split(/\s+/).filter(Boolean)
+  const text = fold(values.filter(Boolean).join(' '))
+  return words.every(word => text.includes(word))
+}
+
 /** Drop accidental keystrokes stored as recent searches. */
 export function isUsefulSearchQuery(value: string): boolean {
   const text = value.trim()

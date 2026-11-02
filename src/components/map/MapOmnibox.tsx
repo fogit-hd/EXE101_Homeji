@@ -1,3 +1,4 @@
+import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -369,56 +370,13 @@ export function MapOmnibox({
   const [recent, setRecent] = useState<MapOmniboxSuggestion[]>(loadRecent)
   const [placeSuggestions, setPlaceSuggestions] = useState<MapOmniboxSuggestion[]>([])
   const [placesLoading, setPlacesLoading] = useState(false)
-  const [animatedPlaceholder, setAnimatedPlaceholder] = useState('')
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 900px)').matches : false,
   )
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (open || query.trim()) {
-      setAnimatedPlaceholder('')
-      return
-    }
-
-    const examples = [
-      'Tìm phòng gần Lê Văn Việt',
-      'Căn hộ gần Đỗ Xuân Hợp',
-      'Tìm trọ gần Man Thiện',
-      'Phòng thuê gần Nguyễn Xiển',
-      'Tìm trọ gần đường số 8',
-    ]
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reducedMotion) {
-      setAnimatedPlaceholder(examples[0])
-      return
-    }
-
-    let cancelled = false
-    let timer = 0
-    let phraseIndex = 0
-    let characterIndex = 0
-    let deleting = false
-    const tick = () => {
-      if (cancelled) return
-      const phrase = examples[phraseIndex]
-      characterIndex += deleting ? -1 : 1
-      setAnimatedPlaceholder(phrase.slice(0, characterIndex))
-      if (characterIndex === phrase.length) {
-        deleting = true
-        timer = window.setTimeout(tick, 1500)
-      } else if (characterIndex === 0) {
-        deleting = false
-        phraseIndex = (phraseIndex + 1) % examples.length
-        timer = window.setTimeout(tick, 300)
-      } else {
-        timer = window.setTimeout(tick, deleting ? 28 : 48)
-      }
-    }
-    timer = window.setTimeout(tick, 350)
-    return () => { cancelled = true; window.clearTimeout(timer) }
-  }, [open, query])
+  const animatedPlaceholder = useStreetSearchPlaceholder(!open && !query.trim(), isMobile ? 'Tìm một địa điểm' : 'Tìm phòng quanh bạn')
 
   const tourVisible = !tourDismissed && shouldShowMapTour(profile)
 

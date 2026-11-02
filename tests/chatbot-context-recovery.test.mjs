@@ -41,6 +41,12 @@ const overrides = {
   '../ai/RentalContextCard': moduleUrl(`import React from '${reactUrl}';export const RentalContextCard=({data})=>React.createElement('p',null,data.posts.map(item=>item.post.title).join(', '))`),
   '../ai/FoodDiscoveryCard': moduleUrl(`import React from '${reactUrl}';export const FoodDiscoveryCard=({data,onSearch,busy})=>React.createElement('section',{'aria-label':'Gợi ý món ăn'},data.items.map(item=>React.createElement('p',{key:item.id},item.title)),React.createElement('button',{disabled:busy,onClick:()=>onSearch({latitude:10.84,longitude:106.8,radiusKm:3})},'Tìm quanh mốc kiểm thử'))`),
 }
+// Transcript extraction changes relative imports, not the API/context boundaries.
+for (const [name, value] of Object.entries(overrides)) {
+  if (name.startsWith('../../')) overrides['../' + name] = value
+  if (name.startsWith('../ai/')) overrides['../' + name] = value
+  if (name.startsWith('./Chatbot')) overrides['.' + name] = value
+}
 const { MapChatbot } = await import(reactDomModule(path.resolve('src/components/map/MapChatbot.tsx'), overrides))
 
 async function environment() {

@@ -17,7 +17,7 @@ function load(relative, imports = {}) {
 }
 const types = load('../src/api/types.ts')
 const labels = load('../src/lib/labels.ts', { '../api/types': types })
-const { getPlanDisplay, sortPlansForDisplay } = load('../src/lib/subscriptionPlanDisplay.ts', {
+const { getPlanDisplay, sortPlansForDisplay, formatDailyEquivalentPrice } = load('../src/lib/subscriptionPlanDisplay.ts', {
   '../api/types': types, './labels': labels,
 })
 const plan = { code: 'PREMIUM_QUARTER', name: 'Premium', tier: 2, price: 275000, durationDays: 90, benefits: [] }
@@ -56,6 +56,7 @@ test('duration colors and equivalent price use catalog values without invented s
   assert.equal(getPlanDisplay({...plan,durationDays:30}).tone,'mint')
   assert.equal(getPlanDisplay({...plan,durationDays:180,price:450000}).tone,'ocean')
   assert.equal(getPlanDisplay({...plan,durationDays:365,price:780000}).tone,'gold')
-  assert.equal(getPlanDisplay({...plan,durationDays:180,price:450000}).equivalentPrice,`Khoảng ${labels.formatPrice(75000)} / 30 ngày`)
-  assert.equal(getPlanDisplay({...plan,durationDays:0}).equivalentPrice,null)
+  assert.equal(formatDailyEquivalentPrice(450000,180),`Khoảng ${labels.formatPrice(2500)} / ngày`)
+  assert.equal(formatDailyEquivalentPrice(450000,0),null)
+  assert.equal(formatDailyEquivalentPrice(49000,30),`Khoảng ${labels.formatPrice(1633)} / ngày`)
 })

@@ -133,7 +133,7 @@ export function PremiumLaunchOffer() {
     <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ đồ.'}</p>
     <div className="premium-launch-offer__price-card">
       <div className="premium-launch-offer__price-copy">
-        <span>{durationDays > 0 ? 'CHI PHÍ BÌNH QUÂN / NGÀY' : announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
+        <span>{durationDays > 0 ? 'MỖI NGÀY CHỈ KHOẢNG' : announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
         <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
       </div>
       <div className="premium-launch-offer__price">
@@ -142,7 +142,7 @@ export function PremiumLaunchOffer() {
         <span>{currentDailyAmount !== null ? '/ ngày' : durationDays > 0 ? `/ ${durationDays} ngày` : ''}</span>
       </div>
     </div>
-    {dailyEquivalent ? <p className="premium-launch-offer__daily">Thanh toán một lần <strong>{formatPrice(currentPrice)}</strong> cho toàn bộ {durationDays} ngày. {dailyEquivalent} chỉ là mức quy đổi tham khảo.</p> : null}
+    {dailyEquivalent ? <p className="premium-launch-offer__daily">Tổng <strong>{formatPrice(currentPrice)}</strong> cho {durationDays} ngày Premium.</p> : null}
     <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
     <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
     <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />

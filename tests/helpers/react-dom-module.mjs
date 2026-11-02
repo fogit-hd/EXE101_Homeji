@@ -14,7 +14,7 @@ export function reactDomModule(file, overrides={}) {
     let url=overrides[specifier]
     if(!url && specifier.startsWith('.')) {
       const base=path.resolve(path.dirname(file),specifier)
-      const dependency=[base,base+'.ts',base+'.tsx'].find(name=>fs.existsSync(name)&&fs.statSync(name).isFile())
+      const dependency=[base,base+'.ts',base+'.tsx',path.join(base,'index.ts'),path.join(base,'index.tsx')].find(name=>fs.existsSync(name)&&fs.statSync(name).isFile())
       if(!dependency)throw new Error('Missing test module '+specifier)
       url=reactDomModule(dependency,overrides)
     }

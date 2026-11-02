@@ -9,6 +9,8 @@ import { SourceRoomDetail } from '../map/listings/SourceRoomDetail'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
 import { matchesRentalPropertyCategory } from '../../lib/rentalPropertyCategory'
 import './GuestListingPreview.css'
+import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
+import { matchesListingText } from '../../lib/searchQuery'
 
 function Arrow({ previous = false }: { previous?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -34,6 +36,9 @@ export function GuestListingPreview() {
   const [visibleCount, setVisibleCount] = useState(8)
   const [selected, setSelected] = useState<RentalPostSummary | null>(null)
   const [selectedSource, setSelectedSource] = useState<RentalSourceListing | null>(null)
+  const [keyword, setKeyword] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
+  const searchPlaceholder = useStreetSearchPlaceholder(!searchFocused && !keyword.trim(), 'Tìm theo đường, khu vực hoặc tiện ích')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -51,7 +56,13 @@ export function GuestListingPreview() {
   }, [attempt])
 
   const items: PreviewItem[] = [...posts.map(data => ({ kind: 'post' as const, data })), ...sourceListings.map(data => ({ kind: 'source' as const, data }))]
-  const filtered = items.filter(({ data }) => matchesRentalPropertyCategory(category, data.title) && (budget === 'all' || data.price > 0 && (budget === 'low' ? data.price < 3_000_000 : budget === 'mid' ? data.price >= 3_000_000 && data.price <= 5_000_000 : data.price > 5_000_000)))
+  const filtered = items.filter(item => {
+    const { data } = item
+    const amenities = item.kind === 'source' ? item.data.amenityHighlights ?? [] : (item.data.amenities ?? []).map(amenityLabel)
+    return matchesRentalPropertyCategory(category, data.title)
+      && matchesListingText(keyword, [data.title, data.address, ...amenities])
+      && (budget === 'all' || data.price > 0 && (budget === 'low' ? data.price < 3_000_000 : budget === 'mid' ? data.price >= 3_000_000 && data.price <= 5_000_000 : data.price > 5_000_000))
+  })
   const shown = filtered.slice(0, visibleCount)
 
   return <section className="guest-preview" id="listings" aria-labelledby="guest-featured-title">
@@ -60,6 +71,13 @@ export function GuestListingPreview() {
         <div><span className="guest-preview__eyebrow">KHÔNG GIAN CHO BẠN</span><h2 id="guest-featured-title">Một góc nhà, nhiều lựa chọn.</h2></div>
         <Link to="/explore" className="guest-preview__explore">Khám phá bản đồ <Arrow /></Link>
       </header>
+      <form className="guest-preview__search" data-glass-exclude role="search" onSubmit={event => { event.preventDefault(); setVisibleCount(8) }}>
+        <label htmlFor="guest-rental-search">Tìm nơi bạn muốn ở</label>
+        <div><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+          <input id="guest-rental-search" type="search" value={keyword} maxLength={150} placeholder={searchPlaceholder} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} onChange={event => { setKeyword(event.target.value); setVisibleCount(8) }} autoComplete="off" enterKeyHint="search" />
+          {keyword ? <button type="button" onClick={() => { setKeyword(''); setVisibleCount(8) }} aria-label="Xóa từ khóa tìm phòng">×</button> : null}
+        </div>
+      </form>
       <div className="guest-preview__categories" role="group" aria-label="Loại chỗ ở">
         {(['rooms', 'apartments'] as const).map(value => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setVisibleCount(8) }}>{value === 'rooms' ? 'Phòng trọ' : 'Căn hộ'} <span>{items.filter(item => matchesRentalPropertyCategory(value, item.data.title)).length}</span></button>)}
       </div>
@@ -99,7 +117,7 @@ export function GuestListingPreview() {
           </li>
         })}
       </ul>
-      {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin trong khoảng giá này. Thử một khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể khám phá khu vực trên bản đồ.'}</p> : null}
+      {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin khớp. Thử từ khóa, loại chỗ ở hoặc khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể khám phá khu vực trên bản đồ.'}</p> : null}
       {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} lựa chọn <Arrow /></button></div> : null}
       {loading ? <span className="guest-preview__sr-only" role="status">Đang tải phòng nổi bật…</span> : null}
     </div>

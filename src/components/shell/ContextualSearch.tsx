@@ -4,6 +4,7 @@ import { useSearch } from '../../contexts/SearchContext'
 import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
 import { NaturalRentalSearch } from '../ai/NaturalRentalSearch'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
+import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 
 function useNarrowBar() {
   const [narrow, setNarrow] = useState(false)
@@ -57,6 +58,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const locationSearch = context === 'map' || context === 'housing'
+  const searchPlaceholder = useStreetSearchPlaceholder(locationSearch && !focused && !query.trim(), placeholder)
 
   const dismiss = () => {
     setOpen(false)
@@ -87,7 +89,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
             id="hj-global-search"
             className="hj-search__input"
             value={query}
-            placeholder={placeholder}
+            placeholder={searchPlaceholder}
             onChange={(event) => {
               setQuery(event.target.value)
               setOpen(true)
