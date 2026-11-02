@@ -91,8 +91,11 @@ export function PremiumLaunchOffer() {
   if (maintenance) return createPortal(<dialog ref={dialog} data-glass-exclude className="premium-launch-offer maintenance-banner" aria-labelledby="maintenance-banner-title" aria-describedby="maintenance-banner-description" onCancel={event => { event.preventDefault(); dismiss() }}>
     <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo bảo trì" autoFocus onClick={dismiss}>×</button>
     <header className="premium-launch-offer__banner">
+      <img className="premium-launch-offer__art" src="/images/maintenance-notice-art.svg" alt="" aria-hidden="true" />
+      <div className="premium-launch-offer__banner-copy">
       <span className="premium-launch-offer__eyebrow">THÔNG BÁO TỪ HOMEJI</span>
       <h2 id="maintenance-banner-title">{maintenance.title}</h2>
+      </div>
     </header>
     <div className="premium-launch-offer__body">
       <p id="maintenance-banner-description">{maintenance.message}</p>
@@ -109,16 +112,24 @@ export function PremiumLaunchOffer() {
   return createPortal(<dialog ref={dialog} data-glass-exclude className={`premium-launch-offer ${reduced ? 'is-reduction' : 'is-increase'}`} aria-labelledby="premium-offer-title" aria-describedby="premium-offer-description" onCancel={event => { event.preventDefault(); dismiss() }}>
     <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo Premium" autoFocus onClick={dismiss}>×</button>
     <header className="premium-launch-offer__banner">
-    <div className="premium-launch-offer__banner-top">
-    <span className="premium-launch-offer__eyebrow">{announcement ? 'HOMEJI PREMIUM · CẬP NHẬT GIÁ' : 'MỚI · HOMEJI AGENT'}</span>
-    <span className="premium-launch-offer__discount">{reduced ? `GIẢM ${percent}%` : `ĐIỀU CHỈNH TĂNG ${percent}%`}</span>
-    </div>
-    <h2 id="premium-offer-title">{announcement ? `Giá mới cho ${announcement.packageName}` : <>Bạn gửi ảnh.<br />Homeji lo bản nháp.</>}</h2>
+      <img className="premium-launch-offer__art" src="/images/premium-offer-art.svg" alt="" aria-hidden="true" />
+      <div className="premium-launch-offer__banner-copy">
+        <div className="premium-launch-offer__banner-top">
+          <span className="premium-launch-offer__eyebrow">{announcement ? 'HOMEJI PREMIUM · CẬP NHẬT GIÁ' : 'HOMEJI PREMIUM · ƯU ĐÃI THÀNH VIÊN'}</span>
+          <span className="premium-launch-offer__discount">{reduced ? `GIẢM ${percent}%` : `ĐIỀU CHỈNH TĂNG ${percent}%`}</span>
+        </div>
+        <h2 id="premium-offer-title">{announcement ? `Giá mới cho ${announcement.packageName}` : <>Bạn gửi ảnh.<br />Homeji lo bản nháp.</>}</h2>
+      </div>
     </header>
     <div className="premium-launch-offer__body">
     <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ đồ.'}</p>
-    <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{!announcement ? <span>/ {plan!.durationDays} ngày</span> : null}</div>
-    <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
+    <div className="premium-launch-offer__price-card">
+      <div className="premium-launch-offer__price-copy">
+        <span>{announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
+        <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
+      </div>
+      <div className="premium-launch-offer__price"><del>{formatPrice(previousPrice)}</del><b>{formatPrice(currentPrice)}</b>{!announcement ? <span>/ {plan!.durationDays} ngày</span> : null}</div>
+    </div>
     <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
     <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
     <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />
