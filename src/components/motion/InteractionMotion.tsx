@@ -19,16 +19,16 @@ export function InteractionMotion() {
     const glassReduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     let lightFrame = 0
     let litSurface: HTMLElement | null = null
-    const resetLight = () => {
+    const resetSurfaceHighlight = () => {
       cancelAnimationFrame(lightFrame)
       lightFrame = 0
       litSurface?.style.removeProperty('--glass-x')
       litSurface?.style.removeProperty('--glass-y')
       litSurface = null
     }
-    const onGlassPreference = () => { if (glassReduced.matches) resetLight() }
+    const onGlassPreference = () => { if (glassReduced.matches) resetSurfaceHighlight() }
     glassReduced.addEventListener('change', onGlassPreference)
-    const onGlassVisibility = () => { if (document.hidden) resetLight() }
+    const onGlassVisibility = () => { if (document.hidden) resetSurfaceHighlight() }
     document.addEventListener('visibilitychange', onGlassVisibility)
     const finish = (animation: AnimationPlaybackControls) => {
       const node = animations.get(animation)
@@ -71,25 +71,25 @@ export function InteractionMotion() {
         { duration: DURATION.reveal, ease: EASE.out }), node)
     }
     document.addEventListener('click', pulse)
-    const refract = (event: PointerEvent) => {
+    const trackSurfaceHighlight = (event: PointerEvent) => {
       if (glassReduced.matches || event.pointerType !== 'mouse' || !(event.target instanceof Element)) return
       const surface = event.target.closest('.btn, .choice-picker__trigger, button[type="submit"]')
       if (!(surface instanceof HTMLElement) || surface.closest('.gm-style') || surface.matches(':disabled')) {
-        resetLight()
+        resetSurfaceHighlight()
         return
       }
-      if (litSurface !== surface) { resetLight(); litSurface = surface }
+      if (litSurface !== surface) { resetSurfaceHighlight(); litSurface = surface }
       cancelAnimationFrame(lightFrame)
       lightFrame = requestAnimationFrame(() => {
         const bounds = surface.getBoundingClientRect()
         if (!bounds.width || !bounds.height) return
+        // Move only the neutral sheen on the control surface; labels remain untouched.
         surface.style.setProperty('--glass-x', `${Math.max(0, Math.min(100, (event.clientX - bounds.left) / bounds.width * 100))}%`)
         surface.style.setProperty('--glass-y', `${Math.max(0, Math.min(100, (event.clientY - bounds.top) / bounds.height * 100))}%`)
         lightFrame = 0
       })
     }
-    document.addEventListener('pointermove', refract, { passive: true })
-
+    document.addEventListener('pointermove', trackSurfaceHighlight, { passive: true })
     const intersection = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(entries => {
       let stagger = 0
       entries.forEach(entry => {
@@ -126,10 +126,10 @@ export function InteractionMotion() {
     mutations.observe(document.getElementById('root') ?? document.body, { childList: true, subtree: true })
     return () => {
       document.removeEventListener('click', pulse)
-      document.removeEventListener('pointermove', refract)
+      document.removeEventListener('pointermove', trackSurfaceHighlight)
       glassReduced.removeEventListener('change', onGlassPreference)
       document.removeEventListener('visibilitychange', onGlassVisibility)
-      resetLight()
+      resetSurfaceHighlight()
       reduced.removeEventListener('change', onPreference)
       intersection?.disconnect()
       document.querySelectorAll('.hj-pre-reveal').forEach(n => n.classList.remove('hj-pre-reveal'))

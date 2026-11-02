@@ -73,6 +73,7 @@
   backdrop-filter: none;
   color: var(--tabs-muted-ink);
   text-shadow: none;
+  filter: none;
   font: 550 13px/1.5 var(--font-ui);
   cursor: pointer;
   touch-action: pan-y;
@@ -198,31 +199,10 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
   #root .liquid-tabs > button[role='tab'][aria-selected='true'] { color: #fff; }
 }
 
-/* Refraction bends only the scene behind the face. The text plane stays above
-   it during rest, press, drag and travel; no displacement ever samples labels. */
+/* Keep the optical face behind labels; tab text is always rendered directly. */
 #root .liquid-tabs[data-lens-engaged] > .liquid-tabs__lens { scale: 1.015; }
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { scale: 1.025 .99; transition: scale 180ms ease; }
 #root .liquid-tabs[data-lens-travel] > .liquid-tabs__lens { z-index: 1; scale: 1; }
-#root .liquid-tabs__refracted-text {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-#root .liquid-tabs > button[role='tab'][aria-selected='true'] > .liquid-tabs__refracted-text {
-  filter: url('#homeji-liquid-tab-text-refraction');
-  text-shadow: -.7px .1px .3px rgb(41 197 222 / .82), .7px -.1px .3px rgb(255 145 105 / .78), 0 0 3px rgb(255 255 255 / .3);
-  transition: text-shadow 180ms ease;
-}
-#root .liquid-tabs[data-lens-engaged] > button[role='tab'][aria-selected='true'] > .liquid-tabs__refracted-text,
-#root .liquid-tabs[data-lens-dragging] > button[role='tab'][aria-selected='true'] > .liquid-tabs__refracted-text {
-  text-shadow: -1px .1px .4px rgb(32 216 246 / .95), 1px -.1px .4px rgb(255 111 93 / .9), 0 0 4px rgb(255 255 255 / .38);
-}
-html[data-theme='dark'] #root .liquid-tabs > button[role='tab'][aria-selected='true'] > .liquid-tabs__refracted-text {
-  text-shadow: -.75px .1px .35px rgb(103 238 255 / .95), .75px -.1px .35px rgb(255 143 125 / .88), 0 0 4px rgb(225 255 251 / .34);
-}
-html[data-theme='dark'] #root .liquid-tabs:is([data-lens-engaged],[data-lens-dragging]) > button[role='tab'][aria-selected='true'] > .liquid-tabs__refracted-text {
-  text-shadow: -1px .1px .45px rgb(103 238 255 / 1), 1px -.1px .45px rgb(255 121 112 / .98), 0 0 5px rgb(225 255 251 / .42);
-}
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
   -webkit-backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(.5px) saturate(1.15);
   backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(.5px) saturate(1.15);
@@ -233,7 +213,6 @@ html[data-theme='dark'] #root .liquid-tabs:is([data-lens-engaged],[data-lens-dra
 }
 @media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
   #root .liquid-tabs__lens::before { display: none; }
-  #root .liquid-tabs__refracted-text { filter: none; text-shadow: none; }
   #root .liquid-tabs > .liquid-tabs__lens,
   #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
