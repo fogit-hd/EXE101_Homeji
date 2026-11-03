@@ -65,6 +65,7 @@ export function GuestMapSection() {
   const [mapFocus, setMapFocus] = useState<MapFocusPoint | null>(GUEST_DEFAULT_FOCUS)
   const [mapFocusToken, setMapFocusToken] = useState(0)
   const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
+  const [nearbyRequestedKey, setNearbyRequestedKey] = useState<string | null>(null)
   const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
   const [nearbyPinned, setNearbyPinned] = useState<{ lat: number; lng: number; title: string; kindLabel: string; token: number } | null>(null)
 
@@ -145,6 +146,7 @@ export function GuestMapSection() {
   }
 
   const handleSelectPost = useCallback((postId: string) => {
+    setNearbyRequestedKey(null)
     setNearbyDismissedKey(null)
     setNearbyPinned(null)
     setSelectedPostId(postId)
@@ -155,6 +157,7 @@ export function GuestMapSection() {
   }, [])
 
   const handleClearSelection = useCallback(() => {
+    setNearbyRequestedKey(null)
     setNearbyPinned(null)
     setSelectedPostId(null)
     setSelectedPlace(null)
@@ -164,6 +167,7 @@ export function GuestMapSection() {
   }, [])
 
   const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
+    setNearbyRequestedKey(null)
     setNearbyDismissedKey(null)
     setNearbyPinned(null)
     setSelectedPostId(null)
@@ -211,8 +215,10 @@ export function GuestMapSection() {
     selectedPostId, selectedPost ?? listingDetail, selectedPlace,
   ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
   const nearbyVisible = !!nearbyAnchor && nearbyDismissedKey !== nearbyAnchor.contextKey && detailOpen
+    && (!window.matchMedia('(max-width: 767px)').matches || nearbyRequestedKey === nearbyAnchor.contextKey)
   const handleChatNearby = useCallback((category: NearbyPlaceCategory) => {
     if (!nearbyAnchor) return false
+    setNearbyRequestedKey(nearbyAnchor.contextKey)
     setNearbyCategory(category)
     setNearbyDismissedKey(null)
     return true
@@ -230,10 +236,11 @@ export function GuestMapSection() {
   }, [selectedPost, selectedPlace])
 
   const handleNearby = useCallback((loc: { lat: number; lng: number }) => {
+    setNearbyRequestedKey(nearbyAnchor?.contextKey ?? null)
     setNearbyDismissedKey(null)
     setMapFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
     setMapFocusToken((n) => n + 1)
-  }, [])
+  }, [nearbyAnchor])
 
   const handleNearbyPick = (place: NearbyPlaceItem) => {
     setNearbyPinned({ lat: place.lat, lng: place.lng, title: place.title, kindLabel: place.typeLabel, token: Date.now() })
