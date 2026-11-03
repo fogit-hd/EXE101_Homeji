@@ -32,3 +32,9 @@
 .source-results__reference{font-size:10px!important}
 .source-results__actions{padding-top:10px;border-top:1px solid var(--border)}
 @media(max-width:420px){.source-results__card{grid-template-columns:88px minmax(0,1fr);padding:12px;gap:12px}.source-results__photo{width:88px;height:116px}.source-results__metrics>.source-results__price{font-size:18px}.source-results__card h3{font-size:14px}}
+.source-results__help { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.source-results__help summary { cursor: pointer; padding-block: 8px; }
+@media(max-width:767px) {
+  #root .source-results__reference, #root .source-results__facts > :nth-child(n+4) { display: none; }
+  #root .source-results__card h3 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}

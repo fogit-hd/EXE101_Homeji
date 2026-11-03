@@ -1468,3 +1468,12 @@ html:root #root .map-listings__move:disabled { opacity:1; cursor:default; }
 #root .map-listings__move { background: var(--ml-card); color: var(--ml-ink); border: 1px solid var(--ml-line); box-shadow: 0 2px 8px #102b2514; }
 html[data-theme='dark'] #root .map-listings__preview-open { background: #126770; color: #fff; }
 @media(max-width:767px) { #root .map-listings__preview:has(.map-listings__preview-close) .map-listings__preview-top { padding-right: 28px; } }
+@media(max-width:767px) {
+  #root .map-listings--list .map-listings__card-hit { flex-direction: row; align-items: flex-start; gap: 12px; padding: 12px; }
+  #root .map-listings--list .map-listings__card-photo { width: 88px; height: 96px; max-height: 96px; flex: 0 0 88px; border-radius: 10px; }
+  #root .map-listings--list .map-listings__card-copy { padding: 0; width: auto; gap: 6px; }
+  #root .map-listings--list :is(.map-listings__name,.map-listings__address) { min-height: 0; }
+  #root .map-listings--list .map-listings__name { font-size: 14px; }
+  #root .map-listings--list .map-listings__price { font-size: 17px; }
+  #root .map-listings--list .map-listings__facts > :nth-child(n+4), #root .map-listings--list .map-listings__consideration { display: none; }
+}

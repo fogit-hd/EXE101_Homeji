@@ -82,3 +82,4 @@
   .app-shell--map-peer > .site-footer { display: none; }
   #root .home-map-page .glass-density-control--docked { display: none; }
 }
+@media(max-width:767px) { #root .app-shell--map-peer .app-main { padding-bottom: 0; } }

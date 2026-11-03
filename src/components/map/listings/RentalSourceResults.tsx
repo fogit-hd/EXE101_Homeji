@@ -49,7 +49,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
   }
   return <section className="source-results" aria-label="Danh sách phòng">
     <header><p>{error ? 'Chưa tải được toàn bộ tin' : loaded ? `${combined.length} lựa chọn · Xem chi tiết và liên hệ ngay trên Homeji` : 'Đang tải toàn bộ danh sách…'}</p></header>
-    <p className="source-results__note">Danh sách gồm mọi tin đang hoạt động khớp bộ lọc, kể cả tin chưa có tọa độ. Bản đồ chỉ gắn ghim cho vị trí đã được xác nhận; tình trạng còn phòng cần kiểm tra với người đăng.</p>
+    <details className="source-results__help"><summary>Về vị trí và tình trạng phòng</summary><p className="source-results__note">Danh sách gồm mọi tin đang hoạt động khớp bộ lọc, kể cả tin chưa có tọa độ. Bản đồ chỉ gắn ghim cho vị trí đã được xác nhận; tình trạng còn phòng cần kiểm tra với người đăng.</p></details>
     {unsupported ? <p className="source-results__note">Một số tin chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
     {loaded && !error && combined.length === 0 ? <p role="status">Không có phòng khớp bộ lọc.</p> : null}
