@@ -35,7 +35,7 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
   const savedQuery = useQuery({
     queryKey,
     queryFn: ({ signal }) => getSavedPosts(signal),
-    enabled: isAuthenticated && Boolean(profile?.id),
+    enabled: isAuthenticated && Boolean(profile?.id) && isRenter,
   })
   const accessDenied = savedQuery.error instanceof ApiRequestError && [401, 403].includes(savedQuery.error.status)
   const posts = (accessDenied ? [] : savedQuery.data ?? []).filter(post => !roommateOnly || post.type === RentalPostType.RoommateShare)

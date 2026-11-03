@@ -31,6 +31,7 @@ export const parseFiltersFromURL = () => ({ catalog: 'rental' });
 export const serializeFiltersToQuery = () => '';
 export const isWideMapSection = () => false;
 export const MapPlaceDetailPanel = props => { f().details.push(props); return null; };
+export const UserRole = { Renter: 1, Landlord: 2, Admin: 3 };
 export const Link = () => null;
 export const DeferredMapBlock = () => null;
 export const HomeListingSkeleton = () => null;

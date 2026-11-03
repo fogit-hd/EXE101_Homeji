@@ -89,8 +89,15 @@ html[data-theme='dark'] #root :is(input, select, textarea, a, button):focus-visi
 html[data-theme='dark'] #root .form-select option { background: var(--surface-elevated); color: var(--text-primary); }
 html[data-theme='dark'] #root :is(.payment-current, .wallet-summary__available) { background: #204f59; color: #effcff; }
 html[data-theme='dark'] #root .payment-current__benefit p { color: #d2e9ef; }
-html[data-theme='dark'] #root .map-messages.is-workspace .map-messages__bubble.is-mine { background: #235861; color: #f0ffff; }
-html[data-theme='dark'] #root .map-messages.is-workspace .map-messages__bubble.is-mine :is(p, time) { color: #f0ffff; }
+/* The outer message is a layout grid (avatar, body, time), never a painted box. */
+html[data-theme='dark'] #root .map-messages .map-messages__bubble { background: transparent; border: 0; box-shadow: none; }
+html[data-theme='dark'] #root .map-messages .map-messages__bubble-body { background: var(--surface-input); color: var(--text-primary); border-color: var(--border); }
+html[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine .map-messages__bubble-body { background: #235861; color: #f0ffff; border-color: #437e87; }
+html[data-theme='dark'] #root .map-messages .map-messages__bubble-body p { color: inherit; }
+html[data-theme='dark'] #root .map-messages { --mm-bg: var(--surface-muted); --mm-line: var(--border); --mm-text: var(--text-primary); --mm-muted: var(--text-secondary); --mm-faint: #b2c4ce; --mm-ink: var(--text-heading); --mm-mint: #21454d; --mm-green-ink: #80d9db; }
+html[data-theme='dark'] #root .map-messages :is(.map-messages__inbox,.map-messages__thread,.map-messages__thread-head,.map-messages__composer,.map-messages__day) { background: var(--surface-elevated); color: var(--text-primary); border-color: var(--border); }
+html[data-theme='dark'] #root .map-messages .map-messages__bubbles { background: var(--surface-muted); }
+html[data-theme='dark'] #root .map-messages .map-messages__bubble time { color: var(--text-secondary); }
 
 /* New-room dialog participates in the same theme rather than retaining teal ink. */
 html[data-theme='dark'] #root .interest-launch { color: var(--text-primary); background: var(--surface-elevated); border-color: var(--border); }

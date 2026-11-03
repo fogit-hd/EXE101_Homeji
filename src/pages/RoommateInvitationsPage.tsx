@@ -8,7 +8,7 @@ import {
   rejectInvitation,
   type RoommateInvitation,
 } from '../api'
-import { RoommateInvitationStatus } from '../api/types'
+import { RoommateInvitationStatus, UserRole } from '../api/types'
 import { HomejiLoader } from "../components/HomejiLoader"
 import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { InvitationsSkeleton } from '../components/skeletons/PageSkeletons'
@@ -49,8 +49,8 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
   }
 
   const loadFn = useCallback(async () => {
-    setInvitations(await getMyInvitations())
-  }, [])
+    setInvitations(profile?.role === UserRole.Renter ? await getMyInvitations() : [])
+  }, [profile?.role])
 
   const { showLoader, onIntroComplete, error, disrupted } = usePersistentLoad(loadFn)
 

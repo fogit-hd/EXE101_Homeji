@@ -58,12 +58,23 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
       const row = item.row
       const photo = row.imageUrls.map(rentalSourceImageHref).find(Boolean)
       const updatedAt = formatSourceDate(row.sourceUpdatedAt)
-      return <li key={row.id}><article className="source-results__card">
-        {photo ? <div className="source-results__photo"><img src={photo} alt={row.title} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.opacity = '.2' }} /><span>{row.imageUrls.length} ảnh</span></div> : null}
-        <div><span className="source-results__category">{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span><h3><Link to={sourceRoomHref(row.id)}>{row.title}</Link></h3><div className="source-results__metrics"><strong className="source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong>{row.area > 0 ? <strong>{row.area} m²</strong> : null}{row.depositLabel ? <span>{row.depositLabel}</span> : null}</div><p>{row.address}</p>
-          <div className="source-results__facts">{(row.amenityHighlights ?? []).slice(0, 4).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
+      return <li key={row.id}><article className="map-listings__card source-results__card">
+        <Link className="source-results__photo" to={sourceRoomHref(row.id)} aria-label={`Xem phòng: ${row.title}`}>
+          <span className="source-results__empty-photo">Chưa có ảnh</span>
+          {photo ? <img src={photo} alt="" loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
+          {photo ? <span className="source-results__photo-count">{row.imageUrls.length} ảnh</span> : null}
+        </Link>
+        <div className="source-results__copy">
+          <strong className="map-listings__price source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong>
+          <h3 className="map-listings__name"><Link to={sourceRoomHref(row.id)}>{row.title}</Link></h3>
+          <p className="map-listings__address">{row.address}</p>
+          <div className="map-listings__meta">{row.area > 0 ? <span>{row.area} m²</span> : null}<span>{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span></div>
+          <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{(row.amenityHighlights ?? []).slice(0, 3).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
           <p className="source-results__publisher">{row.publisherName?.trim() || 'Chưa có tên người đăng'}</p>
-          <div className="source-results__actions">{onFocus && sourceHasLocation(row) ? <button type="button" onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí</button> : null}<Link to={sourceRoomHref(row.id)}>Xem chi tiết & liên hệ</Link></div>
+        </div>
+        <div className="source-results__actions">
+          {onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí trên bản đồ</button> : null}
+          <Link className="map-listings__card-open" data-glass-exclude to={sourceRoomHref(row.id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></Link>
         </div>
       </article></li>
     })}</ul>

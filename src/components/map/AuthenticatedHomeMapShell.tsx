@@ -3,6 +3,7 @@ import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, us
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   NotificationType,
+  UserRole,
   getNotifications,
   getRentalPost,
   getSavedPosts,
@@ -527,7 +528,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [selectedPostId, isAuthenticated, listingViewer, marketMode, needsProfileSetup])
 
   useEffect(() => {
-    if (!isAuthenticated || needsProfileSetup) {
+    if (!isAuthenticated || needsProfileSetup || profile?.role !== UserRole.Renter) {
       setSavedIds(new Set())
       return
     }
@@ -542,7 +543,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated, needsProfileSetup])
+  }, [isAuthenticated, needsProfileSetup, profile?.id, profile?.role])
 
   const handleClearMapSelection = useCallback(() => {
     setNearbyRequestedKey(null)

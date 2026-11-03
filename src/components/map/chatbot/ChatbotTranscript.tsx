@@ -112,7 +112,7 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                   </div>
                 </article>
               })}
-              {showTyping ? <div className="homeji-assistant__thinking" role="status"><span aria-hidden><i /><i /><i /></span>Homeji đang tìm câu trả lời…</div> : null}
+              {showTyping ? <div className="homeji-assistant__thinking" role="status" aria-live="polite" data-glass-exclude><span aria-hidden><i /><i /><i /></span>Homeji đang xử lý…</div> : null}
               <div ref={bottomRef} />
     </>
   )

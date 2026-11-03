@@ -15,8 +15,8 @@
 .payment-page, .payment-embed, .payment-wait-page { font-family: var(--font-ui); }
 :is(.payment-page, .payment-embed, .payment-wait-page) :is(h1, h2, h3, strong, .payment-plan-card__price, .payment-plan-card__price-value) { font-family: var(--font-ui); line-height: 1.45; }
 .map-listings__popover input:not([type='checkbox']) { background: var(--surface-elevated); color: var(--text-heading); }
-.map-messages.is-workspace .map-messages__bubble.is-mine { background: var(--hj-accent); color: #fff; }
-.map-messages.is-workspace .map-messages__bubble.is-mine :is(p, time) { color: #fff; }
+.map-messages.is-workspace .map-messages__bubble.is-mine .map-messages__bubble-body { background: var(--hj-accent); color: #fff; }
+.map-messages.is-workspace .map-messages__bubble.is-mine .map-messages__bubble-body p { color: inherit; }
 .map-messages__composer :is(input, textarea) { color: var(--text-heading); background: var(--surface-elevated); }
 .marketplace-header__ghost { color: #a43c22; background: #fff3ec; }
 .marketplace-card__badge, .marketplace-card__badge.is-mine { color: var(--grab-green-hover); }

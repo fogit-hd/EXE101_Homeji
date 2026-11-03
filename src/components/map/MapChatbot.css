@@ -801,3 +801,17 @@ html:root[data-theme='dark'] #root .homeji-assistant .homeji-assistant__draft-wo
 }
 /* Keep empty-state choices quiet; the composer remains the primary action. */
 .homeji-assistant .homeji-assistant__starters{gap:8px}.homeji-assistant .homeji-assistant__starters>button{display:flex;align-items:center;gap:10px;min-height:46px;padding:12px 14px;border:1px solid var(--assistant-line,#dce6e3);border-radius:12px;background:var(--assistant-bg,#fff);box-shadow:none}.homeji-assistant .homeji-assistant__starters>button::before{display:none}.homeji-assistant .homeji-assistant__starters>button strong{font-size:13px;font-weight:550}.homeji-assistant .homeji-assistant__starters>button b{position:static;margin-left:auto;font-size:12px}.homeji-assistant .map-chatbot__greeting h2{font-size:24px;line-height:1.35;letter-spacing:-.03em}.homeji-assistant .homeji-assistant__welcome-mark{width:36px;height:36px;margin-bottom:12px}
+
+/* Request-bound spectrum capsule: disappears on completion, error or cancel. */
+.homeji-assistant__thinking {
+  position: relative; isolation: isolate; width: fit-content; max-width: 100%;
+  margin: 16px 0; padding: 12px 18px; border: 2px solid transparent; border-radius: 999px;
+  color: var(--text-heading); font: 600 13px/1.5 var(--font-ui);
+  background: linear-gradient(var(--surface-elevated),var(--surface-elevated)) padding-box,
+    conic-gradient(from var(--ai-orbit),#ff6262,#ffac59,#f4d85d,#69d391,#65cfe7,#818af5,#d983e6,#ff6262) border-box;
+  box-shadow: 0 4px 18px rgb(93 124 183 / .14); animation: ai-capsule-orbit 3s linear infinite, ai-capsule-enter .25s ease-out;
+}
+@property --ai-orbit { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes ai-capsule-orbit { to { --ai-orbit: 360deg; } }
+@keyframes ai-capsule-enter { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+@media(prefers-reduced-motion:reduce) { .homeji-assistant__thinking,.homeji-assistant__thinking i { animation: none; } }

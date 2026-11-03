@@ -85,6 +85,21 @@
   gap: 8px;
 }
 
+.page-frame__filters :is(input:not([type='checkbox']):not([type='radio']),select) {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 14px;
+  line-height: 1.5;
+  font-size: 14px;
+  min-width: 0;
+  max-width: 100%;
+}
+.page-frame__actions :is(button,.btn), .page-frame__filters button {
+  min-height: 40px;
+  padding: 9px 14px;
+  line-height: 1.4;
+}
+
 .page-frame__actions:empty,
 .page-frame__filters:empty {
   display: none;

@@ -1,6 +1,7 @@
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { getMyInvitations, RoommateInvitationStatus, type RoommateInvitation } from '../../api'
+import { getMyInvitations, RoommateInvitationStatus, UserRole, type RoommateInvitation } from '../../api'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   getMyRoommateProfile, inviteRoommate, RoommateIntent, searchRoommates, updateMyRoommateProfile,
   type RoommateDirectory, type RoommateDiscoveryProfile,
@@ -17,6 +18,7 @@ const INTENTS = [
 const EMPTY_PROFILE: RoommateDiscoveryProfile = { intent: RoommateIntent.SeekingAccommodation, isDiscoverable: false, introduction: '' }
 
 export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () => void }) {
+  const { profile } = useAuth()
   const [preferences, setPreferences] = useState<RoommateDiscoveryProfile>(EMPTY_PROFILE)
   const [profileReady, setProfileReady] = useState(false)
   const [profileError, setProfileError] = useState('')
@@ -55,7 +57,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
     async function load() {
       setLoading(true); setError('')
       try {
-        const [data, pending] = await Promise.all([searchRoommates(query, controller.signal), getMyInvitations()])
+        const [data, pending] = await Promise.all([searchRoommates(query, controller.signal), profile?.role === UserRole.Renter ? getMyInvitations() : Promise.resolve([])])
         if (!controller.signal.aborted) {
           setDirectory(data)
           setInvitations(current => reconcileRoommateInvitations(pending, current, snapshotRevision, invitationMutations.current))
@@ -66,7 +68,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
     }
     void load()
     return () => controller.abort()
-  }, [query, reload])
+  }, [query, reload, profile?.id, profile?.role])
 
   async function savePreferences(event: FormEvent) {
     event.preventDefault()

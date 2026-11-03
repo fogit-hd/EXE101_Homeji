@@ -117,6 +117,10 @@ html:root #root .gmaps-omnibox__card:not(.is-open):has(> [data-glass-search]) {
 /* Editing surfaces have a quieter tint than action buttons. Values, selection,
    password masking and validation remain native browser behavior. */
 :is(html:root #root,html:root body) [data-glass-field][data-glass-control] {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 14px;
+  line-height: 1.5;
   --control-glass-radius: var(--glass-field-radius,14px);
   --control-glass-fill: color-mix(in srgb,var(--surface-elevated) 88%,transparent);
   --glass-ink: var(--text-primary);

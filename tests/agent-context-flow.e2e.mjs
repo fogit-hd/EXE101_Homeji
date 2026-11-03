@@ -18,7 +18,7 @@ try {
     await page.addInitScript(() => localStorage.setItem('homeji_access_token', 'fixture'))
     await page.route('**/src/contexts/AuthContext.tsx*', r => r.fulfill({ contentType: 'application/javascript', body: 'export const useAuth=()=>({isAuthenticated:true,needsProfileSetup:false,profile:{id:"me"}})' }))
     await page.route('**/src/contexts/AuthModalContext.logic.tsx*', r => r.fulfill({ contentType: 'application/javascript', body: 'export const useAuthModal=()=>({openAuthModal:()=>{},isOpen:false})' }))
-    await page.route('**/api/**', route => {
+    await page.route('**/api/**', async route => {
       const path = new URL(route.request().url()).pathname
       if (!path.startsWith('/api/')) return route.continue()
       if (path === '/api/subscriptions/me') return route.fulfill({ json: { isPremium: true, premiumExpiresAt: '2099-01-01T00:00:00Z' } })
@@ -28,6 +28,7 @@ try {
         const body = route.request().postDataJSON(), now = new Date().toISOString()
         requests.push(body)
         const turn = requests.length
+        await new Promise(resolve => setTimeout(resolve, 700))
         return route.fulfill({ json: {
           conversationId: 'chat', userMessage: { id: 'user-' + turn, sender: 1, content: body.message, createdAt: now },
           assistantMessage: { id: 'assistant-' + turn, sender: 2, content: 'Bản nháp đang chờ bạn duyệt; chưa đăng bài.', createdAt: now }, actions: [], agentRequested: true,
@@ -44,8 +45,14 @@ try {
     await page.locator('input[type=file]').setInputFiles('public/landing/bloom-hero-bg2.jpg')
     await page.getByRole('img', { name: /bloom-hero/ }).waitFor()
     await chat.fill('đăng pas lại cái ghế giá 500k'); await chat.press('Enter')
+    const thinking = page.locator('.homeji-assistant__thinking')
+    await thinking.waitFor()
+    assert.equal(await thinking.getAttribute('role'), 'status')
+    assert.equal(await thinking.evaluate(e => getComputedStyle(e).borderRadius), '999px')
+    await page.screenshot({ path: out + '/thinking-' + width + '.png' })
     const workspace = page.getByRole('complementary', { name: 'Bản nháp đang duyệt' })
     await workspace.waitFor()
+    assert.equal(await thinking.count(), 0, 'Thinking capsule disappears when the response arrives')
     assert.equal(requests[0].attachments.length, 1)
     assert.equal(approvals, 0)
     for (const [index, text] of ['1. tình trạng mới, kick thước 500mm*200mm, chất liệu da', '1'].entries()) {

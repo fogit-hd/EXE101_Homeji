@@ -212,9 +212,9 @@ html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search
 }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search input,.map-messages__search-input,.map-messages__composer textarea)::placeholder { color: #b1c2cc !important; opacity: 1; }
 html:root[data-theme='dark'] #root .map-messages .map-messages__composer { background: var(--surface) !important; border-color: #506975 !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__bubble:not(.is-mine) { background: #223944 !important; color: #e0eaf0 !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble:not(.is-mine) .map-messages__bubble-body { background: #223944 !important; color: #e0eaf0 !important; }
 html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body {
-  background: #17565a !important;
+  background: #235861 !important;
   color: #f2ffff !important;
 }
 html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body p { color: #f2ffff !important; }
@@ -232,3 +232,8 @@ html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn,.map
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn.is-ghost,.map-messages__icon-btn.is-active) { background: #1d3a3d !important; color: #b4eded !important; }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__block-notice,.map-messages__error,.map-messages__address-hint) { color: #f0c8a1; }
 html:root[data-theme='dark'] #root .map-messages .map-messages__mark { background: #665624; color: #fff2bd; }
+
+/* Theme the rounded body, leaving the avatar/time layout transparent. */
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble { background: transparent !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine .map-messages__bubble-body { background: #235861 !important; color: #f0ffff; border-color: #437e87; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble .map-messages__bubble-body p { color: inherit !important; }

@@ -12,6 +12,7 @@ import {
   searchRentalPosts,
   NotificationType,
   RentalPostType,
+  UserRole,
   ViewingAppointmentStatus,
   type MarketplacePost,
   type Notification,
@@ -134,8 +135,8 @@ export function AuthenticatedHub() {
         getNotifications(true),
         getViewingAppointments(),
         getConversations(),
-        getSavedPosts(),
-        getMyInvitations(),
+        profile?.role === UserRole.Renter ? getSavedPosts() : Promise.resolve([]),
+        profile?.role === UserRole.Renter ? getMyInvitations() : Promise.resolve([]),
         searchRentalPosts({ pageSize: 3 }),
         searchMarketplacePosts({ pageSize: 2 }),
       ])
@@ -182,7 +183,7 @@ export function AuthenticatedHub() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey])
+  }, [reloadKey, profile?.id, profile?.role])
 
   const savedIds = useMemo(
     () => new Set((bundle?.saved ?? []).map((post) => post.id)),
