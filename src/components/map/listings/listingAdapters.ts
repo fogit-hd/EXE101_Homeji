@@ -1,5 +1,6 @@
+import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import type { MarketplacePost, RentalPostSearchParams, RentalPostSummary } from '../../../api/types'
-import { MarketplaceListingType } from '../../../api/types'
+import { MarketplaceListingType, RentalPostType } from '../../../api/types'
 import { AMENITY_OPTIONS, amenityLabel, formatPrice, rentalPostTypeLabel } from '../../../lib/labels'
 import { isValidCoord } from '../../../lib/googleMaps'
 import { isInHomejiServiceArea } from '../../../lib/homejiServiceArea'
@@ -119,7 +120,7 @@ export function mapBackendListingToListingViewModel(post: RentalPostSummary): Li
     thumbnailUrl: post.thumbnailPath,
     latitude: post.latitude,
     longitude: post.longitude,
-    typeLabel: rentalPostTypeLabel[post.type] ?? '',
+    typeLabel: isApartmentListing(post.title) ? 'Căn hộ' : post.type === RentalPostType.VacantRoom ? 'Phòng trọ' : rentalPostTypeLabel[post.type] ?? 'Phòng trọ',
     highlightTag: post.highlightTag?.trim() || null,
     ownerBadge: post.ownerBadge?.trim() || null,
     isPremium: post.isOwnerPremium === true,

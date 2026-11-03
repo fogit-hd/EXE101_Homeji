@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { getRentalSourceCatalog, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
-import { listingReference } from '../../../lib/listingReference'
+import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import { filterRentalSourcesForList, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
 import type { ListingQuery } from './listingAdapters'
 import './RentalSourceResults.css'
@@ -60,11 +60,9 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
       const updatedAt = formatSourceDate(row.sourceUpdatedAt)
       return <li key={row.id}><article className="source-results__card">
         {photo ? <div className="source-results__photo"><img src={photo} alt={row.title} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.opacity = '.2' }} /><span>{row.imageUrls.length} ảnh</span></div> : null}
-        <div><h3>{row.title}</h3><div className="source-results__metrics"><strong className="source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong><strong>{row.area} m²</strong>{row.depositLabel ? <span>{row.depositLabel}</span> : null}</div><p>{row.address}</p>
+        <div><span className="source-results__category">{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span><h3><Link to={sourceRoomHref(row.id)}>{row.title}</Link></h3><div className="source-results__metrics"><strong className="source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong>{row.area > 0 ? <strong>{row.area} m²</strong> : null}{row.depositLabel ? <span>{row.depositLabel}</span> : null}</div><p>{row.address}</p>
           <div className="source-results__facts">{(row.amenityHighlights ?? []).slice(0, 4).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
-          <small className="source-results__reference">{listingReference(row.id)}</small>
           <p className="source-results__publisher">{row.publisherName?.trim() || 'Chưa có tên người đăng'}</p>
-          <small>{sourceHasLocation(row) ? 'Đã có vị trí trên bản đồ' : 'Chưa có vị trí trên bản đồ'}</small>
           <div className="source-results__actions">{onFocus && sourceHasLocation(row) ? <button type="button" onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí</button> : null}<Link to={sourceRoomHref(row.id)}>Xem chi tiết & liên hệ</Link></div>
         </div>
       </article></li>

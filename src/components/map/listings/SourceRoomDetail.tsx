@@ -108,6 +108,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         {error ? <div className="room-detail__status" role="alert"><p>{error}</p><button type="button" className="room-detail__retry" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></div> : null}
         {!loaded && !error ? <p role="status">Đang tải thông tin phòng…</p> : null}
         {listing ? <>
+          <PhotoGallery key={id} urls={images} />
           <div className="room-detail__summary">
             <p className="room-detail__eyebrow">{apartment ? 'CĂN HỘ CHO THUÊ' : 'PHÒNG TRỌ CHO THUÊ'}</p>
             <h3>{listing.title}</h3>
@@ -116,7 +117,6 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
             <ul className="room-detail__facts"><li>{apartment ? 'Căn hộ' : 'Phòng trọ'}</li></ul>
           </div>
           <RoomEssentials rentLabel="Giá thuê / tháng" rent={rent} area={formatListingArea(listing.area)} deposit={deposit} />
-          <PhotoGallery key={id} urls={images} />
           <section className="room-detail__costs" data-glass-exclude><h4>Chi phí thuê & tiền cọc</h4>
             {[['Tiền thuê', rent], ['Tiền cọc', deposit], ['Điện, nước', 'Chưa cung cấp'], ['Phí khác', 'Chưa cung cấp']].map(([label, value]) => <p key={label} className="room-detail__cost"><span>{label}</span><span>{value}</span></p>)}
             <p className="room-detail__muted">Xác nhận các khoản phí với người đăng trước khi quyết định.</p>

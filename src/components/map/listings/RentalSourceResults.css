@@ -38,3 +38,13 @@
   #root .source-results__reference, #root .source-results__facts > :nth-child(n+4) { display: none; }
   #root .source-results__card h3 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 }
+
+/* Compact fact-first cards: the same hierarchy in list and split view. */
+.source-results__category { display: inline-block; margin-bottom: 5px; color: var(--text-secondary); font-size: 11px; font-weight: 600; }
+.source-results__card h3 a { color: inherit; text-decoration: none; }
+.source-results__card h3 a:hover { color: var(--action-on-soft); text-decoration: underline; }
+.source-results__card h3 a:focus-visible { outline: 2px solid var(--action-on-soft); outline-offset: 3px; }
+.source-results__metrics > span { background: #fff4ec; color: #9a4d24; border-color: #eed6c6; }
+html[data-theme='dark'] .source-results__metrics > span { background: #3c2a22; color: #f6c5a0; border-color: #735440; }
+.source-results__facts > time { border: 0; background: none; padding-inline: 0; width: 100%; }
+.source-results__card { box-shadow: none; border-radius: 14px; }

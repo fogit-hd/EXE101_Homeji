@@ -389,6 +389,7 @@ export function RoomDetailModal({
           <>
             <div className="room-detail__body">
               <div className="room-detail__main" role="region" aria-label="Thông tin chi tiết phòng" tabIndex={0}>
+                <PhotoGallery urls={listingPhotos(post)} />
                 <div className="room-detail__summary">
                   <p className="room-detail__eyebrow">{isStudentShare ? 'TÌM BẠN Ở GHÉP' : isApartmentListing(post.title) ? 'CĂN HỘ CHO THUÊ' : 'PHÒNG TRỌ CHO THUÊ'}</p>
                   <h3>{post.title?.trim() || 'Tin đăng'}</h3>
@@ -417,7 +418,6 @@ export function RoomDetailModal({
                   ) : null}
                 </div>
                 <RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} rent={rentLabel ?? 'Trao đổi'} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Trao đổi'} />
-                <PhotoGallery urls={listingPhotos(post)} />
                 <section className="room-detail__costs" data-glass-exclude>
                   <h4>Chi phí thuê & tiền cọc</h4>
                   <CostRow label={priceBasis === 'unknown' ? 'Giá chưa rõ đơn vị' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
