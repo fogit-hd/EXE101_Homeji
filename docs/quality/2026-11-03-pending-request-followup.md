@@ -16,7 +16,7 @@ Ignored receipts: `output/verification/pending-requests/`, `glass-game/results.j
 
 ## Still not signed off
 
-- The additional live-provider business-flow test is tracked separately by its actual receipt; fixture success alone is not provider success.
+- Additional Agent checks exposed and fixed “đăng tìm/tuyển” routing and renter roommate authorization. Backend now shares its author policy between normal forms and Agent. 694 unit tests and 11 isolated PostgreSQL tests passed. The extra four-case provider run returned ExternalServiceUnavailableException after the fixes, so those four live cases remain unverified. Earlier sofa/rental provider receipts are separate evidence; they are not counted as proof for these extra cases.
 - Authenticated production admin download and real Google OAuth round trip require an accessible signed-in session. The available in-app Homeji session is anonymous; a minimized Chrome window could not be read by the UI tool. No credentials are requested in chat.
 - Source coordinate refresh fetched all 27 missing-coordinate listing pages; the conservative extractor found no attributable listing-map coordinate. They remain in the list. No coordinates were fabricated or borrowed from the source website's office.
 - Physical-phone performance and microphone end-to-end checks remain unverified. Desktop viewport emulation is not physical-device evidence.
