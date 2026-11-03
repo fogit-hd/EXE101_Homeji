@@ -44,6 +44,7 @@ try {
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('homeji-ai:toggle', { detail: { open: true, anchor: null } })))
     await page.evaluate(dark => document.documentElement.dataset.theme = dark ? 'dark' : 'light', width === 390)
     const chat = page.getByRole('textbox', { name: 'Nhập tin nhắn cho Homeji' })
+    await page.getByRole('button', { name: 'Agent · Premium', exact: true }).click()
     await page.locator('input[type=file]').setInputFiles('public/landing/bloom-hero-bg2.jpg')
     await page.getByRole('img', { name: /bloom-hero/ }).waitFor()
     await chat.fill('đăng pas lại cái ghế giá 500k'); await chat.press('Enter')
@@ -64,6 +65,7 @@ try {
     const workspace = page.getByRole('complementary', { name: 'Bản nháp đang duyệt' })
     await workspace.waitFor()
     assert.equal(await thinking.count(), 0, 'Thinking capsule disappears when the response arrives')
+    assert.equal(requests[0].postingAgent, true)
     assert.equal(requests[0].attachments.length, 1)
     assert.equal(approvals, 0)
     for (const [index, text] of ['1. tình trạng mới, kick thước 500mm*200mm, chất liệu da', '1'].entries()) {
