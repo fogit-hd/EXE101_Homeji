@@ -1556,14 +1556,14 @@ html:root #root .map-messages .map-messages__inbox-filters .map-messages__filter
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-title { color: var(--mm-text); }
 
 /* Inbox rows are readable information surfaces, independent of action glass. */
-html:root #root .map-messages .map-messages__conv-list { gap: 0; padding: 0; }
-html:root #root .map-messages .map-messages__conv-list > li { border-bottom: 1px solid var(--border); }
+html:root #root .map-messages .map-messages__conv-list { gap: 4px; padding: 4px; }
+html:root #root .map-messages .map-messages__conv-list > li { border-bottom: 0; }
 html:root #root .map-messages .map-messages__conv-list > li:last-child { border-bottom: 0; }
 html:root #root .map-messages .map-messages__row {
   position: relative; display: flex; align-items: flex-start; gap: 12px;
   min-height: 94px; padding: 15px 12px; margin: 0;
-  border: 0; border-left: 3px solid transparent; border-radius: 0;
-  background: var(--surface-elevated); color: var(--text-heading);
+  border: 0; border-left: 3px solid transparent; border-radius: 14px;
+  background: transparent; color: var(--text-heading);
   box-shadow: none; text-shadow: none; filter: none;
   -webkit-backdrop-filter: none; backdrop-filter: none;
   transition: background-color 160ms ease, border-color 160ms ease;
