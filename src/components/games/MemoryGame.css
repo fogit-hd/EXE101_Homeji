@@ -14,6 +14,9 @@ html[data-theme='dark'] .homeji-memory { --game-bg: #152c28; --game-ink: #e2f3e9
 .homeji-memory h2 { font-size: 25px; letter-spacing: -.04em; margin: 5px 0 0; font-weight: 750; }
 .homeji-memory__close { width: 40px; height: 40px; border: 1px solid var(--game-line); background: transparent; border-radius: 50%; font-size: 24px !important; }
 .homeji-memory__intro { margin: 14px 0 20px; color: var(--game-muted); font-size: 13px; line-height: 1.6; }
+.homeji-memory__scenery { width: 100%; aspect-ratio: 1026 / 256; overflow: hidden; border-radius: 12px; background: #eaf3e9; margin-bottom: 16px; }
+.homeji-memory__scenery img { display: block; width: 100%; height: 100%; object-fit: contain; }
+html[data-theme='dark'] .homeji-memory__scenery { background: #11251f; }
 .homeji-memory__score { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; border-block: 1px solid var(--game-line); padding: 14px 0; }
 .homeji-memory__score > span { display: grid; gap: 5px; font-size: 10px; color: var(--game-muted); text-align: center; }
 .homeji-memory__score strong { font-size: 23px; color: var(--game-ink); font-variant-numeric: tabular-nums; }

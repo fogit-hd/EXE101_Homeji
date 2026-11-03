@@ -54,7 +54,7 @@ try {
     page.setDefaultTimeout(15000)
     await page.goto(`${base}/${out}/index.html`)
     const tabs = page.getByRole('tablist', { name: 'Chợ Homeji', exact: true })
-    await page.waitForFunction(expected => document.querySelector('.marketplace-header__tabs')?.dataset.glassRenderer === expected, fallback ? 'fallback' : 'webgl')
+    await page.waitForFunction(expected => document.querySelector('.marketplace-header__tabs')?.dataset.glassRenderer === expected, fallback ? 'fallback' : 'webgl-refraction')
     assert.equal(await page.locator('canvas.liquid-tabs__webgl').count(), fallback ? 0 : 1)
     const frameProbe = page.evaluate(() => new Promise(resolve => {
       const intervals = [], start = performance.now()
@@ -77,7 +77,7 @@ try {
     await page.keyboard.press('Home')
     await page.waitForFunction(() => !document.querySelector('.marketplace-header__tabs')?.dataset.lensEngaged)
     const initialDraws = await page.evaluate(() => window.__glassStats.draws)
-    await page.waitForTimeout(350)
+    await page.waitForFunction(() => { const count=window.__glassStats.draws, now=performance.now(); if(window.__lastDrawCount!==count){window.__lastDrawCount=count;window.__lastDrawAt=now} return now-(window.__lastDrawAt??now)>200 }, null, { timeout: 4000 })
     const settledDraws = await page.evaluate(() => window.__glassStats.draws)
     await page.waitForTimeout(350)
     assert.equal(await page.evaluate(() => window.__glassStats.draws), settledDraws, 'No continuous idle render loop')

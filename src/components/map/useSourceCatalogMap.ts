@@ -42,7 +42,7 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
     if (!ready || !enabled) return
     const map = mapRef.current, library = libraryRef.current
     if (!map || !library) return
-    const handles: Array<{ marker: google.maps.marker.AdvancedMarkerElement; dispose: () => void; listener: google.maps.MapsEventListener }> = []
+    const handles: Array<{ marker: google.maps.marker.AdvancedMarkerElement; dispose: () => void; removeClick: () => void }> = []
     const popup = new google.maps.InfoWindow()
     const open = (pin: SourceCatalogPin, marker: google.maps.marker.AdvancedMarkerElement, shouldFocus: boolean) => {
       if (pin.kind === 'rental' && onSelectRental) { popup.close(); onSelectRental(pin); return }
@@ -56,8 +56,9 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
           ? createPricePillPinContent({ title: pin.title, label: formatCompactPriceTr(pin.price) })
           : createRentalPinContent({ title: pin.title, kind: 'vacant' })
       const marker = new library.AdvancedMarkerElement({ position: { lat: pin.lat, lng: pin.lng }, title: pin.title, content: content.element, gmpClickable: true, zIndex: 35 })
-      const listener = marker.addListener('gmp-click', () => open(pin, marker, false))
-      handles.push({ marker, dispose: content.dispose, listener })
+      const onClick = () => open(pin, marker, false)
+      marker.addEventListener('gmp-click', onClick)
+      handles.push({ marker, dispose: content.dispose, removeClick: () => marker.removeEventListener('gmp-click', onClick) })
     }
     onMarkersChange(handles.map((handle, index) => {
       const pin = pins[index]
@@ -70,7 +71,7 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       } }
     }))
     setCount(handles.length)
-    return () => { onMarkersChange([]); popup.close(); for (const handle of handles) { handle.listener.remove(); handle.marker.map = null; handle.dispose() } }
+    return () => { onMarkersChange([]); popup.close(); for (const handle of handles) { handle.removeClick(); handle.marker.map = null; handle.dispose() } }
   }, [mapRef, libraryRef, ready, enabled, markerVariant, pins, navigate, onMarkersChange, onSelectRental])
   return enabled && ready ? count : 0
 }

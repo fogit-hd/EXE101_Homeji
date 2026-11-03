@@ -158,6 +158,7 @@ type MarkerEntry = {
   styleKey: string
   el: HTMLDivElement
   dispose?: () => void
+  removeClick?: () => void
   kind: MapClusterKind
 }
 
@@ -352,6 +353,7 @@ function RentalMapComponent({
     markersRef.current.forEach((entry, id) => {
       if (nextIds.has(id)) return
       entry.marker.map = null
+      entry.removeClick?.()
       entry.dispose?.()
       markersRef.current.delete(id)
     })
@@ -394,16 +396,18 @@ function RentalMapComponent({
           zIndex: s.z,
           gmpClickable: true,
         })
-        marker.addListener('gmp-click', () => {
+        const onClick = () => {
           if (performance.now() < ignoreClickUntilRef.current) return
           onSelectPostRef.current(post.id)
-        })
+        }
+        marker.addEventListener('gmp-click', onClick)
         markersRef.current.set(post.id, {
           marker,
           postId: post.id,
           styleKey,
           el: content.element,
           dispose: content.dispose,
+          removeClick: () => marker.removeEventListener('gmp-click', onClick),
           kind: s.kind,
         })
         markerKindsRef.current.set(marker, s.kind)
@@ -456,6 +460,7 @@ function RentalMapComponent({
     marketplaceMarkersRef.current.forEach((entry, id) => {
       if (nextIds.has(id)) return
       entry.marker.map = null
+      entry.removeClick?.()
       entry.dispose?.()
       marketplaceMarkersRef.current.delete(id)
     })
@@ -487,10 +492,11 @@ function RentalMapComponent({
         }
         content.element.addEventListener('mouseenter', raiseOnHover)
         content.element.addEventListener('mouseleave', restoreAfterHover)
-        marker.addListener('gmp-click', () => {
+        const onClick = () => {
           if (performance.now() < ignoreClickUntilRef.current) return
           onSelectMarketplaceRef.current?.(item.id)
-        })
+        }
+        marker.addEventListener('gmp-click', onClick)
         marketplaceMarkersRef.current.set(item.id, {
           marker,
           postId: item.id,
@@ -501,6 +507,7 @@ function RentalMapComponent({
             content.element.removeEventListener('mouseleave', restoreAfterHover)
             content.dispose()
           },
+          removeClick: () => marker.removeEventListener('gmp-click', onClick),
           kind: 'marketplace',
         })
         markerKindsRef.current.set(marker, 'marketplace')
@@ -763,11 +770,13 @@ function RentalMapComponent({
       clusterAlgorithmRef.current = null
       ownedMarkers.forEach((e) => {
         e.marker.map = null
+        e.removeClick?.()
         e.dispose?.()
       })
       ownedMarkers.clear()
       ownedMarketplaceMarkers.forEach((e) => {
         e.marker.map = null
+        e.removeClick?.()
         e.dispose?.()
       })
       ownedMarketplaceMarkers.clear()

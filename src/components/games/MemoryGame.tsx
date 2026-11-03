@@ -46,6 +46,7 @@ export default function MemoryGame({ open, onClose, waiting = false }: { open: b
     </header>
     {ready ? <div className="homeji-memory__ready" role="status"><span>Homeji đã phản hồi.</span><button type="button" onClick={onClose}>Quay lại chat</button></div> : null}
     <p className="homeji-memory__intro">Tìm 4 cặp đồ vật, gom một góc nhà xinh.</p>
+    <div className="homeji-memory__scenery" aria-hidden="true"><img src="/games/nso-garden.png" width="1026" height="256" alt="" decoding="async" /></div>
     <div className="homeji-memory__score">
       <span><strong>{game.matched.length / 2}<small>/4</small></strong>Cặp đã tìm</span>
       <span><strong>{game.moves}</strong>Lượt lật</span>

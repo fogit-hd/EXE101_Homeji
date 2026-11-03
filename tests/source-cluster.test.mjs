@@ -7,7 +7,7 @@ import{createRoot}from'react-dom/client'
 const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/?view=split'});Object.assign(globalThis,{window:dom.window,document:dom.window.document,IS_REACT_ACT_ENVIRONMENT:true})
 let entries=[],popup,opened
 const pins=Array.from({length:17},(_,i)=>({id:'rental:'+crypto.randomUUID(),kind:'rental',title:'Phòng '+i,address:'Lê Văn Việt',price:2000000+i*10000,lat:10.84,lng:106.78,publisherName:'Người đăng '+i,area:25,amenityHighlights:[],sourceUpdatedAt:null}))
-class Marker{constructor(values){Object.assign(this,values)}addListener(){return{remove(){}}}}
+class Marker extends EventTarget{constructor(values){super();Object.assign(this,values)}addListener(name){assert.notEqual(name,'gmp-click','Advanced-marker DOM events must not use the deprecated Maps event API');return{remove(){}}}}
 class Popup{constructor(){popup=this}setContent(value){this.content=value}setPosition(){}open(){this.opened=true}close(){}}
 const params=new URLSearchParams()
 globalThis.google={maps:{InfoWindow:Popup}}
@@ -35,7 +35,9 @@ let selectedPin
 function SharedScene(){useSourceCatalogMap(mapRef,libraryRef,true,true,{marketplace:false,vacant:true},'price-pill',onChange,pin=>{selectedPin=pin});return null}
 const sharedRoot=createRoot(document.getElementById('root'))
 await act(async()=>{sharedRoot.render(React.createElement(SharedScene));await new Promise(resolve=>setTimeout(resolve,0))})
-entries[16].listing.open();assert.equal(selectedPin.id,pins[16].id)
+entries[16].marker.dispatchEvent(new Event('gmp-click'));assert.equal(selectedPin.id,pins[16].id)
+const retiredMarker=entries[16].marker
 assert.equal(selectedPin.title,pins[16].title)
 await act(async()=>sharedRoot.unmount())
+selectedPin=null;retiredMarker.dispatchEvent(new Event('gmp-click'));assert.equal(selectedPin,null,'Unmount removes DOM marker listeners')
 console.log('PASS source cluster selection delegates to shared React preview')

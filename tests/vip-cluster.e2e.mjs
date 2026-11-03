@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
+const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5541'
+if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local fixture only')
 const out = 'output/verification/vip-cluster'
 await mkdir(out, { recursive: true })
 await writeFile(out + '/index.html', '<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out + '/scene.tsx', `import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{RentalMap}from'/src/components/map/RentalMap.tsx';import'/src/index.css';import'/src/glass-controls.css';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';const posts=Array.from({length:3},(_,i)=>({id:'native-'+i,type:1,title:'Phòng Homeji '+i,address:'Lê Văn Việt, Thủ Đức',price:3000000+i*100000,area:25,latitude:10.842,longitude:106.81,thumbnailPath:'/brand/homeji-agent-cat.png',isOwnerPremium:i!==0,viewCount:0,saveCount:0}));function Scene(){const[vip,setVip]=useState(true),[selected,setSelected]=useState('');return <><button id="expiry" onClick={()=>setVip(false)}>Hết Premium</button><p id="selected">{selected}</p><div style={{height:500}}><RentalMap showSourceCatalog posts={posts.map(p=>({...p,isOwnerPremium:vip&&p.isOwnerPremium}))} selectedPostId={null} onSelectPost={setSelected}/></div><LiquidGlassEffects/></>}createRoot(document.getElementById('root')).render(<MemoryRouter><Scene/></MemoryRouter>);`)
+await writeFile(out + '/scene.tsx', `import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{RentalMap}from'/src/components/map/RentalMap.tsx';import'/src/index.css';import'/src/glass-controls.css';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';const posts=Array.from({length:3},(_,i)=>({id:'native-'+i,type:1,title:'Phòng Homeji '+i,address:'Lê Văn Việt, Thủ Đức',price:3000000+i*100000,area:25,latitude:10.842,longitude:106.81,thumbnailPath:'/brand/homeji-agent-cat.png',isOwnerPremium:i!==0,viewCount:0,saveCount:0}));function Scene(){const[vip,setVip]=useState(true),[selected,setSelected]=useState('');return <><button id="expiry" onClick={()=>setVip(false)}>Hết Premium</button><p id="selected">{selected}</p><div style={{height:500}}><RentalMap showSourceCatalog posts={posts.map(p=>({...p,isOwnerPremium:vip&&p.isOwnerPremium}))} selectedPostId={selected||null} onSelectPost={setSelected}/></div><LiquidGlassEffects/></>}createRoot(document.getElementById('root')).render(<MemoryRouter><Scene/></MemoryRouter>);`)
 const browser = await chromium.launch({ headless: true, channel: 'msedge' })
 const page = await browser.newPage({ viewport: { width: 1100, height: 800 } })
 const errors = []; page.on('pageerror', error => errors.push(error.message))
@@ -16,8 +18,8 @@ await page.route('**/src/lib/googleMaps.ts*', route => route.fulfill({ contentTy
 await page.route('**/src/lib/mapCamera.ts*', route => route.fulfill({ contentType: 'application/javascript', body: `export const createMapCameraScheduler=()=>({attach(){},dispose(){},schedule(){}});` }))
 await page.addInitScript(() => {
   window.clusters = []
-  class Marker {
-    constructor(values) { Object.assign(this, values) }
+  class Marker extends EventTarget {
+    constructor(values) { super(); Object.assign(this, values) }
     addListener(name, handler) { this.handler = handler; return { remove() {} } }
   }
   window.Marker = Marker
@@ -47,7 +49,7 @@ await page.route('**/api/**', route => {
   return route.fulfill({ json: [] })
 })
 try {
-  await page.goto('http://127.0.0.1:5541/' + out + '/index.html', { waitUntil: 'domcontentloaded' })
+  await page.goto(base + '/' + out + '/index.html', { waitUntil: 'domcontentloaded' })
   await page.getByText('★ 2 Premium', { exact: true }).waitFor()
   assert.equal(await page.evaluate(() => window.clusters.length), 1)
   assert.equal(await page.evaluate(() => window.clusters[0].markers.length), 17)
@@ -59,6 +61,10 @@ try {
   assert.equal(await page.locator('.map-cluster-listings__card:visible').count(), 2)
   await page.locator('.map-cluster-listings__card:visible').last().click()
   assert.equal(await page.locator('#selected').textContent(), 'native-2')
+  await page.evaluate(() => window.clusters[0].markers.find(marker => marker.title === 'Phòng Homeji 0').dispatchEvent(new Event('gmp-click')))
+  assert.equal(await page.locator('#selected').textContent(), 'native-0')
+  await page.evaluate(() => window.clusters[0].markers.find(marker => marker.title === 'Phòng Homeji 2').dispatchEvent(new Event('gmp-click')))
+  assert.equal(await page.locator('#selected').textContent(), 'native-2', 'DOM click listener survives marker visual updates')
   for (const width of [1100, 390, 320]) {
     await page.setViewportSize({ width, height: 800 })
     await page.locator('#fixture-cluster').click()
@@ -80,6 +86,6 @@ try {
   assert.deepEqual(errors, [])
   console.log('PASS one shared cluster, 17 total/2 strict Premium, correct selection, mobile list, Premium/all toggle, zoom and entitlement expiry; actual RentalMap and source hook with mocked Google Maps boundary')
 } catch (error) {
-  console.log(JSON.stringify({ errors, state: await page.evaluate(() => ({ text: document.body.innerText.slice(0, 500), clusters: window.clusters.length })) }))
+  console.log(JSON.stringify({ errors }))
   throw error
 } finally { await browser.close() }
