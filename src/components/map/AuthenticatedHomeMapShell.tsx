@@ -50,7 +50,6 @@ import { MapPlaceDetailPanel } from './MapPlaceDetailPanel'
 import './MapPlaceDetailPanel.css'
 import { MapToast } from './MapToast'
 import type { MarketplaceMapPin } from './RentalMap'
-import { GlassDensityControl } from '../ui/GlassDensityControl'
 
 const MOBILE_SHEET_MEDIA = '(max-width: 900px)'
 
@@ -1100,7 +1099,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
                 <div className="home-map-frame">
                   {mapStage}
                   {selectedPlace || placeLoading ? placeDetail : null}
-                  <GlassDensityControl className="glass-density-control--docked" />
                 </div>
               </DeferredMapBlock>
             ) : null
@@ -1154,7 +1152,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
             Vui lòng <Link to="/?section=profile">cập nhật hồ sơ</Link> trước khi xem chi tiết phòng và dùng các tính năng tài khoản.
           </div>
         )}
-        <GlassDensityControl className="glass-density-control--docked" />
       </section>
 
       {chatAndOverlays}
