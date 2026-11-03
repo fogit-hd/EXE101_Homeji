@@ -38,6 +38,7 @@ import { isVisibleFocusTarget } from '../../lib/isVisibleFocusTarget'
 import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
 import { GameLauncher } from '../games/GameLauncher'
 import { AgentDraftWorkspace } from './AgentDraftWorkspace'
+import { recoverPostingImages } from '../../lib/chatbotPostingContext'
 import { useChatbotAgentWorkflow } from './useChatbotAgentWorkflow'
 import { ChatbotLocationControl } from '../ai/ChatbotLocationControl'
 import { rentalPriceBasis } from '../ai/rentalPriceBasis'
@@ -392,7 +393,7 @@ export function MapChatbot({
   }
 
   const send = async (text: string, fromSuggestion = false, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria, locationOverride?: ChatbotLocation) => {
-    const selectedMedia = retryMessage?.retry?.attachments ?? (retryMessage ? [] : attachments)
+    const selectedMedia = retryMessage?.retry?.attachments ?? (retryMessage ? [] : attachments.length ? attachments : recoverPostingImages(text, messages, Boolean(agentDraftId)))
     const hasMedia = selectedMedia.length > 0
     const message = text.trim() || (hasMedia ? 'Hãy xem hoặc nghe nội dung đính kèm và hỗ trợ mình.' : '')
     if (!message || busy || mediaBusy || recordingActive || activeRequest.current) return
