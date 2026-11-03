@@ -16,6 +16,7 @@ import {
   type ChatbotFoodCriteria,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+import { ThinkingCapsule } from './chatbot/ThinkingCapsule'
 import { useAuthModal } from "../../contexts/AuthModalContext.logic"
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 
@@ -646,9 +647,10 @@ export function MapChatbot({
               <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.</p>
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
             </div> : null}
+            <div className={`homeji-assistant__transcript-viewport${showTyping ? ' is-pending' : ''}`}>
             <div className="map-chatbot__body" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
             <ChatbotTranscript
-              state={{ messages, showGreeting, showTyping, busy, mediaBusy, recordingActive, draftWorkspaceId }}
+              state={{ messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId }}
               context={{ rentalContext, rentalSelection, sharedLocation }}
               refs={{ latestMessageRef, bottomRef }}
               actions={{
@@ -665,13 +667,15 @@ export function MapChatbot({
               }}
             />
             </div>
+            <ThinkingCapsule visible={showTyping} />
+            </div>
             {isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
             {copyStatus ? <p className="homeji-assistant__feedback" role="status">{copyStatus}</p> : null}
             <div className="homeji-assistant__wait-tools" hidden={!showTyping}>
               <GameLauncher waiting={showTyping} />
             </div>
-            {showTyping ? <div className="map-chatbot__request-status" role="status"><span>Đang xử lý · bạn vẫn có thể soạn tin</span><button type="button" onClick={stopRequest}>Dừng chờ</button></div> : null}
+            {showTyping ? <div className="map-chatbot__request-status"><span>Bạn vẫn có thể soạn tin</span><button type="button" onClick={stopRequest}>Dừng chờ</button></div> : null}
             <ChatbotComposer
               open={open}
               mediaSession={mediaSession}

@@ -7,11 +7,11 @@ if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('L
 const out = 'output/verification/agent-context-flow'
 await mkdir(out, { recursive: true })
 await writeFile(out + '/index.html', '<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out + '/scene.tsx', `import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapChatbot}from'/src/components/map/MapChatbot.tsx';import'/src/index.css';createRoot(document.getElementById('root')).render(<MemoryRouter><MapChatbot/></MemoryRouter>);`)
+await writeFile(out + '/scene.tsx', `import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapChatbot}from'/src/components/map/MapChatbot.tsx';import'/src/index.css';import'/src/components/theme/dark-theme.css';createRoot(document.getElementById('root')).render(<MemoryRouter><MapChatbot/></MemoryRouter>);`)
 const browser = await chromium.launch({ headless: true, channel: 'msedge' })
 try {
   for (const width of [1366, 390]) {
-    const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' })
+    const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: width === 390 ? 'reduce' : 'no-preference' })
     const requests = [], errors = []
     let approvals = 0
     page.on('pageerror', e => errors.push(e.message))
@@ -28,7 +28,8 @@ try {
         const body = route.request().postDataJSON(), now = new Date().toISOString()
         requests.push(body)
         const turn = requests.length
-        await new Promise(resolve => setTimeout(resolve, 700))
+        await new Promise(resolve => setTimeout(resolve, turn === 1 ? 1500 : 700))
+        if (body.message === 'thử lỗi kết nối') return route.fulfill({ status: 503, json: { message: 'Không kết nối được' } })
         return route.fulfill({ json: {
           conversationId: 'chat', userMessage: { id: 'user-' + turn, sender: 1, content: body.message, createdAt: now },
           assistantMessage: { id: 'assistant-' + turn, sender: 2, content: 'Bản nháp đang chờ bạn duyệt; chưa đăng bài.', createdAt: now }, actions: [], agentRequested: true,
@@ -41,6 +42,7 @@ try {
     await page.goto(base + '/' + out + '/index.html')
     await page.locator('#homeji-ai-conversation').waitFor({ state: 'attached' })
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('homeji-ai:toggle', { detail: { open: true, anchor: null } })))
+    await page.evaluate(dark => document.documentElement.dataset.theme = dark ? 'dark' : 'light', width === 390)
     const chat = page.getByRole('textbox', { name: 'Nhập tin nhắn cho Homeji' })
     await page.locator('input[type=file]').setInputFiles('public/landing/bloom-hero-bg2.jpg')
     await page.getByRole('img', { name: /bloom-hero/ }).waitFor()
@@ -49,6 +51,15 @@ try {
     await thinking.waitFor()
     assert.equal(await thinking.getAttribute('role'), 'status')
     assert.equal(await thinking.evaluate(e => getComputedStyle(e).borderRadius), '999px')
+    assert.equal(await thinking.evaluate(e => Boolean(e.closest('.map-chatbot__body'))), false, 'Popup stays outside the scrollable transcript')
+    const popupBox = await thinking.boundingBox(), inputBox = await chat.boundingBox()
+    assert.ok(popupBox.y + popupBox.height < inputBox.y, 'Popup must not cover composer')
+    const animation = await thinking.evaluate(e => getComputedStyle(e).animationName)
+    assert.equal(animation === 'none', width === 390, 'Reduced motion preference is respected')
+    const before = await thinking.boundingBox()
+    await page.locator('.map-chatbot__body').evaluate(e => e.scrollTop = 0)
+    const after = await thinking.boundingBox()
+    assert.ok(Math.abs(before.y - after.y) < 4, 'Scrolling transcript does not move popup')
     await page.screenshot({ path: out + '/thinking-' + width + '.png' })
     const workspace = page.getByRole('complementary', { name: 'Bản nháp đang duyệt' })
     await workspace.waitFor()
@@ -69,6 +80,14 @@ try {
     await workspace.getByRole('button', { name: 'Xác nhận đăng bài', exact: true }).click()
     await workspace.getByText('Đã đăng lên Chợ đồ', { exact: true }).waitFor()
     assert.equal(approvals, 1)
+    await workspace.getByRole('button', { name: 'Về hội thoại', exact: true }).click()
+    await chat.fill('hỏi về giá'); await chat.press('Enter'); await thinking.waitFor()
+    await page.getByRole('button', { name: 'Dừng chờ', exact: true }).click()
+    await thinking.waitFor({ state: 'detached' })
+    assert.equal(await chat.isEditable(), true)
+    await chat.fill('thử lỗi kết nối'); await chat.press('Enter'); await thinking.waitFor()
+    await thinking.waitFor({ state: 'detached' })
+    assert.equal(await chat.isEditable(), true)
     assert.deepEqual(errors, [])
     await page.close()
   }

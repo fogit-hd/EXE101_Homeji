@@ -27,7 +27,6 @@ import type { DisplayMessage } from './ChatbotMessageTypes'
 type State = {
   messages: DisplayMessage[]
   showGreeting: boolean
-  showTyping: boolean
   busy: boolean
   mediaBusy: boolean
   recordingActive: boolean
@@ -57,7 +56,7 @@ type Actions = {
 type Props = { state: State; context: Context; refs: Refs; actions: Actions }
 
 export function ChatbotTranscript({ state, context, refs, actions }: Props) {
-  const { messages, showGreeting, showTyping, busy, mediaBusy, recordingActive, draftWorkspaceId } = state
+  const { messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId } = state
   const { rentalContext, rentalSelection, sharedLocation } = context
   const { latestMessageRef, bottomRef } = refs
   const { onDismissRentalContext, send, prepareDraft, openDraftWorkspace, closeChat, handleNavigationAction, onSearchUpdate, openPayments, openMarketplace, copyReply } = actions
@@ -112,7 +111,6 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                   </div>
                 </article>
               })}
-              {showTyping ? <div className="homeji-assistant__thinking" role="status" aria-live="polite" data-glass-exclude><span aria-hidden><i /><i /><i /></span>Homeji đang xử lý…</div> : null}
               <div ref={bottomRef} />
     </>
   )
