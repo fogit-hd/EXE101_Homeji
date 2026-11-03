@@ -143,7 +143,7 @@ export function LiquidGlassEffects() {
       }
     })
     mutations.observe(document.body, { childList: true, subtree: true, attributes: true,
-      attributeFilter: ['class', 'role', 'type', 'readonly', 'hidden', 'aria-hidden', 'data-glass-exclude', 'data-glass-optics', 'data-glass-panel', 'data-glass-lens', 'data-glass-profile'] })
+      attributeFilter: ['class', 'role', 'type', 'readonly', 'hidden', 'aria-hidden', 'data-glass-exclude', 'data-glass-optics', 'data-glass-panel', 'data-glass-lens', 'data-glass-profile', 'data-glass-button'] })
     mutations.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => {
       stopActivity()

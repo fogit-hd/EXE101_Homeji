@@ -13,6 +13,7 @@ import './content-surfaces.css'
 import './workspace-readability.css'
 import './home-refinement.css'
 import { LiquidGlassEffects } from './components/ui/LiquidGlassEffects'
+import { WebglButtonGlassEffects } from './components/ui/WebglButtonGlassEffects'
 
 /**
  * Do NOT wrap the app in React.StrictMode while Google Maps Vector/WebGL is in use.
@@ -20,4 +21,4 @@ import { LiquidGlassEffects } from './components/ui/LiquidGlassEffects'
  * That exhausts WebGL contexts and Google falls back to Raster ("Attempted to load a
  * Vector Map, but failed"), which is why maps.google.com stays smooth but this app lags.
  */
-createRoot(document.getElementById('root')!).render(<><LiquidGlassEffects /><App /></>)
+createRoot(document.getElementById('root')!).render(<><WebglButtonGlassEffects /><LiquidGlassEffects /><App /></>)
