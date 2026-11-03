@@ -108,6 +108,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         {error ? <div className="room-detail__status" role="alert"><p>{error}</p><button type="button" className="room-detail__retry" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></div> : null}
         {!loaded && !error ? <p role="status">Đang tải thông tin phòng…</p> : null}
         {listing ? <>
+          <div className="room-detail__mobile-facts"><RoomEssentials rentLabel="Giá thuê / tháng" rent={rent} area={formatListingArea(listing.area)} deposit={deposit} /></div>
           <PhotoGallery key={id} urls={images} />
           <div className="room-detail__summary">
             <p className="room-detail__eyebrow">{apartment ? 'CĂN HỘ CHO THUÊ' : 'PHÒNG TRỌ CHO THUÊ'}</p>
@@ -116,7 +117,6 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
             <p className="room-detail__address">{listing.address || 'Chưa cung cấp địa chỉ'}</p>
             <ul className="room-detail__facts"><li>{apartment ? 'Căn hộ' : 'Phòng trọ'}</li></ul>
           </div>
-          <RoomEssentials rentLabel="Giá thuê / tháng" rent={rent} area={formatListingArea(listing.area)} deposit={deposit} />
           <section className="room-detail__costs" data-glass-exclude><h4>Chi phí thuê & tiền cọc</h4>
             {[['Tiền thuê', rent], ['Tiền cọc', deposit], ['Điện, nước', 'Chưa cung cấp'], ['Phí khác', 'Chưa cung cấp']].map(([label, value]) => <p key={label} className="room-detail__cost"><span>{label}</span><span>{value}</span></p>)}
             <p className="room-detail__muted">Xác nhận các khoản phí với người đăng trước khi quyết định.</p>
@@ -127,7 +127,8 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         </> : null}
       </section>
       <aside ref={contact} className="room-detail__aside source-room-detail__contact" aria-label="Giá thuê và liên hệ" tabIndex={-1}>
-        <div className="room-detail__price"><p className="room-detail__kicker">GIÁ THUÊ / THÁNG</p><p className="room-detail__amount">{rent}</p><p className="room-detail__muted">Giá thuê theo tin đăng</p></div><hr />
+        <div className="room-detail__price"><p className="room-detail__kicker">GIÁ THUÊ / THÁNG</p><p className="room-detail__amount">{rent}</p><p className="room-detail__muted">Giá thuê theo tin đăng</p></div>
+        <RoomEssentials rentLabel="Giá thuê / tháng" area={listing ? formatListingArea(listing.area) : 'Chưa cung cấp'} deposit={deposit} /><hr />
         <section className="room-detail__owner-profile" data-glass-exclude><h4>Hồ sơ người đăng</h4>
           <div className="room-detail__person"><span className="room-detail__avatar" aria-hidden="true">{publisher.charAt(0)}</span><div><span className="room-detail__owner-label">Họ và tên</span><strong>{publisher}</strong></div></div>
           <p className="room-detail__muted">Chưa xác minh danh tính trên Homeji</p>

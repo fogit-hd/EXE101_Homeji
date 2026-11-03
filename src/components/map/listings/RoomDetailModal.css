@@ -839,3 +839,11 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 .room-detail__flashlight:hover svg,.room-detail__flashlight:focus-visible svg{transform:rotate(-90deg)}
 .room-detail__flashlight:hover .room-detail__flashlight-rays,.room-detail__flashlight:focus-visible .room-detail__flashlight-rays{opacity:1}
 .room-detail__flashlight:hover .room-detail__flashlight-beam,.room-detail__flashlight:focus-visible .room-detail__flashlight-beam{opacity:.28}
+
+/* Keep the decision facts visible next to the gallery even on short screens. */
+.room-detail__aside > .room-detail__essentials { grid-template-columns: 1fr 1fr; padding: 14px 0; margin: 0; border: 0; border-block: 1px solid var(--rd-border); border-radius: 0; background: transparent; }
+.room-detail__aside > .room-detail__essentials strong { font-size: 16px; color: var(--rd-forest); overflow-wrap: anywhere; }
+.room-detail__aside > .room-detail__essentials + hr { display: none; }
+
+.room-detail__mobile-facts { display: none; }
+@media(max-width:800px) { .room-detail__mobile-facts { display: block; } .room-detail__mobile-facts .room-detail__essentials { margin-bottom: 16px; } .room-detail__aside > .room-detail__essentials { display: none; } }

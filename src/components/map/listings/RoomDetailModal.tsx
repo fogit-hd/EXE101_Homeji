@@ -389,6 +389,7 @@ export function RoomDetailModal({
           <>
             <div className="room-detail__body">
               <div className="room-detail__main" role="region" aria-label="Thông tin chi tiết phòng" tabIndex={0}>
+                <div className="room-detail__mobile-facts"><RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} rent={rentLabel ?? 'Trao đổi'} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Chưa cung cấp'} /></div>
                 <PhotoGallery urls={listingPhotos(post)} />
                 <div className="room-detail__summary">
                   <p className="room-detail__eyebrow">{isStudentShare ? 'TÌM BẠN Ở GHÉP' : isApartmentListing(post.title) ? 'CĂN HỘ CHO THUÊ' : 'PHÒNG TRỌ CHO THUÊ'}</p>
@@ -417,7 +418,6 @@ export function RoomDetailModal({
                     </ul>
                   ) : null}
                 </div>
-                <RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} rent={rentLabel ?? 'Trao đổi'} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Trao đổi'} />
                 <section className="room-detail__costs" data-glass-exclude>
                   <h4>Chi phí thuê & tiền cọc</h4>
                   <CostRow label={priceBasis === 'unknown' ? 'Giá chưa rõ đơn vị' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
@@ -461,6 +461,7 @@ export function RoomDetailModal({
                   <p className="room-detail__amount">{rentLabel ?? 'Chưa cung cấp'}</p>
                   <p className="room-detail__muted">{priceBasis === 'unknown' ? 'Hỏi người đăng giá theo người hay cả phòng trước khi so chi phí.' : isStudentShare ? 'Trao đổi để xác nhận cách chia các khoản phí.' : 'Giá thuê theo tin đăng'}</p>
                 </div>
+                <RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Chưa cung cấp'} />
                 <hr />
                 <div className="room-detail__contact" data-glass-exclude>
                   <OwnerProfile key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone} isStudentShare={isStudentShare}

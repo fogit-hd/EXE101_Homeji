@@ -9,9 +9,9 @@ export function RoomDetailHeader({ titleId, title, onClose, actions }: { titleId
   </header>
 }
 
-export function RoomEssentials({ rentLabel, rent, area, deposit }: { rentLabel: string; rent: string; area: string; deposit: string }) {
+export function RoomEssentials({ rentLabel, rent, area, deposit }: { rentLabel: string; rent?: string; area: string; deposit: string }) {
   return <div className="room-detail__essentials" aria-label="Thông tin thuê chính">
-    <div><span>{rentLabel}</span><strong>{rent}</strong></div>
+    {rent ? <div><span>{rentLabel}</span><strong>{rent}</strong></div> : null}
     <div><span>Diện tích</span><strong>{area}</strong></div>
     <div><span>Tiền cọc</span><strong>{deposit}</strong></div>
   </div>
