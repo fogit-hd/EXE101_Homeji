@@ -54,8 +54,8 @@ import { GlassDensityControl } from '../ui/GlassDensityControl'
 
 const MOBILE_SHEET_MEDIA = '(max-width: 900px)'
 
-function isMobileSheetViewport(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia(MOBILE_SHEET_MEDIA).matches
+function isMobileSheetViewport(media = MOBILE_SHEET_MEDIA): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(media).matches
 }
 
 type AuthenticatedHomeMapShellProps = {
@@ -162,6 +162,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
   const [nearbyToken, setNearbyToken] = useState(0)
   const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
+  const [nearbyRequestedKey, setNearbyRequestedKey] = useState<string | null>(null)
   /** Pin for chat "Mở trên bản đồ" — independent of selected place red pin. */
   const [sharedLocationPin, setSharedLocationPin] = useState<{
     lat: number
@@ -214,6 +215,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
   const nearbyVisible = !!nearbyAnchor && nearbyAnchor.contextKey === nearbyContextKey
     && nearbyDismissedKey !== nearbyContextKey && detailOpen && !uiCollapsed
+    && (!isMobileSheetViewport('(max-width: 767px)') || nearbyRequestedKey === nearbyContextKey)
     && (!destinationMode || isMapMode) && !marketMode
   useEffect(() => {
     setNearbyAnchor(!marketMode && isMapMode ? nearbyAnchor : null)
@@ -369,6 +371,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const mapFocusToken = nearbyFocus ? nearbyToken : focusToken
 
   const handleSelectPlace = useCallback((place: MapPlaceDetails) => {
+    setNearbyRequestedKey(null)
     setNearbyDismissedKey(null)
     setSharedLocationPin(null)
     setSelectedPlace(place)
@@ -543,6 +546,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [isAuthenticated, needsProfileSetup])
 
   const handleClearMapSelection = useCallback(() => {
+    setNearbyRequestedKey(null)
     setNearbyDismissedKey(null)
     focusedPostIdRef.current = null
     setFocusedPostId(null)
@@ -663,6 +667,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleSelectPost = useCallback(
     (postId: string) => {
+      setNearbyRequestedKey(null)
       setNearbyDismissedKey(null)
       setSharedLocationPin(null)
       setHoveredPostId(null)
@@ -1014,6 +1019,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleNearbyRequest = useCallback((category: import('../../lib/placeAutocomplete').NearbyPlaceCategory) => {
     if (!nearbyAnchor || !detailOpen || uiCollapsed) return false
+    setNearbyRequestedKey(nearbyAnchor.contextKey)
     setNearbyCategory(category)
     setNearbyDismissedKey(null)
     return true
@@ -1101,6 +1107,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           }
           contextPanel={nearbyPanel}
           viewportPaused={viewportPaused}
+          onClearSelection={handleClearMapSelection}
+          onOpenNearby={nearbyAnchor ? () => { setNearbyRequestedKey(nearbyContextKey); setNearbyDismissedKey(null) } : undefined}
           onHoverListing={handleCardHover}
           onLeaveListing={handleCardLeave}
           onSelectListing={handleSelectPost}

@@ -766,3 +766,10 @@ html[data-theme=dark] .source-catalog-popup__action{background:#11645c;border-co
 .source-catalog-cluster__list .source-catalog-popup:after{content:'';display:block;clear:both}
 
 .source-catalog-popup__summary:not(:has(>.source-catalog-popup__image)){grid-template-columns:minmax(0,1fr)}
+
+@media (max-width: 767px) {
+  .source-catalog-popup--rental { max-height: min(260px, 38dvh); overflow-y: auto; }
+  .source-catalog-popup__eyebrow, .source-catalog-popup__updated, .source-catalog-popup__publisher, .source-catalog-popup__note { display: none; }
+  .source-catalog-popup__body { padding-top: 0; }
+  .source-catalog-popup__facts > :nth-child(n+4) { display: none; }
+}

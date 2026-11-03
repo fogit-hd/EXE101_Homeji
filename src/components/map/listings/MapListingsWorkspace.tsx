@@ -54,6 +54,8 @@ type Props = {
   onHoverListing: (id: string) => void
   onLeaveListing: () => void
   onSelectListing: (id: string) => void
+  onClearSelection?: () => void
+  onOpenNearby?: () => void
   onOpenRoomDetail?: (id: string) => void
   onToggleSave?: (id: string) => void
   onResetFilters: () => void
@@ -89,6 +91,8 @@ export function MapListingsWorkspace({
   onHoverListing,
   onLeaveListing,
   onSelectListing,
+  onClearSelection,
+  onOpenNearby,
   onOpenRoomDetail,
   onToggleSave,
   onResetFilters,
@@ -267,6 +271,10 @@ export function MapListingsWorkspace({
             ))}
           </div>
           <div className="map-listings__tools">
+            <button type="button" className="map-listings__mobile-view" data-glass-exclude
+              onClick={() => setView(query.view === 'list' ? 'map' : 'list')}>
+              {query.view === 'list' ? 'Bản đồ' : 'Danh sách'}
+            </button>
             <button ref={filterAnchor} type="button"
               className={`map-listings__filter-trigger${activeFilterCount ? ' is-active' : ''}`}
               aria-expanded={filtersOpen} aria-haspopup="dialog" onClick={() => filtersOpen ? setFiltersOpen(false) : openFilters()}>
@@ -372,6 +380,8 @@ export function MapListingsWorkspace({
               </button>
             {selected && query.view !== 'list' ? (
               <PreviewCard
+                onClose={onClearSelection}
+                onOpenNearby={onOpenNearby}
                 view={selected.view}
                 monthly={!marketMode}
                 considerationPost={!marketMode ? { id: selected.id, title: selected.view.title } : undefined}
@@ -557,6 +567,8 @@ function FilterRange({ label, unit, draft, onChange }: {
 function BookmarkIcon({ saved = false }: { saved?: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z" /></svg> }
 
 function PreviewCard({
+  onClose,
+  onOpenNearby,
   view,
   monthly,
   saved,
@@ -565,6 +577,8 @@ function PreviewCard({
   onOpen,
   considerationPost,
 }: {
+  onClose?: () => void
+  onOpenNearby?: () => void
   view: ReturnType<typeof mapBackendListingToListingViewModel>
   monthly: boolean
   saved?: boolean
@@ -575,6 +589,7 @@ function PreviewCard({
 }) {
   return (
     <article className={`map-listings__preview${view.isPremium ? ' premium-listing' : ''}`} aria-label="Phòng đang chọn">
+      {onClose ? <button type="button" className="map-listings__preview-close" data-glass-exclude aria-label="Đóng phòng đang chọn" onClick={onClose}>×</button> : null}
       <ListingTrustBadges premium={view.isPremium} verified={view.isOwnerVerified} />
       <div className="map-listings__preview-top">
         <div className="map-listings__preview-photo">
@@ -615,6 +630,7 @@ function PreviewCard({
         {monthly ? 'Xem phòng & liên hệ' : 'Xem chi tiết'}
         <img src="/figma/map/arrow-right.svg" alt="" width={13} height={13} />
       </button>
+      {onOpenNearby ? <button type="button" className="map-listings__nearby-open" data-glass-exclude onClick={onOpenNearby}>Tiện ích quanh phòng</button> : null}
     </article>
   )
 }

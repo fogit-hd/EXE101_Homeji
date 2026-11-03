@@ -590,6 +590,7 @@ export function GlobalHeader() {
                   </Link>
                   ))}
                 </div>)}
+                <div className="hj-account__mobile-theme"><span>Giao diện tối</span><ThemeSwitch /></div>
                 <button
                   type="button"
                   role="menuitem"

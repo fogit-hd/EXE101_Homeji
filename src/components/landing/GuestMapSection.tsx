@@ -47,6 +47,7 @@ export function GuestMapSection() {
   const mapsReady = Boolean(apiKey && mapsLoaded)
 
   const [districtId, setDistrictId] = useState(GUEST_DISTRICTS[0].id)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [wardId, setWardId] = useState('')
   const [schoolId, setSchoolId] = useState('')
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
@@ -247,8 +248,12 @@ export function GuestMapSection() {
           <p className="guest-map__eyebrow">Bản đồ</p>
           <RevealText className="guest-map__title" text="Khám phá phòng quanh Thủ Đức & Q.9" />
 
-          <form
-            className="guest-map__filters"
+          <button type="button" className="guest-map__filter-toggle" aria-expanded={filtersOpen}
+            aria-controls="guest-map-filters" onClick={() => setFiltersOpen(open => !open)}>
+            <span>Lọc khu vực</span><span>{filtersOpen ? 'Thu gọn −' : 'Mở bộ lọc +'}</span>
+          </button>
+          <form id="guest-map-filters"
+            className={`guest-map__filters${filtersOpen ? ' is-open' : ''}`}
             onSubmit={(e) => {
               e.preventDefault()
               applyFilters({})

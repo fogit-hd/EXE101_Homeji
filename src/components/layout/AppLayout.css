@@ -76,3 +76,9 @@
   max-height: 100%;
   overflow: hidden;
 }
+
+@media (max-width: 767px) {
+  /* The map needs the full remaining viewport; legal links remain in the menu. */
+  .app-shell--map-peer > .site-footer { display: none; }
+  #root .home-map-page .glass-density-control--docked { display: none; }
+}

@@ -1439,3 +1439,32 @@
 
 /* Paused search is information the user still needs to read. */
 html:root #root .map-listings__move:disabled { opacity:1; cursor:default; }
+
+/* Mobile discovery uses one content pane and named actions, rather than a tiny select. */
+.map-listings__mobile-view { display: none; }
+@media (max-width: 767px) {
+  #root .map-listings .map-listings__toolbar { padding: 0 12px; gap: 8px; min-height: 94px; flex-wrap: wrap; align-content: center; }
+  #root .map-listings__catalog { width: 100%; height: 42px; gap: 24px; }
+  #root .map-listings__tools { width: 100%; justify-content: space-between; padding-bottom: 8px; }
+  #root .map-listings__mobile-view { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--ml-line); border-radius: 999px; background: var(--ml-card); color: var(--ml-ink); font: 600 13px var(--font-ui); }
+  #root .map-listings__display, #root .map-listings__mobile-toggle { display: none; }
+  #root .map-listings__filter-trigger { min-height: 40px; padding-inline: 16px; }
+  #root .map-listings__move { top: 10px; left: 10px; min-height: 34px; padding: 6px 10px; font-size: 11px; }
+  #root .map-listings.is-map-first .map-listings__panel:not(.is-mobile-hidden) { position: static; width: 100%; height: 100%; max-height: none; flex: 1 1 auto; border-radius: 0; }
+  #root .map-listings__panel-close { display: none; }
+  #root .map-listings__preview { left: 10px; right: 10px; bottom: 28px; width: auto; max-height: 230px; overflow: auto; padding: 12px; }
+  #root .map-listings__preview-top { gap: 10px; }
+  #root .map-listings__preview-photo { width: 64px; height: 64px; flex: 0 0 64px; }
+  #root .map-listings__preview-top p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; }
+  #root .map-listings__preview-tags, #root .map-listings__preview > .rental-journey-toggle { display: none; }
+}
+
+.map-listings__preview-close { position: absolute; right: 8px; top: 8px; width: 36px; height: 36px; border: 1px solid var(--ml-line); border-radius: 50%; background: var(--ml-card); color: var(--ml-ink); font-size: 24px; z-index: 2; }
+.map-listings__preview:has(.map-listings__preview-close) > .listing-trust-badges { padding-right: 36px; }
+.map-listings__nearby-open { display: none; }
+@media(max-width:767px) { #root .map-listings__nearby-open { display: block; width: 100%; min-height: 40px; border: 0; background: transparent; color: var(--ml-coral); font: 600 12px var(--font-ui); } }
+
+/* Foreground tokens are not interchangeable with a control's background in dark mode. */
+#root .map-listings__move { background: var(--ml-card); color: var(--ml-ink); border: 1px solid var(--ml-line); box-shadow: 0 2px 8px #102b2514; }
+html[data-theme='dark'] #root .map-listings__preview-open { background: #126770; color: #fff; }
+@media(max-width:767px) { #root .map-listings__preview:has(.map-listings__preview-close) .map-listings__preview-top { padding-right: 28px; } }

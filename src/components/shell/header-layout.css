@@ -17,3 +17,9 @@
     padding: 0 16px;
   }
 }
+
+.hj-account__mobile-theme { display: none; }
+@media (max-width: 767px) {
+  #root .hj-actions > .theme-switch, #root .hj-actions > .hj-post-cta { display: none; }
+  #root .hj-account__mobile-theme { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; color: var(--text-heading); font-size: 13px; }
+}

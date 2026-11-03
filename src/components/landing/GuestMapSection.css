@@ -575,3 +575,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+.guest-map__filter-toggle { display: none; }
+@media (max-width: 767px) {
+  #root .guest-map__filter-toggle { display: flex; width: 100%; justify-content: space-between; align-items: center; min-height: 44px; margin: 14px 0; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated); color: var(--text-heading); font: 600 13px var(--font-ui); }
+  #root .guest-map__filters:not(.is-open) { display: none; }
+  #root .guest-map__filters.is-open { grid-template-columns: 1fr 1fr; gap: 12px; }
+  #root .guest-map__field:first-child { display: none; }
+  #root .guest-map__title { font-size: 24px; line-height: 1.25; }
+  #root .guest-map__map-frame { height: 62dvh; min-height: 360px; }
+}
