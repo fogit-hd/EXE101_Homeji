@@ -30,3 +30,12 @@ assert.equal(opened,'?source='+pins[16].id.slice(7))
 list.querySelector('button').click();assert.equal(zoomed,true)
 await act(async()=>root.unmount());assert.equal(entries.length,0)
 console.log('PASS 17 sources join shared clusters, remain non-VIP, open correct details and clean up')
+
+let selectedPin
+function SharedScene(){useSourceCatalogMap(mapRef,libraryRef,true,true,{marketplace:false,vacant:true},'price-pill',onChange,pin=>{selectedPin=pin});return null}
+const sharedRoot=createRoot(document.getElementById('root'))
+await act(async()=>{sharedRoot.render(React.createElement(SharedScene));await new Promise(resolve=>setTimeout(resolve,0))})
+entries[16].listing.open();assert.equal(selectedPin.id,pins[16].id)
+assert.equal(selectedPin.title,pins[16].title)
+await act(async()=>sharedRoot.unmount())
+console.log('PASS source cluster selection delegates to shared React preview')

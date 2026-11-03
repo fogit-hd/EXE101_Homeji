@@ -27,9 +27,9 @@ try {
   for (const suffix of ['', '?redirect=1']) {
     await page.goto(base + '/' + out + '/index.html' + suffix)
     if (!suffix) await page.getByRole('link', { name: 'Xem phòng & liên hệ', exact: true }).click()
-    const dialog = page.getByRole('dialog', { name: row.title, exact: true })
+    const dialog = page.getByRole('dialog', { name: 'Chi tiết phòng trọ', exact: true })
     await dialog.waitFor()
-    await dialog.getByRole('heading', { name: 'Thanh Hậu Home', exact: true }).waitFor()
+    await dialog.getByRole('complementary', { name: 'Giá thuê và liên hệ' }).getByText('Thanh Hậu Home', { exact: true }).waitFor()
     assert.match(await page.locator('output').textContent(), new RegExp('^/\\?[^#]*source=' + id))
     assert.match(await page.locator('output').textContent(), /keyword=Le\+Van\+Viet/)
     assert.equal(contactReads, 0)
@@ -37,7 +37,7 @@ try {
     assert.equal(await page.locator('body').getAttribute('data-login-requested'), 'yes')
     assert.equal(contactReads, 0)
     await page.screenshot({ path: out + (suffix ? '/explore-redirect.png' : '/popup-click.png') })
-    await dialog.getByRole('button', { name: 'Đóng chi tiết phòng' }).click()
+    await dialog.getByRole('button', { name: 'Đóng', exact: true }).click()
     await dialog.waitFor({ state: 'detached' })
   }
   assert.equal(detailReads, 2); assert.equal(accountWrites, 0); assert.deepEqual(errors, [])

@@ -1,4 +1,9 @@
 import { useSourceCatalogMap } from './useSourceCatalogMap'
+import { useNavigate } from 'react-router-dom'
+import { RentalMapPreview } from './listings/RentalMapPreview'
+import { sourceRoomHref } from '../../lib/sourceRoomLink'
+import { isApartmentListing } from '../../lib/rentalPropertyCategory'
+import type { SourceCatalogPin } from '../../lib/sourceCatalog'
 import { createClusterListings, type ClusterListing, type CatalogClusterMarker } from './clusterListings'
 import { ListingClusterAlgorithm } from './listingClusterAlgorithm'
 import {
@@ -266,12 +271,14 @@ function RentalMapComponent({
   const openStreetViewAtRef = useRef<(position: google.maps.LatLng) => void>(() => {})
 
   const onSelectPostRef = useRef(onSelectPost)
+  const navigate = useNavigate()
+  const [selectedSource, setSelectedSource] = useState<SourceCatalogPin | null>(null)
   const onClearSelectionRef = useRef(onClearSelection)
   const onSelectPlaceRef = useRef(onSelectPlace)
   const onPlaceLoadingRef = useRef(onPlaceLoading)
-  useLayoutEffect(() => { onSelectPostRef.current = onSelectPost }, [onSelectPost])
-  useLayoutEffect(() => { onClearSelectionRef.current = onClearSelection }, [onClearSelection])
-  useLayoutEffect(() => { onSelectPlaceRef.current = onSelectPlace }, [onSelectPlace])
+  useLayoutEffect(() => { onSelectPostRef.current = id => { setSelectedSource(null); onSelectPost(id) } }, [onSelectPost])
+  useLayoutEffect(() => { onClearSelectionRef.current = () => { setSelectedSource(null); onClearSelection?.() } }, [onClearSelection])
+  useLayoutEffect(() => { onSelectPlaceRef.current = place => { setSelectedSource(null); onSelectPlace?.(place) } }, [onSelectPlace])
   useLayoutEffect(() => { onPlaceLoadingRef.current = onPlaceLoading }, [onPlaceLoading])
   const placeFetchSeqRef = useRef(0)
 
@@ -328,7 +335,11 @@ function RentalMapComponent({
     }
     refreshClusters()
   }, [refreshClusters])
-  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange)
+  const selectSourceRental = useCallback((pin: SourceCatalogPin) => {
+    onClearSelection?.()
+    setSelectedSource(pin)
+  }, [onClearSelection])
+  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange, selectSourceRental)
 
   const syncMarkers = useCallback(() => {
     const map = mapRef.current
@@ -1337,6 +1348,15 @@ function RentalMapComponent({
 
   return (
     <div className="rental-map">
+      {selectedSource ? <RentalMapPreview monthly onClose={() => setSelectedSource(null)}
+        onOpen={() => navigate(sourceRoomHref(selectedSource.id.slice('rental:'.length)))}
+        view={{ id: selectedSource.id, title: selectedSource.title, address: selectedSource.address,
+          priceLabel: selectedSource.price === null ? 'Trao đổi' : `${selectedSource.price.toLocaleString('vi-VN')} ₫`,
+          areaLabel: selectedSource.area === null ? '' : `${selectedSource.area} m²`,
+          thumbnailUrl: selectedSource.imageUrl, latitude: selectedSource.lat, longitude: selectedSource.lng,
+          typeLabel: isApartmentListing(selectedSource.title) ? 'Căn hộ' : 'Phòng trọ', highlightTag: null,
+          ownerBadge: null, isPremium: false, isOwnerVerified: false, facts: selectedSource.amenityHighlights,
+          updatedAt: selectedSource.sourceUpdatedAt }} /> : null}
       <div ref={hostRef} className="rental-map__host"
         onWheelCapture={() => { viewportGestureRef.current = true; userGestureRef.current = true }}
         onDoubleClickCapture={() => { viewportGestureRef.current = true; userGestureRef.current = true }}

@@ -1477,3 +1477,5 @@ html[data-theme='dark'] #root .map-listings__preview-open { background: #126770;
   #root .map-listings--list .map-listings__price { font-size: 17px; }
   #root .map-listings--list .map-listings__facts > :nth-child(n+4), #root .map-listings--list .map-listings__consideration { display: none; }
 }
+/* The shared preview can be mounted by either the map or the list workspace. */
+.map-listings__preview { --ml-ink: var(--text-heading); --ml-paper: var(--surface-muted); --ml-card: var(--surface-elevated); --ml-line: var(--border); --ml-muted: var(--text-secondary); --ml-coral: var(--hj-accent); }

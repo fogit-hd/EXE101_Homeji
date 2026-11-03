@@ -5,7 +5,7 @@ import { filterRentalSources } from '../../lib/rentalSourceFilters'
 import { apiRequest } from '../../api/client'
 import { getRentalSourceCatalog, sourceRoomHref } from '../../api/rentalSources'
 import type { CatalogClusterMarker } from './clusterListings'
-import { readSourceCatalogPins } from '../../lib/sourceCatalog'
+import { readSourceCatalogPins, type SourceCatalogPin } from '../../lib/sourceCatalog'
 import { createMarketplacePinContent, createPricePillPinContent, createRentalPinContent } from './mapLocationPins'
 import { formatCompactPriceTr } from './explore/mapExploreFormat'
 import { createSourceCatalogPopup } from './sourceCatalogPopup'
@@ -13,7 +13,7 @@ import type { MapPinLayers } from '../../lib/mapPinLayers'
 import { useCatalogRefresh } from '../../lib/useCatalogRefresh'
 
 
-export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void) {
+export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void, onSelectRental?: (pin: SourceCatalogPin) => void) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const query = useMemo(() => parseFiltersFromURL(params), [params])
@@ -44,6 +44,11 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
     if (!map || !library) return
     const handles: Array<{ marker: google.maps.marker.AdvancedMarkerElement; dispose: () => void; listener: google.maps.MapsEventListener }> = []
     const popup = new google.maps.InfoWindow()
+    const open = (pin: SourceCatalogPin, marker: google.maps.marker.AdvancedMarkerElement, shouldFocus: boolean) => {
+      if (pin.kind === 'rental' && onSelectRental) { popup.close(); onSelectRental(pin); return }
+      popup.setContent(createSourceCatalogPopup(pin, id => navigate(sourceRoomHref(id))))
+      popup.open({ map, anchor: marker, shouldFocus })
+    }
     for (const pin of pins) {
       const content = pin.kind === 'food'
         ? createMarketplacePinContent({ title: pin.title })
@@ -51,7 +56,7 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
           ? createPricePillPinContent({ title: pin.title, label: formatCompactPriceTr(pin.price) })
           : createRentalPinContent({ title: pin.title, kind: 'vacant' })
       const marker = new library.AdvancedMarkerElement({ position: { lat: pin.lat, lng: pin.lng }, title: pin.title, content: content.element, gmpClickable: true, zIndex: 35 })
-      const listener = marker.addListener('gmp-click', () => { popup.setContent(createSourceCatalogPopup(pin, id => navigate(sourceRoomHref(id)))); popup.open({ map, anchor: marker, shouldFocus: false }) })
+      const listener = marker.addListener('gmp-click', () => open(pin, marker, false))
       handles.push({ marker, dispose: content.dispose, listener })
     }
     onMarkersChange(handles.map((handle, index) => {
@@ -61,11 +66,11 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
         title: pin.title, address: pin.address, imageUrl: pin.imageUrl,
         priceLabel: pin.price ? `${pin.price.toLocaleString('vi-VN')} đ / tháng` : '',
         premium: false,
-        open: () => { popup.setContent(createSourceCatalogPopup(pin, id => navigate(sourceRoomHref(id)))); popup.open({ map, anchor: handle.marker, shouldFocus: true }) },
+        open: () => open(pin, handle.marker, true),
       } }
     }))
     setCount(handles.length)
     return () => { onMarkersChange([]); popup.close(); for (const handle of handles) { handle.listener.remove(); handle.marker.map = null; handle.dispose() } }
-  }, [mapRef, libraryRef, ready, enabled, markerVariant, pins, navigate, onMarkersChange])
+  }, [mapRef, libraryRef, ready, enabled, markerVariant, pins, navigate, onMarkersChange, onSelectRental])
   return enabled && ready ? count : 0
 }

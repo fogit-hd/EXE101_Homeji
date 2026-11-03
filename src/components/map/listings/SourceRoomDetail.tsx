@@ -1,6 +1,6 @@
 import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
 import { createPortal } from 'react-dom'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
 import { getRentalSource, getRentalSourceContact, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
@@ -8,17 +8,21 @@ import { formatListingArea, formatListingRent } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
 import { getErrorMessage } from '../../../lib/errors'
 import { pauseGuestCoast, resumeGuestCoast, isGuestCoastPaused } from '../../landing/guestCoast'
+import { RoomDetailHeader, RoomEssentials } from './RoomDetailPresentation'
+import { PhotoGallery } from './RoomPhotoGallery'
+import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import './SourceRoomDetail.css'
 
 export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary?: RentalSourceListing; onClose: () => void }) {
-  const dialog = useRef<HTMLDialogElement>(null)
+  const dialog = useRef<HTMLDivElement>(null)
+  const contact = useRef<HTMLElement>(null)
+  const closeRef = useRef(onClose)
+  useLayoutEffect(() => { closeRef.current = onClose }, [onClose])
   const labelId = useId()
   const [listing, setListing] = useState(summary ?? null)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
-  const [tab, setTab] = useState<'room' | 'contact'>('room')
-  const [photo, setPhoto] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [copyState, setCopyState] = useState('')
   const [contactRequest, setContactRequest] = useState<{ id: string; state: 'loading' | 'ready' | 'error'; phone: string | null; phones: string[]; error?: string } | null>(null)
@@ -36,8 +40,14 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const previousOverflow = document.body.style.overflow
     const wasPaused = isGuestCoastPaused()
-    pauseGuestCoast(); document.body.style.overflow = 'hidden'; element.showModal()
-    return () => { element.close(); document.body.style.overflow = previousOverflow; if (!wasPaused) resumeGuestCoast(); previousFocus?.focus() }
+    pauseGuestCoast(); document.body.style.overflow = 'hidden'; element.querySelector<HTMLButtonElement>('[data-room-detail-close]')?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || element.querySelector('dialog[open]') || document.querySelector('.auth-modal-overlay')) return
+      if (event.target instanceof Element && event.target !== document.body && !element.contains(event.target)) return
+      event.preventDefault(); event.stopImmediatePropagation(); closeRef.current()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => { window.removeEventListener('keydown', onKey, true); document.body.style.overflow = previousOverflow; if (!wasPaused) resumeGuestCoast(); previousFocus?.focus() }
   }, [])
   useEffect(() => {
     const controller = new AbortController()
@@ -78,34 +88,49 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
     if (currentContact?.state === 'ready' && phones.length) { setRevealed(value => !value); return }
     requestPhone()
   }
-  return createPortal(<dialog ref={dialog} className="source-room-detail" aria-labelledby={labelId}
-    onCancel={event => { event.preventDefault(); onClose() }} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
-    <header className="source-room-detail__header"><div><span>HOMEJI · CHI TIẾT PHÒNG</span><strong id={labelId}>{listing?.title ?? 'Thông tin phòng'}</strong></div><button type="button" autoFocus aria-label="Đóng chi tiết phòng" onClick={onClose}>×</button></header>
-    <div className="source-room-detail__tabs" role="tablist" aria-label="Thông tin phòng và liên hệ">
-      {(['room', 'contact'] as const).map((value, index) => <button id={`${labelId}-${value}-tab`} type="button" key={value} role="tab" aria-selected={tab === value} aria-controls={`${labelId}-${value}`} tabIndex={tab === value ? 0 : -1} onClick={() => setTab(value)} onKeyDown={event => {
-        if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 'room' : event.key === 'End' ? 'contact' : index === 0 ? 'contact' : 'room'; setTab(next); document.getElementById(`${labelId}-${next}-tab`)?.focus() }
-      }}>{value === 'room' ? 'Thông tin phòng' : 'Liên hệ'}</button>)}
-    </div>
-    <div className="source-room-detail__columns" data-tab={tab}>
-      <section className="source-room-detail__room" id={`${labelId}-room`} aria-label="Thông tin phòng" tabIndex={0}>
-        {error ? <p className="source-room-detail__error" role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
+  const rent = listing ? formatListingRent(listing.price) : 'Chưa cung cấp'
+  const deposit = listing?.depositLabel?.trim() || 'Chưa cung cấp'
+  const apartment = listing ? isApartmentListing(listing.title) : false
+  return createPortal(<div className="room-detail__backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose() }}>
+    <div ref={dialog} className="room-detail room-detail--source" role="dialog" aria-modal="true" aria-labelledby={labelId}
+      onKeyDown={event => {
+        if (event.target instanceof Element && event.target.closest('dialog')) return
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onClose(); return }
+        if (event.key !== 'Tab') return
+        const nodes = [...(dialog.current?.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],[tabindex="0"]') ?? [])].filter(node => node.getClientRects().length > 0)
+        const first = nodes[0], last = nodes[nodes.length - 1]
+        if (event.shiftKey && document.activeElement === first && last) { event.preventDefault(); last.focus() }
+        else if (!event.shiftKey && document.activeElement === last && first) { event.preventDefault(); first.focus() }
+      }}>
+    <RoomDetailHeader titleId={labelId} title={apartment ? 'Chi tiết căn hộ' : 'Chi tiết phòng trọ'} onClose={onClose} />
+    <div className="room-detail__body">
+      <section className="room-detail__main source-room-detail__room" aria-label="Thông tin chi tiết phòng" tabIndex={0}>
+        {error ? <div className="room-detail__status" role="alert"><p>{error}</p><button type="button" className="room-detail__retry" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></div> : null}
         {!loaded && !error ? <p role="status">Đang tải thông tin phòng…</p> : null}
         {listing ? <>
-          <div className="source-room-detail__gallery">
-            {images[photo] ? <img src={images[photo]} alt={`Ảnh phòng ${photo + 1} trong ${images.length}`} referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.opacity = '.15' }} /> : <span>Chưa có ảnh</span>}
-            {images.length > 1 ? <><button type="button" aria-label="Ảnh trước" onClick={() => setPhoto(value => (value + images.length - 1) % images.length)}>‹</button><button type="button" aria-label="Ảnh tiếp theo" onClick={() => setPhoto(value => (value + 1) % images.length)}>›</button><span>{photo + 1} / {images.length}</span></> : null}
+          <div className="room-detail__summary">
+            <p className="room-detail__eyebrow">{apartment ? 'CĂN HỘ CHO THUÊ' : 'PHÒNG TRỌ CHO THUÊ'}</p>
+            <h3>{listing.title}</h3>
+            <p className="room-detail__muted">Mã tin: {listingReference(listing.id)}</p>
+            <p className="room-detail__address">{listing.address || 'Chưa cung cấp địa chỉ'}</p>
+            <ul className="room-detail__facts"><li>{apartment ? 'Căn hộ' : 'Phòng trọ'}</li></ul>
           </div>
-          {images.length > 1 ? <div className="source-room-detail__thumbnails" aria-label="Chọn ảnh phòng">{images.map((image, index) => <button type="button" key={image} aria-label={`Xem ảnh ${index + 1}`} aria-pressed={index === photo} onClick={() => setPhoto(index)}><img src={image} loading="lazy" alt="" referrerPolicy="no-referrer" /></button>)}</div> : null}
-          <div className="source-room-detail__intro"><p className="source-room-detail__price">{formatListingRent(listing.price)}<small> / tháng</small></p><h1>{listing.title}</h1><p>{listing.address}</p>
-            <dl><div><dt>Diện tích</dt><dd>{formatListingArea(listing.area)}</dd></div><div><dt>Khu vực</dt><dd>{listing.district === 'quan-9' ? 'Quận 9' : 'Thủ Đức'}</dd></div><div><dt>Mã tin</dt><dd>{listingReference(listing.id)}</dd></div></dl>
-          </div>
-          <section className="source-room-detail__description"><h2>Không gian & thông tin phòng</h2><p>{loaded ? listing.description || 'Chưa có mô tả chi tiết cho phòng này.' : 'Đang tải mô tả…'}</p></section>
-          <section className="source-room-detail__provenance"><h2>Thông tin cập nhật</h2><p>{date ? `Cập nhật ngày ${new Date(date).toLocaleDateString('vi-VN')}.` : 'Chưa có ngày cập nhật.'}</p><p>{expired ? 'Tin đã hết hạn. Liên hệ để kiểm tra lại trước khi đến.' : 'Tình trạng còn phòng và các chi phí cần được xác nhận với người đăng.'}</p></section>
+          <RoomEssentials rentLabel="Giá thuê / tháng" rent={rent} area={formatListingArea(listing.area)} deposit={deposit} />
+          <PhotoGallery key={id} urls={images} />
+          <section className="room-detail__costs" data-glass-exclude><h4>Chi phí thuê & tiền cọc</h4>
+            {[['Tiền thuê', rent], ['Tiền cọc', deposit], ['Điện, nước', 'Chưa cung cấp'], ['Phí khác', 'Chưa cung cấp']].map(([label, value]) => <p key={label} className="room-detail__cost"><span>{label}</span><span>{value}</span></p>)}
+            <p className="room-detail__muted">Xác nhận các khoản phí với người đăng trước khi quyết định.</p>
+          </section>
+          <section className="room-detail__section" data-glass-exclude><h4>Mô tả căn phòng</h4><p>{loaded ? listing.description || 'Chưa có mô tả chi tiết cho phòng này.' : 'Đang tải mô tả…'}</p></section>
+          <section className="room-detail__section" data-glass-exclude><h4>Tiện ích trong phòng</h4>{listing.amenityHighlights?.length ? <ul className="room-detail__facts">{listing.amenityHighlights.map(label => <li key={label}>{label}</li>)}</ul> : <p className="room-detail__muted">Chưa cung cấp</p>}</section>
+          <section className="room-detail__section"><h4>Thông tin cập nhật</h4><p className="room-detail__muted">{date ? `Cập nhật ngày ${new Date(date).toLocaleDateString('vi-VN')}.` : 'Chưa có ngày cập nhật.'} {expired ? 'Tin đã hết hạn. Liên hệ để kiểm tra lại trước khi đến.' : 'Xác nhận tình trạng phòng với người đăng.'}</p></section>
         </> : null}
       </section>
-      <aside className="source-room-detail__contact" id={`${labelId}-contact`} aria-label="Thông tin liên hệ">
-        <div className="source-room-detail__contact-card"><span className="source-room-detail__eyebrow">LIÊN HỆ NGƯỜI ĐĂNG</span><div className="source-room-detail__person"><span aria-hidden>{publisher.charAt(0)}</span><div><h2>{publisher}</h2><p>Thông tin liên hệ</p></div></div>
-          <p className="source-room-detail__verification">Chưa xác minh danh tính trên Homeji</p>
+      <aside ref={contact} className="room-detail__aside source-room-detail__contact" aria-label="Giá thuê và liên hệ" tabIndex={-1}>
+        <div className="room-detail__price"><p className="room-detail__kicker">GIÁ THUÊ / THÁNG</p><p className="room-detail__amount">{rent}</p><p className="room-detail__muted">Giá thuê theo tin đăng</p></div><hr />
+        <section className="room-detail__owner-profile" data-glass-exclude><h4>Hồ sơ người đăng</h4>
+          <div className="room-detail__person"><span className="room-detail__avatar" aria-hidden="true">{publisher.charAt(0)}</span><div><span className="room-detail__owner-label">Họ và tên</span><strong>{publisher}</strong></div></div>
+          <p className="room-detail__muted">Chưa xác minh danh tính trên Homeji</p>
         {isAuthenticated && currentContact?.state === 'ready' && !phones.length
             ? <p className="source-room-detail__missing" role="status">Tin này chưa có số điện thoại để liên hệ.</p>
             : <>
@@ -123,10 +148,13 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
               {currentContact?.state === 'error' ? <p className="source-room-detail__missing" role="alert">{currentContact.error}</p> : null}
             </>}
           {copyState ? <p role="status">{copyState}</p> : null}
-          <div className="source-room-detail__contact-note"><strong>Trao đổi trước khi đến xem</strong><p>Hỏi lại giá thuê, tiền cọc, điện nước và thời gian xem phòng. Chưa liên kết tài khoản người đăng với chat Homeji.</p></div>
-        </div>
-        <small className="source-room-detail__attribution">Xác nhận tình trạng phòng và chi phí với người đăng trước khi đặt lịch hoặc đặt cọc.</small>
+
+        </section>
+        <div className="room-detail__note"><strong>Xem phòng trước khi quyết định</strong><p>Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.</p></div>
       </aside>
     </div>
-  </dialog>, document.body)
+    <footer className="room-detail__footer"><div className="room-detail__footer-copy"><strong className="room-detail__footer-price">{rent}<small> / tháng</small></strong><p>{publisher}</p></div>
+      <div className="room-detail__footer-actions"><button type="button" className="room-detail__message" disabled={!listing || currentContact?.state === 'loading'} onClick={() => { handleRevealPhone(); contact.current?.focus() }}>Liên hệ người đăng</button></div>
+    </footer>
+  </div></div>, document.body)
 }
