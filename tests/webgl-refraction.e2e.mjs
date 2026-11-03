@@ -32,6 +32,8 @@ try {
     assert.ok(optics.backingPixels <= 2048 * 256)
     await page.getByRole('tab', { name: 'Ví Homeji', exact: true }).click()
     assert.equal(await page.getByRole('tab', { name: 'Ví Homeji' }).getAttribute('aria-selected'), 'true')
+    await page.waitForTimeout(800)
+    await rail.screenshot({ path: `${out}/${theme}-${width}-wallet.png` })
     await page.getByRole('tab', { name: 'Ví Homeji' }).press('ArrowLeft')
     assert.equal(await page.getByRole('tab', { name: 'Quản lý cửa hàng' }).getAttribute('aria-selected'), 'true')
     await page.waitForTimeout(800)

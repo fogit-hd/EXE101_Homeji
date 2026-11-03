@@ -31,24 +31,44 @@ void main() {
   float radius = max(1., lensBox.w * .5 - 1.);
   vec2 q = p - vec2(clamp(p.x, -lensBox.z*.5+radius+1., lensBox.z*.5-radius-1.),0.);
   float d = length(q) / radius;
-  if (d >= 1. || lensBox.z < 1.) { gl_FragColor = base; return; }
-  float z = sqrt(max(.001, 1.-d*d));
-  vec3 normal = normalize(vec3(q / radius * .68, z));
-  float depth = radius * (.24 + z * .38);
+  if (lensBox.z < 1.) { gl_FragColor = base; return; }
+  // A contact shadow is evaluated from the same capsule silhouette. It is not
+  // a CSS halo; the light and shadow remain attached to the moving lens.
+  if (d >= 1.) {
+    float distance = length(q) - radius;
+    float shadow = exp(-distance / 4.5) * .16;
+    gl_FragColor = vec4(base.rgb * (1. - shadow), base.a);
+    return;
+  }
+  // A flattened optical crown keeps the label readable. Curvature rises only
+  // at the bevel, unlike a spherical cylinder which stretches the whole word.
+  float crown = sqrt(max(.002, 1. - pow(d, 8.)));
+  float slope = min(5., .28 * d + 4. * pow(d, 7.) / crown);
+  vec2 radial = q / max(length(q), .001);
+  vec3 normal = normalize(vec3(radial * slope * .48, 1.));
+  float depth = radius * (.16 + crown * .20);
   // Cauchy-like ordering: violet/blue bends more than red. These are material
   // parameters, not RGB shadows or offset HTML copies.
   vec4 red = texture2D(scene, trace(pixel, normal, depth, 1.506));
   vec4 green = texture2D(scene, trace(pixel, normal, depth, 1.518));
   vec4 blue = texture2D(scene, trace(pixel, normal, depth, 1.532));
   vec3 transmitted = vec3(red.r, green.g, blue.b);
-  vec3 key = normalize(vec3((lightX-.5)*1.6,-.8,1.4));
-  float specular = pow(max(0.,dot(reflect(-key,normal),vec3(0.,0.,1.))),54.);
+  vec3 key = normalize(vec3((lightX-.5)*.9,-.7,1.8));
+  vec3 reflected = reflect(vec3(0.,0.,-1.),normal);
+  // Broad studio softboxes produce continuous rim reflections rather than a
+  // single point-light dot. Fresnel reveals the thickness along the bevel.
+  float softbox = pow(max(0.,dot(reflected,key)),12.);
+  float lowerLight = pow(max(0.,dot(reflected,normalize(vec3(.3,.9,1.5)))),24.);
   float fresnel = .04 + .96 * pow(1.-normal.z,5.);
-  float rim = smoothstep(.91,.985,d) * (1.-smoothstep(.985,1.,d));
-  vec3 tint = mix(vec3(.92,.98,.97),vec3(.49,.72,.68),dark);
-  vec3 color = mix(transmitted * mix(vec3(1.),tint,.035), mix(base.rgb,tint,.35), fresnel);
-  color += vec3(specular*.16 + rim*.10);
-  float edge = 1.-smoothstep(.975,1.,d);
+  float bevel = smoothstep(.72,.98,d);
+  vec3 environment = mix(vec3(.34,.48,.46),vec3(.73,.89,.88),dark);
+  vec3 color = mix(transmitted,environment,fresnel * .55);
+  color *= 1. - bevel * .055;
+  color += vec3(softbox * .095 + lowerLight * .055) * bevel;
+  float topEdge = smoothstep(.93,.985,d) * (1.-smoothstep(.985,1.,d));
+  float facingLight = .35 + .65 * max(0.,-radial.y);
+  color = mix(color,vec3(1.),topEdge * facingLight * mix(.72,.36,dark));
+  float edge = 1.-smoothstep(.985,1.,d);
   gl_FragColor = vec4(mix(base.rgb, color, edge), max(base.a, edge));
 }
 `
@@ -108,7 +128,11 @@ export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
     textureScene.width = canvas.width; textureScene.height = canvas.height
     ctx.setTransform(ratio,0,0,ratio,0,0)
     const dark = document.documentElement.dataset.theme === 'dark'
-    ctx.fillStyle = dark ? '#1e343b' : '#f0f6f5'
+    const surface = ctx.createLinearGradient(0,0,0,height)
+    surface.addColorStop(0,dark ? '#243f47' : '#f4faf9')
+    surface.addColorStop(.52,dark ? '#20383e' : '#e7f1ef')
+    surface.addColorStop(1,dark ? '#1b3038' : '#dcebea')
+    ctx.fillStyle = surface
     ctx.fillRect(0,0,width,height)
     const box = root.getBoundingClientRect()
     for (const button of buttons) {
@@ -139,7 +163,7 @@ export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
     if (disposed || failed || !visible || document.hidden || preferences.matches) return
     const width = root.scrollWidth, height = root.clientHeight
     if (width < 2 || height < 2 || lens.hidden) { showHtml(); return }
-    const ratio = Math.min(window.devicePixelRatio || 1, 2, 2048/width, 256/height)
+    const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 2), 2, 2048/width, 256/height)
     const w = Math.round(width*ratio), h = Math.round(height*ratio)
     if (canvas.width !== w || canvas.height !== h) { canvas.width=w; canvas.height=h; canvas.style.width=`${width}px`; canvas.style.height=`${height}px`; dirty=true }
     if (dirty) { if (!paintScene(width,height,ratio)) { showHtml(); return } dirty=false }
