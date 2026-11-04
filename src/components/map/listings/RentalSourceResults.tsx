@@ -10,6 +10,8 @@ import './RentalSourceResults.css'
 import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
 
 type Counts = { total: number; mapped: number }
+// What students scan for first; shown highlighted on every card.
+const STUDENT_KEY_AMENITIES = new Set(['Máy lạnh', 'Máy nước nóng', 'Bếp', 'Giờ tự do', 'Không chung chủ'])
 function formatSourceDate(value: string | null | undefined): string | null {
   if (!value) return null
   const timestamp = Date.parse(value)
@@ -48,8 +50,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
     if (index < filtered.length) combined.push({ key: filtered[index].id, row: filtered[index] })
   }
   return <section className="source-results" aria-label="Danh sách phòng">
-    <header><p>{error ? 'Chưa tải được toàn bộ tin' : loaded ? `${combined.length} lựa chọn · Xem chi tiết và liên hệ ngay trên Homeji` : 'Đang tải toàn bộ danh sách…'}</p></header>
-    <details className="source-results__help"><summary>Về vị trí và tình trạng phòng</summary><p className="source-results__note">Danh sách gồm mọi tin đang hoạt động khớp bộ lọc, kể cả tin chưa có tọa độ. Bản đồ chỉ gắn ghim cho vị trí đã được xác nhận; tình trạng còn phòng cần kiểm tra với người đăng.</p></details>
+    {!loaded && !error ? <p className="source-results__note" role="status">Đang tải danh sách…</p> : null}
     {unsupported ? <p className="source-results__note">Một số tin chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
     {loaded && !error && combined.length === 0 ? <p role="status">Không có phòng khớp bộ lọc.</p> : null}
@@ -69,7 +70,8 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
           <h3 className="map-listings__name"><Link to={sourceRoomHref(row.id)}>{row.title}</Link></h3>
           <p className="map-listings__address">{row.address}</p>
           <div className="map-listings__meta">{row.area > 0 ? <span>{row.area} m²</span> : null}<span>{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span></div>
-          <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{(row.amenityHighlights ?? []).slice(0, 3).map(value => <span key={value}>{value}</span>)}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
+          {row.amenityHighlights?.length ? <ul className="source-results__amenities" aria-label="Tiện ích nổi bật">{row.amenityHighlights.slice(0, 6).map(value => <li key={value} className={STUDENT_KEY_AMENITIES.has(value) ? 'is-key' : undefined}>{value}</li>)}</ul> : null}
+          <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
           <p className="source-results__publisher">{row.publisherName?.trim() || 'Chưa có tên người đăng'}</p>
         </div>
         <div className="source-results__actions">

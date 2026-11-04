@@ -101,7 +101,7 @@ export function MapListingsWorkspace({
   onUserSearch,
   onFocusSource,
 }: Props) {
-  const [sourceCounts, setSourceCounts] = useState<{ total: number; mapped: number } | null>(null)
+  const [, setSourceCounts] = useState<{ total: number; mapped: number } | null>(null)
   const [searchParams, setSearchParams] = useListingSearchParams()
   const navigate = useNavigate()
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
@@ -408,8 +408,7 @@ export function MapListingsWorkspace({
             aria-label="Danh sách kết quả"
           >
             {query.view === 'split' ? <div className="map-listings__panel-head">
-              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : apartmentMode ? 'Căn hộ trong khu vực' : 'Phòng trọ trong khu vực'}</strong><p className="map-listings__result-count">{loading ? 'Đang tìm kết quả…' : marketMode ? `${cards.length} tin đang hiển thị` : sourceCounts === null ? 'Đang tải danh sách phòng…' : `${cards.length + sourceCounts.total} tin trong danh sách`}</p></div>
-              <button type="button" className="map-listings__panel-close" onClick={() => setPanelOpen(false)}>Thu gọn</button>
+              <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : apartmentMode ? 'Căn hộ trong khu vực' : 'Phòng trọ trong khu vực'}</strong></div>
             </div> : null}
             <div className="map-listings__panel-body">
               {error ? (

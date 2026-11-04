@@ -42,8 +42,8 @@ void main() {
   }
   // A flattened optical crown keeps the label readable. Curvature rises only
   // at the bevel, unlike a spherical cylinder which stretches the whole word.
-  float crown = sqrt(max(.002, 1. - pow(d, 8.)));
-  float slope = min(5., .28 * d + 4. * pow(d, 7.) / crown);
+  float crown = sqrt(max(.002, 1. - pow(d, 5.)));
+  float slope = min(5., .32 * d + 3.2 * pow(d, 4.) / crown);
   vec2 radial = q / max(length(q), .001);
   vec3 normal = normalize(vec3(radial * slope * .48, 1.));
   float depth = radius * (.16 + crown * .20);
@@ -60,7 +60,7 @@ void main() {
   float softbox = pow(max(0.,dot(reflected,key)),12.);
   float lowerLight = pow(max(0.,dot(reflected,normalize(vec3(.3,.9,1.5)))),24.);
   float fresnel = .04 + .96 * pow(1.-normal.z,5.);
-  float bevel = smoothstep(.72,.98,d);
+  float bevel = smoothstep(.6,.98,d);
   vec3 environment = mix(vec3(.34,.48,.46),vec3(.73,.89,.88),dark);
   vec3 color = mix(transmitted,environment,fresnel * .55);
   color *= 1. - bevel * .055;

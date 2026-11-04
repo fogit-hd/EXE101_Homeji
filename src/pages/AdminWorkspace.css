@@ -2,14 +2,14 @@
 #root .admin-workspace { max-width: 1600px; }
 .admin-layout { display: grid; grid-template-columns: 246px minmax(0, 1fr); gap: 32px; align-items: start; }
 .admin-content { min-width: 0; display: grid; gap: 20px; }
-.admin-nav { position: sticky; top: calc(var(--hj-header-h, 80px) + 20px); padding: 20px 12px; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 20px; }
+.admin-nav { position: sticky; top: calc(var(--hj-header-h, 80px) + 20px); max-height: calc(100dvh - var(--hj-header-h, 80px) - 40px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 16px 12px; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 20px; }
 .admin-nav__heading { display: block; padding: 0 12px 12px; color: var(--text-heading); font-size: 14px; font-weight: 750; }
-.admin-nav__group { display: block; padding: 20px 12px 8px; color: var(--text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .03em; }
+.admin-nav__group { display: block; padding: 14px 12px 6px; color: var(--text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .03em; }
 .admin-nav li:first-child .admin-nav__group { padding-top: 6px; }
 .admin-nav ul { display: grid; gap: 5px; list-style: none; padding: 0; margin: 0; }
 .admin-nav li { min-width: 0; }
 #root .admin-nav .admin-nav__toggle { display: none; }
-#root .admin-nav button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-secondary); text-align: left; font: 550 14px/1.5 var(--font-ui); cursor: pointer; }
+#root .admin-nav button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-secondary); text-align: left; font: 550 14px/1.5 var(--font-ui); cursor: pointer; }
 #root .admin-nav button:hover { background: var(--surface-input); color: var(--text-heading); }
 #root .admin-nav button[aria-current] { background: var(--action-soft); border-color: var(--border); color: var(--action-on-soft); font-weight: 750; }
 .admin-nav__count { margin-left: auto; min-width: 24px; padding: 2px 5px; border-radius: 5px; background: var(--surface-elevated); color: var(--text-heading); text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -101,7 +101,7 @@ html[data-theme='dark'] .admin-workspace .admin-price-signal.is-hold { backgroun
 }
 @media (max-width: 800px) {
   .admin-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .admin-nav { position: static; padding: 10px; border: 1px solid var(--border); border-radius: 14px; }
+  .admin-nav { position: static; max-height: none; overflow: visible; padding: 10px; border: 1px solid var(--border); border-radius: 14px; }
   .admin-nav__heading { display: none; }
   #root .admin-nav .admin-nav__toggle { display: flex; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--text-heading); justify-content: space-between; padding: 10px 14px; }
   .admin-nav__toggle small { display: block; font-size: 11px; color: var(--text-secondary); font-weight: 500; margin-bottom: 3px; }
