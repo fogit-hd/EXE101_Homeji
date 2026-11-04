@@ -21,7 +21,7 @@ html body #root button.theme-switch {
 }
 .theme-switch[aria-checked='false'] .theme-switch__moon { opacity: .5; }
 .theme-switch[aria-checked='true'] .theme-switch__sun { opacity: .5; }
-html body #root button.theme-switch--floating { position: fixed; z-index: 6000; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); }
+html body #root button.theme-switch--floating { position: fixed; z-index: 60; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); }
 body:has(.hj-header) #root .theme-switch--floating { display: none; }
 .guest-hero__top { padding-right: 88px; }
 .theme-water-layer { position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; overflow: hidden; }
