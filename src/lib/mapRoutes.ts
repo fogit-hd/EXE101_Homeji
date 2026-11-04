@@ -58,9 +58,9 @@ function toLiteral(
 }
 
 function stripHtml(html: string): string {
-  const el = document.createElement('div')
-  el.innerHTML = html
-  return (el.textContent || el.innerText || '').replace(/\s+/g, ' ').trim()
+  // DOMParser builds an inert document: no scripts run and no images load, unlike innerHTML.
+  const text = new DOMParser().parseFromString(html, 'text/html').body.textContent || ''
+  return text.replace(/\s+/g, ' ').trim()
 }
 
 function extractRouteSteps(route: google.maps.routes.Route): MapRouteStep[] {

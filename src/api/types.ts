@@ -179,6 +179,7 @@ export const ConversationSubjectType = {
   RentalPost: 1,
   MarketplacePost: 2,
   WantedPost: 3,
+  RoommateInvitation: 4,
 } as const
 export type ConversationSubjectType =
   (typeof ConversationSubjectType)[keyof typeof ConversationSubjectType]
@@ -881,7 +882,6 @@ export interface MarketplacePost {
   id: string
   sellerId: string
   sellerDisplayName: string
-  sellerPhone: string | null
   status: MarketplacePostStatus
   title: string
   description: string

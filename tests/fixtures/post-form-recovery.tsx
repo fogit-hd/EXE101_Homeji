@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- browser test entry, never hot-reloaded. */
 import React from 'react'
 import {createRoot} from 'react-dom/client'
 import {MemoryRouter,Routes,Route,useLocation} from 'react-router-dom'

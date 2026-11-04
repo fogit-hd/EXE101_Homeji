@@ -87,6 +87,7 @@ export const subjectTag: Record<number, { label: string; tone: string }> = {
   [ConversationSubjectType.RentalPost]: { label: '⌂ Phòng thuê', tone: 'room' },
   [ConversationSubjectType.MarketplacePost]: { label: '▣ Chợ đồ', tone: 'market' },
   [ConversationSubjectType.WantedPost]: { label: 'Tin cần tìm', tone: 'wanted' },
+  [ConversationSubjectType.RoommateInvitation]: { label: 'Bạn cùng phòng', tone: 'wanted' },
 }
 
 export type ContextItem = {
