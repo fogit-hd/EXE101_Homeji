@@ -6,17 +6,24 @@ export const HOMEJI_AI_PANEL_ID = 'homeji-ai-conversation'
 export type HomejiAiToggleDetail = { anchor: DOMRect | null; open?: boolean }
 
 let lastOpen = false
+const listeners = new Set<(event: Event) => void>()
+let pending: HomejiAiToggleDetail | null = null
 
 export function toggleHomejiAi(anchor: Element | null, open?: boolean) {
+  const detail = { anchor: anchor?.getBoundingClientRect() ?? null, open }
+  // The global chat is lazy loaded; retain the latest intent until it subscribes.
+  if (!listeners.size) { pending = { ...detail, open: open ?? !(pending?.open ?? lastOpen) }; return }
   window.dispatchEvent(new CustomEvent<HomejiAiToggleDetail>(TOGGLE, {
-    detail: { anchor: anchor?.getBoundingClientRect() ?? null, open },
+    detail,
   }))
 }
 
 export function onHomejiAiToggle(fn: (detail: HomejiAiToggleDetail) => void) {
   const handler = (e: Event) => fn((e as CustomEvent<HomejiAiToggleDetail>).detail)
   window.addEventListener(TOGGLE, handler)
-  return () => window.removeEventListener(TOGGLE, handler)
+  listeners.add(handler)
+  if (pending) { const request = pending; pending = null; fn(request) }
+  return () => { window.removeEventListener(TOGGLE, handler); listeners.delete(handler) }
 }
 
 export function publishHomejiAiOpen(open: boolean) {
