@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
 import { useLocation } from 'react-router-dom'
-import { readAuthTokenState } from '../../api/authSession'
+import { hasSessionHint, readAuthTokenState } from '../../api/authSession'
 import { brandIntroPlaybackRate, isBrandIntroLanding } from '../../lib/brandIntroPlayback'
 import { completeBrandIntro, INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
 import { HOMEJI_MARK_H, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
@@ -68,7 +68,7 @@ function BrandIntroOverlay() {
   const [playback] = useState(() => {
     let hasSession = false
     let hasSeenIntro = false
-    try { hasSession = Boolean(readAuthTokenState().token) } catch { /* Storage can be disabled. */ }
+    try { hasSession = Boolean(readAuthTokenState().token) || hasSessionHint() } catch { /* Storage can be disabled. */ }
     try { hasSeenIntro = sessionStorage.getItem(INTRO_SESSION_KEY) === '1' } catch { /* Storage can be disabled. */ }
     return {
       rate: brandIntroPlaybackRate(window.location.pathname, hasSession, hasSeenIntro),

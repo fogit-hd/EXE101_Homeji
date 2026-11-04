@@ -1,10 +1,17 @@
-import { ensureFreshSession } from './sessionRefresh'
+import { ensureFreshSession, SESSION_MODE_HEADERS, withSessionLock } from './sessionRefresh'
 import type { ApiError } from './types'
 import { NetworkError } from '../lib/errors'
 import {
+  announceSessionChange,
   clearStoredAuth,
   expireStoredAuth,
+  getMemorySession,
+  getSessionEpoch,
+  hasSessionHint,
+  queueSessionAdoption,
   readAuthTokenState,
+  setMemorySession,
+  setSignOutPending,
   type AuthTokenState,
 } from './authSession'
 
@@ -12,6 +19,7 @@ import {
  * Dev: same-origin → Vite proxy.
  * Production (Render Web Service): same-origin → scripts/serve-prod.mjs proxy → Render API.
  * Chỉ set VITE_API_BASE_URL khi gọi API trực tiếp (cần CORS trên backend).
+ * Phiên đăng nhập dùng cookie của origin frontend nên luôn cần proxy cùng origin.
  */
 function resolveApiBase(): string {
   if (import.meta.env.DEV) return ''
@@ -75,30 +83,29 @@ function getTokenState(): AuthTokenState {
   return readAuthTokenState()
 }
 
-export function setStoredToken(token: string | null) {
-  if (token) {
-    localStorage.setItem('homeji_access_token', token)
-  } else {
-    localStorage.removeItem('homeji_access_token')
-  }
-}
-
 export function getStoredSession(): { accessToken: string; userId: string | null; email: string | null } | null {
   const { token: accessToken } = getTokenState()
   if (!accessToken) return null
+  const session = getMemorySession()
   return {
     accessToken,
-    userId: localStorage.getItem('homeji_user_id'),
-    email: localStorage.getItem('homeji_email'),
+    userId: session?.userId ?? null,
+    email: session?.email ?? null,
   }
+}
+
+/** Whether requests should authenticate, including while a cookie session is still being restored. */
+export function mayHaveSession(): boolean {
+  return Boolean(getStoredSession()?.accessToken) || hasSessionHint()
 }
 
 export function persistSession(accessToken: string, userId?: string | null, email?: string | null, refreshToken?: string | null) {
   clearStoredAuth()
-  if (refreshToken) { localStorage.setItem('homeji_refresh_token', refreshToken); localStorage.setItem('homeji_session_anchor', accessToken) }
-  setStoredToken(accessToken)
-  if (userId) localStorage.setItem('homeji_user_id', userId)
-  if (email) localStorage.setItem('homeji_email', email)
+  setSignOutPending(false)
+  setMemorySession({ accessToken, userId: userId ?? null, email: email ?? null })
+  // Only sign-in links still hand tokens to the page; the next session check moves them into cookies.
+  if (refreshToken) queueSessionAdoption(accessToken, refreshToken)
+  else announceSessionChange({ type: 'signed-in', userId: getMemorySession()?.userId })
 }
 
 export function getApiBaseUrl(): string {
@@ -117,6 +124,8 @@ type RequestOptions = {
   signal?: AbortSignal
   timeoutMs?: number
   sessionRetried?: boolean
+  /** The response starts a session: ask for cookies instead of a refresh token in the body. */
+  issuesSession?: boolean
 }
 
 function buildUrl(path: string, params?: RequestOptions['params']): string {
@@ -146,16 +155,15 @@ function parseErrorBody(text: string, statusText: string): ApiError {
   }
 }
 
-function sessionStillCurrent(token: string | null, anchor: string | null) {
-  const current = localStorage.getItem('homeji_access_token')
-  return current === token || Boolean(current && anchor && localStorage.getItem('homeji_session_anchor') === anchor)
+function sessionStillCurrent(epoch: number) {
+  return getSessionEpoch() === epoch
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, auth = true, params, signal, timeoutMs = API_TIMEOUT_MS } = options
+  const { method = 'GET', body, auth = true, params, signal, timeoutMs = API_TIMEOUT_MS, issuesSession = false } = options
   if (auth) await ensureFreshSession()
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
-  const sessionAnchor = localStorage.getItem('homeji_session_anchor')
+  const sessionEpoch = getSessionEpoch()
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
       detail: tokenState.expired
@@ -166,6 +174,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    ...(issuesSession ? SESSION_MODE_HEADERS : {}),
   }
 
   if (body !== undefined) {
@@ -176,12 +185,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   let response: Response
   try {
-    response = await fetchWithTimeout(buildUrl(path, params), {
+    const send = () => fetchWithTimeout(buildUrl(path, params), {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal,
     }, timeoutMs)
+    response = await (issuesSession ? withSessionLock(send) : send())
   } catch (error) {
     if (error instanceof ApiRequestError) throw error
     if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
@@ -197,7 +207,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (response.status === 204) {
-    if (auth && !sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
+    if (auth && !sessionStillCurrent(sessionEpoch)) throw new DOMException('Session changed', 'AbortError')
     return undefined as T
   }
 
@@ -212,7 +222,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
-    if (auth && tokenState.token && response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
+    if (auth && tokenState.token && response.status === 401 && getTokenState().token === tokenState.token) {
       const renewed = options.sessionRetried ? null : await ensureFreshSession(tokenState.token)
       if (renewed && renewed !== tokenState.token) return apiRequest<T>(path, { ...options, sessionRetried: true })
       expireStoredAuth()
@@ -223,7 +233,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     )
   }
 
-  if (auth && !sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
+  if (auth && !sessionStillCurrent(sessionEpoch)) throw new DOMException('Session changed', 'AbortError')
   return data as T
 }
 
@@ -236,7 +246,7 @@ export async function apiUpload<T>(
   const auth = options?.auth !== false
   if (auth) await ensureFreshSession()
   const tokenState = auth ? getTokenState() : { token: null, expired: false }
-  const sessionAnchor = localStorage.getItem('homeji_session_anchor')
+  const sessionEpoch = getSessionEpoch()
   if (auth && !tokenState.token) {
     throw new ApiRequestError(401, {
       detail: tokenState.expired
@@ -276,7 +286,7 @@ export async function apiUpload<T>(
   }
 
   if (!response.ok) {
-    if (auth && tokenState.token && response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
+    if (auth && tokenState.token && response.status === 401 && getTokenState().token === tokenState.token) {
       const renewed = options?.sessionRetried ? null : await ensureFreshSession(tokenState.token)
       if (renewed && renewed !== tokenState.token) return apiUpload<T>(path, formData, { ...options, sessionRetried: true })
       expireStoredAuth()
@@ -287,7 +297,7 @@ export async function apiUpload<T>(
     )
   }
 
-  if (auth && !sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
+  if (auth && !sessionStillCurrent(sessionEpoch)) throw new DOMException('Session changed', 'AbortError')
   return data as T
 }
 
@@ -295,7 +305,7 @@ export async function apiUpload<T>(
 export async function apiDownload(path: string, sessionRetried = false): Promise<Blob> {
   await ensureFreshSession()
   const tokenState = getTokenState()
-  const sessionAnchor = localStorage.getItem('homeji_session_anchor')
+  const sessionEpoch = getSessionEpoch()
   if (!tokenState.token) {
     throw new ApiRequestError(401, {
       detail: tokenState.expired
@@ -318,7 +328,7 @@ export async function apiDownload(path: string, sessionRetried = false): Promise
   }
 
   if (!response.ok) {
-    if (response.status === 401 && localStorage.getItem('homeji_access_token') === tokenState.token) {
+    if (response.status === 401 && getTokenState().token === tokenState.token) {
       const renewed = sessionRetried ? null : await ensureFreshSession(tokenState.token ?? undefined)
       if (renewed && renewed !== tokenState.token && !sessionRetried) return apiDownload(path, true)
       expireStoredAuth()
@@ -328,7 +338,7 @@ export async function apiDownload(path: string, sessionRetried = false): Promise
   }
 
   const blob = await response.blob()
-  if (!sessionStillCurrent(tokenState.token, sessionAnchor)) throw new DOMException('Session changed', 'AbortError')
+  if (!sessionStillCurrent(sessionEpoch)) throw new DOMException('Session changed', 'AbortError')
   return blob
 }
 

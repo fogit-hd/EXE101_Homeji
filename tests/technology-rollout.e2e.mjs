@@ -122,7 +122,6 @@ try {
   await page.locator('#auth-email').fill('fixture-b@example.test')
   await page.locator('#auth-password').fill('FixtureOnly123!')
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-  await page.waitForFunction(() => localStorage.getItem('homeji_user_id') === '11111111-1111-4111-8111-111111111112')
   await page.waitForURL(url => url.pathname === '/' && !url.searchParams.has('section'))
   await page.getByText(/Chào.*Tài khoản B/).waitFor({ timeout: 10000 })
   // Same-document navigation proves a QueryClient switch, rather than merely clearing memory on reload.

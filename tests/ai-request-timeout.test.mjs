@@ -18,7 +18,7 @@ function session() {
   let id = 0
   let finish
   const client = module(clientSource, name => name === './sessionRefresh' ? {ensureFreshSession:async()=> 'fixture'} : name === './authSession' ? {
-    readAuthTokenState: () => ({ token: 'fixture', expired: false }),
+    readAuthTokenState: () => ({ token: 'fixture', expired: false }), getSessionEpoch: () => 1,
   } : {}, {
     AbortController, DOMException, URL,
     window: { location: { origin: 'https://homeji.test' },

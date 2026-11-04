@@ -3,7 +3,7 @@ import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
 import type { ChatbotAttachment } from '../lib/chatbotMedia'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
-import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload, getStoredSession } from './client'
+import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload, mayHaveSession } from './client'
 import type {
   AccountMessage,
   AdminActiveUser,
@@ -72,10 +72,10 @@ export * from './types'
 
 // Account
 export const register = (data: { email: string; password: string; displayName: string; redirectTo?: string }) =>
-  apiRequest<AuthSession>('/api/account/register', { method: 'POST', body: data, auth: false })
+  apiRequest<AuthSession>('/api/account/register', { method: 'POST', body: data, auth: false, issuesSession: true })
 
 export const login = (data: { email: string; password: string }) =>
-  apiRequest<AuthSession>('/api/account/login', { method: 'POST', body: data, auth: false })
+  apiRequest<AuthSession>('/api/account/login', { method: 'POST', body: data, auth: false, issuesSession: true })
 
 export const forgotPassword = (data: { email: string; redirectTo?: string }) =>
   apiRequest<AccountMessage>('/api/account/forgot-password', { method: 'POST', body: data, auth: false })
@@ -90,7 +90,7 @@ export const googleLoginWithIdToken = (
   data: { idToken: string },
   funnelEvent: Extract<FunnelEvent, 'login' | 'sign_up'> = 'login',
 ) =>
-  apiRequest<AuthSession>('/api/account/google/id-token', { method: 'POST', body: data, auth: false })
+  apiRequest<AuthSession>('/api/account/google/id-token', { method: 'POST', body: data, auth: false, issuesSession: true })
     .then(session => { if (session.accessToken) trackFunnelEvent(funnelEvent); return session })
 
 export const checkEmail = (data: { email: string }) =>
@@ -412,7 +412,7 @@ export const uploadImages = (files: File[], folder?: string) => {
 
 // Subscriptions
 export const getSubscriptionPackages = () =>
-  apiRequest<SubscriptionPackage[]>('/api/subscriptions/packages', { auth: Boolean(getStoredSession()?.accessToken) })
+  apiRequest<SubscriptionPackage[]>('/api/subscriptions/packages', { auth: mayHaveSession() })
 
 export const getMySubscription = () => apiRequest<MySubscription>('/api/subscriptions/me')
 

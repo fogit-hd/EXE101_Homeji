@@ -2,7 +2,7 @@ import { apiRequest } from './client'
 import type { AccountMessage, AuthSession } from './types'
 
 export const verifySignupOtp = (email: string, code: string) =>
-  apiRequest<AuthSession>('/api/account/verify-signup-otp', { method: 'POST', auth: false, body: { email, code } })
+  apiRequest<AuthSession>('/api/account/verify-signup-otp', { method: 'POST', auth: false, issuesSession: true, body: { email, code } })
 
 export const resendSignupOtp = (email: string) =>
   apiRequest<AccountMessage>('/api/account/resend-signup-otp', { method: 'POST', auth: false, body: { email } })

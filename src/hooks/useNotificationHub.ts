@@ -9,7 +9,7 @@ import {
 import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../lib/sellerOrderAlerts'
 import type { Notification } from '../api/types'
 import { getApiBaseUrl, getStoredSession } from '../api/client'
-import { AUTH_EXPIRED_EVENT, expireStoredAuth, terminateStoredAuth } from '../api/authSession'
+import { AUTH_EXPIRED_EVENT, terminateStoredAuth } from '../api/authSession'
 import {
   createNotificationHubRetryPolicy,
   isUnauthorizedHubError,
@@ -61,10 +61,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
     let cancelled = false
     const isCurrent = () => !cancelled && getStoredSession()?.accessToken === accessToken
     const getAccessToken = () => isCurrent() ? accessToken : null
-    const expireCurrentSession = () => { if (isCurrent()) {
-      if (localStorage.getItem('homeji_refresh_token')) void ensureFreshSession(accessToken).catch(() => {})
-      else expireStoredAuth()
-    } }
+    const expireCurrentSession = () => { if (isCurrent()) void ensureFreshSession(accessToken).catch(() => {}) }
     const connection = new HubConnectionBuilder()
       .withUrl(resolveHubUrl(), {
         accessTokenFactory: async () => { await ensureFreshSession(); return requireNotificationHubAccessToken(() => getStoredSession()?.accessToken ?? null) },

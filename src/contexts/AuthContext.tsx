@@ -16,11 +16,15 @@ import {
   clearSession,
   getMyProfile,
   getStoredSession,
+  hasSessionHint,
+  mayHaveSession,
   persistSession,
+  subscribeToSessionChanges,
+  announceSessionChange,
   type AuthSession,
   type UserProfile,
 } from '../api'
-import { AUTH_REFRESHED_EVENT, ensureFreshSession } from '../api/sessionRefresh'
+import { AUTH_REFRESHED_EVENT, endCookieSession, ensureFreshSession } from '../api/sessionRefresh'
 import { SERVICE_RETRY_MS } from "../components/HomejiLoader.logic"
 
 import { getErrorMessage, isProfileRequiredError, isServiceDisruption } from '../lib/errors'
@@ -47,7 +51,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
-  const [hasToken, setHasToken] = useState(() => Boolean(getStoredSession()?.accessToken))
+  // A cookie session is assumed from its hint until the first check confirms it, so a reload stays signed in.
+  const [hasToken, setHasToken] = useState(mayHaveSession)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
   const [profileError, setProfileError] = useState('')
@@ -55,10 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authDisrupted, setAuthDisrupted] = useState(false)
   const sessionVersion = useRef(0)
   const refreshInFlight = useRef<{ token: string; promise: Promise<void> } | null>(null)
+  const sessionOwner = useRef(getStoredSession()?.userId ?? null)
 
   const resetAuthState = useCallback(() => {
     sessionVersion.current += 1
     refreshInFlight.current = null
+    sessionOwner.current = null
     resetAnalyticsSearchMode()
     setHasToken(false)
     setProfile(null)
@@ -69,8 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    window.addEventListener(AUTH_EXPIRED_EVENT, resetAuthState)
-    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, resetAuthState)
+    const onExpired = () => {
+      resetAuthState()
+      // Covers endings that did not come from the API: otherwise the cookies would restore the session.
+      void endCookieSession()
+    }
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired)
   }, [resetAuthState])
 
   const applySession = useCallback((session: AuthSession) => {
@@ -85,13 +97,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (getStoredSession()?.userId !== session.userId) resetAnalyticsSearchMode()
     persistSession(session.accessToken, session.userId, session.email, session.refreshToken)
+    sessionOwner.current = getStoredSession()?.userId ?? null
     setHasToken(true)
     setEmail(session.email ?? null)
   }, [])
 
   const refreshProfile = useCallback(async () => {
+    if (!getStoredSession()?.accessToken && hasSessionHint()) {
+      try {
+        await ensureFreshSession()
+      } catch (err) {
+        // Mạng / server sự cố → giữ phiên + retry, không logout
+        if (isServiceDisruption(err)) setAuthDisrupted(true)
+        return
+      }
+    }
     const session = getStoredSession()
     if (!session?.accessToken) {
+      setHasToken(false)
       setProfile(null)
       setNeedsProfileSetup(false)
       setProfileError('')
@@ -125,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (err instanceof ApiRequestError && err.status === 401) {
           clearSession()
           resetAuthState()
+          void endCookieSession()
           return
         }
 
@@ -158,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Có mạng lại → tiếp tục session/profile, không cần F5
   useOnReconnect(() => {
-    if (!getStoredSession()?.accessToken) return
+    if (!mayHaveSession()) return
     void refreshProfile()
   })
 
@@ -170,22 +194,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const sync = () => {
-      const token = localStorage.getItem('homeji_access_token')
-      if (!token) { resetAuthState(); return }
+      const session = getStoredSession()
+      if (!session) { if (!hasSessionHint()) resetAuthState(); return }
+      if (sessionOwner.current !== session.userId) {
+        // Another tab switched account: nothing belonging to the previous one may stay on screen.
+        sessionVersion.current += 1
+        refreshInFlight.current = null
+        resetAnalyticsSearchMode()
+        setProfile(null)
+        setNeedsProfileSetup(false)
+        setProfileError('')
+      }
+      sessionOwner.current = session.userId
       setHasToken(true)
-      setEmail(localStorage.getItem('homeji_email'))
+      setEmail(session.email)
       void refreshProfile()
     }
-    const storage = (event: StorageEvent) => { if (event.key === 'homeji_access_token' || event.key === null) sync() }
     const renew = () => { void ensureFreshSession().catch(() => { /* Retry later without deleting the session. */ }) }
+    const unsubscribe = subscribeToSessionChanges(change => {
+      if (change.type === 'signed-out') {
+        clearSession()
+        resetAuthState()
+      } else if (change.userId !== getStoredSession()?.userId) {
+        clearSession()
+        setHasToken(hasSessionHint())
+        void refreshProfile()
+      }
+    })
     window.addEventListener(AUTH_REFRESHED_EVENT, sync)
-    window.addEventListener('storage', storage)
     window.addEventListener('focus', renew)
     window.addEventListener('online', renew)
     const timer = window.setInterval(renew, 30_000)
     return () => {
+      unsubscribe()
       window.removeEventListener(AUTH_REFRESHED_EVENT, sync)
-      window.removeEventListener('storage', storage)
       window.removeEventListener('focus', renew)
       window.removeEventListener('online', renew)
       window.clearInterval(timer)
@@ -222,6 +264,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearSession()
     resetAuthState()
+    announceSessionChange({ type: 'signed-out' })
+    void endCookieSession()
   }, [resetAuthState])
 
   const value = useMemo<AuthContextValue>(
