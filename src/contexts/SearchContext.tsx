@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useListingSearchParams } from '../hooks/useListingSearchParams'
+import { splitListingNavigation } from '../lib/listingSearchState'
 import { trackFunnelEvent } from '../lib/ga4'
 import { fetchPlacePredictions, searchNearbyPlaces, type NearbyPlaceCategory } from '../lib/placeAutocomplete'
 import { useGoogleMaps } from "./GoogleMapsProvider.logic"
@@ -190,8 +192,14 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   const [nearbyPack, setNearbyPack] = useState<SuggestionPack>({ key: '', items: [], loading: false })
   const location = useLocation()
   const navigate = useNavigate()
+  const [listingParams, setListingParams] = useListingSearchParams()
+  const listingSearch = listingParams.toString()
   const context = resolveSearchContext(location.pathname, location.search)
-  const url = readUrlQuery(context, location.search)
+  const url = readUrlQuery(context, context === 'housing' || context === 'map' ? listingSearch : location.search)
+  const openHousingSearch = useCallback((params: URLSearchParams) => {
+    setListingParams(params, { replace: location.pathname !== '/' })
+    if (location.pathname !== '/') navigate({ pathname: '/', search: splitListingNavigation(params).navigation.toString() })
+  }, [setListingParams, location.pathname, navigate])
   const urlStamp = `${context}\0${url.explicit ? '1' : '0'}\0${url.explicit ? url.value : ''}`
   const [appliedStamp, setAppliedStamp] = useState(urlStamp)
   const [queryByContext, setQueryByContext] = useState<QueryMap>(() => url.explicit ? { [context]: url.value } : {})
@@ -201,7 +209,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
 
   if (appliedStamp !== urlStamp) {
     setAppliedStamp(urlStamp)
-    // Removing a URL query clears this context; switching contexts keeps its draft.
+    // Removing applied criteria clears this context; switching contexts keeps its draft.
     if (url.explicit || appliedStamp.split('\0', 1)[0] === context) {
       setQueryByContext((prev) => {
         if ((prev[context] ?? '') === url.value) return prev
@@ -279,23 +287,27 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       remember(next)
       setRecentSearches(loadRecent())
     }
-    const href = destinationFor(context, next, location.search)
+    const housing = context === 'map' || context === 'housing' || context === 'global'
+    const href = destinationFor(context, next, housing ? listingSearch : location.search)
     if (!href) return
-    if (`${location.pathname}${location.search}` === href) return
+    if (!housing && `${location.pathname}${location.search}` === href) return
     if (context === 'map' || context === 'housing') trackFunnelEvent('rental_search', { search_mode: 'filter' })
+    if (housing) { openHousingSearch(new URLSearchParams(href.split('?')[1])); return }
     navigate(href)
-  }, [context, location.pathname, location.search, navigate, query])
+  }, [context, location.pathname, location.search, listingSearch, openHousingSearch, navigate, query])
 
   const clear = useCallback(() => {
     setQueryByContext((prev) => ({ ...prev, [context]: '' }))
     setSuggestionPack({ key: '', items: [], loading: false })
-    const href = destinationFor(context, '', location.search)
+    const housing = context === 'map' || context === 'housing' || context === 'global'
+    const href = destinationFor(context, '', housing ? listingSearch : location.search)
+    if (href && housing) { openHousingSearch(new URLSearchParams(href.split('?')[1])); return }
     if (href && `${location.pathname}${location.search}` !== href) navigate(href)
-  }, [context, location.pathname, location.search, navigate])
+  }, [context, location.pathname, location.search, listingSearch, openHousingSearch, navigate])
 
   const pickSuggestion = useCallback((item: SearchSuggestion) => {
     trackFunnelEvent('rental_search', { search_mode: 'filter' })
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(listingSearch)
     params.set('section', 'listings')
     params.set('view', 'map')
     params.set('placeId', item.id)
@@ -303,9 +315,9 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     params.delete('post')
     params.delete('keyword')
     params.delete('page')
-    navigate(`/?${params.toString()}`)
+    openHousingSearch(params)
     setQueryByContext((prev) => ({ ...prev, map: item.title }))
-  }, [location.search, navigate])
+  }, [listingSearch, openHousingSearch])
 
   const value = useMemo<SearchState>(() => ({
     nearbyAnchor, setNearbyAnchor, nearbyCategory, setNearbyCategory, nearbySuggestions, nearbyLoading,

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import vm from 'node:vm'
 import ts from 'typescript'
+import { createListingSearchStore, splitListingNavigation, mergeListingSearch, isListingSearchNavigation } from '../src/lib/listingSearchState.ts'
 
 const source = await readFile(new URL('../src/contexts/SearchContext.tsx', import.meta.url), 'utf8')
 const javascript = ts.transpileModule(source, {
@@ -34,6 +35,7 @@ function searchSession(initialUrl) {
     useEffect: () => {},
   }
   const storage = new Map()
+  const criteriaStore = createListingSearchStore()
   const exports = {}
   const adapters = {
     react,
@@ -44,6 +46,16 @@ function searchSession(initialUrl) {
     '../lib/searchQuery': { isUsefulSearchQuery: value => value.trim().length >= 2 },
     '../lib/localPlaceSearch': { relevantRecentLocations: items => items },
     '../lib/ga4': { trackFunnelEvent: () => {} },
+    '../lib/listingSearchState': { splitListingNavigation },
+    '../hooks/useListingSearchParams': { useListingSearchParams: () => [
+      isListingSearchNavigation(new URLSearchParams(location.search)) ? mergeListingSearch(new URLSearchParams(location.search), criteriaStore.getSnapshot()) : new URLSearchParams(location.search),
+      next => {
+        const requested = typeof next === 'function' ? next(mergeListingSearch(new URLSearchParams(location.search), criteriaStore.getSnapshot())) : next;
+        const split = splitListingNavigation(requested);
+        criteriaStore.set(split.criteria);
+        move(location.pathname + '?' + split.navigation.toString());
+      },
+    ] },
   }
   vm.runInNewContext(javascript, {
     exports,
@@ -76,10 +88,10 @@ for (const [context, start, parameter] of [
     session.render().setQuery('UEL')
     session.render().submit()
     const submitted = session.url()
-    assert.equal(new URL(submitted, 'https://homeji.test').searchParams.get(parameter), 'UEL')
+    assert.equal(new URL(submitted, 'https://homeji.test').searchParams.get(parameter), context === 'housing' ? null : 'UEL')
     assert.equal(session.render().query, 'UEL')
     session.move(start)
-    assert.equal(session.render().query, '')
+    assert.equal(session.render().query, context === 'housing' ? 'UEL' : '')
     session.move(submitted)
     assert.equal(session.render().query, 'UEL')
     session.render().clear()
@@ -105,7 +117,7 @@ test('context switches preserve unsubmitted drafts and explicit URL queries over
   assert.equal(session.render().query, 'FPT')
 })
 
-test('selected map places retain their name and follow Back and Forward', () => {
+test('selected map places retain their name in tab state without exposing place criteria in navigation', () => {
   const start = '/?section=listings&view=map'
   const session = searchSession(start)
   session.render().submit('UEL')
@@ -113,12 +125,13 @@ test('selected map places retain their name and follow Back and Forward', () => 
   session.render().pickSuggestion({ id: 'campus-uel', title: 'Đại học UEL', subtitle: 'Thủ Đức' })
   const placeUrl = session.url()
   assert.equal(session.render().query, 'Đại học UEL')
+  assert.equal(new URL(placeUrl, 'https://homeji.test').searchParams.has('placeId'), false)
   session.move(keywordUrl)
-  assert.equal(session.render().query, 'UEL')
+  assert.equal(session.render().query, 'Đại học UEL')
   session.move(placeUrl)
   assert.equal(session.render().query, 'Đại học UEL')
   session.move(start)
-  assert.equal(session.render().query, '')
+  assert.equal(session.render().query, 'Đại học UEL')
   session.move(placeUrl)
   assert.equal(session.render().query, 'Đại học UEL')
   session.render().clear()

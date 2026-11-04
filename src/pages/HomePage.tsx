@@ -1,6 +1,7 @@
+import { useListingSearchParams } from '../hooks/useListingSearchParams'
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import {
   getRentalPost,
   highlightRentalPosts,
@@ -103,7 +104,7 @@ function HomePageComponent() {
   const { schools, loading: schoolsLoading } = useNearbyGuestSchools(mapsReady && isAuthenticated)
   const location = useLocation()
   const [pendingAiReview, setPendingAiReview] = useState<AiHighlightResponse | null>(null)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useListingSearchParams()
   const urlSectionRaw = searchParams.get('section')
   const urlPostId = searchParams.get('post')
   // Notifications open from the header bell. Old `section=notifications` links

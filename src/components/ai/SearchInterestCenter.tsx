@@ -1,6 +1,7 @@
+import { useListingSearchParams } from '../../hooks/useListingSearchParams'
 import { MoneyInput } from '../ui/MoneyInput'
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ApiRequestError, UserRole } from '../../api'
 import {
   clearInterestHistory, dismissSearchInterest, followSearchInterest, getSearchInterests, inferSearchInterest,
@@ -25,7 +26,8 @@ export function SearchInterestCenter() {
 function OwnedSearchInterestCenter() {
   const { isAuthenticated, profile } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate()
+  const [listingParams, setListingParams] = useListingSearchParams()
+  const listingSearch = listingParams.toString()
   const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const owner = profile?.id
@@ -35,7 +37,7 @@ function OwnedSearchInterestCenter() {
   const [busy, setBusy] = useState(false)
   const [draft, setDraft] = useState<InterestCriteria | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
-  const [open, setOpen] = useState(() => new URLSearchParams(location.search).get('interest') === 'manage')
+  const [open, setOpen] = useState(() => new URLSearchParams(listingSearch).get('interest') === 'manage')
   const [confirmClear, setConfirmClear] = useState(false)
   const latest = useRef(0)
   const current = state && state.owner === owner ? state.value : null
@@ -51,10 +53,10 @@ function OwnedSearchInterestCenter() {
     if (!isAuthenticated || !owner || !current?.settings.enabled) return
     let cancelled = false
     const capture = window.setTimeout(() => {
-      const params = new URLSearchParams(location.search)
+      const params = new URLSearchParams(listingSearch)
       const post = params.get('post')
       if (post && /^[0-9a-f-]{36}$/i.test(post)) { void markInterestViewed(post).catch(() => {}); return }
-      const criteria = interestFromSearch(location.search)
+      const criteria = interestFromSearch(listingSearch)
       if (!criteria) return
       try {
         const session = interestSession(sessionStorage, owner, Date.now(), () => crypto.randomUUID())
@@ -63,7 +65,7 @@ function OwnedSearchInterestCenter() {
       } catch { /* Disabled storage must never block normal search. */ }
     }, 700)
     return () => { cancelled = true; window.clearTimeout(capture) }
-  }, [isAuthenticated, owner, current?.settings.enabled, location.search, apply])
+  }, [isAuthenticated, owner, current?.settings.enabled, listingSearch, apply])
   const rankedRooms = useRef('')
   const [rankingRetry, setRankingRetry] = useState(0)
   useEffect(() => {
@@ -100,15 +102,15 @@ function OwnedSearchInterestCenter() {
   }, [owner, current?.settings.enabled, current?.settings.aiEnabled, roomSignature, busy, apply, rankingRetry])
   const closePanel = () => {
     setOpen(false)
-    const params = new URLSearchParams(location.search)
-    if (params.has('interest')) { params.delete('interest'); navigate({ search: params.toString() }, { replace: true }) }
+    const params = new URLSearchParams(listingSearch)
+    if (params.has('interest')) { params.delete('interest'); setListingParams(params, { replace: true }) }
   }
   useEffect(() => {
     const node = dialog.current
-    const requested = open || new URLSearchParams(location.search).get('interest') === 'manage'
+    const requested = open || new URLSearchParams(listingSearch).get('interest') === 'manage'
     if (requested && node && !node.open) node.showModal()
     if (!requested && node?.open) node.close()
-  }, [open, location.search])
+  }, [open, listingSearch])
   const action = async (run: () => Promise<InterestOverview>) => {
     if (busy) return
     const turn = ++latest.current
@@ -139,7 +141,7 @@ function OwnedSearchInterestCenter() {
     if (await action(() => followSearchInterest(draft))) { setDraft(null); setNotice('Đã theo dõi. Homeji sẽ kiểm tra tin mới phù hợp theo bộ lọc bạn xác nhận.') }
   }
   if (!isAuthenticated || !owner) return null
-  const section = new URLSearchParams(location.search).get('section')
+  const section = new URLSearchParams(listingSearch).get('section')
   const showLauncher = location.pathname === '/' && (!section || section === 'listings' || section === 'saved') && profile?.role !== UserRole.Admin
   const changeNumber = (key: keyof InterestCriteria, raw: string) => setDraft(value => value ? { ...value, [key]: raw === '' ? null : Number(raw) } : value)
   return <>
@@ -166,7 +168,7 @@ function OwnedSearchInterestCenter() {
             <section><h3>Bạn đang quan tâm khu vực nào?</h3>
               {current.suggestions.length === 0 && <p>Chưa đủ lượt tìm từ nhiều phiên. Bạn vẫn có thể chủ động theo dõi một khu vực.</p>}
               {current.suggestions.map(s => <article key={s.key}><strong>Bạn đang quan tâm khu vực {s.criteria.area}?</strong><p>{s.sessions} phiên tìm trong 7 ngày gần nhất.</p><button type="button" disabled={busy} onClick={() => { setDraft(s.criteria); setWarnings([]) }}>Xem bộ lọc để theo dõi</button><button type="button" disabled={busy} onClick={() => void action(() => dismissSearchInterest(s.criteria.area))}>Bỏ gợi ý 30 ngày</button></article>)}
-              <div className="interest-actions"><button type="button" disabled={busy} onClick={() => { setDraft(interestFromSearch(location.search) || { area: '', amenities: [], excludedAmenities: [] }); setWarnings([]) }}>Theo dõi khu vực mới</button><button type="button" disabled={busy || !current.settings.aiEnabled} onClick={() => void infer()}>{busy ? 'Đang xử lý…' : 'AI tổng hợp nhu cầu'}</button></div>
+              <div className="interest-actions"><button type="button" disabled={busy} onClick={() => { setDraft(interestFromSearch(listingSearch) || { area: '', amenities: [], excludedAmenities: [] }); setWarnings([]) }}>Theo dõi khu vực mới</button><button type="button" disabled={busy || !current.settings.aiEnabled} onClick={() => void infer()}>{busy ? 'Đang xử lý…' : 'AI tổng hợp nhu cầu'}</button></div>
             </section>
             {notice && <p role="status">{notice}</p>}{current.notice && current.notice !== notice && <p role="status">{current.notice}</p>}
             {draft && <section><h3>Xác nhận tiêu chí theo dõi</h3><p>Ngân sách bên dưới là tiền thuê, chưa gồm điện, nước và phí. Gemini không tự bật theo dõi.</p>

@@ -1,3 +1,4 @@
+import { useListingSearchParams } from '../../../hooks/useListingSearchParams'
 import { RentalMapPreview as PreviewCard, BookmarkIcon } from './RentalMapPreview'
 import { MoneyInput } from '../../ui/MoneyInput'
 import { RentalSourceResults } from './RentalSourceResults'
@@ -10,7 +11,7 @@ import {
   type RefObject,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
@@ -101,7 +102,7 @@ export function MapListingsWorkspace({
   onFocusSource,
 }: Props) {
   const [sourceCounts, setSourceCounts] = useState<{ total: number; mapped: number } | null>(null)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useListingSearchParams()
   const navigate = useNavigate()
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])

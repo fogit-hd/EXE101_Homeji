@@ -1,5 +1,6 @@
+import { useListingSearchParams } from '../../hooks/useListingSearchParams'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { parseFiltersFromURL } from './listings/listingAdapters'
 import { filterRentalSources } from '../../lib/rentalSourceFilters'
 import { apiRequest } from '../../api/client'
@@ -28,7 +29,7 @@ function disposeCatalogMarker(handle: OwnedCatalogMarker) {
 
 export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void, onSelectRental?: (pin: SourceCatalogPin) => void) {
   const navigate = useNavigate()
-  const [params] = useSearchParams()
+  const [params] = useListingSearchParams()
   // UI selection and panel URLs do not change which source pins match the search.
   const filterParams = new URLSearchParams(params)
   for (const key of ['section', 'post', 'source', 'view', 'placeName', 'interest', 'page']) filterParams.delete(key)

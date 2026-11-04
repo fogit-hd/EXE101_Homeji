@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import ts from 'typescript'
+import { splitListingNavigation } from '../src/lib/listingSearchState.ts'
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 const app = await read('src/App.tsx')
@@ -29,21 +30,23 @@ test('new listings and room modal coexist with automatic Google nearby discovery
   assert.match(home, /<AuthenticatedHub/)
 })
 
-test('actual new header place pick routes to its Google ID without losing area filters', () => {
+test('actual header place pick applies its Google ID in tab criteria without losing area filters', () => {
   const body = search.match(/const pickSuggestion = useCallback\(\(item: SearchSuggestion\) => \{([\s\S]*?)\n  \}, /)[1]
-  let href, queries
-  new Function('item', 'location', 'navigate', 'setQueryByContext', 'trackFunnelEvent', compile(body))(
+  let criteria, queries
+  new Function('item', 'listingSearch', 'openHousingSearch', 'setQueryByContext', 'trackFunnelEvent', compile(body))(
     { id: 'google-place', title: 'Quán cà phê', subtitle: 'Thủ Đức' },
-    { search: '?section=listings&view=list&district=quan-9&post=old-room&keyword=old&page=3' },
-    value => { href = value }, value => { queries = value({ food: 'cơm' }) }, () => {},
+    'section=listings&view=list&district=quan-9&post=old-room&keyword=old&page=3',
+    value => { criteria = value }, value => { queries = value({ food: 'cơm' }) }, () => {},
   )
-  const url = new URL(href, 'https://homeji.example')
+  const url = { searchParams: criteria }
   assert.equal(url.searchParams.get('placeId'), 'google-place')
   assert.equal(url.searchParams.get('view'), 'map')
   assert.equal(url.searchParams.get('district'), 'quan-9')
   assert.equal(url.searchParams.has('post'), false)
   assert.equal(url.searchParams.has('keyword'), false)
   assert.equal(url.searchParams.has('page'), false)
+  const { navigation } = splitListingNavigation(criteria)
+  assert.equal(navigation.toString(), 'section=listings&view=map')
   assert.deepEqual(queries, { food: 'cơm', map: 'Quán cà phê' })
 })
 

@@ -1,6 +1,7 @@
+import { useListingSearchParams } from '../../hooks/useListingSearchParams'
 import { AnimatePresence, motion } from 'motion/react'
 import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   NotificationType,
   UserRole,
@@ -141,7 +142,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated, profile } = useAuth()
   const { setNearbyAnchor, nearbyCategory, setNearbyCategory } = useSearch()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useListingSearchParams()
   const listingCatalog = useMemo(() => parseFiltersFromURL(searchParams).catalog, [searchParams])
   const marketMode = listingCatalog === 'market'
   const marketListingPins = useMemo(() => marketplacePostsToListingPins(marketPosts), [marketPosts])

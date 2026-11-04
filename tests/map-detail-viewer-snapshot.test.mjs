@@ -10,6 +10,7 @@ const f = () => globalThis.__mapViewerFixture;
 export const useAuth = () => ({ isAuthenticated: true, profile: { id: f().viewer } });
 export const useSearch = () => f().search;
 export const useSearchParams = () => [f().params, f().noop];
+export const useListingSearchParams = () => [f().params, f().noop];
 export const useChatbotSurface = () => {};
 export const useNotificationHub = () => {};
 export const getRentalPost = (id, options) => new Promise(resolve => f().requests.push({ id, options, resolve }));
@@ -46,7 +47,7 @@ export const MapNearbyPanel = () => null;
 export const MapToast = () => null;
 `).toString('base64')
 const seams = ['react-router-dom', '../../api', '../../contexts/AuthContext', '../../contexts/chatbot-surface',
-  '../../contexts/SearchContext', '../../hooks/useNotificationHub', '../../lib/googleMaps', '../../lib/mapPlace',
+  '../../contexts/SearchContext', '../../hooks/useNotificationHub', '../../hooks/useListingSearchParams', '../../lib/googleMaps', '../../lib/mapPlace',
   '../../lib/marketplaceSellerPins', '../../lib/nearbyPanelAnchor', '../chrome', '../HomeListingSkeleton',
   '../MapListingCard', '../toast/PageNotice', './HomeMapStage', './listings/listingAdapters',
   './listings/MapListingsWorkspace', './listings/RoomDetailModal', './MapAppPanel', './MapAppPanel.logic',
