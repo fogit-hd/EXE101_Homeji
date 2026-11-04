@@ -1,42 +1,55 @@
-import { useEffect, useState, useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { claimReferral, createReferralCode, getReferrals, type ReferralSummary, type Voucher } from '../api/referrals'
+import { claimReferral, createReferralCode, getReferrals, type ReferralSummary } from '../api/referrals'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import { formatPrice } from '../lib/labels'
 import { profileSetupUrl } from '../lib/profileSetup'
+import { canClaimReferral, groupVouchers, referralPanel, type VoucherGroup } from '../lib/referralView'
 import './ReferralsPage.css'
+
+const MAX_INVITES = 5
+const CAMPAIGN_PAIRS = 10
+const GIFT_TOTAL = formatPrice(50000)
+
+const RULES = [
+  `Đợt này có ${CAMPAIGN_PAIRS} lượt nhận quà. Hết lượt thì chương trình dừng.`,
+  `Bạn được thưởng tối đa ${MAX_INVITES} lần mời, tương ứng 20 voucher.`,
+  'Mỗi tài khoản mới chỉ nhận quà đăng ký một lần. Tài khoản đã được thưởng nhờ mời bạn thì không nhận thêm quà đăng ký.',
+  'Voucher có hạn 30 ngày kể từ lúc nhận. Mỗi lần thanh toán dùng một voucher.',
+  'Voucher không đổi thành tiền, không cộng vào số dư ví và không chuyển cho người khác.',
+  'Đơn đồ ăn bị hủy sẽ được trả lại voucher, giữ nguyên hạn dùng ban đầu.',
+]
 
 export function ReferralsPage() {
   const { isAuthenticated, needsProfileSetup, isLoading } = useAuth()
   const [params] = useSearchParams()
   const [now] = useState(() => Date.now())
-  const [code, setCode] = useState(() => params.get('code') || '')
+  const [code, setCode] = useState(() => params.get('code')?.trim() || '')
   const [data, setData] = useState<ReferralSummary | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [attempt, setAttempt] = useState(0)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
-  const [copiedCode, setCopiedCode] = useState(false)
-  const [copiedLink, setCopiedLink] = useState(false)
+  const [copied, setCopied] = useState<'code' | 'link' | null>(null)
   const [showQr, setShowQr] = useState(false)
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
   const codeInputId = useId()
 
   useEffect(() => {
+    if (!isAuthenticated) return undefined
     let active = true
-    if (isAuthenticated) {
-      void getReferrals()
-        .then(result => {
-          if (active) setData(result)
-        })
-        .catch(reason => {
-          if (active) setError(getErrorMessage(reason))
-        })
-    }
-    return () => {
-      active = false
-    }
-  }, [isAuthenticated])
+    void getReferrals()
+      .then(result => { if (active) setData(result) })
+      .catch(reason => { if (active) setLoadError(getErrorMessage(reason)) })
+    return () => { active = false }
+  }, [isAuthenticated, attempt])
+
+  useEffect(() => {
+    if (!copied) return undefined
+    const timer = window.setTimeout(() => setCopied(null), 2400)
+    return () => window.clearTimeout(timer)
+  }, [copied])
 
   const act = async (claim: boolean) => {
     if (busy) return
@@ -44,13 +57,8 @@ export function ReferralsPage() {
     setError('')
     setNotice('')
     try {
-      const result = await (claim ? claimReferral(code.trim()) : createReferralCode())
-      setData(result)
-      setNotice(
-        claim
-          ? 'Quà đã có trong tài khoản của cả hai. Xem voucher bên dưới.'
-          : 'Mã mời đã sẵn sàng. Sao chép link và gửi cho bạn bè.'
-      )
+      setData(await (claim ? claimReferral(code) : createReferralCode()))
+      setNotice(claim ? 'Đã nhận quà. Bạn và người mời đều có 4 voucher.' : 'Đã tạo link mời. Sao chép và gửi cho bạn bè.')
     } catch (reason) {
       setError(getErrorMessage(reason))
     } finally {
@@ -58,666 +66,212 @@ export function ReferralsPage() {
     }
   }
 
-  const copyToClipboard = async (text: string, type: 'code' | 'link') => {
+  const copy = async (text: string, kind: 'code' | 'link') => {
+    setNotice('')
     try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        const textarea = document.createElement('textarea')
-        textarea.value = text
-        textarea.style.position = 'fixed'
-        textarea.style.opacity = '0'
-        document.body.appendChild(textarea)
-        textarea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textarea)
-      }
-      if (type === 'code') {
-        setCopiedCode(true)
-        setTimeout(() => setCopiedCode(false), 2400)
-        setNotice('Đã sao chép mã giới thiệu vào bộ nhớ tạm.')
-      } else {
-        setCopiedLink(true)
-        setTimeout(() => setCopiedLink(false), 2400)
-        setNotice('Đã sao chép link mời vào bộ nhớ tạm.')
-      }
+      await navigator.clipboard.writeText(text)
+      setCopied(kind)
       setError('')
     } catch {
-      setError('Chưa sao chép được. Bạn có thể chọn và sao chép thủ công ở ô bên cạnh.')
+      setError('Chưa sao chép được. Bạn hãy chọn nội dung rồi sao chép thủ công.')
     }
   }
 
-  const handleNativeShare = async () => {
-    if (!inviteUrl) return
-    if (navigator?.share) {
-      try {
-        await navigator.share({
-          title: 'Homeji — Nhận bộ 4 voucher 50.000đ',
-          text: 'Nhận ngay bộ 4 voucher giảm giá ẩm thực và hội viên VIP trên Homeji cùng mình nhé!',
-          url: inviteUrl,
-        })
-      } catch {
-        // user cancelled share
-      }
-    } else {
-      await copyToClipboard(inviteUrl, 'link')
-    }
-  }
-
+  const invited = Boolean(params.get('code'))
   const returnTo = '/referrals' + (code ? '?code=' + encodeURIComponent(code) : '')
-  const inviteUrl = data?.code ? window.location.origin + '/referrals?code=' + data.code : ''
-  const remainingPairs = data?.remainingPairs
-  const successfulInvites = data?.successfulInvites
-  const campaignBudgetMax = 1000000
+  const inviteUrl = data?.code ? `${window.location.origin}/referrals?code=${data.code}` : ''
+  const canShareNatively = typeof navigator.share === 'function'
+  const panel = referralPanel({ isLoading, isAuthenticated, needsProfileSetup, hasData: Boolean(data), hasError: Boolean(loadError), hasCode: Boolean(inviteUrl) })
+  const showClaim = !needsProfileSetup && canClaimReferral(data)
+  const claimFirst = invited && showClaim
+  const showAside = isAuthenticated && !needsProfileSetup && Boolean(data)
+  const campaignEnded = data?.remainingPairs === 0
+  const vouchers = groupVouchers(data?.vouchers ?? [], now)
+
+  const claimForm = (
+    <form className="referrals-panel" onSubmit={event => { event.preventDefault(); void act(true) }}>
+      <h2>{claimFirst ? 'Bạn được mời nhận 4 voucher' : 'Nhận quà bằng mã mời'}</h2>
+      <p>Dành cho tài khoản đăng ký trong 7 ngày gần đây và đã xác nhận email.</p>
+      <label htmlFor={codeInputId}>Mã mời</label>
+      <input
+        id={codeInputId}
+        className="form-input referrals-input referrals-input--code"
+        value={code}
+        maxLength={24}
+        required
+        pattern="[A-Fa-f0-9]{24}"
+        title="Mã mời gồm 24 ký tự, chỉ có chữ số và các chữ từ A đến F."
+        autoComplete="off"
+        spellCheck={false}
+        onChange={event => setCode(event.target.value.trim())}
+      />
+      <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Đang nhận quà…' : 'Nhận quà'}</button>
+    </form>
+  )
+
+  const invitePanel = (
+    <section className="referrals-panel" aria-labelledby="referrals-invite-title">
+      {panel === 'loading' ? <p role="status" id="referrals-invite-title">Đang tải…</p> : null}
+
+      {panel === 'guest' ? <>
+        <h2 id="referrals-invite-title">{invited ? 'Bạn được mời nhận 4 voucher' : 'Đăng nhập để lấy link mời'}</h2>
+        <p>{invited ? 'Tạo tài khoản và xác nhận email, sau đó mở lại link này để nhận quà.' : 'Bạn cần tài khoản đã xác nhận email để tạo link mời.'}</p>
+        <div className="referrals-actions">
+          <Link className="btn btn-primary" to="/register" state={{ from: returnTo }}>Tạo tài khoản</Link>
+          <Link className="btn btn-secondary" to="/login" state={{ from: returnTo }}>Đăng nhập</Link>
+        </div>
+      </> : null}
+
+      {panel === 'setup' ? <>
+        <h2 id="referrals-invite-title">Cần cập nhật hồ sơ</h2>
+        <p>Lưu thông tin cơ bản trong hồ sơ trước khi tạo link mời hoặc nhận quà.</p>
+        <div className="referrals-actions"><Link className="btn btn-primary" to={profileSetupUrl(returnTo)}>Cập nhật hồ sơ</Link></div>
+      </> : null}
+
+      {panel === 'error' ? <>
+        <h2 id="referrals-invite-title">Chưa tải được thông tin mời bạn</h2>
+        <p role="alert">{loadError}</p>
+        <div className="referrals-actions"><button type="button" className="btn btn-secondary" onClick={() => { setLoadError(''); setAttempt(value => value + 1) }}>Thử lại</button></div>
+      </> : null}
+
+      {panel === 'create' ? <>
+        <h2 id="referrals-invite-title">Tạo link mời</h2>
+        <p>{campaignEnded ? 'Đợt này đã hết lượt nhận quà, nên link mời chưa mang lại voucher.' : 'Tạo link rồi gửi cho bạn bè. Khi bạn ấy nhận lời mời, cả hai đều có voucher.'}</p>
+        <div className="referrals-actions"><button type="button" className="btn btn-primary" disabled={busy} onClick={() => void act(false)}>{busy ? 'Đang tạo…' : 'Tạo link mời'}</button></div>
+      </> : null}
+
+      {panel === 'share' ? <>
+        <h2 id="referrals-invite-title">Link mời của bạn</h2>
+        {campaignEnded ? <p>Đợt này đã hết lượt nhận quà, nên link mời chưa mang lại voucher.</p> : null}
+        <label htmlFor="referral-invite-link" className="referrals-visually-hidden">Link mời</label>
+        <div className="referrals-copy-row">
+          <input id="referral-invite-link" className="form-input referrals-input" value={inviteUrl} readOnly onFocus={event => event.target.select()} />
+          <button type="button" className="btn btn-primary" onClick={() => void copy(inviteUrl, 'link')}>{copied === 'link' ? 'Đã sao chép' : 'Sao chép link'}</button>
+        </div>
+        <div className="referrals-share" aria-label="Cách gửi khác">
+          {canShareNatively ? <button type="button" className="referrals-share__item" onClick={() => void navigator.share({ title: 'Mời bạn dùng Homeji', text: `Nhận lời mời của mình để cả hai có voucher Homeji, giảm đến ${GIFT_TOTAL}.`, url: inviteUrl }).catch(() => undefined)}>Chia sẻ</button> : null}
+          <a className="referrals-share__item" href={`https://zalo.me/share?url=${encodeURIComponent(inviteUrl)}`} target="_blank" rel="noopener noreferrer">Zalo</a>
+          <a className="referrals-share__item" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteUrl)}`} target="_blank" rel="noopener noreferrer">Facebook</a>
+          <button type="button" className="referrals-share__item" aria-expanded={showQr} onClick={() => setShowQr(value => !value)}>{showQr ? 'Ẩn mã QR' : 'Hiện mã QR'}</button>
+        </div>
+        {showQr ? <div className="referrals-qr">
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(inviteUrl)}&margin=6`} alt="Mã QR của link mời" width="180" height="180" loading="lazy" />
+          <p>Quét bằng camera điện thoại hoặc Zalo để mở link.</p>
+        </div> : null}
+        <div className="referrals-code">
+          <span>Mã mời</span>
+          <code>{data?.code}</code>
+          <button type="button" className="referrals-link-button" onClick={() => void copy(data?.code ?? '', 'code')}>{copied === 'code' ? 'Đã sao chép' : 'Sao chép mã'}</button>
+        </div>
+      </> : null}
+    </section>
+  )
 
   return (
     <main className="referrals-page" data-glass-exclude>
-      {/* Background optical gradient lights */}
-      <div className="referrals-bg-glow referrals-bg-glow--top" aria-hidden="true" />
-      <div className="referrals-bg-glow referrals-bg-glow--bottom" aria-hidden="true" />
-
-      {/* Header bar */}
-      <header className="referrals-header">
-        <Link to="/" className="referrals-back-btn">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>Trang chủ Bản đồ</span>
-        </Link>
-        <div className="referrals-badge">
-          <span className="referrals-badge__pulse" aria-hidden="true" />
-          <span>Chiến dịch Thưởng Bạn Mới · Đợt 1</span>
+      <section className="referrals-hero" aria-labelledby="referrals-title">
+        <div className="referrals-hero__copy">
+          <p className="referrals-hero__eyebrow">Quà mời bạn · Đợt 1</p>
+          <h1 id="referrals-title">Có bạn, có nhà.<br /><span>Có cả quà nữa.</span></h1>
+          <p className="referrals-hero__lead">Mời một người bạn đến Homeji. Cả hai cùng nhận 4 voucher, giảm tổng cộng đến <strong>{GIFT_TOTAL}</strong>.</p>
+          {isAuthenticated
+            ? <a className="referrals-hero__cta" href="#referrals-action">{claimFirst ? 'Nhận quà ngay' : 'Mời bạn ngay'}<span aria-hidden="true">→</span></a>
+            : <Link className="referrals-hero__cta" to="/register" state={{ from: returnTo }}>Đăng ký nhận quà<span aria-hidden="true">→</span></Link>}
+          <ul className="referrals-hero__facts">
+            <li><strong>4</strong> voucher mỗi người</li>
+            <li><strong>{MAX_INVITES}</strong> lần mời được thưởng</li>
+            {data ? <li><strong>{data.remainingPairs}/{CAMPAIGN_PAIRS}</strong> lượt còn lại</li> : <li><strong>{CAMPAIGN_PAIRS}</strong> lượt trong đợt này</li>}
+          </ul>
         </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="referrals-hero">
-        <div className="referrals-hero__intro">
-        <div className="referrals-hero__pill">
-          <span>MỜI BẠN ĐẾN HOMEJI</span>
-        </div>
-        <h1 className="referrals-hero__title">
-          Có bạn, có nhà.<br /><span>Có cả quà nữa.</span>
-        </h1>
-        <p className="referrals-hero__desc">
-          Mỗi người nhận trọn bộ <strong>4 voucher</strong> giúp tiết kiệm lên đến{' '}
-          <strong className="referrals-hero__highlight">50.000đ</strong>. Quà được cấp ngay vào tài khoản sau khi
-          bạn mới xác nhận email và nhận lời mời.
-        </p>
-        <a className="referrals-hero__cta" href="#invite-center">Mời bạn cùng nhận quà <span aria-hidden="true">↗</span></a>
-        </div>
-        <div className="referrals-hero__art" aria-label="Mỗi người nhận 4 voucher, giảm lên đến 50.000 đồng">
-          <div className="referrals-hero__orbit" aria-hidden="true" />
-          <div className="referrals-hero__ticket referrals-hero__ticket--back" aria-hidden="true"><span>HOMEJI · QUÀ CHO BẠN MỚI</span><strong>Chia sẻ niềm vui</strong><span>Mời một người bạn, nhận thêm một niềm vui.</span></div>
-          <div className="referrals-hero__ticket referrals-hero__ticket--front" aria-hidden="true">
-            <div className="referrals-hero__ticket-top"><span>HOMEJI REWARDS</span><span>↗</span></div>
-            <span className="referrals-hero__ticket-label">GIẢM LÊN ĐẾN</span>
-            <strong>50.000<span>đ</span></strong>
-            <div className="referrals-hero__ticket-bottom"><span>03 voucher ẩm thực<br />01 voucher VIP</span><span className="referrals-hero__ticket-seal">Cho<br />cả hai</span></div>
+        <div className="referrals-hero__art" aria-hidden="true">
+          <div className="referrals-ticket referrals-ticket--food"><small>ĐỒ ĂN</small><strong>Giảm 5%</strong><span>3 voucher</span></div>
+          <div className="referrals-ticket referrals-ticket--premium"><small>PREMIUM</small><strong>Giảm 20%</strong><span>1 voucher</span></div>
+          <div className="referrals-ticket referrals-ticket--main">
+            <small>GIẢM TỔNG CỘNG ĐẾN</small>
+            <strong>{GIFT_TOTAL}</strong>
+            <span>Cho cả bạn và người được mời</span>
           </div>
-          <span className="referrals-hero__art-caption">Một lời mời. Hai phần quà.</span>
         </div>
       </section>
 
-        {/* Live HUD Cards */}
-        <div className="referrals-hud">
-          <div className="referrals-hud__card">
-            <div className="referrals-hud__info">
-              <span className="referrals-hud__label">Lượt nhận quà còn lại</span>
-              <strong className="referrals-hud__value" role="status">
-                {remainingPairs ?? '—'} <span className="referrals-hud__unit">/ 10 suất</span>
-              </strong>
-            </div>
-            <div className="referrals-hud__progress-track" aria-hidden="true">
-              <div
-                className="referrals-hud__progress-fill"
-                style={{ width: `${remainingPairs == null ? 0 : Math.max(0, Math.min(100, (remainingPairs / 10) * 100))}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="referrals-hud__card">
-            <div className="referrals-hud__info">
-              <span className="referrals-hud__label">Bạn đã mời thành công</span>
-              <strong className="referrals-hud__value">
-                {successfulInvites ?? '—'} <span className="referrals-hud__unit">/ 5 bạn tối đa</span>
-              </strong>
-            </div>
-            <div className="referrals-hud__meta">
-              {successfulInvites == null ? 'Đăng nhập để xem lượt mời' : `Đã mời ${Math.min(5, successfulInvites)}/5 bạn`}
-            </div>
-          </div>
-
-          <div className="referrals-hud__card">
-            <div className="referrals-hud__info">
-              <span className="referrals-hud__label">Quà tặng mỗi người</span>
-              <strong className="referrals-hud__value referrals-hud__value--green">
-                50.000đ <span className="referrals-hud__unit">(4 voucher)</span>
-              </strong>
-            </div>
-            <div className="referrals-hud__meta">
-              Ngân sách đợt: {formatPrice(campaignBudgetMax)}
-            </div>
-          </div>
-        </div>
-
-      {/* Alerts */}
-      {error && (
-        <div className="referral-alert referral-alert--error" role="alert">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="referral-error">{error}</span>
-        </div>
-      )}
-      {notice && (
-        <div className="referral-alert referral-alert--success" role="status">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{notice}</span>
-        </div>
-      )}
-
-      {/* Main Interactive Grid */}
-      <div className="referrals-grid" id="invite-center">
-        {/* Card 1: Invite Center */}
-        <section className="referrals-card referrals-card--share">
-          <div className="referrals-card__header">
-            <div>
-              <h2 className="referrals-card__title">Link mời của bạn</h2>
-              <p className="referrals-card__subtitle">
-                Gửi mã hoặc link cho bạn bè để cùng nhận bộ 4 voucher ngay khi đăng ký.
-              </p>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="referrals-loading" role="status">
-              <span className="referrals-loading__spinner" aria-hidden="true" />
-              <span>Đang kiểm tra tài khoản…</span>
-            </div>
-          ) : !isAuthenticated ? (
-            <div className="referrals-unauth-box">
-              <div className="referrals-unauth-benefits">
-                <div className="referrals-unauth-item">
-                  <span className="referrals-check-mark">✓</span>
-                  <span>Nhận ngay 4 voucher ẩm thực & VIP</span>
-                </div>
-                <div className="referrals-unauth-item">
-                  <span className="referrals-check-mark">✓</span>
-                  <span>Tạo link mời riêng chia sẻ không giới hạn</span>
-                </div>
-                <div className="referrals-unauth-item">
-                  <span className="referrals-check-mark">✓</span>
-                  <span>Miễn phí 100%, không yêu cầu nạp tiền</span>
-                </div>
-              </div>
-              <div className="referral-actions">
-                <Link className="btn btn-primary referrals-btn-cta" to="/register" state={{ from: returnTo }}>
-                  Đăng ký để nhận quà
-                </Link>
-                <Link className="btn btn-secondary" to="/login" state={{ from: returnTo }}>
-                  Đã có tài khoản? Đăng nhập
-                </Link>
-              </div>
-            </div>
-          ) : needsProfileSetup ? (
-            <div className="referrals-setup-box">
-              <p className="referrals-setup-desc">
-                Bạn cần lưu Thông tin cơ bản trước khi tạo mã mời hoặc nhận quà.
-              </p>
-              <Link className="btn btn-primary" to={profileSetupUrl(returnTo)}>
-                Lưu Thông tin cơ bản trước
-              </Link>
-            </div>
-          ) : inviteUrl ? (
-            <div className="referrals-share-content">
-              {/* Monospace Code Display */}
-              <div className="referrals-code-panel">
-                <span className="referrals-code-label">MÃ GIỚI THIỆU CỦA BẠN</span>
-                <div className="referrals-code-row">
-                  <code className="referrals-code-text">{data?.code}</code>
-                  <button
-                    type="button"
-                    className="referrals-icon-copy-btn"
-                    disabled={busy}
-                    aria-label="Sao chép mã"
-                    onClick={() => void copyToClipboard(data?.code || '', 'code')}
-                  >
-                    {copiedCode ? (
-                      <span className="referrals-copied-tag">Đã chép! ✓</span>
-                    ) : (
-                      <>
-                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true">
-                          <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12a1.5 1.5 0 0 1 .439 1.061V16.5A1.5 1.5 0 0 1 15.5 18h-7A1.5 1.5 0 0 1 7 16.5v-13Z" />
-                          <path d="M5 5.5A1.5 1.5 0 0 0 3.5 7v10.5A1.5 1.5 0 0 0 5 19h7a1.5 1.5 0 0 0 1.5-1.5v-.5H7.5A2.5 2.5 0 0 1 5 14.5V5.5Z" />
-                        </svg>
-                        <span>Sao chép mã</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Full link input */}
-              <div className="referrals-link-box">
-                <label className="referrals-input-label" htmlFor="referral-invite-link">
-                  Đường dẫn mời trực tiếp
-                </label>
-                <div className="referrals-link-row">
-                  <input
-                    id="referral-invite-link"
-                    className="form-input referrals-link-input"
-                    aria-label="Link mời của bạn"
-                    value={inviteUrl}
-                    readOnly
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-secondary referrals-copy-btn"
-                    disabled={busy}
-                    onClick={() => void copyToClipboard(inviteUrl, 'link')}
-                  >
-                    {copiedLink ? 'Đã sao chép ✓' : 'Sao chép link'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Share shortcuts */}
-              <div className="referrals-share-actions">
-                <button
-                  type="button"
-                  className="referrals-share-chip referrals-share-chip--native"
-                  onClick={() => void handleNativeShare()}
-                >
-                  <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true">
-                    <path d="M13 4.5a2.5 2.5 0 1 1 .702 1.737L6.97 9.604a2.518 2.518 0 0 1 0 .792l6.733 3.367a2.5 2.5 0 1 1-.671 1.341l-6.733-3.367a2.5 2.5 0 1 1 0-3.474l6.733-3.366A2.52 2.52 0 0 1 13 4.5Z" />
-                  </svg>
-                  <span>Chia sẻ</span>
-                </button>
-
-                <a
-                  href={`https://zalo.me/share?url=${encodeURIComponent(inviteUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="referrals-share-chip"
-                >
-                  <span>Zalo</span>
-                </a>
-
-                <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="referrals-share-chip"
-                >
-                  <span>Facebook</span>
-                </a>
-
-                <button
-                  type="button"
-                  className="referrals-share-chip"
-                  onClick={() => setShowQr(prev => !prev)}
-                >
-                  <span>{showQr ? 'Ẩn mã QR' : 'Hiện mã QR'}</span>
-                </button>
-              </div>
-
-              {/* QR Code Popover */}
-              {showQr && (
-                <div className="referrals-qr-box">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                      inviteUrl
-                    )}&margin=6`}
-                    alt="Mã QR liên kết giới thiệu"
-                    width="180"
-                    height="180"
-                    className="referrals-qr-img"
-                    loading="lazy"
-                  />
-                  <p className="referrals-qr-hint">
-                    Quét bằng camera điện thoại hoặc ứng dụng Zalo để mở link ngay.
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="referrals-create-box">
-              <p className="referrals-create-desc">
-                Bạn chưa có mã mời.
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary referrals-btn-cta"
-                disabled={busy}
-                onClick={() => void act(false)}
-              >
-                {busy ? 'Đang tạo mã…' : 'Tạo link mời'}
-              </button>
-            </div>
-          )}
-        </section>
-
-        {/* Card 2: Claim Code */}
-        <form
-          className="referrals-card referrals-card--claim"
-          onSubmit={e => {
-            e.preventDefault()
-            void act(true)
-          }}
-        >
-          <div className="referrals-card__header">
-            <div>
-              <h2 className="referrals-card__title">Bạn có mã mời?</h2>
-              <p className="referrals-card__subtitle">
-                Nhập mã bạn bè gửi để nhận 4 voucher.
-              </p>
-            </div>
-          </div>
-
-          <div className="referrals-claim-body">
-            <label htmlFor={codeInputId} className="referrals-input-label">
-              Mã do bạn bè gửi (24 ký tự)
-            </label>
-            <input
-              id={codeInputId}
-              className="form-input referrals-code-input"
-              value={code}
-              maxLength={24}
-              required
-              pattern="[A-Fa-f0-9]{24}"
-              placeholder="Nhập hoặc dán mã 24 ký tự..."
-              onChange={e => setCode(e.target.value)}
-            />
-            <p className="referrals-claim-subhint">
-              {data?.received
-                ? 'Bạn đã nhận quà từ chương trình này. Hãy chia sẻ link của mình để nhận thêm lượt quà!'
-                : 'Lưu ý: Mở và nhận quà trong 7 ngày từ khi đăng ký tài khoản.'}
-            </p>
-
-            <button
-              type="submit"
-              className="btn btn-primary referrals-btn-cta"
-              disabled={busy || data?.received || data?.remainingPairs === 0}
-            >
-              {data?.received ? '✓ Bạn đã nhận quà' : busy ? 'Đang nhận quà…' : 'Nhận quà cho cả hai'}
-            </button>
-          </div>
-        </form>
+      <div className="referrals-feedback" aria-live="polite">
+        {error ? <p className="referrals-message referrals-message--error" role="alert">{error}</p> : null}
+        {notice ? <p className="referrals-message referrals-message--success" role="status">{notice}</p> : null}
       </div>
 
-      {/* 3 Steps Guide */}
-      <section className="referrals-section referrals-steps-section">
-        <div className="referrals-section-header">
-          <span className="referrals-section-pill">QUY TRÌNH ĐƠN GIẢN</span>
-          <h2 className="referrals-section-title">3 bước nhận quà cho cả hai</h2>
-          <p className="referrals-section-subtitle">
-            Chỉ mất 2 phút để hoàn tất và nhận voucher tiết kiệm chi phí phòng trọ, ẩm thực.
-          </p>
+      <div className={`referrals-layout${showAside ? '' : ' referrals-layout--single'}`}>
+        <div className="referrals-primary" id="referrals-action">{claimFirst ? claimForm : invitePanel}</div>
+
+        {showAside && data ? <aside className="referrals-aside" aria-label="Tiến độ mời bạn">
+          <section className="referrals-panel">
+            <h2>Tiến độ</h2>
+            <dl className="referrals-stats">
+              <div><dt>Bạn đã mời</dt><dd>{Math.min(MAX_INVITES, data.successfulInvites)}/{MAX_INVITES}</dd></div>
+              <div><dt>Lượt còn lại của đợt</dt><dd>{data.remainingPairs}/{CAMPAIGN_PAIRS}</dd></div>
+            </dl>
+            {data.received ? <p>Bạn đã nhận quà đăng ký.</p> : null}
+          </section>
+          {showClaim && !claimFirst ? claimForm : null}
+        </aside> : null}
+
+        <div className="referrals-rest">
+          {claimFirst ? invitePanel : null}
+
+          {isAuthenticated && !needsProfileSetup && data ? <section className="referrals-section" aria-labelledby="referrals-vouchers-title">
+            <h2 id="referrals-vouchers-title">Voucher của bạn</h2>
+            {vouchers.length ? <ul className="referrals-vouchers">{vouchers.map(group => <VoucherRow key={group.key} group={group} />)}</ul>
+              : <p className="referrals-empty">Chưa có voucher. Voucher sẽ hiện ở đây khi có người nhận lời mời của bạn, hoặc khi bạn nhận quà bằng mã mời.</p>}
+          </section> : null}
+
+          <section className="referrals-section" aria-labelledby="referrals-steps-title">
+            <h2 id="referrals-steps-title">Cách nhận quà</h2>
+            <ol className="referrals-steps">
+              <li><strong>Gửi link mời</strong><span>Gửi link hoặc mã mời cho bạn bè.</span></li>
+              <li><strong>Bạn ấy tạo tài khoản</strong><span>Đăng ký, xác nhận email và lưu thông tin cơ bản.</span></li>
+              <li><strong>Bạn ấy nhận quà</strong><span>Mở lại link trong 7 ngày kể từ khi đăng ký và bấm Nhận quà. Cả hai có voucher ngay.</span></li>
+            </ol>
+          </section>
+
+          <section className="referrals-section" aria-labelledby="referrals-gifts-title">
+            <h2 id="referrals-gifts-title">Mỗi người nhận được</h2>
+            <ul className="referrals-gifts">
+              <li>
+                <strong>3 voucher đồ ăn</strong>
+                <span>Giảm 5%, tối đa {formatPrice(10000)} mỗi đơn</span>
+                <small>Đơn từ {formatPrice(100000)} ở mục Đồ ăn.</small>
+              </li>
+              <li>
+                <strong>1 voucher gói Premium</strong>
+                <span>Giảm 20%, tối đa {formatPrice(20000)}</span>
+                <small>Gói từ {formatPrice(50000)}, thanh toán bằng Ví Homeji.</small>
+              </li>
+            </ul>
+          </section>
+
+          <section className="referrals-section" aria-labelledby="referrals-rules-title">
+            <h2 id="referrals-rules-title">Thể lệ</h2>
+            <ul className="referrals-rules">{RULES.map(rule => <li key={rule}>{rule}</li>)}</ul>
+          </section>
         </div>
-
-        <ol className="referrals-steps-list">
-          <li className="referrals-step-card">
-            <div className="referrals-step-number">01</div>
-            <div className="referrals-step-content">
-              <h3 className="referrals-step-title">Gửi link mời</h3>
-              <p className="referrals-step-text">
-                Sao chép link mời hoặc gửi mã 24 ký tự cho bạn bè qua Zalo, Messenger hoặc gặp mặt trực tiếp.
-              </p>
-            </div>
-          </li>
-
-          <li className="referrals-step-card">
-            <div className="referrals-step-number">02</div>
-            <div className="referrals-step-content">
-              <h3 className="referrals-step-title">Bạn mới đăng ký & xác nhận</h3>
-              <p className="referrals-step-text">
-                Bạn bè đăng ký tài khoản mới, xác nhận địa chỉ email và lưu Thông tin cơ bản trên Homeji.
-              </p>
-            </div>
-          </li>
-
-          <li className="referrals-step-card">
-            <div className="referrals-step-number">03</div>
-            <div className="referrals-step-content">
-              <h3 className="referrals-step-title">Nhận quà cho cả hai</h3>
-              <p className="referrals-step-text">
-                Mở lại link trong 7 ngày từ khi đăng ký, bấm Nhận quà cho cả hai để nhận ngay 4 voucher vào ví.
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      {/* Rewards Breakdown Showcase */}
-      <section className="referrals-section referrals-rewards-section">
-        <div className="referrals-section-header">
-          <span className="referrals-section-pill">CHI TIẾT ƯU ĐÃI</span>
-          <h2 className="referrals-section-title">Quà của mỗi người</h2>
-          <p className="referrals-section-subtitle">
-            Mỗi người nhận 3 voucher đặt đồ ăn và 1 voucher mua gói VIP trên Homeji.
-          </p>
-        </div>
-
-        <div className="referrals-rewards-grid">
-          <div className="referrals-reward-card referrals-reward-card--food">
-            <div className="referrals-reward-header">
-              <div className="referrals-reward-tag">ẨM THỰC QUANH NHÀ</div>
-              <span className="referrals-reward-badge">3 VOUCHER</span>
-            </div>
-            <div className="referrals-reward-body">
-              <div className="referrals-reward-highlight">Giảm 5%, lên đến 10.000đ</div>
-              <p className="referrals-reward-rule">
-                Áp dụng cho đơn hàng đồ ăn từ <strong>100.000đ</strong> tại Chợ đồ ăn sinh viên Homeji.
-              </p>
-              <ul className="referrals-reward-features">
-                <li>Dùng cho 3 đơn đồ ăn khác nhau</li>
-                <li>Thanh toán trực tiếp nhanh gọn qua giỏ hàng</li>
-                <li>Đơn hủy được hoàn trả voucher tự động</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="referrals-reward-card referrals-reward-card--vip">
-            <div className="referrals-reward-header">
-              <div className="referrals-reward-tag">ĐẶC QUYỀN HỘI VIÊN</div>
-              <span className="referrals-reward-badge">1 VOUCHER</span>
-            </div>
-            <div className="referrals-reward-body">
-              <div className="referrals-reward-highlight">Giảm 20%, lên đến 20.000đ</div>
-              <p className="referrals-reward-rule">
-                Áp dụng cho gói hội viên VIP từ <strong>50.000đ</strong>, thanh toán bằng Ví Homeji.
-              </p>
-              <ul className="referrals-reward-features">
-                <li>Gia tăng hiển thị tin đăng tìm bạn ở ghép / phòng trọ</li>
-                <li>Huy hiệu thành viên uy tín trên toàn bộ bản đồ</li>
-                <li>Ưu tiên nhận thông báo phòng trọ giá tốt mới nhất</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="referrals-notice-bar">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>
-            Hạn 30 ngày từ lúc nhận. Mỗi lần thanh toán dùng 1 voucher. Voucher không cộng vào số dư, không rút hoặc
-            đổi thành tiền. Đơn đồ ăn bị hủy được trả lại voucher với hạn dùng ban đầu.
-          </span>
-        </div>
-      </section>
-
-      {/* User Vouchers Section */}
-      <section className="referrals-section referrals-vouchers-section">
-        <div className="referrals-section-header">
-          <span className="referrals-section-pill">KHO QUÀ CỦA BẠN</span>
-          <h2 className="referrals-section-title">
-            Voucher của bạn{' '}
-            {data?.vouchers && data.vouchers.length > 0 && (
-              <span className="referrals-count-pill">{data.vouchers.length}</span>
-            )}
-          </h2>
-        </div>
-
-        {!data?.vouchers.length ? (
-          <div className="referrals-empty-vouchers">
-            <h3 className="referrals-empty-title">Chưa có voucher trong ví</h3>
-            <p className="referrals-empty-desc">
-              Quà sẽ xuất hiện tại đây ngay khi bạn nhận lời mời hợp lệ hoặc bạn bè dùng mã mời của bạn để nhận quà.
-            </p>
-          </div>
-        ) : (
-          <ul className="referral-vouchers">
-            {data.vouchers.map(v => (
-              <VoucherTicket key={v.id} voucher={v} now={now} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* FAQ & Terms */}
-      <section className="referrals-section referrals-faq-section">
-        <div className="referrals-section-header">
-          <span className="referrals-section-pill">MINH BẠCH & THỂ LỆ</span>
-          <h2 className="referrals-section-title">Câu hỏi thường gặp & Quy định</h2>
-        </div>
-
-        <div className="referrals-faq-list">
-          {FAQS.map((faq, idx) => {
-            const isOpen = openFaq === idx
-            return (
-              <div key={idx} className={`referrals-faq-item ${isOpen ? 'is-open' : ''}`}>
-                <button
-                  type="button"
-                  className="referrals-faq-trigger"
-                  aria-expanded={isOpen}
-                  onClick={() => setOpenFaq(isOpen ? null : idx)}
-                >
-                  <span className="referrals-faq-question">{faq.question}</span>
-                  <span className="referrals-faq-icon" aria-hidden="true">
-                    {isOpen ? '−' : '+'}
-                  </span>
-                </button>
-                {isOpen && (
-                  <div className="referrals-faq-answer">
-                    <p>{faq.answer}</p>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="referrals-terms-box">
-          <h3>Quy định chiến dịch</h3>
-          <p>
-            Đợt này có <strong>10 lượt mời nhận quà</strong>, ngân sách tối đa <strong>1.000.000đ</strong>. Mỗi người mời
-            nhận thưởng tối đa <strong>5 lượt</strong>; mỗi tài khoản mới chỉ nhận quà đăng ký một lần. Tài khoản đã
-            nhận thưởng khi mời người khác không thể nhận thêm quà đăng ký bằng mã khác.
-          </p>
-        </div>
-      </section>
+      </div>
     </main>
   )
 }
 
-function VoucherTicket({ voucher: v, now }: { voucher: Voucher; now: number }) {
-  const isExpired = Date.parse(v.expiresAt) <= now
-  const isFood = v.purpose === 'food'
+const VOUCHER_STATE_LABEL = { used: 'Đã dùng', expired: 'Đã hết hạn' } as const
 
+function VoucherRow({ group: { voucher, state, count } }: { group: VoucherGroup }) {
+  const isFood = voucher.purpose === 'food'
   return (
-    <li className={`referral-ticket ${v.used ? 'is-used' : isExpired ? 'is-expired' : 'is-active'}`}>
-      <div className={`referral-ticket__stub ${isFood ? 'referral-ticket__stub--food' : 'referral-ticket__stub--vip'}`}>
-        <span className="referral-ticket__rate">GIẢM {Math.round(v.rate * 100)}%</span>
-        <span className="referral-ticket__purpose">{isFood ? 'Đồ ăn' : 'Gói VIP'}</span>
+    <li className={`referrals-voucher${state === 'usable' ? '' : ' is-inactive'}`}>
+      <div className="referrals-voucher__rate">{Math.round(voucher.rate * 100)}%</div>
+      <div className="referrals-voucher__body">
+        <strong>{isFood ? 'Đồ ăn' : 'Gói Premium'}{count > 1 ? ` · ${count} voucher` : ''}</strong>
+        <span>Tối đa {formatPrice(voucher.maximumDiscount)}, {isFood ? 'đơn' : 'gói'} từ {formatPrice(voucher.minimumSpend)}. Hạn {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}.</span>
       </div>
-
-      <div className="referral-ticket__divider" aria-hidden="true">
-        <div className="referral-ticket__notch referral-ticket__notch--top" />
-        <div className="referral-ticket__dash" />
-        <div className="referral-ticket__notch referral-ticket__notch--bottom" />
-      </div>
-
-      <div className="referral-ticket__main">
-        <div className="referral-ticket__header">
-          <strong className="referral-ticket__headline">
-            {isFood ? 'Đồ ăn' : 'VIP'} · giảm {Math.round(v.rate * 100)}%, lên đến {formatPrice(v.maximumDiscount)}
-          </strong>
-          {v.used ? (
-            <span className="referral-status-tag referral-status-tag--used">Đã dùng</span>
-          ) : isExpired ? (
-            <span className="referral-status-tag referral-status-tag--expired">Đã hết hạn</span>
-          ) : (
-            <span className="referral-status-tag referral-status-tag--valid">Có thể dùng</span>
-          )}
-        </div>
-
-        <p className="referral-ticket__details">
-          Đơn từ {formatPrice(v.minimumSpend)} · Hạn {new Date(v.expiresAt).toLocaleString('vi-VN')}
-        </p>
-
-        <div className="referral-ticket__footer">
-          {v.used ? (
-            <span className="referral-ticket__state-msg">Voucher đã được áp dụng cho đơn hàng</span>
-          ) : isExpired ? (
-            <span className="referral-ticket__state-msg">Voucher đã hết thời hạn 30 ngày</span>
-          ) : (
-            <Link
-              to={isFood ? '/?section=marketplace&market=food' : '/?section=payments'}
-              className="referral-ticket__cta-link"
-            >
-              Dùng voucher →
-            </Link>
-          )}
-        </div>
-      </div>
+      {state === 'usable'
+        ? <Link className="btn btn-secondary btn-sm referrals-voucher__action" to={isFood ? '/?section=marketplace&market=food' : '/?section=payments'}>{isFood ? 'Đặt món' : 'Xem gói'}</Link>
+        : <span className="referrals-voucher__state">{VOUCHER_STATE_LABEL[state]}</span>}
     </li>
   )
 }
-
-const FAQS = [
-  {
-    question: 'Ai có thể tham gia chương trình này?',
-    answer:
-      'Tất cả thành viên Homeji đều có thể tạo mã mời bạn bè. Người được mời cần là tài khoản mới, xác nhận email và lưu Thông tin cơ bản.',
-  },
-  {
-    question: 'Thời hạn sử dụng của các voucher là bao lâu?',
-    answer:
-      'Tất cả 4 voucher có thời hạn sử dụng 30 ngày kể từ thời điểm nhận thưởng. Sau thời gian này, voucher chưa dùng sẽ tự động hết hạn.',
-  },
-  {
-    question: 'Nếu đơn đồ ăn bị hủy thì voucher có được hoàn lại không?',
-    answer:
-      'Có. Đơn đồ ăn bị hủy hoặc không thành công sẽ được hoàn lại voucher vào ví của bạn với thời hạn sử dụng ban đầu.',
-  },
-  {
-    question: 'Có thể quy đổi voucher ra tiền mặt hoặc chuyển cho người khác không?',
-    answer:
-      'Không. Voucher là ưu đãi giảm giá trực tiếp khi thanh toán dịch vụ hoặc đồ ăn trên Homeji, không được cộng dồn vào số dư ví và không quy đổi thành tiền mặt.',
-  },
-  {
-    question: 'Giới hạn số lần nhận thưởng của mỗi tài khoản là bao nhiêu?',
-    answer:
-      'Mỗi người mời được nhận thưởng tối đa 5 lượt bạn mới thành công (tương ứng tối đa 20 voucher). Mỗi tài khoản mới chỉ nhận quà đăng ký 1 lần.',
-  },
-]
