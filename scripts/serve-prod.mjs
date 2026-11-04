@@ -5,10 +5,11 @@
  */
 import http from 'node:http'
 import https from 'node:https'
-import { createReadStream, existsSync, statSync } from 'node:fs'
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { handlePublicRental, publicOrigin, escapeHtml } from './public-rentals.mjs'
+import { inlineScriptHashes, securityHeaders } from './security-headers.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -20,6 +21,10 @@ const VERIFICATION_META = /^[a-z0-9_-]{10,200}$/i.test(verificationCode)
 const API_TARGET = (process.env.API_PROXY_TARGET || 'https://homeji-be.onrender.com').replace(
   /\/$/,
   '',
+)
+const DIST_INDEX = join(DIST, 'index.html')
+const SECURITY_HEADERS = securityHeaders(
+  existsSync(DIST_INDEX) ? inlineScriptHashes(readFileSync(DIST_INDEX, 'utf8')) : [],
 )
 
 const MIME = {
@@ -225,6 +230,7 @@ const server = http.createServer(async (req, res) => {
       proxyApi(req, res)
       return
     }
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) res.setHeader(name, value)
     if (await handlePublicRental(req, res, { apiTarget: API_TARGET, origin: PUBLIC_ORIGIN, verification: VERIFICATION_META })) return
     serveStatic(req, res)
   } catch {
