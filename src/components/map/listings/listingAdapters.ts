@@ -31,7 +31,7 @@ const SUPPORTED_FILTER_KEYS = [
 
 export type SupportedFilterKey = (typeof SUPPORTED_FILTER_KEYS)[number]
 
-const UI_KEYS = ['section', 'post', 'view', 'searchOnMove', 'placeId', 'placeName', 'interest'] as const
+const UI_KEYS = ['section', 'post', 'source', 'view', 'searchOnMove', 'placeId', 'placeName', 'interest'] as const
 
 const GATEWAY_KEYS = [
   'paymentId',

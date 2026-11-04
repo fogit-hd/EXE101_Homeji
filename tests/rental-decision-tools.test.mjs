@@ -19,6 +19,20 @@ const { calculateRentalCost } = await loadModule('../src/lib/rentalCost.ts')
 const { readCommuteItem, calculateShortlistCommute } = await loadModule('../src/lib/shortlistCommute.ts', true)
 const { parseFiltersFromURL, serializeFiltersToQuery, listingQueryToSearchParams, nonBoundsSignature } = await loadModule('../src/components/map/listings/listingAdapters.ts', true)
 
+test('filter normalization and viewport changes preserve the open source detail', () => {
+  const id = 'e73cd2c3-42de-5863-b404-e6e338e5a22e'
+  const incoming = new URLSearchParams(`section=explore&view=map&source=${id}&keyword=Truong+Van+Thanh&maxPrice=4000000`)
+  const query = parseFiltersFromURL(incoming)
+  const normalized = serializeFiltersToQuery(query, incoming)
+  assert.equal(normalized.get('source'), id)
+  assert.equal(normalized.get('keyword'), 'Truong Van Thanh')
+  assert.equal(normalized.get('maxPrice'), '4000000')
+  const moved = serializeFiltersToQuery({ ...query, bounds: { minLatitude: 10.8, maxLatitude: 10.9, minLongitude: 106.7, maxLongitude: 106.8 } }, normalized)
+  assert.equal(moved.get('source'), id)
+  normalized.delete('source')
+  assert.equal(serializeFiltersToQuery(parseFiltersFromURL(normalized), normalized).has('source'), false)
+})
+
 test('a resolved school destination survives normalization and searches by coordinates with existing filters', () => {
   const incoming = new URLSearchParams('section=listings&view=map&placeId=school-campus&placeName=Đại+học+FPT&maxPrice=4000000&amenities=KITCHEN&searchOnMove=0&page=3')
   const bounds = { minLatitude: 10.8, maxLatitude: 10.84, minLongitude: 106.78, maxLongitude: 106.82 }

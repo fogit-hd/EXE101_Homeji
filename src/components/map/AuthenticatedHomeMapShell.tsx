@@ -917,7 +917,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       : omnibox
 
   // Moving the camera to an amenity must not replace the source area's listings.
-  const viewportPaused = detailOpen || Boolean(sharedLocationPin) || Boolean(navigationRequest)
+  const viewportPaused = detailOpen || Boolean(searchParams.get('source')) || Boolean(sharedLocationPin) || Boolean(navigationRequest)
   const handleViewportIdle = useCallback(
     (bounds: {
       minLatitude: number
