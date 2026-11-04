@@ -11,7 +11,7 @@ import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import { buildRentalSearchChips } from './rentalSearchChips'
 
-export function AiSearchReview({ result, onApply, onRefine, onOpenListing, variant = 'full', applied = false }: {
+export function AiSearchReview({ result, onApply, onRefine, onOpenListing, variant = 'full', applied = false, hasOtherRooms = false }: {
   result: AiHighlightResponse
   onApply: (result: AiHighlightResponse) => void
   onRefine?: (message: string) => void
@@ -19,12 +19,14 @@ export function AiSearchReview({ result, onApply, onRefine, onOpenListing, varia
   /** `compact` is the minimalist search-bar panel: summary, chips, small cards, caveats collapsed. */
   variant?: 'full' | 'compact'
   applied?: boolean
+  /** Rooms from another source are listed beside this review, so an empty `posts` is not an empty result. */
+  hasOtherRooms?: boolean
 }) {
-  return <AiSearchReviewSession key={JSON.stringify(result)} result={result} onApply={onApply} onRefine={onRefine} onOpenListing={onOpenListing} variant={variant} applied={applied} />
+  return <AiSearchReviewSession key={JSON.stringify(result)} result={result} onApply={onApply} onRefine={onRefine} onOpenListing={onOpenListing} variant={variant} applied={applied} hasOtherRooms={hasOtherRooms} />
 }
 
-function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, variant, applied }: {
-  result: AiHighlightResponse; onApply: (result: AiHighlightResponse) => void; onRefine?: (message: string) => void; onOpenListing?: () => void; variant: 'full' | 'compact'; applied: boolean
+function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, variant, applied, hasOtherRooms }: {
+  result: AiHighlightResponse; onApply: (result: AiHighlightResponse) => void; onRefine?: (message: string) => void; onOpenListing?: () => void; variant: 'full' | 'compact'; applied: boolean; hasOtherRooms: boolean
 }) {
   const [caveatsOpen, setCaveatsOpen] = useState(false)
   const [commute, setCommute] = useState<CommuteConfirmation | null>(null)
@@ -112,13 +114,14 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
     </section>
   }
 
+  const onlyOtherRooms = hasOtherRooms && visiblePosts.length === 0
   return <section className="ai-search-review" aria-label="Tiêu chí và tin phòng có nguồn">
-    <header className="ai-search-review__heading"><strong>Phòng tìm được</strong><span>{shownPosts.length > 5 ? `Xem trước 5/${shownPosts.length} tin` : `${shownPosts.length} tin`}</span></header>
+    <header className="ai-search-review__heading"><strong>{onlyOtherRooms ? 'Điều kiện đang tìm' : 'Phòng tìm được'}</strong>{onlyOtherRooms ? null : <span>{shownPosts.length > 5 ? `Xem trước 5/${shownPosts.length} tin` : `${shownPosts.length} tin`}</span>}</header>
     <div className="ai-search-review__chips">{chips.map(chip => onRefine
       ? <button type="button" key={chip.text} onClick={() => onRefine(chip.edit)} title="Sửa tiêu chí">{chip.text} ✎</button>
       : <span key={chip.text}>{chip.text}</span>)}</div>
     {unresolved ? <p className="ai-search-review__notice" role="status">Cần xác nhận thông tin còn thiếu trước khi áp dụng. Bạn có thể sửa yêu cầu hoặc dùng công cụ bên dưới.</p> : <>
-      {visiblePosts.length === 0 ? <p>Chưa có tin phù hợp. Các điều kiện được giữ nguyên.</p> : null}
+      {visiblePosts.length === 0 && !hasOtherRooms ? <p>Chưa có tin phù hợp. Các điều kiện được giữ nguyên.</p> : null}
       {pendingCosts ? <p>Chỉ lọc các phòng trong ngân sách theo chi phí bạn đã nhập và xác nhận. Đây là số tiền ước tính, chưa được người đăng xác nhận.</p> : null}
     </>}
     {unknownPriceUnit ? <p role="status">Một số tin ở ghép chưa rõ giá theo người hay cả phòng. Hỏi người đăng đơn vị hoặc sửa yêu cầu để loại các tin này trước khi áp dụng ngân sách.</p> : null}
@@ -127,6 +130,6 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
       destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
     {unresolved && routedPosts.length ? <strong>Các tin dưới đây chưa đủ thông tin về phí hoặc đường đi để xác nhận phù hợp với yêu cầu của bạn.</strong> : null}
     {shownPosts.slice(0, 5).map(renderListing)}
-    {!unresolved ? applied ? <p role="status">Đã áp dụng bộ lọc lên bản đồ. Bạn có thể tiếp tục xem phòng và sửa yêu cầu ngay trong chat.</p> : <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Áp dụng lên bản đồ</button></div> : null}
+    {!unresolved && !onlyOtherRooms ? applied ? <p role="status">Đã áp dụng bộ lọc lên bản đồ. Bạn có thể tiếp tục xem phòng và sửa yêu cầu ngay trong chat.</p> : <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Áp dụng lên bản đồ</button></div> : null}
   </section>
 }

@@ -16,6 +16,7 @@ import { AgentPostPreview } from '../../ai/AgentPostPreview'
 import { AgentRoommateResults } from '../../ai/AgentRoommateResults'
 import { AiSearchReview } from '../../ai/AiSearchReview'
 import { ChatbotNearbyResults } from '../../ai/ChatbotNearbyResults'
+import { ChatbotSourceResults } from '../../ai/ChatbotSourceResults'
 import { FoodDiscoveryCard } from '../../ai/FoodDiscoveryCard'
 import { RentalContextCard } from '../../ai/RentalContextCard'
 import { ChatbotMessageContent } from '../ChatbotMessageContent'
@@ -95,7 +96,9 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                     {isUser ? <><ChatbotMediaPreview attachments={m.attachments ?? []} /><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy || mediaBusy || recordingActive} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
                       : <><ChatbotMessageContent content={m.content} />
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => closeChat()} /></section> : null}
-                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => closeChat()} /> : null}
+                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} hasOtherRooms={Boolean(m.sourceRooms?.rooms.length)} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => closeChat()} /> : null}
+                        {m.sourceRooms ? <ChatbotSourceResults data={m.sourceRooms} startAt={(m.searchUpdate?.posts.length ?? 0) + 1} onOpen={() => closeChat()} /> : null}
+                        {m.sourceRooms && index === messages.length - 1 ? <div className="map-chatbot__context-prompts" aria-label="Gợi ý hỏi tiếp"><button type="button" disabled={busy} onClick={() => void send('Phòng nào rẻ nhất?')}>Phòng nào rẻ nhất?</button><button type="button" disabled={busy} onClick={() => void send('So sánh 2 phòng đầu')}>So sánh 2 phòng đầu</button></div> : null}
                         {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => openDraftWorkspace(m.agentDraft!.id)}><span>Loại tin · nội dung · chi phí · vị trí</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
                         {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={openPayments}>Xem gói Premium</button><button className="map-chatbot__action" type="button" onClick={() => { if (m.actions?.[0]) handleNavigationAction(m.actions[0]); else { openMarketplace() } }}>Tự đăng bài</button></div> : null}
                         {m.roommateCandidates ? <AgentRoommateResults items={m.roommateCandidates} onOpen={() => closeChat()} /> : null}

@@ -13,7 +13,7 @@ import type { ChatbotLocation } from '../../../lib/chatbotLocation'
 import type { NearbyPlaceCategory } from '../../../lib/placeAutocomplete'
 import type { DecisionResponse } from '../../../api/rentalAssistant'
 import type { RentalAssistantComparison, RentalAssistantSelection } from '../../../contexts/rental-assistant-context'
-import type { AgentPostDraft, AgentRoommateCandidate } from '../../../api/chatbotAgent'
+import type { AgentPostDraft, AgentRoommateCandidate, ChatbotSourceMatch } from '../../../api/chatbotAgent'
 import type { ChatbotNearbyResponse } from '../../ai/ChatbotNearbyResults'
 
 export type ChatRequest = {
@@ -35,6 +35,7 @@ export type ChatRequest = {
 export type DisplayMessage = ChatbotMessage & {
   roommateCandidates?: AgentRoommateCandidate[] | null
   nearbyRooms?: ChatbotNearbyResponse | null
+  sourceRooms?: ChatbotSourceMatch | null
   agentDraft?: AgentPostDraft | null
   upgradeRequired?: boolean
   attachments?: ChatbotDraftAttachment[]

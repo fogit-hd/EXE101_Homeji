@@ -37,6 +37,7 @@ const overrides = {
   '../ai/AgentModeSwitch': moduleUrl('export const AgentModeSwitch=()=>null'),
   '../ai/ChatbotLocationControl': moduleUrl('export const ChatbotLocationControl=()=>null'),
   '../ai/ChatbotNearbyResults': moduleUrl('export const ChatbotNearbyResults=()=>null'),
+  '../ai/ChatbotSourceResults': moduleUrl('export const ChatbotSourceResults=()=>null'),
   '../ai/AiSearchReview': moduleUrl('export const AiSearchReview=()=>null'),
   '../ai/RentalContextCard': moduleUrl(`import React from '${reactUrl}';export const RentalContextCard=({data})=>React.createElement('p',null,data.posts.map(item=>item.post.title).join(', '))`),
   '../ai/FoodDiscoveryCard': moduleUrl(`import React from '${reactUrl}';export const FoodDiscoveryCard=({data,onSearch,busy})=>React.createElement('section',{'aria-label':'Gợi ý món ăn'},data.items.map(item=>React.createElement('p',{key:item.id},item.title)),React.createElement('button',{disabled:busy,onClick:()=>onSearch({latitude:10.84,longitude:106.8,radiusKm:3})},'Tìm quanh mốc kiểm thử'))`),

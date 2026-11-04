@@ -716,6 +716,7 @@ export interface ChatbotNavigationAction {
 export interface ChatbotReply {
   roommateCandidates?: import('./chatbotAgent').AgentRoommateCandidate[] | null
   nearbyRooms?: import("./chatbotAgent").ChatbotNearbyResponse | null
+  sourceRooms?: import("./chatbotAgent").ChatbotSourceMatch | null
   agentRequested?: boolean
   agentDraft?: import("./chatbotAgent").AgentPostDraft | null
   upgradeRequired?: boolean

@@ -483,7 +483,7 @@ export function MapChatbot({
         const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
           content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở mục Đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
-          roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
+          roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, sourceRooms: request.context || request.selection || foodExpected ? null : reply.sourceRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
           actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở mục Đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
             target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
