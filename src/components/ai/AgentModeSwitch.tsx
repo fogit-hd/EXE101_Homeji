@@ -50,8 +50,8 @@ export function AgentModeSwitch({ active, busy, enabled, authenticated, onChange
     </div>
     {(!premium || busy) ? <div className="agent-mode-switch__description" key={active ? 'agent' : 'chat'}>
       <span className="agent-mode-switch__status" aria-hidden="true"><i /><i /><i /></span>
-      <p>{active ? busy ? 'Agent đang thực hiện yêu cầu…' : 'Cho thuê, pass phòng, tìm trọ/ở ghép, bán đồ ăn hoặc đồ cũ. Bạn duyệt đúng mẫu trước khi đăng.' : loading ? 'Đang kiểm tra quyền sử dụng Agent…' : access?.kind === 'error' ? 'Chưa kiểm tra được gói thành viên.' : premium ? 'Trò chuyện, tìm phòng hoặc bật Agent để soạn bài.' : 'Agent dành cho Premium · bạn duyệt trước khi thực hiện.'}</p>
-      {!active && !loading && !premium ? <button type="button" className="agent-mode-switch__upgrade" disabled={busy} onClick={() => access?.kind === 'error' ? setAttempt(value => value + 1) : onUpgrade()}>{access?.kind === 'error' ? 'Thử lại' : 'Mở khóa'}</button> : null}
+      <p>{active ? busy ? 'Agent đang thực hiện yêu cầu…' : 'Cho thuê, nhượng phòng, tìm trọ, ở ghép, bán đồ ăn hoặc đồ cũ. Bạn duyệt đúng mẫu trước khi đăng.' : loading ? 'Đang kiểm tra quyền sử dụng Agent…' : access?.kind === 'error' ? 'Chưa kiểm tra được gói Premium.' : premium ? 'Trò chuyện, tìm phòng hoặc bật Agent để soạn bài.' : 'Agent dành cho Premium · bạn duyệt trước khi thực hiện.'}</p>
+      {!active && !loading && !premium ? <button type="button" className="agent-mode-switch__upgrade" disabled={busy} onClick={() => access?.kind === 'error' ? setAttempt(value => value + 1) : onUpgrade()}>{access?.kind === 'error' ? 'Thử lại' : 'Nâng cấp'}</button> : null}
     </div> : null}
   </section>
 }

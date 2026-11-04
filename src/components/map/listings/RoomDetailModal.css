@@ -546,7 +546,7 @@
   color: #fff;
 }
 
-.room-detail__eyebrow { margin: 0; color: var(--rd-muted); font-size: 10px; font-weight: 650; letter-spacing: .12em; }
+.room-detail__eyebrow { margin: 0; color: var(--rd-muted); font-size: 12px; font-weight: 650; letter-spacing: .12em; }
 .room-detail__person { display: flex; align-items: center; gap: 12px; }
 .room-detail__person > div { min-width: 0; }
 .room-detail__person strong { display: block; font-size: 16px; overflow-wrap: anywhere; }
@@ -792,7 +792,7 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
 .room-detail__summary { gap: 8px; padding-bottom: 16px; }
 .room-detail__summary h3 { font-size: 23px; line-height: 1.4; font-weight: 700; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .room-detail__summary > .room-detail__muted { font-size: 11px; overflow-wrap: anywhere; }
-.room-detail__eyebrow { color: var(--action-on-soft); font-size: 10px; letter-spacing: .12em; }
+.room-detail__eyebrow { color: var(--action-on-soft); font-size: 12px; letter-spacing: .12em; }
 .room-detail__essentials { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; padding: 18px 16px; margin-bottom: 24px; border: 1px solid var(--rd-border); border-radius: 14px; background: var(--rd-bg); }
 .room-detail__essentials > div { display: grid; gap: 7px; min-width: 0; }
 .room-detail__essentials span { font-size: 12px; color: var(--rd-muted); }

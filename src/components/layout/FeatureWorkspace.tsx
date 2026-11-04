@@ -1,7 +1,7 @@
 import { Suspense, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationType, type Notification } from '../../api'
-import { mapMessagesUrl, mapPostUrl, mapSectionUrl } from '../../lib/mapDeepLinks'
+import { mapMessagesUrl, mapPostUrl, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
 import {
   ActivitiesPage,
   MapAppointmentsPanel, MapMessagesPanel,
@@ -16,13 +16,13 @@ import './FeatureWorkspace.css'
 
 const TITLES: Partial<Record<MapAppSection, string>> = {
   saved: 'Những nơi đáng để quay lại',
-  invitations: 'Ở chung, nhưng vẫn được là mình',
+  invitations: 'Ở ghép',
   notifications: 'Thông báo',
   messages: 'Tin nhắn',
   appointments: 'Lịch xem phòng',
   payments: 'Gói Đăng ký',
   profile: 'Hồ sơ',
-  marketplace: 'Chợ đồ',
+  marketplace: 'Chợ Homeji',
   wanted: 'Tin tìm phòng',
   activities: 'Nhật ký hoạt động',
   myPosts: 'Tin của tôi',
@@ -30,12 +30,12 @@ const TITLES: Partial<Record<MapAppSection, string>> = {
 
 const EYEBROWS: Partial<Record<MapAppSection, string>> = {
   saved: 'Đã lưu',
-  invitations: 'Tìm người cùng nhịp',
+  invitations: 'Tìm người ở cùng',
 }
 
 const LEADS: Partial<Record<MapAppSection, string>> = {
-  saved: 'Những phòng bạn đã lưu. Mở lại tin, so sánh giá và diện tích khi bạn sẵn sàng.',
-  invitations: 'Kết nối dựa trên ngân sách, khu vực và những thói quen thật sự quan trọng.',
+  saved: 'Những phòng bạn đã lưu. Mở lại tin, so sánh giá và diện tích.',
+  invitations: 'Tìm người ở cùng theo ngân sách, khu vực và thói quen.',
 }
 
 type Props = {
@@ -91,7 +91,7 @@ export function FeatureWorkspace({ section }: Props) {
         n.type === NotificationType.RoommateInvitationReceived ||
         n.type === NotificationType.RoommateInvitationAccepted
       ) {
-        navigate(mapSectionUrl('invitations'))
+        navigate(ROOMMATE_INVITATIONS_URL)
         return
       }
       if (n.type === NotificationType.MarketplaceOrderUpdated) {

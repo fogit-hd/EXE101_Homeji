@@ -1,4 +1,5 @@
 import { siteLocationSnapshot, subscribeSiteLocation, setSiteLocation as setSharedLocation } from '../../lib/siteLocation'
+import { confirmDialog } from '../ui/confirmDialog'
 import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -54,7 +55,7 @@ import './MapChatbot.css'
 
 const HOMEJI_TITLE = 'Homeji'
 const HOMEJI_GREETING =
-  'Chào bạn! Mình là trợ lý Homeji. Mình có thể tìm phòng, mở đúng tính năng và hỗ trợ bạn chọn đồ ăn an toàn.'
+  'Mình là trợ lý Homeji. Mình có thể tìm phòng, mở đúng mục bạn cần và gợi ý đồ ăn.'
 const VIEW_MARGIN = 12
 const SHEET_MEDIA = '(max-width: 900px)'
 const ACTION_SECTIONS = new Set<MapAppSection>([
@@ -191,7 +192,7 @@ export function MapChatbot({
     pending.controller.abort()
     setBusy(false)
     setMessages(current => current.map(message => message.id === pending.pendingId
-      ? { ...message, pending: false, failure: 'Đã dừng vì phòng đang hỗ trợ thay đổi.', retry: pending.request }
+      ? { ...message, pending: false, failure: 'Đã dừng vì bạn vừa chọn phòng khác.', retry: pending.request }
       : message))
     setDraft(current => pending.restoreDraft && !current && draftRevision.current === pending.draftRevision ? pending.request.message : current)
   }, [activeTargetKey])
@@ -481,9 +482,9 @@ export function MapChatbot({
       setMessages((prev) => {
         const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
-          content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở Chợ đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
+          content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở mục Đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
           roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
-          actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở Chợ đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
+          actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở mục Đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
             target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
           searchUpdate: request.context || request.selection || foodExpected ? null : reply.searchUpdate,
@@ -502,7 +503,8 @@ export function MapChatbot({
   }
 
   const deleteConversation = async () => {
-    if (!conversationId || busy || !window.confirm('Xóa hội thoại hiện tại và tiêu chí đã lưu? Thao tác không thể hoàn tác.')) return
+    if (!conversationId || busy) return
+    if (!await confirmDialog({ title: 'Xóa hội thoại này?', message: 'Tiêu chí đã lưu cũng bị xóa và không khôi phục được.', confirmLabel: 'Xóa hội thoại', danger: true })) return
     setBusy(true); setError(null)
     try {
       await deleteChatbotConversation(conversationId)

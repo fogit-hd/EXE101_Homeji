@@ -98,7 +98,7 @@
 
 .gmaps-omnibox__notify-badge-text {
   fill: var(--notify-badge-text);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 750;
   font-family: inherit;
 }

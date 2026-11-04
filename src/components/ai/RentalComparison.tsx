@@ -81,7 +81,7 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
   const largest = knownAreas.length > 1 ? Math.max(...knownAreas) : null
 
   return <section className="rental-comparison" aria-labelledby="rental-comparison-title">
-    <header><div><span>SHORTLIST CỦA BẠN</span><h2 id="rental-comparison-title">So sánh có căn cứ</h2></div>
+    <header><div><span>Phòng bạn đang cân nhắc</span><h2 id="rental-comparison-title">So sánh phòng</h2></div>
       <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Đóng so sánh</button></header>
     <p>Thông tin được tải lại từ tin đang công khai. Chỉ so giá thấp nhất giữa các tin cùng đơn vị: cả phòng hoặc mỗi người. Giá mỗi người không được tự quy đổi thành giá cả phòng.</p>
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Tải lại tin</button></p> : null}
@@ -109,7 +109,7 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
         return <article key={post.id}>
           <Link to={`/?section=listings&post=${encodeURIComponent(post.id)}`}><h3>{post.title}</h3></Link>
           <p>{post.address}</p>
-          {post.type === RentalPostType.RoomTransfer ? <small>Tin pass phòng dùng vị trí gần đúng nếu bạn không phải chủ tin; cần xác nhận địa chỉ trước khi đi xem.</small> : null}
+          {post.type === RentalPostType.RoomTransfer ? <small>Tin nhượng phòng dùng vị trí gần đúng nếu bạn không phải chủ tin; cần xác nhận địa chỉ trước khi đi xem.</small> : null}
           <dl>
             <dt>{rentalPriceLabel(priceBasis)}</dt><dd>{formatListingRent(post.price)}{isLowestComparablePrice(post, items.map(item => item.post)) ? ' · thấp nhất trong các tin cùng đơn vị' : ''}</dd>
             <dt>Diện tích</dt><dd>{formatListingArea(post.area)}{post.area === largest ? ' · rộng nhất trong lựa chọn' : ''}</dd>

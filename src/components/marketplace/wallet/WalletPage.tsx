@@ -923,7 +923,7 @@ function HistoryPanel({
         <div className="wallet-notice wallet-notice--mint">
           <span className="wallet-notice__icon"><Icon src={WALLET_ASSETS.badge} /></span>
           <span>
-            <strong>Số dư Homeji ghi nhận</strong>
+            <strong>Số dư ví Homeji ghi nhận</strong>
             <small>
               {walletUpdatedAt
                 ? `Cập nhật lần cuối ${formatWalletLedgerTime(walletUpdatedAt)}.`

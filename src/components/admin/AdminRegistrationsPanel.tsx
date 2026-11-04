@@ -41,8 +41,8 @@ export function AdminRegistrationsPanel() {
     {loading ? <p role="status">Đang tải danh sách…</p> : error.key === key ? <div role="alert">{error.message} <button type="button" className="btn btn-secondary" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></div> : null}
     {shown ? <>
       <div className="admin-register__count">{result.total.toLocaleString('vi-VN')} {view === 'accounts' ? 'tài khoản' : 'lượt đăng ký gói'}</div>
-      {!result.total ? <p className="empty-state">Chưa có đăng ký phù hợp.</p> : <div className="admin-data-table" tabIndex={0} role="region" aria-label={view === 'accounts' ? 'Bảng tài khoản' : 'Bảng gói thành viên'}><table>
-        <thead><tr><th>Người đăng ký</th>{view === 'accounts' ? <><th>Tài khoản</th><th>Ngày đăng ký</th><th>Gói hiện tại</th></> : <><th>Gói đăng ký</th><th>Thời hạn</th><th>Thanh toán</th></>}</tr></thead>
+      {!result.total ? <p className="empty-state">Chưa có đăng ký phù hợp.</p> : <div className="admin-data-table" tabIndex={0} role="region" aria-label={view === 'accounts' ? 'Bảng tài khoản' : 'Bảng gói Premium'}><table>
+        <thead><tr><th>Người đăng ký</th>{view === 'accounts' ? <><th>Tài khoản</th><th>Ngày đăng ký</th><th>Gói hiện tại</th></> : <><th>Gói</th><th>Thời hạn</th><th>Thanh toán</th></>}</tr></thead>
         <tbody>{view === 'accounts' ? result.accounts?.map(account => <tr key={account.userId}>
           <td><strong>{account.displayName}</strong><small>{account.email || 'Chưa có email'}</small><details><summary>Mã tài khoản</summary><small>{account.userId}</small></details></td>
           <td>{account.role ? userRoleLabel[account.role] ?? 'Chưa cập nhật' : 'Chưa có hồ sơ'}<small>{account.emailConfirmed ? 'Email đã xác nhận' : 'Email chưa xác nhận'}</small><small>{account.profileCompleted ? 'Hồ sơ đã hoàn tất' : 'Hồ sơ chưa hoàn tất'}</small></td>

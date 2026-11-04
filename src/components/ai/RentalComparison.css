@@ -1,6 +1,6 @@
 .rental-comparison { padding: 24px; margin: 20px 0; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-elevated); color: var(--text-primary); }
 .rental-comparison header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-.rental-comparison header span { font-size: 10px; letter-spacing: .15em; color: var(--text-muted); }
+.rental-comparison header span { font-size: 12px; letter-spacing: .15em; color: var(--text-muted); }
 .rental-comparison h2 { margin: 5px 0; }
 .rental-comparison__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 18px; }
 .rental-comparison__grid article { min-width: 0; border: 1px solid var(--border); padding: 18px; border-radius: 16px; }

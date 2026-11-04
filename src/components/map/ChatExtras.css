@@ -1,4 +1,4 @@
-.chat-premium{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #c99e45;border-radius:999px;background:linear-gradient(110deg,#fff5d8,#f8e3ac);color:#765016;font-size:10px;font-weight:800;white-space:nowrap;vertical-align:middle}
+.chat-premium{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #c99e45;border-radius:999px;background:linear-gradient(110deg,#fff5d8,#f8e3ac);color:#765016;font-size: 12px;font-weight:800;white-space:nowrap;vertical-align:middle}
 .map-messages__row.is-premium{box-shadow:inset 3px 0 #c99e45;background:linear-gradient(100deg,#c99e4515,transparent)}
 .map-messages .map-messages__row.is-premium .map-messages__avatar{outline:2px solid #c99e45;outline-offset:2px}
 .map-messages .map-messages__meta-top>.chat-premium{flex-shrink:0;margin-left:4px}
@@ -31,7 +31,7 @@
 .chat-media__emojis{grid-template-columns:repeat(7,minmax(0,1fr))}
 .chat-media__emojis button{min-width:0;font-size:25px;transition:transform .12s}
 .chat-media__emojis button:hover{transform:scale(1.18);background:#07839112}
-.map-messages.map-messages .chat-premium{gap:4px;padding:3px 7px;color:#fff3c5;border:1px solid #e4ba5b;background:linear-gradient(115deg,#55350e,#9e681e 55%,#4e300c);box-shadow:0 2px 7px #92601826,inset 0 1px #fff6;font-size:9px;letter-spacing:.07em;text-transform:uppercase;line-height:1.4}
+.map-messages.map-messages .chat-premium{gap:4px;padding:3px 7px;color:#fff3c5;border:1px solid #e4ba5b;background:linear-gradient(115deg,#55350e,#9e681e 55%,#4e300c);box-shadow:0 2px 7px #92601826,inset 0 1px #fff6;font-size: 12px;letter-spacing:.07em;text-transform:uppercase;line-height:1.4}
 .map-messages.map-messages .chat-premium>.chat-premium__crown{font-size:13px;color:#ffe5a3;line-height:1}
 html:root #root .map-messages .map-messages__row.is-premium{position:relative;border:1px solid #d4a54f66;border-radius:16px;background:radial-gradient(ellipse at 0 0,#e5ba4c24,transparent 75%),var(--surface,#fff);box-shadow:inset 3px 0 #c9912c,0 3px 12px #986a1210;margin-bottom:6px}
 html:root #root .map-messages .map-messages__row.is-premium.is-active{background:linear-gradient(115deg,#e6bd5b30,#0a899b0d),var(--surface,#fff);border-color:#cb9a3a}

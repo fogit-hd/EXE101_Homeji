@@ -14,7 +14,7 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
   const room = kind === 'rental' || kind === 'roomTransfer' || kind === 'roommate'
   const wanted = kind === 'wanted'
   const food = kind === 'food'
-  const labels = { secondHand: 'Bán đồ cũ', food: 'Bán đồ ăn', rental: 'Cho thuê phòng', roomTransfer: 'Pass phòng', roommate: 'Phòng tìm người ở ghép', wanted: 'Đăng nhu cầu tìm trọ' }
+  const labels = { secondHand: 'Bán đồ cũ', food: 'Bán đồ ăn', rental: 'Cho thuê phòng', roomTransfer: 'Nhượng phòng', roommate: 'Phòng tìm người ở ghép', wanted: 'Đăng nhu cầu tìm trọ' }
   const [details, setDetails] = useState(draft.details)
   const [status, setStatus] = useState<'draft' | 'publishing' | 'published' | 'cancelled'>('draft')
   const [postId, setPostId] = useState(draft.publishedPostId)
@@ -44,10 +44,10 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
   type NumberField = 'deposit' | 'area' | 'maxOccupants' | 'availableSlots' | 'minimumLeaseMonths' | 'passFee' | 'availableQuantity' | 'preparationMinutes'
   function numberField(key: NumberField, label: string) { return <label>{label}<input type="number" min="0" step={key === 'area' ? 'any' : '1'} value={details[key] ?? ''} onChange={e => setDetails({ ...details, [key]: e.target.value === '' ? null : Number(e.target.value) })} /></label> }
   function moneyField(key: 'deposit' | 'passFee', label: string) { return <label>{label}<MoneyInput value={details[key] == null ? '' : String(details[key])} onValueChange={value => setDetails({ ...details, [key]: value === '' ? null : Number(value) })} /></label> }
-  if (status === 'published') return <section className="agent-post-preview" aria-label="Kết quả đăng bài"><strong>{room ? 'Đã gửi tin phòng để kiểm duyệt' : wanted ? 'Đã đăng tin tìm trọ' : 'Đã đăng lên Chợ đồ'}</strong><a href={postHref}>Xem bài vừa đăng</a></section>
+  if (status === 'published') return <section className="agent-post-preview" aria-label="Kết quả đăng bài"><strong>{room ? 'Đã gửi tin phòng để kiểm duyệt' : wanted ? 'Đã đăng tin tìm trọ' : 'Đã đăng lên Chợ Homeji'}</strong><a href={postHref}>Xem bài vừa đăng</a></section>
   if (status === 'cancelled') return <p role="status">Đã hủy bản nháp. Chưa đăng bài.</p>
   return <section className="agent-post-preview" aria-label="Xác nhận bài đăng AI">
-    <header><span>HOMEJI AGENT · PREMIUM · {labels[kind]}</span><strong>Bài đăng của bạn, sẵn sàng để duyệt</strong><small>{expired ? 'Bản nháp đã hết hạn' : !active ? 'Bản nháp cũ · xem bản mới nhất bên dưới' : 'Chưa đăng · chỉ đăng khi bạn xác nhận'}</small></header>
+    <header><span>HOMEJI AGENT · PREMIUM · {labels[kind]}</span><strong>Xem lại bài đăng trước khi gửi</strong><small>{expired ? 'Bản nháp đã hết hạn' : !active ? 'Bản nháp cũ · xem bản mới nhất bên dưới' : 'Chưa đăng · chỉ đăng khi bạn xác nhận'}</small></header>
     <div className={`agent-post-preview__editor${draft.images.length ? '' : ' has-no-images'}`}>
     <div className="agent-post-preview__images">{draft.images.map((src, i) => <img key={i} src={src} alt={`Ảnh bài đăng ${i + 1}`} />)}</div>
     <fieldset disabled={disabled}>
@@ -65,12 +65,12 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
       {wanted ? numberField('maxOccupants', 'Số người muốn thuê') : null}
       {room || wanted ? <label>Ngày dự kiến nhận phòng<input type="date" value={details.availableFrom ?? ''} onChange={e => setDetails({ ...details, availableFrom: e.target.value || null })} /></label> : null}
       {kind === 'roomTransfer' ? <>
-        <label>Hình thức pass<select value={details.transferKind ?? ''} onChange={e => setDetails({ ...details, transferKind: Number(e.target.value) || null })}><option value="">Chọn hình thức</option><option value="1">Chuyển hợp đồng</option><option value="2">Cho thuê lại</option></select></label>
+        <label>Hình thức nhượng<select value={details.transferKind ?? ''} onChange={e => setDetails({ ...details, transferKind: Number(e.target.value) || null })}><option value="">Chọn hình thức</option><option value="1">Chuyển hợp đồng</option><option value="2">Cho thuê lại</option></select></label>
         <label>Ngày hợp đồng kết thúc<input type="date" value={details.originalLeaseEndsOn ?? ''} onChange={e => setDetails({ ...details, originalLeaseEndsOn: e.target.value || null })} /></label>
-        {moneyField('passFee', 'Phí pass (đ) · nhập 0 nếu không có')}
-        <label>Lý do pass<textarea value={details.transferReason ?? ''} onChange={e => setDetails({ ...details, transferReason: e.target.value })} /></label>
+        {moneyField('passFee', 'Phí nhượng (đ) · nhập 0 nếu không có')}
+        <label>Lý do nhượng<textarea value={details.transferReason ?? ''} onChange={e => setDetails({ ...details, transferReason: e.target.value })} /></label>
         <label>Liên hệ chủ nhà<input value={details.ownerConsentContact ?? ''} maxLength={200} onChange={e => setDetails({ ...details, ownerConsentContact: e.target.value })} /></label>
-        <label className="agent-post-preview__consent"><input type="checkbox" checked={details.ownerConsentConfirmed ?? false} onChange={e => setDetails({ ...details, ownerConsentConfirmed: e.target.checked })} />Tôi xác nhận chủ nhà đã đồng ý việc pass/cho thuê lại.</label>
+        <label className="agent-post-preview__consent"><input type="checkbox" checked={details.ownerConsentConfirmed ?? false} onChange={e => setDetails({ ...details, ownerConsentConfirmed: e.target.checked })} />Tôi xác nhận chủ nhà đã đồng ý việc nhượng hoặc cho thuê lại.</label>
       </> : null}
       {food ? <>
         <div className="agent-post-preview__pair">{numberField('availableQuantity', 'Số lượng đang bán')}{numberField('preparationMinutes', 'Chuẩn bị (phút)')}</div>

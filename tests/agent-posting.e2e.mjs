@@ -59,7 +59,7 @@ try {
   await confirm.evaluate(button => { button.click(); button.click() })
   await preview.getByRole('alert').waitFor(); assert.equal(approvals.length, 1)
   assert.equal(approvals[0].price, 550000)
-  reject = false; await confirm.click(); await page.getByText('Đã đăng lên Chợ đồ', { exact: true }).waitFor()
+  reject = false; await confirm.click(); await page.getByText('Đã đăng lên Chợ Homeji', { exact: true }).waitFor()
   assert.equal(approvals.length, 2); assert.deepEqual(approvals[0], approvals[1])
   assert.match(await page.getByRole('link', { name: 'Xem bài vừa đăng' }).getAttribute('href'), /item=posted-id/)
   awaitingImage = true; await page.reload()

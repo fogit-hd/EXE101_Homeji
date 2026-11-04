@@ -21,12 +21,12 @@ type Slide = {
 const SLIDES: Slide[] = [
   { eyebrow: 'Mời bạn cùng dùng', title: 'Cả hai nhận voucher', keyword: 'tối đa 50k/người', sub: 'Bạn mới xác nhận email và nhận lời mời. Đợt này có 10 lượt nhận quà; xem điều kiện áp dụng.', cta: 'Mời bạn & nhận quà', to: '/referrals', accent: '#a43c22', bg: ['#fff8ee', '#ffe9d6'], dot: '#f3d9c2' },
   { eyebrow: 'Tính năng mới', title: 'Tìm bạn ở ghép', keyword: 'hợp gu', sub: 'Ghép theo giờ giấc, ngân sách và thói quen sinh hoạt của bạn.', cta: 'Thử ngay', to: mapSectionUrl('invitations'), accent: '#00b14f', bg: ['#f1faf4', '#d9f3e3'], dot: '#cfe9d8' },
-  { eyebrow: 'Quanh nơi bạn ở', title: 'Chợ đồ & đồ ăn', keyword: 'quanh trọ', sub: 'Tìm đồ dùng và món ăn theo người bán. Xem địa chỉ nhận trước khi đặt.', cta: 'Khám phá chợ', to: mapSectionUrl('marketplace'), accent: '#0f7c80', bg: ['#eef8f8', '#d5eeee'], dot: '#c8e3e3' },
-  { eyebrow: 'Xem phòng dễ dàng', title: 'Đặt lịch xem phòng', keyword: 'theo giờ bạn rảnh', sub: 'Chọn giờ rảnh, chờ chủ trọ xác nhận trong ứng dụng.', cta: 'Đặt lịch ngay', to: mapSectionUrl('listings'), accent: '#b7791f', bg: ['#fffaf0', '#ffeec7'], dot: '#f0dfb6' },
+  { eyebrow: 'Quanh nơi bạn ở', title: 'Đồ cũ và đồ ăn', keyword: 'quanh trọ', sub: 'Tìm đồ dùng và món ăn theo người bán. Xem địa chỉ nhận trước khi đặt.', cta: 'Xem chợ', to: mapSectionUrl('marketplace'), accent: '#0f7c80', bg: ['#eef8f8', '#d5eeee'], dot: '#c8e3e3' },
+  { eyebrow: 'Xem phòng', title: 'Đặt lịch xem phòng', keyword: 'theo giờ bạn rảnh', sub: 'Chọn giờ rảnh, chờ chủ trọ xác nhận trong ứng dụng.', cta: 'Đặt lịch ngay', to: mapSectionUrl('listings'), accent: '#b7791f', bg: ['#fffaf0', '#ffeec7'], dot: '#f0dfb6' },
   { eyebrow: 'Trợ lý Homeji AI', title: 'AI gợi ý phòng', keyword: 'hợp gu', sub: 'Nói nhu cầu của bạn, AI chọn ra những phòng phù hợp nhất.', cta: 'Hỏi AI ngay', accent: '#00a047', bg: ['#effaf6', '#d4f1e6'], dot: '#c9e8dc' },
-  { eyebrow: 'Gói VIP Homeji', title: 'Chọn gói VIP', keyword: 'phù hợp nhu cầu', sub: 'Xem giá, thời hạn và quyền lợi của từng gói trước khi thanh toán.', cta: 'Xem các gói', to: mapSectionUrl('payments'), accent: '#24543e', bg: ['#f1f6f8', '#d9eaf0'], dot: '#cfe0e6' },
+  { eyebrow: 'Gói Premium', title: 'Chọn gói Premium', keyword: 'phù hợp nhu cầu', sub: 'Xem giá, thời hạn và quyền lợi của từng gói trước khi thanh toán.', cta: 'Xem các gói', to: mapSectionUrl('payments'), accent: '#24543e', bg: ['#f1f6f8', '#d9eaf0'], dot: '#cfe0e6' },
   { eyebrow: 'Quản lý tin cho thuê', title: 'Đăng và quản lý', keyword: 'tin của bạn', sub: 'Thêm ảnh, giá và địa chỉ rõ ràng để người thuê dễ tìm hiểu.', cta: 'Quản lý tin', to: mapSectionUrl('myPosts'), accent: '#a43c22', bg: ['#fdf3ef', '#f9dccf'], dot: '#f0d5c8' },
-  { eyebrow: 'Voucher của bạn', title: 'Ưu đãi đồ ăn', keyword: 'và gói VIP', sub: 'Xem voucher còn hạn, mức giảm và điều kiện dùng trong tài khoản của bạn.', cta: 'Xem voucher', to: '/referrals', accent: '#3f7d1f', bg: ['#f5faec', '#e1f0c9'], dot: '#d9e8c2' },
+  { eyebrow: 'Voucher của bạn', title: 'Ưu đãi đồ ăn', keyword: 'và gói Premium', sub: 'Xem voucher còn hạn, mức giảm và điều kiện dùng trong tài khoản của bạn.', cta: 'Xem voucher', to: '/referrals', accent: '#3f7d1f', bg: ['#f5faec', '#e1f0c9'], dot: '#d9e8c2' },
 ]
 
 const INTERVAL_MS = 5000

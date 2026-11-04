@@ -50,7 +50,7 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
     subtitle: '',
   },
   marketplace: {
-    title: 'Chợ đồ',
+    title: 'Chợ Homeji',
     subtitle: '',
   },
   wanted: {

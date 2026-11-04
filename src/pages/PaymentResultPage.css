@@ -6,10 +6,10 @@
 .payment-result-page .payment-result-card.is-error { --result-accent: #a93f38; --result-wash: #fcece9; }
 .payment-result-page .payment-result-card.is-neutral { --result-accent: #586c71; --result-wash: #edf1f2; }
 .payment-result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--result-accent); }
-.payment-result-topline { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px; font-size: 10px; letter-spacing: .07em; color: var(--text-secondary); }
+.payment-result-topline { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px; font-size: 12px; letter-spacing: .07em; color: var(--text-secondary); }
 .payment-result-topline strong { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; letter-spacing: 0; color: var(--text-primary); }
 .payment-result-symbol { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 24px; margin: 10px 0 2px; background: var(--result-wash); color: var(--result-accent); font: 500 40px/1 var(--font-ui); box-shadow: 0 0 0 8px color-mix(in srgb,var(--result-wash) 45%,transparent); }
-.payment-result-label { color: var(--result-accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.payment-result-label { color: var(--result-accent); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .payment-result-page .payment-wait-card h1 { color: var(--text-heading); font-size: clamp(25px,3vw,34px); font-weight: 700; }
 .payment-result-page .payment-wait-description { color: var(--text-secondary); max-width: 460px; font-size: 14px; line-height: 1.7; }
 .payment-result-total { display: grid; gap: 6px; width: 100%; padding: 18px 8px; border-block: 1px solid var(--border); }
@@ -33,7 +33,7 @@ html[data-theme='dark'] .payment-result-card.is-neutral { --result-accent: #c4d4
 @media(max-width:800px) {
  .payment-result-page .payment-wait-layout { grid-template-columns: minmax(0,1fr); }
  .payment-result-page .payment-result-card { padding: 24px 18px; }
- .payment-result-topline { font-size: 9px; }
+ .payment-result-topline { font-size: 12px; }
  .payment-result-page { width: calc(100% - 24px); margin-top: 20px; }
 }
 /* Transaction facts stay readable in both themes; the old payment sheet used

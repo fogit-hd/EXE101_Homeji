@@ -1,4 +1,5 @@
 import './pages.css'
+import { confirmDialog } from '../components/ui/confirmDialog'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -219,7 +220,7 @@ export function AdminModerationPage() {
   const handleApprove = async (post: RentalPostSummary) => {
     const consentNote = consentVerificationNotes[post.id]?.trim()
     if (post.ownerConsentContact && !consentNote) {
-      setError('Vui lòng ghi lại cách đã xác minh sự đồng ý của chủ nhà trước khi duyệt tin pass.')
+      setError('Vui lòng ghi lại cách đã xác minh sự đồng ý của chủ nhà trước khi duyệt tin nhượng phòng.')
       return
     }
     try {
@@ -232,7 +233,7 @@ export function AdminModerationPage() {
       })
       await reload()
     } catch (err) {
-      setError(getErrorMessage(err, 'Duyệt thất bại'))
+      setError(getErrorMessage(err, 'Chưa duyệt được tin. Vui lòng thử lại.'))
     }
   }
 
@@ -243,7 +244,7 @@ export function AdminModerationPage() {
       setRejectReasons(current => ({ ...current, [postId]: '' }))
       await reload()
     } catch (err) {
-      setError(getErrorMessage(err, 'Từ chối thất bại'))
+      setError(getErrorMessage(err, 'Chưa từ chối được tin. Vui lòng thử lại.'))
     }
   }
 
@@ -258,7 +259,7 @@ export function AdminModerationPage() {
       })
       await reload()
     } catch (err) {
-      setError(getErrorMessage(err, 'Xử lý thất bại'))
+      setError(getErrorMessage(err, 'Chưa xử lý được. Vui lòng thử lại.'))
     }
   }
 
@@ -273,7 +274,7 @@ export function AdminModerationPage() {
       })
       await reload()
     } catch (err) {
-      setError(getErrorMessage(err, 'Thao tác thất bại'))
+      setError(getErrorMessage(err, 'Chưa thực hiện được. Vui lòng thử lại.'))
     }
   }
 
@@ -283,7 +284,7 @@ export function AdminModerationPage() {
       setError('Vui lòng nhập mã giao dịch chuyển khoản trước khi xác nhận.')
       return
     }
-    if (!window.confirm('Xác nhận tiền đã được chuyển tới đúng tài khoản người dùng?')) return
+    if (!await confirmDialog({ title: 'Xác nhận đã chuyển tiền?', message: 'Chỉ xác nhận khi tiền đã tới đúng tài khoản của người dùng.', confirmLabel: 'Đã chuyển tiền', danger: true })) return
     try {
       await completeWalletWithdrawal(id, resolutionNote || undefined)
       setMessage('Đã xác nhận chuyển khoản thành công.')
@@ -300,7 +301,7 @@ export function AdminModerationPage() {
       setError('Vui lòng nhập lý do từ chối để người dùng đối soát.')
       return
     }
-    if (!window.confirm('Từ chối yêu cầu này và hoàn toàn bộ số tiền về ví?')) return
+    if (!await confirmDialog({ title: 'Từ chối yêu cầu rút tiền?', message: 'Toàn bộ số tiền sẽ được hoàn về ví của người dùng.', confirmLabel: 'Từ chối và hoàn tiền', danger: true })) return
     try {
       await rejectWalletWithdrawal(id, resolutionNote || undefined)
       setMessage('Đã từ chối và hoàn tiền vào ví người dùng.')
@@ -339,7 +340,7 @@ export function AdminModerationPage() {
   const sectionInfo = {
     registrations: ['Tài khoản & thành viên', 'Xem người đã đăng ký tài khoản, lịch sử mua gói và thời hạn thành viên.'],
     exports: ['Báo cáo Excel', 'Tạo báo cáo, theo dõi email và tải lại các file đã xuất.'],
-    pricing: ['Giá gói thành viên', 'Sửa giá, nêu lý do và công bố cho người xem.'],
+    pricing: ['Giá gói Premium', 'Sửa giá, nêu lý do và công bố cho người xem.'],
     aiReviews: ['AI kiểm tra tin', 'Kiểm tra lần lượt, giới hạn lượt gọi và xem lại kết quả.'],
     overview: ['Tổng quan sản phẩm', 'Hàng chờ, hoạt động và thị trường.'],
     posts: ['Tin chờ duyệt', 'Kiểm tra thông tin và sự đồng ý của chủ nhà trước khi duyệt.'],
@@ -506,7 +507,7 @@ export function AdminModerationPage() {
                   {post.ownerConsentContact ? (
                     <>
                       <p className="alert alert-warning">
-                        <strong>Pass phòng — cần xác minh chủ nhà:</strong>{' '}
+                        <strong>Nhượng phòng — cần xác minh chủ nhà:</strong>{' '}
                         {post.ownerConsentContact}
                       </p>
                       <label className="form-label" htmlFor={`consent-note-${post.id}`}>

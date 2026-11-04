@@ -1,4 +1,5 @@
 import { MoneyInput } from '../components/ui/MoneyInput'
+import { confirmDialog } from '../components/ui/confirmDialog'
 import './pages.css'
 import './post-form.css'
 import { VoucherPicker, type VoucherSelection } from '../components/marketplace/VoucherPicker'
@@ -879,7 +880,7 @@ export function MarketplacePage({
       setActionMsg(
         destinationTab === 'food'
           ? 'Đã đăng món ăn — tin được chuyển vào “Đồ ăn”.'
-          : 'Đã đăng vật dụng — tin được chuyển vào “Chợ đồ”.',
+          : 'Đã đăng vật dụng — tin được chuyển vào “Đồ cũ”.',
       )
       setTitle('')
       setDescription('')
@@ -891,7 +892,7 @@ export function MarketplacePage({
       void reload()
       onFocusMap?.({ lat: latNum, lng: lngNum, zoom: MAP_FOCUS_ZOOM })
     } catch (err) {
-      setActionError(getErrorMessage(err, 'Đăng tin thất bại'))
+      setActionError(getErrorMessage(err, 'Chưa đăng được tin. Vui lòng thử lại.'))
     } finally {
       setUploading(false)
     }
@@ -943,13 +944,13 @@ export function MarketplacePage({
       const created = await createMarketplaceOrder(post.id, {
         pickupAt,
         pickupAddress: 'Thỏa thuận khi chat',
-        note: 'Đặt từ Homeji map',
+        note: 'Đặt từ bản đồ Homeji',
         quantity,
       })
       await rememberCreatedPurchase(created.id, 'Đã gửi yêu cầu mua.')
       return true
     } catch (err) {
-      setActionError(getErrorMessage(err, 'Đặt mua thất bại'))
+      setActionError(getErrorMessage(err, 'Chưa đặt mua được. Vui lòng thử lại.'))
       return false
     } finally {
       singlePurchaseLock.current = false
@@ -976,10 +977,10 @@ export function MarketplacePage({
     try {
       let url: string | null | undefined
       if (method === 'momo') {
-        const result = await createMomoPayment(amount, 'Nạp Số dư Homeji')
+        const result = await createMomoPayment(amount, 'Nạp ví Homeji')
         url = result.payUrl ?? result.deeplink ?? result.qrCodeUrl
       } else {
-        const result = await createPayOsPayment(amount, 'Nạp Số dư Homeji')
+        const result = await createPayOsPayment(amount, 'Nạp ví Homeji')
         url = result.checkoutUrl
       }
       if (!url) throw new Error('Cổng thanh toán chưa trả về đường dẫn thanh toán.')
@@ -992,13 +993,11 @@ export function MarketplacePage({
     }
   }
 
-  const addToCart = (post: MarketplacePost) => {
+  const addToCart = async (post: MarketplacePost) => {
     const quantity = orderQuantities[post.id] ?? 1
     const currentSellerId = cartItems[0]?.sellerId
     if (currentSellerId && currentSellerId !== post.sellerId) {
-      const replaceCart = window.confirm(
-        'Giỏ hàng đang có món của một bếp khác. Xóa giỏ cũ để thêm món này?',
-      )
+      const replaceCart = await confirmDialog({ title: 'Đổi sang bếp khác?', message: 'Giỏ hàng đang có món của một bếp khác. Món cũ sẽ bị xóa khỏi giỏ.', confirmLabel: 'Xóa giỏ cũ và thêm món' })
       if (!replaceCart) return
     }
 
@@ -1078,7 +1077,7 @@ export function MarketplacePage({
       await rememberCreatedPurchase(createdOrder.id, `Đã gửi yêu cầu mua ${itemCount} món. Người bán có thể nhận hoặc từ chối; bạn sẽ được hoàn tiền nếu yêu cầu bị từ chối.`)
       await reload()
     } catch (err) {
-      setActionError(getErrorMessage(err, 'Thanh toán giỏ hàng thất bại'))
+      setActionError(getErrorMessage(err, 'Chưa thanh toán được giỏ hàng. Vui lòng thử lại.'))
     } finally {
       setCartBusy(false)
     }
@@ -1937,7 +1936,7 @@ export function MarketplacePage({
                 value={address}
                 onChange={(value) => { setAddress(value); setLatitude(''); setLongitude('') }}
                 onPlaceSelect={handlePlaceSelect}
-                placeholder="Nhập địa chỉ — gợi ý Places API"
+                placeholder="Nhập địa chỉ rồi chọn từ gợi ý"
                 required
               />
             )}
@@ -2163,7 +2162,7 @@ export function MarketplacePage({
 
                     <div className="marketplace-order-summary">
                       <div>
-                        <span>Tổng thanh toán · Số dư Homeji</span>
+                        <span>Tổng thanh toán · Ví Homeji</span>
                         <strong>{formatPrice(group.total)}</strong>
                       </div>
                       <div className="marketplace-order-eta">
@@ -2243,8 +2242,8 @@ export function MarketplacePage({
                             type="button"
                             className="btn btn-ghost btn-sm"
                             disabled={busy}
-                            onClick={() => {
-                              if (!window.confirm(`Hủy toàn bộ đơn gồm ${group.orders.length} món và hoàn tiền?`)) return
+                            onClick={async () => {
+                              if (!await confirmDialog({ title: `Hủy đơn gồm ${group.orders.length} món?`, message: 'Tiền sẽ được hoàn về ví Homeji.', confirmLabel: 'Hủy đơn và hoàn tiền', cancelLabel: 'Giữ đơn', danger: true })) return
                               void handleOrderGroupAction(
                                 group.groupKey,
                                 () => cancelMarketplaceOrder(firstOrder.id),
@@ -2424,7 +2423,7 @@ export function MarketplacePage({
   }
 
   return (
-    <PageFrame title="Chợ đồ" actions={frameActions}>
+    <PageFrame title="Chợ Homeji" actions={frameActions}>
       <div className="marketplace-page marketplace-page--food">{body}</div>
     </PageFrame>
   )

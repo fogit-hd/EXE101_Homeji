@@ -52,7 +52,7 @@ export function PremiumContactEditor() {
           <label>Link Facebook<input type="url" maxLength={500} value={facebook} onChange={event => setFacebook(event.target.value)} placeholder="https://www.facebook.com/ten.cua.ban" autoComplete="url" /></label>
           <label>Số Zalo<input type="tel" inputMode="tel" maxLength={30} value={zalo} onChange={event => setZalo(event.target.value)} placeholder="0901234567" autoComplete="tel" /></label>
         </fieldset>
-        {premium ? <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu liên hệ'}</button> : <p className="premium-contact-editor__locked">Mở Facebook và Zalo trên hồ sơ với Premium. <Link to="/?section=payments&tab=plans">Xem gói thành viên ↗</Link></p>}
+        {premium ? <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu liên hệ'}</button> : <p className="premium-contact-editor__locked">Mở Facebook và Zalo trên hồ sơ với Premium. <Link to="/?section=payments&tab=plans">Xem gói Premium</Link></p>}
       </form>
       {!premium && (profile.facebookUrl || profile.zaloPhone) ? <button className="btn btn-secondary" type="button" disabled={saving} onClick={() => void save(true)}>Xóa liên hệ đã lưu</button> : null}
       <div className="premium-contact-editor__preview"><strong>Khách khác sẽ thấy</strong><SocialContactLinks facebookUrl={facebook} zaloPhone={zalo} createdAt={profile.createdAt} isPremium={!!premium} requireAuth={false} /></div>

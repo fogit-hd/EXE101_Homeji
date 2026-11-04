@@ -43,8 +43,8 @@ import {
   wardsForDistrict,
 } from '../components/landing/guestMapAreas'
 import { GuestMapSection } from '../components/landing/GuestMapSection'
-import { HorizontalScrollShowcase } from '../components/landing/HorizontalScrollShowcase'
 import { MissionConfetti } from '../components/landing/MissionConfetti'
+import { RevealText } from '../components/motion/RevealText'
 import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
 import { FeatureWorkspace } from '../components/layout/FeatureWorkspace'
 import {
@@ -55,7 +55,6 @@ import {
   serializeFiltersToQuery,
 } from '../components/map/listings/listingAdapters'
 import '../components/map/MapMotion.css'
-import { RevealText } from '../components/motion/RevealText'
 import { getErrorMessage, isServiceDisruption } from '../lib/errors'
 import { DeviceLocationError, getDeviceLocation } from '../lib/geolocation'
 import { MAP_FIT_MAX_ZOOM, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
@@ -985,27 +984,12 @@ function HomePageComponent() {
                 Minh bạch thông tin, rõ ràng quy trình — để việc chuyển nhà gần trường trở nên nhẹ nhàng
                 hơn.
               </p>
-              <div className="guest-mission__stats">
-                <div className="guest-mission__stat">
-                  <strong>Sinh viên</strong>
-                  <span>Tìm phòng gần trường</span>
-                </div>
-                <div className="guest-mission__stat">
-                  <strong>Bạn cùng phòng</strong>
-                  <span>Kết nối có kiểm soát</span>
-                </div>
-                <div className="guest-mission__stat">
-                  <strong>Chủ nhà</strong>
-                  <span>Cho thuê đúng đối tượng</span>
-                </div>
-              </div>
             </div>
             <MissionConfetti />
           </div>
         </section>
-        <HorizontalScrollShowcase />
-        <GuestJourney />
         <GuestMapSection />
+        <GuestJourney />
       </div>
     )
   }

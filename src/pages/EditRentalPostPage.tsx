@@ -1,4 +1,5 @@
 import { MoneyInput } from '../components/ui/MoneyInput'
+import { confirmDialog } from '../components/ui/confirmDialog'
 import './post-form.css'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -165,7 +166,7 @@ export function EditRentalPostPage() {
       await persistDraft()
       setMessage('Đã lưu tin đăng.')
     } catch (err) {
-      setError(getErrorMessage(err, 'Lưu thất bại'))
+      setError(getErrorMessage(err, 'Chưa lưu được tin. Vui lòng thử lại.'))
     } finally {
       setSaving(false)
       operationLock.current = false
@@ -206,7 +207,7 @@ export function EditRentalPostPage() {
       }
       setMessage(`Đã tải lên ${uploaded.length} ảnh.`)
     } catch (err) {
-      setError(getErrorMessage(err, 'Thêm ảnh thất bại'))
+      setError(getErrorMessage(err, 'Chưa thêm được ảnh. Vui lòng thử lại.'))
     } finally {
       setUploadingMedia(false)
       operationLock.current = false
@@ -224,7 +225,7 @@ export function EditRentalPostPage() {
       const updated = await getRentalPost(postId)
       setPost(updated)
     } catch (err) {
-      setError(getErrorMessage(err, 'Xóa ảnh thất bại'))
+      setError(getErrorMessage(err, 'Chưa xóa được ảnh. Vui lòng thử lại.'))
     } finally {
       setSaving(false)
       operationLock.current = false
@@ -244,7 +245,7 @@ export function EditRentalPostPage() {
       setMessage('Tin đăng đã gửi duyệt.')
       navigate(mapSectionUrl('myPosts'))
     } catch (err) {
-      setError(getErrorMessage(err, 'Gửi duyệt thất bại'))
+      setError(getErrorMessage(err, 'Chưa gửi duyệt được. Vui lòng thử lại.'))
     } finally {
       setSaving(false)
       operationLock.current = false
@@ -252,7 +253,10 @@ export function EditRentalPostPage() {
   }
 
   const handleArchive = async () => {
-    if (!postId || operationLock.current || !confirm('Cất tin này vào mục lưu trữ? Các thay đổi chưa lưu sẽ không được giữ lại.')) return
+    if (!postId || operationLock.current) return
+    // Hold the lock across the dialog so a second click or a save cannot slip in.
+    operationLock.current = true
+    if (!await confirmDialog({ title: 'Lưu trữ tin này?', message: 'Các thay đổi chưa lưu sẽ không được giữ lại.', confirmLabel: 'Lưu trữ', danger: true })) { operationLock.current = false; return }
     operationLock.current = true
     addressVersion.current += 1
     setSaving(true)
@@ -261,7 +265,7 @@ export function EditRentalPostPage() {
       await archiveRentalPost(postId)
       navigate(mapSectionUrl('myPosts'))
     } catch (err) {
-      setError(getErrorMessage(err, 'Lưu trữ thất bại'))
+      setError(getErrorMessage(err, 'Chưa lưu trữ được tin. Vui lòng thử lại.'))
     } finally {
       setSaving(false)
       operationLock.current = false
@@ -359,7 +363,7 @@ export function EditRentalPostPage() {
         {type === RentalPostType.RoomTransfer ? (
           <section className="room-transfer-form" aria-labelledby="room-transfer-title">
             <div className="room-transfer-form__notice">
-              <strong id="room-transfer-title">Thông tin pass phòng</strong>
+              <strong id="room-transfer-title">Thông tin nhượng phòng</strong>
               <p>Homeji tách chuyển hợp đồng và cho thuê lại. Tin chỉ công khai sau khi đội ngũ kiểm tra xác nhận của chủ nhà.</p>
             </div>
             <div className="form-row">
@@ -386,7 +390,7 @@ export function EditRentalPostPage() {
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label" htmlFor="pass-fee">Phí pass (VND, nếu có)</label>
+                <label className="form-label" htmlFor="pass-fee">Phí nhượng (đ, nếu có)</label>
                 <MoneyInput id="pass-fee" className="form-input" value={passFee} onValueChange={setPassFee} maxLength={19} />
               </div>
               <div className="form-group">
@@ -396,7 +400,7 @@ export function EditRentalPostPage() {
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="transfer-reason">Lý do pass an toàn</label>
+              <label className="form-label" htmlFor="transfer-reason">Lý do nhượng phòng</label>
               <textarea id="transfer-reason" className="form-textarea" value={transferReason} onChange={(event) => setTransferReason(event.target.value)} maxLength={500} required />
             </div>
             <label className="room-transfer-form__consent">

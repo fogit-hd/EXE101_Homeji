@@ -8,7 +8,7 @@
 }
 .map-nearby-panel > :not(.map-nearby-panel__results) { flex-shrink: 0; }
 .map-nearby-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px 4px; }
-.map-nearby-panel header span { font-size: 10px; font-weight: 650; letter-spacing: .08em; color: var(--text-secondary); }
+.map-nearby-panel header span { font-size: 12px; font-weight: 650; letter-spacing: .08em; color: var(--text-secondary); }
 .map-nearby-panel h2 { margin: 0; font-size: 18px; line-height: 1.3; }
 .map-nearby-panel button { cursor: pointer; font: inherit; }
 .map-nearby-panel__close { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; padding: 0; border: 1px solid var(--border,#d4e3e1); background: transparent; color: var(--text-primary); font-size: 24px !important; }

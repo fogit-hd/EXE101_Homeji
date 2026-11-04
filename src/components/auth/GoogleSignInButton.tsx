@@ -39,7 +39,6 @@ export function GoogleSignInButton({ onSuccess, onError, maxWidth = 280, text = 
       text={text}
       width={String(buttonWidth)}
     />
-      <small>Tiếp tục an toàn với tài khoản Google</small>
-    </div>
+          </div>
   )
 }

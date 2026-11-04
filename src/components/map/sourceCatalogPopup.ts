@@ -47,7 +47,7 @@ export function createSourceCatalogPopup(pin: SourceCatalogPin, onOpen: (id: str
     updated.textContent = `Tin đăng cập nhật ${new Intl.DateTimeFormat('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(pin.sourceUpdatedAt))}`
     body.append(updated)
   }
-  const author = document.createElement('p'); author.className = 'source-catalog-popup__publisher'; author.textContent = `Người đăng: ${pin.publisherName?.trim() || 'Chưa có tên người đăng'}`; body.append(author)
+  const author = document.createElement('p'); author.className = 'source-catalog-popup__publisher'; author.textContent = 'Tin từ nguồn công khai'; body.append(author)
   const note = document.createElement('small'); note.className = 'source-catalog-popup__note'; note.textContent = 'Kiểm tra chi tiết phòng và đăng nhập để liên hệ.'; body.append(note)
   root.append(body)
   const id = pin.id.slice('rental:'.length)

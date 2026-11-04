@@ -8,31 +8,31 @@ import './MarketplaceHeader.css'
 
 const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
   food: {
-    eyebrow: 'Bữa ăn quanh nhà',
-    title: 'Quán ăn & món đang bán',
+    eyebrow: 'Chợ Homeji',
+    title: 'Đồ ăn quanh bạn',
   },
   browse: {
-    eyebrow: 'Mua bán đồ dùng',
-    title: 'Chợ đồ cũ',
+    eyebrow: 'Chợ Homeji',
+    title: 'Đồ cũ quanh bạn',
   },
   purchases: {
     eyebrow: 'Đơn mua',
-    title: 'Theo dõi đơn đồ ăn và đồ dùng.',
+    title: 'Đơn đồ ăn và đồ cũ',
   },
   mine: {
-    eyebrow: 'Gian hàng của bạn',
-    title: 'Tin đã đăng, rõ ràng và dễ quản lý.',
+    eyebrow: 'Cửa hàng',
+    title: 'Tin của tôi',
   },
   sell: {
-    eyebrow: 'Chia sẻ món ngon & đồ tốt',
-    title: 'Đăng bán nhanh, người gần nhà tìm thấy.',
+    eyebrow: 'Cửa hàng',
+    title: 'Đăng bán',
   },
   sales: {
-    eyebrow: 'Quản lý cửa hàng',
-    title: 'Theo dõi đơn bán, xác nhận và giao hàng.',
+    eyebrow: 'Cửa hàng',
+    title: 'Đơn bán',
   },
   wallet: {
-    eyebrow: 'TÀI KHOẢN CỦA BẠN',
+    eyebrow: 'Tài khoản của bạn',
     title: 'Ví Homeji',
   },
 }
@@ -40,13 +40,13 @@ const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
 const PRIMARY_TABS: { id: MarketplacePrimary; label: string }[] = [
   { id: 'shopping', label: 'Mua sắm' },
   { id: 'purchases', label: 'Đơn mua' },
-  { id: 'shop', label: 'Quản lý cửa hàng' },
+  { id: 'shop', label: 'Cửa hàng' },
   { id: 'wallet', label: 'Ví Homeji' },
 ]
 
 const SHOPPING_TABS: { id: MarketplaceTab; label: string }[] = [
   { id: 'food', label: 'Đồ ăn' },
-  { id: 'browse', label: 'Chợ đồ' },
+  { id: 'browse', label: 'Đồ cũ' },
 ]
 
 const SHOP_TABS: { id: MarketplaceTab; label: string }[] = [
@@ -139,7 +139,7 @@ export function MarketplaceHeader({
             </div>
           ) : (
           <MotionTabs items={subTabs} value={tab} onChange={onTabChange}
-            label="Quản lý cửa hàng"
+            label="Cửa hàng"
             className="marketplace-header__subtabs-group" buttonClassName="marketplace-header__subtab"
             idPrefix="marketplace-subtab" panelId="marketplace-panel" renderLabel={(id, label) => <>
               {label}

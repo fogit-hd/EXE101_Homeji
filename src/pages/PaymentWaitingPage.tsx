@@ -15,13 +15,13 @@ const states = {
   success: { title: 'Thanh toán thành công', symbol: '✓', label: 'ĐÃ XÁC NHẬN', tone: 'success' },
   cancelled: { title: 'Thanh toán đã hủy', symbol: '×', label: 'ĐÃ KẾT THÚC', tone: 'neutral' },
   'cancel-return': { title: 'Bạn đã hủy thanh toán', symbol: '×', label: 'ĐÃ TRỞ VỀ TỪ CỔNG THANH TOÁN', tone: 'neutral' },
-  failed: { title: 'Thanh toán không thành công', symbol: '!', label: 'GIAO DỊCH THẤT BẠI', tone: 'error' },
-  'failed-return': { title: 'Chưa hoàn tất thanh toán', symbol: '!', label: 'CẦN KIỂM TRA TRẠNG THÁI', tone: 'error' },
+  failed: { title: 'Thanh toán không thành công', symbol: '!', label: 'Giao dịch không thành công', tone: 'error' },
+  'failed-return': { title: 'Chưa hoàn tất thanh toán', symbol: '!', label: 'Cần kiểm tra', tone: 'error' },
   expired: { title: 'Đơn thanh toán đã hết hạn', symbol: '◷', label: 'ĐÃ KẾT THÚC', tone: 'neutral' },
-  'expired-return': { title: 'Liên kết thanh toán đã hết hạn', symbol: '◷', label: 'CẦN KIỂM TRA TRẠNG THÁI', tone: 'neutral' },
-  overdue: { title: 'Đã hết thời gian thanh toán', symbol: '◷', label: 'ĐANG ĐỐI CHIẾU', tone: 'neutral' },
-  verifying: { title: 'Đang xác minh thanh toán', symbol: '↻', label: 'ĐANG ĐỐI CHIẾU', tone: 'info' },
-  pending: { title: 'Chờ bạn thanh toán', symbol: '↗', label: 'SẴN SÀNG THANH TOÁN', tone: 'info' },
+  'expired-return': { title: 'Liên kết thanh toán đã hết hạn', symbol: '◷', label: 'Cần kiểm tra', tone: 'neutral' },
+  overdue: { title: 'Đã hết thời gian thanh toán', symbol: '◷', label: 'Đang kiểm tra', tone: 'neutral' },
+  verifying: { title: 'Đang xác minh thanh toán', symbol: '↻', label: 'Đang kiểm tra', tone: 'info' },
+  pending: { title: 'Chờ bạn thanh toán', symbol: '↗', label: 'Chờ thanh toán', tone: 'info' },
 } as const
 
 export function PaymentWaitingPage() {

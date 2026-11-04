@@ -1,6 +1,6 @@
 export const trafficPageLabels: Record<string, string> = {
   home: 'Bản đồ tìm phòng', 'rental-detail': 'Chi tiết phòng', explore: 'Khám phá',
-  marketplace: 'Chợ đồ', wanted: 'Tin tìm phòng', saved: 'Phòng đã lưu',
+  marketplace: 'Chợ Homeji', wanted: 'Tin tìm phòng', saved: 'Phòng đã lưu',
   profile: 'Hồ sơ', notifications: 'Thông báo', invitations: 'Ở ghép',
   appointments: 'Lịch xem phòng', messages: 'Tin nhắn', payments: 'Thanh toán',
   'my-posts': 'Tin của tôi', 'create-post': 'Đăng tin', 'edit-post': 'Sửa tin',

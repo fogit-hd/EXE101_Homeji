@@ -197,7 +197,7 @@ function LocationPickerMapComponent({
       {!mapReady ? <div className="map-placeholder-msg">Đang tải bản đồ...</div> : null}
       <div ref={hostRef} className="rental-map__host" />
       {onLocationChange ? (
-        <p className="map-picker-hint">Click hoặc kéo pin trên bản đồ để chọn vị trí.</p>
+        <p className="map-picker-hint">Chạm hoặc kéo ghim trên bản đồ để chọn vị trí.</p>
       ) : null}
     </div>
   )

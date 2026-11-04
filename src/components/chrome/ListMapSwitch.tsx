@@ -26,7 +26,7 @@ export function ListMapSwitch({
     <div
       className={`list-map-switch ${className}`.trim()}
       role="group"
-      aria-label="Chế độ Khám phá"
+      aria-label="Cách xem phòng"
       id={id}
     >
       <button

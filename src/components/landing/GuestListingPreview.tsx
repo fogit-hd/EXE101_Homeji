@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { RentalPostType, searchRentalPosts, type RentalPostSummary } from '../../api'
 import { rentalPriceBasis } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
-import { rentalSourceHref, rentalSourceImageHref, getRentalSourceCatalog, type RentalSourceListing } from '../../api/rentalSources'
+import { rentalSourceAttribution, rentalSourceHref, rentalSourceImageHref, getRentalSourceCatalog, type RentalSourceListing } from '../../api/rentalSources'
 import { RoomDetailModal } from '../map/listings/RoomDetailModal'
 import { SourceRoomDetail } from '../map/listings/SourceRoomDetail'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
+import { GUEST_SEARCH_EVENT, navigateGuestLanding } from './guestLandingNav'
 import { matchesRentalPropertyCategory } from '../../lib/rentalPropertyCategory'
 import './GuestListingPreview.css'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
@@ -41,6 +41,12 @@ export function GuestListingPreview() {
   const searchPlaceholder = useStreetSearchPlaceholder(!searchFocused && !keyword.trim(), 'Tìm theo đường, khu vực hoặc tiện ích')
 
   useEffect(() => {
+    const onSearch = (event: Event) => { setKeyword((event as CustomEvent<string>).detail); setVisibleCount(8) }
+    window.addEventListener(GUEST_SEARCH_EVENT, onSearch)
+    return () => window.removeEventListener(GUEST_SEARCH_EVENT, onSearch)
+  }, [])
+
+  useEffect(() => {
     const controller = new AbortController()
     void Promise.allSettled([
       searchRentalPosts({ page: 1, pageSize: 12 }, { auth: false, signal: controller.signal }),
@@ -68,11 +74,11 @@ export function GuestListingPreview() {
   return <section className="guest-preview" id="listings" aria-labelledby="guest-featured-title">
     <div className="guest-preview__inner">
       <header className="guest-preview__heading">
-        <div><span className="guest-preview__eyebrow">KHÔNG GIAN CHO BẠN</span><h2 id="guest-featured-title">Một góc nhà, nhiều lựa chọn.</h2></div>
-        <Link to="/explore" className="guest-preview__explore">Khám phá bản đồ <Arrow /></Link>
+        <div><h2 id="guest-featured-title">Phòng đang cho thuê</h2></div>
+        <button type="button" className="guest-preview__explore" onClick={() => navigateGuestLanding('map')}>Xem trên bản đồ <Arrow /></button>
       </header>
       <form className="guest-preview__search" data-glass-exclude role="search" onSubmit={event => { event.preventDefault(); setVisibleCount(8) }}>
-        <label htmlFor="guest-rental-search">Tìm nơi bạn muốn ở</label>
+        <label htmlFor="guest-rental-search">Lọc theo khu vực hoặc tiện ích</label>
         <div><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           <input id="guest-rental-search" type="search" value={keyword} maxLength={150} placeholder={searchPlaceholder} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} onChange={event => { setKeyword(event.target.value); setVisibleCount(8) }} autoComplete="off" enterKeyHint="search" />
           {keyword ? <button type="button" onClick={() => { setKeyword(''); setVisibleCount(8) }} aria-label="Xóa từ khóa tìm phòng">×</button> : null}
@@ -85,11 +91,11 @@ export function GuestListingPreview() {
         <div className="guest-preview__budgets" role="group" aria-label="Lọc theo giá trong tin">
           {BUDGETS.map(option => <button key={option.id} type="button" aria-pressed={budget === option.id} onClick={() => { setBudget(option.id); setVisibleCount(8) }}>{option.label}</button>)}
         </div>
-        {!loading ? <span className="guest-preview__count" role="status">{filtered.length} lựa chọn trong danh sách</span> : null}
+        {!loading ? <span className="guest-preview__count" role="status">{filtered.length} phòng</span> : null}
       </div>
-      <p className="guest-preview__note">Giá và thông tin theo người đăng. Xác nhận tình trạng phòng trước khi liên hệ.</p>
+      <p className="guest-preview__note">Giá và thông tin theo tin đăng. Hãy xác nhận lại với người đăng.</p>
       {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
-      <ul className="guest-preview__rail" aria-label="Danh sách phòng nổi bật" aria-busy={loading}>
+      <ul className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading}>
         {loading ? Array.from({ length: 8 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
           const data = item.data
           const isSource = item.kind === 'source'
@@ -110,16 +116,16 @@ export function GuestListingPreview() {
                   <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
                   <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'source' && item.data.depositLabel ? <span>{item.data.depositLabel}</span> : item.kind === 'post' && item.data.deposit && item.data.deposit > 0 ? <span>Cọc {formatListingRent(item.data.deposit)}</span> : null}{item.kind === 'post' && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
                   <span className="guest-preview__meta">{(item.kind === 'source' ? item.data.amenityHighlights ?? [] : (item.data.amenities ?? []).map(amenityLabel)).slice(0, 3).map(value => <span key={value}>{value}</span>)}</span>
-                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : item.data.publisherName?.trim() || 'Chưa có tên người đăng'}</span><strong>Xem chi tiết <Arrow /></strong></span>
+                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : rentalSourceAttribution(item.data.source)}</span><strong>Xem chi tiết <Arrow /></strong></span>
                 </span>
               </button>
             </article>
           </li>
         })}
       </ul>
-      {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin khớp. Thử từ khóa, loại chỗ ở hoặc khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể khám phá khu vực trên bản đồ.'}</p> : null}
-      {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} lựa chọn <Arrow /></button></div> : null}
-      {loading ? <span className="guest-preview__sr-only" role="status">Đang tải phòng nổi bật…</span> : null}
+      {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin khớp. Thử từ khóa, loại chỗ ở hoặc khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể xem khu vực trên bản đồ.'}</p> : null}
+      {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} phòng <Arrow /></button></div> : null}
+      {loading ? <span className="guest-preview__sr-only" role="status">Đang tải danh sách phòng…</span> : null}
     </div>
     {selected ? <GuestRoomPreview key={selected.id} summary={selected} onClose={() => setSelected(null)} /> : null}
     {selectedSource ? <GuestSourcePreview key={selectedSource.id} listing={selectedSource} onClose={() => setSelectedSource(null)} /> : null}

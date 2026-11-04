@@ -20,8 +20,7 @@
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: min(100svh, 680px);
   overflow: hidden;
   color: #fff;
   background: #1b2522;
@@ -77,7 +76,7 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  min-height: 40px;
+  min-height: 44px;
   color: rgb(255 255 255 / 85%);
   font-size: 13px;
   font-weight: 450;
@@ -96,7 +95,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  padding: clamp(88px, 12vh, 160px) 0;
+  padding: clamp(48px, 9vh, 96px) 0;
   text-align: left;
 }
 .guest-hero__slogan-wrap { width: min(100%, 800px); margin: 0; }
@@ -140,6 +139,16 @@
 .guest-hero__primary:hover { background: #fff; transform: translateY(-2px); }
 .guest-hero__primary:hover svg { transform: translateX(3px); }
 .guest-hero__primary:active { transform: translateY(0); }
+.guest-hero__search { width: min(100%, 640px); margin-top: 28px; }
+.guest-hero__search label { display: block; margin-bottom: 8px; color: #fff; font-size: 14px; font-weight: 500; }
+.guest-hero__search div { display: flex; gap: 8px; padding: 6px; border-radius: 16px; background: #fff; }
+.guest-hero__search input { flex: 1; min-width: 0; min-height: 48px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: #12181c; font: 400 16px/1.4 var(--font-ui); }
+.guest-hero__search input::placeholder { color: #5a6770; }
+.guest-hero__search button { min-height: 48px; padding: 0 20px; border: 0; border-radius: 10px; background: #173c37; color: #fff; font: 600 15px/1 var(--font-ui); white-space: nowrap; cursor: pointer; }
+.guest-hero__search button:hover { background: #0f2b27; }
+.guest-hero__search :is(input, button):focus-visible { outline: 2px solid #173c37; outline-offset: 2px; }
+.guest-hero__account { margin: 16px 0 0; color: rgb(255 255 255 / 90%); font-size: 14px; line-height: 1.5; }
+.guest-hero__account a { color: #fff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .guest-hero a:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 3px; }
 .guest-hero .guest-hero__primary:focus-visible { border-radius: 999px; }
 
@@ -156,7 +165,9 @@
   .guest-hero__brand-name { font-size: 24px; }
   .guest-hero__nav-link, .guest-hero__top-login-link { font-size: 12px; }
   .guest-hero__top-login-link svg { display: none; }
-  .guest-hero__center { padding: 100px 0; }
+  .guest-hero__center { padding: 40px 0 16px; }
+  .guest-hero__search div { flex-direction: column; }
+  .guest-hero__search button { width: 100%; }
   .guest-hero__hello { font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1.22; letter-spacing: -.04em; }
   .guest-hero__sub { max-width: 29ch; margin-top: 22px; font-size: 14px; }
   .guest-hero__primary-wrap { margin-top: 28px; }
@@ -475,7 +486,7 @@
   }
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .guest-hero__frame {
     animation: none;
   }

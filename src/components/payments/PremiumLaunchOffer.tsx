@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getSubscriptionPackages, NotificationType, type SubscriptionPackage } from '../../api'
@@ -8,6 +8,7 @@ import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../../lib/sellerO
 import { formatPrice } from '../../lib/labels'
 import { formatDailyEquivalentPrice, getDailyEquivalentAmount } from '../../lib/subscriptionPlanDisplay'
 import { useBrandIntroComplete } from '../../hooks/useBrandIntroComplete'
+import { useAuth } from '../../contexts/AuthContext'
 import './PremiumLaunchOffer.css'
 
 const seenKey = 'homeji-seen-price-announcements'
@@ -25,6 +26,7 @@ export function PremiumLaunchOffer() {
   const location = useLocation()
   const navigate = useNavigate()
   const brandIntroComplete = useBrandIntroComplete()
+  const { isAuthenticated } = useAuth()
   useEffect(() => {
     let active = true
     const load = () => {
@@ -72,7 +74,8 @@ export function PremiumLaunchOffer() {
   const announcement = changes.filter(row => !seen.includes(row.id)).at(-1)
   const maintenance = maintenanceNotices.find(row => !seen.includes(row.id) && Date.parse(row.expiresAt) > now)
   const showOffer = !!plan?.offerEndsAt && !dismissed && now < Date.parse(plan.offerEndsAt)
-  const visible = brandIntroComplete && maintenanceLoaded && !!(maintenance || announcement || showOffer) && !location.pathname.startsWith('/admin') && (maintenance || new URLSearchParams(location.search).get('section') !== 'payments')
+  // Visitors see rooms first; price news is for people who already use Homeji.
+  const visible = brandIntroComplete && maintenanceLoaded && !!(maintenance || (isAuthenticated && (announcement || showOffer))) && !location.pathname.startsWith('/admin') && (maintenance || new URLSearchParams(location.search).get('section') !== 'payments')
   useEffect(() => {
     const node = dialog.current
     if (visible && node && !node.open) node.showModal()
@@ -96,7 +99,7 @@ export function PremiumLaunchOffer() {
     <header className="premium-launch-offer__banner">
       <img className="premium-launch-offer__art" src="/images/maintenance-notice-art.svg" alt="" aria-hidden="true" />
       <div className="premium-launch-offer__banner-copy">
-      <span className="premium-launch-offer__eyebrow">THÔNG BÁO TỪ HOMEJI</span>
+      <span className="premium-launch-offer__eyebrow">Thông báo từ Homeji</span>
       <h2 id="maintenance-banner-title">{maintenance.title}</h2>
       </div>
     </header>
@@ -104,7 +107,6 @@ export function PremiumLaunchOffer() {
       <p id="maintenance-banner-description">{maintenance.message}</p>
       {maintenance.scheduledStartAt ? <div className="maintenance-banner__schedule"><span>Bắt đầu</span><strong>{formatMaintenanceTime(maintenance.scheduledStartAt)}</strong>{maintenance.scheduledEndAt ? <><span>Dự kiến hoàn tất</span><strong>{formatMaintenanceTime(maintenance.scheduledEndAt)}</strong></> : null}</div> : null}
       <button className="premium-launch-offer__cta" type="button" onClick={dismiss}>Đã hiểu</button>
-      <PopupAutoClose key={maintenance.id} onClose={dismiss} />
     </div>
   </dialog>, document.body)
   const previousPrice = announcement?.previousPrice ?? plan!.originalPrice!
@@ -123,17 +125,17 @@ export function PremiumLaunchOffer() {
       <img className="premium-launch-offer__art" src="/images/premium-offer-art.svg" alt="" aria-hidden="true" />
       <div className="premium-launch-offer__banner-copy">
         <div className="premium-launch-offer__banner-top">
-          <span className="premium-launch-offer__eyebrow">{announcement ? 'HOMEJI PREMIUM · CẬP NHẬT GIÁ' : 'HOMEJI PREMIUM · ƯU ĐÃI THÀNH VIÊN'}</span>
+          <span className="premium-launch-offer__eyebrow">{announcement ? 'Homeji Premium · Cập nhật giá' : 'Homeji Premium · Ưu đãi'}</span>
           <span className="premium-launch-offer__discount">{reduced ? `GIẢM ${percent}%` : `ĐIỀU CHỈNH TĂNG ${percent}%`}</span>
         </div>
         <h2 id="premium-offer-title">{announcement ? `Giá mới cho ${announcement.packageName}` : <>Bạn gửi ảnh.<br />Homeji lo bản nháp.</>}</h2>
       </div>
     </header>
     <div className="premium-launch-offer__body">
-    <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ đồ.'}</p>
+    <p id="premium-offer-description">{announcement ? announcement.reason : 'Để AI soạn tin từ ảnh. Bạn chỉnh sửa, duyệt nội dung rồi xác nhận đăng lên Chợ Homeji.'}</p>
     <div className="premium-launch-offer__price-card">
       <div className="premium-launch-offer__price-copy">
-        <span>{durationDays > 0 ? 'MỖI NGÀY CHỈ KHOẢNG' : announcement ? 'GIÁ THÀNH VIÊN' : 'GÓI PREMIUM'}</span>
+        <span>{durationDays > 0 ? 'MỖI NGÀY CHỈ KHOẢNG' : 'GÓI PREMIUM'}</span>
         <p className="premium-launch-offer__saving">{reduced ? `Tiết kiệm ${formatPrice(saving)}` : `Tăng ${formatPrice(-saving)} so với giá trước`}</p>
       </div>
       <div className="premium-launch-offer__price">
@@ -143,9 +145,8 @@ export function PremiumLaunchOffer() {
       </div>
     </div>
     {dailyEquivalent ? <p className="premium-launch-offer__daily">Tổng <strong>{formatPrice(currentPrice)}</strong> cho {durationDays} ngày Premium.</p> : null}
-    <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói thành viên <span aria-hidden>↗</span></button>
-    <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Tiếp tục khám phá Homeji</button>
-    <PopupAutoClose key={announcementId ?? offerEndsAt} onClose={dismiss} />
+    <button className="premium-launch-offer__cta" type="button" onClick={() => { dismiss(); navigate('/?section=payments&tab=plans') }}>Xem gói Premium</button>
+    <button className="premium-launch-offer__later" type="button" onClick={dismiss}>Để sau</button>
     </div>
   </dialog>, document.body)
 }
@@ -154,14 +155,3 @@ function formatMaintenanceTime(value: string) {
   return new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }).format(new Date(value))
 }
 
-function PopupAutoClose({ onClose }: { onClose: () => void }) {
-  const [seconds, setSeconds] = useState(15)
-  const close = useEffectEvent(onClose)
-  useEffect(() => {
-    const deadline = Date.now() + 15_000
-    const timeout = setTimeout(() => close(), 15_000)
-    const interval = setInterval(() => setSeconds(Math.max(0, Math.ceil((deadline - Date.now()) / 1000))), 1000)
-    return () => { clearTimeout(timeout); clearInterval(interval) }
-  }, [])
-  return <small className="premium-launch-offer__countdown" aria-live="off">Tự đóng sau {seconds} giây</small>
-}

@@ -89,7 +89,7 @@
   border-radius: 5px;
   background: var(--ml-ink);
   color: var(--ml-card);
-  font-size: 10px;
+  font-size: 12px;
 }
 .map-listings__display { padding-right: 9px; background: transparent; border-color: transparent; }
 .map-listings__display select { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; max-width: 114px; }
@@ -97,7 +97,7 @@
 .map-listings__panel-caption { font-size: 16px; font-weight: 650; color: var(--ml-ink); }
 .map-listings__result-count { margin: 4px 0 0; font-size: 11px; color: var(--ml-muted); }
 .map-listings__facts { display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
-.map-listings__facts > :is(span,time) { max-width:100%; padding:3px 7px; border:1px solid var(--ml-line); border-radius:7px; background:var(--ml-paper); color:var(--ml-muted); font-size:10px; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.map-listings__facts > :is(span,time) { max-width:100%; padding:3px 7px; border:1px solid var(--ml-line); border-radius:7px; background:var(--ml-paper); color:var(--ml-muted); font-size: 12px; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 .map-listings__popover.map-listings__filter-sheet {
   width: 420px;
@@ -220,7 +220,7 @@
   border-radius: 999px;
   background: var(--ml-coral);
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 16px;
   text-align: center;
@@ -287,7 +287,7 @@
   border-radius: 8px;
   background: #faf6ee;
   color: var(--ml-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1109,7 +1109,7 @@
   border-radius: 999px;
   background: var(--ml-coral);
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }

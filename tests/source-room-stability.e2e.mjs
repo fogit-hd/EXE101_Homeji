@@ -38,7 +38,7 @@ try {
     fail = false
     await dialog.getByRole('button', { name: 'Thử lại', exact: true }).click()
     await dialog.getByText(row.title, { exact: true }).waitFor()
-    await dialog.getByRole('button', { name: /Đăng nhập để xem số/ }).click()
+    await dialog.getByRole('button', { name: /Đăng nhập để xem số điện thoại/ }).click()
     assert.equal(await page.locator('body').getAttribute('data-login-requested'), 'yes')
     assert.equal(await dialog.count(), 1)
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))

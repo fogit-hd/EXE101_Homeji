@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
-import { sourceRoomHref, rentalSourceImageHref, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
+import { rentalSourceAttribution, sourceRoomHref, rentalSourceImageHref, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice } from '../../lib/labels'
 import { rentalSourceFreshness } from '../../lib/rentalSourceFreshness'
@@ -28,7 +28,7 @@ export function RentalSourceBrowser() {
     finally { if (current === request.current) setLoading(false) }
   }
   const changeFilters = () => { request.current += 1; setItems([]); setPage(0); setLoading(false); setError('') }
-  return <details className="rental-source-browser" onToggle={event => { if (event.currentTarget.open && page === 0 && !loading) void load(1) }}><summary>Khám phá thêm phòng</summary>
+  return <details className="rental-source-browser" onToggle={event => { if (event.currentTarget.open && page === 0 && !loading) void load(1) }}><summary>Xem thêm phòng</summary>
     <p>Kiểm tra tình trạng phòng, người cho thuê và các chi phí trước khi đặt lịch hoặc đặt cọc.</p>
     <form onSubmit={event => { event.preventDefault(); void load(1) }}>
       <label htmlFor="source-keyword">Từ khóa tin phòng</label><input id="source-keyword" maxLength={200} value={keyword} onChange={event => { changeFilters(); setKeyword(event.target.value) }} />
@@ -41,7 +41,7 @@ export function RentalSourceBrowser() {
       const freshness = rentalSourceFreshness(item.sourceExpiresAt, item.sourceCheckedAt)
       return <article key={item.id} className="ai-search-review__listing">
         <strong>{item.title}</strong><span>{item.address}</span>
-        <span>Người đăng: {item.publisherName?.trim() || 'Chưa có tên người đăng'}</span>
+        <span>{rentalSourceAttribution(item.source)}</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{item.imageUrls.map(rentalSourceImageHref).filter((url): url is string => url !== null).slice(0, 3).map(url =>
           <a key={url} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`Ảnh từ tin phòng: ${item.title}`} loading="lazy" referrerPolicy="no-referrer" style={{ width: 160, height: 110, objectFit: 'cover', borderRadius: 8 }} onError={event => { event.currentTarget.hidden = true }} /></a>
         )}</div>

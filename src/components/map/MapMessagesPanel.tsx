@@ -1,4 +1,5 @@
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
+import { confirmDialog } from '../ui/confirmDialog'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useIncomingConversationMessages } from '../../hooks/useIncomingConversationMessages'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -237,7 +238,7 @@ function MapMessagesPanelContent({
     if (!active || sending) return
     const conversation = active
     const nextBlocked = !conversation.isBlockedByMe
-    if (nextBlocked && !window.confirm(`Chặn ${peerName}? Hai người sẽ không thể gửi tin nhắn hoặc gọi cho nhau. Lịch sử trò chuyện vẫn được giữ lại.`)) return
+    if (nextBlocked && !await confirmDialog({ title: `Chặn ${peerName}?`, message: 'Hai người sẽ không thể nhắn tin hoặc gọi cho nhau. Lịch sử trò chuyện vẫn được giữ lại.', confirmLabel: 'Chặn', danger: true })) return
     const ownerId = me
     setBlocking(true)
     setError(null)
@@ -409,7 +410,7 @@ function MapMessagesPanelContent({
       setAttachMode(null)
       resetAddressDraft()
     } catch (e) {
-      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Gửi thất bại'))
+      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Chưa gửi được tin nhắn. Vui lòng thử lại.'))
     } finally {
       setSending(false)
     }
@@ -451,7 +452,7 @@ function MapMessagesPanelContent({
       setImageFiles([])
       if (imageInputRef.current) imageInputRef.current.value = ''
     } catch (e) {
-      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Gửi ảnh thất bại'))
+      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Chưa gửi được ảnh. Vui lòng thử lại.'))
     } finally {
       setSending(false)
     }

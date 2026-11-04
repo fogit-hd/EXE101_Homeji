@@ -20,7 +20,7 @@ import { MyPostsSkeleton } from '../components/skeletons/PageSkeletons'
 import { PageNotice } from '../components/toast/PageNotice'
 import { getErrorMessage } from '../lib/errors'
 import { formatDate, rentalPostStatusLabel, rentalPostTypeLabel } from '../lib/labels'
-import { mapPostUrl, mapSectionUrl } from '../lib/mapDeepLinks'
+import { mapPostUrl, ROOMMATE_INVITATIONS_URL } from '../lib/mapDeepLinks'
 
 function parseType(raw: string | null): RentalPostType | null {
   if (raw === 'vacant' || raw === String(RentalPostType.VacantRoom)) return RentalPostType.VacantRoom
@@ -47,7 +47,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
   const title = isRoommate
     ? 'Quản lý tin ở ghép'
     : isRoomTransfer
-      ? 'Quản lý tin pass phòng'
+      ? 'Tin nhượng phòng của tôi'
     : typeFilter === RentalPostType.VacantRoom
       ? 'Quản lý danh sách phòng'
       : 'Quản lý tin đăng'
@@ -69,7 +69,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
       <Link to={createPath} className="btn btn-primary btn-sm">
         Đăng tin mới
       </Link>
-      <Link to={mapSectionUrl('invitations')} className="btn btn-secondary btn-sm">
+      <Link to={ROOMMATE_INVITATIONS_URL} className="btn btn-secondary btn-sm">
         Lời mời ở ghép
       </Link>
     </>
@@ -152,7 +152,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
                               setActionMsg('Đã đánh dấu cho thuê.')
                               void reload()
                             })
-                            .catch((err) => setActionError(getErrorMessage(err, 'Thao tác thất bại')))
+                            .catch((err) => setActionError(getErrorMessage(err, 'Chưa thực hiện được. Vui lòng thử lại.')))
                         }}
                       >
                         Đã thuê
@@ -169,7 +169,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
                               setActionMsg('Đã lưu trữ tin.')
                               void reload()
                             })
-                            .catch((err) => setActionError(getErrorMessage(err, 'Lưu trữ thất bại')))
+                            .catch((err) => setActionError(getErrorMessage(err, 'Chưa lưu trữ được tin. Vui lòng thử lại.')))
                         }}
                       >
                         Lưu trữ

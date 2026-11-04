@@ -292,7 +292,7 @@ export function RoomDetailModal({
       notify('Đã gửi yêu cầu xem phòng.')
       onOpenAppointments?.()
     } catch (error) {
-      notify(getErrorMessage(error, 'Đặt lịch thất bại'), 'err')
+      notify(getErrorMessage(error, 'Chưa đặt được lịch. Vui lòng thử lại.'), 'err')
     } finally {
       setActionBusy(false)
     }

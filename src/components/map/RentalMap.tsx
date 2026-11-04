@@ -490,14 +490,14 @@ function RentalMapComponent({
       const entry = marketplaceMarkersRef.current.get(item.id)
       if (!entry) {
         const content = createMarketplacePinContent({
-          title: item.title || 'Chợ đồ',
+          title: item.title || 'Đồ cũ',
           itemCount: item.itemCount,
           selected,
         })
         const marker = new AdvancedMarkerElement({
           position: pos,
           content: content.element,
-          title: item.title || 'Chợ đồ',
+          title: item.title || 'Đồ cũ',
           zIndex: selected ? 2700 : 900,
           gmpClickable: true,
         })
@@ -533,7 +533,7 @@ function RentalMapComponent({
         if (entry.styleKey !== styleKey) {
           entry.dispose?.()
           const content = createMarketplacePinContent({
-            title: item.title || 'Chợ đồ',
+            title: item.title || 'Đồ cũ',
             itemCount: item.itemCount,
             selected,
           })

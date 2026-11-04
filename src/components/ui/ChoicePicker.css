@@ -17,7 +17,7 @@
 .choice-picker__heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 12px 12px; flex-shrink: 0; }
 .choice-picker__heading > div { display: grid; gap: 4px; min-width: 0; }
 .choice-picker__heading strong { font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; color: var(--text-heading); }
-.choice-picker__eyebrow { color: var(--text-accent); font-size: 9px; font-weight: 700; letter-spacing: .14em; }
+.choice-picker__eyebrow { color: var(--text-accent); font-size: 12px; font-weight: 700; letter-spacing: .14em; }
 .choice-picker__close { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 50%; font: 24px/1 var(--font-ui); cursor: pointer; background: transparent; color: inherit; }
 .choice-picker__search-wrap { display: flex; gap: 9px; align-items: center; border: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 74%, transparent); border-radius: 12px; margin: 0 5px 8px; padding: 0 12px; flex-shrink: 0; color: var(--text-secondary); }
 .choice-picker__search-wrap:focus-within { outline: 2px solid var(--hj-accent); outline-offset: 1px; }
@@ -34,7 +34,7 @@
 .choice-picker__option[aria-selected='true'] .choice-picker__radio { border: 4px solid var(--text-accent); }
 .choice-picker__group { padding: 11px 12px 5px; color: var(--text-secondary); font-size: 11px; font-weight: 650; }
 .choice-picker__empty { margin: 20px 12px; font-size: 13px; text-align: center; color: var(--text-secondary); }
-.choice-picker__foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px; padding: 10px 12px 5px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text-secondary); flex-shrink: 0; }
+.choice-picker__foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px; padding: 10px 12px 5px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
 .choice-picker__handle { display: none; }
 .schedule-dt__time-fields > .choice-picker { width: 80px; }
 @media (max-width: 640px) {

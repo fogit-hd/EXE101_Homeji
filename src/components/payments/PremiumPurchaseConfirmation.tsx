@@ -37,10 +37,10 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
   }, [])
   return createPortal(<dialog ref={dialog} className="premium-purchase-confirm" aria-labelledby={titleId} aria-describedby={descriptionId} aria-busy={busy}
     onCancel={event => { event.preventDefault(); if (!busy) onCancel() }} data-glass-exclude>
-    <h2 id={titleId}>Xác nhận mua gói thành viên</h2>
+    <h2 id={titleId}>Xác nhận mua gói Premium</h2>
     <p id={descriptionId}>Kiểm tra gói và số tiền trước khi tiếp tục thanh toán.</p>
     <dl>
-      <div><dt>Gói thành viên</dt><dd>{purchase.plan.name}</dd></div>
+      <div><dt>Gói</dt><dd>{purchase.plan.name}</dd></div>
       <div><dt>Thời hạn</dt><dd>{purchase.plan.durationDays} ngày</dd></div>
       <div><dt>Thanh toán bằng</dt><dd>{methodNames[purchase.method]}</dd></div>
       <div><dt>Giá gói</dt><dd>{formatPrice(purchase.plan.price)}</dd></div>
@@ -49,7 +49,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
       <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
     </dl>
     <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'
-      ? `Xác nhận sẽ trừ ${formatPrice(purchase.amountDue)} từ ví Homeji.${walletBalance === null ? '' : ` Số dư dự kiến còn ${formatPrice(Math.max(0, walletBalance - purchase.amountDue))}.`}`
+      ? `Sẽ trừ ${formatPrice(purchase.amountDue)} từ ví Homeji.${walletBalance === null ? '' : ` Số dư dự kiến còn ${formatPrice(Math.max(0, walletBalance - purchase.amountDue))}.`}`
       : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
     <div className="premium-purchase-confirm__actions">
       <button ref={cancel} type="button" className="pay-btn" disabled={busy} onClick={onCancel}>Quay lại</button>

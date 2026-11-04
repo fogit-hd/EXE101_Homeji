@@ -1,21 +1,27 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { navigateGuestLanding } from './guestLandingNav'
+import { navigateGuestLanding, searchGuestListings } from './guestLandingNav'
 import { RevealText } from '../motion/RevealText'
 import './GuestHero.css'
 
 const NAV_ITEMS = [
   { id: 'mission', label: 'Về Homeji' },
-  { id: 'how', label: 'Cách hoạt động' },
+  { id: 'listings', label: 'Danh sách phòng' },
   { id: 'map', label: 'Bản đồ' },
+  { id: 'how', label: 'Cách dùng' },
 ] as const
 
 export function GuestHero() {
+  const [keyword, setKeyword] = useState('')
   useEffect(() => {
     const root = document.documentElement
     root.classList.add('hj-no-scrollbar')
     return () => root.classList.remove('hj-no-scrollbar')
   }, [])
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    searchGuestListings(keyword.trim())
+  }
 
   return (
     <section className="guest-hero" id="hero" aria-label="Homeji — trang chủ">
@@ -41,12 +47,7 @@ export function GuestHero() {
             ))}
           </nav>
 
-          <Link to="/login" className="guest-hero__top-login-link liquid-action">
-            Đăng nhập
-            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-              <path d="M4 10h12m-5-5 5 5-5 5" />
-            </svg>
-          </Link>
+          <Link to="/login" className="guest-hero__top-login-link liquid-action">Đăng nhập</Link>
         </header>
 
         <div className="guest-hero__center">
@@ -54,14 +55,15 @@ export function GuestHero() {
             <RevealText as="h1" className="guest-hero__hello" text={'Trọ an tâm.\nNâng tầm cuộc sống.'} delay={0.1} />
           </div>
           <p className="guest-hero__sub">Tìm phòng phù hợp. Gặp người cùng nhịp sống.</p>
-          <div className="guest-hero__primary-wrap" id="hero-start-cta">
-            <Link to="/register" className="guest-hero__primary liquid-action">
-              <span>Tạo tài khoản</span>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M5 12h14m-6-6 6 6-6 6" />
-              </svg>
-            </Link>
-          </div>
+          <form className="guest-hero__search" role="search" onSubmit={submit} data-glass-exclude>
+            <label htmlFor="guest-hero-search">Bạn muốn ở khu vực nào?</label>
+            <div>
+              <input id="guest-hero-search" type="search" value={keyword} maxLength={150} autoComplete="off" enterKeyHint="search"
+                placeholder="Tên đường, khu vực hoặc tiện ích" onChange={event => setKeyword(event.target.value)} />
+              <button type="submit">Tìm phòng</button>
+            </div>
+          </form>
+          <p className="guest-hero__account">Muốn lưu phòng và xem số liên hệ? <Link to="/register">Tạo tài khoản miễn phí</Link></p>
         </div>
       </div>
     </section>

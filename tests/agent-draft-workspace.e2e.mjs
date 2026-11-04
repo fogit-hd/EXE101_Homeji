@@ -55,6 +55,6 @@ try{
   await page.getByRole('button',{name:/Mở bản nháp để xem và chỉnh sửa/}).click();await workspace.waitFor()
   assert.equal(await workspace.getByLabel('Giá bán (đ)').inputValue(),'650.000','Close/reopen must preserve edits')
  }
- await confirm.click();await workspace.getByText('Đã đăng lên Chợ đồ',{exact:true}).waitFor();assert.equal(approvals,1)
+ await confirm.click();await workspace.getByText('Đã đăng lên Chợ Homeji',{exact:true}).waitFor();assert.equal(approvals,1)
  assert.deepEqual(errors,[]);console.log('PASS separate desktop workspace, full-height mobile draft, visible approval footer, edits preserved on resize/close and one explicit publication')
 }finally{await browser.close()}

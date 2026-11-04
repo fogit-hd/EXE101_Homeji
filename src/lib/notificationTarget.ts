@@ -1,5 +1,5 @@
 import { NotificationType, type Notification } from '../api'
-import { mapPostUrl, mapSectionUrl } from './mapDeepLinks'
+import { mapPostUrl, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from './mapDeepLinks'
 
 /** Where “Mở” goes. Matches the notifications page: no target means no button. */
 export function notificationTargetHref(n: Notification): string | null {
@@ -12,7 +12,7 @@ export function notificationTargetHref(n: Notification): string | null {
       return mapSectionUrl('appointments')
     case NotificationType.RoommateInvitationReceived:
     case NotificationType.RoommateInvitationAccepted:
-      return mapSectionUrl('invitations')
+      return ROOMMATE_INVITATIONS_URL
     case NotificationType.MarketplaceOrderUpdated:
       return mapSectionUrl('marketplace')
     case NotificationType.LandlordVerificationUpdated:

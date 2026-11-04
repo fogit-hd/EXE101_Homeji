@@ -62,12 +62,12 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'NHÀ Ở',
     items: [
       { id: 'home', label: 'Trang chủ', href: '/', icon: 'home', group: 'housing' },
-      { id: 'explore', label: 'Khám phá phòng', href: exploreListUrl(), icon: 'search', group: 'housing' },
+      { id: 'explore', label: 'Tìm phòng', href: exploreListUrl(), icon: 'search', group: 'housing' },
       { id: 'map', label: 'Bản đồ', href: exploreMapUrl(), icon: 'map', group: 'housing' },
       { id: 'saved', label: 'Đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark', group: 'housing', requiredAuth: true },
       { id: 'newRooms', label: 'Phòng mới theo nhu cầu', href: '/?interest=manage', icon: 'bell', group: 'housing', requiredAuth: true },
       { id: 'appointments', label: 'Lịch xem phòng', href: mapSectionUrl('appointments'), icon: 'calendar', group: 'housing', requiredAuth: true },
-      { id: 'myPosts', label: 'Quản lý tin', href: mapSectionUrl('myPosts'), icon: 'list', group: 'housing', requiredAuth: true },
+      { id: 'myPosts', label: 'Tin của tôi', href: mapSectionUrl('myPosts'), icon: 'list', group: 'housing', requiredAuth: true },
       { id: 'createPost', label: 'Đăng tin phòng', href: '/posts/new', icon: 'plus', group: 'housing', requiredAuth: true },
       { id: 'transferPost', label: 'Nhượng phòng', href: '/posts/new?type=transfer', icon: 'receipt', group: 'housing', requiredAuth: true },
     ],
@@ -85,11 +85,11 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'CHỢ HOMEJI',
     items: [
       { id: 'food', label: 'Đồ ăn', href: marketplaceHref('food'), icon: 'utensils', group: 'market', cluster: 'Mua sắm', requiredAuth: true },
-      { id: 'browse', label: 'Chợ đồ', href: marketplaceHref('browse'), icon: 'bag', group: 'market', cluster: 'Mua sắm', requiredAuth: true },
+      { id: 'browse', label: 'Đồ cũ', href: marketplaceHref('browse'), icon: 'bag', group: 'market', cluster: 'Mua sắm', requiredAuth: true },
       { id: 'purchases', label: 'Đơn mua', href: marketplaceHref('purchases'), icon: 'receipt', group: 'market', requiredAuth: true },
-      { id: 'mine', label: 'Tin của tôi', href: marketplaceHref('mine'), icon: 'list', group: 'market', cluster: 'Quản lý cửa hàng', requiredAuth: true },
-      { id: 'sell', label: 'Đăng bán', href: marketplaceHref('sell'), icon: 'plus', group: 'market', cluster: 'Quản lý cửa hàng', requiredAuth: true },
-      { id: 'sales', label: 'Đơn bán', href: marketplaceHref('sales'), icon: 'receipt', group: 'market', cluster: 'Quản lý cửa hàng', requiredAuth: true },
+      { id: 'mine', label: 'Tin của tôi', href: marketplaceHref('mine'), icon: 'list', group: 'market', cluster: 'Cửa hàng', requiredAuth: true },
+      { id: 'sell', label: 'Đăng bán', href: marketplaceHref('sell'), icon: 'plus', group: 'market', cluster: 'Cửa hàng', requiredAuth: true },
+      { id: 'sales', label: 'Đơn bán', href: marketplaceHref('sales'), icon: 'receipt', group: 'market', cluster: 'Cửa hàng', requiredAuth: true },
       { id: 'wallet', label: 'Ví Homeji', href: marketplaceHref('wallet'), icon: 'wallet', group: 'market', requiredAuth: true },
     ],
   },
@@ -97,7 +97,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'account',
     label: 'TÀI KHOẢN',
     items: [
-      { id: 'subscription', label: 'Gói đăng ký', href: mapSectionUrl('payments'), icon: 'card', group: 'account', requiredAuth: true },
+      { id: 'subscription', label: 'Gói Premium', href: mapSectionUrl('payments'), icon: 'card', group: 'account', requiredAuth: true },
       { id: 'profile', label: 'Hồ sơ', href: mapSectionUrl('profile'), icon: 'user', group: 'account', requiredAuth: true },
     ],
   },
@@ -106,9 +106,9 @@ export const navigationGroups: NavigationGroup[] = [
 export const navigationItems: NavigationItem[] = navigationGroups.flatMap((group) => group.items)
 
 export const PRIMARY_PILLARS: { id: ProductPillar; label: string; href: string }[] = [
-  { id: 'explore', label: 'Khám phá phòng', href: exploreListUrl() },
+  { id: 'explore', label: 'Tìm phòng', href: exploreListUrl() },
   { id: 'roommate', label: 'Ở ghép', href: mapSectionUrl('invitations') },
-  { id: 'market', label: 'Chợ đồ', href: '/?section=marketplace' },
+  { id: 'market', label: 'Chợ Homeji', href: '/?section=marketplace' },
 ]
 
 const SEARCH_COPY: Record<SearchModule, string> = {
