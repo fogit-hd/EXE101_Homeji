@@ -152,6 +152,10 @@ type RentalMapProps = {
 const DEFAULT_PAD: MapViewportPad = { top: 100, bottom: 230 }
 const DRAG_CLICK_GUARD_MS = 800
 
+function isMapOverlayInteraction(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest('.map-cluster-listings, .source-catalog-popup, button, a, input, textarea, select, [role="dialog"]'))
+}
+
 type MarkerEntry = {
   marker: google.maps.marker.AdvancedMarkerElement
   postId: string
@@ -234,6 +238,8 @@ function RentalMapComponent({
   const clusterAlgorithmRef = useRef<ListingClusterAlgorithm | null>(null)
   const catalogMarkersRef = useRef<CatalogClusterMarker[]>([])
   const clusterPopupRef = useRef<google.maps.InfoWindow | null>(null)
+  const clusterSelectionIdsRef = useRef<string[]>([])
+  const clusteredMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const clusterListingsRef = useRef(new WeakMap<google.maps.marker.AdvancedMarkerElement, ClusterListing>())
   const markerKindsRef = useRef<WeakMap<google.maps.marker.AdvancedMarkerElement, MapClusterKind>>(
     new WeakMap(),
@@ -248,7 +254,11 @@ function RentalMapComponent({
   const onNavigationResultRef = useRef(onNavigationResult)
   useLayoutEffect(() => { onNavigationResultRef.current = onNavigationResult }, [onNavigationResult])
   const onViewportIdleRef = useRef(onViewportIdle)
-  useLayoutEffect(() => { onViewportIdleRef.current = onViewportIdle }, [onViewportIdle])
+  const viewportIdleTimerRef = useRef(0)
+  useLayoutEffect(() => {
+    onViewportIdleRef.current = onViewportIdle
+    window.clearTimeout(viewportIdleTimerRef.current)
+  }, [onViewportIdle])
   const libRef = useRef<google.maps.MarkerLibrary | null>(null)
   const onSelectMarketplaceRef = useRef(onSelectMarketplace)
   useLayoutEffect(() => { onSelectMarketplaceRef.current = onSelectMarketplace }, [onSelectMarketplace])
@@ -314,14 +324,21 @@ function RentalMapComponent({
   const refreshClusters = useCallback(() => {
     const clusterer = markerClustererRef.current
     if (!clusterer) return
-    clusterPopupRef.current?.close()
     const markers = [
       ...Array.from(markersRef.current.values(), (entry) => entry.marker),
       ...Array.from(marketplaceMarkersRef.current.values(), (entry) => entry.marker),
       ...catalogMarkersRef.current.map(entry => entry.marker),
     ]
-    clusterer.clearMarkers(true)
-    clusterer.addMarkers(markers, true)
+    const visibleIds = new Set(markers.map(marker => clusterListingsRef.current.get(marker)?.id))
+    if (clusterSelectionIdsRef.current.some(id => !visibleIds.has(id))) {
+      clusterPopupRef.current?.close()
+      clusterSelectionIdsRef.current = []
+    }
+    if (markers.length !== clusteredMarkersRef.current.length || markers.some((marker, index) => marker !== clusteredMarkersRef.current[index])) {
+      clusterer.clearMarkers(true)
+      clusterer.addMarkers(markers, true)
+      clusteredMarkersRef.current = markers
+    }
     clusterAlgorithmRef.current?.invalidateListings()
     clusterer.render()
     ;(window as Window & { __HOMEJI_CLUSTERED_MARKER_COUNT?: number })
@@ -628,17 +645,23 @@ function RentalMapComponent({
           if (!bounds) return
           const ne = bounds.getNorthEast()
           const sw = bounds.getSouthWest()
-          report({
+          const settledBounds = {
             minLatitude: sw.lat(),
             maxLatitude: ne.lat(),
             minLongitude: sw.lng(),
             maxLongitude: ne.lng(),
-          })
+          }
+          window.clearTimeout(viewportIdleTimerRef.current)
+          viewportIdleTimerRef.current = window.setTimeout(() => {
+            viewportIdleTimerRef.current = 0
+            onViewportIdleRef.current?.(settledBounds)
+          }, 350)
         }),
       )
 
       listeners.push(
         map.addListener('dragstart', () => {
+          window.clearTimeout(viewportIdleTimerRef.current)
           viewportGestureRef.current = true
           userGestureRef.current = true
           ignoreClickUntilRef.current = performance.now() + DRAG_CLICK_GUARD_MS
@@ -725,6 +748,9 @@ function RentalMapComponent({
         algorithm: clusterAlgorithm,
         renderer: clusterRenderer,
         onClusterClick: (event, cluster, clusterMap) => {
+          // InfoWindow auto-pan is camera movement, not a new search gesture.
+          viewportGestureRef.current = false
+          window.clearTimeout(viewportIdleTimerRef.current)
           // MarkerClusterer may emit different click event shapes depending on marker type/version.
           // Guard all stop/prevent methods to avoid runtime errors.
           const evt = event as {
@@ -747,6 +773,7 @@ function RentalMapComponent({
           })
           const zoom = () => { clusterPopupRef.current?.close(); if (cluster.bounds) clusterMap.fitBounds(cluster.bounds, 72) }
           if (!entries.length) { zoom(); return }
+          clusterSelectionIdsRef.current = entries.map(entry => entry.id)
           const popup = clusterPopupRef.current
           popup?.setContent(createClusterListings(entries, zoom))
           popup?.setPosition(cluster.position)
@@ -759,11 +786,14 @@ function RentalMapComponent({
 
     return () => {
       cancelled = true
+      window.clearTimeout(viewportIdleTimerRef.current)
       listeners.forEach((l) => google.maps.event.removeListener(l))
       cameraRef.current?.dispose()
       cameraRef.current = null
       clusterPopupRef.current?.close()
       clusterPopupRef.current = null
+      clusterSelectionIdsRef.current = []
+      clusteredMarkersRef.current = []
       markerClustererRef.current?.clearMarkers(true)
       markerClustererRef.current?.setMap(null)
       markerClustererRef.current = null
@@ -1367,10 +1397,18 @@ function RentalMapComponent({
           ownerBadge: null, isPremium: false, isOwnerVerified: false, facts: selectedSource.amenityHighlights,
           updatedAt: selectedSource.sourceUpdatedAt }} /> : null}
       <div ref={hostRef} className="rental-map__host"
-        onWheelCapture={() => { viewportGestureRef.current = true; userGestureRef.current = true }}
-        onDoubleClickCapture={() => { viewportGestureRef.current = true; userGestureRef.current = true }}
+        onWheelCapture={event => {
+          if (isMapOverlayInteraction(event.target)) return
+          window.clearTimeout(viewportIdleTimerRef.current); viewportGestureRef.current = true; userGestureRef.current = true
+        }}
+        onDoubleClickCapture={event => {
+          if (isMapOverlayInteraction(event.target)) return
+          window.clearTimeout(viewportIdleTimerRef.current); viewportGestureRef.current = true; userGestureRef.current = true
+        }}
         onKeyDownCapture={(event) => {
+          if (isMapOverlayInteraction(event.target)) return
           if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '-', '=', 'PageUp', 'PageDown'].includes(event.key)) {
+            window.clearTimeout(viewportIdleTimerRef.current)
             viewportGestureRef.current = true
             userGestureRef.current = true
           }

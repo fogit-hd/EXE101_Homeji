@@ -12,16 +12,26 @@ const bounds = { minLatitude: 11, maxLatitude: 11.1, minLongitude: 107, maxLongi
 test('initial and programmatic camera idle never overwrite URL bounds; a gesture reports once', async () => {
   const source = await readFile(new URL('../src/components/map/RentalMap.tsx', import.meta.url), 'utf8')
   const body = source.match(/map.addListener\('idle', \(\) => \{([\s\S]*?)\n        \}\),/)[1]
-  const run = new Function('viewportGestureRef', 'onViewportIdleRef', 'map', compile(body))
+  const run = new Function('viewportGestureRef', 'onViewportIdleRef', 'map', 'window', 'viewportIdleTimerRef', compile(body))
   const gesture = { current: false }
   const reports = []
   const callback = { current: area => reports.push(area) }
+  let sequence = 0
+  const timers = new Map()
+  const clock = { clearTimeout: id => timers.delete(id), setTimeout: (fn, delay) => { assert.equal(delay, 350); timers.set(++sequence, fn); return sequence } }
+  const timer = { current: 0 }
   const map = { getBounds: () => ({ getNorthEast: () => ({ lat: () => 11.1, lng: () => 107.1 }), getSouthWest: () => ({ lat: () => 11, lng: () => 107 }) }) }
-  run(gesture, callback, map)
+  const idle = () => run(gesture, callback, map, clock, timer)
+  idle()
   assert.equal(reports.length, 0)
   gesture.current = true
-  run(gesture, callback, map)
-  run(gesture, callback, map)
+  idle()
+  idle()
+  assert.equal(reports.length, 0, 'Do not fetch before the map settles')
+  gesture.current = true
+  idle()
+  assert.equal(timers.size, 1, 'Rapid movements replace the pending search')
+  for (const fn of timers.values()) fn()
   assert.deepEqual(reports, [bounds])
 })
 
