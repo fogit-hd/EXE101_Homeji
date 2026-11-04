@@ -4,7 +4,8 @@ const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi
 
 /** Hashes let the theme and intro bootstraps in index.html run without 'unsafe-inline'. */
 export function inlineScriptHashes(html) {
-  return [...html.matchAll(INLINE_SCRIPT)]
+  // HTML parsers normalize newlines before hashing, and Windows builds keep CRLF in dist/index.html.
+  return [...html.replace(/\r\n?/g, '\n').matchAll(INLINE_SCRIPT)]
     .map(([, body]) => `'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`)
 }
 
@@ -19,7 +20,7 @@ export function contentSecurityPolicy(scriptHashes = []) {
     'img-src': ["'self'", 'data:', 'blob:', 'https:'],
     'media-src': ["'self'", 'blob:', 'https://res.cloudinary.com'],
     // 'self' covers the same-origin SignalR WebSocket. WebRTC relays (Metered) are not governed by connect-src.
-    'connect-src': ["'self'", 'https://maps.googleapis.com', 'https://places.googleapis.com', 'https://accounts.google.com/gsi/', 'https://api.giphy.com', 'https://*.google-analytics.com', 'https://*.googletagmanager.com', 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
+    'connect-src': ["'self'", 'https://maps.googleapis.com', 'https://places.googleapis.com', 'https://accounts.google.com/gsi/', 'https://api.giphy.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://*.googletagmanager.com', 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
     'worker-src': ["'self'", 'blob:'],
     'frame-src': ['https://accounts.google.com/gsi/'],
     'object-src': ["'none'"],

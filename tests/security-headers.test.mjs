@@ -16,6 +16,10 @@ test('hashes inline scripts only, over their exact body', () => {
   assert.deepEqual(inlineScriptHashes('<script>run()</script><script type="module" src="/a.js"></script>'), [expected])
 })
 
+test('hashes match what browsers execute when the build has CRLF line endings', () => {
+  assert.deepEqual(inlineScriptHashes('<script>a()\r\nb()\rc()</script>'), inlineScriptHashes('<script>a()\nb()\nc()</script>'))
+})
+
 test('policy never allows inline or evaluated scripts', () => {
   const scripts = directive(contentSecurityPolicy(["'sha256-x'"]), 'script-src')
   assert.ok(scripts.includes("'sha256-x'"))
