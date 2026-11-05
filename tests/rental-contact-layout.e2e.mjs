@@ -8,7 +8,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('L
 const out = 'output/verification/rental-contact-layout'
 await mkdir(out, { recursive: true })
 await writeFile(`${out}/index.html`, '<!doctype html><html lang="vi" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-const post = { id: 'room-1', type: 1, title: 'Căn hộ 2 phòng ngủ Centum Wealth, không gian thoáng gần làng đại học', address: '2A Phan Chu Trinh, Tăng Nhơn Phú, Hồ Chí Minh 700000, Việt Nam', price: 8000000, area: 79, maxOccupants: 3, deposit: 8000000, latitude: 10.84, longitude: 106.78, ownerDisplayName: 'Người đăng thử nghiệm', ownerPhone: '+84 (901) 234-567', description: 'Căn hộ thoáng sáng, bếp riêng và ban công.\nPhí quản lý: 8.000 đ/m²/tháng.\nVui lòng trao đổi trước khi xem phòng.', amenities: ['wifi','parking'], thumbnailPath: '/landing/bloom-hero-bg2.jpg', media: [0,1,2].map(i => ({ mediaType: 1, path: '/landing/bloom-hero-bg2.jpg?photo=' + i, sortOrder: i })) }
+const post = { id: 'room-1', ownerId: 'owner-1', type: 1, title: 'Căn hộ 2 phòng ngủ Centum Wealth, không gian thoáng gần làng đại học', address: '2A Phan Chu Trinh, Tăng Nhơn Phú, Hồ Chí Minh 700000, Việt Nam', price: 8000000, area: 79, maxOccupants: 3, deposit: 8000000, latitude: 10.84, longitude: 106.78, ownerDisplayName: 'Người đăng thử nghiệm', ownerPhone: '+84 (901) 234-567', description: 'Căn hộ thoáng sáng, bếp riêng và ban công.\nPhí quản lý: 8.000 đ/m²/tháng.\nVui lòng trao đổi trước khi xem phòng.', amenities: ['wifi','parking'], thumbnailPath: '/landing/bloom-hero-bg2.jpg', media: [0,1,2].map(i => ({ mediaType: 1, path: '/landing/bloom-hero-bg2.jpg?photo=' + i, sortOrder: i })) }
 await writeFile(`${out}/scene.tsx`, `
 import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';
 import{RoomDetailModal}from'/src/components/map/listings/RoomDetailModal.tsx';import{MapListingsWorkspace}from'/src/components/map/listings/MapListingsWorkspace.tsx';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';
@@ -18,8 +18,9 @@ function Scene(){const[detail,setDetail]=useState('room-1');const[selected,setSe
 `)
 const browser = await chromium.launch({ headless: true, executablePath: process.env.HOMEJI_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
 const page = await browser.newPage({ reducedMotion: 'reduce' })
-await page.addInitScript(() => localStorage.setItem('homeji_access_token', 'fixture-token'))
-await page.route('**/src/contexts/AuthContext.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuth=()=>({isAuthenticated:true,profile:{role:1}})' }))
+await page.addInitScript(() => { localStorage.setItem('homeji_access_token', 'fixture-token'); localStorage.setItem('homeji_user_id', 'viewer-1') })
+await page.route('**/src/contexts/AuthContext.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuth=()=>({isAuthenticated:true,profile:{id:"viewer-1",role:1}})' }))
+await page.route('**/src/contexts/AuthModalContext.logic.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuthModal=()=>({openAuthModal:()=>{}})' }))
 let mode = 'ready', conversationRequests = 0
 await page.route('**/api/**', route => {
   const url = new URL(route.request().url())
@@ -47,12 +48,13 @@ try {
       assert.ok(box && box.y >= 0 && box.y + box.height <= height && box.width >= 44 && box.height >= 44, `${width}: contact action must stay visible and usable`)
     }
     assert.equal(await call.getAttribute('href'), 'tel:+84901234567')
-    assert.equal(await modal.locator('details').count(), 0, 'Essential room information must not require expanding a disclosure')
+    // The assistant's cost accordions are optional extras; essential room information stays expanded.
+    assert.equal(await modal.locator('details:not(.rental-accordion)').count(), 0, 'Essential room information must not require expanding a disclosure')
     await modal.getByRole('heading', { name: 'Mô tả căn phòng', exact: true }).waitFor()
     assert.ok(await modal.getByText('Căn hộ thoáng sáng, bếp riêng và ban công.', { exact: false }).isVisible())
     assert.ok(await modal.locator('.room-detail__costs').getByText('Tiền cọc', { exact: true }).isVisible())
     assert.ok(await modal.getByRole('heading', { name: 'Tiện ích trong phòng', exact: true }).isVisible())
-    assert.ok(await modal.locator('.room-detail__summary').evaluate(e => e.getBoundingClientRect().top < document.querySelector('.room-detail__gallery').getBoundingClientRect().top))
+    assert.ok(await modal.locator('.room-detail__summary').evaluate(e => e.getBoundingClientRect().top > document.querySelector('.room-detail__gallery').getBoundingClientRect().top), 'Room photos come before the summary')
     assert.ok(await modal.locator('.room-detail__thumbs button').first().evaluate(e => parseFloat(getComputedStyle(e).borderRadius) <= 12 && !e.hasAttribute('data-glass-control')))
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector('.room-detail').scrollWidth <= document.querySelector('.room-detail').clientWidth))
     await page.screenshot({ path: `${out}/${theme}-${width}-detail.png` })

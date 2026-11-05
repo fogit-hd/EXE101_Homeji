@@ -21,6 +21,8 @@ try{
   if(match){messageReads++;return route.fulfill({json:[{id:'saved',conversationId:match[1],senderId:'peer',body:'Lịch sử được giữ',sentAt:'2026-11-01T07:00:00Z'}]})}
   return route.fulfill({json:[]})
  })
+ // Vite reloads the page once while it optimizes this scene's dependencies; count requests only after that settles.
+ await page.goto(base+'/'+out+'/index.html');await page.waitForTimeout(4000);inboxReads=0
  await page.goto(base+'/'+out+'/index.html');await page.getByText('Lịch sử được giữ',{exact:true}).waitFor();await page.waitForTimeout(250)
  assert.equal(inboxReads,1,'Opening history must not duplicate the initial inbox request')
  const composer=page.getByRole('textbox',{name:'Nội dung tin nhắn'});await composer.fill('Bản nháp giữ nguyên')

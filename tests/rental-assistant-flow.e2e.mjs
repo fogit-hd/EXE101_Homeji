@@ -122,7 +122,7 @@ try {
 
     // The room modal must provide its own entry while covering the navbar.
     await page.goto(`${base}/${out}/index.html`)
-    const roomModal = page.getByRole('dialog', { name: 'Chi tiết phòng', exact: true })
+    const roomModal = page.getByRole('dialog', { name: 'Chi tiết phòng trọ', exact: true })
     const modalAssistant = roomModal.getByRole('button', { name: 'Hỏi trợ lý về phòng đang xem', exact: true })
     await modalAssistant.click()
     const assistantDialog = page.getByRole('dialog', { name: 'Homeji', exact: true })
