@@ -14,10 +14,12 @@
 @media(max-width:700px) { .room-detail--source { width: 100vw; max-height: 100dvh; height: 100dvh; margin: 0; border-radius: 0; } }
 .source-room-detail__phone { isolation: isolate; overflow: hidden; }
 .source-room-detail__phone > svg { transform: rotate(-90deg); }
-.source-room-detail__phone:is(:hover,:focus-visible,[aria-pressed=true]) .room-detail__flashlight-rays { opacity: 1; }
-.source-room-detail__phone:is(:hover,:focus-visible,[aria-pressed=true]) .room-detail__flashlight-beam { opacity: .3; }
+.source-room-detail__phone[aria-pressed=true] .room-detail__flashlight-rays { opacity: 1; }
+.source-room-detail__phone[aria-pressed=true] .room-detail__flashlight-beam { opacity: .3; }
+.source-room-detail__phone:hover { border-color: var(--hj-accent); }
+.source-room-detail__phone:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
 .source-room-detail__phone::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(100deg,transparent,#ffe49c55); opacity: 0; transition: opacity .25s; }
-.source-room-detail__phone:is(:hover,:focus-visible,[aria-pressed=true])::before { opacity: 1; }
+.source-room-detail__phone[aria-pressed=true]::before { opacity: 1; }
 @media(prefers-reduced-motion:reduce) { .source-room-detail__phone::before { transition: none; } }
 
 /* Flashlight: the lamp clicks on, flickers, then a cone of warm light sweeps out
@@ -30,7 +32,6 @@
   transform-origin: 28px 50%; transform: scaleX(.15); opacity: 0;
   transition: opacity .25s, transform .45s cubic-bezier(.22,1,.36,1);
 }
-.source-room-detail__phone:is(:hover,:focus-visible)::before { opacity: .55; transform: scaleX(.6); }
 .source-room-detail__phone[aria-pressed=true]::before { animation: hj-torch-on .9s cubic-bezier(.22,1,.36,1) forwards; }
 .source-room-detail__phone[aria-pressed=true] { border-color: #e6bb54; background: linear-gradient(100deg, #fff8e1, var(--rd-bg) 80%); }
 .source-room-detail__phone[aria-pressed=true] > svg { color: #b7791f; filter: drop-shadow(0 0 6px #f6c64499); animation: hj-torch-flicker .5s steps(1) 1; }

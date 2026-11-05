@@ -835,10 +835,8 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 
 @media(prefers-reduced-motion:reduce){.room-detail__owner-phone::before,.room-detail__flashlight svg{transition:none}}
 
-.room-detail__owner-phone:has(.room-detail__flashlight:hover)::before,.room-detail__owner-phone:has(.room-detail__flashlight:focus-visible)::before{opacity:.65;transform:translateY(-50%) scaleX(1)}
-.room-detail__flashlight:hover svg,.room-detail__flashlight:focus-visible svg{transform:rotate(-90deg)}
-.room-detail__flashlight:hover .room-detail__flashlight-rays,.room-detail__flashlight:focus-visible .room-detail__flashlight-rays{opacity:1}
-.room-detail__flashlight:hover .room-detail__flashlight-beam,.room-detail__flashlight:focus-visible .room-detail__flashlight-beam{opacity:.28}
+/* The light belongs to the revealed state only; hover and focus just mark the control. */
+.room-detail__flashlight:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
 
 /* Keep the decision facts visible next to the gallery even on short screens. */
 .room-detail__aside > .room-detail__essentials { grid-template-columns: 1fr 1fr; padding: 14px 0; margin: 0; border: 0; border-block: 1px solid var(--rd-border); border-radius: 0; background: transparent; }
