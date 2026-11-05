@@ -22,7 +22,7 @@ for(const width of[320,390,1280])for(const sourced of[false,true]){
  assert.equal(await preview.locator('.premium-badge').count(),Number(!sourced),'Never invent Premium for imported data')
  await preview.getByRole('button',{name:'Xem phòng & liên hệ'}).click()
  const dialog=page.getByRole('dialog',{name:'Chi tiết phòng trọ',exact:true});await dialog.waitFor()
- await dialog.locator('.room-detail__essentials').waitFor();await dialog.locator('.room-detail__photo-main').waitFor()
+ await dialog.locator('.room-detail__essentials:visible').waitFor();await dialog.locator('.room-detail__photo-main').waitFor()
  assert.equal(await dialog.locator('.room-detail__body > .room-detail__main').count(),1)
  assert.equal(await dialog.locator('.room-detail__body > .room-detail__aside').count(),1)
  if(width>700){const aside=await dialog.locator('.room-detail__aside').boundingBox();await dialog.locator('.room-detail__main').evaluate(e=>e.scrollTop=e.scrollHeight);assert.equal((await dialog.locator('.room-detail__aside').boundingBox()).y,aside.y)}

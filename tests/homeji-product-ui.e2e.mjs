@@ -91,6 +91,7 @@ try{
  await page.setViewportSize({width:1440,height:1000})
  await page.goto(base+'/?section=listings&catalog=market&view=list');await ready()
  const sellerGroup=page.locator('.seller-catalog__shop').filter({hasText:'Cửa hàng Minh'}).first()
+ await sellerGroup.locator('li').first().waitFor()
  assert.equal(await sellerGroup.locator('li').count(),2,'Same seller products are one shop in Explore')
  await sellerGroup.getByRole('link',{name:/Xem cửa hàng/}).click()
  await page.locator('.seller-store-header').waitFor()
@@ -126,7 +127,7 @@ try{
  assert.equal(await page.locator('.food-seller').count(),2)
  const menu=page.locator('.food-seller').first();assert.equal(await menu.locator('.food-card').count(),2)
  await menu.locator('.food-card__cart-btn').first().click();await menu.locator('.food-card__cart-btn').nth(1).click()
- assert.equal(await menu.getByRole('button',{name:'Trong giỏ',exact:true}).count(),2)
+ assert.equal(await menu.getByRole('button',{name:/^Bỏ khỏi giỏ:/}).count(),2)
  await page.waitForTimeout(450)
  for(const button of await menu.locator('.food-qty__btn,.food-card__cart-btn').all()){const box=await button.boundingBox();assert.ok(box.height>=43.5,`Purchase control height ${box.height} is too small`)}
  await page.getByRole('button',{name:/Mở giỏ hàng/}).click()

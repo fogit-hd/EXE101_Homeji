@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
 
 // All API/provider traffic is intercepted. No real accounts, payments or Google events are created.
+// The consent flow only exists when GA4 is configured, so start the dev server with
+// VITE_GA4_MEASUREMENT_ID=G-E2ETEST and VITE_GA4_MANUAL_PAGEVIEWS_READY=true.
 const { chromium } = await import(process.env.HOMEJI_PLAYWRIGHT_MODULE || 'playwright')
 const base = process.env.HOMEJI_TEST_BASE_URL || 'http://127.0.0.1:5197'
 const browser = await chromium.launch({ executablePath: process.env.HOMEJI_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
@@ -13,19 +15,18 @@ const post = (id, title) => ({ id, title, type: 1, status: 3, price: 3000000, ar
   address: 'Thủ Đức', latitude: 10.85, longitude: 106.8, viewCount: 0, saveCount: 1,
   createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), media: [], amenities: [], availableSlots: 2, maxOccupants: 2 })
 let saved = [post('22222222-2222-4222-8222-222222222221', 'Phòng riêng của tài khoản A')]
+const savedByB = [post('33333333-3333-4333-8333-333333333333', 'Phòng riêng của tài khoản B')]
 let savedRequests = 0
 let savedFailureStatus = 0
 const tagRequests = []
 const errors = []
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' })
-await context.addInitScript(({ userA }) => {
-  if (!localStorage.getItem('qa-initialized')) {
-    localStorage.setItem('homeji_access_token', 'fixture-account-a')
-    localStorage.setItem('homeji_user_id', userA)
-    localStorage.setItem('qa-initialized', '1')
-  }
-  sessionStorage.setItem('hj-intro-seen', '1')
-}, { userA })
+await context.addInitScript(() => { sessionStorage.setItem('hj-intro-seen', '1') })
+// The API's session cookies are HttpOnly and invisible here, so the fixture holds the session and plays only the readable hint.
+const clearHint = 'homeji_session_hint=; Path=/; Max-Age=0'
+const setHint = 'homeji_session_hint=1; Path=/'
+let session = { accessToken: 'fixture-account-a', refreshToken: null, userId: userA, email: 'fixture-a@example.test' }
+await context.addCookies([{ name: 'homeji_session_hint', value: '1', url: base }])
 await context.route('**/*', async route => {
   const request = route.request(), url = new URL(request.url())
   if (url.hostname === 'www.googletagmanager.com') {
@@ -35,10 +36,20 @@ await context.route('**/*', async route => {
   }
   if (!request.url().startsWith(base)) { await route.abort(); return }
   if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/hubs/')) { await route.continue(); return }
+  if (url.pathname === '/api/account/session' && request.method() === 'DELETE') {
+    session = null
+    await route.fulfill({ status: 204, headers: { 'Set-Cookie': clearHint } }); return
+  }
+  if (url.pathname === '/api/account/session') {
+    await route.fulfill(session ? { json: session } : { status: 401, headers: { 'Set-Cookie': clearHint }, json: {} }); return
+  }
+  if (url.pathname === '/api/account/login') {
+    session = { accessToken: 'fixture-account-b', refreshToken: null, userId: userB, email: 'fixture-b@example.test' }
+    await route.fulfill({ headers: { 'Set-Cookie': setHint }, json: { ...session, emailConfirmationRequired: false } }); return
+  }
   let body = []
   const account = request.headers().authorization?.includes('fixture-account-b') ? userB : userA
   if (url.pathname === '/api/profile/me') body = { id: account, role: 1, displayName: account === userA ? 'Tài khoản A' : 'Tài khoản B', onboardingCompleted: true, isPremium: false }
-  else if (url.pathname === '/api/account/login') body = { accessToken: 'fixture-account-b', userId: userB, email: 'fixture-b@example.test', emailConfirmationRequired: false }
   else if (url.pathname === '/api/search-interests') body = { settings: { enabled: false, emailEnabled: false, aiEnabled: false }, following: [], suggestions: [], rooms: [], notice: null }
   else if (url.pathname === '/api/saved-posts') {
     savedRequests++
@@ -46,7 +57,9 @@ await context.route('**/*', async route => {
       await route.fulfill({ status: savedFailureStatus, contentType: 'application/json', body: JSON.stringify({ detail: 'Lỗi tải tin QA.' }) })
       return
     }
-    body = saved
+    // Held back so that account A's cached rows, if any survived the switch, would be on screen meanwhile.
+    if (account === userB) await new Promise(resolve => setTimeout(resolve, 1200))
+    body = account === userB ? savedByB : saved
   }
   else if (url.pathname.startsWith('/api/saved-posts/') && request.method() === 'DELETE') {
     saved = saved.filter(item => !url.pathname.endsWith(item.id))
@@ -63,6 +76,8 @@ page.on('pageerror', error => errors.push(error.message))
 const eventList = () => page.evaluate(() => (window.dataLayer ?? []).map(args => Array.from(args)).filter(args => args[0] === 'event'))
 try {
   await page.goto(`${base}/?section=saved&utm_source=qa_campaign`)
+  const ga4Ready = await page.evaluate(async () => (await import('/src/lib/ga4.ts')).ga4Configured)
+  assert.ok(ga4Ready, 'Dev server lacks GA4 config: restart it with VITE_GA4_MEASUREMENT_ID=G-E2ETEST and VITE_GA4_MANUAL_PAGEVIEWS_READY=true')
   await page.getByRole('heading', { name: 'Phòng riêng của tài khoản A' }).waitFor({ timeout: 30000 })
   const initialSkip = page.getByRole('button', { name: 'Bỏ qua', exact: true })
   if (await initialSkip.isVisible()) await initialSkip.click()
@@ -116,7 +131,8 @@ try {
   assert.ok(!JSON.stringify(events).includes('PRIVATE'))
   assert.ok(!JSON.stringify(events).includes('SECRET'))
 
-  saved = [post('33333333-3333-4333-8333-333333333333', 'Phòng riêng của tài khoản B')]
+  // Account A's rows must be in the cache before the switch, or there is nothing for isolation to prove.
+  await page.getByRole('heading', { name: 'Tin mới được lưu từ bản đồ' }).waitFor()
   await page.getByRole('button', { name: 'Menu tài khoản', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Đăng xuất', exact: true }).click()
   await page.locator('#auth-email').fill('fixture-b@example.test')
@@ -129,6 +145,9 @@ try {
     history.pushState({}, '', '/?section=saved')
     window.dispatchEvent(new PopStateEvent('popstate'))
   })
+  await page.locator('.hj-intro').waitFor({ state: 'detached', timeout: 15000 }).catch(() => {})
+  await page.waitForTimeout(600)
+  assert.equal(await page.getByRole('heading', { name: 'Tin mới được lưu từ bản đồ' }).count(), 0, 'account A rows must not show while account B loads')
   await page.getByRole('heading', { name: 'Phòng riêng của tài khoản B' }).waitFor({ timeout: 30000 })
   const skipIntro = page.getByRole('button', { name: 'Bỏ qua', exact: true })
   if (await skipIntro.isVisible()) await skipIntro.click()
