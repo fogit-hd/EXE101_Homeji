@@ -11,9 +11,10 @@ import { fileURLToPath } from 'node:url'
 import { handlePublicRental, publicOrigin, escapeHtml } from './public-rentals.mjs'
 import { CSP_REPORT_PATH, createReportLog, handleCspReport } from './csp-reports.mjs'
 import { inlineScriptHashes, securityHeaders } from './security-headers.mjs'
+import { isSpaRoute } from './spa-fallback.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
-const DIST = join(__dirname, '..', 'dist')
+const DIST = process.env.HOMEJI_DIST_DIR || join(__dirname, '..', 'dist')
 const PORT = Number(process.env.PORT || 3000)
 const PUBLIC_ORIGIN = publicOrigin(process.env.PUBLIC_SITE_URL || 'https://homeji.onrender.com')
 const verificationCode = process.env.GOOGLE_SITE_VERIFICATION || ''
@@ -217,12 +218,13 @@ function serveStatic(req, res) {
 
   // SPA fallback
   const index = join(DIST, 'index.html')
-  if (existsSync(index)) {
+  if (isSpaRoute(urlPath) && existsSync(index)) {
     sendFile(res, index)
     return
   }
 
-  res.writeHead(404, { 'Content-Type': 'text/plain' })
+  // A later deploy may publish this path, so the miss must not be cached.
+  res.writeHead(404, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' })
   res.end('Not Found')
 }
 
