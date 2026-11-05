@@ -35,6 +35,7 @@ import { RentalDetailAssistant } from '../ai/RentalDetailAssistant'
 import { useRentalAssistantOpener, useRentalAssistantSelection } from '../../contexts/rental-assistant-context'
 import { rentalDraftTarget, rentalMessageDraftStore } from '../../lib/rentalMessageDraft'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
+import { MapDetailActionIcon } from './MapDetailActionIcon'
 import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
 
@@ -708,14 +709,14 @@ function MapPlaceDetailPanelContent({
 
         {tabsBar}
 
-        <div className="map-detail-panel__actions">
+        <div className="map-detail-panel__actions" data-glass-exclude>
           <button
             type="button"
             className={`map-detail-action${routeSummary && !routeError ? ' is-primary' : ''}`}
             disabled={!destination || !onDirections}
             onClick={handleDirections}
           >
-            <span className="map-detail-action__icon" aria-hidden>➤</span>
+            <span className="map-detail-action__icon"><MapDetailActionIcon action="directions" /></span>
             <span className="map-detail-action__label">Đường đi</span>
           </button>
           {isListing ? (
@@ -755,16 +756,16 @@ function MapPlaceDetailPanelContent({
             </button>
           ) : null}
           <button type="button" className="map-detail-action" disabled={!destination || !onNearby} onClick={handleNearby}>
-            <span className="map-detail-action__icon" aria-hidden>⌖</span>
+            <span className="map-detail-action__icon"><MapDetailActionIcon action="nearby" /></span>
             <span className="map-detail-action__label">Gần đó</span>
           </button>
           <button type="button" className="map-detail-action" onClick={() => void handleShare()}>
-            <span className="map-detail-action__icon" aria-hidden>⤴</span>
+            <span className="map-detail-action__icon"><MapDetailActionIcon action="share" /></span>
             <span className="map-detail-action__label">Chia sẻ</span>
           </button>
           {isListing && post ? (
           <button type="button" className="map-detail-action" onClick={() => switchTab('about')}>
-            <span className="map-detail-action__icon" aria-hidden>▣</span>
+            <span className="map-detail-action__icon"><MapDetailActionIcon action="details" /></span>
             <span className="map-detail-action__label">Chi tiết</span>
           </button>
           ) : null}

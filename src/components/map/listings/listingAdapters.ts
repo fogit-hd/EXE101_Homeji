@@ -1,4 +1,5 @@
 import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
+import { isImportedRentalPost } from '../../../lib/sourcePublisherLinks'
 import type { MarketplacePost, RentalPostSearchParams, RentalPostSummary } from '../../../api/types'
 import { MarketplaceListingType, RentalPostType } from '../../../api/types'
 import { AMENITY_OPTIONS, amenityLabel, formatPrice, rentalPostTypeLabel } from '../../../lib/labels'
@@ -126,7 +127,7 @@ export function mapBackendListingToListingViewModel(post: RentalPostSummary): Li
     isPremium: post.isOwnerPremium === true,
     isOwnerVerified: post.isOwnerVerified === true,
     facts: [
-      post.deposit == null ? '' : post.deposit > 0 ? `Cọc ${formatPrice(post.deposit)}` : 'Không cọc',
+      post.deposit == null ? '' : post.deposit > 0 ? `Cọc ${formatPrice(post.deposit)}` : isImportedRentalPost(post) ? '' : 'Không cọc',
       ...(post.amenities ?? []).slice(0, 3).map(code => amenityLabel(code)),
     ].filter(Boolean),
     updatedAt: post.updatedAt ?? null,

@@ -345,6 +345,7 @@ export interface RentalPostMedia {
 }
 
 export interface RentalPostSummary {
+  isImportedSource?: boolean
   id: string
   isSynthetic?: boolean
   ownerId?: string

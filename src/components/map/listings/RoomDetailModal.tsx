@@ -1,6 +1,5 @@
 import { PhotoGallery } from './RoomPhotoGallery'
-import { RoomDetailHeader, RoomEssentials } from './RoomDetailPresentation'
-import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
+import { RoomDetailHeader, RoomEssentials, RoomOwnerProfile, RoomOwnerPhone } from './RoomDetailPresentation'
 import { OwnerSocialContacts } from '../../profile/OwnerSocialContacts'
 import { PhoneAction } from '../../ui/PhoneAction'
 import { useMotionPresence } from '../../motion/useMotionPresence'
@@ -32,6 +31,7 @@ import { useRentalAssistantOpener, useRentalAssistantSelection } from '../../../
 import { rentalDraftTarget, rentalMessageDraftStore } from '../../../lib/rentalMessageDraft'
 import { getStoredSession } from '../../../api/client'
 import { aiFeatureFlags } from '../../../lib/aiFeatureFlags'
+import { isImportedRentalPost } from '../../../lib/sourcePublisherLinks'
 import mapPinUrl from '../../../assets/room-detail/map-pin.svg'
 import messageCircleUrl from '../../../assets/room-detail/message-circle.svg'
 import circleAlertUrl from '../../../assets/room-detail/circle-alert.svg'
@@ -45,6 +45,7 @@ type Props = {
   onToggleSave?: (listingId: string) => void
   onOpenMessages?: (conversationId: string) => void
   onOpenAppointments?: () => void
+  saveError?: string
 }
 
 type LoadState = 'loading' | 'ready' | 'error' | 'missing' | 'profile-required'
@@ -89,6 +90,7 @@ export function RoomDetailModal({
   onToggleSave,
   onOpenMessages,
   onOpenAppointments,
+  saveError,
 }: Props) {
   const { isAuthenticated, profile, needsProfileSetup, isLoading: authLoading } = useAuth()
   const { openAuthModal } = useAuthModal()
@@ -310,7 +312,7 @@ export function RoomDetailModal({
     ? [
         isApartmentListing(post.title) ? 'Căn hộ' : rentalPostTypeLabel[post.type] || null,
         post.highlightTag?.trim() || null,
-        post.maxOccupants && post.maxOccupants > 0 ? `Tối đa ${post.maxOccupants} người` : null,
+        !isImportedRentalPost(post) && post.maxOccupants && post.maxOccupants > 0 ? `Tối đa ${post.maxOccupants} người` : null,
       ].filter((item): item is string => Boolean(item))
     : []
   const areaMissing = !post || !(post.area > 0)
@@ -505,6 +507,7 @@ export function RoomDetailModal({
                     <p>{post.ownerDisplayName?.trim() || 'Liên hệ người đăng phòng'}</p>
                   </>
                 )}
+                {saveError ? <p className="room-detail__toast is-err" role="alert">{saveError}</p> : null}
                 {actionMessage ? (
                   <p className={`room-detail__toast is-${actionTone}`} role="status">
                     {actionMessage}
@@ -544,7 +547,6 @@ export function RoomDetailModal({
 
 function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, onAuthenticatedContact }: { post: RentalPost; phone: string; hasPhone: boolean; isStudentShare: boolean; revealRequested: boolean; onAuthenticatedContact: () => void }) {
   const [revealed, setRevealed] = useState(false)
-  const [avatarFailed, setAvatarFailed] = useState(false)
   const { isAuthenticated } = useAuth()
   const { openAuthModal } = useAuthModal()
   const phoneId = useId()
@@ -554,47 +556,19 @@ function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, 
   const maskedPhone = digits ? `${phone.startsWith('+') ? '+' : ''}${digits.slice(0, 3)}${'•'.repeat(Math.max(0, digits.length - 3))}` : '••• ••• ••••'
 
   return (
-    <section className="room-detail__owner-profile" aria-label={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'}>
-      <h4>{isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'}</h4>
-      <div className="room-detail__person">
-        <span className="room-detail__avatar" aria-hidden="true">
-          {post.ownerAvatarPath && !avatarFailed
-            ? <img src={post.ownerAvatarPath} alt="" onError={() => setAvatarFailed(true)} />
-            : name.slice(0, 1).toUpperCase()}
-        </span>
-        <div>
-          <span className="room-detail__owner-label">Họ và tên</span>
-          <strong>{name}</strong>
-          {post.isOwnerVerified ? <span className="room-detail__owner-verified">✓ Hồ sơ chủ nhà đã được duyệt</span> : null}
-        </div>
-      </div>
+    <RoomOwnerProfile heading={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'} name={name} avatarUrl={post.ownerAvatarPath} verified={post.isOwnerVerified}>
       <OwnerSocialContacts key={post.ownerId} userId={post.ownerId} />
-      <div className={`room-detail__owner-phone${phoneVisible ? ' is-revealed' : ''}`}>
-        <div>
-          <span className="room-detail__owner-label">Số điện thoại</span>
-          <span id={phoneId} className="room-detail__phone-value" aria-live="polite" aria-atomic="true">
-            {!hasPhone ? 'Chưa cập nhật' : phoneVisible && phone
+      <RoomOwnerPhone id={phoneId} revealed={phoneVisible}
+        value={!hasPhone ? 'Chưa cập nhật' : phoneVisible && phone
               ? <a href={`tel:${phone}`}>{phone}</a>
               : <span aria-label={isAuthenticated ? `Số điện thoại bắt đầu bằng ${digits.slice(0, 3)}, các số còn lại đang ẩn` : 'Số điện thoại cần đăng nhập để xem'}>{isAuthenticated ? maskedPhone : 'Đăng nhập để xem số'}</span>}
-          </span>
-        </div>
-        {hasPhone ? <button
-          type="button"
-          className={`room-detail__flashlight${phoneVisible ? ' is-lit' : ''}`}
-          aria-label={phoneVisible ? 'Ẩn số điện thoại' : isAuthenticated ? 'Hiện số điện thoại' : 'Đăng nhập để xem số điện thoại'}
-          aria-pressed={phoneVisible}
-          aria-controls={phoneId}
-          onClick={() => {
+        revealLabel={phoneVisible ? 'Ẩn số điện thoại' : isAuthenticated ? 'Hiện số điện thoại' : 'Đăng nhập để xem số điện thoại'}
+        onReveal={hasPhone ? () => {
             if (!isAuthenticated) { openAuthModal({ intent: 'contact', onSuccess: () => { setRevealed(true); onAuthenticatedContact() } }); return }
             setRevealed(value => !value)
-          }}
-        >
-          <ContactFlashlightIcon />
-        </button> : null}
-      </div>
-      {hasPhone ? <p className="room-detail__phone-hint">{phoneVisible ? 'Nhấn số điện thoại để gọi người đăng' : isAuthenticated ? 'Xem số để liên hệ trực tiếp' : 'Đăng nhập để xem số và liên hệ'}</p>
-        : <p className="room-detail__phone-hint">Liên hệ qua tin nhắn trên Homeji.</p>}
-    </section>
+          } : undefined}
+        hint={hasPhone ? phoneVisible ? 'Nhấn số điện thoại để gọi người đăng' : isAuthenticated ? 'Xem số để liên hệ trực tiếp' : 'Đăng nhập để xem số và liên hệ' : 'Liên hệ qua tin nhắn trên Homeji.'} />
+    </RoomOwnerProfile>
   )
 }
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import ts from 'typescript'
+import { reactDomModule } from './helpers/react-dom-module.mjs'
 
 const compileUrl = source => `data:text/javascript;base64,${Buffer.from(ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
@@ -9,8 +10,7 @@ const compileUrl = source => `data:text/javascript;base64,${Buffer.from(ts.trans
 const { buildRentalDraft } = await import(compileUrl(await readFile(new URL('../src/lib/rentalDraft.ts', import.meta.url), 'utf8')))
 const typesUrl = compileUrl(await readFile(new URL('../src/api/types.ts', import.meta.url), 'utf8'))
 const { RentalPostType, UserRole } = await import(typesUrl)
-const { rentalPriceBasis } = await import(compileUrl((await readFile(new URL('../src/components/ai/rentalPriceBasis.ts', import.meta.url), 'utf8'))
-  .replace('../../api/types', typesUrl)))
+const { rentalPriceBasis } = await import(reactDomModule('src/components/ai/rentalPriceBasis.ts'))
 const facts = { typeLabel: 'Tìm bạn ở ghép', address: 'Linh Trung', rent: '1500000', area: '25', amenities: [], imageCount: 3 }
 
 test('renter-authored roommate draft preserves source amount explicitly per person', () => {

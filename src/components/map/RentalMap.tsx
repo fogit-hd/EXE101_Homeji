@@ -1,8 +1,7 @@
 import { useSourceCatalogMap } from './useSourceCatalogMap'
 import { useNavigate } from 'react-router-dom'
-import { RentalMapPreview } from './listings/RentalMapPreview'
+import { ImportedRentalPreview } from './listings/ImportedRentalPreview'
 import { sourceRoomHref } from '../../lib/sourceRoomLink'
-import { isApartmentListing } from '../../lib/rentalPropertyCategory'
 import type { SourceCatalogPin } from '../../lib/sourceCatalog'
 import { createClusterListings, type ClusterListing, type CatalogClusterMarker } from './clusterListings'
 import { ListingClusterAlgorithm } from './listingClusterAlgorithm'
@@ -327,7 +326,7 @@ function RentalMapComponent({
     const markers = [
       ...Array.from(markersRef.current.values(), (entry) => entry.marker),
       ...Array.from(marketplaceMarkersRef.current.values(), (entry) => entry.marker),
-      ...catalogMarkersRef.current.map(entry => entry.marker),
+      ...catalogMarkersRef.current.filter(entry => !entry.listing.id.startsWith('rental:') || !markersRef.current.has(entry.listing.id.slice('rental:'.length))).map(entry => entry.marker),
     ]
     const visibleIds = new Set(markers.map(marker => clusterListingsRef.current.get(marker)?.id))
     if (clusterSelectionIdsRef.current.some(id => !visibleIds.has(id))) {
@@ -1387,15 +1386,9 @@ function RentalMapComponent({
 
   return (
     <div className="rental-map">
-      {selectedSource ? <RentalMapPreview monthly onClose={() => setSelectedSource(null)}
+      {selectedSource ? <ImportedRentalPreview key={selectedSource.id} pin={selectedSource} onClose={() => setSelectedSource(null)}
         onOpen={() => navigate(sourceRoomHref(selectedSource.id.slice('rental:'.length)))}
-        view={{ id: selectedSource.id, title: selectedSource.title, address: selectedSource.address,
-          priceLabel: selectedSource.price === null ? 'Trao đổi' : `${selectedSource.price.toLocaleString('vi-VN')} ₫`,
-          areaLabel: selectedSource.area === null ? '' : `${selectedSource.area} m²`,
-          thumbnailUrl: selectedSource.imageUrl, latitude: selectedSource.lat, longitude: selectedSource.lng,
-          typeLabel: isApartmentListing(selectedSource.title) ? 'Căn hộ' : 'Phòng trọ', highlightTag: null,
-          ownerBadge: null, isPremium: false, isOwnerVerified: false, facts: selectedSource.amenityHighlights,
-          updatedAt: selectedSource.sourceUpdatedAt }} /> : null}
+        /> : null}
       <div ref={hostRef} className="rental-map__host"
         onWheelCapture={event => {
           if (isMapOverlayInteraction(event.target)) return

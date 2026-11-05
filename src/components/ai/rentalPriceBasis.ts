@@ -1,10 +1,12 @@
 import { RentalPostType, UserRole } from '../../api/types'
+import { isImportedRentalPost } from '../../lib/sourcePublisherLinks'
 
-type PricedPost = { type: RentalPostType; ownerRole?: UserRole | null; price: number }
+type PricedPost = { id?: string; isImportedSource?: boolean; type: RentalPostType; ownerRole?: UserRole | null; price: number }
 export type RentalPriceBasis = 'room' | 'person' | 'unknown'
 
 /** Older roommate summaries may omit the author role: their price unit cannot be inferred safely. */
-export function rentalPriceBasis(post: Pick<PricedPost, 'type' | 'ownerRole'>): RentalPriceBasis {
+export function rentalPriceBasis(post: Pick<PricedPost, 'id' | 'isImportedSource' | 'type' | 'ownerRole'>): RentalPriceBasis {
+  if (isImportedRentalPost(post)) return 'unknown'
   if (post.type !== RentalPostType.RoommateShare) return 'room'
   if (post.ownerRole === UserRole.Renter) return 'person'
   if (post.ownerRole === UserRole.Landlord) return 'room'

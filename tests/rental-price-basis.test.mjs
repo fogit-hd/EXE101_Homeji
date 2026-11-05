@@ -14,10 +14,14 @@ const compileUrl = source => `data:text/javascript;base64,${Buffer.from(ts.trans
 }).outputText).toString('base64')}`
 const typesUrl = compileUrl(await readFile(new URL('../src/api/types.ts', import.meta.url), 'utf8'))
 const { RentalPostType, UserRole } = await import(typesUrl)
-const source = await readFile(new URL('../src/components/ai/rentalPriceBasis.ts', import.meta.url), 'utf8')
-const { rentalPriceBasis, rentalPriceLabel, isLowestComparablePrice } = await import(compileUrl(source.replace('../../api/types', typesUrl)))
+const { rentalPriceBasis, rentalPriceLabel, isLowestComparablePrice } = await import(reactDomModule('src/components/ai/rentalPriceBasis.ts'))
 const room = price => ({ type: RentalPostType.VacantRoom, ownerRole: UserRole.Landlord, price })
 const person = price => ({ type: RentalPostType.RoommateShare, ownerRole: UserRole.Renter, price })
+
+test('imported source amounts do not become whole-room prices merely because an account was created', () => {
+  assert.equal(rentalPriceBasis({ ...room(1400000), isImportedSource: true }), 'unknown')
+  assert.equal(isLowestComparablePrice({ ...room(1400000), isImportedSource: true }, [room(6000000)]), false)
+})
 
 test('room and individual roommate prices retain distinct units and source values', () => {
   const wholeRoom = room(3_000_000), shared = person(1_500_000)
@@ -76,7 +80,7 @@ const bindings = `
 import React, { useState } from '${pathToFileURL(require.resolve('react')).href}';
 import { Link } from '${pathToFileURL(require.resolve('react-router-dom')).href}';
 import { RentalPostType } from '${typesUrl}';
-import { rentalPriceBasis, rentalPriceLabel } from '${compileUrl(source.replace('../../api/types', typesUrl))}';
+import { rentalPriceBasis, rentalPriceLabel } from '${reactDomModule('src/components/ai/rentalPriceBasis.ts')}';
 import { buildRentalSearchChips } from '${chipsUrl}';
 import { AiRentalResultCard } from '${cardUrl}';
 const aiFeatureFlags = { commute: false };

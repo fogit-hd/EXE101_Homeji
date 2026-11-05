@@ -51,6 +51,8 @@
   overflow: hidden;
 }
 
+.map-detail-panel__close:focus-visible { outline: 3px solid var(--hj-accent, #12675c); outline-offset: 2px; }
+
 .map-detail-panel.is-visible.is-photo-browser {
   transform: none;
   will-change: auto;
@@ -748,39 +750,45 @@
 
 .map-detail-action {
   flex: 0 0 auto;
-  min-width: 56px;
+  min-width: 64px;
+  min-height: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 2px 4px 0;
+  gap: 7px;
+  padding: 4px 6px;
   border: 0;
   background: transparent;
-  color: var(--maps-blue);
+  color: var(--hj-accent, #12675c);
   text-decoration: none;
   font: inherit;
   cursor: pointer;
 }
 
 .map-detail-action:disabled {
-  opacity: 0.45;
+  opacity: 1;
   cursor: not-allowed;
 }
+.map-detail-action:disabled .map-detail-action__icon { background: var(--surface-muted, #eef2f2); color: var(--text-secondary, #687b80); border-color: transparent; box-shadow: none; }
+.map-detail-action:disabled .map-detail-action__label { color: var(--text-secondary, #687b80); }
+.map-detail-action:focus-visible { outline: 3px solid var(--hj-accent, #12675c); outline-offset: 2px; border-radius: 12px; }
 
 .map-detail-action__icon {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 999px;
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue);
+  border: 1px solid color-mix(in srgb, var(--hj-accent, #12675c) 22%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--hj-accent, #12675c) 9%, var(--surface-elevated, #fff));
+  color: var(--hj-accent, #12675c);
+  box-shadow: 0 2px 5px #123c360a;
   font-size: 1rem;
   transition: transform var(--map-dur-fast, 160ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .map-detail-action.is-primary .map-detail-action__icon {
-  background: var(--grab-blue);
+  background: var(--hj-accent, #12675c);
   color: #fff;
 }
 
@@ -789,8 +797,8 @@
 }
 
 .map-detail-action__label {
-  font-size: 0.62rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 650;
   color: var(--text-heading);
   text-align: center;
   max-width: 64px;
@@ -1689,13 +1697,13 @@
   }
 
   .map-detail-action__icon {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     font-size: 0.92rem;
   }
 
   .map-detail-action.is-primary .map-detail-action__icon {
-    background: var(--maps-blue);
+    background: var(--hj-accent, #12675c);
   }
 
   .map-detail-panel__tabs {

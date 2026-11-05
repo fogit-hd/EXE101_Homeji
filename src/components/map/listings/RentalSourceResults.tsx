@@ -20,7 +20,8 @@ function formatSourceDate(value: string | null | undefined): string | null {
     : null
 }
 
-export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] }: {
+export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [], nativeIds = [] }: {
+  nativeIds?: string[]
   nativeCards?: ReactNode[]
   query: ListingQuery
   onCount: (count: Counts) => void
@@ -38,7 +39,11 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
       .catch(reason => { if (active) { setLoaded(true); setError(getErrorMessage(reason, 'Chưa tải được danh sách phòng.')) } })
     return () => { active = false }
   }, [attempt, revision])
-  const filtered = useMemo(() => filterRentalSourcesForList(rows, query), [rows, query])
+  const nativeIdKey = [...nativeIds].sort().join('|')
+  const filtered = useMemo(() => {
+    const visibleNativeIds = new Set(nativeIdKey.split('|'))
+    return filterRentalSourcesForList(rows, query).filter(row => !visibleNativeIds.has(row.id))
+  }, [rows, query, nativeIdKey])
   const counts = useMemo(() => ({ total: filtered.length, mapped: filtered.filter(sourceHasLocation).length }), [filtered])
   useEffect(() => { onCount(counts) }, [onCount, counts])
   const unsupported = sourceHasUnsupportedFilters(query)

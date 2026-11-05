@@ -1,56 +1,10 @@
-/* Source and member rentals share RoomDetailPresentation and the same layout tokens. */
-.room-detail--source { padding: 0; width: min(1120px, calc(100vw - 48px)); max-width: none; }
-
+/* Source and member rentals use the same dialog, profile and phone presentation. */
+.room-detail--source { padding: 0; }
 .room-detail--source .room-detail__section p { white-space: pre-line; overflow-wrap: anywhere; }
-.room-detail--source .room-detail__owner-profile { display: grid; gap: 12px; }
-.source-room-detail__phone { position: relative; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-height: 48px; padding: 12px; border: 1px solid var(--rd-border); border-radius: 12px; background: var(--rd-bg); color: var(--rd-forest); font: 650 14px var(--font-ui); cursor: pointer; }
-.source-room-detail__phone small { width: 100%; font-size: 12px; font-weight: 400; color: var(--rd-muted); }
-.source-room-detail__phone > svg { width: 24px; height: 24px; flex: 0 0 24px; }
 .source-room-detail__contact-actions { display: grid; gap: 8px; }
 .source-room-detail__contact-number { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .source-room-detail__contact-number a { color: var(--rd-forest); font-weight: 700; }
 .source-room-detail__contact-number button { min-height: 36px; padding: 8px; border: 1px solid var(--rd-border); border-radius: 8px; background: var(--rd-bg); color: var(--rd-text); }
 .source-room-detail__missing { color: var(--rd-muted); font-size: 13px; }
-@media(max-width:700px) { .room-detail--source { width: 100vw; max-height: 100dvh; height: 100dvh; margin: 0; border-radius: 0; } }
-.source-room-detail__phone { isolation: isolate; overflow: hidden; }
-.source-room-detail__phone > svg { transform: rotate(-90deg); }
-.source-room-detail__phone[aria-pressed=true] .room-detail__flashlight-rays { opacity: 1; }
-.source-room-detail__phone[aria-pressed=true] .room-detail__flashlight-beam { opacity: .3; }
-.source-room-detail__phone:hover { border-color: var(--hj-accent); }
-.source-room-detail__phone:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
-.source-room-detail__phone::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(100deg,transparent,#ffe49c55); opacity: 0; transition: opacity .25s; }
-.source-room-detail__phone[aria-pressed=true]::before { opacity: 1; }
-@media(prefers-reduced-motion:reduce) { .source-room-detail__phone::before { transition: none; } }
-
-/* Flashlight: the lamp clicks on, flickers, then a cone of warm light sweeps out
-   from the icon across the card and the revealed numbers are lit in turn. */
-.source-room-detail__phone > svg { position: relative; z-index: 1; transition: color .2s, filter .25s; }
-.source-room-detail__phone::before {
-  background: conic-gradient(from 62deg at 28px 50%, transparent 0deg, #ffe7a3cc 14deg, #fff4d080 28deg, #ffe7a3cc 42deg, transparent 56deg);
-  -webkit-mask: radial-gradient(130% 160% at 28px 50%, #000 30%, transparent 85%);
-  mask: radial-gradient(130% 160% at 28px 50%, #000 30%, transparent 85%);
-  transform-origin: 28px 50%; transform: scaleX(.15); opacity: 0;
-  transition: opacity .25s, transform .45s cubic-bezier(.22,1,.36,1);
-}
-.source-room-detail__phone[aria-pressed=true]::before { animation: hj-torch-on .9s cubic-bezier(.22,1,.36,1) forwards; }
-.source-room-detail__phone[aria-pressed=true] { border-color: #e6bb54; background: linear-gradient(100deg, #fff8e1, var(--rd-bg) 80%); }
-.source-room-detail__phone[aria-pressed=true] > svg { color: #b7791f; filter: drop-shadow(0 0 6px #f6c64499); animation: hj-torch-flicker .5s steps(1) 1; }
-.source-room-detail__contact-number { animation: hj-torch-lit .7s ease-out both; }
-.source-room-detail__contact-number:nth-child(2) { animation-delay: .12s; }
-.source-room-detail__contact-number:nth-child(3) { animation-delay: .24s; }
-@keyframes hj-torch-on {
-  0% { opacity: 0; transform: scaleX(.1); }
-  12% { opacity: .9; } 18% { opacity: .2; } 26% { opacity: 1; }
-  100% { opacity: 1; transform: scaleX(1); }
-}
-@keyframes hj-torch-flicker { 0% { opacity: .4; } 20% { opacity: 1; } 35% { opacity: .5; } 50% { opacity: 1; } }
-@keyframes hj-torch-lit {
-  0% { opacity: 0; filter: brightness(.4); background-image: linear-gradient(100deg, transparent 0%, #ffe7a3aa 0%, transparent 0%); }
-  60% { opacity: 1; filter: brightness(1.15); }
-  100% { opacity: 1; filter: none; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .source-room-detail__phone[aria-pressed=true]::before, .source-room-detail__phone[aria-pressed=true] > svg, .source-room-detail__contact-number { animation: none; }
-  .source-room-detail__phone[aria-pressed=true]::before { opacity: 1; transform: none; }
-}
-html[data-theme='dark'] .source-room-detail__phone[aria-pressed=true] { background: linear-gradient(100deg, #3a2f12, var(--rd-bg) 80%); }
+.source-room-detail__copy { align-self: flex-start; padding: 6px 0; background: transparent; border: 0; color: var(--hj-accent); font: inherit; cursor: pointer; }
+.source-room-detail__copy:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }

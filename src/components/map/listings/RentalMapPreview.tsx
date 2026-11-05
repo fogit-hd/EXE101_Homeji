@@ -16,6 +16,7 @@ export function RentalMapPreview({
   onToggleSave,
   onOpen,
   considerationPost,
+  notice,
 }: {
   onClose?: () => void
   onOpenNearby?: () => void
@@ -26,11 +27,14 @@ export function RentalMapPreview({
   onToggleSave?: () => void
   onOpen: () => void
   considerationPost?: { id: string; title: string }
+  notice?: string
 }) {
   return (
     <article className={`map-listings__preview${view.isPremium ? ' premium-listing' : ''}`} aria-label="Phòng đang chọn">
-      {onClose ? <button type="button" className="map-listings__preview-close" data-glass-exclude aria-label="Đóng phòng đang chọn" onClick={onClose}>×</button> : null}
-      <ListingTrustBadges premium={view.isPremium} verified={view.isOwnerVerified} />
+      {onClose || view.isPremium || view.isOwnerVerified ? <div className="map-listings__preview-toolbar">
+        <ListingTrustBadges premium={view.isPremium} verified={view.isOwnerVerified} />
+        {onClose ? <button type="button" className="map-listings__preview-close" data-glass-exclude aria-label="Đóng phòng đang chọn" onClick={onClose}>×</button> : null}
+      </div> : null}
       <div className="map-listings__preview-top">
         <div className="map-listings__preview-photo">
           {view.thumbnailUrl ? <img src={view.thumbnailUrl} alt="" /> : null}
@@ -66,6 +70,7 @@ export function RentalMapPreview({
         {!view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
       </div>
       {considerationPost ? <RentalConsiderationToggle post={considerationPost} /> : null}
+      {notice ? <p role="alert" className="map-listings__preview-notice">{notice}</p> : null}
       <button type="button" className="map-listings__preview-open" onClick={onOpen}>
         {monthly ? 'Xem phòng & liên hệ' : 'Xem chi tiết'}
         <img src="/figma/map/arrow-right.svg" alt="" width={13} height={13} />

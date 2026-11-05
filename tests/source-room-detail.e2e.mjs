@@ -26,7 +26,7 @@ try{
    const after=await contact.boundingBox();assert.equal(after.y,before.y);assert.equal(after.x,before.x)
    assert.ok(await page.locator('.source-room-detail__room').evaluate(element=>element.scrollTop>100))
   }
-  await dialog.getByRole('button',{name:/Nhấn để xem số điện thoại/}).click()
+  await dialog.getByRole('button',{name:/Hiện số điện thoại/}).click()
   assert.equal(await dialog.getByRole('link',{name:'Gọi người đăng, số 1'}).getAttribute('href'),'tel:0901234567')
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))
   await page.screenshot({path:out+'/contact-'+width+'.png'})

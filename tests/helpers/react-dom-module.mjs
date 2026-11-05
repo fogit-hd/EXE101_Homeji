@@ -8,6 +8,7 @@ const require=createRequire(import.meta.url)
 // DOM component tests execute the actual TypeScript. CSS is checked separately;
 // only external animation failures are substituted when a test asks for that seam.
 export function reactDomModule(file, overrides={}) {
+  if (file.endsWith('.json')) return 'data:text/javascript;base64,' + Buffer.from('export default ' + fs.readFileSync(file, 'utf8')).toString('base64')
   const source=fs.readFileSync(file,'utf8').replace(/^import\s+['"][^'"]+\.css['"];?\s*$/gm,'')
   let code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText
   const resolveModule=specifier=>{
