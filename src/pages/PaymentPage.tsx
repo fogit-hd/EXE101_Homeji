@@ -444,6 +444,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                         className="pay-plan__methods"
+                        data-glass-exclude
                         role="group"
                         aria-label="Chọn hình thức thanh toán"
                       >
@@ -451,17 +452,17 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           <div className="pay-voucher-panel__copy"><strong>Voucher Premium</strong><p>Chọn mã giảm giá để áp dụng khi thanh toán bằng ví Homeji.</p></div>
                           <VoucherPicker key={plan.code + ':' + plan.price} purpose="vip" amount={plan.price} disabled={busy || purchaseConfirmation !== null} onChange={value => setVipVoucher(value ? { ...value, packageCode: plan.code } : null)} />
                         </div>
-                        {planVoucher && !planVoucher.pending && <p>Voucher giảm {formatPrice(planVoucher.discount)} · Còn trả {formatPrice(amountDue)} bằng ví.</p>}
+                        {planVoucher && !planVoucher.pending && <p className="pay-voucher-summary" role="status">Voucher giảm {formatPrice(planVoucher.discount)} · Còn trả {formatPrice(amountDue)} bằng ví.</p>}
                         <div className="pay-wallet-card">
                           <div className="pay-wallet-card__balance"><span>Ví Homeji</span><strong>{walletBalance === null ? (walletLoading ? 'Đang tải…' : 'Chưa tải được') : formatPrice(walletBalance)}</strong></div>
                           <button type="button" className="pay-method pay-wallet-method" disabled={busy || Boolean(planVoucher?.pending) || walletLoading || walletBalance === null || walletBalance < amountDue} onClick={() => confirmPurchase(plan, 'wallet')}>
                             Thanh toán bằng ví
-                            <small>{walletBalance !== null && walletBalance < amountDue ? `Còn thiếu ${formatPrice(amountDue - walletBalance)}` : `Thanh toán ${formatPrice(amountDue)}`}</small>
+                            <small>{walletBalance !== null && walletBalance < amountDue ? `Còn thiếu ${formatPrice(amountDue - walletBalance)}` : formatPrice(amountDue)}</small>
                           </button>
                         </div>
                         {walletError && <p className="pay-wallet-note is-error" role="status">{walletError}</p>}
                         {walletBalance !== null && walletBalance < amountDue && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp thêm tiền vào ví</Link>}
-                        <div>
+                        <div className="pay-plan__external-methods">
                           <button type="button" className="pay-method is-momo" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'momo')}>
                             {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
                           </button>
@@ -470,7 +471,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           </button>
                         </div>
                         <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setVipVoucher(null); setPayPickerCode(null) }}>
-                          Hủy
+                          Đóng lựa chọn
                         </button>
                       </motion.div>
                     ) : (

@@ -23,7 +23,7 @@ export function VoucherPicker({ purpose, amount, disabled, onChange }: Props) {
  return <div className="voucher-picker" data-glass-exclude>
   <label htmlFor={id}>Chọn voucher {purpose === 'food' ? 'đồ ăn' : 'Premium'}</label>
   <select id={id} className="form-select" value={selected} disabled={disabled} onChange={e => void choose(e.target.value)}>
-   <option value="">Thanh toán không dùng voucher</option>
+   <option value="">Không dùng voucher</option>
    {vouchers.map(v => <option key={v.id} value={v.id} disabled={amount < v.minimumSpend}>Giảm {v.rate * 100}% tối đa {formatPrice(v.maximumDiscount)} · từ {formatPrice(v.minimumSpend)}</option>)}
   </select>
   {!vouchers.length && !error && <small>Chưa có voucher phù hợp. Nhận quà tại mục Mời bạn & voucher.</small>}
