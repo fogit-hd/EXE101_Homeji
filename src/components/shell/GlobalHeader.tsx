@@ -384,7 +384,7 @@ export function GlobalHeader() {
     { id: 'saved', label: 'Tin đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark' },
     { id: 'interests', label: 'Phòng mới phù hợp', href: '/?section=listings&view=list&interest=manage', icon: 'search' },
     { id: 'profile', label: 'Hồ sơ', href: mapSectionUrl('profile'), icon: 'user' as const },
-    { id: 'subscription', label: 'Gói đăng ký', href: mapSectionUrl('payments'), icon: 'card' as const },
+    { id: 'subscription', label: 'Gói Premium', href: mapSectionUrl('payments'), icon: 'card' as const },
     { id: 'wanted', label: 'Tin tìm phòng', href: mapSectionUrl('wanted'), icon: 'search' as const },
     { id: 'activities', label: 'Nhật ký hoạt động', href: mapSectionUrl('activities'), icon: 'activity' as const },
   ]

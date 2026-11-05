@@ -43,7 +43,7 @@ try{
  async function open(name){const toggle=nav.locator('.admin-nav__toggle');if(await toggle.isVisible()&&await toggle.getAttribute('aria-expanded')==='false')await toggle.click();await nav.getByRole('button',{name,exact:true}).click()}
  assert.equal(await nav.locator('.admin-nav__icon').count(),0)
  await open('Tài khoản & thành viên');await page.getByText('an@example.invalid',{exact:true}).waitFor();await page.getByText('new@example.invalid',{exact:true}).waitFor();await page.screenshot({path:out+'/accounts-desktop.png'})
- await page.getByRole('button',{name:'Gói thành viên',exact:true}).click();await page.getByText('Premium 30 ngày',{exact:true}).waitFor();await page.getByText('Chờ thanh toán',{exact:true}).waitFor();await page.locator('.admin-state').filter({hasText:'Đang có hiệu lực'}).waitFor()
+ await page.getByRole('button',{name:'Gói Premium',exact:true}).click();await page.getByText('Premium 30 ngày',{exact:true}).waitFor();await page.getByText('Chờ thanh toán',{exact:true}).waitFor();await page.locator('.admin-state').filter({hasText:'Đang có hiệu lực'}).waitFor()
  await open('Báo cáo Excel');await page.getByText('Chưa có báo cáo Excel nào được tạo.',{exact:true}).waitFor();assert.equal(writes.length,0,'Navigation does not send email')
  const create=page.getByRole('button',{name:'Tạo báo cáo & gửi email',exact:true})
  await create.evaluate(button=>{button.click();button.click()});await page.getByText(/Chưa xác định kết quả tạo báo cáo/).waitFor();assert.equal(writes.length,1)

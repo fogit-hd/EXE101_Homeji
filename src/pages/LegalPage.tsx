@@ -17,7 +17,7 @@ function LegalLayout({
   updatedAt?: string
 }) {
   return (
-    <main className="legal-page">
+    <div className="legal-page">
       <article className="legal-page__card">
         <Link className="legal-page__back" to="/">
           ← Về Homeji
@@ -30,7 +30,7 @@ function LegalLayout({
         </header>
         <div className="legal-page__content">{children}</div>
       </article>
-    </main>
+    </div>
   )
 }
 

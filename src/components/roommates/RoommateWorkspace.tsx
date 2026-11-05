@@ -13,7 +13,7 @@ import './RoommateWorkspace.css'
 
 type Tab = 'people' | 'rooms' | 'invitations'
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'people', label: 'Tìm bạn' }, { id: 'rooms', label: 'Tin ở ghép' }, { id: 'invitations', label: 'Lời mời' },
+  { id: 'people', label: 'Tìm bạn' }, { id: 'rooms', label: 'Phòng ở ghép' }, { id: 'invitations', label: 'Lời mời' },
 ]
 
 const TAB_ORDER = TABS.map(item => item.id)
@@ -22,7 +22,7 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
   const { profile } = useAuth()
   const [params, setParams] = useSearchParams()
   const raw = params.get('roommateTab')
-  const tab: Tab = raw === 'rooms' || raw === 'people' ? raw : 'invitations'
+  const tab: Tab = raw === 'rooms' || raw === 'people' || raw === 'invitations' ? raw : profile?.role === UserRole.Renter ? 'people' : 'rooms'
   const panelRef = useTabTransition(tab, TAB_ORDER)
   const [editingLifestyle, setEditingLifestyle] = useState(false)
   const { present: lifestylePresent, ...lifestylePresence } = useMotionPresence(editingLifestyle, 'collapse')
@@ -42,7 +42,7 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
       </button>
       {lifestylePresent ? <div {...lifestylePresence} id="roommate-lifestyle"><ProfilePage embedded lifestyleOnly /></div> : null}
     </section> : <p>Hồ sơ người thuê dùng lối sống để tìm người cùng ở và gửi lời mời. Bạn vẫn có thể xem phòng.</p>}
-    <MotionTabs items={TABS} value={tab} onChange={selectTab} label="Khám phá ở ghép"
+    <MotionTabs items={TABS} value={tab} onChange={selectTab} label="Mục ở ghép"
       className="roommate-workspace__tabs" idPrefix="roommate-tab" panelId="roommate-panel" />
     <div ref={panelRef} className="roommate-workspace__panel" role="tabpanel" id="roommate-panel" aria-labelledby={`roommate-tab-${tab}`}>
       {tab === 'rooms' ? <RoommateRooms initialKeyword={params.get('roommateQuery')?.slice(0, 200) ?? ''}

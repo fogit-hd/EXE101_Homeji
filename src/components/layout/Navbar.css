@@ -229,7 +229,7 @@
 .navbar-inner { max-width: 1320px; width: 100%; padding-inline: 32px; gap: 28px; }
 .navbar-brand__logo { width: 33px; height: 36px; }
 .navbar-brand__word { font-size: 22px; letter-spacing: -.8px; line-height: 1.1; }
-.navbar-brand__word > span { display: block; margin-top: 5px; font-size: 9px; font-weight: 500; letter-spacing: .25px; color: var(--text-secondary); }
+.navbar-brand__word > span { display: block; margin-top: 5px; font-size: 12px; font-weight: 500; letter-spacing: .25px; color: var(--text-secondary); }
 .navbar-links { align-self: stretch; gap: 5px; overflow: visible; }
 .navbar-links a { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; font-size: 13px; font-weight: 550; color: var(--text-secondary); }
 .navbar-links a:hover { color: var(--text-heading); background: color-mix(in srgb, var(--text-primary) 3%, transparent); }

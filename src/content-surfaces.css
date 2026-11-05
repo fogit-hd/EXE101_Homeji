@@ -9,7 +9,7 @@ html:root #root .guest-map__card-wrap .post-card-price { color: var(--hj-accent)
 html:root #root .guest-map__card-wrap .post-card-public-link { padding: 6px 14px; font-size: 12px; text-underline-offset: 3px; }
 html:root #root .guest-map__card-wrap .post-card-actions { padding: 4px 14px 14px; }
 html:root #root .guest-map__card-wrap .post-card-actions button { border: 1px solid var(--border); color: var(--text-primary); background: var(--surface-input); border-radius: 8px; box-shadow: none; min-height: 40px; }
-html:root #root .guest-map__card-wrap .post-card-type { background: #175c57; color: #fff; border-radius: 4px; font-size: 10px; max-width: calc(100% - 12px); left: 6px; }
+html:root #root .guest-map__card-wrap .post-card-type { background: #175c57; color: #fff; border-radius: 4px; font-size: 12px; max-width: calc(100% - 12px); left: 6px; }
 html:root #root .guest-fixed-cta { gap: 0; border-radius: 12px; overflow: hidden; background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); box-shadow: 0 6px 24px rgb(0 0 0 / .18); }
 html:root #root .guest-fixed-cta > span { background: var(--surface-elevated); color: var(--text-secondary); border-radius: 0; letter-spacing: 0; }
 html:root #root .guest-fixed-cta__go { background: #175c57; color: #fff; border-radius: 0; box-shadow: none; min-height: 48px; }
@@ -39,7 +39,7 @@ html:root #root .map-listings__card-open { color: var(--hj-accent); min-height: 
 @media(max-width: 400px) {
  html:root #root .guest-map__card-wrap .post-card.card { grid-template-columns: 88px minmax(0,1fr); }
  html:root #root .guest-map__card-wrap .post-card-body { padding: 12px 10px 4px; }
- html:root #root .guest-map__card-wrap .post-card-type { font-size: 9px; padding-inline: 4px; }
+ html:root #root .guest-map__card-wrap .post-card-type { font-size: 12px; padding-inline: 4px; }
 }
 
 html:root #root .hub-market header a { color: var(--hj-accent); }

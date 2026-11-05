@@ -21,7 +21,7 @@ import {
 } from '../api/types'
 
 export const formatPrice = (value: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
+  `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value)} đ`
 
 // Listing measurements have no explicit-free marker; zero/malformed values stay unknown.
 export const formatListingRent = (value: number) =>
@@ -101,7 +101,7 @@ export const notificationTypeLabel: Record<number, string> = {
   [NotificationType.MaintenanceAnnouncement]: 'Bảo trì hệ thống',
   [NotificationType.SystemAnnouncement]: 'Homeji',
   [NotificationType.Promotion]: 'Ưu đãi',
-  [NotificationType.MarketplaceTip]: 'Chợ đồ',
+  [NotificationType.MarketplaceTip]: 'Chợ Homeji',
   [NotificationType.SafetyTip]: 'An toàn',
 }
 

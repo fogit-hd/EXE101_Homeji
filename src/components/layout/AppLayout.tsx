@@ -4,7 +4,9 @@ import { PremiumLaunchOffer } from '../payments/PremiumLaunchOffer'
 import { SourceRoomDetailsHost } from '../map/listings/SourceRoomDetailsHost'
 import { VoiceCallProvider } from '../../contexts/VoiceCallContext'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
-import { lazy, Suspense, useLayoutEffect } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect } from 'react'
+import { ConfirmDialogHost } from '../ui/ConfirmDialogHost'
+import { documentTitleFor } from '../../lib/documentTitle'
 import { useAnimate } from 'motion/react'
 import { transitions } from '../../lib/motionTokens'
 import { RouteSkeleton } from '../skeletons/RouteSkeleton'
@@ -45,6 +47,8 @@ export function AppLayout() {
     location.pathname === '/' &&
     new URLSearchParams(location.search).get('section') === 'messages'
 
+  useEffect(() => { document.title = documentTitleFor(location.pathname, location.search) }, [location.pathname, location.search])
+
   const [outletRef, animateOutlet] = useAnimate<HTMLDivElement>()
   // Camera bounds, filters and message IDs must not replay the page transition.
   const destination = `${location.pathname}:${new URLSearchParams(location.search).get('section') ?? 'home'}`
@@ -74,6 +78,7 @@ export function AppLayout() {
       <SiteLocationBootstrap enabled={!isAuthCinema} />
       {!isAuthCinema ? <PremiumLaunchOffer /> : null}
       <SourceRoomDetailsHost />
+      <ConfirmDialogHost />
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
         {isAuthenticated && needsProfileSetup && !isProfile && !isAuthCinema ? <ProfileSetupNotice /> : null}
         <div

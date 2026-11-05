@@ -113,7 +113,7 @@ try {
   await page.getByRole('button', { name: 'Chọn gói', exact: true }).first().click()
   await page.getByRole('button', { name: 'MoMo', exact: true }).click()
   assert.equal(createCalls, 0, 'Selecting MoMo must not create a payment before confirmation')
-  await page.getByRole('dialog', { name: 'Xác nhận mua gói thành viên' }).getByRole('button', { name: /^Xác nhận thanh toán/ }).click()
+  await page.getByRole('dialog', { name: 'Xác nhận mua gói Premium' }).getByRole('button', { name: /^Xác nhận thanh toán/ }).click()
   await page.getByRole('heading', { name: 'Chờ bạn thanh toán' }).waitFor()
   assert.equal(createCalls, 1)
   assert.match(page.url(), /\/payments\/wait\?paymentId=/)
@@ -122,7 +122,7 @@ try {
   await page.getByRole('button', { name: 'Chọn gói', exact: true }).first().click()
   await page.getByRole('button', { name: 'PayOS', exact: true }).click()
   assert.equal(createCalls, 1, 'Selecting PayOS must not create a payment before confirmation')
-  await page.getByRole('dialog', { name: 'Xác nhận mua gói thành viên' }).getByRole('button', { name: /^Xác nhận thanh toán/ }).click()
+  await page.getByRole('dialog', { name: 'Xác nhận mua gói Premium' }).getByRole('button', { name: /^Xác nhận thanh toán/ }).click()
   await page.getByRole('heading', { name: 'Chờ bạn thanh toán' }).waitFor()
   assert.equal(createCalls, 2)
 

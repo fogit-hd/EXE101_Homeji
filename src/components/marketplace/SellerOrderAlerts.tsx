@@ -241,7 +241,7 @@ function SellerOrderMonitor({ ownerId, token, host }: { ownerId: string; token: 
   if (!visible) return null
 
   const status = alerts.length ? `${alerts.length} đơn bán cần xử lý` : hasLoaded ? 'Đang theo dõi đơn bán' : 'Đang tải đơn bán…'
-  const detail = error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có yêu cầu mua mới chờ phản hồi' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và pass đồ'
+  const detail = error ? 'Mất đồng bộ · đang thử lại, hãy kiểm tra đơn' : alerts.some(alert => alert.status === MarketplaceOrderStatus.Requested) ? 'Có yêu cầu mua mới chờ phản hồi' : alerts.length ? 'Đơn đã nhận · cần chuẩn bị giao' : 'Đồ ăn và đồ cũ'
   const requested = alerts.filter(alert => alert.status === MarketplaceOrderStatus.Requested).length
   const handoff = alerts.length - requested
   const filteredAlerts = alerts.filter(alert => filter === 'all' || (filter === 'new' ? alert.status === MarketplaceOrderStatus.Requested : alert.status === MarketplaceOrderStatus.Accepted))

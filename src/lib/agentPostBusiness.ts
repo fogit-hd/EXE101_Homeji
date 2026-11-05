@@ -14,10 +14,10 @@ export function agentMissingFields(details: import('../api/chatbotAgent').AgentP
   if (kind === 'wanted') { if (!(details.maxOccupants! > 0)) missing.push('số người thuê'); if (!details.availableFrom) missing.push('ngày chuyển vào') }
   if (kind === 'food') { if (!(details.availableQuantity! > 0)) missing.push('số lượng'); if (!details.unit?.trim()) missing.push('đơn vị bán'); if (details.preparationMinutes == null || details.preparationMinutes < 0) missing.push('thời gian chuẩn bị') }
   if (kind === 'roomTransfer') {
-    if (!details.transferKind) missing.push('hình thức pass')
+    if (!details.transferKind) missing.push('hình thức nhượng')
     if (!details.availableFrom || !details.originalLeaseEndsOn || details.originalLeaseEndsOn <= details.availableFrom) missing.push('thời hạn hợp đồng')
-    if (details.passFee == null || details.passFee < 0) missing.push('phí pass')
-    if (!details.transferReason?.trim()) missing.push('lý do pass')
+    if (details.passFee == null || details.passFee < 0) missing.push('phí nhượng')
+    if (!details.transferReason?.trim()) missing.push('lý do nhượng')
     if (!details.ownerConsentConfirmed || !details.ownerConsentContact?.trim()) missing.push('xác nhận và liên hệ chủ nhà')
   }
   return missing

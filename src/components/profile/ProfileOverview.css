@@ -24,7 +24,7 @@
 .profile-information__title { display:flex; align-items:center; gap:12px; min-width:0; }
 .profile-section-icon { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; border-radius:11px; background:var(--surface-muted); color:var(--text-secondary); }
 .profile-information h2 { margin:0; color:var(--text-heading); font-size:17px; line-height:1.5; letter-spacing:-.02em; }
-.profile-optional { padding:3px 8px; background:var(--surface-muted); border-radius:6px; color:var(--text-secondary); font-size:10px; line-height:1.6; }
+.profile-optional { padding:3px 8px; background:var(--surface-muted); border-radius:6px; color:var(--text-secondary); font-size: 12px; line-height:1.6; }
 #root .profile-account .profile-edit-button { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:40px; flex-shrink:0; padding:8px 12px; border:1px solid var(--border); border-radius:9px; background:var(--surface-elevated); color:var(--text-primary); font:600 12px/1.5 var(--font-ui); cursor:pointer; box-shadow:none; }
 #root .profile-account .profile-edit-button:hover { border-color:var(--action-primary); color:var(--action-on-soft); }
 .profile-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin:0; }

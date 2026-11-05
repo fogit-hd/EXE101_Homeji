@@ -117,7 +117,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
       setTab('browse')
       void reload()
     } catch (err) {
-      setActionError(getErrorMessage(err, 'Đăng tin thất bại'))
+      setActionError(getErrorMessage(err, 'Chưa đăng được tin. Vui lòng thử lại.'))
     } finally {
       setCreating(false)
     }

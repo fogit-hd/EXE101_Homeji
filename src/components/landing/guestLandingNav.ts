@@ -10,3 +10,11 @@ export function navigateGuestLanding(sectionId: string) {
     }),
   )
 }
+
+/** Hero search hands its keyword to the listing section below it. */
+export const GUEST_SEARCH_EVENT = 'homeji:guest-search'
+
+export function searchGuestListings(keyword: string) {
+  window.dispatchEvent(new CustomEvent<string>(GUEST_SEARCH_EVENT, { detail: keyword }))
+  navigateGuestLanding('listings')
+}

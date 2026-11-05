@@ -32,7 +32,7 @@
 
 .marketplace-header__eyebrow {
   margin: 0;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -484,3 +484,6 @@ html:root #root .marketplace-header .marketplace-header__utility-action:focus-vi
 
 .marketplace-header__game { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 18px; color: var(--text-primary); background: var(--surface-elevated); font: inherit; font-size: 12px; cursor: pointer; }
 @media (max-width: 600px) { #root .marketplace-header__utility-actions { flex-wrap: wrap; } }
+
+/* The game stays reachable without pushing the wallet actions onto three lines. */
+@media (max-width: 767px) { .marketplace-header__game .homeji-game-launcher__label { display: none; } .marketplace-header__utility-action { white-space: nowrap; } }

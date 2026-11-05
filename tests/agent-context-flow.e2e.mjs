@@ -80,7 +80,7 @@ try {
     assert.equal(await workspace.getByLabel('Giá bán (đ)').inputValue(), '500.000')
     await page.screenshot({ path: out + '/' + width + '.png' })
     await workspace.getByRole('button', { name: 'Xác nhận đăng bài', exact: true }).click()
-    await workspace.getByText('Đã đăng lên Chợ đồ', { exact: true }).waitFor()
+    await workspace.getByText('Đã đăng lên Chợ Homeji', { exact: true }).waitFor()
     assert.equal(approvals, 1)
     await workspace.getByRole('button', { name: 'Về hội thoại', exact: true }).click()
     await chat.fill('hỏi về giá'); await chat.press('Enter'); await thinking.waitFor()

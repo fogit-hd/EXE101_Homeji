@@ -33,10 +33,10 @@ const SECTION_GUIDE: Partial<Record<MapAppSection, { title: string; body: string
   listings: {
     title: 'Tìm phòng trên bản đồ',
     body: 'Lướt danh sách để Homeji tự đưa bản đồ tới ghim tương ứng.',
-    tip: 'Click một lần để focus ghim; click lần hai để mở đầy đủ chi tiết phòng.',
+    tip: 'Chọn ghim để xem trên bản đồ, chọn lần nữa để mở chi tiết phòng.',
   },
   marketplace: {
-    title: 'Chợ đồ sinh viên',
+    title: 'Chợ Homeji',
     body: 'Mua bán đồ cũ, đồ ăn và vật dụng quanh khu trọ theo vị trí trên bản đồ.',
     tip: 'Kiểm tra người bán, điểm nhận và trạng thái đơn trước khi thanh toán.',
   },
@@ -76,7 +76,7 @@ const SECTION_GUIDE: Partial<Record<MapAppSection, { title: string; body: string
     tip: 'Chỉ chia sẻ các thông tin cần thiết cho việc tìm phòng và ở ghép.',
   },
   payments: {
-    title: 'Gói đăng ký',
+    title: 'Gói Premium',
     body: 'Xem quyền lợi, thời hạn và trạng thái gói Homeji đang sử dụng.',
     tip: 'Đọc kỹ quyền lợi và tổng tiền trước khi bắt đầu thanh toán.',
   },
@@ -535,7 +535,7 @@ export function MapOmnibox({
       kind: 'query',
       title: keyword,
       subtitle: 'Tìm kiếm địa chỉ / từ khóa trên Homeji',
-      meta: 'Bay tới địa điểm hoặc lọc tin đăng',
+      meta: 'Đi tới địa điểm hoặc lọc tin đăng',
       badge: 'Tìm kiếm',
       keyword,
     }
@@ -1210,7 +1210,7 @@ export function MapOmnibox({
         <aside className="gmaps-tour gmaps-tour--menu" aria-label="Hướng dẫn bắt đầu">
           <span className="gmaps-tour__eyebrow">Bắt đầu với Homeji</span>
           <strong>Mở menu ba gạch ở góc trái</strong>
-          <p>Chọn Tìm phòng, Chợ đồ, Ở ghép… rồi Homeji mới giải thích chi tiết mục đó.</p>
+          <p>Chọn Tìm phòng, Chợ Homeji, Ở ghép… rồi Homeji mới giải thích chi tiết mục đó.</p>
           <div className="gmaps-tour__actions">
             <button type="button" className="gmaps-tour__secondary" onClick={finishTour}>Bỏ qua</button>
             <button

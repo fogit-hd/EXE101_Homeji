@@ -12,9 +12,9 @@ export function ExplorePage() {
 
   if (authLoading) {
     return (
-      <main className="container page">
+      <div className="container page">
         <ListingsSkeleton />
-      </main>
+      </div>
     )
   }
 

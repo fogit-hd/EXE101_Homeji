@@ -29,7 +29,7 @@
 #root .auth-cinema--login .auth-cinema__footer button { padding: 4px 10px; margin-left: 4px; min-height: 30px; }
 .auth-login-verify { margin: 16px 0 0; text-align: center; font-size: 12px; }
 .auth-login-verify a { color: var(--text-accent); }
-.auth-login-legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 9px; row-gap: 8px; margin-top: 38px; font-size: 10px; color: var(--text-secondary); }
+.auth-login-legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 9px; row-gap: 8px; margin-top: 38px; font-size: 12px; color: var(--text-secondary); }
 .auth-login-legal a { color: inherit; text-decoration: none; }
 .auth-login-legal > span:last-child { flex-basis: 100%; text-align: center; }
 html[data-theme='dark'] .auth-cinema.auth-cinema--login { background: radial-gradient(ellipse 80% 50% at 10% 0%,#1c3e37,transparent 85%),var(--surface-muted); }

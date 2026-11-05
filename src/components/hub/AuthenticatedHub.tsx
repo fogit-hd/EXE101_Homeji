@@ -24,7 +24,7 @@ import {
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
-import { mapSectionUrl } from '../../lib/mapDeepLinks'
+import { mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
 import { PromoBanner } from './PromoBanner'
@@ -377,7 +377,7 @@ export function AuthenticatedHub() {
                     <section className="hub-section hub-roommates" aria-labelledby="hub-roommates">
                       <header>
                         <h2 id="hub-roommates">Ở ghép</h2>
-                        <Link to={mapSectionUrl('invitations')}>Xem lời mời →</Link>
+                        <Link to={ROOMMATE_INVITATIONS_URL}>Xem lời mời</Link>
                       </header>
                       {bundle.candidates.length > 0 ? (
                         <ul>
@@ -399,7 +399,7 @@ export function AuthenticatedHub() {
                         </div>
                       )}
                       {bundle.candidates.length === 0 ? (
-                        <Link className="hub-roommates__cta liquid-action" to={mapSectionUrl('invitations')}>Xem lời mời</Link>
+                        <Link className="hub-roommates__cta liquid-action" to={ROOMMATE_INVITATIONS_URL}>Xem lời mời</Link>
                       ) : null}
                     </section>
                   ) : null}
@@ -407,7 +407,7 @@ export function AuthenticatedHub() {
                   {bundle.failed.market || bundle.market.length > 0 ? (
                     <section className="hub-section hub-market" aria-labelledby="hub-market">
                       <header>
-                        <h2 id="hub-market">Chợ đồ khu phố</h2>
+                        <h2 id="hub-market">Chợ Homeji</h2>
                         <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ →</Link>
                       </header>
                       {bundle.failed.market ? (

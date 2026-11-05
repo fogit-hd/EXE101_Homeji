@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { confirmDialog } from '../ui/confirmDialog'
 import { getAiReviews, saveAiReviewSettings, queueAiReviewBackfill, resolveAiReview, type AiReviewDashboard, type AiReviewSettings } from '../../api/aiReviews'
 import { getErrorMessage } from '../../lib/errors'
 import './AiListingReviewPanel.css'
 
 const labels: Record<string, string> = { pending: 'Đang chờ', processing: 'Đang kiểm tra', clear: 'Chưa thấy dấu hiệu vi phạm', needs_review: 'Cần người duyệt', blocked: 'AI đã ẩn', superseded: 'Tin đã được sửa', restored: 'Đã giữ hoặc khôi phục tin', confirmed: 'Đã xác nhận ẩn tin' }
-const kindLabels: Record<string, string> = { rental: 'Tin phòng', goods: 'Chợ đồ', food: 'Đồ ăn' }
+const kindLabels: Record<string, string> = { rental: 'Tin phòng', goods: 'Đồ cũ', food: 'Đồ ăn' }
 const fields: { key: keyof Omit<AiReviewSettings, 'enabled' | 'autoBlock'>; label: string; min: number; max: number }[] = [
   { key: 'batchSize', label: 'Số tin mỗi đợt', min: 1, max: 10 },
   { key: 'spacingSeconds', label: 'Khoảng nghỉ giữa hai tin (giây)', min: 30, max: 3600 },
@@ -65,8 +66,8 @@ export function AiListingReviewPanel() {
         </fieldset>
       </form>
       <div className="ai-review-panel__backfill"><div><h3>Kiểm tra tin cũ</h3><p>Chỉ mở khi cần. Tin cũ đi vào hàng đợi riêng, vẫn giữ các khoảng nghỉ và ngân sách trên; tin mới được ưu tiên.</p></div>
-        <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => {
-          if (window.confirm('Đưa các tin cũ chưa kiểm tra vào hàng đợi? Hệ thống xử lý từng tin theo lịch, không gọi AI cùng lúc.')) void act(queueAiReviewBackfill, 'Đã mở đợt kiểm tra tin cũ. Hệ thống sẽ xử lý dần theo lịch.')
+        <button type="button" className="btn btn-secondary" disabled={busy} onClick={async () => {
+          if (await confirmDialog({ title: 'Kiểm tra các tin cũ?', message: 'Hệ thống xử lý từng tin theo lịch, không gọi AI cùng lúc.', confirmLabel: 'Đưa vào hàng đợi' })) void act(queueAiReviewBackfill, 'Đã mở đợt kiểm tra tin cũ. Hệ thống sẽ xử lý dần theo lịch.')
         }}>Mở đợt kiểm tra tin cũ</button></div>
       <h3>Kết quả gần đây</h3>
       {data.items.length === 0 ? <p>Chưa có tin trong hàng đợi. Tin mới hoặc tin vừa sửa sẽ xuất hiện khi đến lượt kiểm tra.</p> : <div className="ai-review-panel__items">{data.items.map(item => <article key={item.id} className={`ai-review-panel__item ai-review-panel__item--${item.state}`}>
@@ -76,8 +77,8 @@ export function AiListingReviewPanel() {
         <small>Đã thử {item.attempts} lần · {new Date(item.createdAt).toLocaleString('vi-VN')}</small>
         {!item.reviewedAt && (item.state === 'needs_review' || item.state === 'blocked') ? <div className="ai-review-panel__actions">
           <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void act(() => resolveAiReview(item.id, true), item.state === 'blocked' ? 'Đã khôi phục tin.' : 'Đã ghi nhận quyết định giữ tin.')}>{item.state === 'blocked' ? 'Khôi phục tin' : 'Giữ tin'}</button>
-          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => {
-            if (window.confirm(item.state === 'blocked' ? 'Xác nhận giữ ẩn tin này?' : 'Ẩn tin này sau khi đã kiểm tra nội dung?')) void act(() => resolveAiReview(item.id, false), 'Đã ghi nhận quyết định ẩn tin.')
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={async () => {
+            if (await confirmDialog({ title: item.state === 'blocked' ? 'Giữ ẩn tin này?' : 'Ẩn tin này?', message: 'Hãy kiểm tra nội dung trước khi xác nhận.', confirmLabel: item.state === 'blocked' ? 'Giữ ẩn' : 'Ẩn tin', danger: true })) void act(() => resolveAiReview(item.id, false), 'Đã ghi nhận quyết định ẩn tin.')
           }}>{item.state === 'blocked' ? 'Xác nhận giữ ẩn' : 'Ẩn tin'}</button>
         </div> : null}
       </article>)}</div>}

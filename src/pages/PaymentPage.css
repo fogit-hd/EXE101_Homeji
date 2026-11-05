@@ -675,8 +675,8 @@
 .pay-plan__ribbon.is-dark { background: var(--pay-heading); }
 .pay-plan h3 { margin: 0; color: var(--pay-ink); font-size: 16px; font-weight: 700; }
 .pay-plan__duration { margin: 2px 0 0; color: var(--pay-muted); font-size: 13px; }
-.pay-plan__rate-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 -10px; color: var(--pay-muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
-.pay-plan__rate-label strong { padding: 4px 7px; border: 1px solid #e6bb63; border-radius: 999px; background: linear-gradient(135deg, #fff1bc, #f3d16d); color: #8f2624; font-size: 9px; font-weight: 900; letter-spacing: .04em; white-space: nowrap; }
+.pay-plan__rate-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 -10px; color: var(--pay-muted); font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.pay-plan__rate-label strong { padding: 4px 7px; border: 1px solid #e6bb63; border-radius: 999px; background: linear-gradient(135deg, #fff1bc, #f3d16d); color: #8f2624; font-size: 12px; font-weight: 900; letter-spacing: .04em; white-space: nowrap; }
 .pay-plan__price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; margin: 14px 0 0; color: var(--pay-ink); font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
 .pay-plan__price small { color: var(--pay-muted); font-size: 13px; font-weight: 500; letter-spacing: 0; }
 .pay-plan__price strong { font: inherit; }

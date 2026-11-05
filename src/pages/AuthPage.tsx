@@ -44,16 +44,16 @@ const VOICE_TAIL_MS = 520
 
 const COPY = {
   context1:
-    'Bạn muốn tìm chỗ quanh Thủ Đức hay Quận 9? Homeji giúp bạn gặp được phòng vừa ý, hợp gu — rõ ràng và yên tâm hơn.',
-  askName: 'Hmm, trước hết, bạn muốn mình gọi bạn là gì nhỉ?',
-  helloAfter: (name: string) => `Rất vui được gặp bạn, ${name}.`,
+    'Tìm phòng quanh Thủ Đức và Quận 9, xem giá và vị trí trước khi liên hệ.',
+  askName: 'Họ tên của bạn là gì?',
+  helloAfter: (name: string) => `Chào ${name}.`,
   context2: 'Tạo tài khoản để lưu phòng, nhắn tin cho người đăng và tìm bạn ở ghép.',
   askEmail: 'Nhập email để đăng ký tài khoản.',
-  askPassword: 'Hãy điền phần mật khẩu mà bạn có thể nhớ được — nhớ là phải từ 6 ký tự trở lên nhé.',
+  askPassword: 'Đặt mật khẩu từ 6 ký tự trở lên.',
   ending:
     'Kiểm tra lại thông tin, rồi chọn Tạo tài khoản để tiếp tục.',
   renameAfter: (name: string) =>
-    `Tên hay quá dạ!! Homeji chúng mình chào mừng ${name} dữ lắm nha.`,
+    `Chào ${name}.`,
   connectCta: 'Tạo tài khoản',
   stepBack: '← Lùi một bước',
 } as const
@@ -716,13 +716,13 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     try {
       const result = await checkEmail({ email: value })
       if (isEmailTaken(result)) {
-        setError('Email này đã được dùng rồi — thử email khác nhé.')
+        setError('Email này đã được dùng. Hãy đăng nhập hoặc dùng email khác.')
         return false
       }
       setError('')
       return true
     } catch (err) {
-      setError(getErrorMessage(err, 'Không kiểm tra được email — thử lại giúp mình.'))
+      setError(getErrorMessage(err, 'Chưa kiểm tra được email. Vui lòng thử lại.'))
       return false
     }
   }
@@ -893,13 +893,13 @@ export function AuthPage({ initialMode }: AuthPageProps) {
         if (session.confirmationMethod === 'otp') { navigate('/verify-email', { state: { from } }); return }
         // Ở lại intro — báo qua mây chat (không nhảy form / không Perfect Wrong)
         setConnectError(
-          'Đăng ký thành công. Vui lòng xác nhận email trước khi đăng nhập nhé.',
+          'Đăng ký thành công. Vui lòng xác nhận email trước khi đăng nhập.',
         )
       } else {
         navigate(authDestination(from, profile?.role))
       }
     } catch (err) {
-      setConnectError(getErrorMessage(err, 'Đăng ký thất bại — thử lại giúp mình nhé.'))
+      setConnectError(getErrorMessage(err, 'Chưa đăng ký được. Vui lòng thử lại.'))
     } finally {
       formSubmitLock.current = false
       setSubmitting(false)
@@ -913,7 +913,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
     try {
       await login(email, password)
     } catch (err) {
-      setError(getErrorMessage(err, 'Đăng nhập thất bại'))
+      setError(getErrorMessage(err, 'Chưa đăng nhập được. Kiểm tra email và mật khẩu rồi thử lại.'))
     } finally {
       setSubmitting(false)
     }
@@ -943,7 +943,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
         navigate(authDestination(from, profile?.role))
       }
     } catch (err) {
-      setError(getErrorMessage(err, 'Đăng ký thất bại'))
+      setError(getErrorMessage(err, 'Chưa đăng ký được. Vui lòng thử lại.'))
     } finally {
       formSubmitLock.current = false
       setSubmitting(false)
@@ -964,7 +964,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
       )
       await setSessionFromAuth(session)
     } catch (err) {
-      setError(getErrorMessage(err, mode === 'signup' ? 'Đăng ký bằng Google thất bại' : 'Đăng nhập Google thất bại'))
+      setError(getErrorMessage(err, mode === 'signup' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.'))
     } finally {
       setSubmitting(false)
     }
@@ -1640,7 +1640,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
           className="auth-cinema__fixed-back"
           onClick={goBackStep}
           disabled={connectUiLocked}
-          title="Lùi một bước để xem lại hiệu ứng — không phải về trang chủ"
+          title="Quay lại bước trước"
         >
           {COPY.stepBack}
         </button>
@@ -1668,7 +1668,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                 <>
                   <Link to="/" className="auth-login-brand" aria-label="Homeji — Trang chủ"><img src="/brand/homeji-logo2.png" width="28" height="28" alt="" /><span>Homeji</span></Link>
                   <h1 className="auth-cinema__title">Đăng nhập</h1>
-                  <p className="auth-cinema__subtitle">Chào mừng trở lại Homeji</p>
+                  <p className="auth-cinema__subtitle">Đăng nhập để xem phòng đã lưu và tin nhắn</p>
                   {error ? (
                     <div className="auth-cinema__alert auth-cinema__alert--error" role="alert">{error}</div>
                   ) : null}
@@ -1678,7 +1678,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                         <GoogleSignInButton
                           maxWidth={380}
                           onSuccess={handleGoogleSuccess}
-                          onError={() => setError('Đăng nhập Google thất bại')}
+                          onError={() => setError('Chưa đăng nhập được bằng Google. Vui lòng thử lại.')}
                         />
                       </div>
                       <div className="auth-cinema__divider">hoặc đăng nhập bằng email</div>
@@ -1731,7 +1731,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
               ) : (
                 <>
                   <RevealText as="h1" className="auth-cinema__title" text="Đăng ký" />
-                  <p className="auth-cinema__subtitle">Tạo tài khoản Homeji miễn phí</p>
+                  <p className="auth-cinema__subtitle">Miễn phí, chỉ cần email và mật khẩu</p>
                   {error ? (
                     <div id="auth-form-error" className="auth-cinema__alert auth-cinema__alert--error" role="alert">{error}</div>
                   ) : null}
@@ -1745,7 +1745,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                           maxWidth={380}
                           text="signup_with"
                           onSuccess={handleGoogleSuccess}
-                          onError={() => setError('Đăng ký bằng Google thất bại')}
+                          onError={() => setError('Chưa đăng ký được bằng Google. Vui lòng thử lại.')}
                         />
                       </div>
                       <div className="auth-cinema__divider">hoặc đăng ký bằng email</div>

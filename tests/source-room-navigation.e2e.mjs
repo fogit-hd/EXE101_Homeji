@@ -33,7 +33,7 @@ try {
     assert.match(await page.locator('output').textContent(), new RegExp('^/\\?[^#]*source=' + id))
     assert.match(await page.locator('output').textContent(), /keyword=Le\+Van\+Viet/)
     assert.equal(contactReads, 0)
-    await dialog.getByRole('button', { name: /Đăng nhập để xem số/ }).click()
+    await dialog.getByRole('button', { name: /Đăng nhập để xem số điện thoại/ }).click()
     assert.equal(await page.locator('body').getAttribute('data-login-requested'), 'yes')
     assert.equal(contactReads, 0)
     await page.screenshot({ path: out + (suffix ? '/explore-redirect.png' : '/popup-click.png') })

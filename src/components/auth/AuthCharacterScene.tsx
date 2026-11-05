@@ -5,13 +5,13 @@ import './AuthCharacterScene.css'
 
 type CharacterState = 'idle' | 'typing' | 'password' | 'peek' | 'error' | 'success' | 'submitting'
 const captions: Record<CharacterState, string> = {
-  idle: 'Chào bạn, mình là bạn đồng hành Homeji.',
+  idle: 'Chào bạn.',
   typing: 'Mình đang lắng nghe bạn nè.',
-  password: 'Bạn nhập mật khẩu nhé. Mình che mắt rồi!',
+  password: 'Mật khẩu của bạn được ẩn.',
   peek: 'Dù bạn hiện mật khẩu, mình vẫn không nhìn đâu.',
-  error: 'Kiểm tra lại một chút nhé. Mình chờ bạn.',
-  success: 'Tuyệt rồi! Chào mừng bạn đến với Homeji.',
-  submitting: 'Chờ một chút, mái ấm mới sắp sẵn sàng.',
+  error: 'Kiểm tra lại thông tin.',
+  success: 'Đã tạo tài khoản.',
+  submitting: 'Đang tạo tài khoản…',
 }
 
 /** Receives interaction state only. Passwords and personal input never enter the scene. */
@@ -237,11 +237,10 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
     return () => { disposed = true; cleanup() }
   }, [])
 
-  return <section className="auth-character" data-state={state} aria-label="Bạn đồng hành Homeji">
+  return <section className="auth-character" data-state={state} aria-label="Nhân vật Homeji">
     <div className="auth-character__copy">
-      <span>HOMEJI · HELLO, BẠN MỚI</span>
-      <h2>Một người bạn mới.<br />Một nơi để thuộc về.</h2>
-      <p>Bắt đầu với vài điều về bạn. Phần còn lại, mình cùng khám phá.</p>
+            <h2>Một người bạn mới.<br />Một nơi để thuộc về.</h2>
+      <p>Tạo tài khoản để lưu phòng và liên hệ người đăng.</p>
     </div>
     <div className={`auth-character__scene${ready ? ' is-ready' : ''}`}>
       <div ref={hostRef} className="auth-character__canvas" aria-hidden="true" />

@@ -26,3 +26,6 @@
 
 .auth-cinema:has(.auth-character) .auth-cinema__password-toggle { display: block; margin-left: auto; min-height: 44px; padding: 8px 0 8px 12px; border: 0; background: transparent; color: var(--text-accent, #147956); font: inherit; font-size: .875rem; cursor: pointer; }
 .auth-cinema:has(.auth-character) .auth-cinema__password-toggle:focus-visible { outline: 3px solid var(--text-accent, #147956); outline-offset: 3px; }
+
+/* The form comes first on phones; the character is decoration. */
+@media (max-width: 767px) { .auth-character__scene { display: none; } .auth-character__copy h2 { margin: 0; font-size: 24px; } .auth-character__copy p { display: none; } }

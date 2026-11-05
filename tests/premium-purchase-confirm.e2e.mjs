@@ -23,7 +23,7 @@ try{
   return route.fulfill({json:[]})
  })
  await page.goto(base+'/'+out+'/index.html');await page.getByRole('button',{name:'Chọn gói',exact:true}).click()
- const dialog=page.getByRole('dialog',{name:'Xác nhận mua gói thành viên'})
+ const dialog=page.getByRole('dialog',{name:'Xác nhận mua gói Premium'})
  const wallet=page.getByRole('button',{name:/Thanh toán bằng ví/})
  await wallet.click();await dialog.waitFor();assert.equal(calls.length,0);assert.match(await dialog.innerText(),/Premium 30 ngày/);assert.match(await dialog.innerText(),/100.000/)
  assert.equal(await dialog.getByRole('button',{name:'Quay lại',exact:true}).evaluate(button=>button===document.activeElement),true)

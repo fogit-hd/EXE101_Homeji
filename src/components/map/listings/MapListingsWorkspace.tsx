@@ -68,7 +68,7 @@ type Props = {
 const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
   { id: 'rooms', label: 'Phòng trọ' },
   { id: 'apartments', label: 'Căn hộ' },
-  { id: 'market', label: 'Chợ đồ' },
+  { id: 'market', label: 'Chợ Homeji' },
 ]
 
 function formatListingDate(value: string): string | null {

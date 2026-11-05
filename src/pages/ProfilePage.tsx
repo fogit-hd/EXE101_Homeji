@@ -165,7 +165,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
     try {
       const uploaded = await uploadImages([file], 'avatars')
       const url = uploaded[0]?.url
-      if (!url) throw new Error('Upload thất bại')
+      if (!url) throw new Error('Chưa tải ảnh lên được. Vui lòng thử lại.')
       setAvatarPath(url)
       await updateMyProfile({
         displayName: profile?.displayName || 'Người dùng Homeji',
@@ -180,7 +180,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       showToast('Đã cập nhật ảnh đại diện.', 'success')
     } catch (err) {
       setAvatarPath(previousAvatarPath)
-      showToast(getErrorMessage(err, 'Tải ảnh thất bại'), 'error')
+      showToast(getErrorMessage(err, 'Chưa tải ảnh lên được. Vui lòng thử lại.'), 'error')
     } finally {
       URL.revokeObjectURL(previewUrl)
       setAvatarBusy(false)
@@ -263,7 +263,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
     try {
       const uploaded = await uploadImages([verifyFile], 'landlord-verification')
       const documentUrl = uploaded[0]?.url
-      if (!documentUrl) throw new Error('Upload thất bại')
+      if (!documentUrl) throw new Error('Chưa tải ảnh lên được. Vui lòng thử lại.')
       const next = await submitLandlordVerification({ documentUrl, note: verifyNote || undefined })
       setVerification(next)
       setVerifyFile(null)
@@ -271,7 +271,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
       await refreshProfile()
       showToast('Đã gửi yêu cầu xác minh chủ nhà.', 'success')
     } catch (err) {
-      showToast(getErrorMessage(err, 'Gửi xác minh thất bại'), 'error')
+      showToast(getErrorMessage(err, 'Chưa gửi được yêu cầu xác minh. Vui lòng thử lại.'), 'error')
     } finally {
       setVerifyBusy(false)
     }
@@ -281,9 +281,9 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
 
   if (profileLoading) {
     return (
-      <main className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
+      <div className={embedded ? 'map-embed profile-embed' : 'container page profile-page'}>
         <ProfileSkeleton />
-      </main>
+      </div>
     )
   }
 

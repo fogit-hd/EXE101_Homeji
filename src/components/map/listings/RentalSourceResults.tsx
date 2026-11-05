@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getRentalSourceCatalog, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSourceCatalog, rentalSourceAttribution, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
 import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
@@ -53,7 +53,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
     {!loaded && !error ? <p className="source-results__note" role="status">Đang tải danh sách…</p> : null}
     {unsupported ? <p className="source-results__note">Một số tin chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
-    {loaded && !error && combined.length === 0 ? <p role="status">Không có phòng khớp bộ lọc.</p> : null}
+    {loaded && !error && combined.length === 0 ? <p role="status">Chưa có phòng phù hợp. Thử bỏ bớt bộ lọc.</p> : null}
     <ul className="map-listings__cards">{combined.slice(0, visible).map(item => {
       if (!item.row) return <li key={item.key}>{item.native}</li>
       const row = item.row
@@ -72,7 +72,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
           <div className="map-listings__meta">{row.area > 0 ? <span>{row.area} m²</span> : null}<span>{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span></div>
           {row.amenityHighlights?.length ? <ul className="source-results__amenities" aria-label="Tiện ích nổi bật">{row.amenityHighlights.slice(0, 6).map(value => <li key={value} className={STUDENT_KEY_AMENITIES.has(value) ? 'is-key' : undefined}>{value}</li>)}</ul> : null}
           <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
-          <p className="source-results__publisher">{row.publisherName?.trim() || 'Chưa có tên người đăng'}</p>
+          <p className="source-results__publisher">{rentalSourceAttribution(row.source)}</p>
         </div>
         <div className="source-results__actions">
           {onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí trên bản đồ</button> : null}

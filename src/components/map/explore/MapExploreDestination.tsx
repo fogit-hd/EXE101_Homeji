@@ -149,7 +149,7 @@ export const MapExploreDestination = memo(function MapExploreDestination({
     >
       <header className="map-explore__header">
         <div className="map-explore__titles">
-          <p className="map-explore__eyebrow">Khám phá theo khu vực</p>
+          <p className="map-explore__eyebrow">Tìm theo khu vực</p>
           <h1 className="map-explore__title">Phòng quanh nhịp sống của bạn</h1>
         </div>
         <p className="map-explore__count">{countLabel}</p>

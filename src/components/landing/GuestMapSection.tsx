@@ -94,7 +94,7 @@ export function GuestMapSection() {
       setError(
         getErrorMessage(
           err,
-          'Không thể tải tin đăng. Máy chủ hoặc database có thể đang lỗi — thử lại sau.',
+          'Chưa tải được tin đăng. Vui lòng thử lại.',
         ),
       )
       setPosts([])
@@ -253,7 +253,7 @@ export function GuestMapSection() {
       <div className="guest-map__shell">
         <div className="guest-map__intro">
           <p className="guest-map__eyebrow">Bản đồ</p>
-          <RevealText className="guest-map__title" text="Khám phá phòng quanh Thủ Đức & Q.9" />
+          <RevealText className="guest-map__title" text="Phòng quanh Thủ Đức và Quận 9" />
 
           <button type="button" className="guest-map__filter-toggle" aria-expanded={filtersOpen}
             aria-controls="guest-map-filters" onClick={() => setFiltersOpen(open => !open)}>
@@ -383,7 +383,7 @@ export function GuestMapSection() {
                   <p>
                     {apiKey
                       ? 'Đang tải Google Maps…'
-                      : 'Chưa có VITE_GOOGLE_MAPS_API_KEY — kiểm tra file .env.'}
+                      : 'Chưa mở được bản đồ. Bạn vẫn có thể xem danh sách phòng ở trên.'}
                   </p>
                 </div>
               )}

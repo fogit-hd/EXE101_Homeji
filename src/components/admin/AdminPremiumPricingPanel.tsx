@@ -43,12 +43,12 @@ export function AdminPremiumPricingPanel() {
   }
   const valid = !!plan && /^\d+$/.test(price) && Number(price) >= 1000 && Number(price) <= 100_000_000 && Number(price) !== plan.price && reason.trim().length >= 5
   return <section className="admin-pricing">
-    <header><h2>Giá gói thành viên</h2><p>Mỗi lần sửa giá sẽ lưu lịch sử và hiển thị thông báo ở giữa màn hình cho người xem: mức bình quân/ngày nổi bật, kèm tổng tiền thanh toán một lần và thời hạn gói.</p></header>
+    <header><h2>Giá gói Premium</h2><p>Mỗi lần sửa giá sẽ lưu lịch sử và hiển thị thông báo ở giữa màn hình cho người xem: mức bình quân/ngày nổi bật, kèm tổng tiền thanh toán một lần và thời hạn gói.</p></header>
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Tải lại</button></p> : null}
     {message ? <p role="status">{message}</p> : null}
     <form onSubmit={event => { event.preventDefault(); if (valid) setConfirming(true) }}>
       <fieldset disabled={busy || confirming}>
-        <label>Gói thành viên<select aria-label="Gói thành viên" value={selected} required onChange={event => { setSelected(event.target.value); setPrice(String(plans.find(row => row.code === event.target.value)?.price ?? '')); setConfirming(false) }}><option value="">Chọn gói</option>{plans.map(row => <option key={row.code} value={row.code}>{row.name} · {formatDailyEquivalentPrice(row.price, row.durationDays) ?? formatPrice(row.price)}</option>)}</select></label>
+        <label>Gói<select aria-label="Gói Premium" value={selected} required onChange={event => { setSelected(event.target.value); setPrice(String(plans.find(row => row.code === event.target.value)?.price ?? '')); setConfirming(false) }}><option value="">Chọn gói</option>{plans.map(row => <option key={row.code} value={row.code}>{row.name} · {formatDailyEquivalentPrice(row.price, row.durationDays) ?? formatPrice(row.price)}</option>)}</select></label>
         {plan ? <p>Giá hiện tại: <strong>{formatPrice(plan.price)} / {plan.durationDays} ngày</strong>{currentDailyPrice !== null ? <> · {formatPrice(currentDailyPrice)} / ngày</> : null}</p> : null}
         <label>Giá mới (đ)<MoneyInput value={price} onValueChange={setPrice} required min="1000" max="100000000" /></label>
         {plan && proposedDailyPrice !== null ? <p>Người xem sẽ thấy: <strong>{formatPrice(proposedDailyPrice)} / ngày</strong> · thanh toán một lần {formatPrice(proposedPrice)} cho {plan.durationDays} ngày.{priceChangePercent !== null && priceChangePercent > 0 ? ` Banner sẽ ghi ${proposedPrice < plan.price ? 'giảm' : 'tăng'} ${priceChangePercent}%.` : ''}</p> : null}

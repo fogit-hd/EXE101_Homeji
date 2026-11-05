@@ -148,7 +148,7 @@ test('an older or mismatched server cannot render rental results or a generic gu
     await act(async () => pending.resolve(reply(pending, 'Hướng dẫn chung chưa có món thật')))
     assert.match(document.body.textContent, /Chưa nhận được dữ liệu món ăn/)
     assert.doesNotMatch(document.body.textContent, /Hướng dẫn chung|Dữ liệu A/)
-    assert.ok(button('Mở Chợ đồ ăn'))
+    assert.ok(button('Mở mục Đồ ăn'))
   } finally { await env.cleanup() }
 })
 

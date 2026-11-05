@@ -21,7 +21,7 @@ export const MAP_PIN_LAYER_OPTIONS: {
 }[] = [
   { id: 'vacant', label: 'Phòng trọ', accent: '#84CC16' },
   { id: 'roommate', label: 'Ở ghép', accent: '#6366F1' },
-  { id: 'marketplace', label: 'Chợ đồ', accent: '#F59E0B' },
+  { id: 'marketplace', label: 'Chợ Homeji', accent: '#F59E0B' },
 ]
 
 function isLayers(value: unknown): value is MapPinLayers {

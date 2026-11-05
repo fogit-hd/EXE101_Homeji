@@ -27,7 +27,7 @@ export function MapErrorPanel({
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
     } catch {
-      window.prompt('Copy báo lỗi này gửi quản trị viên:', report)
+      window.prompt('Sao chép nội dung này và gửi cho quản trị viên:', report)
     }
   }
 
@@ -36,7 +36,7 @@ export function MapErrorPanel({
       <p className="map-error-panel__title">{diagnosis.userTitle}</p>
       <p className="map-placeholder-hint">{diagnosis.userMessage}</p>
 
-      <details className="map-error-panel__dev">
+      {import.meta.env.DEV ? <details className="map-error-panel__dev">
         <summary>Chi tiết kỹ thuật (dành cho quản trị viên)</summary>
 
         <div className="map-error-panel__dev-body">
@@ -77,10 +77,10 @@ export function MapErrorPanel({
           </ul>
 
           <button type="button" className="map-error-panel__copy" onClick={() => void copyReport()}>
-            {copied ? 'Đã copy báo lỗi' : 'Copy báo lỗi gửi quản trị viên'}
+            {copied ? 'Đã sao chép báo lỗi' : 'Sao chép báo lỗi gửi quản trị viên'}
           </button>
         </div>
-      </details>
+      </details> : null}
     </div>
   )
 }

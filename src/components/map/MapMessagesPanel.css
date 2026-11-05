@@ -1548,7 +1548,7 @@ html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs > button[
 html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs > button[role='tab']:first-of-type { flex-grow: .65; }
 html:root #root .map-messages .map-messages__inbox-filters.liquid-tabs > button[role='tab']:nth-of-type(2) { flex-grow: 1.35; }
 html:root #root .map-messages .map-messages__inbox-filters .map-messages__filter-count {
-  flex-shrink: 0; min-width: 16px; height: 16px; padding: 0 3px; font-size: 10px;
+  flex-shrink: 0; min-width: 16px; height: 16px; padding: 0 3px; font-size: 12px;
 }
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble time { color: var(--mm-faint); }
 .map-messages.map-messages .map-messages__bubble.map-messages__bubble .map-messages__loc-address,

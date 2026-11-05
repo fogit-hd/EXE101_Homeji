@@ -289,9 +289,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         message={error}
       />
     ) : (
-      <main className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
+      <div className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
         <PaymentsSkeleton />
-      </main>
+      </div>
     )
   }
 
@@ -323,11 +323,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         onCancel={() => { if (!checkoutGuard.current) setPurchaseConfirmation(null) }}
         onConfirm={() => { if (purchaseConfirmation.method === 'wallet') void checkoutWithWallet(purchaseConfirmation); else void startCheckout(purchaseConfirmation.plan.code, purchaseConfirmation.method) }} /> : null}
       <header className="pay-head">
-        <RevealText as="h1" className="pay-head__title" text="Gói thành viên" />
+        <RevealText as="h1" className="pay-head__title" text="Gói Premium" />
         <p className="pay-head__lead">
           {tab === 'history'
-            ? 'Theo dõi thanh toán và quản lý gói thành viên ở cùng một nơi.'
-            : 'Xem quyền lợi, giá và thời hạn trước khi chọn gói phù hợp.'}
+            ? 'Xem gói đang dùng và các lần thanh toán.'
+            : 'Xem giá, thời hạn và quyền lợi của từng gói.'}
         </p>
       </header>
 
@@ -366,7 +366,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             onClick={() => setTab(value)}
           >
             <span className="pay-tabs__text">
-              {value === 'plans' ? 'Đăng ký gói' : 'Giao dịch'}
+              {value === 'plans' ? 'Các gói' : 'Giao dịch'}
               {value === 'history' && pendingCount > 0 ? <em>{pendingCount}</em> : null}
             </span>
           </button>
@@ -375,7 +375,6 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       {tab === 'plans' ? (
         <div className="pay-plans">
-          <PremiumListingPreview maxFollowedAreas={premiumAreaLimit} maxComparedPosts={premiumComparisonLimit} />
           <div className="pay-plan-grid" style={{ ['--pay-cols' as string]: String(Math.max(1, Math.min(4, displayPlans.length))) }}>
             {displayPlans.map((plan, index) => {
               const view = getPlanDisplay(plan)
@@ -409,7 +408,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     isCurrent ? 'is-current' : '',
                   ].filter(Boolean).join(' ')}
                 >
-                  <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '♛' : '○'}</span><small>{isPremium ? 'PREMIUM' : 'CƠ BẢN'}</small>{isCurrent && <em>Đang dùng</em>}</div>
+                  <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '♛' : '○'}</span><small>{isPremium ? 'Premium' : 'Cơ bản'}</small>{isCurrent && <em>Đang dùng</em>}</div>
                   <h3>{view.title}</h3>
                   <p className="pay-plan__duration">
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
@@ -449,7 +448,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         aria-label="Chọn hình thức thanh toán"
                       >
                         <div className="pay-voucher-panel">
-                          <div className="pay-voucher-panel__copy"><strong>Voucher VIP</strong><p>Chọn mã giảm giá để áp dụng khi thanh toán bằng ví Homeji.</p></div>
+                          <div className="pay-voucher-panel__copy"><strong>Voucher Premium</strong><p>Chọn mã giảm giá để áp dụng khi thanh toán bằng ví Homeji.</p></div>
                           <VoucherPicker key={plan.code + ':' + plan.price} purpose="vip" amount={plan.price} disabled={busy || purchaseConfirmation !== null} onChange={value => setVipVoucher(value ? { ...value, packageCode: plan.code } : null)} />
                         </div>
                         {planVoucher && !planVoucher.pending && <p>Voucher giảm {formatPrice(planVoucher.discount)} · Còn trả {formatPrice(amountDue)} bằng ví.</p>}
@@ -498,6 +497,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             <div className="pay-empty-line">Chưa có gói Premium để đăng ký.</div>
           ) : null}
 
+          <PremiumListingPreview maxFollowedAreas={premiumAreaLimit} maxComparedPosts={premiumComparisonLimit} />
           <section className="pay-compare" aria-labelledby="pay-compare-title">
             <h2 id="pay-compare-title" className="sr-only">So sánh quyền lợi</h2>
             <table>
@@ -558,7 +558,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               {historyLoading && payments.length === 0 ? <p role="status">Đang tải giao dịch…</p> : historyError && payments.length === 0 ? (
                 <div className="pay-empty"><ShellIcon name="receipt" /><h3>Chưa thể tải giao dịch</h3><p>Không thể xác định lịch sử trong lần kiểm tra này.</p><button type="button" className="pay-btn pay-btn--primary" onClick={() => void reload()}>Thử lại</button></div>
               ) : filteredPayments.length === 0 ? (
-                <div className="pay-empty"><ShellIcon name="receipt" /><h3>{payments.length === 0 ? 'Chưa có giao dịch' : 'Không có giao dịch phù hợp'}</h3><p>{payments.length === 0 ? 'Giao dịch sẽ xuất hiện tại đây khi bạn đăng ký gói.' : 'Thử chọn một trạng thái khác để xem giao dịch.'}</p>{payments.length === 0 && <button type="button" className="pay-btn pay-btn--primary" onClick={() => setTab('plans')}>Khám phá các gói</button>}</div>
+                <div className="pay-empty"><ShellIcon name="receipt" /><h3>{payments.length === 0 ? 'Chưa có giao dịch' : 'Không có giao dịch phù hợp'}</h3><p>{payments.length === 0 ? 'Giao dịch sẽ xuất hiện tại đây khi bạn đăng ký gói.' : 'Thử chọn một trạng thái khác để xem giao dịch.'}</p>{payments.length === 0 && <button type="button" className="pay-btn pay-btn--primary" onClick={() => setTab('plans')}>Xem các gói</button>}</div>
               ) : (
                 <div className="pay-table" role="list">
                   <div className="pay-table__head" aria-hidden="true">

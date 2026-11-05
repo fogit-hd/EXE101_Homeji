@@ -146,7 +146,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
       const updated = await action()
       setItems((prev) => prev.map((x) => (x.id === id ? updated : x)))
     } catch (e) {
-      setError(getErrorMessage(e, 'Thao tác thất bại'))
+      setError(getErrorMessage(e, 'Chưa thực hiện được. Vui lòng thử lại.'))
     } finally {
       setBusyId(null)
     }

@@ -93,7 +93,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
       await login(email, password)
       onSuccess()
     } catch (err) {
-      setError(getErrorMessage(err, 'Đăng nhập thất bại'))
+      setError(getErrorMessage(err, 'Chưa đăng nhập được. Kiểm tra email và mật khẩu rồi thử lại.'))
     } finally {
       setSubmitting(false)
     }
@@ -120,7 +120,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
         onSuccess()
       }
     } catch (err) {
-      setError(getErrorMessage(err, 'Đăng ký thất bại'))
+      setError(getErrorMessage(err, 'Chưa đăng ký được. Vui lòng thử lại.'))
     } finally {
       setSubmitting(false)
     }
@@ -141,7 +141,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
       await setSessionFromAuth(session)
       onSuccess()
     } catch (err) {
-      setError(getErrorMessage(err, mode === 'register' ? 'Đăng ký bằng Google thất bại' : 'Đăng nhập Google thất bại'))
+      setError(getErrorMessage(err, mode === 'register' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.'))
     } finally {
       setSubmitting(false)
     }
@@ -166,7 +166,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
             <h2 id={titleId} className="auth-modal__title">
               Đăng nhập
             </h2>
-            <p className="auth-modal__subtitle">{subtitle ?? 'Chào mừng trở lại Homeji'}</p>
+            <p className="auth-modal__subtitle">{subtitle ?? 'Đăng nhập để lưu phòng và xem số liên hệ'}</p>
             <PageNotice message={error} tone="error" />
             <form onSubmit={(e) => void handleLogin(e)}>
               <div className="form-group">
@@ -209,7 +209,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
                 <div className="auth-modal__google-wrap">
                   <GoogleSignInButton
                     onSuccess={handleGoogleSuccess}
-                    onError={() => setError('Đăng nhập Google thất bại')}
+                    onError={() => setError('Chưa đăng nhập được bằng Google. Vui lòng thử lại.')}
                   />
                 </div>
               </>
@@ -231,7 +231,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
             <h2 id={titleId} className="auth-modal__title">
               Đăng ký
             </h2>
-            <p className="auth-modal__subtitle">{subtitle ?? 'Tạo tài khoản Homeji miễn phí'}</p>
+            <p className="auth-modal__subtitle">{subtitle ?? 'Miễn phí, chỉ cần email và mật khẩu'}</p>
             <PageNotice message={error} tone="error" />
             <PageNotice message={message} tone="success" />
             {googleOAuthClientId ? (
@@ -241,7 +241,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
                   <GoogleSignInButton
                     text="signup_with"
                     onSuccess={handleGoogleSuccess}
-                    onError={() => setError('Đăng ký bằng Google thất bại')}
+                    onError={() => setError('Chưa đăng ký được bằng Google. Vui lòng thử lại.')}
                   />
                 </div>
               </>

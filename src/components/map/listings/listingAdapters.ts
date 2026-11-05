@@ -165,7 +165,7 @@ export function mapMarketplacePostToListingViewModel(post: MarketplacePost): Lis
     thumbnailUrl: post.mediaUrls?.find((url) => url.trim()) ?? null,
     latitude,
     longitude,
-    typeLabel: post.category?.trim() || 'Chợ đồ',
+    typeLabel: post.category?.trim() || 'Đồ cũ',
     highlightTag: null,
     ownerBadge: post.sellerDisplayName?.trim() || null,
     isPremium: false,
@@ -185,7 +185,7 @@ export function marketplacePostsToListingPins(posts: MarketplacePost[]): Marketp
     pins.push({
       id: post.id,
       sellerId: post.sellerId,
-      title: post.title?.trim() || 'Chợ đồ',
+      title: post.title?.trim() || 'Đồ cũ',
       lat,
       lng,
       itemCount: 1,

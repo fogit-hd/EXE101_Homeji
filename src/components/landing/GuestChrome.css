@@ -177,8 +177,7 @@
   border-radius: 999px;
   box-shadow: 0 10px 30px rgba(9, 29, 46, 0.18);
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-  will-change: transform;
-  pointer-events: none;
+  pointer-events: auto;
   opacity: 0;
 }
 
@@ -240,3 +239,6 @@
     display: none;
   }
 }
+
+.guest-fixed-cta[hidden] { display: none; }
+@media (max-width: 767px) { .guest-fixed-cta { display: none; } }

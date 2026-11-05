@@ -49,6 +49,9 @@ export function rentalSourceImageHref(raw: string): string | null {
   } catch { return null }
 }
 
+/** Imported listings were not posted by a Homeji member, so name the source rather than a person. */
+export const rentalSourceAttribution = (source: string) => { const label = rentalSourceLabel(source); return label === 'Nguồn công khai' ? 'Tin từ nguồn công khai' : `Nguồn: ${label}` }
+
 export const rentalSourceLabel = (source: string) => ({ mogi: 'Mogi', phongtro123: 'Phongtro123', muaban: 'Muaban.net', phongtrovn: 'Phongtro.vn' }[source] ?? 'Nguồn công khai')
 
 export function rentalSourceHref(raw: string): string | null {

@@ -24,13 +24,13 @@ const TABS: TabItem[] = [
   {
     id: 'explore',
     to: exploreListUrl(),
-    label: 'Khám phá',
+    label: 'Tìm phòng',
     icon: 'explore',
   },
   {
     id: 'market',
     to: mapSectionUrl('marketplace'),
-    label: 'Chợ đồ',
+    label: 'Chợ Homeji',
     icon: 'market',
     matchSection: 'marketplace',
   },

@@ -70,7 +70,7 @@ try {
   assert.equal(tagRequests.length, 0)
   await page.screenshot({ path: `${output}/consent-before-opt-in.png`, fullPage: true })
   const countBefore = savedRequests
-  await page.getByRole('button', { name: 'Đồng ý thống kê', exact: true }).click()
+  await page.getByRole('button', { name: 'Đồng ý', exact: true }).click()
   await page.waitForFunction(() => (window.dataLayer ?? []).some(args => args[0] === 'event' && args[1] === 'page_view'))
   assert.equal(tagRequests.length, 1)
   await page.screenshot({ path: `${output}/saved-consented.png`, fullPage: true })
@@ -97,7 +97,7 @@ try {
   assert.equal(await page.locator('.analytics-choice').count(), 0, 'Consent choice removes the floating UI')
   await page.goto(base + '/privacy')
   await page.getByRole('button', { name: 'Tùy chọn thống kê', exact: true }).click()
-  await page.getByRole('button', { name: 'Từ chối thống kê', exact: true }).click()
+  await page.getByRole('button', { name: 'Từ chối', exact: true }).click()
   assert.equal(await page.evaluate(() => localStorage.getItem('homeji_analytics_consent_v1')), 'rejected')
   await page.goto(base + '/?section=saved')
   await page.screenshot({ path: `${output}/saved-withdrawn.png`, fullPage: true })

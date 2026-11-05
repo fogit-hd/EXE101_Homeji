@@ -99,3 +99,6 @@ html body #root button.theme-switch[aria-checked='true'] { background-color: rgb
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
 }
+
+/* On the landing page the switch scrolls away so it never covers listing cards. */
+@media (max-width: 767px) { html body #root:has(.guest-landing) button.theme-switch--floating { position: absolute; } }

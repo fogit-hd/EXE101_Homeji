@@ -77,6 +77,8 @@ export function mapSectionUrl(section: string): string {
   return `/?section=${encodeURIComponent(section)}`
 }
 
+export const ROOMMATE_INVITATIONS_URL = '/?section=invitations&roommateTab=invitations'
+
 /** Messages workspace, optionally already focused on one thread. */
 export function mapMessagesUrl(conversationId?: string | null): string {
   const params = new URLSearchParams()

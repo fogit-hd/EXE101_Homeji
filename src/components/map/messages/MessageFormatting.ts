@@ -84,8 +84,8 @@ export function dayLabel(iso: string, now = new Date()): string {
 export const clock = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 
 export const subjectTag: Record<number, { label: string; tone: string }> = {
-  [ConversationSubjectType.RentalPost]: { label: '⌂ Phòng thuê', tone: 'room' },
-  [ConversationSubjectType.MarketplacePost]: { label: '▣ Chợ đồ', tone: 'market' },
+  [ConversationSubjectType.RentalPost]: { label: 'Phòng thuê', tone: 'room' },
+  [ConversationSubjectType.MarketplacePost]: { label: 'Chợ Homeji', tone: 'market' },
   [ConversationSubjectType.WantedPost]: { label: 'Tin cần tìm', tone: 'wanted' },
   [ConversationSubjectType.RoommateInvitation]: { label: 'Bạn cùng phòng', tone: 'wanted' },
 }

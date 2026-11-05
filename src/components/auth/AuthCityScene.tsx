@@ -5,8 +5,7 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
   return (
     <section className="auth-city auth-city--panorama" aria-labelledby="auth-city-heading">
       <div className="auth-city__copy">
-        <span>HOMEJI · MỘT NƠI ĐỂ THUỘC VỀ</span>
-        <h2 id="auth-city-heading">{mode === 'signup' ? <>Hành trình mới.<br />Bắt đầu từ một mái nhà.</> : <>Sài Gòn rộng lớn.<br />Có một nơi chờ bạn.</>}</h2>
+                <h2 id="auth-city-heading">{mode === 'signup' ? <>Tìm phòng quanh Thủ Đức<br />và Quận 9.</> : <>Xem phòng đã lưu<br />và tin nhắn của bạn.</>}</h2>
         <p>Tìm căn phòng phù hợp và những người bạn cùng chia sẻ nhịp sống thành phố.</p>
       </div>
       <figure className="auth-city__panorama">

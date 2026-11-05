@@ -107,7 +107,7 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
       await createInvitation(postId, receiverId)
       setActionMsg('Đã gửi lời mời ở ghép.')
     } catch (e) {
-      setActionError(getErrorMessage(e, 'Gửi lời mời thất bại'))
+      setActionError(getErrorMessage(e, 'Chưa gửi được lời mời. Vui lòng thử lại.'))
     } finally {
       inviteLock.current = false
       setInviteBusy(null)
@@ -126,7 +126,7 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
       ) : savedQuery.isError && (!savedQuery.data || accessDenied) ? null : posts.length === 0 ? (
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
-          <p>{roommateOnly ? 'Lưu phòng quan tâm ở tab Tìm phòng để xem gợi ý người cùng ở.' : 'Lưu tin phòng từ Khám phá để xem lại tại đây.'}</p>
+          <p>{roommateOnly ? 'Lưu phòng quan tâm ở tab Tìm phòng để xem gợi ý người cùng ở.' : 'Lưu tin từ mục Tìm phòng để xem lại tại đây.'}</p>
         </div>
       ) : (
         <div className="grid-posts">

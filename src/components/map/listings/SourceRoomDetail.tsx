@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
-import { getRentalSource, getRentalSourceContact, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSource, getRentalSourceContact, rentalSourceAttribution, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { formatListingArea, formatListingRent } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
 import { getErrorMessage } from '../../../lib/errors'
@@ -65,7 +65,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   }, [id, isAuthenticated, revealed, currentContact?.state])
   const images = listing?.imageUrls.map(rentalSourceImageHref).filter((value): value is string => Boolean(value)) ?? []
   const expired = Boolean(listing?.sourceExpiresAt && Date.parse(listing.sourceExpiresAt) <= now)
-  const publisher = listing?.publisherName?.trim() || 'Chưa có tên người đăng'
+  const attribution = listing ? rentalSourceAttribution(listing.source) : 'Tin từ nguồn công khai'
   const date = listing?.detailsCollectedAt ?? listing?.collectedAt
   async function copyPhone(phone: string) {
     if (!/^0\d{9,10}$/.test(phone)) return
@@ -129,16 +129,16 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
       <aside ref={contact} className="room-detail__aside source-room-detail__contact" aria-label="Giá thuê và liên hệ" tabIndex={-1}>
         <div className="room-detail__price"><p className="room-detail__kicker">GIÁ THUÊ / THÁNG</p><p className="room-detail__amount">{rent}</p><p className="room-detail__muted">Giá thuê theo tin đăng</p></div>
         <RoomEssentials rentLabel="Giá thuê / tháng" area={listing ? formatListingArea(listing.area) : 'Chưa cung cấp'} deposit={deposit} /><hr />
-        <section className="room-detail__owner-profile" data-glass-exclude><h4>Hồ sơ người đăng</h4>
-          <div className="room-detail__person"><span className="room-detail__avatar" aria-hidden="true">{publisher.charAt(0)}</span><div><span className="room-detail__owner-label">Họ và tên</span><strong>{publisher}</strong></div></div>
-          <p className="room-detail__muted">Chưa xác minh danh tính trên Homeji</p>
+        <section className="room-detail__owner-profile" data-glass-exclude><h4>Nguồn tin</h4>
+          <p><strong>{attribution}</strong></p>
+          <p className="room-detail__muted">Homeji chưa xác minh người đăng của tin này.</p>
         {isAuthenticated && currentContact?.state === 'ready' && !phones.length
             ? <p className="source-room-detail__missing" role="status">Tin này chưa có số điện thoại để liên hệ.</p>
             : <>
               <button type="button" className="source-room-detail__phone" aria-pressed={phoneVisible} disabled={currentContact?.state === 'loading'} onClick={handleRevealPhone}>
                 <ContactFlashlightIcon />
-                {phoneVisible ? `Ẩn ${phones.length} số điện thoại` : !isAuthenticated ? 'Đăng nhập để xem số' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Nhấn để xem số điện thoại'}
-                <small>{phoneVisible ? 'Số công khai trong tin đăng' : isAuthenticated ? 'Xem thông tin liên hệ' : 'Cần đăng nhập để liên hệ'}</small>
+                {phoneVisible ? `Ẩn ${phones.length} số điện thoại` : !isAuthenticated ? 'Đăng nhập để xem số điện thoại' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Nhấn để xem số điện thoại'}
+                {phoneVisible ? <small>Số công khai trong tin đăng</small> : null}
               </button>
               {phoneVisible ? <div className="source-room-detail__contact-actions" aria-label="Các số điện thoại người đăng">
                 {phones.map((phone, index) => <div className="source-room-detail__contact-number" key={phone}>
@@ -154,7 +154,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         <div className="room-detail__note"><strong>Xem phòng trước khi quyết định</strong><p>Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.</p></div>
       </aside>
     </div>
-    <footer className="room-detail__footer"><div className="room-detail__footer-copy"><strong className="room-detail__footer-price">{rent}<small> / tháng</small></strong><p>{publisher}</p></div>
+    <footer className="room-detail__footer"><div className="room-detail__footer-copy"><strong className="room-detail__footer-price">{rent}<small> / tháng</small></strong><p>{attribution}</p></div>
       <div className="room-detail__footer-actions"><button type="button" className="room-detail__message" disabled={!listing || currentContact?.state === 'loading'} onClick={() => { handleRevealPhone(); contact.current?.focus() }}>Liên hệ người đăng</button></div>
     </footer>
   </div></div>, document.body)

@@ -558,7 +558,7 @@ function MapPlaceDetailPanelContent({
       notify('Đã gửi yêu cầu xem phòng.')
       onOpenAppointments?.()
     } catch (e) {
-      notify(getErrorMessage(e, 'Đặt lịch thất bại'), 'err')
+      notify(getErrorMessage(e, 'Chưa đặt được lịch. Vui lòng thử lại.'), 'err')
     } finally {
       setActionBusy(false)
     }
@@ -967,8 +967,8 @@ function MapPlaceDetailPanelContent({
                       <p>
                         Hợp đồng gốc đến {listing.originalLeaseEndsOn || 'chưa cập nhật'}
                         {(listing.passFee ?? 0) > 0
-                          ? ` · Phí pass ${formatPrice(listing.passFee ?? 0)}`
-                          : ' · Không thu phí pass'}
+                          ? ` · Phí nhượng ${formatPrice(listing.passFee ?? 0)}`
+                          : ' · Không thu phí nhượng'}
                       </p>
                       <span className={listing.ownerConsentVerifiedAt ? 'is-verified' : 'is-pending'}>
                         {listing.ownerConsentVerifiedAt

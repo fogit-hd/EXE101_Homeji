@@ -72,6 +72,7 @@ async function editSession() {
     '../components/map/AddressAutocomplete': components(['AddressAutocomplete']),
     '../components/ui/ChoicePicker': components(['ChoicePicker']),
     '../components/ui/MoneyInput': components(['MoneyInput']),
+    '../components/ui/confirmDialog': { confirmDialog: async () => true },
     '../components/map/LocationPickerMap': components(['LocationPickerMap']),
     '../contexts/AuthContext': { useAuth: () => ({ profile: { id: 'owner-1', role: 2 } }) },
     '../contexts/GoogleMapsProvider.logic': { useGoogleMaps: () => ({ isLoaded: true }) },

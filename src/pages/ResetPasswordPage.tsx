@@ -35,7 +35,7 @@ export function ResetPasswordPage() {
       setMessage(result.message)
       setTimeout(() => navigate('/login'), 2000)
     } catch (err) {
-      setError(getErrorMessage(err, 'Đặt lại mật khẩu thất bại'))
+      setError(getErrorMessage(err, 'Chưa đặt lại được mật khẩu. Vui lòng thử lại.'))
     } finally {
       setLoading(false)
     }
