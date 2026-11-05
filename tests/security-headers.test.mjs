@@ -28,6 +28,12 @@ test('policy never allows inline or evaluated scripts', () => {
   assert.deepEqual(directive(contentSecurityPolicy(), 'object-src'), ["'none'"])
 })
 
+test('GA4 may collect through google.com without opening the whole host', () => {
+  const connections = directive(contentSecurityPolicy(), 'connect-src')
+  assert.ok(connections.includes('https://www.google.com/g/collect'))
+  assert.ok(!connections.includes('https://www.google.com'))
+})
+
 test('CSP stays Report-Only while framing and HSTS are enforced', () => {
   const headers = securityHeaders()
   assert.ok(headers['Content-Security-Policy-Report-Only'])

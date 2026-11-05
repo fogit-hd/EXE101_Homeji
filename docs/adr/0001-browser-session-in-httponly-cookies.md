@@ -10,7 +10,7 @@ Access and refresh tokens were kept in `localStorage`, where any script running 
 
 The API issues the session as host-only cookies that travel through the proxy: `HttpOnly; Secure; SameSite=Strict; Path=/api/account/session`. They hold the refresh token, the signed anchor token that administrator revocation compares against, and the current access token. Page JavaScript holds only the access token, in memory, and gets it from `POST /api/account/session`. A readable `homeji_session_hint` cookie, which holds no secret, lets guests skip that call.
 
-Those endpoints also require the `X-Homeji-Session: cookie` header and an `Origin` listed in `AuthCookies:AllowedOrigins`, which is kept apart from the CORS list because that one includes local development hosts.
+Those endpoints also require the `X-Homeji-Session: cookie` header and an `Origin` listed in `AuthCookies:AllowedOrigins`, which is kept apart from the CORS list because local development hosts must never be trusted with cookie sessions, while they do need CORS during development.
 
 ## Consequences
 
