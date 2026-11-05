@@ -169,7 +169,8 @@ export function MapChatbot({
   const pendingIdRef = useRef(0)
   const activeTargetKey = rentalTargetKey(rentalContext, rentalSelection)
 
-  if (useChangedInputs([openRequestToken]) && openRequestToken) {
+  // The chat is lazy loaded, so a request made while it loads is already set when it first mounts.
+  if (useChangedInputs([openRequestToken], true) && openRequestToken) {
     setOpen(true)
   }
 
