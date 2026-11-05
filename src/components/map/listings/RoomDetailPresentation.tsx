@@ -3,10 +3,10 @@ import houseUrl from '../../../assets/room-detail/house.svg'
 import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
 import './RoomDetailModal.css'
 
-export function RoomDetailHeader({ titleId, title, onClose, actions }: { titleId: string; title: string; onClose: () => void; actions?: ReactNode }) {
+export function RoomDetailHeader({ titleId, title, onClose, actions, autoFocusClose = false }: { titleId: string; title: string; onClose: () => void; actions?: ReactNode; autoFocusClose?: boolean }) {
   return <header className="room-detail__header">
     <div className="room-detail__heading"><img src={houseUrl} alt="" width={20} height={20} /><h2 id={titleId}>{title}</h2></div>
-    <div className="room-detail__header-actions">{actions}<button type="button" className="room-detail__close" data-room-detail-close aria-label="Đóng" onClick={onClose}>×</button></div>
+    <div className="room-detail__header-actions">{actions}<button type="button" className="room-detail__close" data-room-detail-close aria-label="Đóng" autoFocus={autoFocusClose} onClick={onClose}>×</button></div>
   </header>
 }
 

@@ -8,6 +8,8 @@ The account operation assigned unique name-based reserved-domain aliases to 61 e
 
 The close action has its own toolbar so it cannot intercept the save button when no Premium badge exists. Mobile previews retain area/type and shortlist controls. Save failures remain visible and retryable; changing account identity cannot reuse another viewer's saved-state response. Missing source price units, capacity and deposit are not inferred from the imported account role or native draft defaults. The backend's media provenance flag keeps unknown imported price units out of aggregate cost calculations without a schema migration.
 
+The native source modal loads on demand, with an accessible close action while its code loads. The final main entry is 240,291 bytes (74,908 bytes gzip), within the project's 250-kB budget.
+
 Validation on the latest remote main plus these changes:
 
 - 521 frontend tests, production build and changed-file lint.

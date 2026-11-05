@@ -1,8 +1,12 @@
 import { useSearchParams } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { createPortal } from 'react-dom'
 import { SourceRoomDetail } from './SourceRoomDetail'
-import { RoomDetailModal } from './RoomDetailModal'
+import { RoomDetailHeader } from './RoomDetailPresentation'
 import { sourcePublisherLink } from '../../../lib/sourcePublisherLinks'
 import { useRentalPostSave } from '../../../hooks/useRentalPostSave'
+
+const RoomDetailModal = lazy(() => import('./RoomDetailModal').then(module => ({ default: module.RoomDetailModal })))
 
 export function SourceRoomDetailsHost() {
   const [params, setParams] = useSearchParams()
@@ -17,7 +21,10 @@ export function SourceRoomDetailsHost() {
 
 function LinkedNativeDetail({ id, onClose, onOpenSection }: { id: string; onClose: () => void; onOpenSection: (section: string, conversation?: string) => void }) {
   const save = useRentalPostSave(id)
-  return <RoomDetailModal listingId={id} saved={save.saved} saveBusy={save.busy} saveError={save.error} onClose={onClose}
+  return <Suspense fallback={createPortal(<div className="room-detail__backdrop"><div className="room-detail" role="dialog" aria-modal="true" aria-labelledby="native-detail-loading-title"
+    onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onClose() } else if (event.key === 'Tab') event.preventDefault() }}>
+    <RoomDetailHeader titleId="native-detail-loading-title" title="Chi tiết phòng trọ" onClose={onClose} autoFocusClose /><p className="room-detail__status" role="status">Đang tải chi tiết phòng…</p>
+  </div></div>, document.body)}><RoomDetailModal listingId={id} saved={save.saved} saveBusy={save.busy} saveError={save.error} onClose={onClose}
       onToggleSave={() => { void save.toggle() }} onOpenMessages={conversation => onOpenSection('messages', conversation)}
-      onOpenAppointments={() => onOpenSection('appointments')} />
+      onOpenAppointments={() => onOpenSection('appointments')} /></Suspense>
 }
