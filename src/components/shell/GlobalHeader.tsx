@@ -16,7 +16,7 @@ import { NotificationsPage } from '../../pages/deferredPages'
 import { CategoryMegaMenu } from './CategoryMegaMenu'
 import { ContextualSearch } from './ContextualSearch'
 import { resolveMarketplaceDestination } from '../../lib/marketplaceNavigation'
-import { marketplaceHref, PRIMARY_PILLARS } from './navigation'
+import { marketplaceHref, PRIMARY_PILLARS, REFERRALS_NAV } from './navigation'
 import { ShellIcon } from './ShellIcons'
 import { AccountWalletLink } from './AccountWalletLink'
 
@@ -573,8 +573,10 @@ export function GlobalHeader() {
                   <p className="hj-account__group-label">Ví & thanh toán</p>
                   <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}
                     active={accountOpen} ownerId={profile?.id} onNavigate={() => setAccountOpen(false)} />
+                  <Link to={REFERRALS_NAV.href} role="menuitem" className="hj-account__item" onClick={() => setAccountOpen(false)}>
+                    <ShellIcon name={REFERRALS_NAV.icon} /><span>{REFERRALS_NAV.label}</span>
+                  </Link>
                 </div>
-                <Link to="/referrals" role="menuitem" className="hj-account__item" onClick={() => setAccountOpen(false)}>Mời bạn & voucher</Link>
                 {accountGroups.map(group => <div key={group.label} role="group" aria-label={group.label} className="hj-account__group">
                   <p className="hj-account__group-label">{group.label}</p>
                   {group.items.map((item) => (

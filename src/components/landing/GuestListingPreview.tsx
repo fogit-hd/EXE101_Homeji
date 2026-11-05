@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { RentalPostType, searchRentalPosts, type RentalPostSummary } from '../../api'
 import { rentalPriceBasis } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
-import { rentalSourceAttribution, rentalSourceHref, rentalSourceImageHref, getRentalSourceCatalog, type RentalSourceListing } from '../../api/rentalSources'
+import { rentalSourcePublisher, rentalSourceHref, rentalSourceImageHref, getRentalSourceCatalog, type RentalSourceListing } from '../../api/rentalSources'
 import { RoomDetailModal } from '../map/listings/RoomDetailModal'
 import { SourceRoomDetail } from '../map/listings/SourceRoomDetail'
 import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCoast'
@@ -116,7 +116,7 @@ export function GuestListingPreview() {
                   <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
                   <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'source' && item.data.depositLabel ? <span>{item.data.depositLabel}</span> : item.kind === 'post' && item.data.deposit && item.data.deposit > 0 ? <span>Cọc {formatListingRent(item.data.deposit)}</span> : null}{item.kind === 'post' && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
                   <span className="guest-preview__meta">{(item.kind === 'source' ? item.data.amenityHighlights ?? [] : (item.data.amenities ?? []).map(amenityLabel)).slice(0, 3).map(value => <span key={value}>{value}</span>)}</span>
-                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : rentalSourceAttribution(item.data.source)}</span><strong>Xem chi tiết <Arrow /></strong></span>
+                  <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : rentalSourcePublisher(item.data.publisherName)}</span><strong>Xem chi tiết <Arrow /></strong></span>
                 </span>
               </button>
             </article>

@@ -235,7 +235,6 @@
 .navbar-links a:hover { color: var(--text-heading); background: color-mix(in srgb, var(--text-primary) 3%, transparent); }
 .navbar-links a.active { color: var(--text-heading); text-decoration: none; }
 .navbar-links a.active::after { content: ''; position: absolute; bottom: 0; left: 11px; right: 11px; height: 3px; border-radius: 3px 3px 0 0; background: #138b8b; }
-.navbar-gift-dot { width: 5px; height: 5px; border-radius: 50%; background: #c19640; }
 .navbar-account { position: relative; }
 .navbar-profile { display: flex; align-items: center; gap: 9px; font-size: 12px; cursor: pointer; list-style: none; }
 .navbar-profile::-webkit-details-marker { display: none; }
@@ -244,6 +243,9 @@
 .navbar-account__panel { position: absolute; top: calc(100% + 18px); right: 0; width: 210px; padding: 8px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); box-shadow: 0 12px 36px #0b323b18; }
 .navbar-account__panel > a, .navbar-account__panel > button { display: block; width: 100%; padding: 11px 12px; border: 0; border-radius: 8px; background: transparent; text-align: left; font: inherit; font-size: 13px; color: var(--text-primary); cursor: pointer; text-decoration: none; }
 .navbar-account__panel > :hover { background: var(--surface); }
+.navbar-account__panel > a { display: flex; align-items: center; gap: 8px; }
+.navbar-account__panel > a > svg { flex-shrink: 0; }
+.navbar-account__panel > a.active { background: var(--hj-accent-soft); color: var(--text-heading); }
 .navbar-account__panel > button { color: var(--danger, #bc4444); border-top: 1px solid var(--border); border-radius: 0; }
 .navbar :is(a, button, summary):focus-visible { outline: 3px solid #46b6bd; outline-offset: 3px; }
 @media (min-width: 769px) and (max-width: 1150px) {

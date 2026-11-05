@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getRentalSourceCatalog, rentalSourceAttribution, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSourceCatalog, rentalSourcePublisher, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
 import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
@@ -72,7 +72,7 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [] 
           <div className="map-listings__meta">{row.area > 0 ? <span>{row.area} m²</span> : null}<span>{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span></div>
           {row.amenityHighlights?.length ? <ul className="source-results__amenities" aria-label="Tiện ích nổi bật">{row.amenityHighlights.slice(0, 6).map(value => <li key={value} className={STUDENT_KEY_AMENITIES.has(value) ? 'is-key' : undefined}>{value}</li>)}</ul> : null}
           <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
-          <p className="source-results__publisher">{rentalSourceAttribution(row.source)}</p>
+          <p className="source-results__publisher">{rentalSourcePublisher(row.publisherName)}</p>
         </div>
         <div className="source-results__actions">
           {onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí trên bản đồ</button> : null}

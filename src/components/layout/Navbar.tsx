@@ -5,6 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { UserRole } from '../../api/types'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { ThemeSwitch } from '../theme/ThemeSwitch'
+import { REFERRALS_NAV } from '../shell/navigation'
+import { ShellIcon } from '../shell/ShellIcons'
 import './Navbar.css'
 
 function NavLink({ to, className = '', ...props }: ComponentProps<typeof Link>) {
@@ -59,7 +61,7 @@ export function Navbar() {
               <NavLink to={mapSectionUrl('invitations')}>Ở ghép</NavLink>
               <NavLink to={mapSectionUrl('notifications')}>Thông báo</NavLink>
               <NavLink to={mapSectionUrl('payments')}>Thanh toán</NavLink>
-              <NavLink to="/referrals">Mời bạn <span className="navbar-gift-dot" aria-hidden="true" /></NavLink>
+              <NavLink to={REFERRALS_NAV.href}>{REFERRALS_NAV.label}</NavLink>
               {profile?.role === UserRole.Landlord && (
                 <NavLink to="/posts/new">Đăng tin</NavLink>
               )}
@@ -87,8 +89,8 @@ export function Navbar() {
                 <span className="navbar-account__name">{profile?.displayName ?? 'Hồ sơ'}</span><span aria-hidden="true">⌄</span>
               </summary>
               <div className="navbar-account__panel">
-                <Link to={mapSectionUrl('profile')}>Hồ sơ của bạn</Link>
-                <Link to="/referrals">Mời bạn & voucher</Link>
+                <NavLink to={mapSectionUrl('profile')}><ShellIcon name="user" /><span>Hồ sơ của bạn</span></NavLink>
+                <NavLink to={REFERRALS_NAV.href}><ShellIcon name={REFERRALS_NAV.icon} /><span>{REFERRALS_NAV.label}</span></NavLink>
                 <button type="button" onClick={handleLogout}>Đăng xuất</button>
               </div>
             </details>
@@ -146,7 +148,7 @@ export function Navbar() {
                   <NavLink to={mapSectionUrl('payments')} onClick={closeMenu}>
                     Thanh toán
                   </NavLink>
-                  <NavLink to="/referrals" onClick={closeMenu}>Mời bạn & voucher</NavLink>
+                  <NavLink to={REFERRALS_NAV.href} onClick={closeMenu}>{REFERRALS_NAV.label}</NavLink>
                   {profile?.role === UserRole.Landlord && (
                     <NavLink to="/posts/new" onClick={closeMenu}>
                       Đăng tin

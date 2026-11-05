@@ -24,6 +24,9 @@ export type NavIconName =
   | 'megaphone'
   | 'activity'
   | 'shield'
+  | 'gift'
+
+export const REFERRALS_NAV = { href: '/referrals', label: 'Mời bạn & voucher', icon: 'gift' } as const
 
 export type NavigationItem = {
   id: string

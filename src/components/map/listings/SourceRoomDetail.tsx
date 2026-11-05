@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
-import { getRentalSource, getRentalSourceContact, rentalSourceAttribution, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSource, getRentalSourceContact, rentalSourcePublisher, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { formatListingArea, formatListingRent } from '../../../lib/labels'
 import { listingReference } from '../../../lib/listingReference'
 import { getErrorMessage } from '../../../lib/errors'
@@ -65,7 +65,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   }, [id, isAuthenticated, revealed, currentContact?.state])
   const images = listing?.imageUrls.map(rentalSourceImageHref).filter((value): value is string => Boolean(value)) ?? []
   const expired = Boolean(listing?.sourceExpiresAt && Date.parse(listing.sourceExpiresAt) <= now)
-  const attribution = listing ? rentalSourceAttribution(listing.source) : 'Tin từ nguồn công khai'
+  const attribution = rentalSourcePublisher(listing?.publisherName)
   const date = listing?.detailsCollectedAt ?? listing?.collectedAt
   async function copyPhone(phone: string) {
     if (!/^0\d{9,10}$/.test(phone)) return
@@ -129,7 +129,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
       <aside ref={contact} className="room-detail__aside source-room-detail__contact" aria-label="Giá thuê và liên hệ" tabIndex={-1}>
         <div className="room-detail__price"><p className="room-detail__kicker">GIÁ THUÊ / THÁNG</p><p className="room-detail__amount">{rent}</p><p className="room-detail__muted">Giá thuê theo tin đăng</p></div>
         <RoomEssentials rentLabel="Giá thuê / tháng" area={listing ? formatListingArea(listing.area) : 'Chưa cung cấp'} deposit={deposit} /><hr />
-        <section className="room-detail__owner-profile" data-glass-exclude><h4>Nguồn tin</h4>
+        <section className="room-detail__owner-profile" data-glass-exclude><h4>Người liên hệ</h4>
           <p><strong>{attribution}</strong></p>
           <p className="room-detail__muted">Homeji chưa xác minh người đăng của tin này.</p>
         {isAuthenticated && currentContact?.state === 'ready' && !phones.length

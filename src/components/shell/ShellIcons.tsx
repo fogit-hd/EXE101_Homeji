@@ -10,6 +10,13 @@ export function ShellIcon({ name }: Props) {
     'aria-hidden': true as const,
   }
   switch (name) {
+    case 'gift':
+      return (
+        <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14" />
+          <path d="M12 7H8.5A2.5 2.5 0 1 1 11 4.5L12 7zm0 0h3.5A2.5 2.5 0 1 0 13 4.5L12 7z" />
+        </svg>
+      )
     case 'home':
       return (
         <svg {...common}>
