@@ -16,6 +16,7 @@ const compileUrl = source => `data:text/javascript;base64,${Buffer.from(ts.trans
 const typesUrl = compileUrl(await readFile(new URL('../src/api/types.ts', import.meta.url), 'utf8'))
 const basisUrl = reactDomModule('src/components/ai/rentalPriceBasis.ts')
 const bindings = `
+  import { isImportedRentalPost } from '${reactDomModule('src/lib/sourcePublisherLinks.ts')}';
   import React from '${pathToFileURL(require.resolve('react')).href}';
   import { Link } from '${pathToFileURL(require.resolve('react-router-dom')).href}';
   import { rentalPriceBasis, rentalPriceLabel } from '${basisUrl}';

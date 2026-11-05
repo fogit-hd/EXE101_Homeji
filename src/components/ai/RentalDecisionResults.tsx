@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { isImportedRentalPost } from '../../lib/sourcePublisherLinks'
 import type { DecisionItem, DecisionResponse } from '../../api/rentalAssistant'
 import { formatPrice, formatListingRent, formatListingArea, amenityLabel } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
@@ -21,7 +22,7 @@ export function RentalDecisionResults({ data, budgetCeiling, maxCommuteMinutes }
     ['Tiền thuê theo tin', item => formatListingRent(item.post.price)],
     ['Đơn vị tiền thuê', item => rentalPriceLabel(rentalPriceBasis(item.post))],
     ['Diện tích', item => formatListingArea(item.post.area)],
-    ['Chỗ trống / tối đa', item => `${item.post.availableSlots ?? 'Chưa rõ'} / ${item.post.maxOccupants != null && item.post.maxOccupants > 0 ? item.post.maxOccupants : 'Chưa rõ'}`],
+    ['Chỗ trống / tối đa', item => isImportedRentalPost(item.post) ? 'Chưa rõ / Chưa rõ' : `${item.post.availableSlots ?? 'Chưa rõ'} / ${item.post.maxOccupants != null && item.post.maxOccupants > 0 ? item.post.maxOccupants : 'Chưa rõ'}`],
     ['Tiện ích theo tin', item => item.post.amenities.map(amenityLabel).join(', ') || 'Chưa có thông tin'],
     ['Chi phí đã tính / tháng', item => groupBasis(item) && validAmount(item.cost.knownMonthlySubtotal)
       ? formatPrice(item.cost.knownMonthlySubtotal!) + (!knownRent(item) ? ' (chỉ các khoản đã biết; chưa có tiền thuê)' : item.cost.unknown.length ? ' (chưa đủ phí)' : ' (chi phí bạn nhập)')

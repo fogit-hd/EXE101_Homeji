@@ -6,7 +6,8 @@ const base = process.env.HOMEJI_TEST_BASE_URL || 'http://127.0.0.1:5541'
 if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('Local fixtures only')
 const out = 'output/verification/source-room-stability'
 await mkdir(out, { recursive: true })
-const id = 'e73cd2c3-42de-5863-b404-e6e338e5a22e'
+// Keep fallback coverage independent of real source IDs now mapped to native posts.
+const id = 'c3022940-7db2-4d1d-803a-ec9444952978'
 const row = { id, title: 'Cho Thuê Phòng Trọ Cao Cấp Có Gác', address: 'Trương Văn Thành, Hiệp Phú', publisherName: 'Người đăng kiểm thử', price: 3700000, area: 30, imageUrls: [], description: 'Phòng có gác và máy lạnh.', collectedAt: '2026-11-04T00:00:00Z' }
 await writeFile(out + '/index.html', '<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
 // Run the same query normalization as HomePage alongside the real preview and detail host.

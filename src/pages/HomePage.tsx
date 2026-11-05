@@ -1,4 +1,5 @@
 import { useListingSearchParams } from '../hooks/useListingSearchParams'
+import { searchRentalMapInventory } from '../lib/rentalMapInventory'
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -504,7 +505,7 @@ function HomePageComponent() {
             finish(data.map((post) => post.id))
           },
         )
-      : searchRentalPosts(listingQueryToSearchParams(query), { signal: controller.signal }).then((data) => {
+      : (query.view === 'list' ? searchRentalPosts : searchRentalMapInventory)(listingQueryToSearchParams(query), { signal: controller.signal }).then((data) => {
           if (cancelled) return
           setMarketPosts([])
           setPosts(data)

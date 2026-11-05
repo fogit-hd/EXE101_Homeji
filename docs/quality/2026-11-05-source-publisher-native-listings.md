@@ -10,10 +10,12 @@ The close action has its own toolbar so it cannot intercept the save button when
 
 Validation on the latest remote main plus these changes:
 
-- 518 frontend tests, production build and changed-file lint.
+- 521 frontend tests, production build and changed-file lint.
 - 729 backend application unit tests and API build; alias normalization self-test.
 - Real components with local intercepted APIs: imported native preview/detail, save failure and retry, save-state synchronization, shortlist ID, phone reveal, native contact controls, 390/1440 layouts.
 - Native/source fallback dialog geometry, columns, gallery and footer at 320–1440 widths; clustering, selection, source retry/missing contact, Escape and independent detail scrolling.
 - Production database ownership/alias readback and two public native detail responses. These are not authenticated provider or actual message-delivery tests. Public GET requests can increment normal view counters.
 
 Import snapshots and contact-bearing reports remain in ignored backend output and the access-restricted import audit table. Generated aliases are placeholders, not the publishers' actual email addresses. No invitations or messages were sent as part of this operation.
+
+Production readback opened Thanh Hậu Home's actual 1.4-million listing through the standard native modal on `homeji.onrender.com`, verified the original gallery, correct named profile, save/chat/viewing controls and masked guest phone, and closed it successfully. Browser writes were intercepted; no message or booking was sent. A follow-up map inventory check prevents the first 100 imported posts from hiding older original owner pins: maps read bounded 100-record API pages while list pagination stays unchanged. Guest source links also use their mapped native details, deduplicate records and retain unknown capacity; comparison screens do not turn import defaults into occupancy facts.

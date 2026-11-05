@@ -77,6 +77,7 @@ const cardUrl = reactDomModule('src/components/ai/AiRentalResultCard.tsx', {
   './RentalConsiderationToggle': compileUrl('export const RentalConsiderationToggle=()=>null'),
 })
 const bindings = `
+import { isImportedRentalPost } from '${reactDomModule('src/lib/sourcePublisherLinks.ts')}';
 import React, { useState } from '${pathToFileURL(require.resolve('react')).href}';
 import { Link } from '${pathToFileURL(require.resolve('react-router-dom')).href}';
 import { RentalPostType } from '${typesUrl}';

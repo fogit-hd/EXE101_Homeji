@@ -447,7 +447,7 @@ export function MapListingsWorkspace({
                 null
               )}
               {!marketMode && <RentalSourceResults nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} query={query} onCount={setSourceCounts} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
-              {query.page > 1 || cards.length >= PAGE_SIZE ? (
+              {(query.view === 'list' || marketMode) && (query.page > 1 || cards.length >= PAGE_SIZE) ? (
                 <div className="map-listings__pager">
                   {query.page > 1 ? (
                     <button type="button" onClick={() => writeQuery({ page: query.page - 1 })}>

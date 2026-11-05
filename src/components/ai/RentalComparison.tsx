@@ -1,5 +1,6 @@
 import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useRef, useState } from 'react'
+import { isImportedRentalPost } from '../../lib/sourcePublisherLinks'
 import { Link } from 'react-router-dom'
 import { compareRentalPosts, getRentalPost, RentalPostType, type CompareRentalPostItem } from '../../api'
 import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
@@ -113,8 +114,8 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
           <dl>
             <dt>{rentalPriceLabel(priceBasis)}</dt><dd>{formatListingRent(post.price)}{isLowestComparablePrice(post, items.map(item => item.post)) ? ' · thấp nhất trong các tin cùng đơn vị' : ''}</dd>
             <dt>Diện tích</dt><dd>{formatListingArea(post.area)}{post.area === largest ? ' · rộng nhất trong lựa chọn' : ''}</dd>
-            <dt>Số người tối đa theo tin</dt><dd>{post.maxOccupants != null && Number.isInteger(post.maxOccupants) && post.maxOccupants > 0 ? post.maxOccupants : 'Chưa có thông tin'}</dd>
-            <dt>Số chỗ còn lại theo tin</dt><dd>{post.availableSlots ?? 'Chưa có thông tin'}</dd>
+            <dt>Số người tối đa theo tin</dt><dd>{!isImportedRentalPost(post) && post.maxOccupants != null && Number.isInteger(post.maxOccupants) && post.maxOccupants > 0 ? post.maxOccupants : 'Chưa có thông tin'}</dd>
+            <dt>Số chỗ còn lại theo tin</dt><dd>{isImportedRentalPost(post) ? 'Chưa có thông tin' : post.availableSlots ?? 'Chưa có thông tin'}</dd>
             <dt>Tiện ích được chủ tin khai báo</dt><dd>{post.amenities.length ? post.amenities.map(amenityLabel).join(', ') : 'Chưa có thông tin'}</dd>
             <dt>Nguồn / cập nhật</dt><dd>Chủ tin · {new Date(post.updatedAt).toLocaleDateString('vi-VN')}</dd>
             <dt>Đường đi tới điểm đã chọn</dt><dd>{route?.durationMillis != null ? <>{Math.ceil(route.durationMillis / 60000)} phút · {((route.distanceMeters ?? 0) / 1000).toFixed(1)} km · {modeLabels[route.mode]}<br /><small>Google Maps · tính {new Date(route.calculatedAt).toLocaleString('vi-VN')} · giờ đi {new Date(route.departureAt).toLocaleString('vi-VN')}</small></> : route?.error ?? 'Chưa tính được'}</dd>

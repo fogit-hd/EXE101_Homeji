@@ -11,6 +11,7 @@ import { matchesRentalPropertyCategory } from '../../lib/rentalPropertyCategory'
 import './GuestListingPreview.css'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { matchesListingText } from '../../lib/searchQuery'
+import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
 
 function Arrow({ previous = false }: { previous?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -61,7 +62,8 @@ export function GuestListingPreview() {
     return () => controller.abort()
   }, [attempt])
 
-  const items: PreviewItem[] = [...posts.map(data => ({ kind: 'post' as const, data })), ...sourceListings.map(data => ({ kind: 'source' as const, data }))]
+  const nativeIds = new Set(posts.map(post => post.id))
+  const items: PreviewItem[] = [...posts.map(data => ({ kind: 'post' as const, data })), ...sourceListings.filter(data => !nativeIds.has(data.id)).map(data => ({ kind: 'source' as const, data }))]
   const filtered = items.filter(item => {
     const { data } = item
     const amenities = item.kind === 'source' ? item.data.amenityHighlights ?? [] : (item.data.amenities ?? []).map(amenityLabel)
@@ -114,7 +116,7 @@ export function GuestListingPreview() {
                   <span className="guest-preview__price">{formatListingRent(data.price)}<small>{basis === 'person' ? ' / người / tháng' : basis === 'room' ? ' / tháng' : data.price > 0 ? ' · theo tin' : ''}</small></span>
                   <span className="guest-preview__name">{data.title}</span>
                   <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
-                  <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'source' && item.data.depositLabel ? <span>{item.data.depositLabel}</span> : item.kind === 'post' && item.data.deposit && item.data.deposit > 0 ? <span>Cọc {formatListingRent(item.data.deposit)}</span> : null}{item.kind === 'post' && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
+                  <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'source' && item.data.depositLabel ? <span>{item.data.depositLabel}</span> : item.kind === 'post' && item.data.deposit && item.data.deposit > 0 ? <span>Cọc {formatListingRent(item.data.deposit)}</span> : null}{item.kind === 'post' && !isImportedRentalPost(item.data) && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>
                   <span className="guest-preview__meta">{(item.kind === 'source' ? item.data.amenityHighlights ?? [] : (item.data.amenities ?? []).map(amenityLabel)).slice(0, 3).map(value => <span key={value}>{value}</span>)}</span>
                   <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : rentalSourcePublisher(item.data.publisherName)}</span><strong>Xem chi tiết <Arrow /></strong></span>
                 </span>
@@ -127,20 +129,22 @@ export function GuestListingPreview() {
       {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} phòng <Arrow /></button></div> : null}
       {loading ? <span className="guest-preview__sr-only" role="status">Đang tải danh sách phòng…</span> : null}
     </div>
-    {selected ? <GuestRoomPreview key={selected.id} summary={selected} onClose={() => setSelected(null)} /> : null}
+    {selected ? <GuestRoomPreview key={selected.id} id={selected.id} onClose={() => setSelected(null)} /> : null}
     {selectedSource ? <GuestSourcePreview key={selectedSource.id} listing={selectedSource} onClose={() => setSelectedSource(null)} /> : null}
   </section>
 }
 
 function GuestSourcePreview({ listing, onClose }: { listing: RentalSourceListing; onClose: () => void }) {
+  const nativeId = sourcePublisherLink(listing.id)?.nativePostId
+  if (nativeId) return <GuestRoomPreview id={nativeId} onClose={onClose} />
   return <SourceRoomDetail id={listing.id} summary={listing} onClose={onClose} />
 }
 
-function GuestRoomPreview({ summary, onClose }: { summary: RentalPostSummary; onClose: () => void }) {
+function GuestRoomPreview({ id, onClose }: { id: string; onClose: () => void }) {
   useEffect(() => {
     const wasPaused = isGuestCoastPaused()
     pauseGuestCoast()
     return () => { if (!wasPaused) resumeGuestCoast() }
   }, [])
-  return <RoomDetailModal listingId={summary.id} onClose={onClose} />
+  return <RoomDetailModal listingId={id} onClose={onClose} />
 }
