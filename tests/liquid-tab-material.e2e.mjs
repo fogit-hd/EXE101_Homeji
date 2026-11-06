@@ -31,8 +31,8 @@ const page=await context.newPage();const errors=[];page.on('pageerror',error=>er
 async function ready(){const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click({timeout:1500}).catch(async error=>{if(await skip.isVisible())throw error});await page.locator('.hj-intro').waitFor({state:'hidden'})}
 
 try {
- await page.goto(base+'/?section=marketplace&market=browse'); await ready();
- const list=page.getByRole('tablist',{name:'Chợ Homeji',exact:true});
+ await page.goto(base+'/?section=payments'); await ready();
+ const list=page.getByRole('tablist',{name:'Gói và giao dịch',exact:true});
  const lens=list.locator('.liquid-tabs__lens');
  await lens.waitFor();
  await page.waitForFunction(()=>[...document.querySelectorAll('.liquid-tabs__lens')].some(e=>e.style.getPropertyValue('--glass-lens-filter').includes('url(')));
@@ -48,7 +48,7 @@ try {
  const rightReflection=await list.screenshot({path:new URL('reflection-right.png',out).pathname.slice(1)});
  assert.notDeepEqual(leftReflection,rightReflection,'The reflection must visibly move across the face on a plain rail');
 
- const active=list.getByRole('tab',{name:'Mua sắm',exact:true}); const rect=await active.boundingBox();
+ const active=list.getByRole('tab',{name:'Các gói',exact:true}); const rect=await active.boundingBox();
  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.down();
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  assert.match(await lens.evaluate(e=>getComputedStyle(e).backdropFilter),/url\(/);
@@ -57,7 +57,7 @@ try {
  assert.ok(await lens.evaluate(e=>+getComputedStyle(e).zIndex<+getComputedStyle(e.parentElement.querySelector('[role="tab"]')).zIndex));
  await list.screenshot({path:new URL('drag.png',out).pathname.slice(1)});
  await page.mouse.up(); console.log('stage: drag complete');
- await list.getByRole('tab',{name:'Mua sắm',exact:true}).focus(); await page.keyboard.press('End'); console.log('stage: End',await listState()); await page.waitForFunction(()=>[...document.querySelectorAll('[role=tab][aria-selected=true]')].some(e=>e.textContent.includes('Ví Homeji')||e.textContent.includes('Số dư'))); 
+ await list.getByRole('tab',{name:'Các gói',exact:true}).focus(); await page.keyboard.press('End'); console.log('stage: End',await listState()); await page.waitForFunction(()=>[...document.querySelectorAll('[role=tab][aria-selected=true]')].some(e=>e.textContent.includes('Giao dịch'))); 
  await page.waitForFunction(()=>![...document.querySelectorAll('.liquid-tabs')].some(e=>e.dataset.lensEngaged));
  await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  console.log('stage: settle complete');
@@ -67,7 +67,7 @@ try {
  assert.ok(Math.abs(gaps.dx)<1&&Math.abs(gaps.dy)<1&&gaps.right>=2&&gaps.right<=5,JSON.stringify(gaps));
  for(const width of [390,1440]){ console.log('stage: width',width);
   await page.setViewportSize({width,height:1000});
-  await list.getByRole('tab',{name:'Mua sắm',exact:true}).click();
+  await list.getByRole('tab',{name:'Các gói',exact:true}).click();
   await page.waitForFunction(()=>![...document.querySelectorAll('.liquid-tabs')].some(e=>e.dataset.lensEngaged));
   await lens.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
   await page.screenshot({path:new URL('page-'+width+'.png',out).pathname.slice(1)});
@@ -76,7 +76,7 @@ try {
    await list.screenshot({path:new URL(theme+'-'+width+'.png',out).pathname.slice(1)});
   }
  }
- await page.getByRole('tablist',{name:'Mua sắm',exact:true}).getByRole('tab',{name:'Chợ đồ',exact:true}).click(); await page.locator('.marketplace-card__main').first().waitFor(); assert.equal(await page.locator('.marketplace-card__main').first().evaluate(e=>getComputedStyle(e).backdropFilter),'none');
+ await page.goto(base+'/?section=marketplace&market=browse'); await ready(); await page.locator('.marketplace-card__main').first().waitFor(); assert.equal(await page.locator('.marketplace-card__main').first().evaluate(e=>getComputedStyle(e).backdropFilter),'none');
 
  assert.deepEqual(errors,[]);console.log('PASS actual tab lens: soft surface, crisp text, restrained motion, alignment, mobile/desktop, light/dark, clear cards',JSON.stringify({state,gaps}));
 }catch(error){console.log(await listState());await page.screenshot({path:new URL('failure.png',out).pathname.slice(1)});throw error}finally{await browser.close()}

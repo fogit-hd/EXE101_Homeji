@@ -26,6 +26,7 @@ await context.route('**/*', async route => {
   if (url.pathname === '/api/profile/me') body = profile
   else if (url.pathname === '/api/subscriptions/packages') body = [{ code: 'free', name: 'Homeji Free', tier: 1, price: 0, durationDays: 0, badge: 'Free', benefits: [] }]
   else if (url.pathname === '/api/subscriptions/me') body = { tier: 1, isPremium: false, packageCode: 'free', packageName: 'Homeji Free' }
+  else if (url.pathname === '/api/search-interests') body = { settings: { enabled: false, aiEnabled: false, emailEnabled: false }, suggestions: [], following: [], rooms: [] }
   else if (url.pathname === '/api/wallet') body = { userId, balance: 350000, totalDeposited: 350000, totalSpent: 0, totalEarned: 0, isActivated: true }
   else if (url.pathname === '/api/chatbot/popup-config') body = { enabled: false }
   else if (url.pathname === '/api/payments') body = [{ id: 'payment-fixture', method: 2, purpose: 1, amount: 99000, status: 4, createdAt: '2026-10-18T00:00:00Z', orderCode: 'FIXTURE' }]
@@ -44,7 +45,7 @@ async function open(name) {
   return control
 }
 try {
-  await page.goto(base + '/?section=profile')
+  await page.goto(base + '/?section=profile&profileTab=basic')
   const school = await open('Trường học')
   await panel('Trường học').getByRole('combobox').fill('fpt')
   const schoolOption = panel('Trường học').getByRole('option').first()
@@ -54,11 +55,11 @@ try {
   await open('Trường học')
   const glassCoverage = await page.locator('button').evaluateAll(elements => {
     const visible = elements.filter(e => e.getBoundingClientRect().height > 0 && !e.closest('[inert], .gm-style, gmp-map') && !e.matches('.liquid-tabs > [role="tab"]'))
-    return { count: visible.length, untreated: visible.filter(e => !getComputedStyle(e).backgroundImage.includes('radial-gradient')).map(e => e.getAttribute('aria-label') || e.textContent.trim()) }
+    return { count: visible.length, untreated: visible.filter(e => !e.closest('[data-glass-exclude]') && !e.matches('[data-glass-button],[data-glass-control],[data-glass-content]')).map(e => e.getAttribute('aria-label') || e.textContent.trim()) }
   })
   assert.ok(glassCoverage.count > 10)
-  assert.deepEqual(glassCoverage.untreated, [], 'All visible project buttons, including tabs and option rows, use the material')
-  result.checks.push(`Universal glass covers ${glassCoverage.count} visible buttons including tabs and picker options`)
+  assert.deepEqual(glassCoverage.untreated, [], 'Every visible button either uses the material or sits in a deliberate exclusion')
+  result.checks.push(`Glass scope covers ${glassCoverage.count} visible buttons including picker options`)
   await page.screenshot({ path: new URL('app-profile-desktop.png', out).pathname.slice(1), animations: 'disabled' })
   await page.keyboard.press('Escape')
   result.checks.push('Profile school picker changes actual form state')
@@ -66,7 +67,7 @@ try {
   await page.getByRole('button', { name: 'Menu tài khoản', exact: true }).click()
   await page.getByRole('menu').waitFor()
   const accountGlass = await page.locator('.hj-account__menu').evaluate(element => ({ background: getComputedStyle(element).backgroundColor, backdrop: getComputedStyle(element).backdropFilter }))
-  assert.match(accountGlass.background, /rgba/)
+  assert.match(accountGlass.background, /rgba|color\(/)
   assert.match(accountGlass.backdrop, /blur/)
   await page.screenshot({ path: new URL('app-account-glass.png', out).pathname.slice(1), animations: 'disabled' })
   await page.getByRole('button', { name: 'Menu tài khoản', exact: true }).click()
@@ -106,7 +107,7 @@ try {
   assert.match(await page.getByRole('combobox', { name: 'Lọc trạng thái giao dịch', exact: true }).innerText(), /Đã hủy/)
   result.checks.push('Payment history filter retains its status selection')
 
-  await page.goto(base + '/?section=profile')
+  await page.goto(base + '/?section=profile&profileTab=basic')
   await page.locator('.choice-picker__trigger').first().waitFor()
   await page.setViewportSize({ width: 320, height: 740 })
   const marketControl = page.locator('.choice-picker__trigger').first()

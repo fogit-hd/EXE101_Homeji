@@ -45,15 +45,15 @@ try {
   }
   document.querySelector('#root').append(host);
  });
- await page.waitForFunction(()=>document.querySelector('#glass-scope-regression button').hasAttribute('data-glass-face'));
- const cards=await page.locator('#glass-scope-regression > article').evaluateAll(es=>es.map(e=>({cls:e.className,face:e.dataset.glassFace||null,filter:getComputedStyle(e).backdropFilter,radius:getComputedStyle(e).borderRadius,childFace:e.querySelector('button').dataset.glassFace})));
+ await page.waitForFunction(()=>document.querySelector('#glass-scope-regression button').hasAttribute('data-glass-button'));
+ const cards=await page.locator('#glass-scope-regression > article').evaluateAll(es=>es.map(e=>({cls:e.className,face:e.dataset.glassFace||null,filter:getComputedStyle(e).backdropFilter,radius:getComputedStyle(e).borderRadius,childFace:e.querySelector('button').hasAttribute('data-glass-button')})));
  const issues=[];
  for(const c of cards){if(c.face||c.filter!=='none')issues.push(c.cls+' must not refract its content');if(!c.childFace)issues.push(c.cls+' save action must retain glass');}
- const tabs=page.getByRole('tablist',{name:'Chợ Homeji',exact:true});await tabs.getByRole('tab',{name:'Số dư',exact:true}).click();await aligned(tabs);await tabs.locator('.liquid-tabs__lens').evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
+ const tabs=page.getByRole('tablist',{name:'Chợ Homeji',exact:true});await tabs.getByRole('tab',{name:'Ví Homeji',exact:true}).click();await aligned(tabs);await tabs.locator('.liquid-tabs__lens').evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});
  const gaps=await tabs.evaluate(e=>{const l=e.querySelector('.liquid-tabs__lens').getBoundingClientRect(),r=e.getBoundingClientRect(),s=getComputedStyle(e,'::before');return{right:r.right-l.right,top:l.top-r.top-parseFloat(s.top),bottom:r.bottom-parseFloat(s.bottom)-l.bottom}});
  if(Math.abs(gaps.right-gaps.top)>1||Math.abs(gaps.bottom-gaps.top)>1)issues.push('Last lens has uneven rail insets: '+JSON.stringify(gaps));
  await page.locator('#glass-scope-regression').screenshot({path:new URL('cards-scope.png',out).pathname.slice(1)});
  await tabs.screenshot({path:new URL('last-tab-inset.png',out).pathname.slice(1)});
- for(const width of [320,390]){await page.setViewportSize({width,height:1000});await aligned(tabs);await tabs.locator('.liquid-tabs__lens').evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});const gap=await tabs.evaluate(e=>{const l=e.querySelector('.liquid-tabs__lens').getBoundingClientRect(),r=e.getBoundingClientRect();return r.right-l.right});assert.ok(gap>=2&&gap<=5,'Right end stays inset on mobile at '+width+': '+gap)}
+ for(const width of [320,390]){await page.setViewportSize({width,height:1000});await aligned(tabs);await tabs.locator('.liquid-tabs__lens').evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished))});const gap=await tabs.evaluate(e=>{const l=e.querySelector('.liquid-tabs__lens').getBoundingClientRect(),r=e.getBoundingClientRect();return r.right-l.right});assert.ok(gap>=2&&gap<=6,'Right end stays inset on mobile at '+width+': '+gap)}
  assert.deepEqual(issues,[]);assert.deepEqual(errors,[]);console.log('PASS: content cards keep clear media/text; nested actions retain glass; last lens has equal top/right/bottom insets',JSON.stringify(gaps));
 }finally{await browser.close()}

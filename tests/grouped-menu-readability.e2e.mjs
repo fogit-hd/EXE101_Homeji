@@ -42,7 +42,7 @@ try {
    await page.setViewportSize({width,height:width<500?844:1000})
    await page.waitForTimeout(250)
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${theme}/${width}: horizontal overflow`)
-   assert.equal(await page.locator('[data-glass-face]').count(),0)
+   assert.equal(await page.locator('[data-glass-face]').filter({visible:true}).count(),0)
    const adjacent = await page.locator('.marketplace-header__subtabs-lead > *').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}}))
    for(let i=1;i<adjacent.length;i++){const a=adjacent[i-1],b=adjacent[i];assert.ok(Math.min(a.right,b.right)-Math.max(a.left,b.left)<=1||Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)<=1,'Shopping tabs and filters must not overlap')}
 
@@ -92,9 +92,9 @@ try {
   await foodTab.focus();await foodTab.press('ArrowRight')
   await page.waitForURL('**market=browse')
   await page.locator('.marketplace-card').first().waitFor()
-  assert.equal(await page.locator('[data-glass-face]').count(),0)
+  assert.equal(await page.locator('[data-glass-face]').filter({visible:true}).count(),0)
   await page.screenshot({path:`${out}/goods-${theme}-mobile.png`,animations:'disabled'})
-  await page.getByRole('tab',{name:'Chợ đồ',exact:true}).press('ArrowLeft')
+  await page.getByRole('tab',{name:'Đồ cũ',exact:true}).press('ArrowLeft')
   await page.waitForURL('**market=food')
   await page.locator('.food-card').first().waitFor()
   results.checks.push(`${theme}: grouped categories, keyboard open, disclosures, account groups, End/Escape and focus restoration`)

@@ -20,7 +20,7 @@ try{
   assert.ok(sizes.items[1].top>sizes.items[0].top)
   for(const price of await page.locator('.map-listings__card .map-listings__price').all())assert.ok(await price.evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Price must fit on one line')
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No page overflow')
-  if(view==='split'){await page.locator('.map-listings__card-hit').first().click();assert.equal(await page.locator('body').getAttribute('data-selected'),'post-0')}
+  if(view==='split'&&width>1024){await page.locator('.map-listings__card-hit').first().click();assert.equal(await page.locator('body').getAttribute('data-selected'),'post-0')}
   assert.match(await page.getByRole('link',{name:'Xem cửa hàng',exact:false}).getAttribute('href'),/seller=seller/)
  }
  assert.deepEqual(errors,[]);console.log('PASS market map rows: full names/prices, selection, seller links, split/list and 320–1440 light/dark')

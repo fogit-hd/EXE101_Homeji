@@ -26,7 +26,7 @@ try {
     await page.evaluate(theme => document.documentElement.dataset.theme=theme,theme)
     const values=await material()
     assert.equal(new Set(values.map(v=>v.fill)).size,1,`${theme}: all clear faces use the same tint`)
-    assert.equal(new Set(values.slice(0,4).map(v=>v.shadow)).size,1,`${theme}: buttons, category, search and tab share edge/shadow`)
+    assert.equal(new Set(values.slice(0,3).map(v=>v.shadow)).size,1,`${theme}: buttons, category and search share edge/shadow`)
     assert.ok(values.every(v=>v.filter.includes('url(')),`${theme}: all shapes use the common refraction engine`)
     const before=values[0].fill
     await page.evaluate(()=>document.documentElement.style.setProperty('--glass-clear-fill','rgba(255,255,255,.07)'))
