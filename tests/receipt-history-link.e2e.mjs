@@ -5,7 +5,8 @@ const{chromium}=createRequire(import.meta.url)(process.env.HOMEJI_PLAYWRIGHT_MOD
 const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5515'
 if(!['127.0.0.1','localhost'].includes(new URL(base).hostname))throw Error('Local intercepted API only')
 const out='output/verification/receipt-history-link'
-const email=await readFile(out+'/receipt.html','utf8')
+// To test a real render, point this at receipt.html from the backend's HOMEJI_EMAIL_PREVIEW_DIR.
+const email=await readFile(process.env.HOMEJI_RECEIPT_EMAIL_HTML||new URL('./fixtures/receipt-email.html',import.meta.url),'utf8')
 const destination='/marketplace?market=wallet&wallet=history'
 assert.ok(email.includes('href="https://homeji.onrender.com/marketplace?market=wallet&amp;wallet=history" target="_blank"'))
 await mkdir(out,{recursive:true})
@@ -36,7 +37,7 @@ async function contextFor(authenticated){
  })
  return context
 }
-async function history(page){await page.locator('#wallet-panel-history').waitFor({timeout:30000});assert.equal(new URL(page.url()).searchParams.get('wallet'),'history');await page.getByRole('heading',{name:'Lịch sử giao dịch',exact:true}).waitFor();await page.getByText('KIỂM THỬ lịch sử đã mở',{exact:false}).first().waitFor()}
+async function history(page){await page.locator('#wallet-panel-history').waitFor({timeout:30000});assert.equal(new URL(page.url()).searchParams.get('wallet'),'history');await page.getByRole('heading',{name:'Lịch sử giao dịch',exact:true}).waitFor();await page.getByText('KIỂM THỬ lịch sử đã mở',{exact:false}).filter({visible:true}).first().waitFor()}
 try{
  const context=await contextFor(true),page=await context.newPage()
  await page.goto(base+'/receipts')

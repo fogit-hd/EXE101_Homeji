@@ -260,7 +260,9 @@
   .navbar-inner { padding-inline: 20px; }
   .navbar-brand__word { font-size: 20px; }
 }
-body:has(.navbar) #root .theme-switch--floating { display: none; }
+/* Auth pages hide the navbar, so its switch cannot replace the floating one there. */
+body:has(.navbar):not(:has(.app-shell--auth-cinema, .sk-auth--login, .sk-auth--register)) #root .theme-switch--floating { display: none; }
+body:has(.app-shell--auth-cinema, .sk-auth--login, .sk-auth--register) #root button.theme-switch--floating { z-index: 200; }
 @media (max-width: 768px) {
   .navbar-inner > .theme-switch { margin-left: auto; }
   .navbar-menu-btn { margin-left: 0; }

@@ -850,5 +850,11 @@ p {
 html.hj-no-scrollbar, html.hj-no-scrollbar body { scrollbar-width: none; }
 html.hj-no-scrollbar::-webkit-scrollbar, html.hj-no-scrollbar body::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
-/* Every control shows where keyboard focus is, whatever its local styling. */
-html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--action-on-soft, #0f6b63) !important; outline-offset: 2px; }
+/* Every control shows where keyboard focus is, whatever its local styling.
+   The fields listed here sit in a wrapper that already marks focus with :focus-within. */
+html :is(a, button, input, select, textarea, summary, [tabindex]):not(
+  .natural-rental-search__form textarea, .map-chatbot__form textarea,
+  .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input,
+  .guest-preview__search > div input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input,
+  [data-glass-search] > input
+):focus-visible { outline: 2px solid var(--action-on-soft, #0f6b63) !important; outline-offset: 2px; }

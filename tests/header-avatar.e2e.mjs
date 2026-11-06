@@ -37,13 +37,13 @@ try {
  const page=await context.newPage()
  page.on('pageerror',e=>results.errors.push(e.message))
 
- await page.goto(base+'/?section=profile')
+ await page.goto(base+'/?section=profile&profileTab=basic')
  await page.getByRole('textbox',{name:'Họ tên',exact:true}).waitFor()
  await page.locator('.hj-intro').waitFor({state:'hidden'})
  const mark=page.locator('.hj-profile__mark')
  assert.match(await mark.innerText(),/NA/)
  const upload=async()=>{
-  await page.locator('.profile-hero__avatar-wrap input[type="file"]').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:await readFile('public/brand/homeji-logo2.png')})
+  await page.locator('.profile-account-avatar ~ input[type="file"]').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:await readFile('public/brand/homeji-logo2.png')})
   await page.getByText('Đã cập nhật ảnh đại diện.',{exact:true}).waitFor()
  }
  await upload()

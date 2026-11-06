@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type RefObject } from 'react'
 import { observeElementResize } from '../../lib/observeElementResize'
-import { createTabLensMotion } from './tabLensMotion'
+import { createTabLensMotion, tabsTrackWidth } from './tabLensMotion'
 import './LiquidTabList.css'
 
 type Drag = { pointerId: number; x: number; y: number; left: number; width: number; height: number; top: number; moved: boolean; capture: HTMLButtonElement }
@@ -64,8 +64,7 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
       lens.hidden = false
       const box = root.getBoundingClientRect(), selected = active.getBoundingClientRect()
       const tabs = tabsOf(root)
-      const padding = parseFloat(getComputedStyle(root).paddingRight) || 0
-      root.style.setProperty('--tabs-track-width', `${Math.max(root.clientWidth, ...tabs.map(tab => tab.offsetLeft + tab.offsetWidth + padding))}px`)
+      root.style.setProperty('--tabs-track-width', `${tabsTrackWidth(root, tabs)}px`)
       if (drag.current?.moved) return
       // At rest the lens fits the track; only engagement enlarges its optical face.
       motionRef.current?.moveTo(active, {

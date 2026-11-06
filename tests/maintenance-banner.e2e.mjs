@@ -21,7 +21,7 @@ await page.route('**/api/**', route => {
   if (path === '/api/subscriptions/packages') return route.fulfill({ json: offer ? [{ code: 'PREMIUM_MONTHLY', name: 'Premium', price: 49000, originalPrice: 99000, durationDays: 30, offerEndsAt: '2026-11-08T08:12:28Z', benefits: [] }] : [] })
   return route.fulfill({ json: [] })
 })
-const url = 'http://127.0.0.1:5541/' + out + '/index.html'
+const url = (process.env.HOMEJI_TEST_BASE_URL || 'http://127.0.0.1:5541') + '/' + out + '/index.html'
 try {
   await page.clock.install({ time: new Date('2026-11-02T08:00:00Z') })
   await page.clock.pauseAt(new Date('2026-11-02T08:00:01Z'))

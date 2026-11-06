@@ -6,6 +6,7 @@ const base = process.env.HOMEJI_TEST_BASE_URL || 'http://127.0.0.1:5515'
 if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw Error('Local fixtures only')
 const out = 'output/verification/workspace-readability'
 await mkdir(out,{recursive:true})
+await mkdir('output/verification/be-fe-scan',{recursive:true})
 await writeFile(out+'/index.html','<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
 await writeFile(out+'/scene.tsx',`
 import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';

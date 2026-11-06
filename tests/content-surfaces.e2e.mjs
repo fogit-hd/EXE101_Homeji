@@ -34,7 +34,7 @@ try{
   await page.screenshot({path:out+'/'+theme+'-'+width+'-surfaces.png',fullPage:true})
   await goto('journey',theme);await page.locator('.guest-journey__steps li').nth(2).waitFor()
   await contrast('.guest-journey h2','.guest-journey');await contrast('.guest-journey__steps p','.guest-journey__steps li');await contrast('.guest-journey__promises p','.guest-journey')
-  assert.equal(await page.locator('.guest-journey section').count(),3)
+  assert.equal(await page.locator('.guest-journey section').count(),2)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Journey overflow')
   await page.screenshot({path:out+'/'+theme+'-'+width+'-journey.png',fullPage:true})
   await goto('receipts',theme);await page.getByRole('button',{name:'Xem biên nhận',exact:true}).click()

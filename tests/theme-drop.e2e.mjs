@@ -19,6 +19,7 @@ const fixtureRoute = route => {
   if (url.pathname === '/api/profile/me') json = {id,displayName:'Nguyễn Văn An',role:1,onboardingCompleted:true,isPremium:false}
   if (url.pathname === '/api/wallet') json = {userId:id,balance:350000,isActivated:true}
   if (url.pathname === '/api/chatbot/popup-config') json = {enabled:false}
+  if (url.pathname === '/api/search-interests') json = {settings:{enabled:false,aiEnabled:false,emailEnabled:false},suggestions:[],following:[],rooms:[]}
   if (url.pathname === '/api/subscriptions/me') json = {tier:1,isPremium:false,packageCode:'free'}
   return route.fulfill({json})
 }
@@ -33,7 +34,7 @@ async function settle(theme) {
 }
 async function skipIntro() { const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click();await page.locator('.hj-intro').waitFor({state:'hidden'}) }
 try {
-  await page.goto(base+'/?section=profile')
+  await page.goto(base+'/?section=profile&profileTab=basic')
   await skipIntro()
   await control().waitFor()
   await page.getByRole('textbox',{name:'Họ tên',exact:true}).fill('Bản nháp được giữ lại')
@@ -72,11 +73,14 @@ try {
   await page.reload();await skipIntro();await settle('dark')
   result.checks.push('Keyboard switch, reduced motion and persisted theme after reload')
   for(const section of ['profile','activities','payments','marketplace']){
-    await page.goto(base+'/?section='+section)
+    await page.goto(base+'/?section='+section+(section==='profile'?'&profileTab=basic':''))
     await skipIntro();await control().waitFor();await settle('dark');await page.locator('.page-loading,.hub-loading,.route-loading').waitFor({state:'hidden'}).catch(()=>{});if(section==='profile')await page.getByRole('textbox',{name:'Họ tên',exact:true}).waitFor()
     for(const width of [1440,390,320]){
       await page.setViewportSize({width,height:844})
+      const inMenu=width<768
+      if(inMenu){await page.getByRole('button',{name:'Menu tài khoản',exact:true}).click();await control().waitFor()}
       const rect=await control().boundingBox()
+      if(inMenu)await page.keyboard.press('Escape')
       assert.ok(rect&&rect.x>=0&&rect.x+rect.width<=width+1,section+': theme control fits '+width)
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,section+': page fits '+width)
       if(width!==390)await page.screenshot({path:new URL(section+'-dark-'+width+'.png',out).pathname.slice(1),animations:'disabled'})

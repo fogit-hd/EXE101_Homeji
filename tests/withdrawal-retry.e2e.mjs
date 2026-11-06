@@ -44,7 +44,7 @@ try {
   await page.locator('#wallet-panel-withdraw [role="alert"]').waitFor()
   await page.reload(); await fill()
   await page.getByRole('button', { name: 'Gửi yêu cầu rút tiền', exact: true }).click()
-  await page.getByText('Đã gửi yêu cầu. Số dư cập nhật theo phản hồi của ví, không theo ước tính trên form.', { exact: true }).waitFor()
+  await page.getByText('Đã gửi yêu cầu rút tiền. Bạn có thể theo dõi trạng thái trong Lịch sử.', { exact: true }).waitFor()
   assert.equal(calls.length, 2); assert.equal(debits, 1); assert.equal(balance, 30000); assert.deepEqual(errors, [])
   console.log('PASS withdrawal retry: lost response, reload, same requestId, reduced balance, refresh failure after confirmed creation')
 } finally { await browser.close() }

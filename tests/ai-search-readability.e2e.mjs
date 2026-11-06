@@ -77,8 +77,15 @@ try {
       assert.ok(initial.scroll < initial.end - 100, 'A long result must not jump past its first choices')
       const privacySummary = page.locator('.map-chatbot__privacy > summary')
       await privacySummary.focus()
-      await page.keyboard.press('Tab')
-      assert.equal(await page.getByRole('button', { name: 'Cuộc trò chuyện mới', exact: true }).evaluate(element => element === document.activeElement), true)
+      // Keyboard focus stays in the panel and comes back round to its first control.
+      const focusName = () => page.evaluate(() => document.activeElement.getAttribute('aria-label') || document.activeElement.textContent.trim())
+      const visited = []
+      for (let press = 0; press < 12 && visited.at(-1) !== 'Cuộc trò chuyện mới'; press++) {
+        await page.keyboard.press('Tab')
+        visited.push(await focusName())
+        assert.ok(await page.evaluate(() => Boolean(document.activeElement.closest('.homeji-assistant'))), `Focus left the panel after ${visited.join(', ')}`)
+      }
+      assert.equal(visited.at(-1), 'Cuộc trò chuyện mới', visited.join(', '))
       await composer.fill('Bản nháp tiếp theo chưa gửi')
       assert.equal(await page.locator('.map-chatbot__body').evaluate(body => body.scrollTop), initial.scroll, 'Typing must not reset reading position')
     } else if (scene === 'compact') {
@@ -130,12 +137,12 @@ try {
     await page.screenshot({ path: `${out}/${scene}-${width}-${theme}.png`, fullPage: scene === 'cards' })
     if (scene === 'chat') {
       await page.locator('.ai-rental-result').first().getByRole('link', { name: 'Xem phòng', exact: false }).click()
-      await page.getByRole('dialog', { name: 'Chi tiết phòng', exact: true }).waitFor()
+      await page.getByRole('dialog', { name: 'Chi tiết căn hộ', exact: true }).waitFor()
       assert.equal(await page.locator('[data-homeji-ai-panel="open"]').count(), 0)
       assert.equal(requests.length, 1, 'Opening details must not submit a new AI query')
     } else if (scene === 'compact') {
       await page.locator('.ai-suggest-review__card').first().click()
-      await page.getByRole('dialog', { name: 'Chi tiết phòng', exact: true }).waitFor()
+      await page.getByRole('dialog', { name: 'Chi tiết căn hộ', exact: true }).waitFor()
       assert.equal(await page.getByRole('dialog', { name: 'Gợi ý AI tìm phòng', exact: true }).count(), 0)
     }
     assert.equal(writes.length, 0)

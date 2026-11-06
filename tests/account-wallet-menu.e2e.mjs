@@ -23,6 +23,7 @@ await context.route('**/*',async route=>{
   if(!url.pathname.startsWith('/api/')&&!url.pathname.startsWith('/hubs/'))return route.continue()
   let body=[]
   if(url.pathname==='/api/profile/me') body={id:userId,displayName:'Nguyễn Văn An',role:1,onboardingCompleted:true,isPremium:false}
+  else if(url.pathname==='/api/search-interests')body={settings:{enabled:false,aiEnabled:false,emailEnabled:false},suggestions:[],following:[],rooms:[]}
   else if(url.pathname==='/api/subscriptions/packages')body=[{code:'free',name:'Homeji Free',tier:1,price:0,durationDays:0,badge:'Free',benefits:[]}]
   else if(url.pathname==='/api/subscriptions/me')body={tier:1,isPremium:false,packageCode:'free',packageName:'Homeji Free'}
   else if(url.pathname==='/api/wallet'){
@@ -43,7 +44,8 @@ const value=page.locator('.hj-account__wallet-value')
 async function open(){await trigger.click();await page.locator('.hj-account__wallet-link').waitFor()}
 async function close(){await trigger.click();await page.waitForTimeout(300)}
 try{
-  await page.goto(base+'/?section=payments')
+  // Saved rooms load no wallet of their own, unlike the payments page, so any wallet call here would be the menu's.
+  await page.goto(base+'/?section=saved')
   await trigger.waitFor()
   const skip=page.getByRole('button',{name:'Bỏ qua',exact:true})
   if(await skip.count())await skip.click()
@@ -55,7 +57,7 @@ try{
   assert.equal(calls,1)
   assert.equal(await page.locator('.hj-account__wallet-link').getAttribute('href'),'/?section=marketplace&market=wallet&wallet=deposit')
   await page.screenshot({path:new URL('menu-desktop.png',out).pathname.replace(/^\/([A-Za-z]:)/,'$1')})
-  results.checks.push('payments account menu loads real API shape on demand and points at existing wallet route')
+  results.checks.push('account menu loads real API shape on demand and points at existing wallet route')
   await close()
   delay=650;balance=100000
   await open()

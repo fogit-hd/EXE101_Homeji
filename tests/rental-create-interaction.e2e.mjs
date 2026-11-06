@@ -40,7 +40,7 @@ await context.route('**/api/rental-posts/drafts',route=>{
 try {
  await page.goto(base+'/posts/new');await ready();
  const roommate=page.locator('.type-card').filter({hasText:'Tìm bạn ở ghép'});
- const transfer=page.locator('.type-card').filter({hasText:'Pass phòng'});
+ const transfer=page.locator('.type-card').filter({hasText:'Nhượng phòng'});
  await roommate.waitFor();
  await transfer.click();assert.match(await transfer.getAttribute('class'),/selected/);
  await page.mouse.move(0,0);
