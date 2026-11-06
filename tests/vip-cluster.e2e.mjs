@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5541'
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local fixture only')
 const out = 'output/verification/vip-cluster'
 await mkdir(out, { recursive: true })
-await writeFile(out + '/index.html', '<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out + '/scene.tsx', `import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{RentalMap}from'/src/components/map/RentalMap.tsx';import'/src/index.css';import'/src/glass-controls.css';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';const posts=Array.from({length:3},(_,i)=>({id:'native-'+i,type:1,title:'Phòng Homeji '+i,address:'Lê Văn Việt, Thủ Đức',price:3000000+i*100000,area:25,latitude:10.842,longitude:106.81,thumbnailPath:'/brand/homeji-agent-cat.png',isOwnerPremium:i!==0,viewCount:0,saveCount:0}));function Scene(){const[vip,setVip]=useState(true),[selected,setSelected]=useState('');return <><button id="expiry" onClick={()=>setVip(false)}>Hết Premium</button><p id="selected">{selected}</p><div style={{height:500}}><RentalMap showSourceCatalog posts={posts.map(p=>({...p,isOwnerPremium:vip&&p.isOwnerPremium}))} selectedPostId={selected||null} onSelectPost={setSelected}/></div><LiquidGlassEffects/></>}createRoot(document.getElementById('root')).render(<MemoryRouter><Scene/></MemoryRouter>);`)
+// Rewriting an .html file under Vite's root reloads the open page, so leave an unchanged scene alone.
+const writeScene = async (file, content) => { if (await readFile(file, 'utf8').catch(() => '') !== content) await writeFile(file, content) }
+await writeScene(out + '/index.html', '<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
+await writeScene(out + '/scene.tsx', `import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{RentalMap}from'/src/components/map/RentalMap.tsx';import'/src/index.css';import'/src/glass-controls.css';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';const posts=Array.from({length:3},(_,i)=>({id:'native-'+i,type:1,title:'Phòng Homeji '+i,address:'Lê Văn Việt, Thủ Đức',price:3000000+i*100000,area:25,latitude:10.842,longitude:106.81,thumbnailPath:'/brand/homeji-agent-cat.png',isOwnerPremium:i!==0,viewCount:0,saveCount:0}));function Scene(){const[vip,setVip]=useState(true),[selected,setSelected]=useState('');return <><button id="expiry" onClick={()=>setVip(false)}>Hết Premium</button><p id="selected">{selected}</p><div style={{height:500}}><RentalMap showSourceCatalog posts={posts.map(p=>({...p,isOwnerPremium:vip&&p.isOwnerPremium}))} selectedPostId={selected||null} onSelectPost={setSelected}/></div><LiquidGlassEffects/></>}createRoot(document.getElementById('root')).render(<MemoryRouter><Scene/></MemoryRouter>);`)
 const browser = await chromium.launch({ headless: true, channel: 'msedge' })
 const page = await browser.newPage({ viewport: { width: 1100, height: 800 } })
 const errors = []; page.on('pageerror', error => errors.push(error.message))
@@ -62,9 +64,10 @@ try {
   await page.locator('.map-cluster-listings__card:visible').last().click()
   assert.equal(await page.locator('#selected').textContent(), 'native-2')
   await page.evaluate(() => window.clusters[0].markers.find(marker => marker.title === 'Phòng Homeji 0').dispatchEvent(new Event('gmp-click')))
-  assert.equal(await page.locator('#selected').textContent(), 'native-0')
+  await page.waitForFunction(() => document.querySelector('#selected').textContent === 'native-0', null, { timeout: 5000 })
   await page.evaluate(() => window.clusters[0].markers.find(marker => marker.title === 'Phòng Homeji 2').dispatchEvent(new Event('gmp-click')))
-  assert.equal(await page.locator('#selected').textContent(), 'native-2', 'DOM click listener survives marker visual updates')
+  // A timeout here means the DOM click listener did not survive marker visual updates.
+  await page.waitForFunction(() => document.querySelector('#selected').textContent === 'native-2', null, { timeout: 5000 })
   for (const width of [1100, 390, 320]) {
     await page.setViewportSize({ width, height: 800 })
     await page.locator('#fixture-cluster').click()
