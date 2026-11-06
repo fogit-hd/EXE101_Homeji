@@ -144,6 +144,8 @@
 .guest-hero__search div { display: flex; gap: 8px; padding: 6px; border-radius: 16px; background: #fff; }
 .guest-hero__search input { flex: 1; min-width: 0; min-height: 48px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: #12181c; font: 400 16px/1.4 var(--font-ui); }
 .guest-hero__search input::placeholder { color: #5a6770; }
+/* The search stays white in dark mode, so the dark theme's light placeholder would be unreadable. */
+html[data-theme='dark'] #root .guest-hero__search input::placeholder { color: #5a6770; }
 .guest-hero__search button { min-height: 48px; padding: 0 20px; border: 0; border-radius: 10px; background: #173c37; color: #fff; font: 600 15px/1 var(--font-ui); white-space: nowrap; cursor: pointer; }
 .guest-hero__search button:hover { background: #0f2b27; }
 .guest-hero__search :is(input, button):focus-visible { outline: 2px solid #173c37; outline-offset: 2px; }

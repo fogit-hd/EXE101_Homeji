@@ -40,7 +40,7 @@ try{
   await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');assert.ok(await text.evaluate(e=>e===document.activeElement))
   await page.screenshot({path:out+'/'+theme+'-'+width+'-ai.png'})
   await page.keyboard.press('Escape');await page.getByRole('dialog',{name:'Gợi ý AI tìm phòng',exact:true}).waitFor({state:'hidden'})
-  await page.getByRole('button',{name:'Lọc',exact:true}).click()
+  await page.getByRole('button',{name:/^Lọc/}).click()
   const filter=page.getByRole('dialog',{name:'Bộ lọc tìm kiếm',exact:true})
   await filter.waitFor()
   const fields=filter.locator('.map-listings__range-inputs input')
@@ -53,9 +53,12 @@ try{
   for(const[i,value]of['500000','2000000','15','40'].entries())await fields.nth(i).fill(value)
   await page.screenshot({path:out+'/'+theme+'-'+width+'-filter.png'})
   await filter.locator('button[type=submit]').click()
-  await filter.waitFor({state:'detached'});await page.waitForFunction(()=>document.querySelector('#query')?.textContent.includes('minPrice=500000'))
-  assert.match(await page.locator('#query').textContent(),/minPrice=500000/)
-  assert.match(await page.locator('#query').textContent(),/maxArea=40/)
+  await filter.waitFor({state:'detached'})
+  // Criteria live in the tab session, not the address bar, since 69b1438.
+  const saved=()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('homeji_listing_search_v1')||'{}').criteria??{})
+  await page.waitForFunction(()=>JSON.parse(sessionStorage.getItem('homeji_listing_search_v1')||'{}').criteria?.minPrice?.[0]==='500000')
+  assert.deepEqual((await saved()).maxArea,['40'])
+  assert.doesNotMatch(await page.locator('#query').textContent(),/minPrice|maxArea/)
  }
  assert.deepEqual(errors,[]);console.log('PASS grouped AI/range fields: one border, no nested glass/focus halo, keyboard focus/Tab, editing and applied filter values; light/dark 390/1440. No AI request sent.')
 }finally{await browser.close()}

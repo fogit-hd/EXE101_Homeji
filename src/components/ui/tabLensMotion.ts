@@ -1,6 +1,12 @@
 type LensTarget = { x: number; y: number; width: number; height: number }
 
 /** Animate only the optical face. Selection and panel navigation stay synchronous. */
+/** The rail's width from its tabs. Absolutely placed children such as the WebGL canvas must not count. */
+export function tabsTrackWidth(root: HTMLElement, tabs: HTMLElement[]) {
+  const padding = parseFloat(getComputedStyle(root).paddingRight) || 0
+  return Math.max(root.clientWidth, ...tabs.map(tab => tab.offsetLeft + tab.offsetWidth + padding))
+}
+
 export function createTabLensMotion(root: HTMLElement, lens: HTMLElement) {
   let selected: HTMLElement | null = null
   let animation: Animation | null = null

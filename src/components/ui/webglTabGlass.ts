@@ -1,3 +1,5 @@
+import { tabsTrackWidth } from './tabLensMotion'
+
 const vertexSource = `
 attribute vec2 position;
 varying vec2 uv;
@@ -161,7 +163,7 @@ export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
   const render = (now: number) => {
     frame = 0
     if (disposed || failed || !visible || document.hidden || preferences.matches) return
-    const width = root.scrollWidth, height = root.clientHeight
+    const width = tabsTrackWidth(root, tabs()), height = root.clientHeight
     if (width < 2 || height < 2 || lens.hidden) { showHtml(); return }
     const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 2), 2, 2048/width, 256/height)
     const w = Math.round(width*ratio), h = Math.round(height*ratio)
