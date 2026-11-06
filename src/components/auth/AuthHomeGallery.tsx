@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import { HERO_IMAGE_SMALL } from '../landing/heroImage'
 import './AuthHomeGallery.css'
 
 // Existing Homeji illustrations only; decorative crops are not rental listings.
 const photos = [
-  { src: '/landing/bloom-hero-bg.png', position: '50% 50%' },
+  { src: HERO_IMAGE_SMALL, position: '50% 50%' },
   { src: '/figma/images/room-1.jpg', position: '50% 50%' },
-  { src: '/landing/bloom-hero-bg.png', position: '85% 35%' },
+  { src: HERO_IMAGE_SMALL, position: '85% 35%' },
   { src: '/figma/images/room-2.jpg', position: '50% 50%' },
 ]
 const columns = [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1]]

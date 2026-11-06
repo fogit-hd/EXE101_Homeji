@@ -33,7 +33,7 @@ try {
     }, theme)
     await context.route('**/src/contexts/AuthContext.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuth=()=>({isAuthenticated:true,profile:{id:"renter",role:1,onboardingCompleted:true}})' }))
     await context.route('**/src/contexts/AuthModalContext.logic.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useAuthModal=()=>({isOpen:false,openAuthModal:()=>{}})' }))
-    await context.route('**/src/contexts/GoogleMapsProvider.logic.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useGoogleMaps=()=>({apiKey:"fixture",isLoaded:true});' }))
+    await context.route('**/src/contexts/GoogleMapsProvider.logic.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'export const useGoogleMaps=()=>({apiKey:"fixture",isLoaded:true});export const useGoogleMapsStatus=useGoogleMaps;' }))
     await context.route('**/src/lib/placeAutocomplete.ts*', route => {
       if (route.request().url().includes('actualFixture')) return route.continue()
       return route.fulfill({ contentType: 'application/javascript', body: `export * from '/src/lib/placeAutocomplete.ts?actualFixture';export const fetchPlacePredictions=async()=>[{placeId:'fixture-landmark',title:'Mốc kiểm thử Thủ Đức',subtitle:'Địa chỉ giả dùng kiểm thử'}];export const resolvePlaceCoordinates=async()=>({placeId:'fixture-landmark',address:'Mốc kiểm thử Thủ Đức',lat:10.84,lng:106.8});` })

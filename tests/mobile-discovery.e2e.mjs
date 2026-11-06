@@ -11,7 +11,7 @@ try{
 for(const [width,height,theme]of[[320,568,'light'],[390,844,'dark'],[430,932,'light'],[1280,800,'light']]){
  const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error(e.message)});page.on('console',m=>{if(m.type()==='error')console.error(m.text())})
  await page.route('**/api/**',route=>new URL(route.request().url()).pathname.startsWith('/api/')?route.fulfill({json:[]}):route.continue())
- await page.route('**/src/contexts/GoogleMapsProvider.logic.tsx*',route=>route.fulfill({contentType:'application/javascript',body:'export const useGoogleMaps=()=>({apiKey:"",isLoaded:false})'}))
+ await page.route('**/src/contexts/GoogleMapsProvider.logic.tsx*',route=>route.fulfill({contentType:'application/javascript',body:'export const useGoogleMaps=()=>({apiKey:"",isLoaded:false});export const useGoogleMapsStatus=useGoogleMaps;'}))
  await page.route('**/src/contexts/AuthModalContext.logic.ts*',route=>route.fulfill({contentType:'application/javascript',body:'export const useAuthModal=()=>({openAuthModal:()=>{}})'}))
  await page.route('**/src/contexts/chatbot-surface.ts*',route=>route.fulfill({contentType:'application/javascript',body:'export const useChatbotSurface=()=>{}'}))
  await page.route('**/src/contexts/AuthContext.tsx*',route=>route.fulfill({contentType:'application/javascript',body:'export const useAuth=()=>({isAuthenticated:false,isLoading:false,profile:null})'}))

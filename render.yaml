@@ -18,6 +18,9 @@ services:
         value: "false"
       - key: API_PROXY_TARGET
         value: https://homeji-be.onrender.com
+      # Same value as RateLimiting__ProxySecret on the API, so it can rate limit by visitor, not by this proxy.
+      - key: PROXY_SHARED_SECRET
+        sync: false
       # Public OAuth client id used by Google Identity Services in the browser.
       # The matching origin is configured in Google Cloud and the same client is
       # registered in Supabase Auth's Google provider.

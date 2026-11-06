@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { navigateGuestLanding, searchGuestListings } from './guestLandingNav'
 import { RevealText } from '../motion/RevealText'
+import { HERO_IMAGE, HERO_SIZES, HERO_SRC_SET } from './heroImage'
 import './GuestHero.css'
 
 const NAV_ITEMS = [
@@ -26,7 +27,7 @@ export function GuestHero() {
   return (
     <section className="guest-hero" id="hero" aria-label="Homeji — trang chủ">
       <div className="guest-hero__media" aria-hidden="true">
-        <img src="/landing/bloom-hero-bg.png" alt="" className="guest-hero__bg-img" fetchPriority="high" />
+        <img src={HERO_IMAGE} srcSet={HERO_SRC_SET} sizes={HERO_SIZES} alt="" className="guest-hero__bg-img" fetchPriority="high" />
         <div className="guest-hero__veil" />
       </div>
 

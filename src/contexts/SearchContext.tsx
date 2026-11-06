@@ -13,7 +13,7 @@ import { useListingSearchParams } from '../hooks/useListingSearchParams'
 import { splitListingNavigation } from '../lib/listingSearchState'
 import { trackFunnelEvent } from '../lib/ga4'
 import { fetchPlacePredictions, searchNearbyPlaces, type NearbyPlaceCategory } from '../lib/placeAutocomplete'
-import { useGoogleMaps } from "./GoogleMapsProvider.logic"
+import { useGoogleMapsStatus } from "./GoogleMapsProvider.logic"
 
 import type { NearbyAnchor } from '../components/map/MapNearbyPanel'
 import { relevantRecentLocations } from '../lib/localPlaceSearch'
@@ -186,7 +186,7 @@ function remember(keyword: string) {
 type SuggestionPack = { key: string; items: SearchSuggestion[]; loading: boolean }
 
 export function SearchProvider({ children }: { children: ReactNode }) {
-  const { isLoaded: mapsLoaded } = useGoogleMaps()
+  const { isLoaded: mapsLoaded, requestLoad: requestMaps } = useGoogleMapsStatus()
   const [nearbyAnchor, setNearbyAnchor] = useState<NearbyAnchor | null>(null)
   const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
   const [nearbyPack, setNearbyPack] = useState<SuggestionPack>({ key: '', items: [], loading: false })
@@ -238,7 +238,11 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true }
   }, [nearbyAnchor, nearbyCategory, nearbyKey, mapsLoaded])
   const suggestText = query.trim()
-  const canSuggest = placeSearch && mapsLoaded && suggestText.length >= 2 && isUsefulSearchQuery(suggestText)
+  const wantsPlaceSuggestions = placeSearch && suggestText.length >= 2 && isUsefulSearchQuery(suggestText)
+  // This provider wraps every page, so Maps loads only once a search actually needs places.
+  const needsMaps = wantsPlaceSuggestions || Boolean(nearbyKey)
+  useEffect(() => { if (needsMaps) requestMaps?.() }, [needsMaps, requestMaps])
+  const canSuggest = wantsPlaceSuggestions && mapsLoaded
   const suggestions = canSuggest && suggestionPack.key === suggestText ? suggestionPack.items : EMPTY_SUGGESTIONS
   const isLoading = canSuggest && (suggestionPack.key !== suggestText || suggestionPack.loading)
 

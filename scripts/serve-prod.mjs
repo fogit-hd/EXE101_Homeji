@@ -12,6 +12,8 @@ import { handlePublicRental, publicOrigin, escapeHtml } from './public-rentals.m
 import { CSP_REPORT_PATH, createReportLog, handleCspReport } from './csp-reports.mjs'
 import { inlineScriptHashes, securityHeaders } from './security-headers.mjs'
 import { isSpaRoute } from './spa-fallback.mjs'
+import { cacheControlFor, etagFor, isNotModified } from './static-cache.mjs'
+import { applyClientIdentity } from './proxy-identity.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const DIST = process.env.HOMEJI_DIST_DIR || join(__dirname, '..', 'dist')
@@ -24,6 +26,7 @@ const API_TARGET = (process.env.API_PROXY_TARGET || 'https://homeji-be.onrender.
   /\/$/,
   '',
 )
+const PROXY_SHARED_SECRET = process.env.PROXY_SHARED_SECRET || ''
 const DIST_INDEX = join(DIST, 'index.html')
 const SECURITY_HEADERS = securityHeaders(
   existsSync(DIST_INDEX) ? inlineScriptHashes(readFileSync(DIST_INDEX, 'utf8')) : [],
@@ -50,7 +53,7 @@ const MIME = {
   '.lottie': 'application/zip',
 }
 
-function sendFile(res, filePath) {
+function sendFile(req, res, filePath) {
   const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream'
   if (extname(filePath).toLowerCase() === '.html' && VERIFICATION_META) {
     import('node:fs/promises').then(({ readFile }) => readFile(filePath, 'utf8')).then(html => {
@@ -59,7 +62,16 @@ function sendFile(res, filePath) {
     }).catch(() => { res.writeHead(503); res.end('Unavailable') })
     return
   }
-  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'public, max-age=0' })
+  const etag = etagFor(statSync(filePath))
+  // The SPA fallback answers many paths with index.html, which must always revalidate.
+  const cacheControl = extname(filePath).toLowerCase() === '.html' ? 'no-cache' : cacheControlFor(req.url.split('?')[0])
+  const headers = { 'Cache-Control': cacheControl, ETag: etag }
+  if (isNotModified(req.headers['if-none-match'], etag)) {
+    res.writeHead(304, headers)
+    res.end()
+    return
+  }
+  res.writeHead(200, { ...headers, 'Content-Type': type })
   createReadStream(filePath).pipe(res)
 }
 
@@ -76,7 +88,7 @@ function safeDistPath(urlPath) {
 function proxyApi(req, res) {
   const targetUrl = new URL(req.url, API_TARGET)
   const lib = targetUrl.protocol === 'https:' ? https : http
-  const headers = { ...req.headers, host: targetUrl.host }
+  const headers = applyClientIdentity({ ...req.headers, host: targetUrl.host }, req.socket.remoteAddress, PROXY_SHARED_SECRET)
   delete headers['accept-encoding']
 
   let upstreamResponse
@@ -162,7 +174,7 @@ function writeUpgradeResponse(socket, response) {
 function proxyWebSocket(req, socket, head) {
   const targetUrl = new URL(req.url, API_TARGET)
   const lib = targetUrl.protocol === 'https:' ? https : http
-  const headers = { ...req.headers, host: targetUrl.host }
+  const headers = applyClientIdentity({ ...req.headers, host: targetUrl.host }, req.socket.remoteAddress, PROXY_SHARED_SECRET)
   delete headers['accept-encoding']
 
   const upstream = lib.request({
@@ -212,14 +224,14 @@ function serveStatic(req, res) {
   }
 
   if (filePath && existsSync(filePath) && statSync(filePath).isFile()) {
-    sendFile(res, filePath)
+    sendFile(req, res, filePath)
     return
   }
 
   // SPA fallback
   const index = join(DIST, 'index.html')
   if (isSpaRoute(urlPath) && existsSync(index)) {
-    sendFile(res, index)
+    sendFile(req, res, index)
     return
   }
 

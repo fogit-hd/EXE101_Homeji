@@ -14,6 +14,9 @@ import './workspace-readability.css'
 import './home-refinement.css'
 import { LiquidGlassEffects } from './components/ui/LiquidGlassEffects'
 import { WebglButtonGlassEffects } from './components/ui/WebglButtonGlassEffects'
+import { installStaleBuildReload } from './lib/staleBuildReload'
+
+installStaleBuildReload(window)
 
 /**
  * Do NOT wrap the app in React.StrictMode while Google Maps Vector/WebGL is in use.

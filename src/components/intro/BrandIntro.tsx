@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom'
 import { hasSessionHint, readAuthTokenState } from '../../api/authSession'
 import { brandIntroPlaybackRate, isBrandIntroLanding } from '../../lib/brandIntroPlayback'
 import { completeBrandIntro, INTRO_SESSION_KEY, introRequested, whenHomeReady } from '../../lib/introGate'
+import { HERO_IMAGE, HERO_SIZES, HERO_SRC_SET } from '../landing/heroImage'
 import { HOMEJI_MARK_H, HOMEJI_MARK_W, HomejiMark } from './HomejiMark'
 import { SLOGAN_BOTTOM, SLOGAN_GLYPHS, SLOGAN_TOP, SLOGAN_WIDTH } from './sloganGlyphs'
 import './BrandIntro.css'
@@ -42,10 +43,12 @@ function warmAssets(): Promise<unknown> {
       jobs.push(fonts.load(f).catch(() => {}))
     }
   }
-  for (const src of ['/landing/bloom-hero-bg.png', '/brand/homeji-logo2.png']) {
+  // Same srcset as the hero, so this fetches the file the page will actually show.
+  for (const source of [{ src: HERO_IMAGE, srcset: HERO_SRC_SET, sizes: HERO_SIZES }, { src: '/brand/homeji-logo2.png' }]) {
     const img = new Image()
     img.decoding = 'async'
-    img.src = src
+    if (source.srcset) { img.sizes = source.sizes; img.srcset = source.srcset }
+    img.src = source.src
     if (img.decode) jobs.push(img.decode().catch(() => {}))
   }
   return Promise.all(jobs)

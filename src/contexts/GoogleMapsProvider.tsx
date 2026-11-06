@@ -1,5 +1,6 @@
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -10,7 +11,7 @@ import { loadGoogleMaps } from '../lib/loadGoogleMaps'
 import { GoogleMapsContext } from "./GoogleMapsProvider.logic"
 
 /**
- * Loads the official Maps JavaScript API once.
+ * Loads the official Maps JavaScript API once, the first time something asks for it.
  * Does NOT wrap children in @vis.gl APIProvider (removed — caused cascade re-renders).
  */
 export function GoogleMapsProvider({ children }: { children: ReactNode }) {
@@ -18,13 +19,15 @@ export function GoogleMapsProvider({ children }: { children: ReactNode }) {
   const mapId = getGoogleMapId()
   const [isLoaded, setIsLoaded] = useState(false)
   const [loadError, setLoadError] = useState<Error | undefined>()
+  const [requested, setRequested] = useState(false)
+  const requestLoad = useCallback(() => setRequested(true), [])
 
   if (useChangedInputs([apiKey])) {
     setIsLoaded(false)
     setLoadError(undefined)
   }
   useEffect(() => {
-    if (!apiKey) return
+    if (!apiKey || !requested) return
     let cancelled = false
 
     void loadGoogleMaps(apiKey)
@@ -40,11 +43,11 @@ export function GoogleMapsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [apiKey])
+  }, [apiKey, requested])
 
   const value = useMemo(
-    () => ({ apiKey, mapId, isLoaded, loadError }),
-    [apiKey, mapId, isLoaded, loadError],
+    () => ({ apiKey, mapId, isLoaded, loadError, requestLoad }),
+    [apiKey, mapId, isLoaded, loadError, requestLoad],
   )
 
   return (

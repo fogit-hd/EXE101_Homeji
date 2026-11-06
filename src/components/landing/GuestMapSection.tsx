@@ -1,5 +1,5 @@
 import { useChangedInputs } from '../../hooks/useChangedInputs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getRentalPost,
   searchRentalPosts,
@@ -17,7 +17,7 @@ import { RentalMap } from '../map/RentalMap'
 import { RentalPostCard } from '../RentalPostCard'
 import { ChoicePicker } from '../ui/ChoicePicker'
 
-import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
+import { useGoogleMapsStatus } from "../../contexts/GoogleMapsProvider.logic"
 
 import { getErrorMessage } from '../../lib/errors'
 import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
@@ -43,8 +43,22 @@ type GateIntent = 'contact' | 'save' | 'invite' | 'browse'
 
 export function GuestMapSection() {
   const { openAuthModal } = useAuthModal()
-  const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
+  const { apiKey, isLoaded: mapsLoaded, requestLoad: requestMaps } = useGoogleMapsStatus()
   const mapsReady = Boolean(apiKey && mapsLoaded)
+  const sectionRef = useRef<HTMLElement>(null)
+  // The map sits far below the hero: start the download shortly before a visitor reaches it.
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!requestMaps) return
+    if (!section || typeof IntersectionObserver === 'undefined') { requestMaps(); return }
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return
+      observer.disconnect()
+      requestMaps()
+    }, { rootMargin: '800px 0px' })
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [requestMaps])
 
   const [districtId, setDistrictId] = useState(GUEST_DISTRICTS[0].id)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -249,7 +263,7 @@ export function GuestMapSection() {
   }
 
   return (
-    <section className="guest-map" id="map" aria-label="Bản đồ khu vực Thủ Đức và Quận 9">
+    <section ref={sectionRef} className="guest-map" id="map" aria-label="Bản đồ khu vực Thủ Đức và Quận 9">
       <div className="guest-map__shell">
         <div className="guest-map__intro">
           <p className="guest-map__eyebrow">Bản đồ</p>

@@ -28,7 +28,7 @@ import type { MapAppSection } from "../components/map/MapAppPanel.logic"
 import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
 
 import { useAuth } from '../contexts/AuthContext'
-import { useGoogleMaps } from "../contexts/GoogleMapsProvider.logic"
+import { useGoogleMapsStatus } from "../contexts/GoogleMapsProvider.logic"
 
 import { useOnReconnect } from "../contexts/NetworkStatusContext.logic"
 
@@ -99,8 +99,10 @@ const HOME_SECTIONS: MapAppSection[] = [
  */
 function HomePageComponent() {
   const { isAuthenticated, isLoading, needsProfileSetup } = useAuth()
-  const { apiKey, isLoaded: mapsLoaded } = useGoogleMaps()
+  const { apiKey, isLoaded: mapsLoaded, loadError: mapsLoadError, requestLoad: requestMaps } = useGoogleMapsStatus()
   const mapsReady = Boolean(apiKey && mapsLoaded)
+  // Members land on a map-based home; guests load Maps when they reach the map section.
+  useEffect(() => { if (isAuthenticated) requestMaps?.() }, [isAuthenticated, requestMaps])
   const { schools, loading: schoolsLoading } = useNearbyGuestSchools(mapsReady && isAuthenticated)
   const location = useLocation()
   const [pendingAiReview, setPendingAiReview] = useState<AiHighlightResponse | null>(null)
@@ -296,7 +298,6 @@ function HomePageComponent() {
   }
   }, [keyword, minPrice, maxPrice, selectedAmenities])
   // Brand intro hand-off: first listing response settled and (when used) the Maps script is in.
-  const { loadError: mapsLoadError } = useGoogleMaps()
   useEffect(() => {
     if (isLoading || loading) return
     if (isAuthenticated && apiKey && !mapsLoaded && !mapsLoadError) return

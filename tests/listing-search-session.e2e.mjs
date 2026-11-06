@@ -18,7 +18,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' })
     const page = await context.newPage(), reads = [], errors = []
     page.on('pageerror', error => errors.push(error.message))
-    await page.route('**/src/contexts/GoogleMapsProvider.logic*', r => r.fulfill({ contentType: 'application/javascript', body: 'export const useGoogleMaps=()=>({isLoaded:false})' }))
+    await page.route('**/src/contexts/GoogleMapsProvider.logic*', r => r.fulfill({ contentType: 'application/javascript', body: 'export const useGoogleMaps=()=>({isLoaded:false});export const useGoogleMapsStatus=useGoogleMaps;' }))
     await page.route('**/src/contexts/AuthContext.tsx*', r => r.fulfill({ contentType: 'application/javascript', body: 'export const useAuth=()=>({isAuthenticated:false})' }))
     await page.route('**/src/contexts/AuthModalContext.logic.tsx*', r => r.fulfill({ contentType: 'application/javascript', body: 'export const useAuthModal=()=>({openAuthModal:()=>{}})' }))
     await page.route('**/api/**', route => {
