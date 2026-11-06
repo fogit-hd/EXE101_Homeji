@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
-import { CSP_REPORT_PATH } from './csp-reports.mjs'
+
+/** Reaches the API through the /api proxy; the API validates, sanitizes and logs each report. */
+export const CSP_REPORT_PATH = '/api/csp-reports'
 
 const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi
 

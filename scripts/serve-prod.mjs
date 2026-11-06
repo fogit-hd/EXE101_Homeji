@@ -9,7 +9,6 @@ import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { handlePublicRental, publicOrigin, escapeHtml } from './public-rentals.mjs'
-import { CSP_REPORT_PATH, createReportLog, handleCspReport } from './csp-reports.mjs'
 import { inlineScriptHashes, securityHeaders } from './security-headers.mjs'
 import { isSpaRoute } from './spa-fallback.mjs'
 import { cacheControlFor, etagFor, isNotModified } from './static-cache.mjs'
@@ -31,7 +30,6 @@ const DIST_INDEX = join(DIST, 'index.html')
 const SECURITY_HEADERS = securityHeaders(
   existsSync(DIST_INDEX) ? inlineScriptHashes(readFileSync(DIST_INDEX, 'utf8')) : [],
 )
-const logCspReport = createReportLog()
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -244,10 +242,6 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.url?.startsWith('/api') || req.url?.startsWith('/hubs')) {
       proxyApi(req, res)
-      return
-    }
-    if (req.url?.split('?')[0] === CSP_REPORT_PATH) {
-      await handleCspReport(req, res, logCspReport)
       return
     }
     for (const [name, value] of Object.entries(SECURITY_HEADERS)) res.setHeader(name, value)
