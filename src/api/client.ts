@@ -119,6 +119,7 @@ export function clearSession() {
 type RequestOptions = {
   method?: string
   body?: unknown
+  headers?: Record<string, string>
   auth?: boolean
   params?: Record<string, string | number | boolean | string[] | undefined>
   signal?: AbortSignal
@@ -173,6 +174,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   const headers: Record<string, string> = {
+    ...options.headers,
     Accept: 'application/json',
     ...(issuesSession ? SESSION_MODE_HEADERS : {}),
   }
