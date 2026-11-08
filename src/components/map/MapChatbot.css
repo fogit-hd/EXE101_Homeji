@@ -547,6 +547,23 @@ html:root #root .homeji-assistant .map-chatbot__send span {
   font-size: 12px;
   color: var(--assistant-muted);
 }
+.homeji-assistant__disclaimer {
+  margin-block: 4px 0;
+  padding-inline: 4px;
+  color: var(--assistant-muted);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.homeji-assistant__disclaimer a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.grecaptcha-badge {
+  visibility: hidden;
+}
 .homeji-assistant__char-count {
   font-variant-numeric: tabular-nums;
   opacity: 0.85;

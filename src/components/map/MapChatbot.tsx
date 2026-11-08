@@ -415,6 +415,10 @@ export function MapChatbot({
       openAuthModal({ intent: 'chatbot', onSuccess: () => inputRef.current?.focus() })
       return
     }
+    if (!config) {
+      setError('Chatbot đang tải cấu hình. Vui lòng thử lại sau giây lát.')
+      return
+    }
     if (message.length > 1000) {
       setError('Tin nhắn không được vượt quá 1.000 ký tự.')
       return
@@ -466,7 +470,7 @@ export function MapChatbot({
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
         attachments: request.attachments, agentDraftId: request.agentDraftId, postingAgent: request.postingAgent, location: request.location, sessionMessages: request.sessionMessages,
         previousCriteria: request.previousCriteria, foodContext: request.foodContext, previousFoodCriteria: request.previousFoodCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
-        rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal)
+        rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal, config?.recaptchaSiteKey)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       agentFlow.acceptReply(reply, request.postingAgent === true)

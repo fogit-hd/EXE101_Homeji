@@ -41,7 +41,8 @@ export function ChatbotComposer({
   return (
             <div className="homeji-assistant__composer-area">
               <ProfileGate action="trò chuyện với trợ lý AI" onNavigate={closeChat}>
-              {open ? <ChatbotMediaComposer key={mediaSession} attachments={attachments} disabled={busy || mediaBusy}
+              {open ? <ChatbotMediaComposer key={mediaSession} attachments={attachments} disabled={busy || mediaBusy || !config}
+                recaptchaSiteKey={config?.recaptchaSiteKey}
                 onChange={setAttachments} onError={setError} onBusyChange={setMediaBusy} onRecordingChange={setRecordingActive}
                 onDictation={text => {
                   if (!text.trim()) throw new Error('Không nghe rõ lời nói. Hãy ghi âm lại.')
@@ -110,6 +111,19 @@ export function ChatbotComposer({
                 </details>
               </div>
               </ProfileGate>
+              <p className="homeji-assistant__disclaimer">
+                Trong một số trường hợp Bot AI có thể chưa hoàn toàn chính xác. Cần xác minh thêm thông tin, Quý khách vui lòng liên hệ Nhân viên tư vấn qua{' '}
+                <a href="mailto:duongduy12314@gmail.com">duongduy12314@gmail.com</a>.
+              </p>
+              {config?.recaptchaSiteKey ? (
+                <p className="homeji-assistant__disclaimer">
+                  Được bảo vệ bởi reCAPTCHA theo{' '}
+                  <a href="https://policies.google.com/privacy?hl=vi" target="_blank" rel="noreferrer">Chính sách quyền riêng tư</a>
+                  {' '}và{' '}
+                  <a href="https://policies.google.com/terms?hl=vi" target="_blank" rel="noreferrer">Điều khoản dịch vụ</a>
+                  {' '}của Google.
+                </p>
+              ) : null}
             </div>
   )
 }
