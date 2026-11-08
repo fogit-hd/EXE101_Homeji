@@ -15,9 +15,10 @@ export function ChatbotMediaPreview({ attachments, onRemove }: { attachments: Ch
   </div>
 }
 
-export function ChatbotMediaComposer({ attachments, disabled, onChange, onDictation, onError, onBusyChange, onRecordingChange }: {
+export function ChatbotMediaComposer({ attachments, disabled, recaptchaSiteKey, onChange, onDictation, onError, onBusyChange, onRecordingChange }: {
   attachments: ChatbotDraftAttachment[]
   disabled: boolean
+  recaptchaSiteKey?: string | null
   onChange: (attachments: ChatbotDraftAttachment[]) => void
   onDictation: (text: string) => void
   onError: (error: string) => void
@@ -72,7 +73,7 @@ export function ChatbotMediaComposer({ attachments, disabled, onChange, onDictat
           await process(async signal => {
             const attachment = await prepareChatbotAttachment(blob, 'Bản ghi.wav')
             if (mode === 'dictation') {
-              const result = await transcribeChatbotAudio({ mimeType: attachment.mimeType, data: attachment.data }, signal)
+              const result = await transcribeChatbotAudio({ mimeType: attachment.mimeType, data: attachment.data }, signal, recaptchaSiteKey)
               if (!signal.aborted) onDictation(result.text)
             } else {
               const next = [...attachments, attachment]

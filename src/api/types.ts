@@ -692,6 +692,7 @@ export interface ChatbotConversation {
 }
 
 export interface ChatbotPopupConfig {
+  recaptchaSiteKey?: string | null
   historyStorageEnabled?: boolean
   enabled: boolean
   title: string

@@ -2,6 +2,7 @@ import { resultCountBucket, type FunnelEvent } from '../lib/analyticsPolicy'
 import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
 import type { ChatbotAttachment } from '../lib/chatbotMedia'
+import { chatbotRecaptchaHeaders } from '../lib/chatbotRecaptcha'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
 import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload, mayHaveSession } from './client'
 import type {
@@ -373,14 +374,18 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const transcribeChatbotAudio = (audio: ChatbotAttachment, signal?: AbortSignal) =>
-  apiRequest<{ text: string }>('/api/chatbot/transcriptions', { method: 'POST', body: { audio }, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS })
+export const transcribeChatbotAudio = async (audio: ChatbotAttachment, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
+  apiRequest<{ text: string }>('/api/chatbot/transcriptions', {
+    method: 'POST', body: { audio }, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS,
+    headers: recaptchaSiteKey ? await chatbotRecaptchaHeaders(recaptchaSiteKey, 'chatbot_transcription', signal) : undefined,
+  })
 
-export const sendChatbotMessage = (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal) =>
+export const sendChatbotMessage = async (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
   apiRequest<ChatbotReply>('/api/chatbot/messages', {
     timeoutMs: AI_REQUEST_TIMEOUT_MS,
     method: 'POST',
     signal,
+    headers: recaptchaSiteKey ? await chatbotRecaptchaHeaders(recaptchaSiteKey, 'chatbot_message', signal) : undefined,
     body: {
       message: data.message,
       ...(data.location ? { location: data.location } : {}),
