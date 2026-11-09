@@ -160,3 +160,9 @@ html[data-theme='dark'] .action-wheel__icon { color: color-mix(in srgb, var(--to
 @keyframes wheel-rim-spin { to { rotate: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .action-wheel__disc::before { animation: none; } }
 @media (forced-colors: active) { .action-wheel__disc::before { display: none; } }
+/* Illustrated icons need a little more room than line icons. */
+.action-wheel__icon { width: 28px; height: 28px; }
+.action-wheel__item { gap: 1px; }
+:is(.action-wheel__item[data-active], .action-wheel[data-mode='menu'] .action-wheel__item:is(:hover, :focus-visible)) .action-wheel__icon { filter: drop-shadow(0 2px 3px #0003); }
+.action-wheel__icon { box-sizing: border-box; width: 32px; height: 32px; padding: 2px; border-radius: 50%; transition: background 160ms ease; }
+:is(.action-wheel__item[data-active], .action-wheel[data-mode='menu'] .action-wheel__item:is(:hover, :focus-visible)) .action-wheel__icon { background: #fff; filter: drop-shadow(0 2px 4px #0003); }

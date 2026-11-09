@@ -13,6 +13,7 @@ import { attachTraceTilt } from '../motion/traceTilt'
 import { ActionWheel, type WheelAction } from '../motion/ActionWheel'
 import { useHoldWheel } from '../motion/useHoldWheel'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
+import { AreaMapIcon, DirectionsIcon, ShareRoomIcon, ViewRoomIcon } from './wheelIcons'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { matchesListingText } from '../../lib/searchQuery'
 import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
@@ -23,12 +24,11 @@ function Arrow({ previous = false }: { previous?: boolean }) {
   </svg>
 }
 
-const icon = (path: string) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{path.split('|').map(d => <path key={d} d={d} />)}</svg>
 const WHEEL_ACTIONS: readonly WheelAction[] = [
-  { label: 'Xem chi tiết', tone: '#14b8a6', icon: icon('M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z|M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z') },
-  { label: 'Chỉ đường', tone: '#ff7a59', icon: icon('M3 11 21 3l-8 18-2-8-8-2Z') },
-  { label: 'Bản đồ', tone: '#22c55e', icon: icon('M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z|M9 4v14|M15 6v14') },
-  { label: 'Chia sẻ', tone: '#8b5cf6', icon: icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7|M12 3v12|m7 8 5-5 5 5') },
+  { label: 'Xem chi tiết', tone: '#14b8a6', icon: <ViewRoomIcon /> },
+  { label: 'Chỉ đường', tone: '#ff7a59', icon: <DirectionsIcon /> },
+  { label: 'Bản đồ', tone: '#22c55e', icon: <AreaMapIcon /> },
+  { label: 'Chia sẻ', tone: '#8b5cf6', icon: <ShareRoomIcon /> },
 ]
 const itemKey = (item: PreviewItem) => `${item.kind}-${item.data.id}`
 
