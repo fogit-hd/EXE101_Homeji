@@ -1,19 +1,38 @@
 import './GuestJourney.css'
 
 const steps = [
-  ['01', 'Khoanh vùng nơi muốn ở', 'Chọn khu vực gần trường và khoảng ngân sách phù hợp với bạn.', 'Khu vực · Ngân sách'],
-  ['02', 'So sánh trước khi chọn', 'Xem ảnh, giá thuê và vị trí. Lưu các phòng bạn muốn tìm hiểu thêm.', 'Thông tin · Danh sách đã lưu'],
-  ['03', 'Trao đổi rồi quyết định', 'Nhắn người đăng, hẹn xem phòng hoặc kết nối bạn cùng phòng qua lời mời.', 'Nhắn tin · Lịch xem phòng'],
-]
+  { tone: 'area', title: 'Khoanh vùng nơi muốn ở', description: 'Chọn khu vực gần trường và khoảng ngân sách phù hợp với bạn.', detail: 'Khu vực · Ngân sách', pattern: [
+    '..o..', '.#o##', '#o###', 'oo##.', '.·#oo', '..·..',
+  ] },
+  { tone: 'compare', title: 'So sánh trước khi chọn', description: 'Xem ảnh, giá thuê và vị trí. Lưu các phòng bạn muốn tìm hiểu thêm.', detail: 'Thông tin · Danh sách đã lưu', pattern: [
+    '##...', '##o..', '.oo#.', '·.###', '.·.#o', '...oo',
+  ] },
+  { tone: 'contact', title: 'Trao đổi rồi quyết định', description: 'Nhắn người đăng, hẹn xem phòng hoặc kết nối bạn cùng phòng qua lời mời.', detail: 'Nhắn tin · Lịch xem phòng', pattern: [
+    '..#..', '..o..', '#oo##', 'oo#··', '..#..', '..·..',
+  ] },
+] as const
+
+function JourneyPattern({ rows }: { rows: readonly string[] }) {
+  return (
+    <svg className="guest-journey__pattern" viewBox="0 0 100 116" aria-hidden="true" focusable="false">
+      {rows.flatMap((row, y) => Array.from(row, (dot, x) => dot === '.' ? null : (
+        <circle key={`${x}-${y}`} cx={9 + x * 18} cy={9 + y * 18} r={dot === '·' ? 6 : 7.6}
+          data-dot={dot === '#' ? 'solid' : dot === 'o' ? 'ring' : 'faint'} />
+      )))}
+    </svg>
+  )
+}
 
 export function GuestJourney() {
   return <div className="guest-journey" data-glass-exclude>
     <section id="how" className="guest-journey__section" aria-labelledby="journey-title">
       <header className="guest-journey__heading"><h2 id="journey-title">Cách dùng Homeji</h2>
       </header>
-      <ol className="guest-journey__steps">{steps.map(([number, title, description, detail]) => <li key={number}>
-        <span className="guest-journey__number" aria-hidden="true">{number}</span>
-        <h3>{title}</h3><p>{description}</p><span className="guest-journey__detail">{detail}</span>
+      <ol className="guest-journey__steps" role="list">{steps.map(({ tone, title, description, detail, pattern }) => <li key={tone} data-tone={tone}>
+        <JourneyPattern rows={pattern} />
+        <div className="guest-journey__copy">
+          <h3>{title}</h3><p>{description}</p><span className="guest-journey__detail">{detail}</span>
+        </div>
       </li>)}</ol>
     </section>
     <section id="start" className="guest-journey__section guest-journey__trust" aria-labelledby="journey-trust">
