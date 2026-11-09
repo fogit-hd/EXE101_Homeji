@@ -72,7 +72,30 @@ try {
   assert.equal(await page.locator('.theme-water-layer').count(),0)
   await page.reload();await skipIntro();await settle('dark')
   result.checks.push('Keyboard switch, reduced motion and persisted theme after reload')
+  const switchBounds = await control().boundingBox()
+  assert.ok(switchBounds)
+  const art = control().locator('canvas')
+  const night = await art.evaluate(canvas => canvas.toDataURL())
+  const lensX = switchBounds.x + switchBounds.width * .26
+  const centerY = switchBounds.y + switchBounds.height / 2
+  await page.mouse.move(lensX, centerY)
+  await page.mouse.down()
+  await page.mouse.move(lensX + switchBounds.width * .15, centerY, { steps: 5 })
+  await page.waitForFunction(({ canvas, original }) =>
+    canvas.toDataURL() !== original, { canvas: await art.elementHandle(), original: night })
+  assert.equal(await control().getAttribute('aria-checked'), 'true')
+  await page.mouse.up()
+  await settle('dark')
+  await page.mouse.move(lensX, centerY)
+  await page.mouse.down()
+  await page.mouse.move(lensX + switchBounds.width * .4, centerY, { steps: 8 })
+  await page.mouse.up()
+  await settle('light')
+  await control().press('Enter')
+  await settle('dark')
+  result.checks.push('Drag previews the lens, snaps back below the midpoint and commits past it')
   for(const section of ['profile','activities','payments','marketplace']){
+    await page.setViewportSize({width:1440,height:844})
     await page.goto(base+'/?section='+section+(section==='profile'?'&profileTab=basic':''))
     await skipIntro();await control().waitFor();await settle('dark');await page.locator('.page-loading,.hub-loading,.route-loading').waitFor({state:'hidden'}).catch(()=>{});if(section==='profile')await page.getByRole('textbox',{name:'Họ tên',exact:true}).waitFor()
     for(const width of [1440,390,320]){

@@ -1,29 +1,62 @@
 html body #root button.theme-switch {
-  position: relative; display: inline-flex; align-items: center; justify-content: space-around;
-  flex: 0 0 70px; width: 70px; height: 40px; min-width: 70px; padding: 0 7px;
-  border-radius: 999px; border: 1px solid var(--glass-border); cursor: pointer;
-  color: var(--text-heading); background-color: color-mix(in srgb, var(--surface-elevated) 18%, transparent);
-  vertical-align: middle; isolation: isolate; touch-action: manipulation;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 44px;
+  min-width: 76px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  isolation: isolate;
+  overflow: clip;
+  overflow-clip-margin: 14px;
+  touch-action: pan-y;
+  vertical-align: middle;
 }
-.theme-switch__sun, .theme-switch__moon { position: relative; z-index: 2; font: 18px/1 system-ui; width: 22px; text-align: center; }
-.theme-switch__thumb {
-  position: absolute; top: 5px; left: 5px; width: 28px; height: 28px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.16) 48%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 2px 2px -1px #ffffffeb, inset 0 -2px 3px -2px #fff, 0 3px 8px -1px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.12);
-  -webkit-backdrop-filter: var(--glass-lens-filter, blur(6px)); backdrop-filter: var(--glass-lens-filter, blur(6px));
-  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+html body #root button.theme-switch:focus-visible {
+  outline: 2px solid var(--text-heading);
+  outline-offset: 3px;
 }
-.theme-switch[aria-checked='true'] .theme-switch__thumb {
-  transform: translateX(30px);
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.18) 48%, rgba(255, 255, 255, 0.04) 100%);
-  box-shadow: inset 0 2px 2px -1px #ffffff, inset 0 -2px 3px -2px #ffffffc0, 0 3px 10px -1px rgba(0, 0, 0, 0.28), 0 1px 4px rgba(0, 0, 0, 0.18);
+.theme-switch__artwork {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 177.7778%;
+  aspect-ratio: 768 / 560;
+  height: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  visibility: hidden;
 }
-.theme-switch[aria-checked='false'] .theme-switch__moon { opacity: .5; }
-.theme-switch[aria-checked='true'] .theme-switch__sun { opacity: .5; }
+.theme-switch[data-artwork-ready] .theme-switch__artwork { visibility: visible; }
+.theme-switch[data-artwork-ready] .theme-switch__fallback { visibility: hidden; }
+.theme-switch__fallback {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  width: 46%;
+  aspect-ratio: 1;
+  margin-inline: 3%;
+  border: 1px solid #9b6f20;
+  border-radius: 29%;
+  background: #fff0cf;
+  color: #3e2b11;
+  font: 20px/1 system-ui;
+}
+.theme-switch[aria-checked='true'] .theme-switch__fallback {
+  justify-self: start;
+  border-color: #8ca1ff;
+  background: #242b49;
+  color: #fff;
+}
 html body #root button.theme-switch--floating { position: fixed; z-index: 60; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); }
 body:has(.hj-header) #root .theme-switch--floating { display: none; }
-.guest-hero__top { padding-right: 88px; }
+.guest-hero__top { padding-right: 96px; }
 .theme-water-layer { position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; overflow: hidden; }
 .theme-water-drop { position: absolute; top: 0; width: 26px; height: 29px; border-radius: 48% 48% 50% 50%; background: var(--drop-color); box-shadow: inset 3px 2px 5px #ffffff50, 0 2px 8px #0002; will-change: transform; }
 .theme-water-drop::after { content: ''; position: absolute; left: 6px; top: 5px; width: 4px; height: 9px; border-radius: 50%; background: #ffffff70; rotate: 25deg; }
@@ -35,12 +68,9 @@ html[data-theme-transition]::view-transition-image-pair(root) { isolation: auto;
 html[data-theme-transition]::view-transition-old(root) { z-index: 1; }
 html[data-theme-transition]::view-transition-new(root) { z-index: 2; }
 @media (max-width: 767px) {
-  html body #root button.theme-switch { width: 60px; min-width: 60px; flex-basis: 60px; height: 36px; padding: 0 5px; }
-  .theme-switch__thumb { width: 26px; height: 26px; top: 4px; left: 4px; }
-  .theme-switch[aria-checked='true'] .theme-switch__thumb { transform: translateX(25px); }
-  .guest-hero__top { padding-right: 74px; }
+  html body #root button.theme-switch { width: 68px; min-width: 68px; flex-basis: 68px; }
+  .guest-hero__top { padding-right: 84px; }
 }
-@media (prefers-reduced-motion: reduce) { .theme-switch__thumb { transition: none; } }
 /* UI colors change via semantic roles; photos, videos and map tiles are never inverted. */
 html[data-theme='dark'] {
   --hj-accent: #72d6d9; --hj-grab-green: #72d6d9; --text-accent: #72d6d9;
@@ -67,38 +97,21 @@ html[data-theme='dark'] :is(.pay-table__head,.pay-compare th) { background: var(
 html[data-theme='dark'] .hj-glyph { filter: brightness(0) invert(1); }
 html[data-theme='dark'] #hj-boot { background: var(--surface-muted); }
 @media (forced-colors: active) {
-  html body #root button.theme-switch { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
-  .theme-switch__thumb { background: Highlight !important; }
+  html body #root button.theme-switch { background: ButtonFace; border: 1px solid ButtonText; }
+  html body #root button.theme-switch:focus-visible { outline-color: Highlight; }
+  .theme-switch[data-artwork-ready] .theme-switch__artwork { visibility: hidden; }
+  .theme-switch[data-artwork-ready] .theme-switch__fallback { visibility: visible; }
+  .theme-switch .theme-switch__fallback,
+  .theme-switch[aria-checked='true'] .theme-switch__fallback {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
 }
 
 /* Theme announcements are for assistive technology, never visible page copy. */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-
-/* Clear switch lens rides over the state color; the icons stay above it. */
-#root .theme-switch__thumb {
-  z-index: 1;
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.16) 48%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 2px 2px -1px #ffffffeb, inset 0 -2px 3px -2px #fff, 0 3px 8px -1px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.12);
-  -webkit-backdrop-filter: var(--glass-lens-filter, blur(6px));
-  backdrop-filter: var(--glass-lens-filter, blur(6px));
-}
-html body #root button.theme-switch[aria-checked='true'] { background-color: rgb(33 122 83 / .65); color: #fff; }
-@media(forced-colors:active) { #root .theme-switch__thumb { background: Highlight; border-color: ButtonText; } }
-
-#root .theme-switch__thumb {
-  -webkit-backdrop-filter: var(--glass-lens-filter,none);
-  backdrop-filter: var(--glass-lens-filter,none);
-}
-#root .theme-switch__thumb[data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,none);
-  backdrop-filter: var(--glass-lens-active-filter,none);
-}
-@media(forced-colors:active),(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
-  #root .theme-switch__thumb,#root .theme-switch__thumb[data-glass-interacting] {
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-  }
-}
 
 /* On the landing page the switch scrolls away so it never covers listing cards. */
 @media (max-width: 767px) { html body #root:has(.guest-landing) button.theme-switch--floating { position: absolute; } }
