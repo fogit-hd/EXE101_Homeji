@@ -96,6 +96,7 @@ export function useHoldWheel<T>(resolve: (element: Element) => T | null, count: 
   }
   const onPointerCancel = () => {
     cancelPress()
+    suppressClick.current = false
     if (wheelRef.current?.mode === 'hold') update(null)
   }
   const onClickCapture = (event: MouseEvent<HTMLElement>) => {
