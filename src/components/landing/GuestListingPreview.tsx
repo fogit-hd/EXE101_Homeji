@@ -31,6 +31,7 @@ const WHEEL_ACTIONS: readonly WheelAction[] = [
   { label: 'Chia sẻ', tone: '#8b5cf6', icon: <ShareRoomIcon /> },
 ]
 const itemKey = (item: PreviewItem) => `${item.kind}-${item.data.id}`
+const PAGE_SIZE = 8
 
 type PreviewItem = { kind: 'post'; data: RentalPostSummary } | { kind: 'source'; data: RentalSourceListing }
 const BUDGETS = [
@@ -47,7 +48,7 @@ export function GuestListingPreview() {
   const [attempt, setAttempt] = useState(0)
   const [category, setCategory] = useState<'rooms' | 'apartments'>('rooms')
   const [budget, setBudget] = useState<(typeof BUDGETS)[number]['id']>('all')
-  const [visibleCount, setVisibleCount] = useState(8)
+  const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<RentalPostSummary | null>(null)
   const [selectedSource, setSelectedSource] = useState<RentalSourceListing | null>(null)
   const [keyword, setKeyword] = useState('')
@@ -57,7 +58,7 @@ export function GuestListingPreview() {
   const searchPlaceholder = useStreetSearchPlaceholder(!searchFocused && !keyword.trim(), 'Tìm theo đường, khu vực hoặc tiện ích')
 
   useEffect(() => {
-    const onSearch = (event: Event) => { setKeyword((event as CustomEvent<string>).detail); setVisibleCount(8) }
+    const onSearch = (event: Event) => { setKeyword((event as CustomEvent<string>).detail); setPage(1) }
     window.addEventListener(GUEST_SEARCH_EVENT, onSearch)
     return () => window.removeEventListener(GUEST_SEARCH_EVENT, onSearch)
   }, [])
@@ -86,7 +87,19 @@ export function GuestListingPreview() {
       && matchesListingText(keyword, [data.title, data.address, ...amenities])
       && (budget === 'all' || data.price > 0 && (budget === 'low' ? data.price < 3_000_000 : budget === 'mid' ? data.price >= 3_000_000 && data.price <= 5_000_000 : data.price > 5_000_000))
   })
-  const shown = filtered.slice(0, visibleCount)
+  const pageCount = Math.ceil(filtered.length / PAGE_SIZE)
+  const firstIndex = (page - 1) * PAGE_SIZE
+  const shown = filtered.slice(firstIndex, firstIndex + PAGE_SIZE)
+  const pageLinks = pageCount <= 5 ? Array.from({ length: pageCount }, (_, index) => index + 1)
+    : page <= 3 ? [1, 2, 3, 'after', pageCount]
+    : page >= pageCount - 2 ? [1, 'before', pageCount - 2, pageCount - 1, pageCount]
+    : [1, 'before', page, 'after', pageCount]
+  const goToPage = (nextPage: number) => {
+    if (nextPage === page) return
+    setPage(nextPage)
+    rail.current?.focus({ preventScroll: true })
+    rail.current?.scrollIntoView({ block: 'start' })
+  }
   const [shareNote, setShareNote] = useState('')
   useEffect(() => {
     if (!shareNote) return
@@ -127,26 +140,26 @@ export function GuestListingPreview() {
         <div><h2 id="guest-featured-title">Phòng đang cho thuê</h2></div>
         <button type="button" className="guest-preview__explore" onClick={() => navigateGuestLanding('map')}>Xem trên bản đồ <Arrow /></button>
       </header>
-      <form className="guest-preview__search" data-glass-exclude role="search" onSubmit={event => { event.preventDefault(); setVisibleCount(8) }}>
+      <form className="guest-preview__search" data-glass-exclude role="search" onSubmit={event => { event.preventDefault(); setPage(1) }}>
         <label htmlFor="guest-rental-search">Lọc theo khu vực hoặc tiện ích</label>
         <div><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
-          <input id="guest-rental-search" type="search" value={keyword} maxLength={150} placeholder={searchPlaceholder} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} onChange={event => { setKeyword(event.target.value); setVisibleCount(8) }} autoComplete="off" enterKeyHint="search" />
-          {keyword ? <button type="button" onClick={() => { setKeyword(''); setVisibleCount(8) }} aria-label="Xóa từ khóa tìm phòng">×</button> : null}
+          <input id="guest-rental-search" type="search" value={keyword} maxLength={150} placeholder={searchPlaceholder} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} onChange={event => { setKeyword(event.target.value); setPage(1) }} autoComplete="off" enterKeyHint="search" />
+          {keyword ? <button type="button" onClick={() => { setKeyword(''); setPage(1) }} aria-label="Xóa từ khóa tìm phòng">×</button> : null}
         </div>
       </form>
       <div className="guest-preview__categories" role="group" aria-label="Loại chỗ ở">
-        {(['rooms', 'apartments'] as const).map(value => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setVisibleCount(8) }}>{value === 'rooms' ? 'Phòng trọ' : 'Căn hộ'} <span>{items.filter(item => matchesRentalPropertyCategory(value, item.data.title)).length}</span></button>)}
+        {(['rooms', 'apartments'] as const).map(value => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setPage(1) }}>{value === 'rooms' ? 'Phòng trọ' : 'Căn hộ'} <span>{items.filter(item => matchesRentalPropertyCategory(value, item.data.title)).length}</span></button>)}
       </div>
       <div className="guest-preview__toolbar">
         <div className="guest-preview__budgets" role="group" aria-label="Lọc theo giá trong tin">
-          {BUDGETS.map(option => <button key={option.id} type="button" aria-pressed={budget === option.id} onClick={() => { setBudget(option.id); setVisibleCount(8) }}>{option.label}</button>)}
+          {BUDGETS.map(option => <button key={option.id} type="button" aria-pressed={budget === option.id} onClick={() => { setBudget(option.id); setPage(1) }}>{option.label}</button>)}
         </div>
         {!loading ? <span className="guest-preview__count" role="status">{filtered.length} phòng</span> : null}
       </div>
       <p className="guest-preview__note">Giá và thông tin theo tin đăng. Hãy xác nhận lại với người đăng.</p>
-      {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
-      <ul ref={rail} {...bind} className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading}>
-        {loading ? Array.from({ length: 8 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
+      {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setPage(1); setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
+      <ul ref={rail} {...bind} className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading} tabIndex={-1}>
+        {loading ? Array.from({ length: PAGE_SIZE }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
           const data = item.data
           const isSource = item.kind === 'source'
           const photos = item.kind === 'source' ? item.data.imageUrls.map(rentalSourceImageHref).filter((url): url is string => Boolean(url)) : item.data.thumbnailPath ? [item.data.thumbnailPath] : []
@@ -174,7 +187,16 @@ export function GuestListingPreview() {
         })}
       </ul>
       {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin khớp. Thử từ khóa, loại chỗ ở hoặc khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể xem khu vực trên bản đồ.'}</p> : null}
-      {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} phòng <Arrow /></button></div> : null}
+      {!loading && pageCount > 1 ? <nav className="guest-preview__pagination" aria-label="Phân trang danh sách phòng" data-glass-exclude>
+        <p role="status">Đang xem {firstIndex + 1}–{firstIndex + shown.length} / {filtered.length} phòng</p>
+        <div>
+          <button type="button" aria-label="Trang trước" disabled={page === 1} onClick={() => goToPage(page - 1)}><Arrow previous /></button>
+          {pageLinks.map(link => typeof link === 'number'
+            ? <button key={link} type="button" aria-label={`Trang ${link}`} aria-current={link === page ? 'page' : undefined} onClick={() => goToPage(link)}>{link}</button>
+            : <span key={link} aria-hidden="true">…</span>)}
+          <button type="button" aria-label="Trang sau" disabled={page === pageCount} onClick={() => goToPage(page + 1)}><Arrow /></button>
+        </div>
+      </nav> : null}
       {loading ? <span className="guest-preview__sr-only" role="status">Đang tải danh sách phòng…</span> : null}
       <p className="guest-preview__hint">Mẹo: nhấn giữ một phòng để mở nhanh chỉ đường, bản đồ hoặc chia sẻ.</p>
       <span className="guest-preview__share-note" role="status" data-visible={shareNote ? '' : undefined}>{shareNote}</span>
