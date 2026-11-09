@@ -109,8 +109,8 @@ export function HomejiLoader({
             className="homeji-loader__media is-active"
             src={
               phase === 'intro'
-                ? '/loading/homeji_loading_intro.gif'
-                : '/loading/homeji_loading_loop.gif'
+                ? '/loading/homeji_loading_intro.webp'
+                : '/loading/homeji_loading_loop.webp'
             }
             alt=""
             draggable={false}
