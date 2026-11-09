@@ -1,0 +1,181 @@
+.glass-voice {
+  --voice-size: 48px;
+  --voice-bead: calc(var(--voice-size) * .64634);
+  --voice-center: calc(var(--voice-size) / 2);
+  --voice-spring: cubic-bezier(.22, 1.29, .39, 1);
+  --voice-ink: #fff;
+  --voice-tint: 32 53 73;
+  position: relative;
+  flex: 0 1 auto;
+  width: var(--voice-size);
+  height: var(--voice-size);
+  min-width: var(--voice-size);
+  max-width: 100%;
+  color: var(--voice-ink);
+  transition: width 520ms var(--voice-spring);
+}
+
+.glass-voice[data-expanded] {
+  --voice-center: calc(100% - var(--voice-size) / 2);
+  width: calc(var(--voice-size) * 3.26829);
+}
+
+.glass-voice__shell,
+.glass-voice__bead {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 100vmax;
+  pointer-events: none;
+}
+
+.glass-voice__shell {
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 73% 100%, #d5e7ff55, transparent 48%),
+    radial-gradient(ellipse at 25% 17%, #cde9ff44, transparent 30%),
+    rgb(var(--voice-tint) / .48);
+  box-shadow: 0 2px 7px #071b3033;
+  transform: translate(var(--voice-shift-x, 0%), var(--voice-shift-y, 0%))
+    rotate(var(--voice-angle, 0rad)) scale(var(--voice-squeeze, 1), var(--voice-stretch, 1))
+    rotate(calc(-1 * var(--voice-angle, 0rad)));
+  transition: transform 340ms var(--voice-spring);
+}
+
+.glass-voice[data-expanded] .glass-voice__shell {
+  transform: translate(var(--voice-shift-x, 0%), var(--voice-shift-y, 0%))
+    scaleY(calc(1 + (var(--voice-stretch, 1) - 1) * .16));
+}
+
+.glass-voice__bead {
+  top: 50%;
+  left: var(--voice-center);
+  width: var(--voice-bead);
+  aspect-ratio: 1;
+  background:
+    radial-gradient(ellipse at 76% 83%, #eaf1ff7d, transparent 60%),
+    radial-gradient(ellipse at 27% 23%, #c7ddff50, transparent 29%),
+    rgb(var(--voice-tint) / .65);
+  transform: translate(calc(-50% + var(--voice-shift-x, 0%)), calc(-50% + var(--voice-shift-y, 0%)))
+    rotate(var(--voice-angle, 0rad)) scale(var(--voice-squeeze, 1), var(--voice-stretch, 1))
+    rotate(calc(-1 * var(--voice-angle, 0rad)));
+  transition: left 520ms var(--voice-spring), transform 300ms var(--voice-spring);
+}
+
+.glass-voice :is(.glass-voice__shell, .glass-voice__bead) > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: var(--glass-lens-filter, blur(1px) saturate(1.18));
+}
+
+.glass-voice :is(.glass-voice__shell, .glass-voice__bead)::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 23% 22%, #f1f7ffd0, transparent 7%),
+    radial-gradient(ellipse at 84% 98%, #e2edff72, transparent 40%),
+    linear-gradient(142deg, #4c779a55, transparent 49%, #10243a40);
+  box-shadow:
+    inset 0 0 0 max(1px, calc(var(--voice-size) * .006)) #e5efffc2,
+    inset 0 0 0 max(2px, calc(var(--voice-size) * .019)) #314d7390,
+    inset 0 0 calc(var(--voice-size) * .095) #081d3790;
+}
+
+.glass-voice__bead::before {
+  box-shadow: inset 0 0 0 max(1px, calc(var(--voice-size) * .0049)) #e6efff9c,
+    inset 0 0 calc(var(--voice-size) * .080) #e8efff86,
+    inset 0 0 calc(var(--voice-size) * .15) #0d2338bc;
+}
+
+.glass-voice[data-recording] .glass-voice__shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 14% 85%, rgb(79 148 255 / calc(var(--voice-0, 0) * .72)), transparent 38%),
+    radial-gradient(ellipse at 29% 98%, rgb(111 144 255 / calc(var(--voice-1, 0) * .72)), transparent 43%),
+    radial-gradient(ellipse at 46% 100%, rgb(183 106 252 / calc(var(--voice-2, 0) * .74)), transparent 42%),
+    radial-gradient(ellipse at 62% 89%, rgb(255 113 185 / calc(var(--voice-3, 0) * .69)), transparent 40%),
+    radial-gradient(ellipse at 76% 85%, rgb(115 163 255 / calc(var(--voice-4, 0) * .69)), transparent 36%),
+    radial-gradient(ellipse at 91% 88%, rgb(106 225 255 / calc(var(--voice-5, 0) * .62)), transparent 33%);
+}
+
+.glass-voice__mark,
+.glass-voice__clock {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  pointer-events: none;
+  translate: -50% -50%;
+  text-shadow: 0 1px 3px #12263f9c;
+}
+
+.glass-voice__mark { display: flex; left: calc(var(--voice-size) / 2); }
+.glass-voice .glass-voice__mark svg {
+  width: calc(var(--voice-size) * .298);
+  height: calc(var(--voice-size) * .298);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+}
+
+.glass-voice__clock {
+  left: 50%;
+  font: 600 calc(var(--voice-size) * .326) / 1 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.035em;
+  animation: glass-voice-clock-in 220ms 90ms both;
+}
+
+.glass-voice .glass-voice__hit {
+  position: absolute;
+  z-index: 3;
+  inset-block: 0;
+  left: var(--voice-center);
+  translate: -50% 0;
+  width: var(--voice-size);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: left 520ms var(--voice-spring);
+}
+.glass-voice__hit:disabled { cursor: default; }
+.glass-voice__hit:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+.glass-voice__stop {
+  width: calc(var(--voice-size) * .218);
+  aspect-ratio: 1;
+  border-radius: 24%;
+  background: currentColor;
+  animation: glass-voice-clock-in 220ms 90ms both;
+}
+
+@keyframes glass-voice-clock-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-voice, .glass-voice__shell, .glass-voice__bead, .glass-voice .glass-voice__hit { transition: none; }
+  .glass-voice .glass-voice__shell { transform: none; }
+  .glass-voice__bead { transform: translate(-50%, -50%); }
+  .glass-voice__clock, .glass-voice__stop { animation: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-voice__shell { background: #263b52; }
+  .glass-voice__bead { background: #405870; }
+  .glass-voice :is(.glass-voice__shell, .glass-voice__bead) > span { backdrop-filter: none; }
+}
+
+@media (forced-colors: active) {
+  .glass-voice { color: ButtonText; }
+  .glass-voice__shell, .glass-voice__bead { border: 1px solid ButtonText; background: ButtonFace; }
+  .glass-voice__stop { forced-color-adjust: none; background: ButtonText; }
+}

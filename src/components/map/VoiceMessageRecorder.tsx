@@ -3,6 +3,7 @@ import { sendConversationVoice, type PostMessage } from '../../api'
 import { getErrorMessage } from '../../lib/errors'
 import { encodeVoiceWav, VOICE_SAMPLE_RATE } from '../../lib/voiceRecording'
 import { useVoiceCalls } from '../../contexts/voice-call'
+import { GlassVoiceControl } from './GlassVoiceControl'
 import './VoiceMessageRecorder.css'
 
 type RecorderProps = {
@@ -24,7 +25,8 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
   const pendingContext = useRef<AudioContext | null>(null)
   const pendingStream = useRef<MediaStream | null>(null)
   const uploading = useRef(false)
-  const resource = useRef<{ stream: MediaStream; context: AudioContext; source: MediaStreamAudioSourceNode; node: AudioWorkletNode } | null>(null)
+  const resource = useRef<{ stream: MediaStream; context: AudioContext; source: MediaStreamAudioSourceNode; node: AudioWorkletNode; analyser?: AnalyserNode } | null>(null)
+  const getAnalyser = useCallback(() => resource.current?.analyser, [])
   const chunks = useRef<Int16Array[]>([])
   const version = useRef(0)
   const gate = useRef(false)
@@ -35,7 +37,7 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
     const pending = pendingContext.current; pendingContext.current = null
     if (pending && pending.state !== 'closed') void pending.close().catch(() => {})
     const value = resource.current; resource.current = null
-    if (value) { value.node.port.onmessage = null; value.node.disconnect(); value.source.disconnect(); value.stream.getTracks().forEach(t => t.stop()); void value.context.close().catch(() => {}) }
+    if (value) { value.node.port.onmessage = null; value.node.disconnect(); value.analyser?.disconnect(); value.source.disconnect(); value.stream.getTracks().forEach(t => t.stop()); void value.context.close().catch(() => {}) }
   }, [])
   const clear = useCallback(() => {
     version.current++; release(); chunks.current = []; samples.current = 0; blob.current = null; gate.current = false
@@ -69,7 +71,12 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
       await context.audioWorklet.addModule('/audio/voice-capture.js')
       if (current !== version.current) { stream.getTracks().forEach(t => t.stop()); if (context.state !== 'closed') await context.close(); return }
       const source = context.createMediaStreamSource(stream), node = new AudioWorkletNode(context, 'homeji-voice-capture', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1 })
-      pendingContext.current = null; pendingStream.current = null; resource.current = { stream, context, source, node }; chunks.current = []; samples.current = 0
+      const analyser = transcribeOnStop ? context.createAnalyser() : undefined
+      if (analyser) {
+        analyser.fftSize = 1024
+        analyser.smoothingTimeConstant = .72
+      }
+      pendingContext.current = null; pendingStream.current = null; resource.current = { stream, context, source, node, analyser }; chunks.current = []; samples.current = 0
       node.port.onmessage = event => {
         if (current !== version.current) return
         if (event.data.samples instanceof ArrayBuffer) {
@@ -78,7 +85,9 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
         if (event.data.stopped || event.data.limit) finish()
       }
       // The worklet has silent output, so microphone audio is never played to speakers.
-      source.connect(node); node.connect(context.destination); setPhase('recording')
+      if (analyser) { source.connect(analyser); analyser.connect(node) }
+      else source.connect(node)
+      node.connect(context.destination); setPhase('recording')
     } catch (e) {
       stream?.getTracks().forEach(t => t.stop()); if (context?.state !== 'closed') void context?.close().catch(() => {})
       if (current === version.current) { clear(); onError(e instanceof DOMException && e.name === 'NotAllowedError' ? 'Bạn cần cho phép sử dụng micro để ghi âm.' : getErrorMessage(e, 'Không mở được micro.')) }
@@ -103,14 +112,25 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
     } catch (e) { if (current === version.current) { setPhase('preview'); onError(getErrorMessage(e, 'Chưa gửi được bản ghi. Bạn có thể thử lại.')) } }
     finally { uploading.current = false }
   }
-  return <div className={`chat-recorder ${phase !== 'idle' ? 'is-open' : ''}`}>
-    {phase === 'idle' ? <><button type="button" className="chat-recorder__mic" aria-label="Ghi âm tin nhắn" disabled={disabled || busy} onClick={() => void start(transcribeOnStop ? 'dictation' : 'message')}><svg viewBox="0 0 24 24" aria-hidden><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>{allowTranscription || transcribeOnStop ? <span>Ghi âm</span> : null}</button>
-      {allowTranscription && !transcribeOnStop ? <button type="button" className="chat-recorder__dictation" disabled={disabled || busy} onClick={() => void start('dictation')}>Nói thành chữ</button> : null}</> : <section className="chat-recorder__panel" aria-label="Ghi âm tin nhắn">
+  const liveGlass = transcribeOnStop && (phase === 'starting' || phase === 'recording')
+  const showPanel = phase !== 'idle' && !liveGlass
+  const stop = () => resource.current?.node.port.postMessage('stop')
+  return <div className={`chat-recorder ${showPanel ? 'is-open' : ''}`}>
+    {transcribeOnStop && <GlassVoiceControl recording={phase === 'recording'} starting={phase === 'starting'}
+      seconds={seconds} disabled={phase !== 'idle' || disabled || busy} getAnalyser={getAnalyser}
+      onStart={() => void start('dictation')} onStop={stop} />}
+    {liveGlass && <>
+      <span className="sr-only" role="status">{phase === 'starting' ? 'Đang mở micro…' : 'Đang ghi âm'}</span>
+      <button type="button" className="chat-recorder__cancel" onClick={clear}>Hủy</button>
+    </>}
+    {!transcribeOnStop && phase === 'idle' && <><button type="button" className="chat-recorder__mic" aria-label="Ghi âm tin nhắn" disabled={disabled || busy} onClick={() => void start()}><svg viewBox="0 0 24 24" aria-hidden><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>{allowTranscription ? <span>Ghi âm</span> : null}</button>
+      {allowTranscription ? <button type="button" className="chat-recorder__dictation" disabled={disabled || busy} onClick={() => void start('dictation')}>Nói thành chữ</button> : null}</>}
+    {showPanel && <section className="chat-recorder__panel" aria-label="Ghi âm tin nhắn">
       <strong>{phase === 'starting' ? 'Đang mở micro…' : phase === 'recording' ? '● Đang ghi âm' : phase === 'sending' ? mode === 'dictation' ? 'Đang chuyển thành chữ…' : 'Đang xử lý bản ghi…' : 'Nghe lại trước khi gửi'}</strong>
       <span role="timer">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} / 2:00</span>
       {preview && <audio controls src={preview} preload="metadata" aria-label="Nghe lại bản ghi" />}
       <div><button type="button" onClick={clear} disabled={phase === 'sending'}>Hủy</button>
-        {phase === 'recording' && <button type="button" onClick={() => resource.current?.node.port.postMessage('stop')}>Dừng ghi</button>}
+        {phase === 'recording' && <button type="button" onClick={stop}>Dừng ghi</button>}
         {phase === 'preview' && <button type="button" disabled={disabled || busy} onClick={() => void send()}>{mode === 'dictation' ? 'Chuyển thành chữ' : onRecorded ? 'Đính kèm bản ghi' : 'Gửi âm thoại'}</button>}
       </div>
     </section>}
