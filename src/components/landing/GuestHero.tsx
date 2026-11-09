@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { navigateGuestLanding, searchGuestListings } from './guestLandingNav'
 import { RevealText } from '../motion/RevealText'
@@ -14,10 +14,38 @@ const NAV_ITEMS = [
 
 export function GuestHero() {
   const [keyword, setKeyword] = useState('')
+  const hero = useRef<HTMLElement>(null)
+  const image = useRef<HTMLImageElement>(null)
+  const glass = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const root = document.documentElement
     root.classList.add('hj-no-scrollbar')
     return () => root.classList.remove('hj-no-scrollbar')
+  }, [])
+  useEffect(() => {
+    const section = hero.current
+    const photo = image.current
+    const canvas = glass.current
+    if (!section || !photo || !canvas) return
+    const largeScreen = matchMedia('(min-width: 641px) and (forced-colors: none) and (prefers-reduced-transparency: no-preference)')
+    let dispose: (() => void) | undefined
+    let revision = 0
+    const update = () => {
+      const request = ++revision
+      dispose?.()
+      dispose = undefined
+      if (!largeScreen.matches) return
+      void import('./guestHeroGlass').then(({ attachGuestHeroGlass }) => {
+        if (request === revision) dispose = attachGuestHeroGlass(section, photo, canvas)
+      }).catch(() => { /* The original hero image is already visible. */ })
+    }
+    largeScreen.addEventListener('change', update)
+    update()
+    return () => {
+      revision++
+      largeScreen.removeEventListener('change', update)
+      dispose?.()
+    }
   }, [])
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -25,9 +53,10 @@ export function GuestHero() {
   }
 
   return (
-    <section className="guest-hero" id="hero" aria-label="Homeji — trang chủ">
+    <section ref={hero} className="guest-hero" id="hero" aria-label="Homeji - trang chủ">
       <div className="guest-hero__media" aria-hidden="true">
-        <img src={HERO_IMAGE} srcSet={HERO_SRC_SET} sizes={HERO_SIZES} alt="" className="guest-hero__bg-img" fetchPriority="high" />
+        <img ref={image} src={HERO_IMAGE} srcSet={HERO_SRC_SET} sizes={HERO_SIZES} alt="" className="guest-hero__bg-img" fetchPriority="high" />
+        <canvas ref={glass} className="guest-hero__glass" hidden />
         <div className="guest-hero__veil" />
       </div>
 

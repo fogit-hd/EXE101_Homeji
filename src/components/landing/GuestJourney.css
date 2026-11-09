@@ -6,9 +6,71 @@
 .guest-journey p { margin: 0; color: var(--text-secondary); font-size: 15px; line-height: 1.8; }
 .guest-journey p.guest-journey__eyebrow { margin: 0 0 18px; color: var(--hj-accent); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
 .guest-journey__steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; list-style: none; padding: 0; margin: 0; }
-.guest-journey__steps li { padding: 28px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-elevated); display: flex; flex-direction: column; align-items: start; }
-.guest-journey__number { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 32px; border-radius: 14px; background: var(--hj-accent-soft); color: var(--hj-accent); font: 650 18px/1 var(--font-ui); }
-.guest-journey__detail { display: block; margin-top: auto; padding-top: 28px; color: var(--hj-accent); font-size: 12px; font-weight: 600; line-height: 1.6; }
+.guest-journey__steps li {
+  --step-bg: #101b19;
+  --step-halo: #273936;
+  --step-ink: #f9fcfb;
+  --step-secondary: #d6e2de;
+  --step-dot: #e4fff2;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: clamp(330px, 34vw, 414px);
+  padding: clamp(24px, 3vw, 38px);
+  border-radius: clamp(26px, 3.3vw, 44px);
+  background: radial-gradient(ellipse at 65% 100%, var(--step-halo), transparent 65%), var(--step-bg);
+}
+.guest-journey__steps [data-tone='compare'] {
+  --step-bg: #075d4a;
+  --step-halo: #08755d;
+  --step-ink: #fff;
+  --step-secondary: #ebfff6;
+  --step-dot: #f2fff5;
+}
+.guest-journey__steps [data-tone='contact'] {
+  --step-bg: #eeeee7;
+  --step-halo: #d3e5d9;
+  --step-ink: #172a23;
+  --step-secondary: #394f45;
+  --step-dot: #147755;
+}
+.guest-journey__pattern {
+  width: 100px;
+  height: 116px;
+  flex: none;
+  overflow: visible;
+  color: var(--step-dot);
+}
+.guest-journey__pattern circle {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.guest-journey__pattern [data-dot='ring'] { fill: none; stroke: currentColor; stroke-width: 1.35; opacity: .64; }
+.guest-journey__pattern [data-dot='faint'] { opacity: .24; }
+#root .guest-journey__steps h3 {
+  margin: 0 0 9px;
+  color: var(--step-ink);
+  font-size: clamp(19px, 1.8vw, 23px);
+  letter-spacing: -.025em;
+  line-height: 1.24;
+  text-wrap: balance;
+}
+#root .guest-journey__steps p { color: var(--step-secondary); line-height: 1.55; }
+.guest-journey__detail { display: block; margin-top: 14px; color: var(--step-secondary); font-size: 12px; font-weight: 650; line-height: 1.5; }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .guest-journey__steps li:hover circle { animation: guest-journey-dot 520ms ease-in-out both; }
+  .guest-journey__steps li:hover circle:nth-child(3n + 2) { animation-delay: 55ms; }
+  .guest-journey__steps li:hover circle:nth-child(3n) { animation-delay: 110ms; }
+}
+@keyframes guest-journey-dot {
+  45% { transform: translateY(-3px) scale(1.14); }
+}
+@media (forced-colors: active) {
+  .guest-journey__steps li { border: 1px solid CanvasText; }
+}
 .guest-journey__audience, .guest-journey__trust { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr); gap: 64px; border-top: 1px solid var(--border); }
 .guest-journey__roles article { display: flex; gap: 24px; padding-block: 28px; border-bottom: 1px solid var(--border); }
 .guest-journey__roles article:first-child { padding-top: 0; }
@@ -21,7 +83,7 @@
 @media (max-width: 760px) {
   .guest-journey__section { width: calc(100% - 40px); }
   .guest-journey__steps, .guest-journey__audience, .guest-journey__trust { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .guest-journey__number { margin-bottom: 20px; }
-  .guest-journey__steps li { padding: 24px; }
+  .guest-journey__steps li { min-height: 280px; padding: 24px; gap: 22px; }
+  .guest-journey__pattern { width: 76px; height: 88px; }
   .guest-journey__audience .guest-journey__heading, .guest-journey__trust .guest-journey__heading { margin-bottom: 0; }
 }
