@@ -1,5 +1,6 @@
 import { useChangedInputs } from '../../hooks/useChangedInputs'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNearViewport } from '../../hooks/useNearViewport'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   getRentalPost,
   searchRentalPosts,
@@ -45,20 +46,9 @@ export function GuestMapSection() {
   const { openAuthModal } = useAuthModal()
   const { apiKey, isLoaded: mapsLoaded, requestLoad: requestMaps } = useGoogleMapsStatus()
   const mapsReady = Boolean(apiKey && mapsLoaded)
-  const sectionRef = useRef<HTMLElement>(null)
-  // The map sits far below the hero: start the download shortly before a visitor reaches it.
-  useEffect(() => {
-    const section = sectionRef.current
-    if (!requestMaps) return
-    if (!section || typeof IntersectionObserver === 'undefined') { requestMaps(); return }
-    const observer = new IntersectionObserver(entries => {
-      if (!entries.some(entry => entry.isIntersecting)) return
-      observer.disconnect()
-      requestMaps()
-    }, { rootMargin: '800px 0px' })
-    observer.observe(section)
-    return () => observer.disconnect()
-  }, [requestMaps])
+  // The map sits far below the hero: fetch Maps and its rooms shortly before a visitor reaches it.
+  const [sectionRef, nearSection] = useNearViewport<HTMLElement>('800px 0px')
+  useEffect(() => { if (nearSection) requestMaps?.() }, [nearSection, requestMaps])
 
   const [districtId, setDistrictId] = useState(GUEST_DISTRICTS[0].id)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -118,10 +108,11 @@ export function GuestMapSection() {
   }, [])
 
   useEffect(() => {
+    if (!nearSection) return
     let cancelled = false
     void Promise.resolve().then(() => { if (!cancelled) void load(searchKeyword) })
     return () => { cancelled = true }
-  }, [load, searchKeyword])
+  }, [load, searchKeyword, nearSection])
 
   const applyFilters = useCallback(
     (next: { districtId?: string; wardId?: string; schoolId?: string }) => {

@@ -39,7 +39,8 @@ export function PremiumLaunchOffer() {
       if (notification?.type === NotificationType.MaintenanceAnnouncement) load()
     }
     load()
-    const timer = setInterval(load, 30_000)
+    // A hidden tab cannot show the notice; focusing it loads again straight away.
+    const timer = setInterval(() => { if (!document.hidden) load() }, 30_000)
     window.addEventListener('focus', load)
     window.addEventListener(NOTIFICATION_RECEIVED, onNotification)
     window.addEventListener(NOTIFICATION_CONNECTED, load)
@@ -52,6 +53,8 @@ export function PremiumLaunchOffer() {
     }
   }, [])
   useEffect(() => {
+    // Offers and price news are only shown to signed-in users, so visitors do not fetch them.
+    if (!isAuthenticated) return
     let active = true
     const load = () => {
       void getSubscriptionPackages().then(plans => {
@@ -65,10 +68,10 @@ export function PremiumLaunchOffer() {
       setNow(Date.now())
     }
     load()
-    const timer = setInterval(load, 60_000)
+    const timer = setInterval(() => { if (!document.hidden) load() }, 60_000)
     window.addEventListener('focus', load)
     return () => { active = false; clearInterval(timer); window.removeEventListener('focus', load) }
-  }, [])
+  }, [isAuthenticated])
   // Each published revision gets its own acknowledgement, including a price
   // changed back to an earlier value. No announcement invents an expiry date.
   const announcement = changes.filter(row => !seen.includes(row.id)).at(-1)
