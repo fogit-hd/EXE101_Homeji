@@ -36,27 +36,37 @@ function loadRecaptcha(siteKey: string): Promise<Recaptcha> {
   return loading
 }
 
-export async function chatbotRecaptchaHeaders(siteKey: string, action: ChatbotAction, signal?: AbortSignal) {
-  signal?.throwIfAborted()
-  const controller = AbortSignal.any([AbortSignal.timeout(timeoutMs * 2), ...(signal ? [signal] : [])])
+async function requestToken(siteKey: string, action: ChatbotAction, signal: AbortSignal) {
   let onAbort: () => void = () => {}
   try {
-    const token = await Promise.race([
+    return await Promise.race([
       loadRecaptcha(siteKey).then(api => {
-        controller.throwIfAborted()
+        signal.throwIfAborted()
         return api.execute(siteKey, { action })
       }),
       new Promise<never>((_, reject) => {
-        onAbort = () => reject(controller.reason)
-        controller.addEventListener('abort', onAbort, { once: true })
+        onAbort = () => reject(signal.reason)
+        signal.addEventListener('abort', onAbort, { once: true })
       }),
     ])
-    if (!token) throw new Error(unavailable)
-    return { 'X-Homeji-Recaptcha': token }
-  } catch {
-    signal?.throwIfAborted()
-    throw new Error(unavailable)
   } finally {
-    controller.removeEventListener('abort', onAbort)
+    signal.removeEventListener('abort', onAbort)
   }
+}
+
+export async function chatbotRecaptchaHeaders(siteKey: string, action: ChatbotAction, signal?: AbortSignal) {
+  // Retry token creation only. The caller still sends the API request once.
+  for (const attemptTimeout of [timeoutMs * 2, timeoutMs]) {
+    signal?.throwIfAborted()
+    const timeout = AbortSignal.timeout(attemptTimeout)
+    const attempt = signal ? AbortSignal.any([signal, timeout]) : timeout
+    try {
+      const token = await requestToken(siteKey, action, attempt)
+      signal?.throwIfAborted()
+      if (token) return { 'X-Homeji-Recaptcha': token }
+    } catch {
+      signal?.throwIfAborted()
+    }
+  }
+  throw new Error(unavailable)
 }
