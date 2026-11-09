@@ -2882,3 +2882,32 @@
 #root .marketplace-detail-dialog__image { object-fit:contain; background:var(--surface-muted); }
 #root .marketplace-order-items img,
 #root .marketplace-order__product img { object-fit:contain; background:var(--surface-muted); }
+
+/* Liquid progress: the decorative layer replaces the flat connectors. */
+.marketplace-order-progress.has-liquid { position: relative; isolation: isolate; }
+.marketplace-order-progress.has-liquid > div:not(:last-child)::after { display: none; }
+.marketplace-order-progress.has-liquid > div:not(.liquid-progress) > span { position: relative; }
+@media (forced-colors: active) { .marketplace-order-progress.has-liquid > div:not(:last-child)::after { display: block; } }
+.marketplace-order-progress > .liquid-progress { position: absolute; display: flex; flex: none; min-width: 0; gap: 0; justify-items: normal; text-align: initial; }
+.marketplace-order-progress > .liquid-progress::after { display: none; }
+html[data-theme='dark'] .marketplace-order-progress :is(.is-current, .is-done) > span { color: #fff; }
+/* With liquid, reached steps are drawn by the liquid itself; the number floats on top. */
+.marketplace-order-progress.has-liquid :is(.is-current, .is-done) > span {
+  border-color: transparent;
+  background: transparent;
+  color: #fff;
+  text-shadow: 0 1px 2px #0005;
+}
+.marketplace-order-progress.has-liquid > div:not(.liquid-progress) > span { border-style: dashed; }
+@media (forced-colors: active) {
+  .marketplace-order-progress.has-liquid :is(.is-current, .is-done) > span { border-color: CanvasText; background: Canvas; color: CanvasText; }
+}
+
+/* Order header: a brighter shop mark and readable dark-mode labels. */
+.marketplace-order-group__header .marketplace-store-avatar {
+  background: linear-gradient(135deg, #14b8a6, #22c55e 60%, #f5a524);
+  color: #fff;
+  text-shadow: 0 1px 2px #0004;
+}
+html[data-theme='dark'] .marketplace-order-group__header span:not(.marketplace-order-status-pill) { color: #8fe3c6; }
+html[data-theme='dark'] .marketplace-order-status-pill { background: #14b8a62e; color: #b5f0e4 !important; }

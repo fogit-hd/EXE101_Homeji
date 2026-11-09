@@ -1,4 +1,5 @@
-import { useId, useLayoutEffect, useRef } from 'react'
+import { useCallback, useId, useLayoutEffect, useRef } from 'react'
+import { attachPointerSpot } from '../../motion/pointerSpot'
 import { Sk } from '../../skeletons/Skeleton'
 import type { MarketplacePost } from '../../../api'
 import { formatPrice } from '../../../lib/labels'
@@ -92,6 +93,8 @@ export function FoodMarketplaceView({
   onSelectKitchen,
 }: Props) {
   const cartDialogRef = useRef<HTMLDialogElement>(null)
+  // Dot cards: the hovered card lights the dots under the pointer.
+  const dotSpotRef = useCallback((node: HTMLDivElement | null) => node ? attachPointerSpot(node, '.food-card') : undefined, [])
   const cartTitleId = useId()
   const cartDialogId = useId()
   useLayoutEffect(() => {
@@ -179,7 +182,7 @@ export function FoodMarketplaceView({
             <p>Thử đổi bộ lọc, từ khóa, hoặc bật định vị để xem bếp gần bạn.</p>
           </div>
         ) : (
-          <div className="food-seller-list">
+          <div ref={dotSpotRef} className="food-seller-list">
             {sellerGroups.map((seller) => (
               <section key={seller.sellerId} className="food-seller" aria-label={`Thực đơn ${seller.sellerName}`}>
                 <header className="food-seller__header">

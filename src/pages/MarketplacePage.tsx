@@ -107,6 +107,7 @@ import { announceSellerOrdersChanged, SELLER_ORDERS_SNAPSHOT } from '../lib/sell
 import { formatWalletAmount, parseWalletTab, readDepositReturn } from '../lib/walletMoney'
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
 import { withdrawalAttempt } from '../lib/withdrawalRequest'
+import { LiquidProgressLayer } from '../components/motion/LiquidProgressLayer'
 import './MarketplacePage.css'
 
 const TAB_MOTION_ORDER: readonly MarketplaceTab[] = ['food', 'browse', 'purchases', 'mine', 'sell', 'sales', 'wallet']
@@ -2141,7 +2142,8 @@ export function MarketplacePage({
                     </header>
 
                     {progressStep != null ? (
-                      <div className="marketplace-order-progress" aria-label={happyPathComplete ? 'Tiến trình đơn hàng: hoàn tất' : `Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
+                      <div className="marketplace-order-progress has-liquid" aria-label={happyPathComplete ? 'Tiến trình đơn hàng: hoàn tất' : `Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
+                        <LiquidProgressLayer total={ORDER_STEPS.length} current={progressStep - 1} complete={happyPathComplete} />
                         {ORDER_STEPS.map((label, index) => {
                           const step = index + 1
                           const done = happyPathComplete || step < progressStep

@@ -8,6 +8,8 @@ const RATES = { card: 18, echo1: 9, echo2: 5 }
 const SETTLED = .002
 
 export function attachTraceTilt(container: HTMLElement, itemSelector: string) {
+  // Decoration only: environments without media queries get none.
+  if (typeof matchMedia !== 'function') return () => {}
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)')
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
   const traces = new Map<HTMLElement, Trace>()

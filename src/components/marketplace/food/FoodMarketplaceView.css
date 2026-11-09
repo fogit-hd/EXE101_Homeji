@@ -1324,3 +1324,88 @@ html[data-theme='dark'] #root .marketplace-page--food { --glass-panel: rgb(29 48
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
   html[data-theme='dark'] #root .marketplace-page--food { --glass-panel: var(--surface-elevated); --glass-panel-filter: none; }
 }
+
+/* ── Dot cards: a quiet dot field that lights up in colour around the pointer ── */
+.food-card { position: relative; isolation: isolate; --dot-ink: #1f8f86; --dot-size: 9px; }
+.food-card > * { position: relative; z-index: 1; }
+.food-card::before,
+.food-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* Resting field: teal-to-coral dots fading in from the right. */
+.food-card::before {
+  background: linear-gradient(120deg, #14b8a6, #22c55e 45%, #f5a524 75%, #ff7a59);
+  -webkit-mask:
+    radial-gradient(circle, #000 1.05px, #0000 1.55px) 4px 4px / var(--dot-size) var(--dot-size),
+    linear-gradient(105deg, #0000 22%, #0006 62%, #000c);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle, #000 1.05px, #0000 1.55px) 4px 4px / var(--dot-size) var(--dot-size),
+    linear-gradient(105deg, #0000 22%, #0006 62%, #000c);
+  mask-composite: intersect;
+  opacity: .32;
+  transition: opacity 260ms ease;
+}
+/* Spotlight: bigger dots in a warm-to-cool bloom that follows the pointer. */
+.food-card::after {
+  background: radial-gradient(circle 150px at var(--spot-x, -300px) var(--spot-y, -300px), #ff5f6d 0, #ff9f43 22%, #ffd93d 38%, #4ade80 56%, #22d3ee 74%, #a78bfa 92%, #a78bfa00 100%);
+  -webkit-mask:
+    radial-gradient(circle, #000 1.9px, #0000 2.4px) 4px 4px / var(--dot-size) var(--dot-size),
+    radial-gradient(circle 150px at var(--spot-x, -300px) var(--spot-y, -300px), #000 0, #000a 55%, #0000 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle, #000 1.9px, #0000 2.4px) 4px 4px / var(--dot-size) var(--dot-size),
+    radial-gradient(circle 150px at var(--spot-x, -300px) var(--spot-y, -300px), #000 0, #000a 55%, #0000 100%);
+  mask-composite: intersect;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.food-card[data-spot]::before { opacity: .55; }
+.food-card[data-spot]::after { opacity: 1; animation: food-dot-pulse 1.8s ease-in-out infinite; }
+.food-card[data-spot] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface-elevated), var(--surface-elevated)) padding-box,
+    linear-gradient(120deg, #14b8a6, #22c55e, #f5a524, #ff7a59) border-box;
+  box-shadow: 0 14px 34px #ff7a5926, 0 4px 12px #14b8a61f;
+}
+@keyframes food-dot-pulse { 0%, 100% { filter: saturate(1) brightness(1); } 50% { filter: saturate(1.35) brightness(1.12); } }
+
+/* Dishes without a photo get a dotted plate instead of plain text. */
+.food-card__empty {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 46%, #fff7ec 0 30%, #ffe9d6 31% 44%, #fff 45% 100%);
+  color: #b2552f;
+  font-size: 0 !important;
+}
+.food-card__empty::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: conic-gradient(from 210deg, #ff7a59, #f5a524, #22c55e, #14b8a6, #ff7a59);
+  -webkit-mask:
+    radial-gradient(circle, #000 1.3px, #0000 1.8px) 0 0 / 6px 6px,
+    radial-gradient(circle, #0000 0 34%, #000 35% 62%, #0000 63%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle, #000 1.3px, #0000 1.8px) 0 0 / 6px 6px,
+    radial-gradient(circle, #0000 0 34%, #000 35% 62%, #0000 63%);
+  mask-composite: intersect;
+}
+.food-card__empty::after {
+  content: '🍜';
+  position: relative;
+  font-size: 26px;
+  filter: drop-shadow(0 2px 3px #b2552f40);
+}
+html[data-theme='dark'] .food-card__empty { background: radial-gradient(circle at 50% 46%, #3a2c26 0 30%, #33261f 31% 44%, #1d2f36 45% 100%); }
+@media (prefers-reduced-motion: reduce) { .food-card[data-spot]::after { animation: none; } }
+@media (hover: none), (forced-colors: active) { .food-card::after { display: none; } .food-card::before { opacity: .2; } }
+@media (forced-colors: active) { .food-card::before { display: none; } }

@@ -10,6 +10,9 @@ import { GUEST_SEARCH_EVENT, navigateGuestLanding } from './guestLandingNav'
 import { matchesRentalPropertyCategory } from '../../lib/rentalPropertyCategory'
 import './GuestListingPreview.css'
 import { attachTraceTilt } from '../motion/traceTilt'
+import { ActionWheel, type WheelAction } from '../motion/ActionWheel'
+import { useHoldWheel } from '../motion/useHoldWheel'
+import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { matchesListingText } from '../../lib/searchQuery'
 import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
@@ -19,6 +22,15 @@ function Arrow({ previous = false }: { previous?: boolean }) {
     <path d={previous ? 'M19 12H5m6 6-6-6 6-6' : 'M5 12h14m-6-6 6 6-6 6'} />
   </svg>
 }
+
+const icon = (path: string) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{path.split('|').map(d => <path key={d} d={d} />)}</svg>
+const WHEEL_ACTIONS: readonly WheelAction[] = [
+  { label: 'Xem chi tiết', tone: '#14b8a6', icon: icon('M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z|M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z') },
+  { label: 'Chỉ đường', tone: '#ff7a59', icon: icon('M3 11 21 3l-8 18-2-8-8-2Z') },
+  { label: 'Bản đồ', tone: '#22c55e', icon: icon('M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z|M9 4v14|M15 6v14') },
+  { label: 'Chia sẻ', tone: '#8b5cf6', icon: icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7|M12 3v12|m7 8 5-5 5 5') },
+]
+const itemKey = (item: PreviewItem) => `${item.kind}-${item.data.id}`
 
 type PreviewItem = { kind: 'post'; data: RentalPostSummary } | { kind: 'source'; data: RentalSourceListing }
 const BUDGETS = [
@@ -75,6 +87,39 @@ export function GuestListingPreview() {
       && (budget === 'all' || data.price > 0 && (budget === 'low' ? data.price < 3_000_000 : budget === 'mid' ? data.price >= 3_000_000 && data.price <= 5_000_000 : data.price > 5_000_000))
   })
   const shown = filtered.slice(0, visibleCount)
+  const [shareNote, setShareNote] = useState('')
+  useEffect(() => {
+    if (!shareNote) return
+    const timer = window.setTimeout(() => setShareNote(''), 2400)
+    return () => window.clearTimeout(timer)
+  }, [shareNote])
+  const runAction = (key: string, index: number) => {
+    const item = shown.find(candidate => itemKey(candidate) === key)
+    if (!item) return
+    const { data } = item
+    if (index === 0) {
+      if (item.kind === 'post') setSelected(item.data)
+      else setSelectedSource(item.data)
+    } else if (index === 1) {
+      const hasPoint = data.latitude != null && data.longitude != null && (data.latitude !== 0 || data.longitude !== 0)
+      const destination = hasPoint ? `${data.latitude},${data.longitude}` : data.address || data.title
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank', 'noopener,noreferrer')
+    } else if (index === 2) {
+      navigateGuestLanding('map')
+    } else {
+      const url = item.kind === 'post' ? new URL(mapPostUrl(item.data.id), location.origin).href : rentalSourceHref(item.data.sourceUrl) ?? location.href
+      if (navigator.share) {
+        void navigator.share({ title: data.title, url }).catch(() => { /* The visitor closed the share sheet. */ })
+      } else {
+        void navigator.clipboard?.writeText(url).then(() => setShareNote('Đã sao chép liên kết phòng'), () => setShareNote('Không sao chép được liên kết'))
+      }
+    }
+  }
+  const { wheel, bind, close, choose } = useHoldWheel(
+    element => element.closest<HTMLElement>('.guest-preview__rail > li[data-wheel-key]')?.dataset.wheelKey ?? null,
+    WHEEL_ACTIONS.length,
+    runAction,
+  )
 
   return <section className="guest-preview" id="listings" aria-labelledby="guest-featured-title">
     <div className="guest-preview__inner">
@@ -100,13 +145,13 @@ export function GuestListingPreview() {
       </div>
       <p className="guest-preview__note">Giá và thông tin theo tin đăng. Hãy xác nhận lại với người đăng.</p>
       {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
-      <ul ref={rail} className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading}>
+      <ul ref={rail} {...bind} className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading}>
         {loading ? Array.from({ length: 8 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
           const data = item.data
           const isSource = item.kind === 'source'
           const photos = item.kind === 'source' ? item.data.imageUrls.map(rentalSourceImageHref).filter((url): url is string => Boolean(url)) : item.data.thumbnailPath ? [item.data.thumbnailPath] : []
           const basis = item.kind === 'post' ? rentalPriceBasis(item.data) : 'unknown'
-          return <li key={`${item.kind}-${data.id}`}>
+          return <li key={itemKey(item)} data-wheel-key={itemKey(item)}>
             <article className="guest-preview__card" data-glass-exclude>
               <button type="button" className="guest-preview__card-open" aria-label={`Xem ${isSource ? 'tin phòng' : 'phòng'}: ${data.title}`} onClick={() => item.kind === 'post' ? setSelected(item.data) : setSelectedSource(item.data)}>
                 <span className="guest-preview__photo">
@@ -131,6 +176,9 @@ export function GuestListingPreview() {
       {!loading && !filtered.length ? <p className="guest-preview__state">{items.length ? 'Chưa có tin khớp. Thử từ khóa, loại chỗ ở hoặc khoảng giá khác.' : 'Chưa có tin để hiển thị. Bạn có thể xem khu vực trên bản đồ.'}</p> : null}
       {!loading && shown.length < filtered.length ? <div className="guest-preview__more"><button type="button" onClick={() => setVisibleCount(count => count + 8)}>Xem thêm {Math.min(8, filtered.length - shown.length)} phòng <Arrow /></button></div> : null}
       {loading ? <span className="guest-preview__sr-only" role="status">Đang tải danh sách phòng…</span> : null}
+      <p className="guest-preview__hint">Mẹo: nhấn giữ một phòng để mở nhanh chỉ đường, bản đồ hoặc chia sẻ.</p>
+      <span className="guest-preview__share-note" role="status" data-visible={shareNote ? '' : undefined}>{shareNote}</span>
+      {wheel ? <ActionWheel {...wheel} title={`Thao tác nhanh: ${shown.find(item => itemKey(item) === wheel.target)?.data.title ?? 'phòng'}`} actions={WHEEL_ACTIONS} onSelect={choose} onClose={close} /> : null}
     </div>
     {selected ? <GuestRoomPreview key={selected.id} id={selected.id} onClose={() => setSelected(null)} /> : null}
     {selectedSource ? <GuestSourcePreview key={selectedSource.id} listing={selectedSource} onClose={() => setSelectedSource(null)} /> : null}
