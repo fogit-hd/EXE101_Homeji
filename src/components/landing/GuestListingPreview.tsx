@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RentalPostType, searchRentalPosts, type RentalPostSummary } from '../../api'
 import { rentalPriceBasis } from '../ai/rentalPriceBasis'
 import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
@@ -9,6 +9,7 @@ import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from './guestCo
 import { GUEST_SEARCH_EVENT, navigateGuestLanding } from './guestLandingNav'
 import { matchesRentalPropertyCategory } from '../../lib/rentalPropertyCategory'
 import './GuestListingPreview.css'
+import { attachTraceTilt } from '../motion/traceTilt'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { matchesListingText } from '../../lib/searchQuery'
 import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
@@ -39,6 +40,8 @@ export function GuestListingPreview() {
   const [selectedSource, setSelectedSource] = useState<RentalSourceListing | null>(null)
   const [keyword, setKeyword] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const rail = useRef<HTMLUListElement>(null)
+  useEffect(() => rail.current ? attachTraceTilt(rail.current, '.guest-preview__rail > li') : undefined, [])
   const searchPlaceholder = useStreetSearchPlaceholder(!searchFocused && !keyword.trim(), 'Tìm theo đường, khu vực hoặc tiện ích')
 
   useEffect(() => {
@@ -97,7 +100,7 @@ export function GuestListingPreview() {
       </div>
       <p className="guest-preview__note">Giá và thông tin theo tin đăng. Hãy xác nhận lại với người đăng.</p>
       {error ? <div className="guest-preview__state" role="alert"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Thử lại</button></div> : null}
-      <ul className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading}>
+      <ul ref={rail} className="guest-preview__rail" aria-label="Danh sách phòng" aria-busy={loading}>
         {loading ? Array.from({ length: 8 }, (_, index) => <li key={index} className="guest-preview__skeleton" aria-hidden="true"><div /><span /><span /></li>) : shown.map(item => {
           const data = item.data
           const isSource = item.kind === 'source'

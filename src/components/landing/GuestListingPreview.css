@@ -108,3 +108,43 @@
 .guest-preview__search input::-webkit-search-cancel-button{-webkit-appearance:none}
 
 button.guest-preview__explore { border: 0; background: none; font: inherit; cursor: pointer; min-height: 44px; }
+
+/* Trace cards: a fine pointer tilts the card; two glowing echoes trail behind it. */
+.guest-preview__rail > li { position: relative; isolation: isolate; perspective: 1000px; }
+.guest-preview__rail > li[data-trace] .guest-preview__card {
+  position: relative;
+  z-index: 2;
+  transform: rotateX(calc(var(--trace-y, 0) * -5deg)) rotateY(calc(var(--trace-x, 0) * 6deg)) translateZ(0);
+  box-shadow: calc(var(--trace-x, 0) * -10px) calc(12px + var(--trace-y, 0) * -8px) 30px #173e351f;
+  will-change: transform;
+}
+.guest-preview__rail > li::before,
+.guest-preview__rail > li::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+.guest-preview__rail > li::before {
+  z-index: 1;
+  border: 1.5px solid #28b6b8;
+  box-shadow: 0 0 18px #28b6b866, inset 0 0 12px #28b6b833;
+  transform: translate(calc(var(--trace-e1x, 0) * 26px), calc(var(--trace-e1y, 0) * 22px)) rotateX(calc((var(--trace-y, 0) + var(--trace-e1y, 0)) * -5deg)) rotateY(calc((var(--trace-x, 0) + var(--trace-e1x, 0)) * 6deg));
+}
+.guest-preview__rail > li::after {
+  z-index: 0;
+  border: 1.5px solid #ff8a6b;
+  box-shadow: 0 0 22px #ff8a6b55;
+  transform: translate(calc(var(--trace-e2x, 0) * 44px), calc(var(--trace-e2y, 0) * 38px)) rotateX(calc((var(--trace-y, 0) + var(--trace-e2y, 0)) * -5deg)) rotateY(calc((var(--trace-x, 0) + var(--trace-e2x, 0)) * 6deg));
+}
+.guest-preview__rail > li[data-trace]::before { opacity: .85; }
+.guest-preview__rail > li[data-trace]::after { opacity: .6; }
+html[data-theme='dark'] .guest-preview__rail > li::before { border-color: #72d6d9; box-shadow: 0 0 20px #72d6d988, inset 0 0 14px #72d6d933; }
+html[data-theme='dark'] .guest-preview__rail > li::after { border-color: #ffaf97; box-shadow: 0 0 24px #ffaf9777; }
+@media (prefers-reduced-motion: reduce), (hover: none), (forced-colors: active) {
+  .guest-preview__rail > li::before, .guest-preview__rail > li::after { display: none; }
+  .guest-preview__rail > li[data-trace] .guest-preview__card { transform: none; }
+}
