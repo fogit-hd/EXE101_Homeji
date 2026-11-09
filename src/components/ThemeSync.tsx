@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { ThemeContext } from '../contexts/ThemeContext'
 import { applyTheme, currentTheme, savedTheme, THEME_KEY, type Theme } from '../lib/theme'
 import { ThemeSwitch } from './theme/ThemeSwitch'
-import { themeDrop } from './theme/themeDrop'
+import { fadeTheme } from './theme/themeFade'
 import './theme/theme.css'
 
 export function ThemeSync({ children }: { children?: ReactNode }) {
@@ -29,7 +29,7 @@ export function ThemeSync({ children }: { children?: ReactNode }) {
       window.removeEventListener('storage', onStorage)
     }
   }, [])
-  const toggle = async (element: HTMLElement) => {
+  const toggle = async () => {
     if (running.current) return
     const controller = new AbortController()
     running.current = controller
@@ -39,7 +39,7 @@ export function ThemeSync({ children }: { children?: ReactNode }) {
       if (controller.signal.aborted) return
       flushSync(() => { applyTheme(next, true); setTheme(next) })
     }
-    try { await themeDrop(next, element.getBoundingClientRect(), commit, controller.signal) }
+    try { await fadeTheme(next, commit, controller.signal) }
     catch { if (!controller.signal.aborted) commit() }
     finally {
       if (running.current === controller) running.current = null
