@@ -70,7 +70,9 @@ try {
 
     async function record(button) {
       await page.getByRole('button', { name: button, exact: true }).click()
-      await page.waitForFunction(() => document.querySelector('[role="timer"]')?.textContent?.startsWith('0:01'))
+      await page.waitForFunction(() => /^00:0[1-9]$/.test(document.querySelector('.glass-voice [role="timer"]')?.textContent ?? ''))
+      const shape = await page.locator('.glass-voice').boundingBox()
+      assert.ok(shape && Math.abs(shape.width / shape.height - 268 / 82) < .025, 'Recorder expands to the reference capsule ratio')
       await page.getByRole('button', { name: 'Dừng ghi', exact: true }).click()
     }
     assert.equal(await page.getByRole('button', { name: 'Nói thành chữ', exact: true }).count(), 0)
