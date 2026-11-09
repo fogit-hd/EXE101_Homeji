@@ -57,16 +57,17 @@ html body #root button.theme-switch:focus-visible {
 html body #root button.theme-switch--floating { position: fixed; z-index: 60; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); }
 body:has(.hj-header) #root .theme-switch--floating { display: none; }
 .guest-hero__top { padding-right: 96px; }
-.theme-water-layer { position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; overflow: hidden; }
-.theme-water-drop { position: absolute; top: 0; width: 26px; height: 29px; border-radius: 48% 48% 50% 50%; background: var(--drop-color); box-shadow: inset 3px 2px 5px #ffffff50, 0 2px 8px #0002; will-change: transform; }
-.theme-water-drop::after { content: ''; position: absolute; left: 6px; top: 5px; width: 4px; height: 9px; border-radius: 50%; background: #ffffff70; rotate: 25deg; }
-.theme-water-wave { position: absolute; border-radius: 50%; background: var(--drop-color); transform-origin: center; will-change: transform, opacity; }
+.theme-fade-layer { position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; background: #f3f7fa; }
+.theme-fade-layer[data-target='dark'] { background: #10212b; }
 /* The browser's snapshot overlay is decorative too; controls remain clickable. */
 html[data-theme-transition]::view-transition { pointer-events: none; }
-html[data-theme-transition]::view-transition-old(root), html[data-theme-transition]::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-html[data-theme-transition]::view-transition-image-pair(root) { isolation: auto; }
-html[data-theme-transition]::view-transition-old(root) { z-index: 1; }
-html[data-theme-transition]::view-transition-new(root) { z-index: 2; }
+html[data-theme-transition]::view-transition-group(root) { animation: none; }
+html[data-theme-transition]::view-transition-old(root) { animation: none; mix-blend-mode: normal; }
+html[data-theme-transition]::view-transition-new(root) {
+  animation: theme-fade-in 640ms ease-in-out both;
+  mix-blend-mode: normal;
+}
+@keyframes theme-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 767px) {
   html body #root button.theme-switch { width: 68px; min-width: 68px; flex-basis: 68px; }
   .guest-hero__top { padding-right: 84px; }
