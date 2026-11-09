@@ -8,7 +8,7 @@ import './theme/theme.css'
 
 export function ThemeSync({ children }: { children?: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(currentTheme)
-  const [busy, setBusy] = useState(false)
+  const [pendingTheme, setPendingTheme] = useState<Theme | null>(null)
   const running = useRef<AbortController | null>(null)
   useLayoutEffect(() => { applyTheme(theme) }, [theme])
   useEffect(() => {
@@ -18,7 +18,7 @@ export function ThemeSync({ children }: { children?: ReactNode }) {
       const next = savedTheme() ?? (preference.matches ? 'dark' : 'light')
       applyTheme(next)
       setTheme(next)
-      setBusy(false)
+      setPendingTheme(null)
     }
     const onStorage = (event: StorageEvent) => { if (event.key === THEME_KEY || event.key === null) sync() }
     preference.addEventListener('change', sync)
@@ -33,8 +33,8 @@ export function ThemeSync({ children }: { children?: ReactNode }) {
     if (running.current) return
     const controller = new AbortController()
     running.current = controller
-    setBusy(true)
     const next = theme === 'dark' ? 'light' : 'dark'
+    setPendingTheme(next)
     const commit = () => {
       if (controller.signal.aborted) return
       flushSync(() => { applyTheme(next, true); setTheme(next) })
@@ -43,11 +43,11 @@ export function ThemeSync({ children }: { children?: ReactNode }) {
     catch { if (!controller.signal.aborted) commit() }
     finally {
       if (running.current === controller) running.current = null
-      if (!controller.signal.aborted) setBusy(false)
+      if (!controller.signal.aborted) setPendingTheme(null)
     }
   }
-  return <ThemeContext.Provider value={{ theme, busy, toggle }}>
+  return <ThemeContext.Provider value={{ theme, pendingTheme, toggle }}>
     {children}<ThemeSwitch floating />
-    <span className="sr-only" role="status">{busy ? 'Đang chuyển giao diện' : theme === 'dark' ? 'Đã bật giao diện tối' : 'Đã bật giao diện sáng'}</span>
+    <span className="sr-only" role="status">{pendingTheme ? 'Đang chuyển giao diện' : theme === 'dark' ? 'Đã bật giao diện tối' : 'Đã bật giao diện sáng'}</span>
   </ThemeContext.Provider>
 }
