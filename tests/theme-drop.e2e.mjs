@@ -90,6 +90,21 @@ try {
   await control().press('Enter')
   await settle('dark')
   result.checks.push('Drag previews the lens, snaps back below the midpoint and commits past it')
+  const brightness=()=>art.evaluate(canvas=>{const d=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let sum=0,n=0;for(let i=0;i<d.length;i+=16){if(d[i+3]<8)continue;sum+=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])*d[i+3]/255;n++}return sum/n})
+  // The header can shift the switch after the drags above, so measure it again.
+  const hoverBounds=await control().boundingBox()
+  const hoverY=hoverBounds.y+hoverBounds.height/2
+  await page.mouse.move(5,hoverY+300);await page.waitForTimeout(300)
+  const resting=await brightness()
+  await page.mouse.move(hoverBounds.x+hoverBounds.width*.15,hoverY);await page.waitForTimeout(300)
+  const towardMoon=await brightness()
+  await page.mouse.move(hoverBounds.x+hoverBounds.width*.85,hoverY,{steps:4});await page.waitForTimeout(300)
+  const towardSun=await brightness()
+  assert.ok(towardSun>towardMoon+15,`Hovering toward the sun brightens the switch: moon ${towardMoon}, sun ${towardSun}`)
+  await page.mouse.move(5,hoverY+300);await page.waitForTimeout(300)
+  assert.ok(Math.abs(await brightness()-resting)<1,'Leaving restores the resting light')
+  await settle('dark')
+  result.checks.push('Hover leans the light toward the pointer without changing the theme')
   for(const section of ['profile','activities','payments','marketplace']){
     await page.setViewportSize({width:1440,height:844})
     await page.goto(base+'/?section='+section+(section==='profile'?'&profileTab=basic':''))

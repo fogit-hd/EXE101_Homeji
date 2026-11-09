@@ -7,6 +7,13 @@ import { THEME_FADE_MS, themeFadeEase } from './themeFade'
 /** A timed move of the lens that runs alongside the page fade. */
 type Tween = { from: number, to: number, start: number }
 
+/**
+ * How far the lens leans toward a hovering mouse, as a share of the way to the pointer. The artwork's
+ * light follows the lens, so the switch brightens toward the sun and dims toward the moon without
+ * changing the theme until a click.
+ */
+const HOVER_LEAN = .45
+
 type Drag = {
   id: number
   startX: number
@@ -29,6 +36,8 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
     position: target, target, velocity: 0, orbit: target ? -Math.PI / 2 : Math.PI / 2,
     direction: target ? -1 : 1, hover: 0, energy: 0, scrub: null as number | null,
     tween: null as Tween | null,
+    /** Where a hovering mouse sits along the lens travel, 0 at the moon end and 1 at the sun end. */
+    pointer: null as number | null,
   })
   const refresh = useRef(() => {})
 
@@ -59,7 +68,8 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
       frame = 0
       const elapsed = previous ? Math.min((time - previous) / 1000, .032) : 1 / 60
       previous = time
-      const destination = state.scrub ?? state.target
+      const destination = state.scrub
+        ?? (state.pointer === null ? state.target : state.target + (state.pointer - state.target) * HOVER_LEAN)
       if (state.scrub !== null || reduced.matches) {
         state.tween = null
         state.position = destination
@@ -161,6 +171,7 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
     const center = bounds.left + bounds.width / 2 + (startPosition - .5) * travel
     if (Math.abs(event.clientX - center) > lensWidth / 2) return
     motion.current.direction = dark ? 1 : -1
+    motion.current.pointer = null
     drag.current = {
       id: event.pointerId, startX: event.clientX, startPosition, travel, moved: false,
     }
@@ -168,7 +179,11 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
   }
   const move = (event: PointerEvent<HTMLButtonElement>) => {
     const gesture = drag.current
-    if (!gesture || gesture.id !== event.pointerId || !gesture.travel) return
+    if (!gesture) {
+      if (event.pointerType === 'mouse') lean(event)
+      return
+    }
+    if (gesture.id !== event.pointerId || !gesture.travel) return
     const dx = event.clientX - gesture.startX
     if (!gesture.moved && Math.abs(dx) < 4) return
     gesture.moved = true
@@ -190,6 +205,15 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
   }
   const hover = (value: number) => {
     motion.current.hover = value
+    if (!value) motion.current.pointer = null
+    refresh.current()
+  }
+  /** Leans the lens, and with it the light, toward wherever the mouse is along the track. */
+  const lean = (event: PointerEvent<HTMLButtonElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const travel = bounds.width * GLASS_TRACK.travel / GLASS_TRACK.width
+    if (!travel) return
+    motion.current.pointer = clamp((event.clientX - bounds.left - (bounds.width - travel) / 2) / travel)
     refresh.current()
   }
 
