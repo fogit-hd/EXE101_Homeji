@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
-
+/* Font Be Vietnam Pro được nạp qua <link> trong index.html để preload scanner
+   thấy ngay, thay vì @import chặn render sau khi CSS bundle tải xong. */
 :root {
   --font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   /* ── Homeji product tokens (logged-in, desktop #19323b sidebar) ── */
