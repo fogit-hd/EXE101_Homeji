@@ -1053,6 +1053,7 @@ export interface UserActivity {
 
 export interface ApiError {
   code?: string
+  captchaSiteKey?: string
   title?: string
   detail?: string
   status?: number

@@ -5,3 +5,6 @@
 .confirm-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .confirm-dialog__actions .btn { min-height: 44px; }
 @media (max-width: 480px) { .confirm-dialog__actions { flex-direction: column-reverse; } .confirm-dialog__actions .btn { width: 100%; } }
+.chatbot-captcha-overlay { position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center; background: rgb(9 29 46 / 45%); overflow: auto; }
+.chatbot-captcha-overlay .confirm-dialog { position: static; margin: 16px; }
+.chatbot-captcha-widget { display: grid; justify-content: center; margin-top: 16px; }

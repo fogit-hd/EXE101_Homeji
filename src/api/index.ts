@@ -2,9 +2,9 @@ import { resultCountBucket, type FunnelEvent } from '../lib/analyticsPolicy'
 import { rentalScenarioSnapshot } from '../lib/rentalJourney'
 import { foodCriteriaSnapshot } from '../lib/foodChatIntent'
 import type { ChatbotAttachment } from '../lib/chatbotMedia'
-import { chatbotRecaptchaHeaders } from '../lib/chatbotRecaptcha'
+import { chatbotRecaptchaHeaders, requestChatbotCaptcha, type ChatbotAction } from '../lib/chatbotRecaptcha'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
-import { AI_REQUEST_TIMEOUT_MS, apiDownload, apiRequest, apiUpload, mayHaveSession } from './client'
+import { AI_REQUEST_TIMEOUT_MS, ApiRequestError, apiDownload, apiRequest, apiUpload, mayHaveSession } from './client'
 import type {
   AccountMessage,
   AdminActiveUser,
@@ -374,37 +374,43 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-export const transcribeChatbotAudio = async (audio: ChatbotAttachment, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
-  apiRequest<{ text: string }>('/api/chatbot/transcriptions', {
-    method: 'POST', body: { audio }, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS,
-    headers: recaptchaSiteKey ? await chatbotRecaptchaHeaders(recaptchaSiteKey, 'chatbot_transcription', signal) : undefined,
-  })
+async function postChatbot<T>(path: string, action: ChatbotAction, body: unknown, signal?: AbortSignal, siteKey?: string | null) {
+  const send = (headers?: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'POST', body, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS, headers })
+  const headers = siteKey ? await chatbotRecaptchaHeaders(siteKey, action, signal) : undefined
+  try {
+    return await send(headers)
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || error.status !== 403 ||
+      error.body.code !== 'chatbot_captcha_required' || typeof error.body.captchaSiteKey !== 'string' ||
+      !error.body.captchaSiteKey) throw error
+    const token = await requestChatbotCaptcha(error.body.captchaSiteKey, signal)
+    return send({ 'X-Homeji-Recaptcha': token })
+  }
+}
 
-export const sendChatbotMessage = async (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
-  apiRequest<ChatbotReply>('/api/chatbot/messages', {
-    timeoutMs: AI_REQUEST_TIMEOUT_MS,
-    method: 'POST',
-    signal,
-    headers: recaptchaSiteKey ? await chatbotRecaptchaHeaders(recaptchaSiteKey, 'chatbot_message', signal) : undefined,
-    body: {
-      message: data.message,
-      ...(data.location ? { location: data.location } : {}),
-      ...(data.postingAgent ? { postingAgent: true } : {}),
-      ...(data.agentDraftId ? { agentDraftId: data.agentDraftId } : {}),
-      ...(data.sessionMessages ? { sessionMessages: data.sessionMessages.slice(-6).map(row => ({ ...row, content: row.content.slice(0, 1000) })) } : {}),
-      ...(data.attachments?.length ? { attachments: data.attachments.map(({ mimeType, data }) => ({ mimeType, data })) } : {}),
-      saveHistory: data.saveHistory === true,
-      ...(data.foodContext ? { foodContext: { latitude: data.foodContext.latitude, longitude: data.foodContext.longitude, radiusKm: data.foodContext.radiusKm } } : {}),
-      ...(data.previousFoodCriteria ? { previousFoodCriteria: foodCriteriaSnapshot(data.previousFoodCriteria) } : {}),
-      ...(data.rentalContext ? { rentalContext: { postId: data.rentalContext.postId, ...(data.rentalContext.task ? { task: data.rentalContext.task } : {}) } } : {}),
-      ...(data.rentalSelection ? { rentalSelection: { postIds: [...data.rentalSelection.postIds],
-        ...(data.rentalSelection.task ? { task: data.rentalSelection.task } : {}),
-        ...(data.rentalSelection.scenario ? { scenario: rentalScenarioSnapshot(data.rentalSelection.scenario) } : {}),
-      } } : {}),
-      ...(data.previousCriteria ? { previousCriteria: data.previousCriteria } : {}),
-      ...(data.conversationId ? { conversationId: data.conversationId } : {}),
-    },
-  })
+export const transcribeChatbotAudio = (audio: ChatbotAttachment, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
+  postChatbot<{ text: string }>('/api/chatbot/transcriptions', 'chatbot_transcription', { audio }, signal, recaptchaSiteKey)
+
+export const sendChatbotMessage = (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
+  postChatbot<ChatbotReply>('/api/chatbot/messages', 'chatbot_message', {
+    message: data.message,
+    ...(data.location ? { location: data.location } : {}),
+    ...(data.postingAgent ? { postingAgent: true } : {}),
+    ...(data.agentDraftId ? { agentDraftId: data.agentDraftId } : {}),
+    ...(data.sessionMessages ? { sessionMessages: data.sessionMessages.slice(-6).map(row => ({ ...row, content: row.content.slice(0, 1000) })) } : {}),
+    ...(data.attachments?.length ? { attachments: data.attachments.map(({ mimeType, data }) => ({ mimeType, data })) } : {}),
+    saveHistory: data.saveHistory === true,
+    ...(data.foodContext ? { foodContext: { latitude: data.foodContext.latitude, longitude: data.foodContext.longitude, radiusKm: data.foodContext.radiusKm } } : {}),
+    ...(data.previousFoodCriteria ? { previousFoodCriteria: foodCriteriaSnapshot(data.previousFoodCriteria) } : {}),
+    ...(data.rentalContext ? { rentalContext: { postId: data.rentalContext.postId, ...(data.rentalContext.task ? { task: data.rentalContext.task } : {}) } } : {}),
+    ...(data.rentalSelection ? { rentalSelection: { postIds: [...data.rentalSelection.postIds],
+      ...(data.rentalSelection.task ? { task: data.rentalSelection.task } : {}),
+      ...(data.rentalSelection.scenario ? { scenario: rentalScenarioSnapshot(data.rentalSelection.scenario) } : {}),
+    } } : {}),
+    ...(data.previousCriteria ? { previousCriteria: data.previousCriteria } : {}),
+    ...(data.conversationId ? { conversationId: data.conversationId } : {}),
+  }, signal, recaptchaSiteKey)
 
 // Upload
 export const uploadImages = (files: File[], folder?: string) => {
