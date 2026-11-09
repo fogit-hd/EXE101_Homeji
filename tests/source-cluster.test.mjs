@@ -32,7 +32,7 @@ await act(async()=>root.unmount());assert.equal(entries.length,0)
 console.log('PASS 17 sources join shared clusters, remain non-VIP, open correct details and clean up')
 
 let selectedPin
-function SharedScene(){useSourceCatalogMap(mapRef,libraryRef,true,true,{marketplace:false,vacant:true},'price-pill',onChange,pin=>{selectedPin=pin});return null}
+function SharedScene(){useSourceCatalogMap(mapRef,libraryRef,true,false,{marketplace:false,vacant:true},'price-pill',onChange,pin=>{selectedPin=pin},pins);return null}
 const sharedRoot=createRoot(document.getElementById('root'))
 await act(async()=>{sharedRoot.render(React.createElement(SharedScene));await new Promise(resolve=>setTimeout(resolve,0))})
 entries[16].marker.dispatchEvent(new Event('gmp-click'));assert.equal(selectedPin.id,pins[16].id)
@@ -40,4 +40,4 @@ const retiredMarker=entries[16].marker
 assert.equal(selectedPin.title,pins[16].title)
 await act(async()=>sharedRoot.unmount())
 selectedPin=null;retiredMarker.dispatchEvent(new Event('gmp-click'));assert.equal(selectedPin,null,'Unmount removes DOM marker listeners')
-console.log('PASS source cluster selection delegates to shared React preview')
+console.log('PASS guest-supplied source pins join clusters and open the shared React preview')

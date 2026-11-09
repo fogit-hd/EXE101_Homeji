@@ -27,7 +27,7 @@ function disposeCatalogMarker(handle: OwnedCatalogMarker) {
   handle.dispose()
 }
 
-export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void, onSelectRental?: (pin: SourceCatalogPin) => void) {
+export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void, onSelectRental?: (pin: SourceCatalogPin) => void, rentalPins?: SourceCatalogPin[]) {
   const navigate = useNavigate()
   const [params] = useListingSearchParams()
   // UI selection and panel URLs do not change which source pins match the search.
@@ -56,13 +56,14 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
     return () => controller.abort()
   }, [ready, enabled, revision])
   const pins = useMemo(() => [
-    ...readSourceCatalogPins(filterRentalSources(rentalRows, query), 'rental'),
+    ...(rentalPins ?? readSourceCatalogPins(filterRentalSources(rentalRows, query), 'rental')),
     ...readSourceCatalogPins(foodRows, 'food'),
-  ].filter(pin => pin.kind === 'food' ? layers.marketplace : layers.vacant), [rentalRows, foodRows, query, layers.marketplace, layers.vacant])
+  ].filter(pin => pin.kind === 'food' ? layers.marketplace : layers.vacant), [rentalPins, rentalRows, foodRows, query, layers.marketplace, layers.vacant])
+  const showMarkers = ready && (enabled || rentalPins !== undefined)
   const markers = useRef(new Map<string, OwnedCatalogMarker>())
   const popupRef = useRef<google.maps.InfoWindow | null>(null)
   useEffect(() => {
-    if (!ready || !enabled) return
+    if (!showMarkers) return
     popupRef.current = new google.maps.InfoWindow()
     const owned = markers.current
     return () => {
@@ -74,9 +75,9 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       }
       owned.clear()
     }
-  }, [ready, enabled, onMarkersChange])
+  }, [showMarkers, onMarkersChange])
   useEffect(() => {
-    if (!ready || !enabled) return
+    if (!showMarkers) return
     const map = mapRef.current, library = libraryRef.current
     if (!map || !library) return
     const owned = markers.current
@@ -131,6 +132,6 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       } }
     }))
     setCount(owned.size)
-  }, [mapRef, libraryRef, ready, enabled, markerVariant, pins, onMarkersChange])
-  return enabled && ready ? count : 0
+  }, [mapRef, libraryRef, showMarkers, markerVariant, pins, onMarkersChange])
+  return showMarkers ? count : 0
 }

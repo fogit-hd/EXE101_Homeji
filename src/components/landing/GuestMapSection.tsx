@@ -1,12 +1,13 @@
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useNearViewport } from '../../hooks/useNearViewport'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   getRentalPost,
-  searchRentalPosts,
   type RentalPost,
   type RentalPostSummary,
 } from '../../api'
+import { getRentalSourceCatalog, sourceRoomHref, type RentalSourceListing } from '../../api/rentalSources'
 import { useAuthModal } from "../../contexts/AuthModalContext.logic"
 import { useChatbotSurface } from '../../contexts/chatbot-surface'
 import { nearbyPanelAnchor } from '../../lib/nearbyPanelAnchor'
@@ -20,9 +21,14 @@ import { ChoicePicker } from '../ui/ChoicePicker'
 
 import { useGoogleMapsStatus } from "../../contexts/GoogleMapsProvider.logic"
 
-import { getErrorMessage } from '../../lib/errors'
 import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import { HOMEJI_SERVICE_AREA, isInHomejiServiceArea } from '../../lib/homejiServiceArea'
+import { formatListingRent } from '../../lib/labels'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
+import { searchRentalMapInventory } from '../../lib/rentalMapInventory'
+import { matchesListingText } from '../../lib/searchQuery'
+import { readSourceCatalogPins } from '../../lib/sourceCatalog'
+import { sourcePublisherLink } from '../../lib/sourcePublisherLinks'
 import '../map/MapPlaceDetailPanel.css'
 import { RevealText } from '../motion/RevealText'
 import {
@@ -37,10 +43,7 @@ import {
 } from './guestMapAreas'
 import './GuestMapSection.css'
 
-const PAGE_SIZE = 24
 const GUEST_SELECTION_PAD = { top: 24, bottom: 80 }
-
-type GateIntent = 'contact' | 'save' | 'invite' | 'browse'
 
 export function GuestMapSection() {
   const { openAuthModal } = useAuthModal()
@@ -55,6 +58,8 @@ export function GuestMapSection() {
   const [wardId, setWardId] = useState('')
   const [schoolId, setSchoolId] = useState('')
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
+  const [sourceRows, setSourceRows] = useState<RentalSourceListing[]>([])
+  const [attempt, setAttempt] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
@@ -63,11 +68,10 @@ export function GuestMapSection() {
   const [placeLoading, setPlaceLoading] = useState(false)
   const [listingDetail, setListingDetail] = useState<RentalPost | null>(null)
   const [listingLoading, setListingLoading] = useState(false)
-  const [searchKeyword, setSearchKeyword] = useState(
-    buildGuestSearchKeyword({ districtKeyword: GUEST_DISTRICTS[0].keyword }),
-  )
-  const [mapFocus, setMapFocus] = useState<MapFocusPoint | null>(GUEST_DEFAULT_FOCUS)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [mapFocus, setMapFocus] = useState<MapFocusPoint | null>(null)
   const [mapFocusToken, setMapFocusToken] = useState(0)
+  const [overviewFitToken, setOverviewFitToken] = useState(0)
   const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
   const [nearbyRequestedKey, setNearbyRequestedKey] = useState<string | null>(null)
   const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
@@ -79,40 +83,37 @@ export function GuestMapSection() {
     [wardId],
   )
 
-  const load = useCallback(async (keyword: string) => {
-    setLoading(true)
-    setError('')
-    try {
-      const data = await searchRentalPosts(
-        {
-          keyword: keyword.trim() || 'Thủ Đức',
-          page: 1,
-          pageSize: PAGE_SIZE,
-        },
-        { auth: false },
-      )
-      setPosts(data)
-      setSelectedPostId(null)
-      setHoveredPostId(null)
-    } catch (err) {
-      setError(
-        getErrorMessage(
-          err,
-          'Chưa tải được tin đăng. Vui lòng thử lại.',
-        ),
-      )
-      setPosts([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
     if (!nearSection) return
-    let cancelled = false
-    void Promise.resolve().then(() => { if (!cancelled) void load(searchKeyword) })
-    return () => { cancelled = true }
-  }, [load, searchKeyword, nearSection])
+    const controller = new AbortController()
+    void Promise.resolve().then(async () => {
+      if (controller.signal.aborted) return
+      setLoading(true)
+      setError('')
+      const [native, sources] = await Promise.allSettled([
+        searchRentalMapInventory({ ...HOMEJI_SERVICE_AREA, keyword: searchKeyword || undefined }, { auth: false, signal: controller.signal }),
+        getRentalSourceCatalog(),
+      ])
+      if (controller.signal.aborted) return
+      setPosts(native.status === 'fulfilled'
+        ? native.value.filter(post => isInHomejiServiceArea(post.latitude, post.longitude)) : [])
+      setSourceRows(sources.status === 'fulfilled' ? sources.value : [])
+      if (native.status === 'rejected' || sources.status === 'rejected') setError('Chưa tải được đầy đủ tin trên bản đồ.')
+      if (!searchKeyword) setOverviewFitToken(value => value + 1)
+      setLoading(false)
+    })
+    return () => controller.abort()
+  }, [attempt, nearSection, searchKeyword])
+
+  const sourcePins = useMemo(() => {
+    const nativeIds = new Set(posts.map(post => post.id))
+    return readSourceCatalogPins(sourceRows.filter(row => {
+      const nativeId = sourcePublisherLink(row.id)?.nativePostId
+      return !nativeIds.has(row.id) && !(nativeId && nativeIds.has(nativeId)) &&
+        matchesListingText(searchKeyword, [row.title, row.address, row.district, row.description])
+    }), 'rental')
+  }, [posts, searchKeyword, sourceRows])
+  const resultCount = posts.length + sourcePins.length
 
   const applyFilters = useCallback(
     (next: { districtId?: string; wardId?: string; schoolId?: string }) => {
@@ -128,27 +129,25 @@ export function GuestMapSection() {
       const nextSchool = schoolsAvailable.find((s) => s.id === nextSchoolId)
       const resolvedSchoolId = nextSchool?.id ?? ''
 
-      const keyword = buildGuestSearchKeyword({
+      const keyword = nextSchool || nextWard || nextDistrict.id !== GUEST_DISTRICTS[0].id ? buildGuestSearchKeyword({
         schoolKeyword: nextSchool?.keyword,
         wardKeyword: nextWard?.keyword,
         districtKeyword: nextDistrict.keyword,
-      })
+      }) : ''
 
       const focus =
         nextSchool?.focus ?? nextWard?.focus ?? nextDistrict.focus ?? GUEST_DEFAULT_FOCUS
 
       setSchoolId(resolvedSchoolId)
       setSearchKeyword(keyword)
-      setMapFocus({ ...focus })
+      setMapFocus(keyword ? { ...focus } : null)
       setSelectedPostId(null)
       setHoveredPostId(null)
     },
     [districtId, wardId, schoolId],
   )
 
-  const openGate = (intent: GateIntent) => {
-    openAuthModal({ mode: 'register', intent })
-  }
+  const openSaveGate = () => openAuthModal({ mode: 'register', intent: 'save' })
 
   const handleSelectPost = useCallback((postId: string) => {
     setNearbyRequestedKey(null)
@@ -293,7 +292,7 @@ export function GuestMapSection() {
               >
                 {GUEST_DISTRICTS.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.label}
+                    {d.id === GUEST_DISTRICTS[0].id ? 'Thủ Đức và Quận 9' : d.label}
                   </option>
                 ))}
               </ChoicePicker>
@@ -371,6 +370,7 @@ export function GuestMapSection() {
               {mapsReady ? (
                 <RentalMap
                   posts={posts}
+                  sourceRentalPins={sourcePins}
                   selectedPostId={selectedPostId}
                   hoveredPostId={hoveredPostId}
                   onSelectPost={handleSelectPost}
@@ -381,6 +381,7 @@ export function GuestMapSection() {
                   sharedLocationPin={nearbyVisible ? nearbyPinned : null}
                   focus={mapFocus}
                   focusToken={mapFocusToken}
+                  listingsFitToken={overviewFitToken}
                   selectionPad={GUEST_SELECTION_PAD}
                 />
               ) : (
@@ -401,7 +402,7 @@ export function GuestMapSection() {
                 listingSummary={selectedPost}
                 listingLoading={!!selectedPost && listingLoading}
                 onNearby={handleNearby}
-                onSaveListing={() => openGate('save')}
+                onSaveListing={openSaveGate}
                 listingSaved={false}
               />
               {nearbyAnchor && nearbyVisible ? <MapNearbyPanel
@@ -415,18 +416,15 @@ export function GuestMapSection() {
           </div>
 
           <aside className="guest-map__list">
-            {error ? <div className="guest-map__alert">{error}</div> : null}
+            {error ? <div className="guest-map__alert" role="alert">{error}{' '}
+              <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button>
+            </div> : null}
 
             {loading ? (
               <ContentSkeleton compact count={3} label="Đang tải tin phòng…" />
-            ) : posts.length === 0 ? (
-              <p className="guest-map__status">
-                Chưa có tin phù hợp khu vực này. Thử phường/trường khác hoặc đăng nhập để lọc
-                nâng cao.
-              </p>
-            ) : (
+            ) : resultCount > 0 ? (
               <>
-                <p className="guest-map__count">{posts.length} tin trên bản đồ</p>
+                <p className="guest-map__count" aria-live="polite">{resultCount} tin {error ? 'đã tải' : 'trên bản đồ'}</p>
                 <div className="guest-map__list-scroll">
                   <div className="guest-map__cards">
                     {posts.map((post) => (
@@ -440,28 +438,36 @@ export function GuestMapSection() {
                         <RentalPostCard
                           post={post}
                           showSave
-                          onSave={() => openGate('save')}
+                          onSave={openSaveGate}
                         />
+                      </div>
+                    ))}
+                    {sourcePins.map(pin => (
+                      <div key={pin.id} className="guest-map__card-wrap">
+                        <article className="post-card card">
+                          <Link to={sourceRoomHref(pin.id.slice('rental:'.length))} className="post-card-link">
+                            <div className="post-card-image">
+                              {pin.imageUrl ? <img src={pin.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                                : <div className="post-card-placeholder">Chưa có ảnh</div>}
+                              <span className="badge badge-green post-card-type">Tin nguồn ngoài</span>
+                            </div>
+                            <div className="post-card-body">
+                              <h3>{pin.title}</h3>
+                              <p className="post-card-price">{formatListingRent(pin.price ?? 0)}</p>
+                              <p className="post-card-meta">{pin.address}</p>
+                            </div>
+                          </Link>
+                        </article>
                       </div>
                     ))}
                   </div>
                 </div>
               </>
+            ) : error ? null : (
+              <p className="guest-map__status">
+                Chưa có tin phù hợp khu vực này. Thử chọn phường hoặc trường khác.
+              </p>
             )}
-
-            <p className="guest-map__more">
-              <a
-                href="#login"
-                className="guest-map__more-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  openAuthModal({ mode: 'login', intent: 'browse' })
-                }}
-              >
-                đăng nhập
-              </a>{' '}
-              để xem thêm
-            </p>
           </aside>
         </div>
       </div>

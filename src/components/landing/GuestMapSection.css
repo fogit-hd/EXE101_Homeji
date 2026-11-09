@@ -503,28 +503,6 @@
   box-shadow: 0 0 0 2px rgba(0, 177, 79, 0.55);
 }
 
-.guest-map__more {
-  margin: 4px 0 0;
-  padding-top: 4px;
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: #4a5864;
-}
-
-.guest-map__more-link {
-  color: var(--landing-green, #00b14f);
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.guest-map__more-link:hover {
-  color: #009643;
-}
-
 .guest-map .sr-only {
   position: absolute;
   width: 1px;
