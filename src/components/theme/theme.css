@@ -57,15 +57,30 @@ html body #root button.theme-switch:focus-visible {
 html body #root button.theme-switch--floating { position: fixed; z-index: 60; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); }
 body:has(.hj-header) #root .theme-switch--floating { display: none; }
 .guest-hero__top { padding-right: 96px; }
-.theme-fade-layer { position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; background: #f3f7fa; }
-.theme-fade-layer[data-target='dark'] { background: #10212b; }
 /* The browser's snapshot overlay is decorative too; controls remain clickable. */
 html[data-theme-transition]::view-transition { pointer-events: none; }
 html[data-theme-transition]::view-transition-group(root) { animation: none; }
 html[data-theme-transition]::view-transition-old(root) { animation: none; mix-blend-mode: normal; }
+/* 1100ms and this easing are THEME_FADE_MS and themeFadeEase in themeFade.ts. */
 html[data-theme-transition]::view-transition-new(root) {
   animation: theme-fade-in 1100ms cubic-bezier(.4, 0, .2, 1) both;
   mix-blend-mode: normal;
+}
+/* The switch animates itself in step with the page. Kept out of the page snapshot, it shows one
+   lens moving instead of the old and new lens blended on top of each other. */
+html[data-theme-transition='crossfade'] #root .theme-switch { view-transition-name: var(--theme-switch-name); view-transition-class: theme-switch; }
+html[data-theme-transition]::view-transition-group(*.theme-switch),
+html[data-theme-transition]::view-transition-new(*.theme-switch) { animation: none; }
+html[data-theme-transition]::view-transition-old(*.theme-switch) { display: none; }
+/* Browsers without View Transitions ease colors in place for the same time. */
+html[data-theme-transition='fallback'],
+html[data-theme-transition='fallback'] *,
+html[data-theme-transition='fallback'] *::before,
+html[data-theme-transition='fallback'] *::after {
+  transition-property: background-color, color, border-color, outline-color, fill, stroke, box-shadow, text-decoration-color !important;
+  transition-duration: 1100ms !important;
+  transition-timing-function: cubic-bezier(.4, 0, .2, 1) !important;
+  transition-delay: 0s !important;
 }
 @keyframes theme-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 767px) {

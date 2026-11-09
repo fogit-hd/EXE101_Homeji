@@ -1,7 +1,11 @@
-import { useLayoutEffect, useRef, type PointerEvent } from 'react'
+import { useId, useLayoutEffect, useRef, type CSSProperties, type PointerEvent } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { clamp, GLASS_TRACK, paintGlassLight, resizeGlassCanvas } from './glassLightArtwork'
 import type { createGlassLightWebGL } from './glassLightWebGL'
+import { THEME_FADE_MS, themeFadeEase } from './themeFade'
+
+/** A timed move of the lens that runs alongside the page fade. */
+type Tween = { from: number, to: number, start: number }
 
 type Drag = {
   id: number
@@ -19,9 +23,12 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const drag = useRef<Drag | null>(null)
   const ignoreClick = useRef(false)
+  // Each visible switch needs its own name for the page transition.
+  const transitionName = `theme-switch-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const motion = useRef({
     position: target, target, velocity: 0, orbit: target ? -Math.PI / 2 : Math.PI / 2,
     direction: target ? -1 : 1, hover: 0, energy: 0, scrub: null as number | null,
+    tween: null as Tween | null,
   })
   const refresh = useRef(() => {})
 
@@ -54,8 +61,20 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
       previous = time
       const destination = state.scrub ?? state.target
       if (state.scrub !== null || reduced.matches) {
+        state.tween = null
         state.position = destination
         state.velocity = 0
+      } else if (state.tween) {
+        // Brighten or dim on the page fade's clock, so the switch lands when the page does.
+        const progress = clamp((time - state.tween.start) / THEME_FADE_MS)
+        const next = state.tween.from + (state.tween.to - state.tween.from) * themeFadeEase(progress)
+        state.velocity = (next - state.position) / Math.max(elapsed, 1 / 240)
+        state.position = next
+        if (progress >= 1) {
+          state.position = state.tween.to
+          state.velocity = 0
+          state.tween = null
+        }
       } else {
         // Substeps keep the spring stable on slower devices.
         for (let step = 0; step < 3; step++) {
@@ -126,6 +145,8 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
   useLayoutEffect(() => {
     const state = motion.current
     if (state.target !== target && !drag.current) state.direction = target ? 1 : -1
+    if (state.target !== target && state.scrub === null)
+      state.tween = { from: state.position, to: target, start: performance.now() }
     state.target = target
     refresh.current()
   }, [target])
@@ -183,6 +204,7 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
       aria-busy={!!pendingTheme || undefined}
       title={dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
       className={`theme-switch${floating ? ' theme-switch--floating' : ''}`}
+      style={{ '--theme-switch-name': transitionName } as CSSProperties}
       data-glass-exclude=""
       onPointerDown={press}
       onPointerMove={move}
