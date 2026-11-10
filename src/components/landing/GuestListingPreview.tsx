@@ -11,6 +11,7 @@ import { matchesRentalPropertyCategory } from '../../lib/rentalPropertyCategory'
 import './GuestListingPreview.css'
 import { attachTraceTilt } from '../motion/traceTilt'
 import { ActionWheel, type WheelAction } from '../motion/ActionWheel'
+import { RoomDirectionsDialog } from './RoomDirectionsDialog'
 import { useHoldWheel } from '../motion/useHoldWheel'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { AreaMapIcon, DirectionsIcon, ShareRoomIcon, ViewRoomIcon } from './wheelIcons'
@@ -100,6 +101,7 @@ export function GuestListingPreview() {
     rail.current?.focus({ preventScroll: true })
     rail.current?.scrollIntoView({ block: 'start' })
   }
+  const [directionsFor, setDirectionsFor] = useState<PreviewItem | null>(null)
   const [shareNote, setShareNote] = useState('')
   useEffect(() => {
     if (!shareNote) return
@@ -114,9 +116,7 @@ export function GuestListingPreview() {
       if (item.kind === 'post') setSelected(item.data)
       else setSelectedSource(item.data)
     } else if (index === 1) {
-      const hasPoint = data.latitude != null && data.longitude != null && (data.latitude !== 0 || data.longitude !== 0)
-      const destination = hasPoint ? `${data.latitude},${data.longitude}` : data.address || data.title
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank', 'noopener,noreferrer')
+      setDirectionsFor(item)
     } else if (index === 2) {
       navigateGuestLanding('map')
     } else {
@@ -204,6 +204,9 @@ export function GuestListingPreview() {
     </div>
     {selected ? <GuestRoomPreview key={selected.id} id={selected.id} onClose={() => setSelected(null)} /> : null}
     {selectedSource ? <GuestSourcePreview key={selectedSource.id} listing={selectedSource} onClose={() => setSelectedSource(null)} /> : null}
+    {directionsFor ? <RoomDirectionsDialog key={itemKey(directionsFor)} title={directionsFor.data.title} address={directionsFor.data.address}
+      destination={directionsFor.data.latitude != null && directionsFor.data.longitude != null ? { lat: directionsFor.data.latitude, lng: directionsFor.data.longitude } : null}
+      onClose={() => setDirectionsFor(null)} /> : null}
   </section>
 }
 
