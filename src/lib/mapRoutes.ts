@@ -182,17 +182,4 @@ export async function computeDrivingRoute(
   }
 }
 
-/** Simple glyph for common maneuver codes from Routes / Directions. */
-export function maneuverGlyph(maneuver: string | null | undefined): string {
-  const key = (maneuver || '').toUpperCase()
-  if (key.includes('LEFT') && key.includes('U')) return '↶'
-  if (key.includes('RIGHT') && key.includes('U')) return '↷'
-  if (key.includes('LEFT')) return '↰'
-  if (key.includes('RIGHT')) return '↱'
-  if (key.includes('MERGE')) return '⤴'
-  if (key.includes('ROUNDABOUT') || key.includes('FORK')) return '↻'
-  if (key.includes('STRAIGHT') || key.includes('CONTINUE') || key.includes('NAME_CHANGE')) return '↑'
-  if (key.includes('DEPART') || key.includes('FERRY')) return '●'
-  if (key.includes('ARRIVE')) return '◎'
-  return '→'
-}
+export { maneuverGlyph } from './maneuverGlyph'
