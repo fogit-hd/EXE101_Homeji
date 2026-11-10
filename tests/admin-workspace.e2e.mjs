@@ -48,6 +48,7 @@ await context.route('**/*', async route => {
   else if (u.pathname === '/api/admin/wallet-withdrawals') json = empty ? [] : withdrawals
   else if (u.pathname === '/api/admin/moderation/active-users') json = empty ? [] : [{ userId: user, displayName: 'Quản trị Homeji', role: 3, isOnline: true, lastSeenAt: stamp }]
   else if (u.pathname === '/api/rental-assistant/admin-summary') json = { calculatedAt: stamp, summary: 'Có 2 tin phòng và 2 báo cáo cần kiểm tra.', tasks: [{ kind: 'reports', id: reports[1].id, label: 'Kiểm tra báo cáo thứ hai' }] }
+  else if (u.pathname === '/api/admin/ai-reviews') json = { settings: { enabled: true, autoBlock: false, batchSize: 3, spacingSeconds: 60, pauseMinutes: 30, dailyRequestLimit: 50, dailyTokenBudget: 100000 }, nextAllowedAt: stamp, lastHeartbeatAt: new Date().toISOString(), requestsToday: 4, tokensReservedToday: 8000, pauseReason: null, pending: 1, needsReview: 2, blocked: 0, items: [] }
   else if (u.pathname === '/api/admin/analytics/product') {
     requestedPeriods.push(Number(u.searchParams.get('days')))
     if (failAnalytics) return route.fulfill({ status: 400, json: { detail: 'Báo cáo sản phẩm chưa tải được.' } })
@@ -57,35 +58,38 @@ await context.route('**/*', async route => {
 })
 const page = await context.newPage()
 page.on('pageerror', error => errors.push(error.message))
-async function ready() { await page.locator('.admin-nav').waitFor(); await page.locator('.admin-queues__grid').waitFor(); await page.locator('.admin-analytics__kpis').waitFor() }
+async function ready() { await page.locator('.admin-nav').waitFor(); await page.locator('.admin-queues__grid').waitFor(); await page.locator('.admin-pulse').waitFor() }
+const nav = () => page.getByRole('navigation', { name: 'Mục quản trị' })
 async function openSection(name) {
-  const nav = page.getByRole('navigation', { name: 'Mục quản trị' })
-  const toggle = nav.locator('.admin-nav__toggle')
+  const toggle = page.locator('.admin-nav__toggle')
   if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') === 'false') await toggle.click()
-  await nav.locator('ul').getByRole('button', { name }).click()
+  await nav().getByRole('link', { name }).click()
+  if (await toggle.isVisible()) assert.equal(await toggle.getAttribute('aria-expanded'), 'false', 'Choosing a section closes the drawer')
   await page.evaluate(() => window.scrollTo(0, 0))
 }
 async function capture(name) {
-  await page.waitForTimeout(200)
+  await page.waitForTimeout(300)
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name}: document overflow`)
-  assert.equal(await page.locator('.admin-layout [data-glass-control]').count(), 0)
+  assert.equal(await page.locator('.admin-shell [data-glass-control]').count(), 0)
   await page.screenshot({ path: `${out}/${name}.png` })
 }
 try {
   await page.goto(base + '/admin'); await ready()
+  assert.equal(await page.locator('.hj-shell').count(), 0, 'Admin uses its own shell, not the customer header')
   for (const width of [1440, 900, 390, 320]) for (const theme of ['light', 'dark']) {
     await page.setViewportSize({ width, height: 1000 })
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme; localStorage.setItem('homeji_theme', theme); sessionStorage.setItem('admin-test-theme', theme) }, theme)
-    await openSection('Tổng quan'); await capture(`overview-${theme}-${width}`)
+    await openSection('Trang chủ'); await capture(`home-${theme}-${width}`)
+    assert.equal(await page.locator('.admin-nav a[aria-current="page"]').count(), 1)
+    assert.equal(await page.locator('.admin-queues__grid a').count(), 4)
+    await openSection('Phân tích sản phẩm'); await page.locator('.admin-analytics__kpis').waitFor(); await capture(`analytics-${theme}-${width}`)
     if (width === 1440 || width === 320) {
-      await page.locator('.admin-analytics__primary-grid').screenshot({ path: `${out}/analytics-${theme}-${width}.png` })
-      const chart = page.locator('.admin-trend-chart svg')
+      await page.locator('.admin-analytics__primary-grid').screenshot({ path: `${out}/analytics-grid-${theme}-${width}.png` })
+      const chart = page.locator('.admin-trend-chart svg').first()
       assert.ok(await chart.evaluate(svg => Math.abs(svg.viewBox.baseVal.width - svg.getBoundingClientRect().width) < 2), 'Chart labels must not shrink with a fixed desktop viewBox')
       await page.getByText('Cơ sở đánh giá & giới hạn', { exact: true }).click()
       await page.getByText(/Chỉ số cầu so mức quan tâm/).waitFor()
     }
-    assert.equal(await page.locator('.admin-nav button[aria-current="page"]').count(), 1)
-    assert.equal(await page.locator('.admin-queues__grid button').count(), 4)
     for (const [key, name] of [['posts', 'Tin chờ duyệt'], ['reports', 'Báo cáo vi phạm'], ['verifications', 'Xác minh chủ nhà'], ['withdrawals', 'Rút tiền'], ['active', 'Đang hoạt động'], ['maintenance', 'Bảo trì']]) {
       await openSection(name)
       if (key !== 'maintenance') await page.locator('.admin-item').first().waitFor()
@@ -93,6 +97,7 @@ try {
     }
   }
   await page.setViewportSize({ width: 1440, height: 1000 }); await openSection('Tin chờ duyệt')
+  assert.equal(new URL(page.url()).pathname, '/admin/posts', 'Each section has its own address')
   const postNote = page.getByLabel('Lý do từ chối: ' + posts[0].title, { exact: true })
   await postNote.fill('Thiếu thông tin liên hệ')
   assert.equal(await page.getByLabel('Lý do từ chối: ' + posts[1].title, { exact: true }).inputValue(), '')
@@ -111,23 +116,34 @@ try {
   await note.fill('BANK-TEST-001'); assert.equal(await page.getByLabel('Mã giao dịch hoặc lý do từ chối: NGUYEN VAN BINH', { exact: true }).inputValue(), '')
   await openSection('Xác minh chủ nhà'); assert.equal(await page.getByLabel('Ghi chú duyệt: Chủ nhà 1', { exact: true }).inputValue(), '')
   await page.getByLabel('Ghi chú duyệt: Chủ nhà 1', { exact: true }).fill('Đã đối chiếu giấy tờ')
-  await openSection('Rút tiền'); assert.equal(await note.inputValue(), 'BANK-TEST-001')
-  page.once('dialog', dialog => dialog.dismiss())
+  await openSection('Rút tiền'); assert.equal(await note.inputValue(), 'BANK-TEST-001', 'A draft note survives moving between sections')
   await page.locator('.admin-item').first().getByRole('button', { name: 'Xác nhận đã chuyển' }).click()
+  await page.locator('dialog.confirm-dialog').getByRole('button', { name: 'Hủy', exact: true }).click()
   assert.equal(mutations.length, 2, 'Cancelling confirmation must not send a withdrawal decision')
-  await openSection('Tổng quan'); await page.getByRole('button', { name: '7 ngày', exact: true }).click()
+  await page.goBack(); await page.getByLabel('Ghi chú duyệt: Chủ nhà 1', { exact: true }).waitFor()
+  assert.equal(new URL(page.url()).pathname, '/admin/verifications', 'Browser back returns to the previous section')
+  assert.equal(await page.getByLabel('Ghi chú duyệt: Chủ nhà 1', { exact: true }).inputValue(), 'Đã đối chiếu giấy tờ')
+  await openSection('Phân tích sản phẩm'); await page.getByRole('button', { name: '7 ngày', exact: true }).click()
   await page.waitForFunction(() => document.querySelector('.admin-analytics')?.getAttribute('aria-busy') === 'false'); assert.ok(requestedPeriods.includes(7))
+  await openSection('Trang chủ')
   await page.getByRole('button', { name: 'Hôm nay có gì cần xử lý?' }).click()
   await page.getByRole('button', { name: 'Mở báo cáo: Kiểm tra báo cáo thứ hai' }).click()
   await page.waitForFunction(() => document.activeElement?.id === 'admin-reports-report-2')
+  await openSection('Trang chủ'); await page.locator('.admin-next button').filter({ hasText: 'NGUYEN VAN AN' }).click()
+  await page.waitForFunction(() => document.activeElement?.id === 'admin-withdrawals-withdrawal-1')
+  assert.equal(new URL(page.url()).pathname, '/admin/withdrawals')
+  await page.goto(base + '/admin/khong-ton-tai'); await ready(); assert.equal(new URL(page.url()).pathname, '/admin', 'An unknown section falls back to the home screen')
+  await page.goto(base + '/admin/withdrawals'); await page.locator('.admin-item').first().waitFor()
+  assert.match(await page.locator('.admin-nav a[aria-current="page"]').textContent(), /^Rút tiền/, 'A deep link opens its section directly')
   empty = true; failAnalytics = true
-  await page.reload(); await page.getByRole('button', { name: 'Thử lại', exact: true }).waitFor(); await page.locator('.admin-queues__grid').waitFor()
+  await page.goto(base + '/admin'); await page.getByRole('button', { name: 'Thử lại', exact: true }).waitFor(); await page.locator('.admin-queues__grid').waitFor()
   await capture('error-empty-dark-1440'); assert.deepEqual(await page.locator('.admin-queues__grid strong').allTextContents(), ['0', '0', '0', '0'])
+  await page.getByText('Không còn việc nào đang chờ. Hàng chờ đã được xử lý hết.', { exact: true }).waitFor()
   failAnalytics = false; await page.getByRole('button', { name: 'Thử lại', exact: true }).click(); await ready()
   await openSection('Tin chờ duyệt'); await page.getByText('Không có tin chờ duyệt.', { exact: true }).waitFor()
-  await openSection('Tổng quan')
-  const navButton = page.getByRole('navigation', { name: 'Mục quản trị' }).getByRole('button', { name: /^Báo cáo vi phạm/ })
-  await navButton.focus(); await page.keyboard.press('Enter'); assert.equal(await navButton.getAttribute('aria-current'), 'page')
+  await openSection('Trang chủ')
+  const navLink = nav().getByRole('link', { name: /^Báo cáo vi phạm/ })
+  await navLink.focus(); await page.keyboard.press('Enter'); assert.equal(await navLink.getAttribute('aria-current'), 'page')
   assert.deepEqual(errors, [])
-  console.log('PASS: Admin desktop/mobile light/dark, all sections, search, isolated notes, duplicate lock, error retry, empty state, confirmation cancellation and exact assistant task focus. API writes were intercepted fixtures.')
+  console.log('PASS: Admin shell desktop/mobile light/dark, home, all sections, section URLs, back navigation, deep link, search, isolated and persistent notes, duplicate lock, error retry, empty state, confirmation cancellation and exact task focus. API writes were intercepted fixtures.')
 } finally { await browser.close() }

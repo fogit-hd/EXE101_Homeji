@@ -4,7 +4,7 @@ import test from 'node:test'
 
 const api = readFileSync(new URL('../src/api/index.ts', import.meta.url), 'utf8')
 const auth = readFileSync(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8')
-const page = readFileSync(new URL('../src/pages/AdminModerationPage.tsx', import.meta.url), 'utf8')
+const page = readFileSync(new URL('../src/components/admin/AdminSystemViews.tsx', import.meta.url), 'utf8')
 
 test('authenticated sessions do not poll a dedicated presence endpoint', () => {
   assert.doesNotMatch(api, /\/api\/activities\/presence/)

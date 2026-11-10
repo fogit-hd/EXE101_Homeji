@@ -36,6 +36,7 @@ const SECTION_TITLES: Record<string, string> = {
 export function documentTitleFor(pathname: string, search: string): string {
   const name = pathname === '/'
     ? SECTION_TITLES[new URLSearchParams(search).get('section') ?? '']
-    : /^\/posts\/[^/]+\/edit$/.test(pathname) ? 'Sửa tin đăng' : PATH_TITLES[pathname]
+    : /^\/posts\/[^/]+\/edit$/.test(pathname) ? 'Sửa tin đăng'
+      : pathname.startsWith('/admin/') ? PATH_TITLES['/admin'] : PATH_TITLES[pathname]
   return name ? `${name} · ${SITE}` : HOME_TITLE
 }

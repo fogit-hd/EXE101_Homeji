@@ -69,7 +69,7 @@ export function RouteSkeleton() {
     body = <PostFormSkeleton />
   } else if (pathname === '/payments/wait') {
     body = <PaymentWaitSkeleton />
-  } else if (pathname === '/admin') {
+  } else if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     body = <AdminSkeleton />
   } else if (REDIRECT_SECTIONS[pathname]) {
     const s = REDIRECT_SECTIONS[pathname]

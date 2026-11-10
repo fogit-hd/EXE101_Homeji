@@ -14,6 +14,7 @@ import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { isExploreMapMode } from '../chrome/exploreMode'
 import { isMapSectionRedirectPath } from '../../lib/mapDeepLinks'
+import { isAdminPath } from '../admin/adminSections'
 import { Navbar } from './Navbar'
 import { SiteFooter } from './SiteFooter'
 import './footer.css'
@@ -29,14 +30,15 @@ export function AppLayout() {
   const isAuthCinema =
     location.pathname === '/login' || location.pathname === '/register'
   const isGuestLanding = location.pathname === '/' && !isAuthenticated
+  /** The admin workspace brings its own rail and top bar instead of the customer chrome. */
+  const isAdminWorkspace = isAuthenticated && isAdminPath(location.pathname)
   const isAuthedApp =
     isAuthenticated &&
     !isAuthCinema &&
     (location.pathname === '/' ||
       isMapSectionRedirectPath(location.pathname) ||
       location.pathname === '/payments/wait' ||
-      location.pathname.startsWith('/posts') ||
-      location.pathname === '/admin')
+      location.pathname.startsWith('/posts'))
   /** Peer height for the map destination (not Khám phá list / view=list). */
   const isMapPeer =
     isAuthenticated &&
@@ -51,7 +53,7 @@ export function AppLayout() {
 
   const [outletRef, animateOutlet] = useAnimate<HTMLDivElement>()
   // Camera bounds, filters and message IDs must not replay the page transition.
-  const destination = `${location.pathname}:${new URLSearchParams(location.search).get('section') ?? 'home'}`
+  const destination = `${isAdminWorkspace ? '/admin' : location.pathname}:${new URLSearchParams(location.search).get('section') ?? 'home'}`
   useLayoutEffect(() => {
     if (isMapPeer || !outletRef.current) return
     // Opacity only: transforming this ancestor breaks sticky and fixed descendants.
@@ -70,13 +72,14 @@ export function AppLayout() {
         isMessagesWorkspace ? 'app-shell--messages' : '',
         isGuestLanding ? 'app-shell--guest-landing' : '',
         isAuthCinema ? 'app-shell--auth-cinema' : '',
+        isAdminWorkspace ? 'app-shell--admin' : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      {isAuthedApp ? <Suspense fallback={<div aria-hidden="true" style={{ height: 76 }} />}><AppShell /></Suspense> : <Navbar />}
+      {isAdminWorkspace ? null : isAuthedApp ? <Suspense fallback={<div aria-hidden="true" style={{ height: 76 }} />}><AppShell /></Suspense> : <Navbar />}
       <SiteLocationBootstrap enabled={!isAuthCinema} />
-      {!isAuthCinema ? <PremiumLaunchOffer /> : null}
+      {!isAuthCinema && !isAdminWorkspace ? <PremiumLaunchOffer /> : null}
       <SourceRoomDetailsHost />
       <ConfirmDialogHost />
       <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
@@ -84,7 +87,7 @@ export function AppLayout() {
         <div
           ref={outletRef}
           /* Keep HomePage mounted across hub / map / feature switches on `/`. */
-          key={location.pathname === '/' ? 'home-root' : location.pathname}
+          key={location.pathname === '/' ? 'home-root' : isAdminWorkspace ? 'admin-root' : location.pathname}
           className={
             isMapPeer ? 'route-outlet route-outlet--map-peer' : 'route-outlet'
           }
@@ -95,7 +98,7 @@ export function AppLayout() {
           </Suspense>
         </div>
       </main>
-      <SiteFooter compact={isMapPeer || isMessagesWorkspace} />
+      {isAdminWorkspace ? null : <SiteFooter compact={isMapPeer || isMessagesWorkspace} />}
     </div>
     </SellerOrderAlertsProvider></VoiceCallProvider>
   )

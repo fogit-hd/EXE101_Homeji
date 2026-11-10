@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-const page = readFileSync(new URL('../src/pages/AdminModerationPage.tsx', import.meta.url), 'utf8')
+const page = readFileSync(new URL('../src/components/admin/AdminQueueViews.tsx', import.meta.url), 'utf8')
 const types = readFileSync(new URL('../src/api/types.ts', import.meta.url), 'utf8')
 
 test('admin reports display people and reported content instead of raw identifiers', () => {
