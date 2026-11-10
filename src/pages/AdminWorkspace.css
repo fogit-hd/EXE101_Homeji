@@ -1,5 +1,7 @@
 /* Admin workspace: its own rail and top bar, crisp operational surfaces, one clear selected state. */
 .app-shell--admin { background: var(--surface-muted); }
+/* The top bar carries the theme switch here, so the page-level floating one must not sit on top of it. */
+body:has(.admin-shell) #root .theme-switch--floating { display: none; }
 .admin-shell {
   --admin-rail-w: 264px;
   --admin-topbar-h: 64px;
