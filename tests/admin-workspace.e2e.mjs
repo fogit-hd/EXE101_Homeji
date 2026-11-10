@@ -76,6 +76,9 @@ async function capture(name) {
 try {
   await page.goto(base + '/admin'); await ready()
   assert.equal(await page.locator('.hj-shell').count(), 0, 'Admin uses its own shell, not the customer header')
+  await page.setViewportSize({ width: 1440, height: 520 })
+  assert.ok(await page.evaluate(() => document.querySelector('.admin-nav').getBoundingClientRect().bottom <= document.querySelector('.admin-rail__account').getBoundingClientRect().top + 1 && document.querySelector('.admin-rail__account').getBoundingClientRect().bottom <= innerHeight + 1), 'On a short window the menu scrolls instead of sliding under the account block')
+  await page.screenshot({ path: `${out}/rail-short-1440.png` })
   for (const width of [1440, 900, 390, 320]) for (const theme of ['light', 'dark']) {
     await page.setViewportSize({ width, height: 1000 })
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme; localStorage.setItem('homeji_theme', theme); sessionStorage.setItem('admin-test-theme', theme) }, theme)
