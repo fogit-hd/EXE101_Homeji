@@ -48,7 +48,7 @@ await context.route('**/*', async route => {
   else if (u.pathname === '/api/admin/wallet-withdrawals') json = empty ? [] : withdrawals
   else if (u.pathname === '/api/admin/moderation/active-users') json = empty ? [] : [{ userId: user, displayName: 'Quản trị Homeji', role: 3, isOnline: true, lastSeenAt: stamp }]
   else if (u.pathname === '/api/rental-assistant/admin-summary') json = { calculatedAt: stamp, summary: 'Có 2 tin phòng và 2 báo cáo cần kiểm tra.', tasks: [{ kind: 'reports', id: reports[1].id, label: 'Kiểm tra báo cáo thứ hai' }] }
-  else if (u.pathname === '/api/admin/ai-reviews') json = { settings: { enabled: true, autoBlock: false, batchSize: 3, spacingSeconds: 60, pauseMinutes: 30, dailyRequestLimit: 50, dailyTokenBudget: 100000 }, nextAllowedAt: stamp, lastHeartbeatAt: new Date().toISOString(), requestsToday: 4, tokensReservedToday: 8000, pauseReason: null, pending: 1, needsReview: 2, blocked: 0, items: [] }
+  else if (u.pathname === '/api/admin/ai-reviews') json = { settings: { enabled: true, autoBlock: false, batchSize: 3, spacingSeconds: 60, pauseMinutes: 30, dailyRequestLimit: 50, dailyTokenBudget: 100000 }, nextAllowedAt: stamp, lastHeartbeatAt: new Date().toISOString(), requestsToday: 4, tokensReservedToday: 8000, pauseReason: null, pending: 1, needsReview: empty ? 0 : 2, blocked: 0, items: [] }
   else if (u.pathname === '/api/admin/analytics/product') {
     requestedPeriods.push(Number(u.searchParams.get('days')))
     if (failAnalytics) return route.fulfill({ status: 400, json: { detail: 'Báo cáo sản phẩm chưa tải được.' } })

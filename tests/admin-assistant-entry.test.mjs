@@ -19,7 +19,6 @@ const aiFeatureFlags = { adminSummary: true };
 const ReportStatus = { Pending: 1 };
 const reportStatusLabel = { 1: 'Chờ xử lý' };
 const formatPrice = value => String(value);
-const getAiReviews = async () => ({});
 const getAdminExports = async () => [];
 const Link = ({ children, to }) => React.createElement('a', { href: to }, children);
 `
@@ -38,6 +37,7 @@ const workspace = {
   verifications: [], withdrawals: [],
   counts: { posts: 1, reports: 1, verifications: 0, withdrawals: 0, active: 2 },
   onlineCount: 2, reportStatus: 1, showLoader: false, loadError: '', reload: async () => {}, openTask: () => {},
+  aiReview: null, aiAttention: null,
   analytics: null, analyticsError: '', analyticsLoading: true, retryAnalytics: () => {},
 }
 
@@ -54,6 +54,13 @@ test('admin home counts waiting work, links each queue and lists the oldest item
   assert.match(html, /Studio có ban công/)
   assert.match(html, /Tin bị báo cáo/)
   assert.match(html, /Đã xử lý hết/)
+})
+
+test('admin home counts AI-flagged listings as waiting work', () => {
+  const html = renderToStaticMarkup(createElement(AdminHome, { ws: { ...workspace, pendingPosts: [], reports: [], counts: { ...workspace.counts, posts: 0, reports: 0 }, aiAttention: 66 } }))
+  assert.match(html, /Có 66 việc đang chờ bạn quyết định, gồm 66 tin AI cần người xem lại\./)
+  assert.doesNotMatch(html, /Không còn việc nào đang chờ/)
+  assert.match(html, /href="\/admin\/ai-reviews"[^>]*>66 tin AI đánh dấu cần người xem lại/)
 })
 
 test('admin home says so when nothing is waiting', () => {

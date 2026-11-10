@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { AdminAnalyticsTrendPoint } from '../../api'
 import { getAdminExports, type AdminReportExport } from '../../api/adminReporting'
-import { getAiReviews, type AiReviewDashboard } from '../../api/aiReviews'
 import { ReportStatus } from '../../api/types'
 import { useAuth } from '../../contexts/AuthContext'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
@@ -10,7 +9,7 @@ import { formatPrice, reportStatusLabel } from '../../lib/labels'
 import { AdminAssistant } from '../ai/AdminAssistant'
 import { AdminOperationsSummary, type AdminQueueSummary } from './AdminOperationsSummary'
 import { adminQueueLabels, adminSectionPath, waitingLabel, type AdminQueue } from './adminSections'
-import type { AdminWorkspace } from './useAdminWorkspace'
+import type { AdminWorkspace, AiReviewProbe } from './useAdminWorkspace'
 
 type Task = { kind: AdminQueue; id: string; title: string; detail: string; since: string | null }
 type Health = { tone: 'ok' | 'warn' | 'idle'; text: string }
@@ -24,7 +23,7 @@ const oldest = (dates: (string | null | undefined)[]) =>
 
 const byWaiting = (a: Task, b: Task) => (a.since ?? '9999').localeCompare(b.since ?? '9999')
 
-function aiHealth(probe: Probe<AiReviewDashboard> | null): Health {
+function aiHealth(probe: AiReviewProbe | null): Health {
   if (!probe) return { tone: 'idle', text: 'Đang kiểm tra…' }
   if (!probe.data?.settings) return { tone: 'warn', text: 'Chưa đọc được trạng thái.' }
   const { settings, lastHeartbeatAt, needsReview, blocked } = probe.data
@@ -58,7 +57,6 @@ function useProbe<T>(load: () => Promise<T>) {
 export function AdminHome({ ws }: { ws: AdminWorkspace }) {
   const { profile } = useAuth()
   const [now] = useState(() => Date.now())
-  const aiProbe = useProbe(getAiReviews)
   const exportProbe = useProbe(getAdminExports)
 
   const pendingReports = ws.reports.filter(report => report.status === ReportStatus.Pending)
@@ -74,11 +72,12 @@ export function AdminHome({ ws }: { ws: AdminWorkspace }) {
     ...ws.verifications.map(item => ({ kind: 'verifications' as const, id: item.id, title: item.applicantDisplayName, detail: item.applicantNote || 'Hồ sơ xác minh chủ nhà', since: item.createdAt })),
     ...ws.withdrawals.map(item => ({ kind: 'withdrawals' as const, id: item.id, title: formatPrice(item.amount), detail: `${item.accountHolder} · ${item.bankName}`, since: item.createdAt })),
   ].sort(byWaiting)
-  const waitingTotal = tasks.length
+  const aiWaiting = ws.aiAttention ?? 0
+  const waitingTotal = tasks.length + aiWaiting
   const queuesReady = !ws.showLoader && !ws.loadError
   const health: { label: string; to: string; state: Health }[] = [
     { label: 'Người đang hoạt động', to: adminSectionPath('active'), state: queuesReady ? { tone: 'ok', text: `${ws.onlineCount.toLocaleString('vi-VN')} kết nối realtime đang mở.` } : { tone: 'idle', text: 'Đang kiểm tra…' } },
-    { label: 'AI kiểm tra tin', to: adminSectionPath('aiReviews'), state: aiHealth(aiProbe) },
+    { label: 'AI kiểm tra tin', to: adminSectionPath('aiReviews'), state: aiHealth(ws.aiReview) },
     { label: 'Email báo cáo Excel', to: adminSectionPath('exports'), state: exportHealth(exportProbe) },
   ]
 
@@ -87,7 +86,7 @@ export function AdminHome({ ws }: { ws: AdminWorkspace }) {
       <div>
         <span className="admin-section-kicker">{new Date(now).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
         <h2>Chào {profile?.displayName || 'bạn'}</h2>
-        <p role="status">{!queuesReady ? 'Đang tổng hợp việc cần xử lý…' : waitingTotal ? `Có ${waitingTotal.toLocaleString('vi-VN')} việc đang chờ bạn quyết định.` : 'Không còn việc nào đang chờ. Hàng chờ đã được xử lý hết.'}</p>
+        <p role="status">{!queuesReady ? 'Đang tổng hợp việc cần xử lý…' : waitingTotal ? `Có ${waitingTotal.toLocaleString('vi-VN')} việc đang chờ bạn quyết định${aiWaiting ? `, gồm ${aiWaiting.toLocaleString('vi-VN')} tin AI cần người xem lại` : ''}.` : 'Không còn việc nào đang chờ. Hàng chờ đã được xử lý hết.'}</p>
       </div>
       <button type="button" className="btn btn-secondary btn-sm" disabled={ws.showLoader} onClick={() => void ws.reload()}>Làm mới</button>
     </header>
@@ -98,7 +97,7 @@ export function AdminHome({ ws }: { ws: AdminWorkspace }) {
     <div className="admin-home__grid">
       <section className="admin-panel" aria-labelledby="admin-next-title">
         <div className="admin-panel__heading"><h3 id="admin-next-title">Nên xử lý trước</h3><span>Chờ lâu nhất ở trên</span></div>
-        {!queuesReady ? <p role="status">Đang tải…</p> : !tasks.length ? <p className="admin-panel__empty">Không có mục nào đang chờ.</p> : <ol className="admin-next">{tasks.slice(0, NEXT_UP_LIMIT).map(task => {
+        {!queuesReady ? <p role="status">Đang tải…</p> : !tasks.length ? <p className="admin-panel__empty">{aiWaiting ? 'Bốn hàng chờ đã trống.' : 'Không có mục nào đang chờ.'}</p> : <ol className="admin-next">{tasks.slice(0, NEXT_UP_LIMIT).map(task => {
           const waited = waitingLabel(task.since, now)
           return <li key={`${task.kind}:${task.id}`}>
             <button type="button" onClick={() => ws.openTask(task.kind, task.id)}>
@@ -108,6 +107,7 @@ export function AdminHome({ ws }: { ws: AdminWorkspace }) {
             </button>
           </li>
         })}</ol>}
+        {aiWaiting ? <p className="admin-panel__note"><Link to={adminSectionPath('aiReviews')}>{aiWaiting.toLocaleString('vi-VN')} tin AI đánh dấu cần người xem lại →</Link></p> : null}
         {queuesReady && tasks.length > NEXT_UP_LIMIT ? <p className="admin-panel__note">Còn {(tasks.length - NEXT_UP_LIMIT).toLocaleString('vi-VN')} mục khác trong các hàng chờ.</p> : null}
       </section>
 
