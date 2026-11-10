@@ -22,6 +22,7 @@ import {
   type Report,
   type WalletWithdrawal,
 } from '../../api'
+import { getAiReviews, type AiReviewDashboard } from '../../api/aiReviews'
 import { LandlordVerificationStatus, ReportStatus, WalletWithdrawalStatus } from '../../api/types'
 import { usePersistentLoad } from '../HomejiLoader.logic'
 import { confirmDialog } from '../ui/confirmDialog'
@@ -29,7 +30,9 @@ import { getErrorMessage } from '../../lib/errors'
 import type { AdminQueue, AdminSection } from './adminSections'
 
 type Notes = Record<string, string>
-type TaskTarget = { kind: AdminQueue; id: string; afterRevision: number; from: AdminSection }
+/** `data` is absent when the status could not be read. */
+export type AiReviewProbe = { data?: AiReviewDashboard; observedAt: number }
+type TaskTarget ={ kind: AdminQueue; id: string; afterRevision: number; from: AdminSection }
 
 const withoutKey = (notes: Notes, key: string) => {
   const next = { ...notes }
@@ -75,6 +78,7 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
   const [sendingMaintenance, setSendingMaintenance] = useState(false)
   const [queueSnapshot, setQueueSnapshot] = useState<{ revision: number; reportStatus: ReportStatus | undefined }>({ revision: 0, reportStatus: ReportStatus.Pending })
   const taskFocusRef = useRef<TaskTarget | null>(null)
+  const [aiReview, setAiReview] = useState<AiReviewProbe | null>(null)
 
   // A search term or a notice belongs to the section it was typed in, whichever way the admin left it.
   const [shownSection, setShownSection] = useState(section)
@@ -152,7 +156,16 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
     return () => { cancelled = true }
   }, [analyticsDays, analyticsAttempt])
 
-  const changeAnalyticsDays = (days: number) => {
+  // AI-flagged listings are human work too, so the shell and the home screen count them with the queues.
+  useEffect(() => {
+    let cancelled = false
+    void getAiReviews()
+      .then(data => { if (!cancelled) setAiReview({ data, observedAt: Date.now() }) })
+      .catch(() => { if (!cancelled) setAiReview({ observedAt: Date.now() }) })
+    return () => { cancelled = true }
+  }, [queueSnapshot.revision])
+
+  const changeAnalyticsDays =(days: number) => {
     if (analyticsLoading || days === analyticsDays) return
     setAnalyticsLoading(true)
     setAnalyticsDays(days)
@@ -328,7 +341,11 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
     || values.some(value => value?.toLocaleLowerCase('vi-VN').includes(term))
   const onlineCount = activeUsers.filter(user => user.isOnline).length
 
+  // A malformed payload counts as unread rather than as zero work.
+  const aiAttention = aiReview?.data?.settings ? aiReview.data.needsReview + aiReview.data.blocked : null
+
   return {
+    aiReview, aiAttention,
     pendingPosts, reports, verifications, withdrawals, activeUsers, onlineCount,
     visiblePosts: pendingPosts.filter(post => matches(post.title, post.address)),
     visibleReports: reports.filter(report => matches(report.targetDisplayName, report.reporterDisplayName, report.reason, report.description)),

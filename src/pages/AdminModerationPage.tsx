@@ -45,7 +45,7 @@ function AdminWorkspaceView({ section }: { section: AdminSection }) {
   const usesQueues = queueBacked.includes(section)
 
   return <div className="account-surface admin-workspace">
-    <AdminShell section={section} counts={ws.showLoader || ws.loadError ? {} : ws.counts}>
+    <AdminShell section={section} counts={{ ...(ws.showLoader || ws.loadError ? {} : ws.counts), ...(ws.aiAttention === null ? {} : { aiReviews: ws.aiAttention }) }}>
       {!selfTitled.includes(section) ? <header className="admin-section-heading">
         <div><span className="admin-section-kicker">{info.group}</span><h2>{info.title}</h2><p>{info.description}</p></div>
         {usesQueues ? <button type="button" className="btn btn-secondary btn-sm" disabled={ws.showLoader || ws.pendingAction !== null} onClick={() => void ws.reload()}>Làm mới</button> : null}
