@@ -72,7 +72,7 @@ function AppRoutes() {
         <Route path="/payments/wait" element={<ProtectedRoute><PaymentWaitingPage /></ProtectedRoute>} />
 
         <Route
-          path="/admin"
+          path="/admin/:section?"
           element={
             <ProtectedRoute>
               <AdminRoute>

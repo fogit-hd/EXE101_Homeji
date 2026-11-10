@@ -4,7 +4,7 @@ import test from 'node:test'
 
 const api = readFileSync(new URL('../src/api/index.ts', import.meta.url), 'utf8')
 const types = readFileSync(new URL('../src/api/types.ts', import.meta.url), 'utf8')
-const page = readFileSync(new URL('../src/pages/AdminModerationPage.tsx', import.meta.url), 'utf8')
+const page = readFileSync(new URL('../src/components/admin/AdminSystemViews.tsx', import.meta.url), 'utf8')
 
 test('admin can send a persisted maintenance announcement to every user', () => {
   assert.match(api, /sendMaintenanceAnnouncement/)

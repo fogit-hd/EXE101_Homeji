@@ -18,10 +18,14 @@ test('admin analytics reads a dedicated protected product endpoint', () => {
   assert.match(apiSource, /params: \{ days \}/)
 })
 
-test('admin opens on product overview and retains customer map access', () => {
-  assert.match(pageSource, /useState<[^>]+>\('overview'\)/)
-  assert.match(pageSource, /Tổng quan sản phẩm/)
-  assert.match(pageSource, /Xem trang tìm phòng/)
+test('admin opens on the operations home, links product analytics and retains customer map access', async () => {
+  const sections = await readFile(new URL('../src/components/admin/adminSections.ts', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/components/admin/AdminShell.tsx', import.meta.url), 'utf8')
+  const home = await readFile(new URL('../src/components/admin/AdminHome.tsx', import.meta.url), 'utf8')
+  assert.match(sections, /id: 'home', slug: ''/)
+  assert.match(sections, /id: 'analytics', slug: 'analytics'[^\n]+Tổng quan sản phẩm/)
+  assert.match(home, /adminSectionPath\('analytics'\)/)
+  assert.match(shell, /Xem trang tìm phòng/)
   assert.match(pageSource, /AdminAnalyticsDashboard/)
 })
 

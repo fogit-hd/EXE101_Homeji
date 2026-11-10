@@ -14,27 +14,50 @@ const stripImports = source => ts.transpileModule(source, {
 }).outputText.replace(/^import .*?from ['"].*?['"];?$/gm, '').replace(/^import ['"].*?['"];?$/gm, '')
 const bindings = `
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from '${pathToFileURL(require.resolve('react')).href}';
-const useAuth = () => ({ profile: { role: 3 } });
-const usePersistentLoad = () => ({ showLoader: false, error: '', reload: async () => {} });
+const useAuth = () => ({ profile: { role: 3, displayName: 'Quản trị Homeji' } });
 const aiFeatureFlags = { adminSummary: true };
 const ReportStatus = { Pending: 1 };
 const reportStatusLabel = { 1: 'Chờ xử lý' };
-const PageNotice = () => null;
-const ContentSkeleton = () => null;
-const AdminAnalyticsSkeleton = () => null;
-const PageFrame = ({ children, tabs }) => React.createElement('main', null, tabs, children);
-const Link = ({ children }) => React.createElement('a', null, children);
+const formatPrice = value => String(value);
+const getAiReviews = async () => ({});
+const getAdminExports = async () => [];
+const Link = ({ children, to }) => React.createElement('a', { href: to }, children);
 `
 const components = await Promise.all([
-  'src/components/admin/AdminWorkspaceNav.tsx',
+  'src/components/admin/adminSections.ts',
   'src/components/admin/AdminOperationsSummary.tsx',
   'src/components/ai/AdminAssistant.tsx',
-  'src/pages/AdminModerationPage.tsx',
+  'src/components/admin/AdminHome.tsx',
 ].map(async path => stripImports(await readSource(path))))
-const { AdminModerationPage } = await import(`data:text/javascript;base64,${Buffer.from(bindings + components.join('\n')).toString('base64')}`)
+const { AdminHome } = await import(`data:text/javascript;base64,${Buffer.from(bindings + components.join('\n')).toString('base64')}`)
 
-test('real admin overview renders one assistant and one work-check entry', () => {
-  const html = renderToStaticMarkup(createElement(AdminModerationPage))
+const stamp = '2026-10-23T03:00:00Z'
+const workspace = {
+  pendingPosts: [{ id: 'post-1', title: 'Studio có ban công', address: 'Linh Trung', updatedAt: stamp }],
+  reports: [{ id: 'report-1', status: 1, targetDisplayName: 'Tin bị báo cáo', reason: 'Giá sai', createdAt: stamp }],
+  verifications: [], withdrawals: [],
+  counts: { posts: 1, reports: 1, verifications: 0, withdrawals: 0, active: 2 },
+  onlineCount: 2, reportStatus: 1, showLoader: false, loadError: '', reload: async () => {}, openTask: () => {},
+  analytics: null, analyticsError: '', analyticsLoading: true, retryAnalytics: () => {},
+}
+
+test('admin home renders one assistant and one work-check entry', () => {
+  const html = renderToStaticMarkup(createElement(AdminHome, { ws: workspace }))
   assert.equal((html.match(/Hôm nay có gì cần xử lý\?/g) ?? []).length, 1)
   assert.equal((html.match(/aria-label="Trợ lý điều hành"/g) ?? []).length, 1)
+})
+
+test('admin home counts waiting work, links each queue and lists the oldest items first', () => {
+  const html = renderToStaticMarkup(createElement(AdminHome, { ws: workspace }))
+  assert.match(html, /Có 2 việc đang chờ bạn quyết định\./)
+  for (const path of ['/admin/posts', '/admin/reports', '/admin/verifications', '/admin/withdrawals']) assert.match(html, new RegExp(`href="${path}"`))
+  assert.match(html, /Studio có ban công/)
+  assert.match(html, /Tin bị báo cáo/)
+  assert.match(html, /Đã xử lý hết/)
+})
+
+test('admin home says so when nothing is waiting', () => {
+  const html = renderToStaticMarkup(createElement(AdminHome, { ws: { ...workspace, pendingPosts: [], reports: [], counts: { ...workspace.counts, posts: 0, reports: 0 } } }))
+  assert.match(html, /Không còn việc nào đang chờ/)
+  assert.match(html, /Không có mục nào đang chờ\./)
 })
