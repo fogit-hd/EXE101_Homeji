@@ -393,7 +393,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 ? Math.round((plan.originalPrice - plan.price) / plan.originalPrice * 100)
                 : 0
               const pickingPay = payPickerCode === plan.code
-
+              const isRecommended = isPremium && (plan.durationDays === 30 || (!displayPlans.some((p) => p.tier === SubscriptionTier.Premium && p.durationDays === 30) && index === 1))
 
               return (
                 <motion.article
@@ -404,10 +404,16 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
                   className={[
                     'pay-plan',
+                    isRecommended ? 'is-recommended' : '',
                     selectedCode === plan.code ? 'is-selected' : '',
                     isCurrent ? 'is-current' : '',
                   ].filter(Boolean).join(' ')}
                 >
+                  {isRecommended && (
+                    <div className="pay-plan__recommended-badge" aria-label="Gói được khuyên dùng">
+                      ⭐ Gói khuyên dùng
+                    </div>
+                  )}
                   <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '♛' : '○'}</span><small>{isPremium ? 'Premium' : 'Cơ bản'}</small>{isCurrent && <em>Đang dùng</em>}</div>
                   <h3>{view.title}</h3>
                   <p className="pay-plan__duration">
@@ -429,8 +435,16 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       </>
                     ) : '\u00a0'}
                   </p>
-                  <ul>
+                  <ul className="pay-plan__benefits-list">
                     {view.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}
+                    {isPremium ? (
+                      <>
+                        <li>Đẩy tin tự động mỗi ngày (Auto-bump)</li>
+                        <li>Ghim top & ưu tiên hiển thị trên bản đồ</li>
+                        <li>Huy hiệu VIP Pro sáng đẹp trên tin & hồ sơ</li>
+                        <li>Trợ lý AI hỗ trợ phân tích tin & tối ưu tìm kiếm</li>
+                      </>
+                    ) : null}
                   </ul>
 
                   <div className="pay-plan__actions">
@@ -503,15 +517,24 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             <h2 id="pay-compare-title" className="sr-only">So sánh quyền lợi</h2>
             <table>
               <thead>
-                <tr><th scope="col">Quyền lợi</th><th scope="col">Miễn phí</th><th scope="col">Premium</th></tr>
+                <tr>
+                  <th scope="col">Quyền lợi</th>
+                  <th scope="col">Miễn phí (Free)</th>
+                  <th scope="col">Gói Cơ bản</th>
+                  <th scope="col">VIP Pro (Khuyên dùng)</th>
+                </tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Tìm và lưu phòng</th><td>Có</td><td>Có</td></tr>
-                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa {premiumAreaLimit}</td></tr>
-                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 phòng/lần</td><td>Tối đa {premiumComparisonLimit} phòng/lần</td></tr>
-                <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td>Có</td></tr>
-                <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td>Có, kèm hiệu ứng nhẹ</td></tr>
-                <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td>Có</td></tr>
+                <tr><th scope="row">Tìm và lưu phòng</th><td>Có</td><td>Có</td><td>Có</td></tr>
+                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa 15</td><td>Tối đa {premiumAreaLimit}</td></tr>
+                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 phòng/lần</td><td>Tối đa 5 phòng/lần</td><td>Tối đa {premiumComparisonLimit} phòng/lần</td></tr>
+                <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td>Có</td><td>Huy hiệu VIP Pro sáng đẹp</td></tr>
+                <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td>Có, kèm hiệu ứng nhẹ</td><td>Khung viền phát sáng VIP</td></tr>
+                <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td>Có</td><td>Ưu tiên cao nhất bản đồ & danh sách</td></tr>
+                <tr><th scope="row">Đẩy tin tự động mỗi ngày (Auto-bump)</th><td>Không</td><td>Thủ công</td><td>Tự động mỗi ngày</td></tr>
+                <tr><th scope="row">Ghim top nổi bật trên bản đồ</th><td>Không</td><td>Không</td><td>Ghim vị trí đầu & ghim top</td></tr>
+                <tr><th scope="row">Huy hiệu VIP Pro trên hồ sơ & tin</th><td>Không</td><td>Không</td><td>Huy hiệu VIP vàng uy tín</td></tr>
+                <tr><th scope="row">Trợ lý AI phân tích & tối ưu tin</th><td>Cơ bản</td><td>Tiêu chuẩn</td><td>Ưu tiên & không giới hạn</td></tr>
               </tbody>
             </table>
           </section>

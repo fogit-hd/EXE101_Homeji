@@ -55,6 +55,8 @@ import { LocationPickerMap } from '../components/map/LocationPickerMap'
 import { MapToast } from '../components/map/MapToast'
 import { FoodMarketplaceView } from '../components/marketplace/food/FoodMarketplaceView'
 import '../components/marketplace/food/FoodMarketplaceView.css'
+import { MarketplaceSellFoodForm, type FoodFormData } from '../components/marketplace/food/MarketplaceSellFoodForm'
+import { KitchenOrderBoard } from '../components/marketplace/food/KitchenOrderBoard'
 import { QuantityStepper } from '../components/marketplace/food/QuantityStepper'
 import { MarketplaceFilterPanel } from '../components/marketplace/MarketplaceFilterPanel'
 import type { MarketplaceFilterValue } from '../components/marketplace/marketplaceFilterValue'
@@ -69,7 +71,7 @@ import { useTabTransition } from '../components/motion/useTabTransition'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
-import { FOOD_PRESETS, type FoodPreset } from '../lib/foodPresets'
+import { FOOD_PRESETS } from '../lib/foodPresets'
 import { trackFunnelEvent } from '../lib/ga4'
 import { isValidCoord, MAP_FOCUS_ZOOM } from '../lib/googleMaps'
 import {
@@ -406,6 +408,11 @@ export function MarketplacePage({
   const [availableQuantity, setAvailableQuantity] = useState('10')
   const [unit, setUnit] = useState('phần')
   const [preparationMinutes, setPreparationMinutes] = useState('20')
+  const [foodEstimatedCost, setFoodEstimatedCost] = useState<number | undefined>(undefined)
+  const [foodDailyQuota, setFoodDailyQuota] = useState<number | undefined>(undefined)
+  const [foodFreshnessBadge, setFoodFreshnessBadge] = useState<string | undefined>(undefined)
+  const [foodAllergenAlerts, setFoodAllergenAlerts] = useState<string | undefined>(undefined)
+  const [foodIsSamplePhoto, setFoodIsSamplePhoto] = useState<boolean>(false)
   const [presetImageUrl, setPresetImageUrl] = useState('')
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([])
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
@@ -421,11 +428,21 @@ export function MarketplacePage({
     dialog.showModal()
     return () => dialog.close()
   }, [checkoutConfirmationOpen, tab])
+  useEffect(() => {
+    if (checkoutConfirmationOpen) {
+      if (!recipientName && profile?.displayName) setRecipientName(profile.displayName)
+      if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
+    }
+  }, [checkoutConfirmationOpen, profile])
   const cartTotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cartItems],
   )
   const [cartNote, setCartNote] = useState('')
+  const [fulfillmentMode, setFulfillmentMode] = useState<'pickup' | 'delivery'>('pickup')
+  const [recipientName, setRecipientName] = useState('')
+  const [recipientPhone, setRecipientPhone] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [inventoryBusy, setInventoryBusy] = useState(false)
   const inventoryActionLock = useRef(false)
@@ -959,19 +976,6 @@ export function MarketplacePage({
     }
   }
 
-  const applyFoodPreset = (preset: FoodPreset) => {
-    setListingType(MarketplaceListingType.Food)
-    setTitle(preset.title)
-    setDescription(preset.description)
-    setPrice(String(preset.price))
-    setCondition('Mới làm trong ngày')
-    setSellCategory(preset.category)
-    setUnit(preset.unit)
-    setPreparationMinutes(String(preset.preparationMinutes))
-    setAvailableQuantity('10')
-    setPresetImageUrl(preset.imageUrl)
-  }
-
   const startWalletTopUp = async (amount: number, method: DepositMethod) => {
     if (needsProfileSetup) return { ok: false as const, message: 'Lưu Thông tin cơ bản trong Hồ sơ trước khi nạp tiền. Dùng nút Bổ sung thông tin tài khoản ở đầu trang.' }
     setWalletBusy(method)
@@ -1049,6 +1053,15 @@ export function MarketplacePage({
   const checkoutCart = async () => {
     if (!checkoutConfirmationOpen || tab !== 'food' || foodVoucher?.pending) return
     if (cartItems.length === 0 || cartBusy) return
+    if (fulfillmentMode === 'delivery') {
+      const cleanName = recipientName.trim()
+      const cleanPhone = recipientPhone.trim()
+      const cleanAddress = deliveryAddress.trim()
+      if (!cleanName || !cleanPhone || !cleanAddress) {
+        setActionError('Vui lòng điền đầy đủ họ tên, số điện thoại và phòng KTX để bếp giao tận nơi.')
+        return
+      }
+    }
     trackFunnelEvent('begin_checkout', { item_category: 'marketplace' })
     setCartBusy(true)
     setActionError('')
@@ -1063,6 +1076,18 @@ export function MarketplacePage({
         pickupAt: new Date(Date.now() + estimatedPreparationMinutes * 60 * 1000).toISOString(),
         pickupAddress: cartItems[0]?.sellerAddress || 'Nhận tại bếp Homeji',
         note: cartNote.trim() || 'Đặt từ giỏ hàng Homeji',
+        fulfillment: fulfillmentMode === 'delivery' ? {
+          mode: 1,
+          delivery: {
+            recipientName: recipientName.trim() || 'Sinh viên Homeji',
+            recipientPhone: recipientPhone.trim() || '0900000000',
+            address: deliveryAddress.trim() || cartItems[0]?.sellerAddress || 'KTX ĐHQG',
+            latitude: 10.8805,
+            longitude: 106.7820,
+          },
+        } : {
+          mode: 0,
+        },
       })
       const createdOrder = created[0]
       if (!createdOrder) {
@@ -1484,6 +1509,11 @@ export function MarketplacePage({
     setAvailableQuantity(String(post.availableQuantity))
     setUnit(post.unit || 'phần')
     setPreparationMinutes(String(post.preparationMinutes ?? 0))
+    setFoodEstimatedCost(post.estimatedCost ?? undefined)
+    setFoodDailyQuota(post.dailyQuota ?? undefined)
+    setFoodFreshnessBadge(post.freshnessBadge ?? undefined)
+    setFoodAllergenAlerts(post.allergenAlerts ?? undefined)
+    setFoodIsSamplePhoto(post.isSamplePhoto ?? false)
     setPresetImageUrl('')
     setExistingMediaUrls(post.mediaUrls ?? [])
     openLeaf('sell')
@@ -1509,6 +1539,11 @@ export function MarketplacePage({
     setTitle('')
     setDescription('')
     setPrice('')
+    setFoodEstimatedCost(undefined)
+    setFoodDailyQuota(undefined)
+    setFoodFreshnessBadge(undefined)
+    setFoodAllergenAlerts(undefined)
+    setFoodIsSamplePhoto(false)
     setPresetImageUrl('')
     mediaFiles.forEach(media => URL.revokeObjectURL(media.previewUrl))
     setMediaFiles([])
@@ -1649,9 +1684,77 @@ export function MarketplacePage({
         }}>
           <h2 id="checkout-confirmation-title">Xác nhận đặt món</h2>
           <p>{cartItemCount} món · Tạm tính {formatPrice(cartTotal)}</p>
+
+          {/* Phương thức nhận món Dual Fulfillment */}
+          <div style={{ marginBottom: '12px', background: '#f8faf9', padding: '10px 12px', borderRadius: '12px' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '8px', color: '#24382d' }}>
+              Phương thức nhận món:
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                className={`btn ${fulfillmentMode === 'pickup' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                onClick={() => setFulfillmentMode('pickup')}
+                style={{ fontSize: '0.78rem', padding: '6px 8px' }}
+              >
+                🚶 Tự đến lấy tại bếp
+              </button>
+              <button
+                type="button"
+                className={`btn ${fulfillmentMode === 'delivery' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                onClick={() => setFulfillmentMode('delivery')}
+                style={{ fontSize: '0.78rem', padding: '6px 8px' }}
+              >
+                🛵 Bếp giao tận phòng KTX
+              </button>
+            </div>
+          </div>
+
+          {fulfillmentMode === 'delivery' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px', background: '#f4faf6', padding: '12px', borderRadius: '10px', border: '1px solid #d4ede0' }}>
+              <div>
+                <label htmlFor="checkout-recipient-name" style={{ fontSize: '0.75rem', color: '#526358', display: 'block', marginBottom: '2px' }}>Họ và tên người nhận</label>
+                <input
+                  id="checkout-recipient-name"
+                  className="form-input"
+                  style={{ fontSize: '0.82rem', padding: '6px 8px', height: '36px' }}
+                  placeholder="Ví dụ: Nguyễn Văn Sinh Viên"
+                  value={recipientName}
+                  onChange={e => setRecipientName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="checkout-recipient-phone" style={{ fontSize: '0.75rem', color: '#526358', display: 'block', marginBottom: '2px' }}>Số điện thoại</label>
+                <input
+                  id="checkout-recipient-phone"
+                  type="tel"
+                  className="form-input"
+                  style={{ fontSize: '0.82rem', padding: '6px 8px', height: '36px' }}
+                  placeholder="Ví dụ: 0912345678"
+                  value={recipientPhone}
+                  onChange={e => setRecipientPhone(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="checkout-delivery-address" style={{ fontSize: '0.75rem', color: '#526358', display: 'block', marginBottom: '2px' }}>Tòa nhà / Số phòng KTX</label>
+                <input
+                  id="checkout-delivery-address"
+                  className="form-input"
+                  style={{ fontSize: '0.82rem', padding: '6px 8px', height: '36px' }}
+                  placeholder="Ví dụ: Phòng 314, Nhà B4, KTX Khu B"
+                  value={deliveryAddress}
+                  onChange={e => setDeliveryAddress(e.target.value)}
+                />
+              </div>
+              <small style={{ color: '#24543e', fontSize: '0.72rem', fontWeight: 500 }}>✓ Miễn phí giao tận phòng ký túc xá.</small>
+            </div>
+          ) : (
+            <p>Nhận tại {cartItems[0]?.sellerAddress || 'bếp Homeji'}. Chỉ xác nhận khi đã kiểm tra món và tổng tiền.</p>
+          )}
+
           {checkoutConfirmationOpen && <VoucherPicker key={cartTotal} purpose="food" amount={cartTotal} disabled={cartBusy} onChange={setFoodVoucher} />}
           <p>Voucher: −{formatPrice(foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0)} · Cần trả {formatPrice(cartTotal - (foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0))}</p>
-          <p>Nhận tại {cartItems[0]?.sellerAddress || 'bếp Homeji'}. Chỉ xác nhận khi đã kiểm tra món và tổng tiền.</p>
+          {actionError && <p className="form-error" role="alert" style={{ color: '#dc2626', fontSize: '0.82rem', margin: '6px 0' }}>{actionError}</p>}
           <div className="food-checkout-confirmation__actions">
           <button type="button" className="btn btn-secondary" autoFocus disabled={cartBusy} onClick={() => setCheckoutConfirmationOpen(false)}>Quay lại giỏ</button>
           <button type="button" className="btn btn-primary" disabled={cartBusy || Boolean(foodVoucher?.pending) || cartItems.length === 0} onClick={() => void checkoutCart()}>{cartBusy ? 'Đang đặt…' : 'Xác nhận đặt món'}</button>
@@ -1806,124 +1909,178 @@ export function MarketplacePage({
           <MarketplaceLoadingSkeleton tab={tab}  />
         )
       ) : tab === 'sell' ? (
-        <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
-          <header className="sell-form-heading"><span>{editingPostId ? 'Chỉnh sửa tin bán' : 'Tạo tin bán mới'}</span><h2>{listingType === MarketplaceListingType.Food ? 'Chia sẻ món ngon quanh nhà' : 'Trao đồ cũ, đón giá trị mới'}</h2><p>Điền thông tin, thêm ảnh và kiểm tra điểm bán trước khi đăng.</p></header>
-          {listingType === MarketplaceListingType.Food ? (
-            <section className="food-preset-section" aria-labelledby="food-preset-heading">
-              <div>
-                <h3 id="food-preset-heading">Món phổ biến cho sinh viên</h3>
-                <p>Chọn để điền nhanh giá gợi ý. Ảnh chỉ là mẫu có giấy phép; hãy thay bằng ảnh món thật trước khi bán.</p>
-              </div>
-              <div className="food-preset-grid" data-glass-exclude>
-                {FOOD_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className={presetImageUrl === preset.imageUrl ? 'is-selected' : ''}
-                    onClick={() => applyFoodPreset(preset)}
-                  >
-                    <img src={preset.imageUrl} alt="" />
-                    <span>{preset.title}</span>
-                    <strong>{formatPrice(preset.price)}</strong>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : null}
+        listingType === MarketplaceListingType.Food ? (
+          <MarketplaceSellFoodForm
+            editingPostId={editingPostId}
+            initialValues={{
+              title,
+              description,
+              price: Number(price) || undefined,
+              category: sellCategory,
+              availableQuantity: Number(availableQuantity) || undefined,
+              unit,
+              preparationMinutes: Number(preparationMinutes) || undefined,
+              estimatedCost: foodEstimatedCost,
+              dailyQuota: foodDailyQuota,
+              freshnessBadge: foodFreshnessBadge,
+              allergenAlerts: foodAllergenAlerts,
+              isSamplePhoto: foodIsSamplePhoto,
+              mediaUrls: presetImageUrl ? [presetImageUrl] : existingMediaUrls,
+            }}
+            sellingAddress={sellingAddress}
+            latNum={latNum}
+            lngNum={lngNum}
+            hasAddressAnchor={Boolean(sellerLocationPost)}
+            uploading={uploading}
+            actionError={actionError}
+            onSubmit={async (foodData: FoodFormData) => {
+              setActionError('')
+              try {
+                setUploading(true)
+                let urls: string[] = foodData.mediaUrls.length ? foodData.mediaUrls : existingMediaUrls.length ? existingMediaUrls : []
+                if (foodData.mediaFiles.length > 0) {
+                  const uploaded = await uploadImages(foodData.mediaFiles, 'marketplace')
+                  urls = uploaded.map((u) => u.url).filter(Boolean)
+                }
+                if (urls.length === 0) {
+                  urls = [DEFAULT_MEDIA]
+                }
+                if (editingPostId) {
+                  await updateMarketplacePost(editingPostId, {
+                    title: foodData.title,
+                    description: foodData.description,
+                    price: foodData.price,
+                    condition: '',
+                    category: foodData.category,
+                    address: sellingAddress.trim() || 'Thủ Đức, TP.HCM',
+                    latitude: isValidCoord(latNum, lngNum) ? latNum : 10.8805,
+                    longitude: isValidCoord(latNum, lngNum) ? lngNum : 106.7820,
+                    mediaUrls: urls,
+                    listingType: MarketplaceListingType.Food,
+                    availableQuantity: foodData.availableQuantity,
+                    unit: foodData.unit,
+                    preparationMinutes: foodData.preparationMinutes,
+                    estimatedCost: foodData.estimatedCost,
+                    dailyQuota: foodData.dailyQuota,
+                    freshnessBadge: foodData.freshnessBadge,
+                    allergenAlerts: foodData.allergenAlerts,
+                    isSamplePhoto: foodData.isSamplePhoto,
+                  })
+                  setEditingPostId(null)
+                  setActionMsg('Đã cập nhật món ăn.')
+                  openLeaf('mine')
+                  void reload()
+                  return
+                }
+                await createMarketplacePost({
+                  title: foodData.title,
+                  description: foodData.description,
+                  price: foodData.price,
+                  condition: '',
+                  category: foodData.category,
+                  address: sellingAddress.trim() || 'Thủ Đức, TP.HCM',
+                  latitude: isValidCoord(latNum, lngNum) ? latNum : 10.8805,
+                  longitude: isValidCoord(latNum, lngNum) ? lngNum : 106.7820,
+                  mediaUrls: urls,
+                  listingType: MarketplaceListingType.Food,
+                  availableQuantity: foodData.availableQuantity,
+                  unit: foodData.unit,
+                  preparationMinutes: foodData.preparationMinutes,
+                  estimatedCost: foodData.estimatedCost,
+                  dailyQuota: foodData.dailyQuota,
+                  freshnessBadge: foodData.freshnessBadge,
+                  allergenAlerts: foodData.allergenAlerts,
+                  isSamplePhoto: foodData.isSamplePhoto,
+                })
+                setActionMsg('Đã đăng món ăn thành công!')
+                openLeaf('food')
+                void reload()
+              } catch (err) {
+                setActionError(getErrorMessage(err, 'Chưa đăng món được. Vui lòng kiểm tra lại.'))
+              } finally {
+                setUploading(false)
+              }
+            }}
+          />
+        ) : (
+          <form className="card marketplace-sell-form" onSubmit={(e) => void handleCreate(e)}>
+            <header className="sell-form-heading"><span>{editingPostId ? 'Chỉnh sửa tin bán' : 'Tạo tin bán mới'}</span><h2>Trao đồ cũ, đón giá trị mới</h2><p>Điền thông tin, thêm ảnh và kiểm tra điểm bán trước khi đăng.</p></header>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="sale-title">Tiêu đề</label>
-            <input id="sale-title" className="form-input" aria-label="Tiêu đề tin bán" maxLength={200} placeholder={listingType === MarketplaceListingType.Food ? 'Ví dụ: Cơm gà nhà làm' : 'Ví dụ: Bàn học gỗ còn tốt'} value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="sale-description">Mô tả</label>
-            <textarea id="sale-description" className="form-textarea" maxLength={3000} value={description} onChange={(e) => setDescription(e.target.value)} required />
-          </div>
-          <div className="marketplace-sell-grid">
             <div className="form-group">
-              <label className="form-label" htmlFor="sale-price">Giá (VND)</label>
-              <MoneyInput id="sale-price" className="form-input" aria-label="Giá bán"  min={1} step={1} value={price} onValueChange={value => setPrice(value)} required />
+              <label className="form-label" htmlFor="sale-title">Tiêu đề</label>
+              <input id="sale-title" className="form-input" aria-label="Tiêu đề tin bán" maxLength={200} placeholder="Ví dụ: Bàn học gỗ còn tốt" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="sale-condition">Tình trạng</label>
-              <ChoicePicker
-                id="sale-condition"
-                className="form-select"
-                aria-label="Tình trạng sản phẩm"
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                required
-              >
-                {listingType === MarketplaceListingType.Food ? (
-                  <option value="Mới làm trong ngày">Mới làm trong ngày</option>
-                ) : null}
-                {(listingType === MarketplaceListingType.Food ? [] : MARKETPLACE_CONDITIONS).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </ChoicePicker>
+              <label className="form-label" htmlFor="sale-description">Mô tả</label>
+              <textarea id="sale-description" className="form-textarea" maxLength={3000} value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="sale-category">Danh mục</label>
-              <ChoicePicker
-                id="sale-category"
-                className="form-select"
-                aria-label="Danh mục tin bán"
-                value={sellCategory}
-                onChange={(e) => setSellCategory(e.target.value)}
-                required
-              >
-                {[...new Set([...(listingType === MarketplaceListingType.Food ? FOOD_CATEGORIES : GOODS_CATEGORIES), ...(editingPostId ? [sellCategory] : [])])].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </ChoicePicker>
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="sale-quantity">Số lượng sẵn bán</label>
-              <MoneyInput
-                id="sale-quantity"
-                className="form-input"
-
-                aria-label="Số lượng sẵn bán"
-                min={1}
-                max={listingType === MarketplaceListingType.Food ? 100 : 1}
-                value={availableQuantity}
-                onValueChange={value => setAvailableQuantity(value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="sale-unit">Đơn vị</label>
-              <input
-                id="sale-unit"
-                className="form-input"
-                aria-label="Đơn vị bán"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                maxLength={30}
-                placeholder="phần, ly, ổ..."
-                required
-              />
-            </div>
-            {listingType === MarketplaceListingType.Food ? (
+            <div className="marketplace-sell-grid">
               <div className="form-group">
-                <label className="form-label" htmlFor="sale-preparation">Thời gian chuẩn bị (phút)</label>
+                <label className="form-label" htmlFor="sale-price">Giá (VND)</label>
+                <MoneyInput id="sale-price" className="form-input" aria-label="Giá bán"  min={1} step={1} value={price} onValueChange={value => setPrice(value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="sale-condition">Tình trạng</label>
+                <ChoicePicker
+                  id="sale-condition"
+                  className="form-select"
+                  aria-label="Tình trạng sản phẩm"
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  required
+                >
+                  {MARKETPLACE_CONDITIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </ChoicePicker>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="sale-category">Danh mục</label>
+                <ChoicePicker
+                  id="sale-category"
+                  className="form-select"
+                  aria-label="Danh mục tin bán"
+                  value={sellCategory}
+                  onChange={(e) => setSellCategory(e.target.value)}
+                  required
+                >
+                  {[...new Set([...GOODS_CATEGORIES, ...(editingPostId ? [sellCategory] : [])])].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </ChoicePicker>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="sale-quantity">Số lượng sẵn bán</label>
                 <MoneyInput
-                  id="sale-preparation"
+                  id="sale-quantity"
                   className="form-input"
 
-                  aria-label="Thời gian chuẩn bị (phút)"
-                  min={0}
-                  max={240}
-                  value={preparationMinutes}
-                  onValueChange={value => setPreparationMinutes(value)}
+                  aria-label="Số lượng sẵn bán"
+                  min={1}
+                  max={1}
+                  value={availableQuantity}
+                  onValueChange={value => setAvailableQuantity(value)}
+                  required
                 />
               </div>
-            ) : null}
-          </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="sale-unit">Đơn vị</label>
+                <input
+                  id="sale-unit"
+                  className="form-input"
+                  aria-label="Đơn vị bán"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  maxLength={30}
+                  placeholder="sản phẩm..."
+                  required
+                />
+              </div>
+            </div>
           <div className="form-group">
             <label className="form-label" htmlFor={sellerLocationPost ? undefined : 'sale-address'}>Địa chỉ / điểm giao cố định</label>
             {sellerLocationPost ? (
@@ -2032,19 +2189,33 @@ export function MarketplacePage({
                 <p>Giữ {existingMediaUrls.length} ảnh hiện tại. Chọn ảnh mới để thay thế.</p>
               </div>
             ) : (
-              <p className="form-hint">
-                {listingType === MarketplaceListingType.Food
-                  ? 'Đồ ăn bắt buộc có ảnh món thật hoặc chọn ảnh mẫu.'
-                  : 'Chưa chọn ảnh — sẽ dùng ảnh mặc định.'}
-              </p>
+              <p className="form-hint">Chưa chọn ảnh — sẽ dùng ảnh mặc định.</p>
             )}
           </div>
           <button type="submit" className="btn btn-primary" disabled={uploading}>
             {uploading ? 'Đang tải ảnh / đăng tin…' : editingPostId ? 'Lưu chỉnh sửa' : 'Đăng tin'}
           </button>
         </form>
+        )
       ) : tab === 'purchases' || tab === 'sales' ? (
         <div className="marketplace-orders-dashboard">
+          {tab === 'sales' && (
+            <KitchenOrderBoard
+              orders={orders.filter(o => o.sellerId === myUserId)}
+              busyGroupKey={orderGroupBusy}
+              onAcceptOrder={async (orderId: string) => {
+                await handleOrderGroupAction(orderId, () => acceptMarketplaceOrder(orderId), 'Đã nhận đơn hàng.')
+              }}
+              onRejectOrder={async (orderId: string) => {
+                await handleOrderGroupAction(orderId, () => rejectMarketplaceOrder(orderId), 'Đã từ chối đơn hàng.')
+              }}
+              onDeliverOrder={async (orderId: string) => {
+                await handleOrderGroupAction(orderId, () => markMarketplaceOrderDelivered(orderId), 'Đã cập nhật trạng thái đơn.')
+              }}
+              onContactCustomer={(postId: string, orderId: string) => void contactAboutPost(postId, orderId)}
+            />
+          )}
+
           {tab === 'sales' && sellerActionCount > 0 && orderStatusFilter === 'all' ? (
             <div className="marketplace-order-alert" role="status">
               <span aria-hidden="true">!</span>

@@ -59,6 +59,10 @@ function formatRent(value: number | null | undefined): string | null {
   return `${rentFormat.format(value)} đ`
 }
 
+function formatPrice(value: number | null | undefined): string {
+  return formatRent(value) ?? '0 đ'
+}
+
 function listingPhotos(post: RentalPost): string[] {
   const fromMedia = [...(post.media ?? [])]
     .filter((item) => item.mediaType !== MediaType.Video)
@@ -244,6 +248,29 @@ export function RoomDetailModal({
     onToggleSave(listingId)
   }
 
+  const handleShare = async () => {
+    if (!post) return
+    const title = post.title || 'Phòng trọ Homeji'
+    const shareUrl = window.location.href
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text: `${title} · ${rentLabel ?? ''} - Xem trên Homeji`,
+          url: shareUrl,
+        })
+      } catch (err) {
+        if ((err as Error)?.name !== 'AbortError') {
+          await navigator.clipboard?.writeText(shareUrl)
+          notify('Đã sao chép liên kết phòng.', 'ok')
+        }
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(shareUrl)
+      notify('Đã sao chép liên kết phòng.', 'ok')
+    }
+  }
+
   const handleMessage = async (questionDraft?: string) => {
     if (actionBusy) return
     if (!isAuthenticated) { openAuthModal({ intent: 'contact' }); return }
@@ -339,6 +366,17 @@ export function RoomDetailModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <RoomDetailHeader titleId={titleId} title={post && isApartmentListing(post.title) ? 'Chi tiết căn hộ' : 'Chi tiết phòng trọ'} onClose={onClose} actions={<>
+            {loadState === 'ready' && post ? (
+              <button
+                type="button"
+                className="room-detail__share"
+                aria-label="Chia sẻ phòng"
+                onClick={() => void handleShare()}
+              >
+                <ShareIcon />
+                <span>Chia sẻ</span>
+              </button>
+            ) : null}
             {loadState === 'ready' && onToggleSave ? (
               <button
                 type="button"
@@ -436,6 +474,16 @@ export function RoomDetailModal({
                   ) : null}
                 </section>
 
+                <RoomCostCalculatorWidget
+                  rent={post.price}
+                  isStudentShare={isStudentShare}
+                  electricityPriceHint={post.electricityPrice}
+                  waterPriceHint={post.waterPrice}
+                  internetPriceHint={post.internetPrice}
+                  maxOccupantsHint={post.maxOccupants}
+                  availableSlotsHint={post.availableSlots}
+                />
+
                 {description ? (
                   <section className="room-detail__section" data-glass-exclude>
                     <h4>{isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Mô tả căn phòng'}</h4>
@@ -528,6 +576,30 @@ export function RoomDetailModal({
                   guestLabel={<>{phoneIcon}Gọi điện</>} guestAriaLabel="Gọi điện, đăng nhập để xem số điện thoại">
                   {phoneIcon}Gọi điện
                 </PhoneAction> : null}
+                {hasOwnerPhone && phone ? (
+                  isAuthenticated ? (
+                    <a
+                      href={`https://zalo.me/${phone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="room-detail__zalo"
+                      aria-label="Chat Zalo với người đăng"
+                    >
+                      <span className="room-detail__zalo-icon" aria-hidden="true">Z</span>
+                      Zalo
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      className="room-detail__zalo"
+                      aria-label="Chat Zalo, đăng nhập để liên hệ"
+                      onClick={() => openAuthModal({ intent: 'contact', onSuccess: () => setRevealPhoneForPost(post.id) })}
+                    >
+                      <span className="room-detail__zalo-icon" aria-hidden="true">Z</span>
+                      Zalo
+                    </button>
+                  )
+                ) : null}
                 <button
                   type="button"
                   className="room-detail__book"
@@ -587,5 +659,176 @@ function CostRow({ label, value, muted }: { label: string; value: string; muted?
       <span>{label}</span>
       <span className={muted ? 'is-muted' : undefined}>{value}</span>
     </p>
+  )
+}
+
+function RoomCostCalculatorWidget({
+  rent,
+  isStudentShare,
+  electricityPriceHint,
+  waterPriceHint,
+  internetPriceHint,
+  maxOccupantsHint,
+  availableSlotsHint,
+}: {
+  rent: number
+  isStudentShare: boolean
+  electricityPriceHint?: number
+  waterPriceHint?: number
+  internetPriceHint?: number
+  maxOccupantsHint?: number
+  availableSlotsHint?: number
+}) {
+  const initialOccupants = isStudentShare ? Math.max(1, availableSlotsHint || 2) : 1
+  const maxAllowed = Math.max(initialOccupants, maxOccupantsHint && maxOccupantsHint > 0 ? maxOccupantsHint : 6)
+  const [occupants, setOccupants] = useState(initialOccupants)
+  const [kwhPerPerson, setKwhPerPerson] = useState(80)
+  const [electricityUnitPrice, setElectricityUnitPrice] = useState(() => (electricityPriceHint && electricityPriceHint > 0 ? electricityPriceHint : 3500))
+  const [waterPerPerson, setWaterPerPerson] = useState(() => (waterPriceHint && waterPriceHint > 0 ? waterPriceHint : 80000))
+  const [serviceFee, setServiceFee] = useState(() => (internetPriceHint && internetPriceHint > 0 ? internetPriceHint + 50000 : 120000))
+  const [isOpen, setIsOpen] = useState(false)
+
+  const rentAmount = Number.isFinite(rent) && rent > 0 ? rent : 0
+  const electricityTotal = kwhPerPerson * occupants * electricityUnitPrice
+  const waterTotal = waterPerPerson * occupants
+  const totalMonthly = rentAmount + electricityTotal + waterTotal + serviceFee
+  const perPersonMonthly = Math.round(totalMonthly / occupants)
+
+  return (
+    <div className="room-cost-calculator" data-glass-exclude>
+      <div className="room-cost-calculator__header">
+        <div className="room-cost-calculator__title-group">
+          <span className="room-cost-calculator__icon" aria-hidden="true">🧮</span>
+          <div>
+            <h5>Dự toán chi phí trọn gói</h5>
+            <p>Tiền phòng + điện, nước + xe máy & wifi</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="room-cost-calculator__toggle-btn"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? 'Thu gọn' : 'Tùy chỉnh'}
+        </button>
+      </div>
+
+      <div className="room-cost-calculator__summary">
+        <div className="room-cost-calculator__stat">
+          <span>Tổng dự kiến cả phòng</span>
+          <strong>{formatPrice(totalMonthly)} <small>/ tháng</small></strong>
+        </div>
+        {occupants > 1 && (
+          <div className="room-cost-calculator__stat is-highlight">
+            <span>Mỗi người ({occupants} người)</span>
+            <strong>{formatPrice(perPersonMonthly)} <small>/ tháng</small></strong>
+          </div>
+        )}
+      </div>
+
+      <div className="room-cost-calculator__breakdown-chips">
+        <span>🏠 Phòng: {formatPrice(rentAmount)}</span>
+        <span>⚡ Điện (~{kwhPerPerson * occupants} kWh): {formatPrice(electricityTotal)}</span>
+        <span>💧 Nước: {formatPrice(waterTotal)}</span>
+        <span>🛵 Dịch vụ & xe: {formatPrice(serviceFee)}</span>
+      </div>
+
+      {isOpen && (
+        <div className="room-cost-calculator__controls">
+          <div className="room-cost-calculator__field">
+            <label>Số người ở:</label>
+            <div className="room-cost-stepper">
+              <button
+                type="button"
+                disabled={occupants <= 1}
+                onClick={() => setOccupants(Math.max(1, occupants - 1))}
+              >
+                -
+              </button>
+              <span>{occupants} người</span>
+              <button
+                type="button"
+                disabled={occupants >= maxAllowed}
+                onClick={() => setOccupants(Math.min(maxAllowed, occupants + 1))}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="room-cost-calculator__field">
+            <label>Đơn giá điện ({formatPrice(electricityUnitPrice)}/kWh):</label>
+            <select
+              value={electricityUnitPrice}
+              onChange={(e) => setElectricityUnitPrice(Number(e.target.value))}
+            >
+              <option value="3000">3.000đ / kWh (Giá nhà nước/hộ gia đình)</option>
+              <option value="3500">3.500đ / kWh (Mức phổ biến phòng trọ)</option>
+              <option value="4000">4.000đ / kWh (Căn hộ dịch vụ/tiêu chuẩn cao)</option>
+              {electricityPriceHint && ![3000, 3500, 4000].includes(electricityPriceHint) ? (
+                <option value={electricityPriceHint}>{formatPrice(electricityPriceHint)}/kWh (Theo tin đăng)</option>
+              ) : null}
+            </select>
+          </div>
+
+          <div className="room-cost-calculator__field">
+            <label>Lượng điện ước lượng / người (~{kwhPerPerson} kWh):</label>
+            <input
+              type="range"
+              min="30"
+              max="200"
+              step="10"
+              value={kwhPerPerson}
+              onChange={(e) => setKwhPerPerson(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="room-cost-calculator__field">
+            <label>Nước sinh hoạt / người:</label>
+            <select
+              value={waterPerPerson}
+              onChange={(e) => setWaterPerPerson(Number(e.target.value))}
+            >
+              <option value="50000">50.000đ (Dùng ít)</option>
+              <option value="80000">80.000đ (Tiêu chuẩn)</option>
+              <option value="120000">120.000đ (Dùng nhiều)</option>
+              {waterPriceHint && ![50000, 80000, 120000].includes(waterPriceHint) ? (
+                <option value={waterPriceHint}>{formatPrice(waterPriceHint)} / người (Theo tin đăng)</option>
+              ) : null}
+            </select>
+          </div>
+
+          <div className="room-cost-calculator__field">
+            <label>Phí gửi xe & rác, wifi:</label>
+            <select
+              value={serviceFee}
+              onChange={(e) => setServiceFee(Number(e.target.value))}
+            >
+              <option value="0">Miễn phí / Đã gồm trong tiền phòng</option>
+              <option value="100000">100.000đ (1 xe + wifi cơ bản)</option>
+              <option value="150000">150.000đ (2 xe + wifi & rác)</option>
+              <option value="250000">250.000đ (Đầy đủ dịch vụ)</option>
+              {internetPriceHint && ![0, 100000, 150000, 250000].includes(internetPriceHint) ? (
+                <option value={internetPriceHint}>{formatPrice(internetPriceHint)} (Internet theo tin đăng)</option>
+              ) : null}
+            </select>
+          </div>
+          <small className="room-cost-calculator__hint">
+            💡 Mức tính toán dựa trên mức sinh hoạt phổ biến của sinh viên & người đi làm tại TP.HCM. Hãy xác nhận biểu phí chính thức với người đăng.
+          </small>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ShareIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <polyline points="16 6 12 2 8 6" />
+      <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
   )
 }

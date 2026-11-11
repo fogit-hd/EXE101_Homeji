@@ -23,6 +23,16 @@ import {
 export const formatPrice = (value: number) =>
   `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value)} đ`
 
+export const formatCompactRent = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) return 'Chưa có thông tin'
+  if (value >= 1_000_000) {
+    const millions = value / 1_000_000
+    const formatted = Number.isInteger(millions) ? millions.toString() : millions.toFixed(1).replace('.', ',')
+    return `${formatted} triệu`
+  }
+  return formatPrice(value)
+}
+
 // Listing measurements have no explicit-free marker; zero/malformed values stay unknown.
 export const formatListingRent = (value: number) =>
   Number.isFinite(value) && value > 0 ? formatPrice(value) : 'Chưa có thông tin'

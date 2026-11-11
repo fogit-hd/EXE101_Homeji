@@ -1,4 +1,5 @@
 import { useListingSearchParams } from '../../hooks/useListingSearchParams'
+import { useBackButtonClose } from '../../hooks/useBackButtonClose'
 import { AnimatePresence, motion } from 'motion/react'
 import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -817,6 +818,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const closeRoomDetail = useCallback(() => {
     setRoomDetailId(null)
   }, [])
+  useBackButtonClose(Boolean(roomDetailId), closeRoomDetail)
 
   const handleCardHover = useCallback((postId: string) => {
     if (!window.matchMedia('(hover: hover)').matches) return

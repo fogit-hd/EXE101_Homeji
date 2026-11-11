@@ -81,5 +81,8 @@
   /* The map needs the full remaining viewport; legal links remain in the menu. */
   .app-shell--map-peer > .site-footer { display: none; }
   #root .home-map-page .glass-density-control--docked { display: none; }
+  .app-shell:not(.app-shell--map-peer):not(.app-shell--messages):not(.app-shell--auth-cinema) .main-content {
+    padding-bottom: calc(var(--mobile-tabbar-height, 56px) + env(safe-area-inset-bottom, 0px));
+  }
 }
 @media(max-width:767px) { #root .app-shell--map-peer .app-main { padding-bottom: 0; } }

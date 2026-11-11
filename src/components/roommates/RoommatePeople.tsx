@@ -4,7 +4,7 @@ import { getMyInvitations, RoommateInvitationStatus, UserRole, type RoommateInvi
 import { useAuth } from '../../contexts/AuthContext'
 import {
   getMyRoommateProfile, inviteRoommate, RoommateIntent, searchRoommates, updateMyRoommateProfile,
-  type RoommateDirectory, type RoommateDiscoveryProfile,
+  type RoommateDirectory, type RoommateDiscoveryProfile, type RoommatePerson,
 } from '../../api/roommateDiscovery'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, petPreferenceLabel, sleepHabitLabel, smokingPreferenceLabel } from '../../lib/labels'
@@ -16,6 +16,155 @@ const INTENTS = [
   { value: RoommateIntent.HasAccommodation, label: 'Đã có chỗ ở', description: 'Tìm bạn ghép vào chỗ đang ở, không cần sở hữu phòng.' },
 ]
 const EMPTY_PROFILE: RoommateDiscoveryProfile = { intent: RoommateIntent.SeekingAccommodation, isDiscoverable: false, introduction: '' }
+
+function extractGenderPreference(text?: string | null): 'female' | 'male' | 'any' {
+  if (!text) return 'any'
+  const lower = text.toLowerCase()
+  const isFemale = /(nữ|bạn nữ|tìm nữ|chỉ nữ|con gái)/i.test(lower)
+  const isMale = /(nam|bạn nam|tìm nam|chỉ nam|con trai)/i.test(lower)
+  if (isFemale && !isMale) return 'female'
+  if (isMale && !isFemale) return 'male'
+  return 'any'
+}
+
+function normalizeDistrict(text?: string | null): string {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .replace(/\b(thành phố|tp\.?|quận|huyện|q\.?)\b/gi, '')
+    .trim()
+}
+
+function computeRoommateCompatibility(
+  myProfile: ReturnType<typeof useAuth>['profile'],
+  person: RoommatePerson,
+) {
+  let score = person.compatibilityScore ?? 75
+  const reasons: string[] = []
+
+  if (myProfile) {
+    let points = 0
+    let totalWeight = 0
+
+    // 1. Giới tính & tiêu chí ở ghép (Gender match) - weight 15
+    totalWeight += 15
+    const myGender = extractGenderPreference(`${myProfile.rentalNeed || ''} ${myProfile.displayName || ''}`)
+    const theirGender = extractGenderPreference(`${person.introduction || ''} ${person.displayName || ''}`)
+
+    if (myGender !== 'any' && theirGender !== 'any') {
+      if (myGender === theirGender) {
+        points += 15
+        reasons.push(myGender === 'female' ? 'Phù hợp tiêu chí ở ghép Nữ' : 'Phù hợp tiêu chí ở ghép Nam')
+      } else {
+        points += 3
+      }
+    } else if (myGender !== 'any' || theirGender !== 'any') {
+      points += 12
+      const matched = myGender !== 'any' ? (myGender === 'female' ? 'Nữ' : 'Nam') : (theirGender === 'female' ? 'Nữ' : 'Nam')
+      reasons.push(`Tiêu chí giới tính hòa hợp (${matched})`)
+    } else {
+      points += 12
+    }
+
+    // 2. Ngân sách thuê phòng (Budget) - weight 20
+    totalWeight += 20
+    if (myProfile.maxBudget && person.maxBudget) {
+      const diff = Math.abs(myProfile.maxBudget - person.maxBudget)
+      if (diff <= 500000) {
+        points += 20
+        reasons.push(`Ngân sách tương đương (~${formatPrice(person.maxBudget)})`)
+      } else if (diff <= 1500000) {
+        points += 15
+        reasons.push('Khoảng giá thuê phù hợp')
+      } else {
+        points += 6
+      }
+    } else {
+      points += 14
+    }
+
+    // 3. Quận / Khu vực mong muốn & Trường học (Location / School) - weight 20
+    totalWeight += 20
+    const myArea = normalizeDistrict(myProfile.preferredArea)
+    const theirArea = normalizeDistrict(person.preferredArea)
+    const mySchool = (myProfile.school || '').trim().toLowerCase()
+    const theirSchool = (person.school || '').trim().toLowerCase()
+
+    if (myArea && theirArea && (myArea.includes(theirArea) || theirArea.includes(myArea))) {
+      points += 20
+      reasons.push(`Cùng khu vực mong muốn (${person.preferredArea})`)
+    } else if (mySchool && theirSchool && (mySchool.includes(theirSchool) || theirSchool.includes(mySchool))) {
+      points += 16
+      reasons.push(`Cùng trường học (${person.school})`)
+    } else {
+      points += 10
+    }
+
+    // 4. Thói quen giờ giấc (Sleep) - weight 15
+    totalWeight += 15
+    if (myProfile.sleepHabit && person.sleepHabit) {
+      if (myProfile.sleepHabit === person.sleepHabit) {
+        points += 15
+        reasons.push(`Giờ giấc tương đồng (${sleepHabitLabel[person.sleepHabit]})`)
+      } else {
+        points += 5
+      }
+    } else {
+      points += 10
+    }
+
+    // 5. Nuôi thú cưng (Pet) - weight 15
+    totalWeight += 15
+    if (myProfile.petPreference && person.petPreference) {
+      if (myProfile.petPreference === person.petPreference) {
+        points += 15
+        reasons.push(`Quan điểm thú cưng hòa hợp (${petPreferenceLabel[person.petPreference]})`)
+      } else {
+        points += 5
+      }
+    } else {
+      points += 10
+    }
+
+    // 6. Hút thuốc (Smoking) - weight 15
+    totalWeight += 15
+    if (myProfile.smokingPreference && person.smokingPreference) {
+      if (myProfile.smokingPreference === person.smokingPreference) {
+        points += 15
+        if (person.smokingPreference === 1) {
+          reasons.push('Cùng không hút thuốc')
+        } else {
+          reasons.push(`Thói quen hút thuốc tương đồng (${smokingPreferenceLabel[person.smokingPreference]})`)
+        }
+      } else {
+        points += 0
+      }
+    } else {
+      points += 10
+    }
+
+    const calculated = Math.round((points / totalWeight) * 100)
+    score = Math.max(50, Math.min(98, calculated))
+  } else {
+    if (person.compatibilityScore) {
+      score = person.compatibilityScore
+    }
+    if (person.smokingPreference === 1) {
+      reasons.push('Không hút thuốc')
+    }
+    if (person.preferredArea) {
+      reasons.push(`Khu vực ${person.preferredArea}`)
+    }
+    if (person.maxBudget) {
+      reasons.push(`Ngân sách ~${formatPrice(person.maxBudget)}`)
+    }
+  }
+
+  const tier = score >= 85 ? 'high' : score >= 70 ? 'medium' : 'normal'
+  const tierLabel = score >= 85 ? 'Rất phù hợp' : score >= 70 ? 'Phù hợp' : 'Cơ bản'
+
+  return { score, reasons, tier, tierLabel }
+}
 
 export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () => void }) {
   const { profile } = useAuth()
@@ -110,7 +259,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
           <span><strong>{option.label}</strong><small>{option.description}</small></span>
         </label>)}</div>
         <label className="roommate-people__introduction">Giới thiệu ngắn
-          <textarea maxLength={600} rows={3} value={preferences.introduction ?? ''} placeholder="Bạn muốn sống cùng người như thế nào?"
+          <textarea maxLength={600} rows={3} value={preferences.introduction ?? ''} placeholder="Ví dụ: Nữ sinh viên năm 2 tìm bạn nữ ở cùng quanh SPKT, sạch sẽ, ngủ trước 23h, không hút thuốc..."
             onChange={event => setPreferences(previous => ({ ...previous, introduction: event.target.value }))} />
         </label>
         <label className="roommate-people__consent"><input type="checkbox" checked={preferences.isDiscoverable}
@@ -137,12 +286,30 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
       {directory.items.length === 0 ? <p>Chưa có hồ sơ phù hợp. Thử trường hoặc đường gần đó, hoặc đổi nhu cầu.</p> : <div className="roommate-people__grid">{directory.items.map(person => {
         const existing = invitations.find(invitation => (invitation.senderId === person.userId || invitation.receiverId === person.userId) &&
           (invitation.status === RoommateInvitationStatus.Pending || invitation.status === RoommateInvitationStatus.Accepted))
+        const { score, reasons, tier, tierLabel } = computeRoommateCompatibility(profile, person)
         return <article className="roommate-people__person" key={person.userId}>
-          <div className="roommate-people__person-header"><span className="roommate-people__avatar" aria-hidden="true">{person.displayName.slice(0, 1)}</span><div><h3>{person.displayName}</h3><span>{INTENTS.find(option => option.value === person.intent)?.label}</span></div></div>
+          <div className="roommate-people__person-header">
+            <span className="roommate-people__avatar" aria-hidden="true">{person.displayName.slice(0, 1)}</span>
+            <div>
+              <h3>{person.displayName}</h3>
+              <span>{INTENTS.find(option => option.value === person.intent)?.label}</span>
+            </div>
+            <div className={`roommate-compat-badge is-${tier}`} title={`${score}% phù hợp lối sống & nhu cầu`}>
+              <span className="roommate-compat-score">{score}% Phù hợp</span>
+              <span className="roommate-compat-tier">{tierLabel}</span>
+            </div>
+          </div>
           {person.introduction ? <p className="roommate-people__bio">{person.introduction}</p> : null}
           <dl><div><dt>Trường</dt><dd>{person.school || 'Chưa cập nhật'}</dd></div><div><dt>Khu vực</dt><dd>{person.preferredArea || 'Chưa cập nhật'}</dd></div><div><dt>Ngân sách/tháng</dt><dd>{person.maxBudget != null ? formatPrice(person.maxBudget) : 'Chưa cập nhật'}</dd></div></dl>
           <ul className="roommate-people__habits"><li>{sleepHabitLabel[person.sleepHabit]}</li><li>{petPreferenceLabel[person.petPreference]}</li><li>{smokingPreferenceLabel[person.smokingPreference]}</li></ul>
-          <p className="roommate-people__score">{person.compatibilityScore != null ? `${person.compatibilityScore}% tương đồng lối sống đã khai báo` : 'Chưa đủ thông tin để so sánh lối sống'}</p>
+          {reasons.length > 0 && (
+            <ul className="roommate-compat-reasons" aria-label="Điểm hòa hợp">
+              {reasons.slice(0, 3).map((reason) => (
+                <li key={reason}>✓ {reason}</li>
+              ))}
+            </ul>
+          )}
+          <p className="roommate-people__score">{person.compatibilityScore != null ? `${person.compatibilityScore}% tương đồng lối sống đã khai báo` : `${score}% tương đồng theo hồ sơ`}</p>
           {existing ? <button type="button" className="btn btn-secondary" onClick={onViewInvitations}>{existing.status === RoommateInvitationStatus.Accepted ? 'Xem kết nối' : 'Xem lời mời đang chờ'}</button>
             : <button type="button" className="btn btn-primary" disabled={sendingId !== null} onClick={() => void sendInvitation(person.userId)}>{sendingId === person.userId ? 'Đang gửi…' : 'Mời kết nối'}</button>}
         </article>

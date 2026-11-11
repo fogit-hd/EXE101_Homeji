@@ -127,6 +127,11 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
           <p>{roommateOnly ? 'Lưu phòng quan tâm ở tab Tìm phòng để xem gợi ý người cùng ở.' : 'Lưu tin từ mục Tìm phòng để xem lại tại đây.'}</p>
+          <div style={{ marginTop: 16 }}>
+            <Link to="/explore" className="btn btn-primary">
+              Khám phá phòng ngay
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid-posts">

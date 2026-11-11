@@ -1,7 +1,7 @@
 import { MoneyInput } from '../components/ui/MoneyInput'
 import { confirmDialog } from '../components/ui/confirmDialog'
 import './post-form.css'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   addRentalPostMedia,
@@ -97,7 +97,38 @@ export function EditRentalPostPage() {
     setTransferReason(data.transferReason ?? '')
     setOwnerConsentConfirmed(data.ownerConsentConfirmed ?? false)
     setOwnerConsentContact(data.ownerConsentContact ?? '')
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`homeji_draft_backup_${postId}`)
+        if (stored) {
+          const backup = JSON.parse(stored)
+          if (backup && (!data.title && backup.title || !data.description && backup.description)) {
+            if (backup.title && !data.title) setTitle(backup.title)
+            if (backup.description && !data.description) setDescription(backup.description)
+            if (backup.price && !data.price) setPrice(backup.price)
+            if (backup.deposit && !data.deposit) setDeposit(backup.deposit)
+            if (backup.area && !data.area) setArea(backup.area)
+            if (backup.address && !data.address) setAddress(backup.address)
+          }
+        }
+      } catch {}
+    }
   }, [postId])
+
+  useEffect(() => {
+    if (!postId || !post) return
+    if (typeof localStorage === 'undefined' || typeof setTimeout === 'undefined') return
+    const key = `homeji_draft_backup_${postId}`
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify({
+          title, description, price, deposit, area, address, latitude, longitude,
+          maxOccupants, availableSlots, amenities, passFee, transferReason, ownerConsentContact,
+        }))
+      } catch {}
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [postId, post, title, description, price, deposit, area, address, latitude, longitude, maxOccupants, availableSlots, amenities, passFee, transferReason, ownerConsentContact])
 
   const { showLoader, onIntroComplete, error: loadError, disrupted } = usePersistentLoad(
     loadFn,
@@ -164,6 +195,7 @@ export function EditRentalPostPage() {
     setSaving(true)
     try {
       await persistDraft()
+      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch {} }
       setMessage('Đã lưu tin đăng.')
     } catch (err) {
       setError(getErrorMessage(err, 'Chưa lưu được tin. Vui lòng thử lại.'))
@@ -243,6 +275,7 @@ export function EditRentalPostPage() {
       const saved = await persistDraft()
       if (saved.media.length < 3) throw new Error('Thêm ít nhất 3 ảnh thật trước khi gửi duyệt.')
       await submitRentalPost(postId)
+      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch {} }
       setMessage('Tin đăng đã gửi duyệt.')
       navigate(mapSectionUrl('myPosts'))
     } catch (err) {
@@ -552,6 +585,28 @@ export function EditRentalPostPage() {
                 void handleAddMedia(files)
               }}
             />
+            <div style={{ marginTop: 8 }}>
+              <label htmlFor="rental-media-camera" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Chụp ảnh trực tiếp từ camera
+                <input
+                  id="rental-media-camera"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? [])
+                    event.target.value = ''
+                    if (files.length) {
+                      setMediaFiles(files)
+                      void handleAddMedia(files)
+                    }
+                  }}
+                />
+              </label>
+            </div>
             {uploadingMedia ? <span role="status">Đang tải ảnh lên…</span>
               : mediaFiles.length > 0 ? <button type="button" className="btn btn-secondary" disabled={saving || (post?.media.length ?? 0) >= 10} onClick={() => void handleAddMedia()}>
                 Thử tải lại {mediaFiles.length} ảnh

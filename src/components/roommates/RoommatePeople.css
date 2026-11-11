@@ -28,3 +28,57 @@
 .roommate-people__person > button { margin-top: auto; }
 .roommate-people__notice { color: var(--hj-accent); }
 @media (max-width: 540px) { .roommate-people__intents { grid-template-columns: 1fr; } .roommate-people__profile, .roommate-people__person { padding: 16px; } }
+
+/* Compatibility Score Pill & Breakdown */
+.roommate-compat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.roommate-compat-badge.is-high {
+  background: #e8f5ec;
+  color: #1b5e20;
+  border: 1px solid #c8e6c9;
+}
+
+.roommate-compat-badge.is-medium {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #bbdefb;
+}
+
+.roommate-compat-badge.is-normal {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffe0b2;
+}
+
+.roommate-compat-tier {
+  font-size: 10.5px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.roommate-compat-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.roommate-compat-reasons li {
+  font-size: 11.5px;
+  color: var(--text-secondary, #3b5745);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

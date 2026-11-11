@@ -67,6 +67,7 @@
 }
 
 .room-detail__save,
+.room-detail__share,
 .room-detail__close,
 .room-detail__book,
 .room-detail__retry,
@@ -79,9 +80,13 @@
   cursor: pointer;
 }
 
-.room-detail__save {
+.room-detail__save,
+.room-detail__share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 36px;
-  padding: 0 16px;
+  padding: 0 14px;
 }
 
 .room-detail__save.is-on {
@@ -570,6 +575,42 @@ html:root body .room-detail__contact .room-detail__phone-hint { margin: -8px 0 0
 .room-detail__footer-price small { color: var(--rd-muted); font-size: 13px; font-weight: 400; }
 .room-detail__call { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 20px; border: 1px solid var(--rd-border); border-radius: 8px; background: var(--rd-surface); color: var(--rd-forest); font: 600 14px/20px var(--font-ui); text-decoration: none; white-space: nowrap; cursor: pointer; }
 .room-detail__call:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
+.room-detail__zalo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 48px;
+  padding: 0 18px;
+  border: 1px solid #0068ff;
+  border-radius: 8px;
+  background: #0068ff;
+  color: #fff !important;
+  font: 600 14px/20px var(--font-ui);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgb(0 104 255 / 25%);
+  transition: background 180ms ease, transform 180ms ease;
+}
+.room-detail__zalo:hover {
+  background: #0056d6;
+  color: #fff !important;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+.room-detail__zalo-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #fff;
+  color: #0068ff;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+}
 :is(html:root #root,html:root body) .room-detail .room-detail__footer-actions > .room-detail__message {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   background: #175c57; color: #fff; border: 1px solid #175c57;
@@ -703,6 +744,16 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
     padding-right: 16px;
   }
 
+  .room-detail__share span {
+    display: none;
+  }
+
+  .room-detail__share {
+    padding: 0 8px;
+    width: 36px;
+    justify-content: center;
+  }
+
   .room-detail__body {
     display: flex;
     flex-direction: column;
@@ -757,7 +808,9 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
     align-items: stretch;
     flex-direction: column;
     gap: 10px;
-    padding-block: 12px;
+    padding-top: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    padding-inline: 12px;
   }
 
   .room-detail__footer-actions {
@@ -999,4 +1052,172 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 .room-report__actions button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* Room Cost Calculator Widget */
+.room-cost-calculator {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--surface-muted, #f7faf8);
+  border: 1px solid var(--border, #dbe4df);
+  border-radius: 14px;
+}
+
+.room-cost-calculator__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.room-cost-calculator__title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.room-cost-calculator__icon {
+  font-size: 22px;
+}
+
+.room-cost-calculator__title-group h5 {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text-heading, #1f3328);
+  margin: 0;
+}
+
+.room-cost-calculator__title-group p {
+  font-size: 12px;
+  color: var(--text-secondary, #526358);
+  margin: 2px 0 0;
+}
+
+.room-cost-calculator__toggle-btn {
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border, #c2cdc6);
+  background: #fff;
+  color: #24543e;
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.room-cost-calculator__toggle-btn:hover {
+  background: #edf5f0;
+}
+
+.room-cost-calculator__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.room-cost-calculator__stat {
+  flex: 1;
+  min-width: 140px;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e1e8e3;
+}
+
+.room-cost-calculator__stat.is-highlight {
+  background: #eef7f1;
+  border-color: #badcc6;
+}
+
+.room-cost-calculator__stat span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-secondary, #526358);
+}
+
+.room-cost-calculator__stat strong {
+  display: block;
+  font-size: 16px;
+  color: #24543e;
+  margin-top: 2px;
+}
+
+.room-cost-calculator__stat strong small {
+  font-size: 12px;
+  font-weight: normal;
+  color: #526358;
+}
+
+.room-cost-calculator__breakdown-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.room-cost-calculator__breakdown-chips span {
+  font-size: 11.5px;
+  padding: 3px 8px;
+  background: #e9f0ec;
+  border-radius: 6px;
+  color: #2f4438;
+}
+
+.room-cost-calculator__controls {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #d0dcd4;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.room-cost-calculator__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.room-cost-calculator__field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2b3e33;
+}
+
+.room-cost-calculator__field select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #c8d3cd;
+  font-size: 12.5px;
+  background: #fff;
+}
+
+.room-cost-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.room-cost-stepper button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #b9c7bf;
+  background: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.room-cost-stepper button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.room-cost-calculator__hint {
+  font-size: 11px;
+  color: #6a7c71;
+  line-height: 1.4;
+  margin-top: 4px;
 }

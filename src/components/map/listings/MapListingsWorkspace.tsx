@@ -3,6 +3,7 @@ import { RentalMapPreview as PreviewCard, BookmarkIcon } from './RentalMapPrevie
 import { MoneyInput } from '../../ui/MoneyInput'
 import { RentalSourceResults } from './RentalSourceResults'
 import {
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -71,6 +72,83 @@ const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
   { id: 'market', label: 'Chợ Homeji' },
 ]
 
+type QuickChip = {
+  id: string
+  label: string
+  isActive: (query: ListingQuery) => boolean
+  toggle: (query: ListingQuery) => Partial<ListingQuery>
+}
+
+const QUICK_CHIPS: QuickChip[] = [
+  {
+    id: 'under-3m',
+    label: 'Dưới 3tr',
+    isActive: (query) => query.maxPrice === 3_000_000 && (query.minPrice == null || query.minPrice === 0),
+    toggle: (query) =>
+      query.maxPrice === 3_000_000 && (query.minPrice == null || query.minPrice === 0)
+        ? { minPrice: undefined, maxPrice: undefined }
+        : { minPrice: undefined, maxPrice: 3_000_000 },
+  },
+  {
+    id: '3m-5m',
+    label: '3 - 5tr',
+    isActive: (query) => query.minPrice === 3_000_000 && query.maxPrice === 5_000_000,
+    toggle: (query) =>
+      query.minPrice === 3_000_000 && query.maxPrice === 5_000_000
+        ? { minPrice: undefined, maxPrice: undefined }
+        : { minPrice: 3_000_000, maxPrice: 5_000_000 },
+  },
+  {
+    id: 'over-5m',
+    label: '> 5tr',
+    isActive: (query) => query.minPrice === 5_000_000 && query.maxPrice == null,
+    toggle: (query) =>
+      query.minPrice === 5_000_000 && query.maxPrice == null
+        ? { minPrice: undefined, maxPrice: undefined }
+        : { minPrice: 5_000_000, maxPrice: undefined },
+  },
+  {
+    id: 'ac',
+    label: 'Có máy lạnh',
+    isActive: (query) => query.amenities.includes('AIR_CONDITIONER'),
+    toggle: (query) => ({
+      amenities: query.amenities.includes('AIR_CONDITIONER')
+        ? query.amenities.filter((a) => a !== 'AIR_CONDITIONER')
+        : [...query.amenities, 'AIR_CONDITIONER'],
+    }),
+  },
+  {
+    id: 'loft',
+    label: 'Gác lửng',
+    isActive: (query) => query.amenities.includes('LOFT'),
+    toggle: (query) => ({
+      amenities: query.amenities.includes('LOFT')
+        ? query.amenities.filter((a) => a !== 'LOFT')
+        : [...query.amenities, 'LOFT'],
+    }),
+  },
+  {
+    id: 'wc',
+    label: 'WC riêng',
+    isActive: (query) => query.amenities.includes('PRIVATE_BATHROOM'),
+    toggle: (query) => ({
+      amenities: query.amenities.includes('PRIVATE_BATHROOM')
+        ? query.amenities.filter((a) => a !== 'PRIVATE_BATHROOM')
+        : [...query.amenities, 'PRIVATE_BATHROOM'],
+    }),
+  },
+  {
+    id: 'pet',
+    label: 'Cho nuôi thú cưng',
+    isActive: (query) => query.amenities.includes('PET_FRIENDLY'),
+    toggle: (query) => ({
+      amenities: query.amenities.includes('PET_FRIENDLY')
+        ? query.amenities.filter((a) => a !== 'PET_FRIENDLY')
+        : [...query.amenities, 'PET_FRIENDLY'],
+    }),
+  },
+]
+
 function formatListingDate(value: string): string | null {
   const timestamp = Date.parse(value)
   return Number.isFinite(timestamp)
@@ -108,12 +186,45 @@ export function MapListingsWorkspace({
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
   const apartmentMode = query.catalog === 'apartments'
+  const [sortBy, setSortBy] = useState<'default' | 'priceAsc' | 'priceDesc' | 'areaDesc'>('default')
+  const sortChoices = [
+    ['default', 'Mới nhất'],
+    ['priceAsc', 'Giá thấp → cao'],
+    ['priceDesc', 'Giá cao → thấp'],
+    ['areaDesc', 'Diện tích lớn'],
+  ] as const
+
   const cards = useMemo(
-    () =>
-      marketMode
+    () => {
+      const items = marketMode
         ? marketPosts.map((post) => ({ id: post.id, view: mapMarketplacePostToListingViewModel(post) }))
-        : posts.map((post) => ({ id: post.id, view: mapBackendListingToListingViewModel(post) })),
-    [marketMode, marketPosts, posts],
+        : posts.map((post) => ({ id: post.id, view: mapBackendListingToListingViewModel(post) }))
+      if (sortBy === 'default') return items
+      const copy = [...items]
+      if (sortBy === 'priceAsc') {
+        return copy.sort((a, b) => {
+          const postA = posts.find((p) => p.id === a.id)
+          const postB = posts.find((p) => p.id === b.id)
+          return (postA?.price ?? 0) - (postB?.price ?? 0)
+        })
+      }
+      if (sortBy === 'priceDesc') {
+        return copy.sort((a, b) => {
+          const postA = posts.find((p) => p.id === a.id)
+          const postB = posts.find((p) => p.id === b.id)
+          return (postB?.price ?? 0) - (postA?.price ?? 0)
+        })
+      }
+      if (sortBy === 'areaDesc') {
+        return copy.sort((a, b) => {
+          const postA = posts.find((p) => p.id === a.id)
+          const postB = posts.find((p) => p.id === b.id)
+          return (postB?.area ?? 0) - (postA?.area ?? 0)
+        })
+      }
+      return copy
+    },
+    [marketMode, marketPosts, posts, sortBy],
   )
   const selected = cards.find((item) => item.id === selectedListingId) ?? null
 
@@ -171,6 +282,26 @@ export function MapListingsWorkspace({
     ['split', 'Chia đôi'],
     ['list', 'Danh sách'],
   ] as const
+
+  const infiniteSentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (query.view === 'map' || loading || cards.length < PAGE_SIZE) return
+    const sentinel = infiniteSentinelRef.current
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry?.isIntersecting && !loading) {
+          writeQuery({ page: query.page + 1 })
+        }
+      },
+      { rootMargin: '300px 0px' }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [query.view, query.page, loading, cards.length])
 
   const renderListingCard = (id: string, view: ReturnType<typeof mapMarketplacePostToListingViewModel>) => {
     const selectedCard = selectedListingId === id
@@ -285,6 +416,15 @@ export function MapListingsWorkspace({
               </svg>
               Lọc {activeFilterCount > 0 ? <span className="map-listings__filter-count">{activeFilterCount}</span> : null}
             </button>
+            <label className="map-listings__sort" title="Sắp xếp kết quả">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <path d="m3 16 4 4 4-4M7 20V4m14 4-4-4-4 4m4-4v16" />
+              </svg>
+              <span className="map-listings__sr-only">Sắp xếp</span>
+              <ChoicePicker value={sortBy} onChange={(event) => setSortBy(event.target.value as any)}>
+                {sortChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+              </ChoicePicker>
+            </label>
             <label className="map-listings__display">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
                 <rect x="3.5" y="4" width="17" height="16" rx="2" /><path d="M10 4v16" />
@@ -296,6 +436,27 @@ export function MapListingsWorkspace({
             </label>
           </div>
         </div>
+        {!marketMode ? (
+          <div className="map-listings__quick-chips-bar" role="group" aria-label="Bộ lọc nhanh" data-glass-exclude>
+            {QUICK_CHIPS.map((chip) => {
+              const active = chip.isActive(query)
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
+                  aria-pressed={active}
+                  onClick={() => {
+                    const patch = chip.toggle(query)
+                    writeQuery({ ...patch, page: 1 }, { fit: true })
+                  }}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
         <FilterPopover anchorRef={filterAnchor} open={filtersOpen} onClose={() => setFiltersOpen(false)}
           className="map-listings__popover map-listings__filter-sheet"
           onSubmit={() => {
@@ -311,22 +472,81 @@ export function MapListingsWorkspace({
             <button type="button" className="map-listings__sheet-close" aria-label="Đóng bộ lọc" onClick={() => setFiltersOpen(false)}>×</button>
           </div>
           <div className="map-listings__sheet-body">
-            {filterConfig.price ? <FilterRange label="Khoảng giá" unit="đ" draft={priceDraft} onChange={setPriceDraft} /> : null}
+            {filterConfig.price ? (
+              <>
+                <FilterRange label="Khoảng giá" unit="đ" draft={priceDraft} onChange={setPriceDraft} />
+                <div className="map-listings__quick-chips" role="group" aria-label="Mức giá nhanh">
+                  {[
+                    { id: 'under-3', label: '< 3 triệu', min: '', max: '3000000' },
+                    { id: '3-to-5', label: '3 - 5 triệu', min: '3000000', max: '5000000' },
+                    { id: 'above-5', label: '> 5 triệu', min: '5000000', max: '' },
+                  ].map((preset) => {
+                    const active = priceDraft.min === preset.min && priceDraft.max === preset.max
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
+                        onClick={() => {
+                          if (active) {
+                            setPriceDraft({ min: '', max: '' })
+                          } else {
+                            setPriceDraft({ min: preset.min, max: preset.max })
+                          }
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            ) : null}
             {filterConfig.area ? <FilterRange label="Diện tích" unit="m²" draft={areaDraft} onChange={setAreaDraft} /> : null}
-            {filterConfig.amenities.length > 0 ? <fieldset className="map-listings__amenity-group">
-              <legend>Tiện ích</legend>
-              <div className="map-listings__amenity-grid">
-                {filterConfig.amenities.map((option) => <label key={option.code}>
-                  <input type="checkbox" checked={amenityDraft.includes(option.code)}
-                    onChange={() => setAmenityDraft(current => current.includes(option.code) ? current.filter(code => code !== option.code) : [...current, option.code])} />
-                  <span>{option.label}</span>
-                </label>)}
-              </div>
-            </fieldset> : null}
+            {filterConfig.amenities.length > 0 ? (
+              <fieldset className="map-listings__amenity-group">
+                <legend>Tiện ích</legend>
+                <div className="map-listings__quick-chips" role="group" aria-label="Tiện ích nhanh">
+                  {[
+                    { code: 'AIR_CONDITIONER', label: '❄️ Máy lạnh' },
+                    { code: 'LOFT', label: '🪜 Gác lửng' },
+                    { code: 'PRIVATE_BATHROOM', label: '🚿 WC riêng' },
+                    { code: 'PET_FRIENDLY', label: '🐾 Cho nuôi pet' },
+                  ].map((preset) => {
+                    const active = amenityDraft.includes(preset.code)
+                    return (
+                      <button
+                        key={preset.code}
+                        type="button"
+                        className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
+                        onClick={() => {
+                          setAmenityDraft((current) =>
+                            current.includes(preset.code)
+                              ? current.filter((c) => c !== preset.code)
+                              : [...current, preset.code]
+                          )
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="map-listings__amenity-grid">
+                  {filterConfig.amenities.map((option) => <label key={option.code}>
+                    <input type="checkbox" checked={amenityDraft.includes(option.code)}
+                      onChange={() => setAmenityDraft(current => current.includes(option.code) ? current.filter(code => code !== option.code) : [...current, option.code])} />
+                    <span>{option.label}</span>
+                  </label>)}
+                </div>
+              </fieldset>
+            ) : null}
           </div>
           <div className="map-listings__sheet-footer">
             <button type="button" className="map-listings__sheet-reset" disabled={!queryHasActiveFilters(query) && !priceDraft.min && !priceDraft.max && !areaDraft.min && !areaDraft.max && !amenityDraft.length} onClick={resetFilters}>Đặt lại</button>
-            <button type="submit" className="map-listings__sheet-apply">Áp dụng</button>
+            <button type="submit" className="map-listings__sheet-apply">
+              {cards.length > 0 ? `Xem ${cards.length} kết quả` : 'Áp dụng'}
+            </button>
           </div>
         </FilterPopover>
       </header>
@@ -435,18 +655,29 @@ export function MapListingsWorkspace({
                   ))}
                 </ul>
               ) : cards.length === 0 && marketMode ? (
-                <div className="map-listings__state" role="status">
-                  <p>{marketMode ? 'Không có tin chợ khớp bộ lọc.' : 'Không có phòng khớp bộ lọc.'}</p>
-                  <button type="button" onClick={resetFilters}>
-                    Đặt lại bộ lọc
-                  </button>
+                <div className="map-listings__state map-listings__smart-empty" role="status">
+                  <div className="map-listings__empty-icon" aria-hidden="true">🏷️✨</div>
+                  <h3 className="map-listings__empty-title">Chưa tìm thấy món đồ phù hợp</h3>
+                  <p className="map-listings__empty-desc">Không có tin chợ khớp bộ lọc. Thử đặt lại bộ lọc để xem thêm đồ thanh lý từ sinh viên quanh đây.</p>
+                  <div className="map-listings__empty-actions">
+                    <button type="button" className="btn-empty-reset" onClick={resetFilters}>
+                      Đặt lại bộ lọc
+                    </button>
+                  </div>
                 </div>
               ) : (
                 marketMode ? <MarketplaceSellerCatalog posts={marketPosts} layout="list"
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 null
               )}
-              {!marketMode && <RentalSourceResults nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} query={query} onCount={setSourceCounts} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              {!marketMode && <RentalSourceResults nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} query={query} onCount={setSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              <div ref={infiniteSentinelRef} className="map-listings__sentinel" aria-hidden="true" />
+              {loading && query.page > 1 ? (
+                <div className="map-listings__loading-more" role="status">
+                  <span className="map-listings__loading-spinner" aria-hidden="true" />
+                  <span>Đang tải thêm phòng…</span>
+                </div>
+              ) : null}
               {(query.view === 'list' || marketMode) && (query.page > 1 || cards.length >= PAGE_SIZE) ? (
                 <div className="map-listings__pager">
                   {query.page > 1 ? (
@@ -499,6 +730,15 @@ function FilterPopover({
       const anchor = anchorRef.current
       const pop = popRef.current
       if (!anchor || !pop) return
+      if (window.innerWidth <= 767) {
+        pop.style.position = 'fixed'
+        pop.style.zIndex = '80'
+        pop.style.left = '0px'
+        pop.style.right = '0px'
+        pop.style.top = 'auto'
+        pop.style.bottom = '0px'
+        return
+      }
       const rect = anchor.getBoundingClientRect()
       const margin = 8
       const width = pop.offsetWidth
@@ -515,6 +755,8 @@ function FilterPopover({
       pop.style.zIndex = '80'
       pop.style.left = `${left}px`
       pop.style.top = `${top}px`
+      pop.style.right = 'auto'
+      pop.style.bottom = 'auto'
     }
     place()
     const form = popRef.current

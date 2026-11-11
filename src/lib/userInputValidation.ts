@@ -41,7 +41,6 @@ export function validateRegistrationPassword(password: string, confirmation: str
 export function validateRegistrationEmail(value: string): string | null {
   const normalized = normalizeEmail(value)
   if (!EMAIL_FORMAT_RE.test(normalized)) return 'Email chưa đúng định dạng.'
-  if (!normalized.endsWith('@gmail.com')) return 'Vui lòng sử dụng địa chỉ Gmail (@gmail.com).'
   if (normalized.length > USER_INPUT_LIMITS.email) return 'Email quá dài.'
   return null
 }

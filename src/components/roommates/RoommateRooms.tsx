@@ -122,6 +122,8 @@ export function RoommateRooms({ initialKeyword = '', onOpenConversation }: Props
         const seats = capacity != null && open != null && capacity > 0 && capacity <= MAX_SEATS
           ? Array.from({ length: capacity }, (_, seat) => seat < capacity - open) : null
         const chips = (post.amenities ?? []).map(amenityLabel).filter(Boolean).slice(0, 3)
+        const budgetMatch = profile?.maxBudget && post.price <= profile.maxBudget
+        const schoolMatch = profile?.school && post.ownerSchool && profile.school.toLowerCase().includes(post.ownerSchool.toLowerCase())
         return <article key={post.id} className="rm-card" data-motion-reveal="" data-glass-exclude="" style={{ '--tone': TONES[index % TONES.length] } as CSSProperties}>
           <div className="rm-card__band">
             <div className="rm-card__author">
@@ -139,6 +141,8 @@ export function RoommateRooms({ initialKeyword = '', onOpenConversation }: Props
             <ul className="rm-card__facts">
               <li className="rm-card__fact rm-card__fact--place">{post.address || 'Chưa cung cấp địa chỉ'}</li>
               {capacity != null ? <li className="rm-card__fact rm-card__fact--home">Tối đa {capacity} người · {post.area} m²</li> : null}
+              {budgetMatch ? <li className="rm-card__fact rm-card__fact--tag">✓ Trong ngân sách</li> : null}
+              {schoolMatch ? <li className="rm-card__fact rm-card__fact--tag">✓ Cùng trường</li> : null}
               {chips.map(chip => <li key={chip} className="rm-card__fact rm-card__fact--tag">{chip}</li>)}
             </ul>
             <div className="rm-card__cost"><span>Chi phí dự kiến/người/tháng</span><strong>{formatPrice(post.price)}</strong></div>

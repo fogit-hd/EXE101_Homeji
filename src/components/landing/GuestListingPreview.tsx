@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { RentalPostType, searchRentalPosts, type RentalPostSummary } from '../../api'
 import { rentalPriceBasis } from '../ai/rentalPriceBasis'
-import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
+import { amenityLabel, formatCompactRent, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
 import { rentalSourcePublisher, rentalSourceHref, rentalSourceImageHref, getRentalSourceCatalog, type RentalSourceListing } from '../../api/rentalSources'
 import { RoomDetailModal } from '../map/listings/RoomDetailModal'
 import { SourceRoomDetail } from '../map/listings/SourceRoomDetail'
@@ -16,6 +16,7 @@ import { useHoldWheel } from '../motion/useHoldWheel'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { AreaMapIcon, DirectionsIcon, ShareRoomIcon, ViewRoomIcon } from './wheelIcons'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
+import { useBackButtonClose } from '../../hooks/useBackButtonClose'
 import { matchesListingText } from '../../lib/searchQuery'
 import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
 import { listingThumbSrcSet } from '../../lib/cloudinaryImage'
@@ -53,6 +54,7 @@ export function GuestListingPreview() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<RentalPostSummary | null>(null)
   const [selectedSource, setSelectedSource] = useState<RentalSourceListing | null>(null)
+  useBackButtonClose(Boolean(selected || selectedSource), () => { setSelected(null); setSelectedSource(null) })
   const [keyword, setKeyword] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const rail = useRef<HTMLUListElement>(null)
@@ -175,7 +177,7 @@ export function GuestListingPreview() {
                   {item.kind === 'source' && photos.length > 1 ? <span className="guest-preview__photo-count">{photos.length} ảnh</span> : null}
                 </span>
                 <span className="guest-preview__copy">
-                  <span className="guest-preview__price">{formatListingRent(data.price)}<small>{basis === 'person' ? ' / người / tháng' : basis === 'room' ? ' / tháng' : data.price > 0 ? ' · theo tin' : ''}</small></span>
+                  <span className="guest-preview__price">{formatCompactRent(data.price)}<small>{basis === 'person' ? ' / người / tháng' : basis === 'room' ? ' / tháng' : data.price > 0 ? ' · theo tin' : ''}</small></span>
                   <span className="guest-preview__name">{data.title}</span>
                   <span className="guest-preview__address">{data.address || 'Chưa có địa chỉ'}</span>
                   <span className="guest-preview__meta"><span>{formatListingArea(data.area)}</span>{item.kind === 'source' && item.data.depositLabel ? <span>{item.data.depositLabel}</span> : item.kind === 'post' && item.data.deposit && item.data.deposit > 0 ? <span>Cọc {formatListingRent(item.data.deposit)}</span> : null}{item.kind === 'post' && !isImportedRentalPost(item.data) && item.data.maxOccupants && item.data.maxOccupants > 0 ? <span>Tối đa {item.data.maxOccupants} người</span> : null}{item.kind === 'source' ? <span>{item.data.district === 'thu-duc' ? 'Thủ Đức' : item.data.district === 'quan-9' ? 'Quận 9' : item.data.district}</span> : null}</span>

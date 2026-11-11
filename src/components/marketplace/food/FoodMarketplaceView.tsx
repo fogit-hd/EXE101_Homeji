@@ -1,4 +1,4 @@
-import { useCallback, useId, useLayoutEffect, useRef } from 'react'
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { attachPointerSpot } from '../../motion/pointerSpot'
 import { Sk } from '../../skeletons/Skeleton'
 import type { MarketplacePost } from '../../../api'
@@ -116,6 +116,51 @@ export function FoodMarketplaceView({
     .map((k) => k.sellerName)
     .join(', ')
 
+  const [mealCategory, setMealCategory] = useState<string>('all')
+  const [maxDistanceKm, setMaxDistanceKm] = useState<number>(0)
+
+  const MEAL_TABS = [
+    { id: 'all', label: 'Tất cả' },
+    { id: 'lunch', label: '🍱 Trưa nay ăn gì?' },
+    { id: 'snack', label: '🍟 Ăn vặt chiều' },
+    { id: 'late', label: '🌙 Ăn khuya' },
+    { id: 'drink', label: '🧋 Đồ uống & Trà sữa' },
+  ]
+
+  const DISTANCE_OPTIONS = [
+    { value: 0, label: 'Mọi khoảng cách' },
+    { value: 0.5, label: '< 500m (Đi bộ)' },
+    { value: 1.5, label: '< 1.5 km' },
+  ]
+
+  const filteredSellerGroups = useMemo(() => {
+    return sellerGroups.map((seller) => {
+      if (maxDistanceKm > 0 && seller.distanceKm != null && seller.distanceKm > maxDistanceKm) {
+        return null
+      }
+      const matchingPosts = seller.posts.filter((post) => {
+        if (mealCategory === 'all') return true
+        const cat = (post.category || '').toLowerCase()
+        const title = (post.title || '').toLowerCase()
+        if (mealCategory === 'lunch') {
+          return cat.includes('cơm') || cat.includes('bún') || cat.includes('phở') || cat.includes('chay') || title.includes('cơm') || title.includes('bún')
+        }
+        if (mealCategory === 'snack') {
+          return cat.includes('vặt') || cat.includes('bánh mì') || cat.includes('xôi') || cat.includes('fastfood')
+        }
+        if (mealCategory === 'late') {
+          return cat.includes('khuya') || cat.includes('bún') || cat.includes('bánh mì') || cat.includes('vặt')
+        }
+        if (mealCategory === 'drink') {
+          return cat.includes('uống') || cat.includes('trà') || cat.includes('nước') || cat.includes('tráng miệng')
+        }
+        return true
+      })
+      if (matchingPosts.length === 0) return null
+      return { ...seller, posts: matchingPosts }
+    }).filter(Boolean) as (Omit<NearbyKitchen, 'postsCount'> & { posts: MarketplacePost[] })[]
+  }, [sellerGroups, mealCategory, maxDistanceKm])
+
   const railProps = {
     loading,
     kitchens,
@@ -142,6 +187,66 @@ export function FoodMarketplaceView({
   return (
     <div className="food-market-body">
       <div className="food-catalog">
+        {/* Bộ lọc bữa ăn sinh viên & khoảng cách */}
+        <div className="food-meal-filter-bar" style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+        }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }} role="tablist" aria-label="Bộ lọc bữa ăn">
+            {MEAL_TABS.map((tab) => {
+              const active = mealCategory === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setMealCategory(tab.id)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: active ? 600 : 500,
+                    border: active ? '1px solid var(--grab-green, #24543e)' : '1px solid #dbe2de',
+                    background: active ? 'var(--grab-green, #24543e)' : '#fff',
+                    color: active ? '#fff' : '#24382d',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.78rem', color: '#526358' }}>Bán kính:</span>
+            <select
+              value={maxDistanceKm}
+              onChange={(e) => setMaxDistanceKm(Number(e.target.value) || 0)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '12px',
+                border: '1px solid #dbe2de',
+                fontSize: '0.8rem',
+                background: '#fff',
+                color: '#24382d',
+                cursor: 'pointer',
+              }}
+              aria-label="Lọc theo khoảng cách"
+            >
+              {DISTANCE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div className="food-nearby-head">
           <div>
             <h2>Chọn quán, chọn món</h2>
@@ -183,35 +288,42 @@ export function FoodMarketplaceView({
           </div>
         ) : (
           <div ref={dotSpotRef} className="food-seller-list">
-            {sellerGroups.map((seller) => (
-              <section key={seller.sellerId} className="food-seller" aria-label={`Thực đơn ${seller.sellerName}`}>
-                <header className="food-seller__header">
-                  <span className="food-seller__avatar" aria-hidden="true">
-                    {seller.sellerName.slice(0, 1).toUpperCase()}
-                  </span>
-                  <div className="food-seller__info">
-                    <h3>{seller.sellerName}</h3>
-                    <p>{seller.posts.length} món · {seller.distanceKm == null
-                      ? locating ? 'Đang định vị…' : hasUserLocation ? 'Chưa rõ khoảng cách' : 'Chưa có vị trí'
-                      : formatDistanceMeters(seller.distanceKm)}</p>
-                    {seller.address ? <p>{seller.address}</p> : null}
+            {filteredSellerGroups.length === 0 ? (
+              <div className="food-catalog__state" role="status">
+                <strong>Không có món phù hợp bộ lọc bữa ăn đã chọn</strong>
+                <p>Hãy thử chọn &quot;Tất cả&quot; hoặc đổi khoảng cách tìm kiếm.</p>
+              </div>
+            ) : (
+              filteredSellerGroups.map((seller) => (
+                <section key={seller.sellerId} className="food-seller" aria-label={`Thực đơn ${seller.sellerName}`}>
+                  <header className="food-seller__header">
+                    <span className="food-seller__avatar" aria-hidden="true">
+                      {seller.sellerName.slice(0, 1).toUpperCase()}
+                    </span>
+                    <div className="food-seller__info">
+                      <h3>{seller.sellerName}</h3>
+                      <p>{seller.posts.length} món · {seller.distanceKm == null
+                        ? locating ? 'Đang định vị…' : hasUserLocation ? 'Chưa rõ khoảng cách' : 'Chưa có vị trí'
+                        : formatDistanceMeters(seller.distanceKm)}</p>
+                      {seller.address ? <p>{seller.address}</p> : null}
+                    </div>
+                  </header>
+                  <div className="food-card-grid">
+                    {seller.posts.map((post) => (
+                      <FoodCard
+                        key={post.id}
+                        post={post}
+                        quantity={quantities[post.id] ?? 1}
+                        inCart={cartItems.some((item) => item.postId === post.id)}
+                        onQuantityChange={(next) => onQuantityChange(post.id, next)}
+                        onAddToCart={() => onAddToCart(post)}
+                        onShowOnMap={() => onShowOnMap(post)}
+                      />
+                    ))}
                   </div>
-                </header>
-                <div className="food-card-grid">
-                  {seller.posts.map((post) => (
-                    <FoodCard
-                      key={post.id}
-                      post={post}
-                      quantity={quantities[post.id] ?? 1}
-                      inCart={cartItems.some((item) => item.postId === post.id)}
-                      onQuantityChange={(next) => onQuantityChange(post.id, next)}
-                      onAddToCart={() => onAddToCart(post)}
-                      onShowOnMap={() => onShowOnMap(post)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
+                </section>
+              ))
+            )}
           </div>
         )}
 
@@ -311,6 +423,46 @@ export function FoodMarketplaceView({
             </span>
             <FoodUtilityRail {...railProps} compact />
       </dialog>
+
+      {/* Thanh Giỏ Hàng Dính Đáy (Sticky Floating Cart Bar) */}
+      {cartItemCount > 0 && !cartOpen ? (
+        <aside
+          className="food-sticky-floating-cart"
+          data-glass-exclude
+          aria-label="Giỏ hàng đã chọn món"
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '0.92rem', fontWeight: 700 }}>
+                {cartItemCount} món · {formatPrice(cartTotal)}
+              </span>
+            </div>
+            <small style={{ fontSize: '0.74rem', opacity: 0.9, display: 'block', marginTop: '2px' }}>
+              {cartTotal < minimumCartTotal
+                ? `Thêm ${formatPrice(minimumCartTotal - cartTotal)} để đạt đơn tối thiểu 25k`
+                : '✓ Đạt đơn tối thiểu · Sẵn sàng đặt món'}
+            </small>
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{
+              background: '#fff',
+              color: '#24543e',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              borderRadius: '20px',
+              padding: '8px 16px',
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+            onClick={() => onCartOpenChange(true)}
+          >
+            Xem giỏ & Thanh toán →
+          </button>
+        </aside>
+      ) : null}
     </div>
   )
 }

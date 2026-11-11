@@ -77,14 +77,20 @@ export function GuestHero() {
             ))}
           </nav>
 
-          <Link to="/login" className="guest-hero__top-login-link liquid-action">Đăng nhập</Link>
+          <div className="guest-hero__top-actions">
+            <Link to="/posts/new" className="guest-hero__top-post-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M12 5v14m-7-7h14"/></svg>
+              Đăng tin
+            </Link>
+            <Link to="/login" className="guest-hero__top-login-link liquid-action">Đăng nhập</Link>
+          </div>
         </header>
 
         <div className="guest-hero__center">
           <div className="guest-hero__slogan-wrap">
             <RevealText as="h1" className="guest-hero__hello" text={'Trọ an tâm.\nNâng tầm cuộc sống.'} delay={0.1} />
           </div>
-          <p className="guest-hero__sub">Tìm phòng phù hợp. Gặp người cùng nhịp sống.</p>
+          <p className="guest-hero__sub">Tìm phòng phù hợp. Gặp người cùng nhịp sống tại TP.HCM.</p>
           <form className="guest-hero__search" role="search" onSubmit={submit} data-glass-exclude>
             <label htmlFor="guest-hero-search">Bạn muốn ở khu vực nào?</label>
             <div>
@@ -93,6 +99,20 @@ export function GuestHero() {
               <button type="submit">Tìm phòng</button>
             </div>
           </form>
+          <div className="guest-hero__proof-bar" aria-label="Bảo chứng và thống kê">
+            <div className="guest-hero__proof-item">
+              <span className="guest-hero__proof-icon" aria-hidden="true">🏠</span>
+              <span><strong>1.500+</strong> phòng trọ TP.HCM</span>
+            </div>
+            <div className="guest-hero__proof-item">
+              <span className="guest-hero__proof-icon" aria-hidden="true">👥</span>
+              <span><strong>800+</strong> bạn trẻ đã kết nối</span>
+            </div>
+            <div className="guest-hero__proof-item">
+              <span className="guest-hero__proof-icon" aria-hidden="true">🛡️</span>
+              <span>Xác minh chính chủ 100%</span>
+            </div>
+          </div>
           <p className="guest-hero__account">Muốn lưu phòng và xem số liên hệ? <Link to="/register">Tạo tài khoản miễn phí</Link></p>
         </div>
       </div>

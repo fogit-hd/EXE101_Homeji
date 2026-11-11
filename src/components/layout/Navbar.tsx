@@ -96,10 +96,13 @@ export function Navbar() {
             </details>
           ) : (
             <>
+              <Link to="/posts/new" className="btn btn-primary btn-sm">
+                + Đăng tin
+              </Link>
               <Link to="/login" className="btn btn-ghost">
                 Đăng nhập
               </Link>
-              <Link to="/register" className="btn btn-primary btn-sm">
+              <Link to="/register" className="btn btn-secondary btn-sm">
                 Tạo tài khoản
               </Link>
             </>

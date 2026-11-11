@@ -1,7 +1,7 @@
 import { useListingSearchParams } from '../hooks/useListingSearchParams'
 import { searchRentalMapInventory } from '../lib/rentalMapInventory'
 import { useChangedInputs } from '../hooks/useChangedInputs'
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   getRentalPost,
@@ -44,7 +44,7 @@ import {
   wardsForDistrict,
 } from '../components/landing/guestMapAreas'
 import { GuestMapSection } from '../components/landing/GuestMapSection'
-import { MissionConfetti } from '../components/landing/MissionConfetti'
+const MissionConfetti = lazy(() => import('../components/landing/MissionConfetti').then(m => ({ default: m.MissionConfetti })))
 import { RevealText } from '../components/motion/RevealText'
 import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
 import { FeatureWorkspace } from '../components/layout/FeatureWorkspace'
@@ -502,14 +502,28 @@ function HomePageComponent() {
           (data) => {
             if (cancelled) return
             setPosts([])
-            setMarketPosts(data)
+            setMarketPosts((current) => {
+              if (query.page > 1) {
+                const existingIds = new Set(current.map((p) => p.id))
+                const newItems = data.filter((p) => !existingIds.has(p.id))
+                return [...current, ...newItems]
+              }
+              return data
+            })
             finish(data.map((post) => post.id))
           },
         )
       : (query.view === 'list' ? searchRentalPosts : searchRentalMapInventory)(listingQueryToSearchParams(query), { signal: controller.signal }).then((data) => {
           if (cancelled) return
           setMarketPosts([])
-          setPosts(data)
+          setPosts((current) => {
+            if (query.page > 1) {
+              const existingIds = new Set(current.map((p) => p.id))
+              const newItems = data.filter((p) => !existingIds.has(p.id))
+              return [...current, ...newItems]
+            }
+            return data
+          })
           finish(data.map((post) => post.id))
         })
     void request
@@ -987,7 +1001,9 @@ function HomePageComponent() {
                 hơn.
               </p>
             </div>
-            <MissionConfetti />
+            <Suspense fallback={null}>
+              <MissionConfetti />
+            </Suspense>
           </div>
         </section>
         <GuestMapSection />

@@ -31,6 +31,7 @@
 @media (max-width: 768px) {
   .site-footer {
     padding: 16px;
+    padding-bottom: calc(16px + var(--mobile-tabbar-height, 56px) + env(safe-area-inset-bottom, 0px));
   }
   .site-footer--compact { padding: 5px 12px; }
   .site-footer nav { margin-left: 0; }
