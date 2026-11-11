@@ -233,3 +233,9 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 #root .liquid-tabs[data-glass-renderer=webgl-refraction]>.liquid-tabs__lens{opacity:0}
 #root .liquid-tabs[data-glass-renderer=webgl-refraction]>button[role=tab]{opacity:0}
 #root .liquid-tabs[data-glass-webgl]>.liquid-tabs__webgl{position:absolute;left:0;top:0;z-index:3;max-width:none;border-radius:999px;pointer-events:none;filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+
+/* Touch: the selected tab is the lens, so it owns its gestures and a thumb's
+   curved swipe slides it instead of being taken for a page scroll. Idle tabs
+   keep vertical page scrolling, and also scroll an overflowing rail sideways. */
+#root .liquid-tabs > button[role='tab'][aria-selected='true'] { touch-action: none; }
+#root .liquid-tabs[data-tabs-overflow] > button[role='tab'][aria-selected='false'] { touch-action: pan-x pan-y; }

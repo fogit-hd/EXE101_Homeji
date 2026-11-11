@@ -1,6 +1,6 @@
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { useNearViewport } from '../../hooks/useNearViewport'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getRentalPost,
@@ -22,6 +22,8 @@ import { ChoicePicker } from '../ui/ChoicePicker'
 import { useGoogleMapsStatus } from "../../contexts/GoogleMapsProvider.logic"
 
 import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
+import { DeviceLocationError, getDeviceLocation } from '../../lib/geolocation'
+import { MapToast } from '../map/MapToast'
 import { HOMEJI_SERVICE_AREA, isInHomejiServiceArea } from '../../lib/homejiServiceArea'
 import { formatListingRent } from '../../lib/labels'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
@@ -72,6 +74,10 @@ export function GuestMapSection() {
   const [mapFocus, setMapFocus] = useState<MapFocusPoint | null>(null)
   const [mapFocusToken, setMapFocusToken] = useState(0)
   const [overviewFitToken, setOverviewFitToken] = useState(0)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locating, setLocating] = useState(false)
+  const [locationError, setLocationError] = useState('')
+  const locateRequestRef = useRef(0)
   const [nearbyDismissedKey, setNearbyDismissedKey] = useState<string | null>(null)
   const [nearbyRequestedKey, setNearbyRequestedKey] = useState<string | null>(null)
   const [nearbyCategory, setNearbyCategory] = useState<NearbyPlaceCategory>('food')
@@ -246,6 +252,27 @@ export function GuestMapSection() {
     setMapFocusToken((n) => n + 1)
   }, [nearbyAnchor])
 
+  // Location is asked for only when the visitor presses "Vị trí của tôi".
+  const locateMe = useCallback(() => {
+    const requestId = ++locateRequestRef.current
+    setLocating(true)
+    setLocationError('')
+    void getDeviceLocation().then(loc => {
+      if (requestId !== locateRequestRef.current) return
+      setUserLocation({ lat: loc.lat, lng: loc.lng })
+      setMapFocus({ lat: loc.lat, lng: loc.lng, zoom: MAP_FOCUS_ZOOM })
+      setMapFocusToken(value => value + 1)
+    }, (err: unknown) => {
+      if (requestId !== locateRequestRef.current) return
+      setLocationError(err instanceof DeviceLocationError ? err.message : 'Không thể lấy vị trí hiện tại.')
+    }).finally(() => { if (requestId === locateRequestRef.current) setLocating(false) })
+  }, [])
+  useEffect(() => {
+    if (!locationError) return
+    const timer = window.setTimeout(() => setLocationError(''), 4800)
+    return () => window.clearTimeout(timer)
+  }, [locationError])
+
   const handleNearbyPick = (place: NearbyPlaceItem) => {
     setNearbyPinned({ lat: place.lat, lng: place.lng, title: place.title, kindLabel: place.typeLabel, token: Date.now() })
     setMapFocus({ lat: place.lat, lng: place.lng, zoom: MAP_FOCUS_ZOOM })
@@ -383,6 +410,9 @@ export function GuestMapSection() {
                   focusToken={mapFocusToken}
                   listingsFitToken={overviewFitToken}
                   selectionPad={GUEST_SELECTION_PAD}
+                  userLocation={userLocation}
+                  onLocate={locateMe}
+                  locating={locating}
                 />
               ) : (
                 <div className="guest-map__map-fallback">
@@ -471,6 +501,7 @@ export function GuestMapSection() {
           </aside>
         </div>
       </div>
+      <MapToast message={locationError || null} tone="error" onDismiss={() => setLocationError('')} />
     </section>
   )
 }

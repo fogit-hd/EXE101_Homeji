@@ -3,7 +3,8 @@ import { observeElementResize } from '../../lib/observeElementResize'
 import { createTabLensMotion, tabsTrackWidth } from './tabLensMotion'
 import './LiquidTabList.css'
 
-type Drag = { pointerId: number; x: number; y: number; left: number; width: number; height: number; top: number; moved: boolean; capture: HTMLButtonElement }
+// lensGrip: the press began on the selected tab, i.e. on the lens itself.
+type Drag = { pointerId: number; x: number; y: number; left: number; width: number; height: number; top: number; moved: boolean; capture: HTMLButtonElement; lensGrip: boolean }
 const tabsOf = (root: HTMLElement) => [...root.querySelectorAll<HTMLButtonElement>(':scope > button[role="tab"]:not(:disabled)')]
 
 type Props = HTMLAttributes<HTMLDivElement> & { containerRef?: RefObject<HTMLDivElement | null>; webglGlass?: boolean }
@@ -65,6 +66,8 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
       const box = root.getBoundingClientRect(), selected = active.getBoundingClientRect()
       const tabs = tabsOf(root)
       root.style.setProperty('--tabs-track-width', `${tabsTrackWidth(root, tabs)}px`)
+      // An overflowing rail lets touch swipes on idle tabs scroll it (see CSS).
+      root.toggleAttribute('data-tabs-overflow', root.scrollWidth > root.clientWidth + 1)
       if (drag.current?.moved) return
       // At rest the lens fits the track; only engagement enlarges its optical face.
       motionRef.current?.moveTo(active, {
@@ -94,7 +97,7 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
       const box = root.getBoundingClientRect(), selected = button.getBoundingClientRect()
       drag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY,
         left: selected.left - box.left + root.scrollLeft, width: selected.width, height: selected.height,
-        top: selected.top - box.top, moved: false, capture: button }
+        top: selected.top - box.top, moved: false, capture: button, lensGrip: button.getAttribute('aria-selected') === 'true' }
       try { button.setPointerCapture(event.pointerId) }
       catch { drag.current = null; return }
       motionRef.current?.stop()
@@ -111,8 +114,9 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
       }
       if (event.defaultPrevented || !current || current.pointerId !== event.pointerId || !lens || !root) return
       const dx = event.clientX - current.x, dy = event.clientY - current.y
-      // Let a vertical touch gesture scroll the page rather than changing tabs.
-      if (!current.moved && Math.abs(dy) > 6 && Math.abs(dy) > Math.abs(dx)) { cancelDrag(); return }
+      // Let a vertical gesture on an idle tab scroll the page. The lens owns its
+      // gestures (touch-action: none), so a thumb's curved swipe still slides it.
+      if (!current.moved && !current.lensGrip && Math.abs(dy) > 6 && Math.abs(dy) > Math.abs(dx)) { cancelDrag(); return }
       if (!current.moved && Math.abs(dx) < 5) return
       current.moved = true
       root.dataset.lensDragging = 'true'
