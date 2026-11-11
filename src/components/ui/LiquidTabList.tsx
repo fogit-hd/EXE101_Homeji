@@ -9,7 +9,7 @@ const tabsOf = (root: HTMLElement) => [...root.querySelectorAll<HTMLButtonElemen
 type Props = HTMLAttributes<HTMLDivElement> & { containerRef?: RefObject<HTMLDivElement | null>; webglGlass?: boolean }
 
 /** Presentation and keyboard navigation only; callers keep selection and API state. */
-export function LiquidTabList({ children, className = '', containerRef, webglGlass = false, onKeyDown, onKeyUp, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onClick, onClickCapture, ...props }: Props) {
+export function LiquidTabList({ children, className = '', containerRef, webglGlass = true, onKeyDown, onKeyUp, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onClick, onClickCapture, ...props }: Props) {
   const localRef = useRef<HTMLDivElement>(null)
   const rootRef = containerRef ?? localRef
   const lensRef = useRef<HTMLSpanElement>(null)

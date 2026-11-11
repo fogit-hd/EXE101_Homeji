@@ -40,6 +40,8 @@
 .room-directions__origin .form-input { flex: 1; min-width: 0; height: 44px; border-radius: 12px; }
 .room-directions__origin .btn { min-height: 44px; border-radius: 12px; white-space: nowrap; }
 .room-directions__locate { justify-self: start; padding: 4px 0; border: 0; background: none; color: #0f766e; font: inherit; font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.room-directions__external { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; background: #0f766e; color: #fff; font-size: 14px; font-weight: 700; text-decoration: none; }
+.room-directions__external:focus-visible { outline: 2px solid var(--text-heading); outline-offset: 2px; }
 .room-directions__locate:disabled { opacity: .5; cursor: wait; }
 .room-directions :is(button, input):focus-visible { outline: 2px solid var(--text-heading); outline-offset: 2px; }
 html[data-theme='dark'] .room-directions__header p,

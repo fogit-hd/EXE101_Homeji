@@ -111,7 +111,7 @@ export function GuestMapSection() {
       const nativeId = sourcePublisherLink(row.id)?.nativePostId
       return !nativeIds.has(row.id) && !(nativeId && nativeIds.has(nativeId)) &&
         matchesListingText(searchKeyword, [row.title, row.address, row.district, row.description])
-    }), 'rental')
+    }), 'rental').filter(pin => isInHomejiServiceArea(pin.lat, pin.lng))
   }, [posts, searchKeyword, sourceRows])
   const resultCount = posts.length + sourcePins.length
 

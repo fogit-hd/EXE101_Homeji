@@ -125,7 +125,7 @@ export function MarketplaceHeader({
         </div>
       </div>
 
-      <MotionTabs webglGlass items={PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
+      <MotionTabs items={PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
         className="marketplace-header__tabs" buttonClassName="marketplace-header__tab"
         idPrefix="marketplace-primary" panelId="marketplace-panel" />
 

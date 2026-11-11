@@ -129,6 +129,9 @@ export function RoomDirectionsDialog({ title, address, destination, onClose }: P
     await drawRoute({ lat: found.lat, lng: found.lng }, found.formattedAddress)
   }
 
+  // Without a working Homeji map, Google Maps can still route to the room.
+  const knownPoint = point(destination)
+  const externalDestination = knownPoint ? `${knownPoint.lat},${knownPoint.lng}` : address.trim()
   const busy = status.kind === 'map' || status.kind === 'locating' || status.kind === 'routing'
   return createPortal(
     <dialog ref={dialog} className="room-directions" aria-labelledby={titleId} data-glass-exclude=""
@@ -164,6 +167,10 @@ export function RoomDirectionsDialog({ title, address, destination, onClose }: P
             </li>)}
           </ol> : null}
         </> : null}
+        {status.kind === 'error' && externalDestination ? <a className="room-directions__external" target="_blank" rel="noopener noreferrer"
+          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(externalDestination)}`}>
+          Mở chỉ đường trên Google Maps
+        </a> : null}
         {status.kind !== 'error' ? <form className="room-directions__origin" onSubmit={event => void submitOrigin(event)}>
           <label htmlFor={originId}>{status.kind === 'need-origin' ? 'Điểm xuất phát' : 'Đi từ nơi khác?'}</label>
           <div>
