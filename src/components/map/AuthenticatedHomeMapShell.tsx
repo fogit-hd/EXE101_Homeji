@@ -102,6 +102,7 @@ type AuthenticatedHomeMapShellProps = {
   destinationMode?: boolean
   /** Khám phá mode from URL (`view=list` → list-first, no map mount). */
   exploreView?: ExploreView
+  onRefresh?: () => Promise<void> | void
 }
 
 /**
@@ -140,6 +141,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   onAiSearchUpdate,
   destinationMode = false,
   exploreView = 'map',
+  onRefresh,
 }: AuthenticatedHomeMapShellProps) {
   const { isAuthenticated, profile } = useAuth()
   const { setNearbyAnchor, nearbyCategory, setNearbyCategory } = useSearch()
@@ -1118,6 +1120,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           onOpenRoomDetail={openRoomDetail}
           onToggleSave={isAuthenticated ? handleMapExploreToggleSave : undefined}
           onResetFilters={onResetFilters}
+          onRefresh={onRefresh}
         />
         {needsProfileSetup ? (
           <div className="home-map-banner home-map-banner--dest">

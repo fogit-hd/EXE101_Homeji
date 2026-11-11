@@ -520,10 +520,11 @@ function MapPlaceDetailPanelContent({
     try {
       const convo = await startRentalPostConversation(post.id)
       if (!isCurrent()) return
-      if (questionDraft !== undefined) {
+      const effectiveDraft = questionDraft ?? `Chào bạn, mình quan tâm đến phòng "${listing?.title?.trim() || ''}" trên Homeji. Phòng này hiện còn trống không ạ?`
+      if (effectiveDraft !== undefined) {
         const target = rentalDraftTarget(source.userId, convo)
         if (!target || target.postId !== source.postId || target.recipientId !== source.ownerId
-          || !rentalMessageDraftStore.queue(target, questionDraft)) {
+          || !rentalMessageDraftStore.queue(target, effectiveDraft)) {
           notify('Chưa chuyển được bản nháp vào đúng hội thoại. Nội dung vẫn ở đây để bạn sửa và thử lại.', 'err')
           return
         }

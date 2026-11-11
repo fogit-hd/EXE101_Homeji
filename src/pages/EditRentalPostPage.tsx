@@ -429,7 +429,7 @@ export function EditRentalPostPage() {
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="owner-contact">Kênh để Homeji xác minh chủ nhà</label>
-                <input id="owner-contact" className="form-input" value={ownerConsentContact} onChange={(event) => setOwnerConsentContact(event.target.value)} maxLength={200} placeholder="Số điện thoại hoặc email chủ nhà/người quản lý" required />
+                <input id="owner-contact" className="form-input" inputMode="tel" autoComplete="tel" value={ownerConsentContact} onChange={(event) => setOwnerConsentContact(event.target.value)} maxLength={200} placeholder="Số điện thoại hoặc email chủ nhà/người quản lý" required />
                 <small className="form-hint">Thông tin này chỉ hiển thị cho bộ phận kiểm duyệt.</small>
               </div>
             </div>
@@ -478,7 +478,7 @@ export function EditRentalPostPage() {
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="rental-area">Diện tích (m²)</label>
-            <input id="rental-area" className="form-input" type="number" min="0.1" step="0.1" value={area} onChange={(e) => setArea(e.target.value)} required />
+            <input id="rental-area" className="form-input" type="number" inputMode="decimal" min="0.1" step="0.1" value={area} onChange={(e) => setArea(e.target.value)} required />
           </div>
         </div>
         <div className="form-group">

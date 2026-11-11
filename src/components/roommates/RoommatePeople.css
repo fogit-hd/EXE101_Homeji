@@ -80,5 +80,14 @@
   color: var(--text-secondary, #3b5745);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+}
+
+.roommate-compat-check {
+  color: #1b5e20;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .roommate-compat-check {
+  color: #4ade80;
 }

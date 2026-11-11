@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import houseUrl from '../../../assets/room-detail/house.svg'
 import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
+import { ShieldCheckIcon } from '../../icons/SvgIcons'
+import { VerifiedBadgeModal } from '../../badges/VerifiedBadgeModal'
 import './RoomDetailModal.css'
 
 export function RoomDetailHeader({ titleId, title, onClose, actions, autoFocusClose = false }: { titleId: string; title: string; onClose: () => void; actions?: ReactNode; autoFocusClose?: boolean }) {
@@ -22,15 +24,39 @@ export function RoomOwnerProfile({ heading, name, avatarUrl, verified = false, c
   heading: string; name: string; avatarUrl?: string | null; verified?: boolean; children: ReactNode
 }) {
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
+  const [showVerifiedModal, setShowVerifiedModal] = useState(false)
+
   return <section className="room-detail__owner-profile" aria-label={heading}>
     <h4>{heading}</h4>
     <div className="room-detail__person">
       <span className="room-detail__avatar" aria-hidden="true">{avatarUrl && failedAvatar !== avatarUrl ? <img src={avatarUrl} alt="" onError={() => setFailedAvatar(avatarUrl)} /> : name.slice(0, 1).toUpperCase()}</span>
       <div><span className="room-detail__owner-label">Họ và tên</span><strong>{name}</strong>
-        {verified ? <span className="room-detail__owner-verified">✓ Hồ sơ chủ nhà đã được duyệt</span> : null}
+        {verified ? (
+          <button
+            type="button"
+            className="room-detail__owner-verified"
+            onClick={() => setShowVerifiedModal(true)}
+            title="Nhấn để xem tiêu chuẩn xác minh minh bạch của Homeji"
+            style={{
+              cursor: 'pointer',
+              border: 'none',
+              background: 'transparent',
+              padding: 0,
+              font: 'inherit',
+              textAlign: 'left',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <ShieldCheckIcon size={14} />
+            <span>Hồ sơ chủ nhà đã được duyệt</span>
+          </button>
+        ) : null}
       </div>
     </div>
     {children}
+    {verified ? <VerifiedBadgeModal open={showVerifiedModal} onClose={() => setShowVerifiedModal(false)} /> : null}
   </section>
 }
 

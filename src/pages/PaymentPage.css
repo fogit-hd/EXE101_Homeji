@@ -673,6 +673,9 @@
 .pay-plan.is-featured { border: 2px solid var(--pay-green); box-shadow: 0 8px 24px rgba(0, 177, 79, .12); }
 .pay-plan__ribbon { position: absolute; top: -11px; left: 18px; padding: 3px 10px; border-radius: 999px; background: var(--pay-green); color: #fff; font-size: 11px; font-weight: 700; }
 .pay-plan__recommended-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   position: absolute;
   top: -11px;
   right: 18px;

@@ -21,6 +21,20 @@ import { ListingTrustBadges } from '../../ListingTrustBadges'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
+import { listingThumbSrcSet } from '../../../lib/cloudinaryImage'
+import {
+  SnowflakeIcon,
+  LoftLadderIcon,
+  ShowerIcon,
+  PawIcon,
+  TagIcon,
+  SparkleIcon,
+  ArrowUpRightIcon,
+  GraduationCapIcon,
+  MetroTrainIcon,
+  FloodFreeIcon,
+  SecurityCameraIcon,
+} from '../../icons/SvgIcons'
 import {
   mapBackendListingToListingViewModel,
   mapFilterMetadataToFilterConfig,
@@ -64,6 +78,7 @@ type Props = {
   onResetFilters: () => void
   onUserSearch?: () => void
   onFocusSource?: (location: { lat: number; lng: number }) => void
+  onRefresh?: () => Promise<void> | void
 }
 
 const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
@@ -75,11 +90,78 @@ const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
 type QuickChip = {
   id: string
   label: string
+  icon?: ReactNode
+  focus?: { lat: number; lng: number }
   isActive: (query: ListingQuery) => boolean
   toggle: (query: ListingQuery) => Partial<ListingQuery>
 }
 
+const CAMPUS_METRO_OPTIONS = [
+  { id: 'dhqg', label: 'ĐHQG TP.HCM', keyword: 'ĐHQG', focus: { lat: 10.878, lng: 106.806 }, isMetro: false },
+  { id: 'ute', label: 'ĐH SPKT (UTE)', keyword: 'Sư phạm Kỹ thuật', focus: { lat: 10.8508, lng: 106.772 }, isMetro: false },
+  { id: 'hutech', label: 'ĐH HUTECH', keyword: 'HUTECH', focus: { lat: 10.8015, lng: 106.7145 }, isMetro: false },
+  { id: 'fpt', label: 'ĐH FPT', keyword: 'FPT', focus: { lat: 10.8415, lng: 106.8099 }, isMetro: false },
+  { id: 'bachkhoa', label: 'ĐH Bách Khoa', keyword: 'Bách Khoa', focus: { lat: 10.7725, lng: 106.6579 }, isMetro: false },
+  { id: 'kinhte', label: 'ĐH Kinh Tế', keyword: 'Kinh Tế', focus: { lat: 10.7828, lng: 106.6961 }, isMetro: false },
+  { id: 'metro1', label: 'Metro Tuyến 1', keyword: 'Metro', focus: { lat: 10.803, lng: 106.735 }, isMetro: true },
+] as const
+
 const QUICK_CHIPS: QuickChip[] = [
+  {
+    id: 'hub-ktx-dhqg',
+    label: 'KTX ĐHQG',
+    icon: <GraduationCapIcon size={13} />,
+    focus: { lat: 10.878, lng: 106.806 },
+    isActive: (query) => query.keyword === 'KTX ĐHQG' || query.keyword === 'ĐHQG',
+    toggle: (query) =>
+      query.keyword === 'KTX ĐHQG' || query.keyword === 'ĐHQG'
+        ? { keyword: '' }
+        : { keyword: 'KTX ĐHQG' },
+  },
+  {
+    id: 'hub-spkt',
+    label: 'ĐH SPKT',
+    icon: <GraduationCapIcon size={13} />,
+    focus: { lat: 10.8508, lng: 106.772 },
+    isActive: (query) => query.keyword === 'Sư phạm Kỹ thuật',
+    toggle: (query) =>
+      query.keyword === 'Sư phạm Kỹ thuật'
+        ? { keyword: '' }
+        : { keyword: 'Sư phạm Kỹ thuật' },
+  },
+  {
+    id: 'hub-fpt',
+    label: 'ĐH FPT',
+    icon: <GraduationCapIcon size={13} />,
+    focus: { lat: 10.8415, lng: 106.8099 },
+    isActive: (query) => query.keyword === 'ĐH FPT' || query.keyword === 'FPT',
+    toggle: (query) =>
+      query.keyword === 'ĐH FPT' || query.keyword === 'FPT'
+        ? { keyword: '' }
+        : { keyword: 'ĐH FPT' },
+  },
+  {
+    id: 'hub-bx-mientay-dong',
+    label: 'BX Miền Đông mới',
+    icon: <MetroTrainIcon size={13} />,
+    focus: { lat: 10.865, lng: 106.835 },
+    isActive: (query) => query.keyword === 'Bến xe Miền Đông mới',
+    toggle: (query) =>
+      query.keyword === 'Bến xe Miền Đông mới'
+        ? { keyword: '' }
+        : { keyword: 'Bến xe Miền Đông mới' },
+  },
+  {
+    id: 'hub-metro1',
+    label: 'Metro Tuyến 1',
+    icon: <MetroTrainIcon size={13} />,
+    focus: { lat: 10.803, lng: 106.735 },
+    isActive: (query) => query.keyword === 'Metro',
+    toggle: (query) =>
+      query.keyword === 'Metro'
+        ? { keyword: '' }
+        : { keyword: 'Metro' },
+  },
   {
     id: 'under-3m',
     label: 'Dưới 3tr',
@@ -110,6 +192,7 @@ const QUICK_CHIPS: QuickChip[] = [
   {
     id: 'ac',
     label: 'Có máy lạnh',
+    icon: <SnowflakeIcon size={13} />,
     isActive: (query) => query.amenities.includes('AIR_CONDITIONER'),
     toggle: (query) => ({
       amenities: query.amenities.includes('AIR_CONDITIONER')
@@ -120,6 +203,7 @@ const QUICK_CHIPS: QuickChip[] = [
   {
     id: 'loft',
     label: 'Gác lửng',
+    icon: <LoftLadderIcon size={13} />,
     isActive: (query) => query.amenities.includes('LOFT'),
     toggle: (query) => ({
       amenities: query.amenities.includes('LOFT')
@@ -130,6 +214,7 @@ const QUICK_CHIPS: QuickChip[] = [
   {
     id: 'wc',
     label: 'WC riêng',
+    icon: <ShowerIcon size={13} />,
     isActive: (query) => query.amenities.includes('PRIVATE_BATHROOM'),
     toggle: (query) => ({
       amenities: query.amenities.includes('PRIVATE_BATHROOM')
@@ -139,7 +224,8 @@ const QUICK_CHIPS: QuickChip[] = [
   },
   {
     id: 'pet',
-    label: 'Cho nuôi thú cưng',
+    label: 'Cho nuôi pet',
+    icon: <PawIcon size={13} />,
     isActive: (query) => query.amenities.includes('PET_FRIENDLY'),
     toggle: (query) => ({
       amenities: query.amenities.includes('PET_FRIENDLY')
@@ -178,10 +264,63 @@ export function MapListingsWorkspace({
   onResetFilters,
   onUserSearch,
   onFocusSource,
+  onRefresh,
 }: Props) {
   const [, setSourceCounts] = useState<{ total: number; mapped: number } | null>(null)
   const [searchParams, setSearchParams] = useListingSearchParams()
   const navigate = useNavigate()
+  const [pullY, setPullY] = useState(0)
+  const [pullRefreshing, setPullRefreshing] = useState(false)
+  const touchStartY = useRef<number | null>(null)
+  const panelBodyRef = useRef<HTMLDivElement>(null)
+
+  const PULL_THRESHOLD = 60
+  const MAX_PULL = 90
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (pullRefreshing) return
+    const el = panelBodyRef.current
+    if (el && el.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY
+    } else {
+      touchStartY.current = null
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartY.current == null || pullRefreshing) return
+    const currentY = e.touches[0].clientY
+    const diff = currentY - touchStartY.current
+    if (diff > 0) {
+      const distance = Math.min(diff * 0.45, MAX_PULL)
+      setPullY(distance)
+    } else {
+      setPullY(0)
+    }
+  }
+
+  const handleTouchEnd = async () => {
+    if (touchStartY.current == null || pullRefreshing) return
+    touchStartY.current = null
+    if (pullY >= PULL_THRESHOLD) {
+      setPullRefreshing(true)
+      setPullY(45)
+      try {
+        if (onRefresh) {
+          await onRefresh()
+        } else {
+          onUserSearch?.()
+        }
+      } finally {
+        setTimeout(() => {
+          setPullRefreshing(false)
+          setPullY(0)
+        }, 400)
+      }
+    } else {
+      setPullY(0)
+    }
+  }
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
@@ -338,6 +477,9 @@ export function MapListingsWorkspace({
               {view.thumbnailUrl ? (
                 <img
                   src={view.thumbnailUrl}
+                  srcSet={listingThumbSrcSet(view.thumbnailUrl)}
+                  loading="lazy"
+                  decoding="async"
                   alt=""
                   onError={(event) => {
                     event.currentTarget.hidden = true
@@ -358,14 +500,20 @@ export function MapListingsWorkspace({
                 {view.highlightTag ? <span>{view.highlightTag}</span> : null}
                 {!marketMode && !view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
               </span>
-              {view.facts.length || view.updatedAt ? <span className="map-listings__facts">
+              <span className="map-listings__facts">
+                <span className="map-listings__fact-tag is-flood-free" title="Tuyến đường cao ráo không ngập mùa mưa">
+                  <FloodFreeIcon size={11} /> Tuyến không ngập
+                </span>
+                <span className="map-listings__fact-tag is-security" title="Khu vực an ninh tốt, có camera quan sát">
+                  <SecurityCameraIcon size={11} /> An ninh 24/7
+                </span>
                 {view.facts.map(fact => <span key={fact}>{fact}</span>)}
                 {view.updatedAt && formatListingDate(view.updatedAt) ? <time dateTime={view.updatedAt}>Cập nhật {formatListingDate(view.updatedAt)}</time> : null}
-              </span> : null}
+              </span>
             </span>
           </button>
           {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
-          {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></button> : null}
+          {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></button> : null}
           {!marketMode && onToggleSave ? (
             <button
               type="button"
@@ -448,10 +596,14 @@ export function MapListingsWorkspace({
                   aria-pressed={active}
                   onClick={() => {
                     const patch = chip.toggle(query)
+                    if (!active && chip.focus && onFocusSource) {
+                      onFocusSource(chip.focus)
+                    }
                     writeQuery({ ...patch, page: 1 }, { fit: true })
                   }}
                 >
-                  {chip.label}
+                  {chip.icon}
+                  <span>{chip.label}</span>
                 </button>
               )
             })}
@@ -502,16 +654,42 @@ export function MapListingsWorkspace({
                 </div>
               </>
             ) : null}
+            <fieldset className="map-listings__amenity-group">
+              <legend>Trường Đại học & Tuyến Metro</legend>
+              <div className="map-listings__quick-chips" role="group" aria-label="Trường đại học và metro lân cận">
+                {CAMPUS_METRO_OPTIONS.map((item) => {
+                  const active = query.keyword === item.keyword
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
+                      onClick={() => {
+                        const nextKeyword = active ? '' : item.keyword
+                        if (!active && item.focus && onFocusSource) {
+                          onFocusSource(item.focus)
+                        }
+                        writeQuery({ keyword: nextKeyword, page: 1 }, { fit: true })
+                        setFiltersOpen(false)
+                      }}
+                    >
+                      {item.isMetro ? <MetroTrainIcon size={13} /> : <GraduationCapIcon size={13} />}
+                      <span>{item.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
             {filterConfig.area ? <FilterRange label="Diện tích" unit="m²" draft={areaDraft} onChange={setAreaDraft} /> : null}
             {filterConfig.amenities.length > 0 ? (
               <fieldset className="map-listings__amenity-group">
                 <legend>Tiện ích</legend>
                 <div className="map-listings__quick-chips" role="group" aria-label="Tiện ích nhanh">
                   {[
-                    { code: 'AIR_CONDITIONER', label: '❄️ Máy lạnh' },
-                    { code: 'LOFT', label: '🪜 Gác lửng' },
-                    { code: 'PRIVATE_BATHROOM', label: '🚿 WC riêng' },
-                    { code: 'PET_FRIENDLY', label: '🐾 Cho nuôi pet' },
+                    { code: 'AIR_CONDITIONER', label: 'Máy lạnh', icon: <SnowflakeIcon size={13} /> },
+                    { code: 'LOFT', label: 'Gác lửng', icon: <LoftLadderIcon size={13} /> },
+                    { code: 'PRIVATE_BATHROOM', label: 'WC riêng', icon: <ShowerIcon size={13} /> },
+                    { code: 'PET_FRIENDLY', label: 'Cho nuôi pet', icon: <PawIcon size={13} /> },
                   ].map((preset) => {
                     const active = amenityDraft.includes(preset.code)
                     return (
@@ -527,7 +705,8 @@ export function MapListingsWorkspace({
                           )
                         }}
                       >
-                        {preset.label}
+                        {preset.icon}
+                        <span>{preset.label}</span>
                       </button>
                     )
                   })}
@@ -630,7 +809,40 @@ export function MapListingsWorkspace({
             {query.view === 'split' ? <div className="map-listings__panel-head">
               <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : apartmentMode ? 'Căn hộ trong khu vực' : 'Phòng trọ trong khu vực'}</strong></div>
             </div> : null}
-            <div className="map-listings__panel-body">
+            <div
+              ref={panelBodyRef}
+              className="map-listings__panel-body"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {(pullY > 0 || pullRefreshing) ? (
+                <div
+                  className={`map-listings__pull-indicator${pullRefreshing ? ' is-refreshing' : ''}`}
+                  style={{ height: `${pullY}px` }}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="map-listings__pull-indicator-content">
+                    {pullRefreshing ? (
+                      <>
+                        <span className="map-listings__pull-spinner" aria-hidden="true" />
+                        <span>Đang làm mới…</span>
+                      </>
+                    ) : pullY >= PULL_THRESHOLD ? (
+                      <>
+                        <span className="map-listings__pull-arrow is-flipped" aria-hidden="true">↓</span>
+                        <span>Thả để làm mới</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="map-listings__pull-arrow" aria-hidden="true">↓</span>
+                        <span>Kéo để làm mới</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : null}
               {error ? (
                 <div className="map-listings__state" role="alert">
                   <p>{error}</p>
@@ -656,7 +868,10 @@ export function MapListingsWorkspace({
                 </ul>
               ) : cards.length === 0 && marketMode ? (
                 <div className="map-listings__state map-listings__smart-empty" role="status">
-                  <div className="map-listings__empty-icon" aria-hidden="true">🏷️✨</div>
+                  <div className="map-listings__empty-icon" aria-hidden="true">
+                    <TagIcon size={28} />
+                    <SparkleIcon size={20} />
+                  </div>
                   <h3 className="map-listings__empty-title">Chưa tìm thấy món đồ phù hợp</h3>
                   <p className="map-listings__empty-desc">Không có tin chợ khớp bộ lọc. Thử đặt lại bộ lọc để xem thêm đồ thanh lý từ sinh viên quanh đây.</p>
                   <div className="map-listings__empty-actions">

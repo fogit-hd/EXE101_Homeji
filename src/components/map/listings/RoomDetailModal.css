@@ -524,6 +524,35 @@
   align-items: center;
 }
 
+.room-detail__greeting-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.room-detail__greeting-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--rd-line, #e2e8f0);
+  background: var(--rd-card, #f8fafc);
+  color: var(--rd-forest, #102e32);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.room-detail__greeting-chip:hover:not(:disabled) {
+  border-color: #087f8c;
+  color: #087f8c;
+  background: rgba(8, 127, 140, 0.08);
+}
+
 .room-detail__book,
 .room-detail__message {
   height: 48px;
@@ -1078,7 +1107,20 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 }
 
 .room-cost-calculator__icon {
-  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #e8f5ec;
+  color: #00b14f;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .room-cost-calculator__icon {
+  background: #173c32;
+  color: #00b14f;
 }
 
 .room-cost-calculator__title-group h5 {
@@ -1158,11 +1200,19 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 }
 
 .room-cost-calculator__breakdown-chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11.5px;
   padding: 3px 8px;
   background: #e9f0ec;
   border-radius: 6px;
   color: #2f4438;
+}
+
+[data-theme='dark'] .room-cost-calculator__breakdown-chips span {
+  background: #1e3328;
+  color: #c9ded3;
 }
 
 .room-cost-calculator__controls {
@@ -1216,8 +1266,88 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 }
 
 .room-cost-calculator__hint {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 11px;
   color: #6a7c71;
   line-height: 1.4;
   margin-top: 4px;
+}
+
+.room-cost-calculator__hint svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #d97706;
+}
+
+/* Environmental & Security Trust Info */
+.room-detail__environment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: var(--surface-muted, #f8faf9);
+  border: 1px solid var(--border, #e2e8e4);
+  border-radius: 12px;
+}
+
+.room-detail__environment-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text-heading, #1f3328);
+}
+
+.room-detail__environment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.room-detail__env-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='dark'] .room-detail__env-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.room-detail__env-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #e8f6ef;
+  color: #00b14f;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .room-detail__env-icon {
+  background: #173c32;
+  color: #34d399;
+}
+
+.room-detail__env-text strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  margin-bottom: 2px;
+}
+
+.room-detail__env-text small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.35;
 }

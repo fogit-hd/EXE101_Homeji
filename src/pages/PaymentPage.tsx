@@ -33,6 +33,7 @@ import { LiquidTabList } from '../components/ui/LiquidTabList'
 import { useAuth } from '../contexts/AuthContext'
 import { currentSubscription } from '../lib/currentSubscription'
 import { getErrorMessage } from '../lib/errors'
+import { StarIcon, CrownIcon, ShieldCheckIcon, CheckIcon } from '../components/icons/SvgIcons'
 import { trackFunnelEvent } from '../lib/ga4'
 import {
   formatDate,
@@ -411,10 +412,15 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 >
                   {isRecommended && (
                     <div className="pay-plan__recommended-badge" aria-label="Gói được khuyên dùng">
-                      ⭐ Gói khuyên dùng
+                      <StarIcon size={12} fill="currentColor" />
+                      <span>Gói khuyên dùng</span>
                     </div>
                   )}
-                  <div className="pay-plan__identity" aria-hidden="true"><span>{isPremium ? '♛' : '○'}</span><small>{isPremium ? 'Premium' : 'Cơ bản'}</small>{isCurrent && <em>Đang dùng</em>}</div>
+                  <div className="pay-plan__identity" aria-hidden="true">
+                    <span>{isPremium ? <CrownIcon size={16} /> : <ShieldCheckIcon size={16} />}</span>
+                    <small>{isPremium ? 'Premium' : 'Cơ bản'}</small>
+                    {isCurrent && <em>Đang dùng</em>}
+                  </div>
                   <h3>{view.title}</h3>
                   <p className="pay-plan__duration">
                     {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
@@ -449,7 +455,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
                   <div className="pay-plan__actions">
                     {!isPremium ? (
-                      <span className="pay-btn pay-btn--current">{isCurrent ? '✓ Gói hiện tại' : 'Gói miễn phí'}</span>
+                      <span className="pay-btn pay-btn--current">{isCurrent ? <><CheckIcon size={14} /> Gói hiện tại</> : 'Gói miễn phí'}</span>
                     ) : isCurrent && !pickingPay ? (
                       <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={() => { setVipVoucher(null); setSelectedCode(plan.code); setPayPickerCode(plan.code) }}>Gia hạn gói</button>
                     ) : pickingPay ? (

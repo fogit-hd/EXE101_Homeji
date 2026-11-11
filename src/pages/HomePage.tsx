@@ -1065,6 +1065,7 @@ function HomePageComponent() {
       pinLayers={pinLayers}
       onDetailLabelChange={handleDetailLabelChange}
       onAiSearchUpdate={applyAiSearchUpdate}
+      onRefresh={() => { setExploreReload((n) => n + 1) }}
     />
     </>
   )

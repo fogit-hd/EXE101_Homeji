@@ -33,6 +33,17 @@ import { rentalDraftTarget, rentalMessageDraftStore } from '../../../lib/rentalM
 import { getStoredSession } from '../../../api/client'
 import { aiFeatureFlags } from '../../../lib/aiFeatureFlags'
 import { isImportedRentalPost } from '../../../lib/sourcePublisherLinks'
+import {
+  CalculatorIcon,
+  HouseIcon,
+  ElectricBoltIcon,
+  WaterDropIcon,
+  MotorbikeIcon,
+  LightbulbIcon,
+  FloodFreeIcon,
+  SecurityCameraIcon,
+  MessageCircleIcon,
+} from '../../icons/SvgIcons'
 import mapPinUrl from '../../../assets/room-detail/map-pin.svg'
 import messageCircleUrl from '../../../assets/room-detail/message-circle.svg'
 import circleAlertUrl from '../../../assets/room-detail/circle-alert.svg'
@@ -286,10 +297,11 @@ export function RoomDetailModal({
     try {
       const convo = await startRentalPostConversation(post.id)
       if (!isCurrent()) return
-      if (questionDraft !== undefined) {
+      const effectiveDraft = questionDraft ?? `Chào bạn, mình quan tâm đến phòng "${post.title?.trim() || ''}" trên Homeji. Phòng này hiện còn trống không ạ?`
+      if (effectiveDraft !== undefined) {
         const target = rentalDraftTarget(source.userId, convo)
         if (!target || target.postId !== source.postId || target.recipientId !== source.ownerId
-          || !rentalMessageDraftStore.queue(target, questionDraft)) {
+          || !rentalMessageDraftStore.queue(target, effectiveDraft)) {
           notify('Chưa chuyển được bản nháp vào đúng hội thoại. Nội dung vẫn ở đây để bạn sửa và thử lại.', 'err')
           return
         }
@@ -502,6 +514,25 @@ export function RoomDetailModal({
                     <p className="room-detail__muted">Các tiện ích khác: chưa cung cấp</p>
                   )}
                 </section>
+                <div className="room-detail__environment-section" data-glass-exclude>
+                  <h4 className="room-detail__environment-title">Thông tin an ninh & môi trường khu vực</h4>
+                  <div className="room-detail__environment-grid">
+                    <div className="room-detail__env-item">
+                      <span className="room-detail__env-icon" aria-hidden="true"><FloodFreeIcon size={16} /></span>
+                      <div className="room-detail__env-text">
+                        <strong>Tuyến đường không ngập</strong>
+                        <small>Khu vực cao ráo, lưu thông thuận tiện mùa mưa lớn</small>
+                      </div>
+                    </div>
+                    <div className="room-detail__env-item">
+                      <span className="room-detail__env-icon" aria-hidden="true"><SecurityCameraIcon size={16} /></span>
+                      <div className="room-detail__env-text">
+                        <strong>An ninh camera 24/7</strong>
+                        <small>Khu nhà trọ có camera giám sát và khóa cổng an toàn</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post} showFacts={false}
                   canMessage={Boolean(isAuthenticated && isRenter && profile?.id !== post.ownerId && onOpenMessages && !actionBusy)}
                   onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
@@ -520,6 +551,24 @@ export function RoomDetailModal({
                   <OwnerProfile key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone} isStudentShare={isStudentShare}
                     revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
+                  <div className="room-detail__greeting-chips" role="group" aria-label="Mẫu tin nhắn nhanh">
+                    {[
+                      'Phòng này hiện còn trống không ạ?',
+                      'Mình muốn hẹn lịch qua xem phòng được không?',
+                      'Chi phí điện nước và dịch vụ tính thế nào ạ?',
+                    ].map((template) => (
+                      <button
+                        key={template}
+                        type="button"
+                        className="room-detail__greeting-chip"
+                        disabled={actionBusy}
+                        onClick={() => void handleMessage(`Chào bạn, ${template.charAt(0).toLowerCase() + template.slice(1)}`)}
+                      >
+                        <MessageCircleIcon size={13} />
+                        <span>{template}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="room-detail__note">
                   <strong>Xem phòng trước khi quyết định</strong>
@@ -698,7 +747,7 @@ function RoomCostCalculatorWidget({
     <div className="room-cost-calculator" data-glass-exclude>
       <div className="room-cost-calculator__header">
         <div className="room-cost-calculator__title-group">
-          <span className="room-cost-calculator__icon" aria-hidden="true">🧮</span>
+          <span className="room-cost-calculator__icon" aria-hidden="true"><CalculatorIcon size={18} /></span>
           <div>
             <h5>Dự toán chi phí trọn gói</h5>
             <p>Tiền phòng + điện, nước + xe máy & wifi</p>
@@ -728,10 +777,10 @@ function RoomCostCalculatorWidget({
       </div>
 
       <div className="room-cost-calculator__breakdown-chips">
-        <span>🏠 Phòng: {formatPrice(rentAmount)}</span>
-        <span>⚡ Điện (~{kwhPerPerson * occupants} kWh): {formatPrice(electricityTotal)}</span>
-        <span>💧 Nước: {formatPrice(waterTotal)}</span>
-        <span>🛵 Dịch vụ & xe: {formatPrice(serviceFee)}</span>
+        <span><HouseIcon size={13} /> Phòng: {formatPrice(rentAmount)}</span>
+        <span><ElectricBoltIcon size={13} /> Điện (~{kwhPerPerson * occupants} kWh): {formatPrice(electricityTotal)}</span>
+        <span><WaterDropIcon size={13} /> Nước: {formatPrice(waterTotal)}</span>
+        <span><MotorbikeIcon size={13} /> Dịch vụ & xe: {formatPrice(serviceFee)}</span>
       </div>
 
       {isOpen && (
@@ -815,7 +864,8 @@ function RoomCostCalculatorWidget({
             </select>
           </div>
           <small className="room-cost-calculator__hint">
-            💡 Mức tính toán dựa trên mức sinh hoạt phổ biến của sinh viên & người đi làm tại TP.HCM. Hãy xác nhận biểu phí chính thức với người đăng.
+            <LightbulbIcon size={14} />
+            <span>Mức tính toán dựa trên mức sinh hoạt phổ biến của sinh viên & người đi làm tại TP.HCM. Hãy xác nhận biểu phí chính thức với người đăng.</span>
           </small>
         </div>
       )}

@@ -212,7 +212,7 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   )
 }
 
-function NetworkStatusBanner({
+export function NetworkStatusBanner({
   status,
   showRestored,
   brandIntroComplete,
@@ -228,7 +228,7 @@ function NetworkStatusBanner({
   let tone: 'offline' | 'reconnecting' | 'restored' = 'offline'
 
   if (status === 'offline') {
-    text = 'Đã mất kết nối mạng. Đang cố kết nối lại…'
+    text = 'Bạn đang ngoại tuyến. Dữ liệu phòng đã được lưu để duyệt tiếp.'
     tone = 'offline'
   } else if (status === 'reconnecting') {
     text = 'Đang kết nối lại mạng…'

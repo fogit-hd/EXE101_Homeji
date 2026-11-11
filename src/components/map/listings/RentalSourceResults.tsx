@@ -5,6 +5,7 @@ import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
 import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import { filterRentalSourcesForList, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
+import { HouseIcon, SparkleIcon, NoteEditIcon, UsersIcon, ArrowUpRightIcon } from '../../icons/SvgIcons'
 import type { ListingQuery } from './listingAdapters'
 import './RentalSourceResults.css'
 import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
@@ -61,7 +62,10 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
     {loaded && !error && combined.length === 0 ? (
       <div className="map-listings__smart-empty" role="status">
-        <div className="map-listings__empty-icon" aria-hidden="true">🏠✨</div>
+        <div className="map-listings__empty-icon" aria-hidden="true">
+          <HouseIcon size={26} />
+          <SparkleIcon size={18} />
+        </div>
         <h3 className="map-listings__empty-title">Chưa tìm thấy phòng phù hợp với yêu cầu của bạn</h3>
         <p className="map-listings__empty-desc">
           Chưa có phòng phù hợp. Thử bỏ bớt bộ lọc hoặc đăng tin tìm phòng để các chủ trọ và bạn cùng phòng chủ động kết nối!
@@ -73,10 +77,12 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
             </button>
           ) : null}
           <Link to="/wanted" className="btn-empty-cta">
-            📝 Đăng tin tìm phòng ngay
+            <NoteEditIcon size={15} />
+            <span>Đăng tin tìm phòng ngay</span>
           </Link>
           <Link to="/invitations" className="btn-empty-secondary">
-            👥 Tìm bạn ở ghép
+            <UsersIcon size={15} />
+            <span>Tìm bạn ở ghép</span>
           </Link>
         </div>
       </div>
@@ -103,7 +109,7 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
         </div>
         <div className="source-results__actions">
           {onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí trên bản đồ</button> : null}
-          <Link className="map-listings__card-open" data-glass-exclude to={sourceRoomHref(row.id)}>Chi tiết & liên hệ <span aria-hidden="true">↗</span></Link>
+          <Link className="map-listings__card-open" data-glass-exclude to={sourceRoomHref(row.id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></Link>
         </div>
       </article></li>
     })}</ul>

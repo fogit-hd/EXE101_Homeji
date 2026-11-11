@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { navigateGuestLanding, searchGuestListings } from './guestLandingNav'
 import { RevealText } from '../motion/RevealText'
 import { HERO_IMAGE, HERO_SIZES, HERO_SRC_SET } from './heroImage'
+import { HouseIcon, UsersIcon, ShieldCheckIcon } from '../icons/SvgIcons'
 import './GuestHero.css'
 
 const NAV_ITEMS = [
@@ -101,15 +102,15 @@ export function GuestHero() {
           </form>
           <div className="guest-hero__proof-bar" aria-label="Bảo chứng và thống kê">
             <div className="guest-hero__proof-item">
-              <span className="guest-hero__proof-icon" aria-hidden="true">🏠</span>
+              <span className="guest-hero__proof-icon" aria-hidden="true"><HouseIcon size={16} /></span>
               <span><strong>1.500+</strong> phòng trọ TP.HCM</span>
             </div>
             <div className="guest-hero__proof-item">
-              <span className="guest-hero__proof-icon" aria-hidden="true">👥</span>
+              <span className="guest-hero__proof-icon" aria-hidden="true"><UsersIcon size={16} /></span>
               <span><strong>800+</strong> bạn trẻ đã kết nối</span>
             </div>
             <div className="guest-hero__proof-item">
-              <span className="guest-hero__proof-icon" aria-hidden="true">🛡️</span>
+              <span className="guest-hero__proof-icon" aria-hidden="true"><ShieldCheckIcon size={16} /></span>
               <span>Xác minh chính chủ 100%</span>
             </div>
           </div>

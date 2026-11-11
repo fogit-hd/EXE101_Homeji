@@ -10,6 +10,7 @@ import { mapMessagesUrl, mapPostUrl } from '../../lib/mapDeepLinks'
 import { RoommateRoomsSkeleton } from '../skeletons/PageSkeletons'
 import './RoommateRooms.css'
 import { RoommateEmptyArt, RoommateSceneArt, SeatIcon } from './roommateArt'
+import { CheckIcon } from '../icons/SvgIcons'
 
 const TONES = ['#14b8a6', '#ff7a59', '#22c55e', '#8b5cf6'] as const
 const MAX_SEATS = 6
@@ -141,8 +142,8 @@ export function RoommateRooms({ initialKeyword = '', onOpenConversation }: Props
             <ul className="rm-card__facts">
               <li className="rm-card__fact rm-card__fact--place">{post.address || 'Chưa cung cấp địa chỉ'}</li>
               {capacity != null ? <li className="rm-card__fact rm-card__fact--home">Tối đa {capacity} người · {post.area} m²</li> : null}
-              {budgetMatch ? <li className="rm-card__fact rm-card__fact--tag">✓ Trong ngân sách</li> : null}
-              {schoolMatch ? <li className="rm-card__fact rm-card__fact--tag">✓ Cùng trường</li> : null}
+              {budgetMatch ? <li className="rm-card__fact rm-card__fact--tag"><CheckIcon size={12} /> Trong ngân sách</li> : null}
+              {schoolMatch ? <li className="rm-card__fact rm-card__fact--tag"><CheckIcon size={12} /> Cùng trường</li> : null}
               {chips.map(chip => <li key={chip} className="rm-card__fact rm-card__fact--tag">{chip}</li>)}
             </ul>
             <div className="rm-card__cost"><span>Chi phí dự kiến/người/tháng</span><strong>{formatPrice(post.price)}</strong></div>

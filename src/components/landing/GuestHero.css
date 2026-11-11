@@ -140,7 +140,10 @@
   gap: 8px;
 }
 .guest-hero__proof-icon {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--landing-green, #00b14f);
 }
 .guest-hero__center {
   display: flex;

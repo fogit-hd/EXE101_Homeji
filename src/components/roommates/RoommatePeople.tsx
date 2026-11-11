@@ -9,6 +9,7 @@ import {
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, petPreferenceLabel, sleepHabitLabel, smokingPreferenceLabel } from '../../lib/labels'
 import { reconcileRoommateInvitations, upsertRoommateInvitation } from './roommateInvitationState'
+import { SparkleIcon, CheckCircleIcon } from '../icons/SvgIcons'
 import './RoommatePeople.css'
 
 const INTENTS = [
@@ -295,6 +296,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
               <span>{INTENTS.find(option => option.value === person.intent)?.label}</span>
             </div>
             <div className={`roommate-compat-badge is-${tier}`} title={`${score}% phù hợp lối sống & nhu cầu`}>
+              <SparkleIcon size={12} />
               <span className="roommate-compat-score">{score}% Phù hợp</span>
               <span className="roommate-compat-tier">{tierLabel}</span>
             </div>
@@ -305,7 +307,10 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
           {reasons.length > 0 && (
             <ul className="roommate-compat-reasons" aria-label="Điểm hòa hợp">
               {reasons.slice(0, 3).map((reason) => (
-                <li key={reason}>✓ {reason}</li>
+                <li key={reason}>
+                  <CheckCircleIcon size={13} className="roommate-compat-check" />
+                  <span>{reason}</span>
+                </li>
               ))}
             </ul>
           )}
