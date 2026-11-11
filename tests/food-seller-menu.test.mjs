@@ -90,8 +90,8 @@ test('food cards render freshness badge, preparation time, allergen note and sam
     assert.ok(card)
     assert.match(card.textContent, /Phở bò tái lăn/)
     assert.match(card.textContent, /Nấu theo đơn/)
-    assert.match(card.textContent, /⏱ 15p/)
-    assert.match(card.textContent, /⚠️ Hành hoa, gừng/)
+    assert.match(card.textContent, /15p/)
+    assert.match(card.textContent, /Lưu ý: Hành hoa, gừng/)
     assert.match(card.textContent, /\[Ảnh mẫu\]/)
   } finally {
     await act(() => root.unmount())

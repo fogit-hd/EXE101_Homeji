@@ -97,7 +97,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
             gap: '4px',
           }}
         >
-          <span>🔥</span> {freshnessText} · ⏱ {preparationMinutes}p
+          {freshnessText} · {preparationMinutes}p
         </span>
       </div>
 
@@ -154,7 +154,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
               marginBottom: '8px',
             }}
           >
-            ⚠️ {allergenAlerts}
+            Lưu ý: {allergenAlerts}
           </div>
         )}
 
@@ -168,7 +168,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
               textOverflow: 'ellipsis',
             }}
           >
-            📍 {address}
+            Địa chỉ: {address}
           </div>
         )}
       </div>

@@ -48,9 +48,9 @@ export interface MarketplaceSellFoodFormProps {
 
 const CATEGORIES = ['Cơm nhà', 'Bún/Phở', 'Bánh mì', 'Ăn vặt', 'Đồ uống', 'Món chay']
 const FRESHNESS_OPTIONS = [
-  { value: 'CookToOrder', label: '🔥 Nấu nóng theo đơn (Đặt mới nấu)' },
-  { value: 'DailyBatch', label: '🍲 Nấu theo mẻ trong ca (Còn nóng hổi)' },
-  { value: 'ChilledReady', label: '🧊 Đồ ăn vặt / Đồ uống ướp lạnh' },
+  { value: 'CookToOrder', label: 'Nấu nóng theo đơn (Đặt mới nấu)' },
+  { value: 'DailyBatch', label: 'Nấu theo mẻ trong ca (Còn nóng hổi)' },
+  { value: 'ChilledReady', label: 'Đồ ăn vặt / Đồ uống ướp lạnh' },
 ]
 const ALLERGEN_PRESETS = ['Không cay', 'Cay vừa', 'Cay nhiều', 'Có đậu phộng', 'Có hải sản', 'Món chay']
 
@@ -168,7 +168,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
     <div className="marketplace-sell-food-studio" style={{ padding: '16px 0' }}>
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 6px 0' }}>
-          {editingPostId ? 'Chỉnh sửa món ăn' : '🍳 Bếp Sinh Viên: Đăng Món Mới'}
+          {editingPostId ? 'Chỉnh sửa món ăn' : 'Bếp Sinh Viên: Đăng Món Mới'}
         </h2>
         <p style={{ color: 'var(--text-secondary, #64748b)', margin: 0, fontSize: '0.9rem' }}>
           Chia sẻ món ăn tự nấu chuẩn vị nhà làm, kết nối cộng đồng sinh viên Thủ Đức.
@@ -178,7 +178,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
       {!editingPostId && (
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}>
-            ⚡ Điền nhanh từ món mẫu phổ biến:
+            Điền nhanh từ món mẫu phổ biến:
           </label>
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
             {FOOD_PRESETS.map((preset) => (
@@ -199,7 +199,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                   gap: '6px',
                 }}
               >
-                <span>🍽️</span> {preset.title}
+                {preset.title}
               </button>
             ))}
           </div>
@@ -418,7 +418,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
             />
             {isSamplePhoto && (
               <p style={{ margin: 0, fontSize: '0.8rem', color: '#b45309' }}>
-                ⚠️ Đang dùng ảnh mẫu demo. Bạn nên chụp ảnh món thật sau khi nấu xong để tăng độ tin cậy.
+                Lưu ý: Đang dùng ảnh mẫu demo. Bạn nên chụp ảnh món thật sau khi nấu xong để tăng độ tin cậy.
               </p>
             )}
           </div>
@@ -454,7 +454,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
               cursor: uploading ? 'not-allowed' : 'pointer',
             }}
           >
-            {uploading ? 'Đang lưu món ăn…' : editingPostId ? 'Lưu chỉnh sửa món' : '🚀 Mở Bán Món Này'}
+            {uploading ? 'Đang lưu món ăn…' : editingPostId ? 'Lưu chỉnh sửa món' : 'Mở Bán Món Này'}
           </button>
         </form>
 
@@ -462,7 +462,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 10px 0', color: 'var(--text-secondary, #64748b)' }}>
-              📱 Xem trước hiển thị trên App:
+              Xem trước hiển thị trên ứng dụng:
             </h3>
             <LiveFoodCardPreview
               title={title}
@@ -487,7 +487,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
               color: 'var(--text-secondary, #64748b)',
             }}
           >
-            <strong>🛡️ Quy tắc cộng đồng:</strong>
+            <strong>Quy tắc cộng đồng:</strong>
             <ul style={{ margin: '6px 0 0 0', paddingLeft: '18px' }}>
               <li>Tiền thanh toán được giữ an toàn bởi Homeji Escrow trong 24 giờ.</li>
               <li>Chỉ nhận đơn khi bếp sẵn sàng nấu và đảm bảo vệ sinh an toàn thực phẩm.</li>

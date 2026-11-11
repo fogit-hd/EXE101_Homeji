@@ -121,10 +121,10 @@ export function FoodMarketplaceView({
 
   const MEAL_TABS = [
     { id: 'all', label: 'Tất cả' },
-    { id: 'lunch', label: '🍱 Trưa nay ăn gì?' },
-    { id: 'snack', label: '🍟 Ăn vặt chiều' },
-    { id: 'late', label: '🌙 Ăn khuya' },
-    { id: 'drink', label: '🧋 Đồ uống & Trà sữa' },
+    { id: 'lunch', label: 'Trưa nay ăn gì?' },
+    { id: 'snack', label: 'Ăn vặt chiều' },
+    { id: 'late', label: 'Ăn khuya' },
+    { id: 'drink', label: 'Đồ uống & Trà sữa' },
   ]
 
   const DISTANCE_OPTIONS = [

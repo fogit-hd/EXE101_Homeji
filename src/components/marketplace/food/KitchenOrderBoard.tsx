@@ -101,7 +101,6 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.25rem' }}>🧑‍🍳</span>
             <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Bảng Điều Khiển Bếp Sinh Viên</h3>
           </div>
           <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary, #64748b)' }}>
@@ -169,7 +168,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
             }}
           >
             <strong style={{ fontSize: '0.9rem', color: '#b45309' }}>
-              🔔 ĐƠN MỚI ĐẾN ({requestedOrders.length})
+              ĐƠN MỚI ĐẾN ({requestedOrders.length})
             </strong>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)' }}>
               Đếm ngược 30p
@@ -192,8 +191,8 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                 const remainingMinutes = Math.floor(remainingMs / 60000)
                 const remainingSeconds = Math.floor((remainingMs % 60000) / 1000)
                 const countdownLabel = isExpired
-                  ? '⚠️ Hết hạn nhận đơn (30p)'
-                  : `⏱ Còn ${remainingMinutes}:${String(remainingSeconds).padStart(2, '0')}`
+                  ? 'Hết hạn nhận đơn (30p)'
+                  : `Còn ${remainingMinutes}:${String(remainingSeconds).padStart(2, '0')}`
 
                 return (
                   <div
@@ -230,8 +229,8 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
 
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)', marginBottom: '8px' }}>
                       <div>Số lượng: {order.quantity || 1} suất</div>
-                      {order.pickupAddress && <div>📍 {order.pickupAddress}</div>}
-                      {order.note && <div style={{ color: '#b45309' }}>💬 "{order.note}"</div>}
+                      {order.pickupAddress && <div>Địa chỉ: {order.pickupAddress}</div>}
+                      {order.note && <div style={{ color: '#b45309' }}>Ghi chú: "{order.note}"</div>}
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
@@ -255,7 +254,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           cursor: isBusy ? 'not-allowed' : 'pointer',
                         }}
                       >
-                        {isBusy ? 'Đang xử lý…' : '🍳 Nhận & Nấu'}
+                        {isBusy ? 'Đang xử lý…' : 'Nhận & Nấu'}
                       </button>
                       <button
                         type="button"
@@ -290,7 +289,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           }}
                           title="Nhắn tin với khách"
                         >
-                          💬
+                          Chat
                         </button>
                       )}
                     </div>
@@ -319,7 +318,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
             }}
           >
             <strong style={{ fontSize: '0.9rem', color: '#0369a1' }}>
-              🍲 ĐANG NẤU ({preparingOrders.length})
+              ĐANG NẤU ({preparingOrders.length})
             </strong>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)' }}>
               Theo ca bếp
@@ -354,7 +353,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
 
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)', marginBottom: '8px' }}>
                       <div>Số lượng: {order.quantity || 1} suất</div>
-                      {order.pickupAddress && <div>📍 {order.pickupAddress}</div>}
+                      {order.pickupAddress && <div>Địa chỉ: {order.pickupAddress}</div>}
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
@@ -378,7 +377,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           cursor: isBusy ? 'not-allowed' : 'pointer',
                         }}
                       >
-                        {isBusy ? 'Đang cập nhật…' : '🛵 Đã Xong / Giao Món'}
+                        {isBusy ? 'Đang cập nhật…' : 'Đã Xong / Giao Món'}
                       </button>
                       {onContactCustomer && (
                         <button
@@ -395,7 +394,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           }}
                           title="Nhắn tin với khách"
                         >
-                          💬
+                          Chat
                         </button>
                       )}
                     </div>
@@ -424,7 +423,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
             }}
           >
             <strong style={{ fontSize: '0.9rem', color: '#15803d' }}>
-              ✅ SẴN SÀNG & ĐÃ GIAO ({readyOrDeliveredOrders.length})
+              SẴN SÀNG & ĐÃ GIAO ({readyOrDeliveredOrders.length})
             </strong>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)' }}>
               Escrow Hold 24h
@@ -460,7 +459,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)' }}>
                       <div>{isCompleted ? 'Khách đã bấm nhận món' : 'Đã bàn giao món'}</div>
                       <div style={{ color: '#0369a1', marginTop: '4px' }}>
-                        🛡️ Tiền về ví sau 24h Escrow bảo vệ ATTP.
+                        Tiền về ví sau 24h Escrow bảo vệ an toàn thực phẩm.
                       </div>
                     </div>
                   </div>

@@ -1697,7 +1697,7 @@ export function MarketplacePage({
                 onClick={() => setFulfillmentMode('pickup')}
                 style={{ fontSize: '0.78rem', padding: '6px 8px' }}
               >
-                🚶 Tự đến lấy tại bếp
+                Tự đến lấy tại bếp
               </button>
               <button
                 type="button"
@@ -1705,7 +1705,7 @@ export function MarketplacePage({
                 onClick={() => setFulfillmentMode('delivery')}
                 style={{ fontSize: '0.78rem', padding: '6px 8px' }}
               >
-                🛵 Bếp giao tận phòng KTX
+                Bếp giao tận phòng KTX
               </button>
             </div>
           </div>

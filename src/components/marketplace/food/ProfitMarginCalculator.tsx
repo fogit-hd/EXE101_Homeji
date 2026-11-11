@@ -44,7 +44,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
           fontWeight: 600,
         }}
       >
-        <span>💡 Bảng tính lợi nhuận ròng (Gói Sàn 10%)</span>
+        <span>Bảng tính lợi nhuận ròng (Gói sàn 10%)</span>
         <span
           style={{
             color: marginPercent >= 20 ? 'var(--color-success, #16a34a)' : marginPercent > 0 ? 'var(--color-warning, #d97706)' : 'var(--color-danger, #dc2626)',
@@ -100,7 +100,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
             border: '1px solid #fecaca',
           }}
         >
-          ⚠️ Giá món ăn tối thiểu là 10.000đ để đảm bảo chi phí vận hành.
+          Giá món ăn tối thiểu là 10.000đ để đảm bảo chi phí vận hành.
         </div>
       )}
 
@@ -116,7 +116,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
             border: '1px solid #fde68a',
           }}
         >
-          ⚠️ Biên lãi ước tính dưới 20%. Bạn nên cân nhắc điều chỉnh lại giá hoặc khẩu phần để bù đắp công sức nấu nướng.
+          Biên lãi ước tính dưới 20%. Bạn nên cân nhắc điều chỉnh lại giá hoặc khẩu phần để bù đắp công sức nấu nướng.
         </div>
       )}
 

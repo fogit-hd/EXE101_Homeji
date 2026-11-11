@@ -70,18 +70,18 @@ export function FoodCard({
                 borderRadius: '4px',
               }}
             >
-              🔥 {freshnessText}
+              {freshnessText}
             </span>
           )}
           {post.preparationMinutes != null && post.preparationMinutes > 0 && (
             <span className="food-card__eta" style={{ fontSize: '0.72rem', color: 'var(--food-muted, #64748b)' }}>
-              ⏱ {post.preparationMinutes}p
+              {post.preparationMinutes}p
             </span>
           )}
         </div>
         {post.allergenAlerts && (
           <p style={{ margin: 0, fontSize: '0.72rem', color: '#b45309', lineHeight: 1.3 }}>
-            ⚠️ {post.allergenAlerts}
+            Lưu ý: {post.allergenAlerts}
           </p>
         )}
         <p className="food-card__price">{formatPrice(post.price)}</p>
