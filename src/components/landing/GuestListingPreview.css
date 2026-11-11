@@ -178,3 +178,22 @@ html[data-theme='dark'] .guest-preview__rail > li::after { border-color: #ffaf97
 }
 .guest-preview__share-note[data-visible] { opacity: 1; translate: -50% 0; }
 .guest-preview__share-note:empty { visibility: hidden; }
+
+/* Save heart: top-right of the card, over the photo on phones and beside the title on wider cards. */
+.guest-preview__card { position: relative; }
+.guest-preview__save { position: absolute; z-index: 2; top: 6px; right: 6px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #1d2a27; cursor: pointer; }
+.guest-preview__save::before { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: #ffffffed; box-shadow: 0 1px 4px rgb(0 0 0 / 18%); }
+.guest-preview__save svg { position: relative; }
+.guest-preview__save[aria-pressed='true'] { color: #e5484d; }
+.guest-preview__save:disabled { cursor: progress; opacity: .7; }
+.guest-preview__save:focus-visible { outline: 2px solid var(--text-heading); outline-offset: 0; }
+.guest-preview__card:has(.guest-preview__save) .guest-preview__name { padding-right: 40px; }
+
+/* Phones: photo-first card. The 100px side thumbnail was too small to judge a room. */
+@media (max-width: 640px) {
+  .guest-preview__card-open { display: flex; flex-direction: column; }
+  .guest-preview__photo { width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .guest-preview__copy { padding: 14px 16px 16px; }
+  .guest-preview__card:has(.guest-preview__save) .guest-preview__name { padding-right: 0; }
+  .guest-preview__source-badge { top: 10px; left: 10px; padding: 5px 9px; }
+}

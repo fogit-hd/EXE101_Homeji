@@ -19,6 +19,7 @@ import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlacehold
 import { matchesListingText } from '../../lib/searchQuery'
 import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
 import { listingThumbSrcSet } from '../../lib/cloudinaryImage'
+import { ListingSaveButton } from './ListingSaveButton'
 
 function Arrow({ previous = false }: { previous?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -55,6 +56,13 @@ export function GuestListingPreview() {
   const [selectedSource, setSelectedSource] = useState<RentalSourceListing | null>(null)
   const [keyword, setKeyword] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set())
+  const setSaved = (postId: string, saved: boolean) => setSavedIds(previous => {
+    const next = new Set(previous)
+    if (saved) next.add(postId)
+    else next.delete(postId)
+    return next
+  })
   const rail = useRef<HTMLUListElement>(null)
   useEffect(() => rail.current ? attachTraceTilt(rail.current, '.guest-preview__rail > li') : undefined, [])
   const searchPlaceholder = useStreetSearchPlaceholder(!searchFocused && !keyword.trim(), 'Tìm theo đường, khu vực hoặc tiện ích')
@@ -170,7 +178,7 @@ export function GuestListingPreview() {
               <button type="button" className="guest-preview__card-open" aria-label={`Xem ${isSource ? 'tin phòng' : 'phòng'}: ${data.title}`} onClick={() => item.kind === 'post' ? setSelected(item.data) : setSelectedSource(item.data)}>
                 <span className="guest-preview__photo">
                   <span>Chưa có ảnh</span>
-                  {photos[0] ? <img src={photos[0]} srcSet={listingThumbSrcSet(photos[0])} sizes="(max-width: 480px) 100px, 150px" alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
+                  {photos[0] ? <img src={photos[0]} srcSet={listingThumbSrcSet(photos[0])} sizes="(max-width: 640px) calc(100vw - 48px), 150px" alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
                   <span className="guest-preview__source-badge">{item.kind === 'post' && item.data.type !== RentalPostType.VacantRoom ? rentalPostTypeLabel[item.data.type] : category === 'apartments' ? 'Căn hộ' : 'Phòng trọ'}</span>
                   {item.kind === 'source' && photos.length > 1 ? <span className="guest-preview__photo-count">{photos.length} ảnh</span> : null}
                 </span>
@@ -183,6 +191,7 @@ export function GuestListingPreview() {
                   <span className="guest-preview__card-footer"><span>{item.kind === 'post' ? item.data.ownerDisplayName || 'Người đăng Homeji' : rentalSourcePublisher(item.data.publisherName)}</span><strong>Xem chi tiết <Arrow /></strong></span>
                 </span>
               </button>
+              {item.kind === 'post' ? <ListingSaveButton postId={item.data.id} title={data.title} saved={savedIds.has(item.data.id)} onSavedChange={setSaved} /> : null}
             </article>
           </li>
         })}

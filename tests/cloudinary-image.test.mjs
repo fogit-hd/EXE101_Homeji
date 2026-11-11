@@ -27,5 +27,5 @@ test('srcSet lists every thumbnail width', () => {
 
 test('guest listing cards request sized thumbnails', () => {
   const card = readFileSync(new URL('../src/components/landing/GuestListingPreview.tsx', import.meta.url), 'utf8')
-  assert.match(card, /srcSet=\{listingThumbSrcSet\(photos\[0\]\)\} sizes="\(max-width: 480px\) 100px, 150px"/)
+  assert.match(card, /srcSet=\{listingThumbSrcSet\(photos\[0\]\)\} sizes="\(max-width: 640px\) calc\(100vw - 48px\), 150px"/)
 })
