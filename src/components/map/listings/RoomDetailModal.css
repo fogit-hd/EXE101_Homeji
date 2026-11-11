@@ -845,3 +845,156 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 
 .room-detail__mobile-facts { display: none; }
 @media(max-width:800px) { .room-detail__mobile-facts { display: block; } .room-detail__mobile-facts .room-detail__essentials { margin-bottom: 16px; } .room-detail__aside > .room-detail__essentials { display: none; } }
+
+.room-report {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.room-report__trigger {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--rd-muted);
+  font: 500 13px/18px var(--font-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.room-report__trigger:hover {
+  color: var(--error);
+}
+
+.room-report__done {
+  margin: 0;
+  color: var(--rd-muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.room-report__dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--rd-border);
+  border-radius: 16px;
+  background: var(--rd-surface);
+  color: var(--rd-text);
+  overflow-y: auto;
+}
+
+.room-report__dialog::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+.room-report__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.room-report__form h4 {
+  margin: 0;
+  color: var(--rd-forest);
+  font: 700 18px/24px var(--font-ui);
+}
+
+.room-report__hint,
+.room-report__count {
+  margin: 0;
+  color: var(--rd-muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.room-report__count {
+  text-align: right;
+}
+
+.room-report__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.room-report__reasons legend,
+.room-report__field {
+  margin-bottom: 4px;
+  color: var(--rd-forest);
+  font: 600 14px/20px var(--font-ui);
+}
+
+.room-report__reason {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.room-report__reason input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: var(--error);
+}
+
+.room-report__form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--rd-border);
+  border-radius: 8px;
+  background: var(--rd-bg);
+  color: var(--rd-text);
+  font: 16px/22px var(--font-ui);
+  resize: vertical;
+}
+
+.room-report__error {
+  margin: 0;
+  color: var(--error);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.room-report__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.room-report__actions button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font: 600 14px/20px var(--font-ui);
+  cursor: pointer;
+}
+
+.room-report__cancel {
+  border: 1px solid var(--rd-border);
+  background: var(--rd-surface);
+  color: var(--rd-forest);
+}
+
+.room-report__submit {
+  border: 0;
+  /* Fixed red keeps white text at 4.5:1+ in both themes (dark --error is a light pink). */
+  background: #c5221f;
+  color: #fff;
+}
+
+.room-report__actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
