@@ -59,7 +59,7 @@
   text-wrap: balance;
 }
 #root .guest-journey__steps p { color: var(--step-secondary); line-height: 1.55; }
-.guest-journey__detail { display: block; margin-top: 14px; color: var(--step-secondary); font-size: 12px; font-weight: 650; line-height: 1.5; }
+.guest-journey__detail { display: block; margin-top: 14px; color: var(--step-secondary); font-size: 13px; font-weight: 650; line-height: 1.5; }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .guest-journey__steps li:hover circle { animation: guest-journey-dot 520ms ease-in-out both; }
   .guest-journey__steps li:hover circle:nth-child(3n + 2) { animation-delay: 55ms; }

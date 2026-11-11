@@ -534,7 +534,7 @@
   padding-inline: 4px;
   background: transparent;
   color: var(--rd-muted);
-  font-size: 12px;
+  font-size: 14px;
   text-underline-offset: 4px;
   text-decoration: underline;
 }
@@ -556,7 +556,7 @@
 .room-detail__owner-profile { display: flex; flex-direction: column; gap: 18px; }
 .room-detail__owner-profile .room-detail__avatar { width: 48px; height: 48px; overflow: hidden; }
 .room-detail__avatar img { width: 100%; height: 100%; object-fit: cover; }
-.room-detail__owner-label { display: block; margin-bottom: 4px; color: var(--rd-muted); font-size: 12px; line-height: 1.5; }
+.room-detail__owner-label { display: block; margin-bottom: 4px; color: var(--rd-muted); font-size: 13px; line-height: 1.5; }
 .room-detail__owner-verified { display: block; margin-top: 4px; color: var(--hj-accent); font-size: 11px; }
 .room-detail__owner-phone { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--rd-border); border-radius: 12px; background: color-mix(in srgb,var(--hj-accent) 6%,var(--rd-surface)); }
 .room-detail__owner-phone > div { min-width: 0; }
@@ -564,10 +564,10 @@
 .room-detail__phone-value > span { letter-spacing: .08em; }
 .room-detail__phone-value a { color: var(--hj-accent); text-decoration: none; }
 .room-detail__phone-value a:hover { text-decoration: underline; }
-html:root body .room-detail__contact .room-detail__phone-hint { margin: -8px 0 0; color: var(--rd-muted); font-size: 11px; line-height: 1.6; }
+html:root body .room-detail__contact .room-detail__phone-hint { margin: -8px 0 0; color: var(--rd-muted); font-size: 13px; line-height: 1.6; }
 .room-detail__main > .room-detail__section { margin-top: 16px; border-top: 1px solid var(--rd-border); }
 .room-detail__footer-copy .room-detail__footer-price { font-size: 22px; font-variant-numeric: tabular-nums; }
-.room-detail__footer-price small { color: var(--rd-muted); font-size: 12px; font-weight: 400; }
+.room-detail__footer-price small { color: var(--rd-muted); font-size: 13px; font-weight: 400; }
 .room-detail__call { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 20px; border: 1px solid var(--rd-border); border-radius: 8px; background: var(--rd-surface); color: var(--rd-forest); font: 600 14px/20px var(--font-ui); text-decoration: none; white-space: nowrap; cursor: pointer; }
 .room-detail__call:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
 :is(html:root #root,html:root body) .room-detail .room-detail__footer-actions > .room-detail__message {
@@ -774,7 +774,7 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
   }
   .room-detail__message { width: 100%; padding-inline: 10px; font-size: 13px; white-space: nowrap; }
   .room-detail__call { padding-inline: 12px; }
-  .room-detail__book { grid-column: 1 / -1; height: 28px; }
+  .room-detail__book { grid-column: 1 / -1; height: 40px; }
   .room-detail__footer-actions:not(:has(.room-detail__call)) .room-detail__message { grid-column: 1 / -1; }
   .room-detail__footer-copy { flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
   .room-detail__footer-copy .room-detail__footer-price { font-size: 18px; }
@@ -791,11 +791,11 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
 .room-detail__photo-main { height: 320px; border-radius: 14px; }
 .room-detail__summary { gap: 8px; padding-bottom: 16px; }
 .room-detail__summary h3 { font-size: 23px; line-height: 1.4; font-weight: 700; letter-spacing: -.025em; overflow-wrap: anywhere; }
-.room-detail__summary > .room-detail__muted { font-size: 11px; overflow-wrap: anywhere; }
+.room-detail__summary > .room-detail__muted { font-size: 13px; overflow-wrap: anywhere; }
 .room-detail__eyebrow { color: var(--action-on-soft); font-size: 12px; letter-spacing: .12em; }
 .room-detail__essentials { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; padding: 18px 16px; margin-bottom: 24px; border: 1px solid var(--rd-border); border-radius: 14px; background: var(--rd-bg); }
 .room-detail__essentials > div { display: grid; gap: 7px; min-width: 0; }
-.room-detail__essentials span { font-size: 12px; color: var(--rd-muted); }
+.room-detail__essentials span { font-size: 13px; color: var(--rd-muted); }
 .room-detail__essentials strong { font-size: 19px; color: var(--rd-forest); font-variant-numeric: tabular-nums; }
 .room-detail__essentials > div:first-child strong { color: var(--action-on-soft); }
 .room-detail__main > .room-detail__costs { padding: 0 0 20px; margin-bottom: 24px; border-bottom: 1px solid var(--rd-border); }
@@ -816,7 +816,7 @@ html[data-theme='dark'] .room-detail__message img { filter: brightness(0); }
   .room-detail__photo-main { height: 240px; }
   .room-detail__summary h3 { font-size: 20px; }
   .room-detail__essentials { gap: 8px; padding: 14px 10px; }
-  .room-detail__essentials span { font-size: 11px; }
+  .room-detail__essentials span { font-size: 13px; line-height: 1.35; }
   .room-detail__essentials strong { font-size: 15px; overflow-wrap: anywhere; }
 }
 
@@ -845,6 +845,8 @@ html:root body .room-detail__flashlight.is-lit { background: #fff3cd; color: #8b
 
 .room-detail__mobile-facts { display: none; }
 @media(max-width:800px) { .room-detail__mobile-facts { display: block; } .room-detail__mobile-facts .room-detail__essentials { margin-bottom: 16px; } .room-detail__aside > .room-detail__essentials { display: none; } }
+/* On small screens the summary at the top and the sticky footer already carry the rent. */
+@media(max-width:800px) { .room-detail__aside > .room-detail__price { display: none; } }
 
 .room-report {
   display: flex;

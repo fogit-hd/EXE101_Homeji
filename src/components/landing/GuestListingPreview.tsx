@@ -18,6 +18,7 @@ import { AreaMapIcon, DirectionsIcon, ShareRoomIcon, ViewRoomIcon } from './whee
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { matchesListingText } from '../../lib/searchQuery'
 import { isImportedRentalPost, sourcePublisherLink } from '../../lib/sourcePublisherLinks'
+import { listingThumbSrcSet } from '../../lib/cloudinaryImage'
 
 function Arrow({ previous = false }: { previous?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -169,7 +170,7 @@ export function GuestListingPreview() {
               <button type="button" className="guest-preview__card-open" aria-label={`Xem ${isSource ? 'tin phòng' : 'phòng'}: ${data.title}`} onClick={() => item.kind === 'post' ? setSelected(item.data) : setSelectedSource(item.data)}>
                 <span className="guest-preview__photo">
                   <span>Chưa có ảnh</span>
-                  {photos[0] ? <img src={photos[0]} alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
+                  {photos[0] ? <img src={photos[0]} srcSet={listingThumbSrcSet(photos[0])} sizes="(max-width: 480px) 100px, 150px" alt="" loading="lazy" decoding="async" referrerPolicy={isSource ? 'no-referrer' : undefined} onError={event => { event.currentTarget.hidden = true }} /> : null}
                   <span className="guest-preview__source-badge">{item.kind === 'post' && item.data.type !== RentalPostType.VacantRoom ? rentalPostTypeLabel[item.data.type] : category === 'apartments' ? 'Căn hộ' : 'Phòng trọ'}</span>
                   {item.kind === 'source' && photos.length > 1 ? <span className="guest-preview__photo-count">{photos.length} ảnh</span> : null}
                 </span>

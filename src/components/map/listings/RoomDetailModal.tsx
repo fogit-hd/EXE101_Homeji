@@ -425,7 +425,7 @@ export function RoomDetailModal({
                 </div>
                 <section className="room-detail__costs" data-glass-exclude>
                   <h4>Chi phí thuê & tiền cọc</h4>
-                  <CostRow label={priceBasis === 'unknown' ? 'Giá chưa rõ đơn vị' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
+                  <CostRow label={priceBasis === 'unknown' ? 'Tiền thuê theo tin' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
                   <CostRow label="Tiền cọc" value={depositLabel ?? 'Chưa cung cấp'} muted={!depositLabel} />
                   <CostRow label="Điện, nước" value={utilities} muted={utilities === 'Chưa cung cấp'} />
                   <CostRow label="Phí khác" value={otherFee ?? 'Chưa cung cấp'} muted={!otherFee} />
@@ -454,7 +454,7 @@ export function RoomDetailModal({
                     <p className="room-detail__muted">Các tiện ích khác: chưa cung cấp</p>
                   )}
                 </section>
-                {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post}
+                {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post} showFacts={false}
                   canMessage={Boolean(isAuthenticated && isRenter && profile?.id !== post.ownerId && onOpenMessages && !actionBusy)}
                   onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
                 {aiFeatureFlags.decisionTools && openRentalAssistant ? <button type="button" className="btn btn-secondary btn-sm"
@@ -524,8 +524,9 @@ export function RoomDetailModal({
                 <button type="button" className="room-detail__message" disabled={actionBusy} onClick={() => void handleMessage()}>
                   <img src={messageCircleUrl} alt="" width={19} height={19} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin ngay'}
                 </button>
-                {hasOwnerPhone ? <PhoneAction className="room-detail__call" phone={phone} hasPhone={hasOwnerPhone} onAuthenticated={() => setRevealPhoneForPost(post.id)}>
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>Gọi điện
+                {hasOwnerPhone ? <PhoneAction className="room-detail__call" phone={phone} hasPhone={hasOwnerPhone} onAuthenticated={() => setRevealPhoneForPost(post.id)}
+                  guestLabel={<>{phoneIcon}Gọi điện</>} guestAriaLabel="Gọi điện, đăng nhập để xem số điện thoại">
+                  {phoneIcon}Gọi điện
                 </PhoneAction> : null}
                 <button
                   type="button"
@@ -550,6 +551,8 @@ export function RoomDetailModal({
     document.body,
   )
 }
+
+const phoneIcon = <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>
 
 function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, onAuthenticatedContact }: { post: RentalPost; phone: string; hasPhone: boolean; isStudentShare: boolean; revealRequested: boolean; onAuthenticatedContact: () => void }) {
   const [revealed, setRevealed] = useState(false)

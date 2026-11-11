@@ -85,7 +85,8 @@ html[data-theme-transition='fallback'] *::after {
 @keyframes theme-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 767px) {
   html body #root button.theme-switch { width: 68px; min-width: 68px; flex-basis: 68px; }
-  .guest-hero__top { padding-right: 84px; }
+  /* Switch (68px) + its 16px inset + 8px breathing room, minus the hero frame's 24px gutter. */
+  .guest-hero__top { padding-right: 68px; }
 }
 /* UI colors change via semantic roles; photos, videos and map tiles are never inverted. */
 html[data-theme='dark'] {

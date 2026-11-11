@@ -47,6 +47,8 @@
   z-index: 1;
   display: grid;
   grid-template-rows: auto 1fr;
+  /* minmax(0, …) stops one wide row from stretching every hero row past the viewport. */
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
   max-width: 1480px;
   margin: 0 auto;
@@ -162,11 +164,12 @@ html[data-theme='dark'] #root .guest-hero__search input::placeholder { color: #5
 }
 @media (max-width: 640px) {
   .guest-hero__frame { padding: 20px 24px 36px; }
-  .guest-hero__top { gap: 14px; padding-bottom: 16px; }
+  .guest-hero__top { gap: 8px; padding-bottom: 16px; }
   .guest-hero__corner-logo { width: 26px; height: 26px; }
   .guest-hero__brand { gap: 7px; }
-  .guest-hero__brand-name { font-size: 24px; }
-  .guest-hero__nav-link, .guest-hero__top-login-link { font-size: 12px; }
+  .guest-hero__brand-name { font-size: 22px; }
+  .guest-hero__top-login-link.liquid-action { padding-inline: 10px; }
+  .guest-hero__nav-link, .guest-hero__top-login-link { font-size: 13px; }
   .guest-hero__top-login-link svg { display: none; }
   .guest-hero__center { padding: 40px 0 16px; }
   .guest-hero__search div { flex-direction: column; }
@@ -177,6 +180,11 @@ html[data-theme='dark'] #root .guest-hero__search input::placeholder { color: #5
   .guest-hero__primary { min-height: 50px; padding-inline: 22px; }
   .guest-hero__bg-img { object-position: 58% center; }
   .guest-hero__veil { background: linear-gradient(90deg, rgb(13 24 21 / 75%), rgb(13 24 21 / 28%)); }
+}
+
+/* Below 360px the wordmark no longer fits beside the map link, login and theme switch; keep it for screen readers. */
+@media (max-width: 360px) {
+  .guest-hero__brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
 /* Shared CTA utilities (closing / chrome) */

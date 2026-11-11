@@ -13,6 +13,8 @@ type RentalDetailAssistantProps = {
   post: RentalPost
   onPrepareMessage: (draft: string) => void
   canMessage?: boolean
+  /** Off where the surrounding panel already shows rent and deposit, so the price is not repeated. */
+  showFacts?: boolean
 }
 
 export function RentalDetailAssistant(props: RentalDetailAssistantProps) {
@@ -20,7 +22,7 @@ export function RentalDetailAssistant(props: RentalDetailAssistantProps) {
   return <RentalDetailAssistantContent key={`${props.post.id}:${props.post.updatedAt}`} {...props} />
 }
 
-function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = true }: RentalDetailAssistantProps) {
+function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = true, showFacts = true }: RentalDetailAssistantProps) {
   const id = useId()
   const [draft, setDraft] = useState<string | null>(null)
   const basis = rentalPriceBasis(post)
@@ -34,10 +36,10 @@ function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = tru
     </div>
     <p className="rental-detail-assistant__source">Dữ liệu do người đăng cung cấp{Number.isNaN(updatedAt.getTime()) ? '' : ` · cập nhật ${updatedAt.toLocaleDateString('vi-VN')}`}. Chưa xác minh tình trạng còn phòng.</p>
     <RentalConsiderationToggle post={post} />
-    <dl className="rental-detail-assistant__facts">
+    {showFacts ? <dl className="rental-detail-assistant__facts">
       <div><dt>{rentalPriceLabel(basis)}</dt><dd>{formatListingRent(post.price)}</dd></div>
       <div><dt>Tiền cọc · khoản riêng</dt><dd>{validAmount(post.deposit) ? formatPrice(post.deposit) : 'Chưa xác nhận'}</dd></div>
-    </dl>
+    </dl> : null}
     <p className="rental-detail-assistant__note">{basis === 'person'
       ? 'Giá mỗi người có thể đã gồm một số khoản. Cần hỏi cách chia phí trước khi tính tổng.'
       : basis === 'unknown' ? 'Cần hỏi giá theo người hay cả phòng trước khi tính tổng.'
