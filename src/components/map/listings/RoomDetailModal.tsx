@@ -1,10 +1,11 @@
 import { PhotoGallery } from './RoomPhotoGallery'
+import { ReportListingButton } from './ReportListingButton'
 import { RoomDetailHeader, RoomEssentials, RoomOwnerProfile, RoomOwnerPhone } from './RoomDetailPresentation'
 import { OwnerSocialContacts } from '../../profile/OwnerSocialContacts'
 import { PhoneAction } from '../../ui/PhoneAction'
 import { useMotionPresence } from '../../motion/useMotionPresence'
 import { useChangedInputs } from '../../../hooks/useChangedInputs'
-import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { RentalPostType } from '../../../api/types'
 import {
@@ -121,6 +122,8 @@ export function RoomDetailModal({
   const [scheduleAt, setScheduleAt] = useState('')
   const [scheduleNote, setScheduleNote] = useState('')
   const [revealPhoneForPost, setRevealPhoneForPost] = useState<string | null>(null)
+  const [reportAfterLoginFor, setReportAfterLoginFor] = useState<string | null>(null)
+  const clearReportAfterLogin = useCallback(() => setReportAfterLoginFor(null), [])
 
   const viewerId = profile?.id ?? 'guest'
   const matched = result && result.viewerId === viewerId && (result.id === listingId || (!listingId && present)) && result.attempt === attempt ? result : null
@@ -134,7 +137,7 @@ export function RoomDetailModal({
   const actionTone = notice?.tone ?? 'ok'
   const scheduleOpen = scheduleListingId != null && scheduleListingId === listingId
   if (useChangedInputs([listingId, viewerId])) setActionBusy(false)
-  if (useChangedInputs([listingId])) setRevealPhoneForPost(null)
+  if (useChangedInputs([listingId])) { setRevealPhoneForPost(null); setReportAfterLoginFor(null) }
 
   useLayoutEffect(() => {
     messageEpoch.current += 1
@@ -474,6 +477,9 @@ export function RoomDetailModal({
                   <strong>Xem phòng trước khi quyết định</strong>
                   <p>{isStudentShare ? 'Thống nhất chi phí và quy tắc ở chung trước khi quyết định.' : 'Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.'}</p>
                 </div>
+                <ReportListingButton key={post.id} postId={post.id} ownerId={post.ownerId}
+                  openRequested={reportAfterLoginFor === post.id} onAuthRequired={() => setReportAfterLoginFor(post.id)}
+                  onOpenRequestHandled={clearReportAfterLogin} />
               </aside>
             </div>
             <footer className="room-detail__footer" data-scheduling={scheduleOpen || undefined}>
