@@ -85,6 +85,7 @@ type MapDisplayMode = BaseMapMode | 'streetview-select' | 'streetview'
 
 type RentalMapProps = {
   showSourceCatalog?: boolean
+  sourceRentalPins?: SourceCatalogPin[]
   posts: RentalPostSummary[]
   selectedPostId: string | null
   hoveredPostId?: string | null
@@ -199,6 +200,7 @@ function styleFor(
  */
 function RentalMapComponent({
   showSourceCatalog = false,
+  sourceRentalPins,
   posts,
   selectedPostId,
   hoveredPostId = null,
@@ -313,8 +315,9 @@ function RentalMapComponent({
     const pts: { lat: number; lng: number }[] = []
     for (const p of pins) pts.push({ lat: p.latitude, lng: p.longitude })
     for (const m of visibleMarketplacePins) pts.push({ lat: m.lat, lng: m.lng })
+    if (pinLayers.vacant && sourceRentalPins) pts.push(...sourceRentalPins)
     return pts
-  }, [pins, visibleMarketplacePins])
+  }, [pins, visibleMarketplacePins, pinLayers.vacant, sourceRentalPins])
   const selectedPost = useMemo(
     () => pins.find((p) => p.id === selectedPostId) ?? null,
     [pins, selectedPostId],
@@ -356,7 +359,7 @@ function RentalMapComponent({
     onClearSelection?.()
     setSelectedSource(pin)
   }, [onClearSelection])
-  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange, selectSourceRental)
+  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange, selectSourceRental, sourceRentalPins)
 
   const syncMarkers = useCallback(() => {
     const map = mapRef.current
@@ -1555,6 +1558,7 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.selectedMarketplaceId === next.selectedMarketplaceId &&
     prev.onSelectMarketplace === next.onSelectMarketplace &&
     prev.showSourceCatalog === next.showSourceCatalog &&
+    prev.sourceRentalPins === next.sourceRentalPins &&
     prev.pinLayers?.vacant === next.pinLayers?.vacant &&
     prev.pinLayers?.roommate === next.pinLayers?.roommate &&
     prev.pinLayers?.marketplace === next.pinLayers?.marketplace &&

@@ -24,12 +24,13 @@ export function getRentalSourceCatalog(): Promise<RentalSourceListing[]> {
   if (catalogRequest) return catalogRequest
   catalogRequest = (async () => {
     const rows = new Map<string, RentalSourceListing>()
-    for (let page = 1; page <= 20; page++) {
+    for (let page = 1; ; page++) {
       const chunk = await searchRentalSources({ keyword: '', district: '', page, pageSize: 50 })
+      const previousSize = rows.size
       for (const row of chunk) rows.set(row.id, row)
       if (chunk.length < 50) { const result = [...rows.values()]; catalog = { rows: result, at: Date.now() }; return result }
+      if (rows.size === previousSize) throw new Error('Không thể tải trang tin nguồn tiếp theo.')
     }
-    throw new Error('Danh sách vượt quá giới hạn tải bản đồ. Cần chia nhỏ khu vực để tải đủ tin.')
   })().finally(() => { catalogRequest = null })
   return catalogRequest
 }

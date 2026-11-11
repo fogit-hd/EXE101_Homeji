@@ -26,3 +26,19 @@ test('cancelling between pages prevents another request', async () => {
   await assert.rejects(searchRentalMapInventory({}, { signal: controller.signal }), error => error.name === 'AbortError')
   assert.equal(calls, 1)
 })
+
+test('guest map reads past a thousand posts and stops on the last page', async () => {
+  const signal = new AbortController().signal
+  globalThis.__mapInventorySearch = async ({ page, pageSize }, options) => {
+    assert.equal(options.auth, false)
+    return Array.from({ length: page <= 10 ? pageSize : 1 }, (_, index) => ({ id: `${page}:${index}` }))
+  }
+  const posts = await searchRentalMapInventory({}, { auth: false, signal })
+  assert.equal(posts.length, 1001)
+  assert.equal(posts.at(-1).id, '11:0')
+})
+
+test('a repeated full page is rejected instead of retrying indefinitely', async () => {
+  globalThis.__mapInventorySearch = async () => Array.from({ length: 100 }, (_, index) => ({ id: String(index) }))
+  await assert.rejects(searchRentalMapInventory({}, { signal: new AbortController().signal }), /trang tin tiếp theo/)
+})

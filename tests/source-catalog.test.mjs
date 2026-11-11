@@ -32,8 +32,8 @@ test('venue references do not invent order stock or prices', () => {
 })
 
 test('all loaded pages can contribute map pins, including Phongtro.vn', () => {
-  const rows = Array.from({length:110},(_,index)=>({...base,id:String(index)}))
-  assert.equal(readSourceCatalogPins(rows,'rental').length,110)
+  const rows = Array.from({length:1001},(_,index)=>({...base,id:String(index)}))
+  assert.equal(readSourceCatalogPins(rows,'rental').length,rows.length)
   const pin=readSourceCatalogPins([{...base,sourceUrl:'https://phongtro.vn/cho-thue-phong-tro/123',imageUrls:['https://file.phongtro.vn/own.jpg'],publisherName:'Nguyễn An'}],'rental')[0]
   assert.equal(pin.publisherName,'Nguyễn An');assert.equal(pin.imageUrl,'https://file.phongtro.vn/own.jpg')
 })

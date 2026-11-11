@@ -120,8 +120,7 @@ html[data-theme='dark'] :is(.guest-map__list, .guest-map__map-frame) {
   border-color: var(--border);
   box-shadow: 0 12px 28px rgb(0 0 0 / .16);
 }
-html[data-theme='dark'] :is(.guest-map__status, .guest-map__count, .guest-map__more) { color: var(--text-secondary); }
-html[data-theme='dark'] .guest-map__more-link { color: var(--hj-accent); }
+html[data-theme='dark'] :is(.guest-map__status, .guest-map__count) { color: var(--text-secondary); }
 
 /* Pair component surfaces with their ink; global heading colors alone cannot
    repair a component that still paints a light background. */

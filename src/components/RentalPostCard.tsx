@@ -21,7 +21,7 @@ export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, save
       <Link to={mapPostUrl(post.id)} className="post-card-link">
         <div className="post-card-image">
           {post.thumbnailPath ? (
-            <img src={post.thumbnailPath} alt={post.title} />
+            <img src={post.thumbnailPath} alt={post.title} loading="lazy" />
           ) : (
             <div className="post-card-placeholder">Chưa có ảnh</div>
           )}

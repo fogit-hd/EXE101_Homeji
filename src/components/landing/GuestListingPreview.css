@@ -30,8 +30,15 @@
 .guest-preview__excerpt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; line-height: 1.6; color: var(--text-secondary); }
 .guest-preview__card-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); }
 .guest-preview__card-footer strong { display: inline-flex; gap: 6px; align-items: center; font-size: 11px; font-weight: 650; color: var(--text-heading); }
-.guest-preview__more { display: flex; justify-content: center; margin-top: 28px; }
-.guest-preview__more button { display: inline-flex; gap: 14px; align-items: center; padding: 12px 22px; min-height: 44px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-elevated); color: var(--text-heading); font: inherit; font-size: 13px; cursor: pointer; }
+.guest-preview__pagination { display: grid; justify-items: center; gap: 10px; margin-top: 28px; }
+.guest-preview__pagination p { margin: 0; color: var(--text-secondary); font-size: 13px; }
+.guest-preview__pagination > div { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(3px, 1vw, 6px); }
+.guest-preview__pagination button { display: grid; place-items: center; width: clamp(36px, 11vw, 44px); min-height: 44px; padding: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-elevated); color: var(--text-heading); font: inherit; font-size: 13px; cursor: pointer; }
+.guest-preview__pagination button:disabled { opacity: .5; cursor: default; }
+.guest-preview__pagination button:not(:disabled):hover { border-color: var(--text-heading); }
+.guest-preview__pagination button[aria-current='page'] { border-color: var(--text-heading); background: var(--text-heading); color: var(--surface-elevated); font-weight: 700; }
+.guest-preview__pagination button[aria-current='page']:focus-visible { outline-color: var(--surface-elevated); }
+.guest-preview__pagination span { padding-inline: 3px; color: var(--text-secondary); }
 .guest-preview__state { padding: 20px 0; margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .guest-preview__state p { margin-top: 0; }
 .guest-preview__state button { padding: 9px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-elevated); color: var(--text-heading); font: inherit; cursor: pointer; }
