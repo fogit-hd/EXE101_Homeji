@@ -18,6 +18,12 @@ import { installStaleBuildReload } from './lib/staleBuildReload'
 
 installStaleBuildReload(window)
 
+if ('serviceWorker' in navigator && !import.meta.env.DEV) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 /**
  * Do NOT wrap the app in React.StrictMode while Google Maps Vector/WebGL is in use.
  * Strict Mode double-invokes effects in DEV: create map → destroy → create again.

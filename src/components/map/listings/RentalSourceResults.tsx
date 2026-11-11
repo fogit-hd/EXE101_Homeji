@@ -20,12 +20,13 @@ function formatSourceDate(value: string | null | undefined): string | null {
     : null
 }
 
-export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [], nativeIds = [] }: {
+export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, nativeCards = [], nativeIds = [] }: {
   nativeIds?: string[]
   nativeCards?: ReactNode[]
   query: ListingQuery
   onCount: (count: Counts) => void
   onFocus?: (location: { lat: number; lng: number }) => void
+  onResetFilters?: () => void
 }) {
   const [rows, setRows] = useState<RentalSourceListing[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -58,7 +59,28 @@ export function RentalSourceResults({ query, onCount, onFocus, nativeCards = [],
     {!loaded && !error ? <p className="source-results__note" role="status">Đang tải danh sách…</p> : null}
     {unsupported ? <p className="source-results__note">Một số tin chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
-    {loaded && !error && combined.length === 0 ? <p role="status">Chưa có phòng phù hợp. Thử bỏ bớt bộ lọc.</p> : null}
+    {loaded && !error && combined.length === 0 ? (
+      <div className="map-listings__smart-empty" role="status">
+        <div className="map-listings__empty-icon" aria-hidden="true">🏠✨</div>
+        <h3 className="map-listings__empty-title">Chưa tìm thấy phòng phù hợp với yêu cầu của bạn</h3>
+        <p className="map-listings__empty-desc">
+          Chưa có phòng phù hợp. Thử bỏ bớt bộ lọc hoặc đăng tin tìm phòng để các chủ trọ và bạn cùng phòng chủ động kết nối!
+        </p>
+        <div className="map-listings__empty-actions">
+          {onResetFilters ? (
+            <button type="button" className="btn-empty-reset" onClick={onResetFilters}>
+              Đặt lại bộ lọc
+            </button>
+          ) : null}
+          <Link to="/wanted" className="btn-empty-cta">
+            📝 Đăng tin tìm phòng ngay
+          </Link>
+          <Link to="/invitations" className="btn-empty-secondary">
+            👥 Tìm bạn ở ghép
+          </Link>
+        </div>
+      </div>
+    ) : null}
     <ul className="map-listings__cards">{combined.slice(0, visible).map(item => {
       if (!item.row) return <li key={item.key}>{item.native}</li>
       const row = item.row

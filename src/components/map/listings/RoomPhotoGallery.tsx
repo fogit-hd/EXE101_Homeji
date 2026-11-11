@@ -7,6 +7,7 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
   const [view, setView] = useState({ scale: 1, x: 0, y: 0 })
   const dragRef = useRef<{ x: number; y: number } | null>(null)
   const swipeRef = useRef<{ x: number; y: number } | null>(null)
+  const inlineSwipeRef = useRef<{ x: number; y: number } | null>(null)
   const viewerRef = useRef<HTMLDialogElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const openPhoto = (nextIndex: number) => {
@@ -68,7 +69,29 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
   return (
     <div className="room-detail__gallery">
       <div className={`room-detail__photos${thumbs.length === 0 ? ' is-single' : ''}`} data-glass-exclude>
-        <button type="button" className="room-detail__photo-main" data-glass-exclude aria-label="Mở ảnh lớn" onClick={() => openPhoto(safeIndex)}>
+        <button
+          type="button"
+          className="room-detail__photo-main"
+          data-glass-exclude
+          aria-label="Mở ảnh lớn"
+          onClick={() => openPhoto(safeIndex)}
+          onTouchStart={(e) => {
+            if (e.touches[0]) {
+              inlineSwipeRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+            }
+          }}
+          onTouchEnd={(e) => {
+            if (inlineSwipeRef.current && e.changedTouches[0] && visible.length > 1) {
+              const dx = e.changedTouches[0].clientX - inlineSwipeRef.current.x
+              const dy = e.changedTouches[0].clientY - inlineSwipeRef.current.y
+              const direction = gallerySwipeDirection(dx, dy)
+              if (direction) {
+                movePhoto(direction)
+              }
+            }
+            inlineSwipeRef.current = null
+          }}
+        >
           <img
             src={current}
             alt=""

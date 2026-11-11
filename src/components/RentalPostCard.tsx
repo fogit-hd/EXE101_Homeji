@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { RentalPostSummary } from '../api/types'
-import { formatListingRent, formatListingArea, rentalPostTypeLabel } from '../lib/labels'
+import { formatCompactRent, formatListingArea, rentalPostTypeLabel } from '../lib/labels'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import './RentalPostCard.css'
 import { RentalConsiderationToggle } from './ai/RentalConsiderationToggle'
@@ -32,7 +32,7 @@ export function RentalPostCard({ post, showSave, onSave, onUnsave, isSaved, save
         </div>
         <div className="post-card-body">
           <h3>{post.title || 'Tin đăng mới'}</h3>
-          <p className="post-card-price">{formatListingRent(post.price)}{Number.isFinite(post.price) && post.price > 0 ? '/tháng' : ''}</p>
+          <p className="post-card-price">{formatCompactRent(post.price)}{Number.isFinite(post.price) && post.price > 0 ? '/tháng' : ''}</p>
           <p className="post-card-meta">
             {formatListingArea(post.area)} · {post.address || 'Chưa có địa chỉ'}
           </p>

@@ -63,6 +63,8 @@ function AppRoutes() {
         <Route path="/my-posts" element={<ProtectedRoute><MapHomeSectionRedirect section="myPosts" /></ProtectedRoute>} />
         <Route path="/marketplace" element={<ProtectedRoute><MapHomeSectionRedirect section="marketplace" /></ProtectedRoute>} />
         <Route path="/wanted" element={<ProtectedRoute><MapHomeSectionRedirect section="wanted" /></ProtectedRoute>} />
+        <Route path="/wanted/new" element={<Navigate to="/wanted" replace />} />
+        <Route path="/roommates" element={<Navigate to="/invitations" replace />} />
         <Route path="/activities" element={<ProtectedRoute><MapHomeSectionRedirect section="activities" /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><MapHomeSectionRedirect section="saved" /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><MapHomeSectionRedirect section="profile" /></ProtectedRoute>} />

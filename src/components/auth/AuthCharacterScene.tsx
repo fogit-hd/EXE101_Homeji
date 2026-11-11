@@ -29,6 +29,7 @@ export function AuthCharacterScene({ state, progress }: { state: CharacterState;
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) return
     let disposed = false
     let cleanup = () => {}
     const disposeModel = (root: Object3D) => {

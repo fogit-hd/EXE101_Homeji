@@ -1,0 +1,27 @@
+{
+  "name": "Homeji — Tìm phòng trọ & Bạn ở ghép",
+  "short_name": "Homeji",
+  "description": "Nền tảng kết nối tìm phòng trọ, căn hộ, bạn cùng phòng và chợ đồ sinh viên tại Thủ Đức & TP.HCM",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#087f8c",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/brand/homeji-logo2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "utilities"],
+  "lang": "vi"
+}

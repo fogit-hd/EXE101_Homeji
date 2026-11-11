@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { type RentalPostSummary } from '../api/types'
-import { formatPrice, rentalPostTypeLabel } from '../lib/labels'
+import { formatCompactRent, formatListingArea, formatPrice, rentalPostTypeLabel } from '../lib/labels'
 import './MapListingCard.css'
 import { shortListingAddress, shortListingTitle } from "./MapListingCard.logic"
 import { PremiumBadge } from './PremiumBadge'
@@ -10,6 +10,8 @@ type Props = {
   active?: boolean
   highlighted?: boolean
   staggerIndex?: number
+  isSaved?: boolean
+  onToggleSave?: (id: string) => void
   onHover?: () => void
   onLeave?: () => void
   onSelect?: () => void
@@ -20,6 +22,8 @@ export const MapListingCard = memo(function MapListingCard({
   active,
   highlighted,
   staggerIndex = 0,
+  isSaved,
+  onToggleSave,
   onHover,
   onLeave,
   onSelect,
@@ -60,12 +64,26 @@ export const MapListingCard = memo(function MapListingCard({
             —
           </div>
         )}
+        {onToggleSave ? (
+          <button
+            type="button"
+            className={`map-listing-card-save${isSaved ? ' is-saved' : ''}`}
+            aria-label={isSaved ? 'Bỏ lưu tin' : 'Lưu tin phòng'}
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleSave(post.id)
+            }}
+          >
+            {isSaved ? '♥' : '♡'}
+          </button>
+        ) : null}
         {post.isOwnerPremium === true ? <PremiumBadge /> : null}
-        <span className="map-listing-card-price">{formatPrice(post.price)}/tháng</span>
+        <span className="map-listing-card-price">{formatCompactRent(post.price)}/tháng</span>
       </div>
       <div className="map-listing-card-body">
         <div className="map-listing-card-meta">
           <span className="map-listing-card-type">{rentalPostTypeLabel[post.type]}</span>
+          {post.area > 0 && <span className="map-listing-card-area"> · {formatListingArea(post.area)}</span>}
         </div>
         <h3>{title}</h3>
         <p className="map-listing-address">{address}</p>

@@ -665,6 +665,16 @@ export const createMarketplaceCartOrder = (data: {
   pickupAddress: string
   voucherId?: string
   note?: string
+  fulfillment?: {
+    mode: number
+    delivery?: {
+      recipientName: string
+      recipientPhone: string
+      address: string
+      latitude: number
+      longitude: number
+    }
+  }
 }) =>
   apiRequest<MarketplaceOrder[]>('/api/marketplace-orders/cart', {
     method: 'POST',

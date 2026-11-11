@@ -28,11 +28,10 @@ const TABS: TabItem[] = [
     icon: 'explore',
   },
   {
-    id: 'market',
-    to: mapSectionUrl('marketplace'),
-    label: 'Chợ Homeji',
-    icon: 'market',
-    matchSection: 'marketplace',
+    id: 'post',
+    to: '/posts/new',
+    label: 'Đăng tin',
+    icon: 'post',
   },
   {
     id: 'invite',
@@ -50,11 +49,42 @@ const TABS: TabItem[] = [
   },
 ]
 
+const GUEST_TABS: TabItem[] = [
+  { id: 'hub', to: '/', end: true, label: 'Trang chủ', icon: 'hub' },
+  {
+    id: 'explore',
+    to: '/explore',
+    label: 'Tìm phòng',
+    icon: 'explore',
+  },
+  {
+    id: 'post',
+    to: '/posts/new',
+    label: 'Đăng tin',
+    icon: 'post',
+  },
+  {
+    id: 'invite',
+    to: mapSectionUrl('invitations'),
+    label: 'Ở ghép',
+    icon: 'invite',
+    matchSection: 'invitations',
+  },
+  {
+    id: 'login',
+    to: '/login',
+    label: 'Đăng nhập',
+    icon: 'user',
+  },
+]
+
 function isTabActive(tab: TabItem, pathname: string, search: string): boolean {
   const section = new URLSearchParams(search).get('section')
   const post = new URLSearchParams(search).get('post')
   if (tab.id === 'hub') return pathname === '/' && !section && !post
-  if (tab.id === 'explore') return isExploreListMode(pathname, search)
+  if (tab.id === 'explore') return pathname === '/explore' || isExploreListMode(pathname, search)
+  if (tab.id === 'post') return pathname.startsWith('/posts')
+  if (tab.id === 'login') return pathname === '/login' || pathname === '/register'
   if (tab.matchSection) return pathname === '/' && section === tab.matchSection
   return false
 }
@@ -62,12 +92,15 @@ function isTabActive(tab: TabItem, pathname: string, search: string): boolean {
 export function MobileTabBar() {
   const { isAuthenticated } = useAuth()
   const location = useLocation()
+  const isAuthCinema = location.pathname === '/login' || location.pathname === '/register'
 
-  if (!isAuthenticated) return null
+  if (isAuthCinema) return null
+
+  const tabs = isAuthenticated ? TABS : GUEST_TABS
 
   return (
-    <nav className="mobile-tabbar" aria-label="Điều hướng chính">
-      {TABS.map((tab) => {
+    <nav className="mobile-tabbar" aria-label="Điều hướng chính" data-glass-exclude>
+      {tabs.map((tab) => {
         const active = isTabActive(tab, location.pathname, location.search)
         return (
           <NavLink
@@ -109,6 +142,12 @@ function TabIcon({ name }: { name: string }) {
           <path fill="currentColor" d="M4 6h16v2H4V6zm0 5h10v2H4v-2zm0 5h16v2H4v-2z" />
         </svg>
       )
+    case 'post':
+      return (
+        <svg {...common}>
+          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </svg>
+      )
     case 'invite':
       return (
         <svg {...common}>
@@ -133,6 +172,15 @@ function TabIcon({ name }: { name: string }) {
           <path
             fill="currentColor"
             d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"
+          />
+        </svg>
+      )
+    case 'user':
+      return (
+        <svg {...common}>
+          <path
+            fill="currentColor"
+            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
           />
         </svg>
       )

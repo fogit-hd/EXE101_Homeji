@@ -672,6 +672,24 @@
 .pay-plan:hover { box-shadow: 0 6px 20px rgba(18, 24, 28, .06); }
 .pay-plan.is-featured { border: 2px solid var(--pay-green); box-shadow: 0 8px 24px rgba(0, 177, 79, .12); }
 .pay-plan__ribbon { position: absolute; top: -11px; left: 18px; padding: 3px 10px; border-radius: 999px; background: var(--pay-green); color: #fff; font-size: 11px; font-weight: 700; }
+.pay-plan__recommended-badge {
+  position: absolute;
+  top: -11px;
+  right: 18px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0d7045, #1d8a57);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(13, 112, 69, 0.25);
+  letter-spacing: 0.02em;
+  z-index: 2;
+}
+.pay-plan.is-recommended {
+  border-color: #087e72;
+  box-shadow: 0 4px 18px rgba(8, 126, 114, 0.12);
+}
 .pay-plan__ribbon.is-dark { background: var(--pay-heading); }
 .pay-plan h3 { margin: 0; color: var(--pay-ink); font-size: 16px; font-weight: 700; }
 .pay-plan__duration { margin: 2px 0 0; color: var(--pay-muted); font-size: 13px; }

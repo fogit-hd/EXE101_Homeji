@@ -904,6 +904,11 @@ export interface MarketplacePost {
   reservedQuantity: number
   unit: string
   preparationMinutes: number | null
+  estimatedCost?: number | null
+  dailyQuota?: number
+  freshnessBadge?: string | null
+  allergenAlerts?: string | null
+  isSamplePhoto?: boolean
 }
 
 export interface UpsertMarketplacePostInput {
@@ -921,6 +926,11 @@ export interface UpsertMarketplacePostInput {
   availableQuantity?: number
   unit?: string
   preparationMinutes?: number | null
+  estimatedCost?: number | null
+  dailyQuota?: number
+  freshnessBadge?: string | null
+  allergenAlerts?: string | null
+  isSamplePhoto?: boolean
 }
 
 export interface MarketplaceOrder {

@@ -89,7 +89,10 @@ async function editSession() {
   }
   const exports = {}
   vm.runInNewContext(compiled, {
-    exports, require: name => { if (name.endsWith('.css')) return {}; assert.ok(name in adapters, `Unexpected dependency ${name}`); return adapters[name] },
+    exports,
+    setTimeout,
+    clearTimeout,
+    require: name => { if (name.endsWith('.css')) return {}; assert.ok(name in adapters, `Unexpected dependency ${name}`); return adapters[name] },
     confirm: () => true, document: { getElementById: () => ({ focus() {} }) },
   })
   function entries(node, disabled = false, result = []) {

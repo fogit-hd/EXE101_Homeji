@@ -1411,3 +1411,30 @@ html[data-theme='dark'] .food-card__empty { background: radial-gradient(circle a
 @media (prefers-reduced-motion: reduce) { .food-card[data-spot]::after { animation: none; } }
 @media (hover: none), (forced-colors: active) { .food-card::after { display: none; } .food-card::before { opacity: .2; } }
 @media (forced-colors: active) { .food-card::before { display: none; } }
+
+/* Sticky Floating Cart Bar with safe mobile positioning */
+.food-sticky-floating-cart {
+  position: fixed;
+  bottom: calc(var(--mobile-tabbar-height, 56px) + 16px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 520px;
+  z-index: 90;
+  background: var(--grab-green, #24543e);
+  color: #fff;
+  border-radius: 16px;
+  padding: 12px 18px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (min-width: 769px) {
+  .food-sticky-floating-cart {
+    bottom: 24px;
+  }
+}
+

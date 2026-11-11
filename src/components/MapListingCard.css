@@ -71,6 +71,42 @@
   gap: 6px 10px;
 }
 
+.map-listing-card-save {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 0;
+  background: rgb(255 255 255 / 88%);
+  backdrop-filter: blur(4px);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.map-listing-card-save:hover {
+  background: #fff;
+  color: #ea4335;
+  transform: scale(1.1);
+}
+
+.map-listing-card-save.is-saved {
+  color: #ea4335;
+  background: #fff;
+}
+
+.map-listing-card-area {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .map-listing-card-price {
   position: absolute;
   bottom: 6px;

@@ -858,3 +858,14 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):not(
   .guest-preview__search > div input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input,
   [data-glass-search] > input
 ):focus-visible { outline: 2px solid var(--action-on-soft, #0f6b63) !important; outline-offset: 2px; }
+
+/* Mobile touch-press micro-interaction */
+@media (hover: none) and (pointer: coarse) {
+  button:active:not(:disabled),
+  .btn:active:not(:disabled),
+  .card:active,
+  .map-listing-card:active {
+    transform: scale(0.975);
+    transition: transform 60ms ease;
+  }
+}

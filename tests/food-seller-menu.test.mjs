@@ -56,3 +56,49 @@ test('seller menus contain separate dishes and retain each dish purchase and map
     }
   }
 })
+
+test('food cards render freshness badge, preparation time, allergen note and sample photo label', async () => {
+  const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost' })
+  const previous = new Map(['window', 'document', 'IS_REACT_ACT_ENVIRONMENT'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
+  Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true })
+  const { createRoot } = await import('react-dom/client')
+  const root = createRoot(document.getElementById('root'))
+  const { FoodCard } = await import(reactDomModule('src/components/marketplace/food/FoodCard.tsx'))
+  const post = {
+    id: 'pho',
+    sellerId: 's1',
+    title: 'Phở bò tái lăn',
+    price: 45000,
+    availableQuantity: 8,
+    freshnessBadge: 'CookToOrder',
+    preparationMinutes: 15,
+    allergenAlerts: 'Hành hoa, gừng',
+    isSamplePhoto: true,
+    mediaUrls: ['https://example.com/pho.jpg'],
+    distanceKm: null,
+  }
+  try {
+    await act(() => root.render(React.createElement(FoodCard, {
+      post,
+      quantity: 1,
+      inCart: false,
+      onQuantityChange: () => {},
+      onAddToCart: () => {},
+      onShowOnMap: () => {},
+    })))
+    const card = document.querySelector('.food-card')
+    assert.ok(card)
+    assert.match(card.textContent, /Phở bò tái lăn/)
+    assert.match(card.textContent, /Nấu theo đơn/)
+    assert.match(card.textContent, /⏱ 15p/)
+    assert.match(card.textContent, /⚠️ Hành hoa, gừng/)
+    assert.match(card.textContent, /\[Ảnh mẫu\]/)
+  } finally {
+    await act(() => root.unmount())
+    dom.window.close()
+    for (const [key, descriptor] of previous) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor)
+      else delete globalThis[key]
+    }
+  }
+})
