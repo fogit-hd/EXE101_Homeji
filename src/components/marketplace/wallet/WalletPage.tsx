@@ -357,7 +357,9 @@ function WalletTabNavigation({
           className={tab === item.id ? 'is-active' : ''}
           onClick={() => onTabChange(item.id)}
         >
-          <Icon src={tab === item.id ? item.icon : item.idle} />
+          {/* Both states let the tab glass recolour the icon wherever its lens moves. */}
+          <img src={tab === item.id ? item.icon : item.idle} alt="" width={16} height={16}
+            data-glass-active-src={item.icon} data-glass-idle-src={item.idle} />
           {item.label}
         </button>
       ))}
