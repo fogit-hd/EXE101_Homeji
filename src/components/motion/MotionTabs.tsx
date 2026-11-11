@@ -16,7 +16,7 @@ type Props<T extends string> = {
 }
 
 /** A shared raised lens follows selection while preserving existing IDs and navigation. */
-export function MotionTabs<T extends string>({ items, value, onChange, label, className, buttonClassName = '', idPrefix, panelId, renderLabel, webglGlass = false }: Props<T>) {
+export function MotionTabs<T extends string>({ items, value, onChange, label, className, buttonClassName = '', idPrefix, panelId, renderLabel, webglGlass = true }: Props<T>) {
   const generatedId = useId()
   const prefix = idPrefix ?? `motion-tabs-${generatedId}`
   const containerRef = useRef<HTMLDivElement>(null)

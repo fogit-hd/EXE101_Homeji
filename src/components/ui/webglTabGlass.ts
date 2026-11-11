@@ -75,6 +75,31 @@ void main() {
 }
 `
 
+/** sRGB channels 0..1 and alpha from a computed CSS colour; null when unparseable. */
+function parseColor(value: string): [number, number, number, number] | null {
+  const rgb = /^rgba?\(([^)]+)\)$/.exec(value)
+  if (rgb) {
+    const [r, g, b, a = '1'] = rgb[1].split(/[\s,/]+/).filter(Boolean)
+    return [Number(r) / 255, Number(g) / 255, Number(b) / 255, Number(a)]
+  }
+  const srgb = /^color\(srgb ([^)]+)\)$/.exec(value)
+  if (srgb) {
+    const [r, g, b, , a = '1'] = srgb[1].split(/\s+/)
+    return [Number(r), Number(g), Number(b), Number(a)]
+  }
+  return null
+}
+const hasPaint = (value: string) => (parseColor(value)?.[3] ?? 0) > .05
+const luminance = ([r, g, b]: [number, number, number, number]) =>
+  [r, g, b].map(c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4).reduce((sum, c, i) => sum + c * [.2126, .7152, .0722][i], 0)
+/** True when text keeps at least 4.5:1 against the painted glass surface. */
+function readableOnScene(color: string, dark: boolean) {
+  const parsed = parseColor(color)
+  if (!parsed) return true
+  const text = luminance(parsed), surface = dark ? .036 : .84
+  return (Math.max(text, surface) + .05) / (Math.min(text, surface) + .05) >= 4.5
+}
+
 /** Bounded tab scene, not a screenshot of arbitrary page content. HTML remains
  * the interaction/accessibility layer. Unsupported content keeps plain HTML. */
 export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
@@ -122,11 +147,18 @@ export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
   root.append(canvas)
   const tabs = () => [...root.querySelectorAll<HTMLButtonElement>(':scope > button[role="tab"]')]
   const showHtml = () => { delete root.dataset.glassRenderer; canvas.hidden = true }
+  // Images still decoding are skipped for this paint and repaint on load.
+  const pendingImages = new WeakSet<HTMLImageElement>()
+  const awaitImage = (image: HTMLImageElement) => {
+    if (pendingImages.has(image)) return
+    pendingImages.add(image)
+    image.addEventListener('load', () => { pendingImages.delete(image); if (!disposed) invalidate() }, { once: true })
+  }
   const paintScene = (width: number, height: number, ratio: number) => {
     const buttons = tabs()
-    // This scene intentionally supports text tabs. Never replace an icon/image
-    // tab by an inaccurate flattening; keep its HTML visible instead.
-    if (!buttons.length || buttons.some(button => button.querySelector('img,svg,canvas,video'))) return false
+    // Text, <img> icons and solid badges are painted faithfully. Inline SVG,
+    // canvas and video cannot be flattened accurately, so keep their HTML.
+    if (!buttons.length || buttons.some(button => button.querySelector('svg,canvas,video'))) return false
     textureScene.width = canvas.width; textureScene.height = canvas.height
     ctx.setTransform(ratio,0,0,ratio,0,0)
     const dark = document.documentElement.dataset.theme === 'dark'
@@ -137,19 +169,48 @@ export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
     ctx.fillStyle = surface
     ctx.fillRect(0,0,width,height)
     const box = root.getBoundingClientRect()
+    const offsetX = root.scrollLeft - box.left, offsetY = -box.top
+    // HTML labels are hidden under the scene, so a caller's ink chosen for a
+    // solid active pill (e.g. white) must not vanish on the light glass.
+    const fallbackInk = getComputedStyle(root).getPropertyValue('--tabs-ink').trim() || (dark ? '#f0fdf9' : '#0f2e28')
+    const ink = (color: string, onBadge: boolean) => onBadge || readableOnScene(color, dark) ? color : fallbackInk
     for (const button of buttons) {
-      const range = document.createRange(); range.selectNodeContents(button)
-      const rect = range.getBoundingClientRect(), style = getComputedStyle(button)
-      const fontSize = parseFloat(style.fontSize)
-      ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
-      ctx.fillStyle = style.color; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
       ctx.globalAlpha = button.disabled ? .4 : 1
-      ctx.letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing
-      const text = button.textContent?.trim() ?? ''
-      const metrics = ctx.measureText(text)
-      const ascent = metrics.actualBoundingBoxAscent, descent = metrics.actualBoundingBoxDescent
-      ctx.fillText(text, rect.left-box.left+root.scrollLeft, rect.top-box.top+(rect.height+ascent-descent)*.5 || fontSize)
+      const walker = document.createTreeWalker(button, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT)
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node instanceof HTMLImageElement) {
+          const rect = node.getBoundingClientRect()
+          if (!rect.width || !rect.height) continue
+          if (node.complete && node.naturalWidth) ctx.drawImage(node, rect.left+offsetX, rect.top+offsetY, rect.width, rect.height)
+          else awaitImage(node)
+          continue
+        }
+        if (node instanceof HTMLElement) {
+          const style = getComputedStyle(node), rect = node.getBoundingClientRect()
+          if (node !== button && rect.width && hasPaint(style.backgroundColor)) {
+            ctx.fillStyle = style.backgroundColor
+            ctx.beginPath(); ctx.roundRect(rect.left+offsetX, rect.top+offsetY, rect.width, rect.height, Math.min(parseFloat(style.borderTopLeftRadius) || 0, rect.height/2)); ctx.fill()
+          }
+          continue
+        }
+        const text = node.textContent?.trim()
+        const parent = node.parentElement
+        if (!text || !parent) continue
+        const range = document.createRange(); range.selectNodeContents(node)
+        const rect = range.getBoundingClientRect(), style = getComputedStyle(parent)
+        if (!rect.width) continue
+        ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+        ctx.fillStyle = ink(style.color, parent !== button && hasPaint(style.backgroundColor))
+        ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
+        ctx.letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing
+        const metrics = ctx.measureText(text)
+        const ascent = metrics.actualBoundingBoxAscent, descent = metrics.actualBoundingBoxDescent
+        // Centre the glyph box; textAlign follows the browser's laid-out start.
+        const textWidth = metrics.width, left = rect.left + Math.max(0, (rect.width - textWidth) / 2)
+        ctx.fillText(text, left+offsetX, rect.top+offsetY+(rect.height+ascent-descent)*.5 || parseFloat(style.fontSize))
+      }
       ctx.globalAlpha = 1
+      const style = getComputedStyle(button)
       if (button.matches(':focus-visible')) {
         const focus = button.getBoundingClientRect(); ctx.strokeStyle = style.color; ctx.lineWidth = 2
         ctx.beginPath(); ctx.roundRect(focus.left-box.left+root.scrollLeft+3,focus.top-box.top+3,focus.width-6,focus.height-6,20); ctx.stroke()
@@ -164,7 +225,8 @@ export function attachWebglTabGlass(root: HTMLElement, lens: HTMLElement) {
     frame = 0
     if (disposed || failed || !visible || document.hidden || preferences.matches) return
     const width = tabsTrackWidth(root, tabs()), height = root.clientHeight
-    if (width < 2 || height < 2 || lens.hidden) { showHtml(); return }
+    // A surface whose CSS removes the lens (flat admin/popup tabs) keeps HTML.
+    if (width < 2 || height < 2 || lens.hidden || !lens.getClientRects().length) { showHtml(); return }
     const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 2), 2, 2048/width, 256/height)
     const w = Math.round(width*ratio), h = Math.round(height*ratio)
     if (canvas.width !== w || canvas.height !== h) { canvas.width=w; canvas.height=h; canvas.style.width=`${width}px`; canvas.style.height=`${height}px`; dirty=true }
