@@ -71,6 +71,7 @@ export const navigationGroups: NavigationGroup[] = [
       { id: 'newRooms', label: 'Phòng mới theo nhu cầu', href: '/?interest=manage', icon: 'bell', group: 'housing', requiredAuth: true },
       { id: 'appointments', label: 'Lịch xem phòng', href: mapSectionUrl('appointments'), icon: 'calendar', group: 'housing', requiredAuth: true },
       { id: 'myPosts', label: 'Tin của tôi', href: mapSectionUrl('myPosts'), icon: 'list', group: 'housing', requiredAuth: true },
+      { id: 'archivedPosts', label: 'Tin đã lưu trữ', href: `${mapSectionUrl('myPosts')}&status=archived`, icon: 'activity', group: 'housing', requiredAuth: true },
       { id: 'createPost', label: 'Đăng tin phòng', href: '/posts/new', icon: 'plus', group: 'housing', requiredAuth: true },
       { id: 'transferPost', label: 'Nhượng phòng', href: '/posts/new?type=transfer', icon: 'receipt', group: 'housing', requiredAuth: true },
     ],
@@ -157,6 +158,8 @@ export function isNavigationItemActive(item: NavigationItem, pathname: string, s
       return section === 'saved'
     case 'appointments':
       return section === 'appointments'
+    case 'archivedPosts':
+      return section === 'myPosts' && params.get('status') === 'archived'
     case 'roommates':
       return section === 'invitations'
     case 'messages':

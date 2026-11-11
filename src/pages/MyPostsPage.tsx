@@ -32,6 +32,8 @@ function parseType(raw: string | null): RentalPostType | null {
 export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
   const [searchParams] = useSearchParams()
   const typeFilter = parseType(searchParams.get('type'))
+  /** `status=archived` is the menu's own doorway to archived posts. */
+  const archivedOnly = searchParams.get('status') === 'archived'
   const [stats, setStats] = useState<RentalPostOwnerStats | null>(null)
   const [actionError, setActionError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
@@ -44,7 +46,9 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
 
   const isRoommate = typeFilter === RentalPostType.RoommateShare
   const isRoomTransfer = typeFilter === RentalPostType.RoomTransfer
-  const title = isRoommate
+  const title = archivedOnly
+    ? 'Tin đã lưu trữ'
+    : isRoommate
     ? 'Quản lý tin ở ghép'
     : isRoomTransfer
       ? 'Tin nhượng phòng của tôi'
@@ -58,7 +62,8 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
       : '/posts/new?type=vacant'
 
   const posts = (stats?.posts ?? []).filter((p) =>
-    typeFilter == null ? true : p.type === typeFilter,
+    (typeFilter == null || p.type === typeFilter)
+    && (!archivedOnly || p.status === RentalPostStatus.Archived),
   )
 
   const actions = (
@@ -114,8 +119,8 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
 
           {posts.length === 0 ? (
             <div className="page-frame-empty">
-              <p className="page-frame-empty__title">Chưa có tin đăng</p>
-              <p>Hãy tạo tin mới để bắt đầu quản lý tại đây.</p>
+              <p className="page-frame-empty__title">{archivedOnly ? 'Chưa có tin nào được lưu trữ' : 'Chưa có tin đăng'}</p>
+              <p>{archivedOnly ? 'Tin bạn lưu trữ từ mục Tin của tôi sẽ nằm ở đây.' : 'Hãy tạo tin mới để bắt đầu quản lý tại đây.'}</p>
             </div>
           ) : (
             <div className="notification-list">
