@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const source = readFileSync(new URL('../src/pages/EditRentalPostPage.tsx', import.meta.url), 'utf8')
-const handler = source.slice(source.indexOf('const handleAddMedia = async () => {'), source.indexOf('const handleDeleteMedia ='))
+const handler = source.slice(source.indexOf('const handleAddMedia = async (files: File[] = mediaFiles) => {'), source.indexOf('const handleDeleteMedia ='))
 
 async function runUpload({ existing = 0, count = 3, failAt = 0, storageFails = false } = {}) {
   let visible = { media: Array.from({ length: existing }, (_, id) => ({ id })) }
@@ -39,7 +39,7 @@ async function runUpload({ existing = 0, count = 3, failAt = 0, storageFails = f
       return persisted
     },
   }
-  const upload = new Function(...Object.keys(context), `${handler}; return handleAddMedia`)(...Object.values(context))
+  const upload = new Function(...Object.keys(context), `${handler.replace('(files: File[] = mediaFiles)', '(files = mediaFiles)')}; return handleAddMedia`)(...Object.values(context))
   await upload()
   return { visible, files, error, message, uploading, selected, payloads }
 }
@@ -69,6 +69,12 @@ test('the ten-image limit leaves unprocessed selections intact', async () => {
   assert.deepEqual(result.files.map(file => file.name), ['qa-1.png', 'qa-2.png'])
   assert.equal(result.payloads[0].isThumbnail, false)
   assert.equal(result.payloads[0].sortOrder, 9)
+})
+
+test('choosing photos uploads them at once and a retry control appears only for leftovers', () => {
+  assert.match(source, /setMediaFiles\(files\)\s+void handleAddMedia\(files\)/)
+  assert.doesNotMatch(source, /`Tải \$\{mediaFiles\.length/)
+  assert.match(source, /Thử tải lại \{mediaFiles\.length\} ảnh/)
 })
 
 test('storage failure keeps the selection and performs no metadata writes', async () => {

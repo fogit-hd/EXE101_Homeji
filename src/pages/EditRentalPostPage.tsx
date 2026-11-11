@@ -173,8 +173,9 @@ export function EditRentalPostPage() {
     }
   }
 
-  const handleAddMedia = async () => {
-    if (!postId || !profile || operationLock.current || mediaFiles.length === 0) return
+  /** Uploads as soon as files are picked; `files` defaults to what is left over from a failed attempt. */
+  const handleAddMedia = async (files: File[] = mediaFiles) => {
+    if (!postId || !profile || operationLock.current || files.length === 0) return
     setError('')
     operationLock.current = true
     addressVersion.current += 1
@@ -182,7 +183,7 @@ export function EditRentalPostPage() {
     setUploadingMedia(true)
     try {
       const remainingSlots = Math.max(0, 10 - (post?.media.length ?? 0))
-      const selectedFiles = mediaFiles.slice(0, remainingSlots)
+      const selectedFiles = files.slice(0, remainingSlots)
       if (selectedFiles.length === 0) {
         setError('Mỗi tin được tối đa 10 ảnh.')
         return
@@ -543,11 +544,18 @@ export function EditRentalPostPage() {
               accept="image/jpeg,image/png,image/webp"
               multiple
               disabled={busy}
-              onChange={(event) => setMediaFiles(Array.from(event.target.files ?? []))}
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? [])
+                // Clear the control so picking the same photos again still fires a change.
+                event.target.value = ''
+                setMediaFiles(files)
+                void handleAddMedia(files)
+              }}
             />
-            <button type="button" className="btn btn-secondary" disabled={saving || uploadingMedia || mediaFiles.length === 0 || (post?.media.length ?? 0) >= 10} onClick={() => void handleAddMedia()}>
-              {uploadingMedia ? 'Đang tải...' : `Tải ${mediaFiles.length || ''} ảnh`}
-            </button>
+            {uploadingMedia ? <span role="status">Đang tải ảnh lên…</span>
+              : mediaFiles.length > 0 ? <button type="button" className="btn btn-secondary" disabled={saving || (post?.media.length ?? 0) >= 10} onClick={() => void handleAddMedia()}>
+                Thử tải lại {mediaFiles.length} ảnh
+              </button> : null}
           </div>
         </div>
         {post?.media.map((m) => (
