@@ -297,7 +297,9 @@ export function RoomDetailModal({
     try {
       const convo = await startRentalPostConversation(post.id)
       if (!isCurrent()) return
-      const effectiveDraft = questionDraft ?? `Chào bạn, mình quan tâm đến phòng "${post.title?.trim() || ''}" trên Homeji. Phòng này hiện còn trống không ạ?`
+      const effectiveDraft = questionDraft ?? (post.title?.trim()
+        ? `Chào bạn, mình quan tâm đến phòng "${post.title.trim()}" trên Homeji. Phòng này hiện còn trống không ạ?`
+        : 'Chào bạn, mình quan tâm đến phòng này trên Homeji. Phòng này hiện còn trống không ạ?')
       if (effectiveDraft !== undefined) {
         const target = rentalDraftTarget(source.userId, convo)
         if (!target || target.postId !== source.postId || target.recipientId !== source.ownerId
@@ -551,24 +553,26 @@ export function RoomDetailModal({
                   <OwnerProfile key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone} isStudentShare={isStudentShare}
                     revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
-                  <div className="room-detail__greeting-chips" role="group" aria-label="Mẫu tin nhắn nhanh">
-                    {[
-                      'Phòng này hiện còn trống không ạ?',
-                      'Mình muốn hẹn lịch qua xem phòng được không?',
-                      'Chi phí điện nước và dịch vụ tính thế nào ạ?',
-                    ].map((template) => (
-                      <button
-                        key={template}
-                        type="button"
-                        className="room-detail__greeting-chip"
-                        disabled={actionBusy}
-                        onClick={() => void handleMessage(`Chào bạn, ${template.charAt(0).toLowerCase() + template.slice(1)}`)}
-                      >
-                        <MessageCircleIcon size={13} />
-                        <span>{template}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {(!profile || post.ownerId !== profile.id) && (
+                    <div className="room-detail__greeting-chips" role="group" aria-label="Mẫu tin nhắn nhanh">
+                      {[
+                        'Phòng này hiện còn trống không ạ?',
+                        'Mình muốn hẹn lịch qua xem phòng được không?',
+                        'Chi phí điện nước và dịch vụ tính thế nào ạ?',
+                      ].map((template) => (
+                        <button
+                          key={template}
+                          type="button"
+                          className="room-detail__greeting-chip"
+                          disabled={actionBusy}
+                          onClick={() => void handleMessage(`Chào bạn, ${template.charAt(0).toLowerCase() + template.slice(1)}`)}
+                        >
+                          <MessageCircleIcon size={13} />
+                          <span>{template}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="room-detail__note">
                   <strong>Xem phòng trước khi quyết định</strong>

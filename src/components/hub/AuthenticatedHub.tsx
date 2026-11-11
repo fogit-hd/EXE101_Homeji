@@ -23,6 +23,7 @@ import {
   type ViewingAppointment,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+import { HeartIcon } from '../icons/SvgIcons'
 import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import { mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
@@ -318,7 +319,12 @@ export function AuthenticatedHub() {
                         />
                       ) : null}
                       <span className="hub-room__nophoto">Chưa có ảnh</span>
-                      {savedIds.has(post.id) ? <em className="hub-room__saved">♥ Đã lưu</em> : null}
+                      {savedIds.has(post.id) ? (
+                        <em className="hub-room__saved">
+                          <HeartIcon size={12} filled style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                          Đã lưu
+                        </em>
+                      ) : null}
                     </span>
                     <span className="hub-room__copy">
                       <b>{post.title}</b>

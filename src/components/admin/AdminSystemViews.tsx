@@ -1,5 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext'
 import { formatDate, userRoleLabel } from '../../lib/labels'
+import { ElectricBoltIcon } from '../icons/SvgIcons'
 import type { AdminWorkspace } from './useAdminWorkspace'
 
 type Props = { ws: AdminWorkspace }
@@ -54,7 +55,7 @@ export function AdminPresencePanel({ ws }: Props) {
 export function AdminMaintenancePanel({ ws }: Props) {
   return <section className="admin-maintenance-card card" aria-labelledby="maintenance-heading">
     <div className="admin-maintenance-intro">
-      <span className="admin-maintenance-icon" aria-hidden>⚡</span>
+      <span className="admin-maintenance-icon" aria-hidden="true"><ElectricBoltIcon size={20} /></span>
       <div>
         <h2 id="maintenance-heading">Thông báo bảo trì toàn hệ thống</h2>
         <p>Hiện banner cho người xem web và gửi vào hộp thông báo của tất cả tài khoản.</p>

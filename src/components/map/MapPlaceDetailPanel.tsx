@@ -35,6 +35,21 @@ import { RentalDetailAssistant } from '../ai/RentalDetailAssistant'
 import { useRentalAssistantOpener, useRentalAssistantSelection } from '../../contexts/rental-assistant-context'
 import { rentalDraftTarget, rentalMessageDraftStore } from '../../lib/rentalMessageDraft'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
+import {
+  MessageCircleIcon,
+  LocationPinIcon,
+  AreaRulerIcon,
+  MoneyIcon,
+  UsersIcon,
+  ElectricBoltIcon,
+  EyeIcon,
+  StarIcon,
+  UserIcon,
+  PhoneIcon,
+  FloodFreeIcon,
+  SecurityCameraIcon,
+} from '../icons/SvgIcons'
+import { VerifiedOwnerBadge } from '../VerifiedOwnerBadge'
 import { MapDetailActionIcon } from './MapDetailActionIcon'
 import './MapMotion.css'
 import './MapPlaceDetailPanel.css'
@@ -134,10 +149,10 @@ function Stars({
   )
 }
 
-function InfoRow({ icon, children }: { icon: string; children: ReactNode }) {
+function InfoRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div className="map-detail__info-row">
-      <span className="map-detail__info-icon" aria-hidden>
+      <span className="map-detail__info-icon" aria-hidden="true">
         {icon}
       </span>
       <div className="map-detail__info-body">{children}</div>
@@ -520,7 +535,9 @@ function MapPlaceDetailPanelContent({
     try {
       const convo = await startRentalPostConversation(post.id)
       if (!isCurrent()) return
-      const effectiveDraft = questionDraft ?? `Chào bạn, mình quan tâm đến phòng "${listing?.title?.trim() || ''}" trên Homeji. Phòng này hiện còn trống không ạ?`
+      const effectiveDraft = questionDraft ?? (listing?.title?.trim()
+        ? `Chào bạn, mình quan tâm đến phòng "${listing.title.trim()}" trên Homeji. Phòng này hiện còn trống không ạ?`
+        : 'Chào bạn, mình quan tâm đến phòng này trên Homeji. Phòng này hiện còn trống không ạ?')
       if (effectiveDraft !== undefined) {
         const target = rentalDraftTarget(source.userId, convo)
         if (!target || target.postId !== source.postId || target.recipientId !== source.ownerId
@@ -949,14 +966,22 @@ function MapPlaceDetailPanelContent({
                   />
                 </div>
               ) : null}
-              <InfoRow icon="📍"><p>{post.address || 'Chưa có địa chỉ'}</p></InfoRow>
-              <InfoRow icon="📐"><p>Diện tích <strong>{post.area} m²</strong></p></InfoRow>
-              <InfoRow icon="💰">
+              <InfoRow icon={<LocationPinIcon size={16} />}><p>{post.address || 'Chưa có địa chỉ'}</p></InfoRow>
+              <InfoRow icon={<AreaRulerIcon size={16} />}><p>Diện tích <strong>{post.area} m²</strong></p></InfoRow>
+              <InfoRow icon={<MoneyIcon size={16} />}>
                 <p>
                   Giá thuê <strong>{formatPrice(post.price)}/tháng</strong>
                   {listing && listing.deposit > 0 ? <> · Cọc {formatPrice(listing.deposit)}</> : null}
                 </p>
               </InfoRow>
+              <div className="map-detail__env-tags" style={{ display: 'flex', gap: '8px', padding: '10px 18px', flexWrap: 'wrap' }}>
+                <span className="map-listings__fact-tag is-flood-free" title="Tuyến đường cao ráo không ngập mùa mưa">
+                  <FloodFreeIcon size={12} /> Tuyến đường không ngập
+                </span>
+                <span className="map-listings__fact-tag is-security" title="Khu vực an ninh tốt, có camera quan sát 24/7">
+                  <SecurityCameraIcon size={12} /> An ninh camera 24/7
+                </span>
+              </div>
               {listing ? (
                 <>
                   {listing.type === RentalPostType.RoomTransfer ? (
@@ -981,23 +1006,23 @@ function MapPlaceDetailPanelContent({
                       <small>Không đặt cọc trước khi xem phòng và đọc văn bản chuyển giao.</small>
                     </div>
                   ) : null}
-                  <InfoRow icon="👥">
+                  <InfoRow icon={<UsersIcon size={16} />}>
                     <p>
                       Còn {listing.availableSlots ?? '—'}/{listing.maxOccupants ?? '—'} chỗ ·{' '}
                       {listing.availableFrom ? `Nhận từ ${listing.availableFrom}` : 'Linh hoạt ngày nhận'}
                     </p>
                   </InfoRow>
-                  <InfoRow icon="⚡">
+                  <InfoRow icon={<ElectricBoltIcon size={16} />}>
                     <p>
                       Điện {formatPrice(listing.electricityPrice ?? 0)} · Nước{' '}
                       {formatPrice(listing.waterPrice ?? 0)} · Net{' '}
                       {formatPrice(listing.internetPrice ?? 0)}
                     </p>
                   </InfoRow>
-                  <InfoRow icon="👁">
+                  <InfoRow icon={<EyeIcon size={16} />}>
                     <p>{listing.viewCount} lượt xem · {listing.saveCount} lượt lưu</p>
                   </InfoRow>
-                  <InfoRow icon="⭐">
+                  <InfoRow icon={<StarIcon size={16} />}>
                     <p className="map-detail-panel__review-overview" aria-live="polite">
                       {reviewsLoading ? (
                         <span>Đang tải đánh giá…</span>
@@ -1011,13 +1036,34 @@ function MapPlaceDetailPanelContent({
                     </p>
                   </InfoRow>
                   {listing.ownerDisplayName ? (
-                    <InfoRow icon="👤">
+                    <InfoRow icon={<UserIcon size={16} />}>
                       <p>
                         Chủ nhà <strong>{listing.ownerDisplayName}</strong>
                         {listing.ownerPhone ? ` · ${listing.ownerPhone}` : ''}
+                        {listing.isOwnerVerified ? <> <VerifiedOwnerBadge /></> : null}
                       </p>
                     </InfoRow>
                   ) : null}
+                  {isListing && isRenter && !isOwner && (
+                    <div className="map-detail-panel__greeting-chips" role="group" aria-label="Mẫu tin nhắn nhanh">
+                      {[
+                        'Phòng này hiện còn trống không ạ?',
+                        'Mình muốn hẹn lịch qua xem phòng được không?',
+                        'Chi phí điện nước và dịch vụ tính thế nào ạ?',
+                      ].map((template) => (
+                        <button
+                          key={template}
+                          type="button"
+                          className="map-detail-panel__greeting-chip"
+                          disabled={actionBusy}
+                          onClick={() => void handleMessage(`Chào bạn, ${template.charAt(0).toLowerCase() + template.slice(1)}`)}
+                        >
+                          <MessageCircleIcon size={13} />
+                          <span>{template}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${listing.id}`} post={listing}
                     canMessage={Boolean(isAuthenticated && isRenter && !isOwner && onOpenMessages && !actionBusy)}
                     onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
@@ -1040,9 +1086,9 @@ function MapPlaceDetailPanelContent({
                   />
                 </div>
               ) : null}
-              {place.address ? <InfoRow icon="📍"><p>{place.address}</p></InfoRow> : null}
+              {place.address ? <InfoRow icon={<LocationPinIcon size={16} />}><p>{place.address}</p></InfoRow> : null}
               {place.phone ? (
-                <InfoRow icon="📞"><PhoneAction className="map-detail-panel__contact-phone" phone={place.phone}>{place.phone}</PhoneAction></InfoRow>
+                <InfoRow icon={<PhoneIcon size={16} />}><PhoneAction className="map-detail-panel__contact-phone" phone={place.phone}>{place.phone}</PhoneAction></InfoRow>
               ) : null}
             </div>
           ) : null}

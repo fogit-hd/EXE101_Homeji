@@ -103,8 +103,14 @@ const CAMPUS_METRO_OPTIONS = [
   { id: 'fpt', label: 'ĐH FPT', keyword: 'FPT', focus: { lat: 10.8415, lng: 106.8099 }, isMetro: false },
   { id: 'bachkhoa', label: 'ĐH Bách Khoa', keyword: 'Bách Khoa', focus: { lat: 10.7725, lng: 106.6579 }, isMetro: false },
   { id: 'kinhte', label: 'ĐH Kinh Tế', keyword: 'Kinh Tế', focus: { lat: 10.7828, lng: 106.6961 }, isMetro: false },
+  { id: 'bx-miendong', label: 'Bến xe Miền Đông mới', keyword: 'Bến xe Miền Đông mới', focus: { lat: 10.865, lng: 106.835 }, isMetro: true },
   { id: 'metro1', label: 'Metro Tuyến 1', keyword: 'Metro', focus: { lat: 10.803, lng: 106.735 }, isMetro: true },
 ] as const
+
+const matchesKeyword = (queryKeyword: string | undefined, ...targets: string[]) => {
+  const norm = queryKeyword?.trim().toLowerCase()
+  return Boolean(norm && targets.some((t) => t.toLowerCase() === norm))
+}
 
 const QUICK_CHIPS: QuickChip[] = [
   {
@@ -112,9 +118,9 @@ const QUICK_CHIPS: QuickChip[] = [
     label: 'KTX ĐHQG',
     icon: <GraduationCapIcon size={13} />,
     focus: { lat: 10.878, lng: 106.806 },
-    isActive: (query) => query.keyword === 'KTX ĐHQG' || query.keyword === 'ĐHQG',
+    isActive: (query) => matchesKeyword(query.keyword, 'KTX ĐHQG', 'ĐHQG'),
     toggle: (query) =>
-      query.keyword === 'KTX ĐHQG' || query.keyword === 'ĐHQG'
+      matchesKeyword(query.keyword, 'KTX ĐHQG', 'ĐHQG')
         ? { keyword: '' }
         : { keyword: 'KTX ĐHQG' },
   },
@@ -123,9 +129,9 @@ const QUICK_CHIPS: QuickChip[] = [
     label: 'ĐH SPKT',
     icon: <GraduationCapIcon size={13} />,
     focus: { lat: 10.8508, lng: 106.772 },
-    isActive: (query) => query.keyword === 'Sư phạm Kỹ thuật',
+    isActive: (query) => matchesKeyword(query.keyword, 'Sư phạm Kỹ thuật', 'ĐH SPKT'),
     toggle: (query) =>
-      query.keyword === 'Sư phạm Kỹ thuật'
+      matchesKeyword(query.keyword, 'Sư phạm Kỹ thuật', 'ĐH SPKT')
         ? { keyword: '' }
         : { keyword: 'Sư phạm Kỹ thuật' },
   },
@@ -134,9 +140,9 @@ const QUICK_CHIPS: QuickChip[] = [
     label: 'ĐH FPT',
     icon: <GraduationCapIcon size={13} />,
     focus: { lat: 10.8415, lng: 106.8099 },
-    isActive: (query) => query.keyword === 'ĐH FPT' || query.keyword === 'FPT',
+    isActive: (query) => matchesKeyword(query.keyword, 'ĐH FPT', 'FPT'),
     toggle: (query) =>
-      query.keyword === 'ĐH FPT' || query.keyword === 'FPT'
+      matchesKeyword(query.keyword, 'ĐH FPT', 'FPT')
         ? { keyword: '' }
         : { keyword: 'ĐH FPT' },
   },
@@ -145,9 +151,9 @@ const QUICK_CHIPS: QuickChip[] = [
     label: 'BX Miền Đông mới',
     icon: <MetroTrainIcon size={13} />,
     focus: { lat: 10.865, lng: 106.835 },
-    isActive: (query) => query.keyword === 'Bến xe Miền Đông mới',
+    isActive: (query) => matchesKeyword(query.keyword, 'Bến xe Miền Đông mới', 'BX Miền Đông mới'),
     toggle: (query) =>
-      query.keyword === 'Bến xe Miền Đông mới'
+      matchesKeyword(query.keyword, 'Bến xe Miền Đông mới', 'BX Miền Đông mới')
         ? { keyword: '' }
         : { keyword: 'Bến xe Miền Đông mới' },
   },
@@ -156,9 +162,9 @@ const QUICK_CHIPS: QuickChip[] = [
     label: 'Metro Tuyến 1',
     icon: <MetroTrainIcon size={13} />,
     focus: { lat: 10.803, lng: 106.735 },
-    isActive: (query) => query.keyword === 'Metro',
+    isActive: (query) => matchesKeyword(query.keyword, 'Metro', 'Metro Tuyến 1'),
     toggle: (query) =>
-      query.keyword === 'Metro'
+      matchesKeyword(query.keyword, 'Metro', 'Metro Tuyến 1')
         ? { keyword: '' }
         : { keyword: 'Metro' },
   },
@@ -272,27 +278,61 @@ export function MapListingsWorkspace({
   const [pullY, setPullY] = useState(0)
   const [pullRefreshing, setPullRefreshing] = useState(false)
   const touchStartY = useRef<number | null>(null)
+  const touchStartX = useRef<number | null>(null)
   const panelBodyRef = useRef<HTMLDivElement>(null)
+  const refreshTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current != null) {
+        window.clearTimeout(refreshTimerRef.current)
+      }
+    }
+  }, [])
 
   const PULL_THRESHOLD = 60
   const MAX_PULL = 90
 
+  const isAtScrollTop = () => {
+    const el = panelBodyRef.current
+    if (!el) return true
+    if (el.scrollTop > 0) return false
+    if (typeof window !== 'undefined' && window.scrollY > 0) return false
+    return true
+  }
+
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (pullRefreshing) return
-    const el = panelBodyRef.current
-    if (el && el.scrollTop <= 0) {
+    if (isAtScrollTop()) {
       touchStartY.current = e.touches[0].clientY
+      touchStartX.current = e.touches[0].clientX
     } else {
       touchStartY.current = null
+      touchStartX.current = null
     }
   }
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (touchStartY.current == null || pullRefreshing) return
+    if (!isAtScrollTop() && pullY === 0) {
+      touchStartY.current = null
+      touchStartX.current = null
+      return
+    }
     const currentY = e.touches[0].clientY
-    const diff = currentY - touchStartY.current
-    if (diff > 0) {
-      const distance = Math.min(diff * 0.45, MAX_PULL)
+    const currentX = e.touches[0].clientX
+    const diffY = currentY - touchStartY.current
+    const diffX = touchStartX.current != null ? Math.abs(currentX - touchStartX.current) : 0
+
+    // Ignore horizontal gesture before pull starts
+    if (pullY === 0 && diffX > Math.abs(diffY)) {
+      touchStartY.current = null
+      touchStartX.current = null
+      return
+    }
+
+    if (diffY > 0) {
+      const distance = Math.min(diffY * 0.45, MAX_PULL)
       setPullY(distance)
     } else {
       setPullY(0)
@@ -302,6 +342,7 @@ export function MapListingsWorkspace({
   const handleTouchEnd = async () => {
     if (touchStartY.current == null || pullRefreshing) return
     touchStartY.current = null
+    touchStartX.current = null
     if (pullY >= PULL_THRESHOLD) {
       setPullRefreshing(true)
       setPullY(45)
@@ -311,8 +352,10 @@ export function MapListingsWorkspace({
         } else {
           onUserSearch?.()
         }
+      } catch (err) {
+        console.error('[pull-to-refresh] refresh failed', err)
       } finally {
-        setTimeout(() => {
+        refreshTimerRef.current = window.setTimeout(() => {
           setPullRefreshing(false)
           setPullY(0)
         }, 400)
@@ -478,6 +521,7 @@ export function MapListingsWorkspace({
                 <img
                   src={view.thumbnailUrl}
                   srcSet={listingThumbSrcSet(view.thumbnailUrl)}
+                  sizes="(max-width: 640px) 100vw, 320px"
                   loading="lazy"
                   decoding="async"
                   alt=""
@@ -658,7 +702,7 @@ export function MapListingsWorkspace({
               <legend>Trường Đại học & Tuyến Metro</legend>
               <div className="map-listings__quick-chips" role="group" aria-label="Trường đại học và metro lân cận">
                 {CAMPUS_METRO_OPTIONS.map((item) => {
-                  const active = query.keyword === item.keyword
+                  const active = matchesKeyword(query.keyword, item.keyword)
                   return (
                     <button
                       key={item.id}
@@ -669,7 +713,13 @@ export function MapListingsWorkspace({
                         if (!active && item.focus && onFocusSource) {
                           onFocusSource(item.focus)
                         }
-                        writeQuery({ keyword: nextKeyword, page: 1 }, { fit: true })
+                        writeQuery({
+                          keyword: nextKeyword,
+                          minPrice: readDraft(priceDraft.min),
+                          maxPrice: readDraft(priceDraft.max),
+                          ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
+                          page: 1,
+                        }, { fit: true })
                         setFiltersOpen(false)
                       }}
                     >

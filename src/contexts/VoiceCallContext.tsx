@@ -8,6 +8,14 @@ import { useAuth } from './AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import './VoiceCallContext.css'
 
+function PhoneCallIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  )
+}
+
 type Call = { id: string; conversationId: string; name: string; incoming: boolean; phase: 'ringing' | 'connecting' | 'connected' }
 type Incoming = { callId: string; conversationId: string; callerName: string }
 
@@ -215,7 +223,7 @@ export function VoiceCallProvider({ children }: { children: ReactNode }) {
     {children}
     <audio ref={audio} autoPlay />
     {call ? <section className="voice-call" role="dialog" aria-label="Cuộc gọi thoại" aria-live="polite">
-      <span className="voice-call__icon" aria-hidden>☎</span><strong>{call.name}</strong>
+      <span className="voice-call__icon" aria-hidden="true"><PhoneCallIcon /></span><strong>{call.name}</strong>
       <p>{call.phase === 'connected' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : call.phase === 'connecting' ? 'Đang kết nối âm thanh…' : call.incoming ? 'Cuộc gọi thoại đến' : 'Đang chờ người nhận…'}</p>
       <div>{call.incoming && call.phase === 'ringing' ? <button type="button" onClick={() => void accept()}>Nghe máy</button> : call.phase === 'connected' ? <button type="button" aria-pressed={muted} onClick={() => { const next = !muted; stream.current?.getAudioTracks().forEach(t => { t.enabled = !next }); setMuted(next) }}>{muted ? 'Bật micro' : 'Tắt micro'}</button> : null}
         <button type="button" className="voice-call__end" onClick={() => end()}>{call.incoming && call.phase === 'ringing' ? 'Từ chối' : 'Kết thúc'}</button>

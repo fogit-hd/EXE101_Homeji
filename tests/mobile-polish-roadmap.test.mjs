@@ -98,9 +98,10 @@ test('EditRentalPostPage specifies mobile inputMode="decimal" on area and "tel" 
 })
 
 // --- 4. Cloudinary Image srcSet and Lazy Loading in MapListingsWorkspace ---
-test('MapListingsWorkspace optimizes thumbnails with lazy loading, async decoding and responsive srcSet', async () => {
+test('MapListingsWorkspace optimizes thumbnails with lazy loading, async decoding, responsive srcSet and sizes', async () => {
   const code = readFileSync(new URL('../src/components/map/listings/MapListingsWorkspace.tsx', import.meta.url), 'utf8')
   assert.match(code, /srcSet=\{listingThumbSrcSet\(view\.thumbnailUrl\)\}/)
+  assert.match(code, /sizes="\(max-width: 640px\) 100vw, 320px"/)
   assert.match(code, /loading="lazy"/)
   assert.match(code, /decoding="async"/)
 
@@ -124,6 +125,8 @@ test('MapListingsWorkspace includes fast location filter chips for Thu Duc / Q9 
   assert.match(code, /ĐH FPT/)
   assert.match(code, /'hub-bx-mientay-dong'/)
   assert.match(code, /Bến xe Miền Đông mới/)
+  assert.match(code, /matchesKeyword/, 'uses case-insensitive keyword matcher')
+  assert.match(code, /minPrice: readDraft\(priceDraft\.min\)/, 'preserves price drafts when selecting hub in popover')
 })
 
 // --- 6. Pull to Refresh on Mobile Listings Panel ---
@@ -133,9 +136,14 @@ test('MapListingsWorkspace implements touch-based pull-to-refresh on mobile feed
   assert.match(code, /onTouchMove=\{handleTouchMove\}/)
   assert.match(code, /onTouchEnd=\{handleTouchEnd\}/)
   assert.match(code, /map-listings__pull-indicator/)
+  assert.match(code, /isAtScrollTop/, 'verifies container and window scroll positions')
+  assert.match(code, /window\.scrollY/, 'verifies document-level scroll before pulling')
   assert.match(code, /Kéo để làm mới/)
   assert.match(code, /Thả để làm mới/)
   assert.match(code, /Đang làm mới/)
+
+  const css = readFileSync(new URL('../src/components/map/listings/MapListingsWorkspace.css', import.meta.url), 'utf8')
+  assert.match(css, /overscroll-behavior-y:\s*contain/, 'prevents rubber-band scroll interference')
 })
 
 // --- 7. Prefilled Contact Message when reaching out to landlords ---
@@ -144,7 +152,10 @@ test('RoomDetailModal and MapPlaceDetailPanel provide prefilled greeting templat
   assert.match(modalCode, /Chào bạn,.*hiện còn trống không ạ\?/)
   assert.match(modalCode, /room-detail__greeting-chip/)
   assert.match(modalCode, /Phòng này hiện còn trống không ạ\?/)
+  assert.match(modalCode, /Chào bạn, mình quan tâm đến phòng này trên Homeji/, 'provides clean fallback when title is missing')
 
   const panelCode = readFileSync(new URL('../src/components/map/MapPlaceDetailPanel.tsx', import.meta.url), 'utf8')
   assert.match(panelCode, /Chào bạn,.*hiện còn trống không ạ\?/)
+  assert.match(panelCode, /map-detail-panel__greeting-chip/, 'provides greeting chips on map place panel')
+  assert.match(panelCode, /Chào bạn, mình quan tâm đến phòng này trên Homeji/, 'provides clean fallback when title is missing')
 })

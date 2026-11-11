@@ -3,6 +3,7 @@ import { useChangedInputs } from '../../hooks/useChangedInputs'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { ContentSkeleton } from '../ContentSkeleton'
 import { PhoneAction } from '../ui/PhoneAction'
+import { StarIcon } from '../icons/SvgIcons'
 import './MapPlacePreview.css'
 
 type MapPlacePreviewProps = {
@@ -63,7 +64,8 @@ export function MapPlacePreview({
           ) : null}
           {shown.rating != null ? (
             <p className="map-place-preview__rating">
-              ★ {shown.rating.toFixed(1)}
+              <StarIcon size={13} style={{ verticalAlign: 'text-bottom', marginRight: 4, display: 'inline-block' }} />
+              {shown.rating.toFixed(1)}
               {shown.ratingCount != null
                 ? ` · ${shown.ratingCount.toLocaleString('vi-VN')} đánh giá`
                 : ''}

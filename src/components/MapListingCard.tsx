@@ -4,6 +4,7 @@ import { formatCompactRent, formatListingArea, formatPrice, rentalPostTypeLabel 
 import './MapListingCard.css'
 import { shortListingAddress, shortListingTitle } from "./MapListingCard.logic"
 import { PremiumBadge } from './PremiumBadge'
+import { HeartIcon } from './icons/SvgIcons'
 
 type Props = {
   post: RentalPostSummary
@@ -74,7 +75,7 @@ export const MapListingCard = memo(function MapListingCard({
               onToggleSave(post.id)
             }}
           >
-            {isSaved ? '♥' : '♡'}
+            <HeartIcon size={16} filled={isSaved} />
           </button>
         ) : null}
         {post.isOwnerPremium === true ? <PremiumBadge /> : null}
