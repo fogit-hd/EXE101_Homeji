@@ -6,6 +6,7 @@ import { LANDING_GLASS } from '../ui/glass'
 import { BrandMark } from '../ui/BrandMark'
 import { IconButton } from '../ui/primitives'
 import { jumpToSection } from '../jump'
+import { frameScrollY } from '../frameScroll'
 
 /** A picture card in a nav word's panel (nav-cards). */
 export type NavCard = { id: string; title: string; meta: string; image: { src: string; alt: string }; onSelect: () => void }
@@ -144,15 +145,14 @@ export function Navbar({ items }: { items: NavItem[] }) {
   const tuckedRef = useRef(false)
   useEffect(() => {
     let last = window.scrollY
-    let y = last
     let frame = 0
     const onScroll = () => {
-      // Read the position here, in the event: read inside the frame, after the film has written
-      // its styles, it would make the browser recalculate them on the spot.
-      y = window.scrollY
+      // The position is read in the frame, once for the whole page (frameScroll.ts): a read here, in
+      // the event, made the browser restyle the page before the film had even moved.
       if (frame) return
       frame = requestAnimationFrame(() => {
         frame = 0
+        const y = frameScrollY()
         const delta = y - last
         if (Math.abs(delta) < 6) return
         last = y
