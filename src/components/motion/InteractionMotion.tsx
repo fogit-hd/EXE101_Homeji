@@ -51,7 +51,7 @@ export function InteractionMotion() {
       if (reduced.matches || !(event.target instanceof Element) || !overlay.current) return
       const target = event.target.closest(ACTIONS)
       if (!(target instanceof HTMLElement) || target.matches(':disabled, [aria-disabled="true"]')
-        || target.closest('.gm-style') || target.matches(AI_ACTIONS)) return
+        || target.closest('.gm-style') || target.closest('.hx') || target.matches(AI_ACTIONS)) return
       const bounds = target.getBoundingClientRect()
       if (!bounds.width || !bounds.height) return
       const node = document.createElement('span')
@@ -74,7 +74,7 @@ export function InteractionMotion() {
     const trackSurfaceHighlight = (event: PointerEvent) => {
       if (glassReduced.matches || event.pointerType !== 'mouse' || !(event.target instanceof Element)) return
       const surface = event.target.closest('.btn, .choice-picker__trigger, button[type="submit"]')
-      if (!(surface instanceof HTMLElement) || surface.closest('.gm-style') || surface.matches(':disabled')) {
+      if (!(surface instanceof HTMLElement) || surface.closest('.gm-style') || surface.closest('.hx') || surface.matches(':disabled')) {
         resetSurfaceHighlight()
         return
       }

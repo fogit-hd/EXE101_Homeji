@@ -1,3 +1,5 @@
+import { APP_GLASS, type GlassPalette } from './glassPalette'
+
 export const GLASS_TRACK = { width: 432, height: 224, lens: 198, travel: 208 }
 export const GLASS_BLEED = 168
 const BLEED = GLASS_BLEED
@@ -95,22 +97,26 @@ export function resizeGlassCanvas(canvas: HTMLCanvasElement, width: number) {
   canvas.height = Math.max(1, Math.round((GLASS_TRACK.height + BLEED * 2) * scale))
 }
 
-export function paintGlassLight(ctx: CanvasRenderingContext2D, position: number, orbit: number, energy: number) {
+export function paintGlassLight(
+  ctx: CanvasRenderingContext2D, position: number, orbit: number, energy: number, palette: GlassPalette = APP_GLASS,
+) {
+  const pick = (pair: readonly [Color, Color], t: number) => color(pair[0], pair[1], t)
+  const stop = (pair: GlassPalette['track'], i: number, t: number) => color(pair[0][i], pair[1][i], t)
   const { width, height, travel } = GLASS_TRACK
   const p = clamp(position)
   const day = smooth((p - .18) / .64)
   const x = width / 2 + travel * (position - .5)
   const y = height / 2
-  const light = color([111, 134, 255], [255, 168, 46], day)
+  const light = pick(palette.led, day)
   const emission = rimPoint(orbit, HALF + 5, RADIUS + 5)
   const scale = ctx.canvas.width / (width + BLEED * 2)
   ctx.setTransform(scale, 0, 0, scale, BLEED * scale, BLEED * scale)
   ctx.clearRect(-BLEED, -BLEED, width + BLEED * 2, height + BLEED * 2)
 
   const track = ctx.createLinearGradient(0, 0, 0, height)
-  track.addColorStop(0, rgba(color([6, 6, 8], [200, 200, 196], day)))
-  track.addColorStop(.10, rgba(color([12, 12, 15], [221, 221, 217], day)))
-  track.addColorStop(1, rgba(color([10, 10, 12], [230, 230, 226], day)))
+  track.addColorStop(0, rgba(stop(palette.track, 0, day)))
+  track.addColorStop(.10, rgba(stop(palette.track, 1, day)))
+  track.addColorStop(1, rgba(stop(palette.track, 2, day)))
   ctx.shadowColor = rgba([0, 0, 0], mix(.58, .25, day))
   ctx.shadowBlur = 25 * scale
   ctx.shadowOffsetY = 9 * scale
@@ -150,9 +156,9 @@ export function paintGlassLight(ctx: CanvasRenderingContext2D, position: number,
   }
 
   const face = ctx.createLinearGradient(x, y - HALF, x, y + HALF)
-  face.addColorStop(0, rgba(color([65, 65, 70], [255, 254, 249], day), .95))
-  face.addColorStop(.47, rgba(color([40, 42, 49], [249, 248, 242], day), .94))
-  face.addColorStop(1, rgba(color([27, 29, 40], [238, 237, 232], day), .94))
+  face.addColorStop(0, rgba(stop(palette.face, 0, day), .95))
+  face.addColorStop(.47, rgba(stop(palette.face, 1, day), .94))
+  face.addColorStop(1, rgba(stop(palette.face, 2, day), .94))
   box(ctx, x - HALF, y - HALF, HALF * 2, HALF * 2, RADIUS)
   ctx.shadowColor = rgba([0, 0, 0], mix(.56, .27, day))
   ctx.shadowBlur = 21 * scale
@@ -172,8 +178,8 @@ export function paintGlassLight(ctx: CanvasRenderingContext2D, position: number,
   ctx.fillStyle = bevel
   ctx.fillRect(x - HALF, 0, HALF * 2, height)
 
-  const ink = color([255, 247, 228], [49, 45, 36], smooth((p - .35) / .55))
-  ctx.shadowColor = rgba(color([255, 203, 149], [125, 97, 55], day), mix(.65, .17, day))
+  const ink = pick(palette.ink, smooth((p - .35) / .55))
+  ctx.shadowColor = rgba(pick(palette.inkGlow, day), mix(.65, .17, day))
   ctx.shadowBlur = 8 * scale
   paintGlassIcon(ctx, x, y, p, ink)
   ctx.shadowBlur = 0
@@ -189,9 +195,9 @@ export function paintGlassLight(ctx: CanvasRenderingContext2D, position: number,
   ctx.restore()
 
   const edge = ctx.createLinearGradient(x - HALF, y - HALF, x + HALF, y + HALF)
-  edge.addColorStop(0, rgba(color([207, 214, 233], [255, 255, 253], day), mix(.35, .87, day)))
-  edge.addColorStop(.52, rgba(color([120, 129, 169], [255, 251, 237], day), mix(.19, .53, day)))
-  edge.addColorStop(1, rgba(color([137, 159, 255], [255, 250, 218], day), .58))
+  edge.addColorStop(0, rgba(stop(palette.edge, 0, day), mix(.35, .87, day)))
+  edge.addColorStop(.52, rgba(stop(palette.edge, 1, day), mix(.19, .53, day)))
+  edge.addColorStop(1, rgba(stop(palette.edge, 2, day), .58))
   ctx.strokeStyle = edge
   ctx.lineWidth = 2
   ctx.stroke()

@@ -63,8 +63,8 @@ export function RouteSkeleton() {
   } else if (pathname === '/privacy' || pathname === '/terms') {
     body = <LegalSkeleton />
   } else if (!isAuthenticated) {
-    // Guest landing keeps its brand intro; no product skeleton here.
-    return <ScreenPending />
+    // The guest landing loads under its own intro (LandingIntro, mounted in App); other guest pages stay quiet.
+    return pathname === '/' ? null : <ScreenPending />
   } else if (pathname === '/posts/new' || /^\/posts\/[^/]+\/edit$/.test(pathname)) {
     body = <PostFormSkeleton />
   } else if (pathname === '/payments/wait') {

@@ -1,0 +1,241 @@
+/*
+ * The page after the film: one paper ground, sections parted by space only
+ * (rhythm "space"), every heading on the container's left line, and a dark
+ * umber footer with the name set large (footer-dark). Loaded after landing.css,
+ * so these rules win over its older section styles.
+ */
+
+/* ---------- Rhythm ---------- */
+.hx .hx-listings,
+.hx .hx-quotes {
+  background: none;
+  border: 0;
+}
+
+.hx .hx-section {
+  padding-block: clamp(80px, 7vw + 32px, 136px);
+}
+
+/* One section a screen: a short section fills the screen and centres its content in it. */
+.hx .hx-how,
+.hx .hx-quotes {
+  display: grid;
+  align-content: center;
+  min-height: 100svh;
+}
+
+/* A grid item with auto side margins shrinks to its content; keep the container full width. */
+.hx .hx-how > .hx-container,
+.hx .hx-quotes > .hx-container {
+  width: 100%;
+}
+
+/* The film ends on its own night ground; the first section starts clear of it. */
+.hx .hx-film + .hx-section {
+  padding-top: clamp(80px, 7vw + 32px, 136px);
+}
+
+/* Linked cards lift 2px, never more. */
+@media (hover: hover) {
+  .hx .hx-card--interactive:hover {
+    transform: translateY(-2px);
+  }
+
+  .hx .hx-listing:hover .hx-listing__media.is-loaded img {
+    transform: scale(1.03);
+  }
+}
+
+/* ---------- Featured listings ---------- */
+.hx .hx-listings .hx-heading {
+  align-items: flex-end;
+}
+
+.hx .hx-listing__media {
+  background: var(--hx-surface-sunken);
+}
+
+.hx .hx-listing {
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.hx .hx-listings__grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 248px), 1fr));
+  gap: 20px;
+}
+
+.hx .hx-listings__more {
+  justify-content: flex-start;
+  margin-top: 40px;
+}
+
+.hx .hx-listings__filters {
+  margin-top: -16px;
+}
+
+/* ---------- How it works: the words on the left, the three steps on the right ---------- */
+.hx .hx-how__layout {
+  display: grid;
+  gap: 48px;
+}
+
+.hx .hx-how__intro .hx-heading {
+  margin-bottom: 28px;
+}
+
+.hx .hx-how__tabs {
+  justify-content: flex-start;
+  margin: 0;
+}
+
+.hx .hx-how__cta {
+  justify-content: flex-start;
+  margin-top: 28px;
+}
+
+.hx .hx-how__steps {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--hx-border-strong);
+}
+
+.hx .hx-how__steps::before {
+  content: none;
+}
+
+.hx .hx-how__step {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  column-gap: 20px;
+  row-gap: 6px;
+  justify-items: start;
+  padding-block: 28px;
+  border-bottom: 1px solid var(--hx-border);
+  text-align: left;
+}
+
+.hx .hx-how__num {
+  grid-row: 1 / 3;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hx-accent-text);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hx .hx-how__title {
+  font-size: clamp(1.25rem, 1rem + 0.6vw, 1.5rem);
+  letter-spacing: -0.02em;
+}
+
+.hx .hx-how__body {
+  max-width: 52ch;
+}
+
+@media (min-width: 1024px) {
+  .hx .hx-how__layout {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 72px;
+    align-items: start;
+  }
+
+  .hx .hx-how__steps {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .hx .hx-how__step {
+    grid-template-columns: 96px minmax(0, 1fr);
+    justify-items: start;
+    text-align: left;
+  }
+
+  .hx .hx-how__num {
+    grid-row: 1 / 3;
+    margin: 0;
+    font-size: 3.75rem;
+  }
+}
+
+/* ---------- Testimonials ---------- */
+.hx .hx-quote {
+  border-radius: 18px;
+  background: var(--hx-surface);
+}
+
+.hx .hx-quote__mark {
+  color: color-mix(in srgb, var(--hx-accent) 30%, transparent);
+}
+
+/* ---------- Footer (footer-dark): umber in light mode, a step darker at night ---------- */
+.hx .hx-footer {
+  --hx-text: #f4ebde;
+  --hx-text-muted: #c9b9a5;
+  --hx-text-subtle: #ad9b86;
+  --hx-border: rgb(255 232 204 / 0.12);
+  --hx-primary-text: #f0c48a;
+  --hx-surface: rgb(255 232 204 / 0.06);
+  padding-block: clamp(72px, 6vw + 32px, 112px) 32px;
+  border-top: 0;
+  background: #1d1712;
+  color: var(--hx-text-muted);
+}
+
+html[data-theme='dark'] .hx .hx-footer {
+  background: #0d0a08;
+  border-top: 1px solid var(--hx-border);
+}
+
+.hx .hx-footer .hx-logo {
+  --hx-logo-ink: #b9d3a8;
+  color: var(--hx-text);
+}
+
+.hx .hx-footer__link:hover {
+  color: var(--hx-text);
+}
+
+.hx .hx-footer__name {
+  margin: clamp(56px, 6vw, 96px) 0 0;
+  color: #f4ebde;
+  font-size: clamp(4.5rem, 27vw, 31rem);
+  font-weight: 800;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  /* The name sits on the left line and runs to the right one at 1200px. */
+  margin-left: -0.05em;
+  opacity: 0.94;
+  user-select: none;
+}
+
+.hx .hx-footer__bottom {
+  margin-top: 8px;
+  font-size: var(--hx-text-sm);
+}
+
+/* The descender of the j sits above the legal row's hairline. */
+.hx .hx-footer__name {
+  padding-bottom: 0.32em;
+}
+
+/* The app's global `p` colour must not reach the footer's lines. */
+.hx .hx-footer__about,
+.hx .hx-footer__bottom p {
+  margin: 0;
+  color: var(--hx-text-muted);
+}
+
+.hx .hx-quote__text p,
+.hx .hx-quote__stars {
+  margin: 0;
+  color: var(--hx-text);
+}

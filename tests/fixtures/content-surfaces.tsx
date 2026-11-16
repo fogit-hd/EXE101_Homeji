@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
-import { GuestJourney } from '../../src/components/landing/GuestJourney'
 import { RentalPostCard } from '../../src/components/RentalPostCard'
 import { NotificationPopupList } from '../../src/pages/NotificationPopupList'
 import { ReceiptsPage } from '../../src/pages/ReceiptsPage'
@@ -14,8 +13,6 @@ import '../../src/product-ui.css'
 import '../../src/glass-controls.css'
 import '../../src/content-surfaces.css'
 import '../../src/components/shell/shell.css'
-import '../../src/components/landing/GuestMapSection.css'
-import '../../src/components/landing/GuestChrome.css'
 import '../../src/components/hub/AuthenticatedHub.css'
 import '../../src/components/map/MapChatbot.css'
 import '../../src/components/marketplace/SellerOrderAlerts.css'
@@ -25,7 +22,7 @@ const initial = Array.from({ length: 5 }, (_, i) => ({ id: 'notification-' + i, 
 export function Scene() {
   const view = new URLSearchParams(location.search).get('view')
   const [items, setItems] = useState(initial)
-  return <MemoryRouter><LiquidGlassEffects />{view === 'journey' ? <GuestJourney /> : view === 'receipts' ? <ReceiptsPage /> : view === 'map' ? <div style={{ height: '100dvh' }}>
+  return <MemoryRouter><LiquidGlassEffects />{view === 'receipts' ? <ReceiptsPage /> : view === 'map' ? <div style={{ height: '100dvh' }}>
     <MapListingsWorkspace posts={[post]} selectedListingId="room-1" hoveredListingId={null} savedIds={new Set()} loading={false} error="" mapNode={<div style={{ height: '100%', background: '#bddbd7' }} />} onHoverListing={() => {}} onLeaveListing={() => {}} onSelectListing={() => {}} onOpenRoomDetail={() => { document.body.dataset.detail = 'yes' }} onToggleSave={() => { document.body.dataset.saved = 'yes' }} onResetFilters={() => {}} />
   </div> : <main style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,360px),1fr))', gap: 24, padding: 24, alignItems: 'start' }}>
     <div className="guest-map__card-wrap" data-glass-exclude><RentalPostCard post={post} showSave onSave={() => { document.body.dataset.saved = 'yes' }} /></div>
@@ -36,7 +33,6 @@ export function Scene() {
       <ul><li><a href="#market"><span className="hub-market__thumb"><img src="/landing/bloom-hero-bg2.jpg" alt="" /></span><b>Bún trộn nhà làm</b><strong>35.000 đ</strong></a></li><li><a href="#market"><span className="hub-market__thumb" /><b>Đèn bàn LED</b><strong>120.000 đ</strong></a></li></ul></section></div>
     <details className="map-chatbot__privacy" data-glass-exclude open><summary>Hội thoại và tiêu chí của bạn</summary><p>Tin nhắn và tiêu chí chỉ dùng trong phiên hiện tại. Lưu lịch sử hiện đang tắt.</p><button onClick={() => { document.body.dataset.cleared = 'yes' }}>Xóa nội dung phiên và tiêu chí</button></details>
     <dialog className="seller-watch__dialog" open style={{ position: 'static', margin: 0, width: '100%' }}><header data-glass-exclude><div><h2>Đơn bán cần xử lý</h2><p>Thông báo trực tiếp cho đồ ăn và pass đồ</p></div><button aria-label="Đóng đơn bán">×</button></header></dialog>
-    <div className="guest-fixed-cta" style={{ position: 'static', opacity: 1, pointerEvents: 'auto', justifySelf: 'start' }} data-glass-exclude><span>Miễn phí đăng ký</span><a className="guest-fixed-cta__go" href="/register">Bắt đầu ngay</a></div>
   </main>}</MemoryRouter>
 }
 createRoot(document.getElementById('root')!).render(<Scene />)

@@ -2,6 +2,7 @@ import { useId, useLayoutEffect, useRef, type CSSProperties, type PointerEvent }
 import { useTheme } from '../../contexts/ThemeContext'
 import { clamp, GLASS_TRACK, paintGlassLight, resizeGlassCanvas } from './glassLightArtwork'
 import type { createGlassLightWebGL } from './glassLightWebGL'
+import { APP_GLASS, type GlassPalette } from './glassPalette'
 import { THEME_FADE_MS, themeFadeEase } from './themeFade'
 
 /** A timed move of the lens that runs alongside the page fade. */
@@ -22,7 +23,9 @@ type Drag = {
   moved: boolean
 }
 
-export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
+/** `palette` recolours the glass for a surface with its own colours (the guest landing); it is read once. */
+export function ThemeSwitch({ floating = false, palette = APP_GLASS, className = '' }: { floating?: boolean; palette?: GlassPalette; className?: string }) {
+  const colors = useRef(palette)
   const { theme, pendingTheme, toggle } = useTheme()
   const dark = theme === 'dark'
   const target = (pendingTheme ?? theme) === 'dark' ? 0 : 1
@@ -60,7 +63,7 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
       if (renderer?.paint(ctx, state.position, state.orbit, state.energy)) {
         control.dataset.glassRenderer = 'webgl'
       } else {
-        paintGlassLight(ctx, state.position, state.orbit, state.energy)
+        paintGlassLight(ctx, state.position, state.orbit, state.energy, colors.current)
         control.dataset.glassRenderer = 'canvas'
       }
     }
@@ -124,7 +127,7 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
         // The first paint uses Canvas 2D while the shader loads separately.
         void import('./glassLightWebGL').then(({ createGlassLightWebGL }) => {
           if (disposed) return
-          renderer = createGlassLightWebGL(schedule)
+          renderer = createGlassLightWebGL(schedule, colors.current)
           if (renderer) schedule()
         }).catch(() => { /* Canvas 2D is already active. */ })
       }
@@ -227,7 +230,7 @@ export function ThemeSwitch({ floating = false }: { floating?: boolean }) {
       aria-disabled={!!pendingTheme || undefined}
       aria-busy={!!pendingTheme || undefined}
       title={dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-      className={`theme-switch${floating ? ' theme-switch--floating' : ''}`}
+      className={`theme-switch${floating ? ' theme-switch--floating' : ''}${className ? ` ${className}` : ''}`}
       style={{ '--theme-switch-name': transitionName } as CSSProperties}
       data-glass-exclude=""
       onPointerDown={press}

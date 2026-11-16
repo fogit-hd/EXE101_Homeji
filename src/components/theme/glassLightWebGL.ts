@@ -1,4 +1,5 @@
 import { clamp, GLASS_BLEED, GLASS_TRACK, paintGlassIcon } from './glassLightArtwork'
+import { APP_GLASS, type GlassPalette } from './glassPalette'
 
 const iconSize = 128
 const surfaceWidth = GLASS_TRACK.width + 2 * GLASS_BLEED
@@ -19,6 +20,8 @@ in vec2 uv;
 out vec4 pixel;
 uniform vec3 motion;
 uniform sampler2D icon;
+// Night and day colours (glassPalette.ts): led, track, body, reflection.
+uniform vec3 ledN, ledD, trackN, trackD, bodyN, bodyD, reflectN, reflectD;
 const vec2 trackHalf = vec2(${GLASS_TRACK.width}.0, ${GLASS_TRACK.height}.0) * 0.5;
 const float lensHalf = ${GLASS_TRACK.lens}.0 * 0.5;
 
@@ -49,7 +52,7 @@ float iconAt(vec2 p) {
 vec3 trackColor(vec2 p, vec2 lensPoint, float day, vec3 led) {
   float d = roundedBox(p, trackHalf, 72.0);
   float upperLip = exp(min(d, 0.0) / 9.0) * (0.5 - 0.5 * smoothstep(-70.0, 80.0, p.y));
-  vec3 base = mix(vec3(0.041, 0.043, 0.054), vec3(0.889, 0.886, 0.867), day);
+  vec3 base = mix(trackN, trackD, day);
   float pool = exp(-stripDistance(lensPoint) / 43.0);
   return base * (1.0 - upperLip * mix(0.61, 0.17, day))
     + led * pool * mix(0.23, 0.10, day);
@@ -60,7 +63,7 @@ void main() {
   vec2 lensCenter = vec2((motion.x - 0.5) * ${GLASS_TRACK.travel}.0, 0.0);
   vec2 q = p - lensCenter;
   float day = smoothstep(0.18, 0.82, motion.x);
-  vec3 led = mix(vec3(0.36, 0.48, 1.0), vec3(1.0, 0.57, 0.13), day);
+  vec3 led = mix(ledN, ledD, day);
   float intensity = 1.0 + 0.17 * motion.z;
   float aa = max(fwidth(p.x), fwidth(p.y)) * 0.63;
   float track = roundedBox(p, trackHalf, 72.0);
@@ -89,14 +92,14 @@ void main() {
     vec3 blur = vec3(iconAt(ray + vec2(2.5, 0.0)), iconAt(ray + vec2(0.0, 2.5)), iconAt(ray - vec2(2.5, 2.5)));
     mask = mix(mask, blur, bevel * 0.68);
     vec3 transmitted = trackColor(lensCenter + ray, ray, day, led);
-    vec3 body = mix(vec3(0.20, 0.21, 0.24), vec3(1.0, 0.994, 0.968), day);
+    vec3 body = mix(bodyN, bodyD, day);
     vec3 glassColor = mix(transmitted, body, mix(0.72, 0.77, day));
     vec3 ink = mix(vec3(1.0, 0.955, 0.86), vec3(0.145, 0.128, 0.105), smoothstep(0.35, 0.9, motion.x));
     glassColor = mix(glassColor, ink, mask);
     float scatter = exp(-strip / 23.0) * 0.79 + exp(-strip / 52.0) * 0.23;
     glassColor = mix(glassColor, mix(led, vec3(1.0), day * 0.30), scatter * intensity * mix(0.91, 0.69, day));
     float reflection = exp(min(glass, 0.0) / 2.3) * (0.30 - normal.y * 0.11);
-    vec3 reflectionTint = mix(vec3(0.60, 0.66, 0.81), vec3(1.0, 0.99, 0.94), day);
+    vec3 reflectionTint = mix(reflectN, reflectD, day);
     glassColor = mix(glassColor, reflectionTint, reflection);
     result = over(result, glassColor, 1.0 - smoothstep(-aa, aa, glass));
   }
@@ -115,7 +118,7 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
   return shader
 }
 
-export function createGlassLightWebGL(onLost: () => void) {
+export function createGlassLightWebGL(onLost: () => void, palette: GlassPalette = APP_GLASS) {
   const surface = document.createElement('canvas')
   // Integrated GPUs are sufficient for this tiny surface. Let the Canvas 2D
   // renderer handle devices that would have to emulate WebGL in software.
@@ -147,6 +150,11 @@ export function createGlassLightWebGL(onLost: () => void) {
   }
   const motion = gl.getUniformLocation(program, 'motion')
   gl.useProgram(program)
+  const { led, track, body, reflection } = palette.gl
+  for (const [name, pair] of [['led', led], ['track', track], ['body', body], ['reflect', reflection]] as const) {
+    gl.uniform3f(gl.getUniformLocation(program, `${name}N`), ...pair[0])
+    gl.uniform3f(gl.getUniformLocation(program, `${name}D`), ...pair[1])
+  }
   gl.bindTexture(gl.TEXTURE_2D, texture)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)

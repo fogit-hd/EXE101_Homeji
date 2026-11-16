@@ -26,7 +26,7 @@ try{
   assert.notEqual(await page.locator('.guest-fixed-cta').getAttribute('data-glass-exclude'),null)
   await page.screenshot({path:new URL('landing-'+theme+'.png',out).pathname.slice(1),animations:'disabled'})
  }
- // GuestChrome.css has hidden the fixed CTA on phones since f628970.
+ // Fixed guest CTA stays hidden on phones since f628970.
  await page.setViewportSize({width:390,height:844})
  await page.locator('.guest-fixed-cta').waitFor({state:'hidden'})
  await page.screenshot({path:new URL('landing-mobile.png',out).pathname.slice(1),animations:'disabled'})

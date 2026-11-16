@@ -856,7 +856,8 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):not(
   .natural-rental-search__form textarea, .map-chatbot__form textarea,
   .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input,
   .guest-preview__search > div input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input,
-  [data-glass-search] > input
+  [data-glass-search] > input, .explore-search__input,
+  .hx *
 ):focus-visible { outline: 2px solid var(--action-on-soft, #0f6b63) !important; outline-offset: 2px; }
 
 /* Mobile touch-press micro-interaction */

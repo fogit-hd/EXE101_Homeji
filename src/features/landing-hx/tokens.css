@@ -1,0 +1,189 @@
+/*
+ * Homeji landing design tokens (prefix --hx-). Scoped to .hx so nothing leaks
+ * into the product app, and nothing from the app's tokens is read here.
+ * Brand emerald #10b981 and earth orange #f97316 are decorative only; text and
+ * filled buttons use the 700 shades so white text clears WCAG AA (≥4.5:1).
+ */
+.hx {
+  /* Palette */
+  --hx-emerald-50: #ecfdf5;
+  --hx-emerald-100: #d1fae5;
+  --hx-emerald-200: #a7f3d0;
+  --hx-emerald-300: #6ee7b7;
+  --hx-emerald-400: #34d399;
+  --hx-emerald-500: #10b981;
+  --hx-emerald-600: #059669;
+  --hx-emerald-700: #047857;
+  --hx-emerald-800: #065f46;
+  --hx-emerald-900: #064e3b;
+  --hx-emerald-950: #022c22;
+
+  --hx-orange-50: #fff7ed;
+  --hx-orange-100: #ffedd5;
+  --hx-orange-200: #fed7aa;
+  --hx-orange-400: #fb923c;
+  --hx-orange-500: #f97316;
+  --hx-orange-600: #ea580c;
+  --hx-orange-700: #c2410c;
+  --hx-orange-800: #9a3412;
+  --hx-orange-950: #431407;
+
+  --hx-slate-50: #f8fafc;
+  --hx-slate-100: #f1f5f9;
+  --hx-slate-200: #e2e8f0;
+  --hx-slate-300: #cbd5e1;
+  --hx-slate-400: #94a3b8;
+  --hx-slate-500: #64748b;
+  --hx-slate-600: #475569;
+  --hx-slate-700: #334155;
+  --hx-slate-800: #1e293b;
+  --hx-slate-900: #0f172a;
+  --hx-slate-950: #020617;
+
+  --hx-white: #ffffff;
+  --hx-sand-50: #fdfaf5;
+  --hx-sand-100: #f8f1e6;
+
+  /*
+   * Semantic: surfaces and text. Warm paper and walnut ink, taken from the film's
+   * plaster walls and timber, so the page below the film reads as the same house.
+   */
+  --hx-bg: #f7f1e7;
+  /* The logo's own green (public/brand/homeji-logo2.png); a light sage on dark grounds. */
+  --hx-logo-ink: #354d2b;
+  --hx-surface: #fffbf4;
+  --hx-surface-sunken: #efe6d7;
+  --hx-border: rgb(74 52 34 / 0.13);
+  --hx-border-strong: rgb(74 52 34 / 0.26);
+  --hx-text: #221a14;
+  --hx-text-muted: #5a4a3d;
+  --hx-text-subtle: #6f5d4e;
+
+  /* Semantic: brand */
+  --hx-primary: var(--hx-emerald-700);
+  --hx-primary-hover: var(--hx-emerald-800);
+  --hx-primary-on: #ffffff;
+  --hx-primary-soft: var(--hx-emerald-50);
+  --hx-primary-soft-border: var(--hx-emerald-200);
+  --hx-primary-text: var(--hx-emerald-700);
+
+  --hx-accent: var(--hx-orange-700);
+  --hx-accent-hover: var(--hx-orange-800);
+  --hx-accent-on: #ffffff;
+  --hx-accent-soft: var(--hx-orange-50);
+  --hx-accent-text: var(--hx-orange-700);
+  --hx-accent-brand: var(--hx-orange-500);
+  /* Hero CTA fill #EA580C: white text is 3.56:1, so it is only used with ≥19px bold labels (WCAG large text). */
+  --hx-cta: var(--hx-orange-600);
+  --hx-cta-hover: var(--hx-orange-700);
+  --hx-cta-on: #ffffff;
+
+  --hx-star: #6b4a2b;
+  --hx-focus: var(--hx-emerald-700);
+  --hx-selection: var(--hx-emerald-100);
+
+  /* Radius */
+  --hx-radius-sm: 8px;
+  --hx-radius-md: 12px;
+  --hx-radius-lg: 16px;
+  --hx-radius-xl: 24px;
+  --hx-radius-2xl: 32px;
+  --hx-radius-pill: 999px;
+
+  /* Shadow: layered, offset and soft */
+  --hx-shadow-xs: 0 1px 2px rgb(34 26 20 / 0.05);
+  --hx-shadow-sm: 0 1px 2px rgb(34 26 20 / 0.06), 0 2px 6px -2px rgb(34 26 20 / 0.06);
+  --hx-shadow-md: 0 2px 4px -1px rgb(34 26 20 / 0.06), 0 10px 20px -6px rgb(34 26 20 / 0.1);
+  --hx-shadow-lg: 0 4px 8px -2px rgb(34 26 20 / 0.06), 0 24px 48px -16px rgb(34 26 20 / 0.18);
+  /* Neutral on purpose: orange buttons get no coloured glow. */
+  --hx-shadow-accent: 0 1px 2px rgb(34 26 20 / 0.12), 0 6px 16px -10px rgb(34 26 20 / 0.35);
+
+  /* Spacing (4px base) */
+  --hx-space-1: 4px;
+  --hx-space-2: 8px;
+  --hx-space-3: 12px;
+  --hx-space-4: 16px;
+  --hx-space-5: 20px;
+  --hx-space-6: 24px;
+  --hx-space-8: 32px;
+  --hx-space-10: 40px;
+  --hx-space-12: 48px;
+  --hx-space-16: 64px;
+  --hx-space-20: 80px;
+  --hx-space-24: 96px;
+  --hx-section-y: clamp(72px, 6vw + 40px, 128px);
+  --hx-gutter: clamp(16px, 4vw, 40px);
+  --hx-container: 1200px;
+  --hx-nav-h: 72px;
+
+  /* Typography */
+  --hx-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --hx-text-xs: 0.8125rem;
+  --hx-text-sm: 0.875rem;
+  --hx-text-md: 1rem;
+  --hx-text-lg: 1.125rem;
+  --hx-text-xl: 1.25rem;
+  --hx-text-2xl: clamp(1.375rem, 1.1rem + 0.8vw, 1.625rem);
+  --hx-text-3xl: clamp(1.875rem, 1.3rem + 2.2vw, 2.875rem);
+  --hx-text-4xl: clamp(2.25rem, 1.2rem + 4vw, 4rem);
+  --hx-leading-tight: 1.1;
+  --hx-leading-snug: 1.3;
+  --hx-leading-body: 1.6;
+  --hx-tracking-tight: -0.025em;
+  --hx-tracking-display: -0.035em;
+
+  /* Motion */
+  --hx-dur-fast: 160ms;
+  --hx-dur-base: 240ms;
+  --hx-dur-slow: 420ms;
+  --hx-dur-story: 560ms;
+  --hx-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --hx-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Z-index */
+  --hx-z-base: 0;
+  --hx-z-raised: 10;
+  --hx-z-sticky: 40;
+  --hx-z-nav: 50;
+  --hx-z-overlay: 80;
+  --hx-z-sheet: 90;
+}
+
+/* Dark: the house at night. Warm umber, never navy, with lamplight cream for text. */
+html[data-theme='dark'] .hx {
+  --hx-bg: #15110d;
+  --hx-logo-ink: #b9d3a8;
+  --hx-surface: #1f1914;
+  --hx-surface-sunken: #110d0a;
+  --hx-border: rgb(255 232 204 / 0.12);
+  --hx-border-strong: rgb(255 232 204 / 0.24);
+  --hx-text: #f4ebde;
+  --hx-text-muted: #c9b9a5;
+  --hx-text-subtle: #ad9b86;
+
+  --hx-primary: var(--hx-emerald-500);
+  --hx-primary-hover: var(--hx-emerald-400);
+  --hx-primary-on: var(--hx-emerald-950);
+  --hx-primary-soft: rgb(16 185 129 / 0.12);
+  --hx-primary-soft-border: rgb(16 185 129 / 0.32);
+  --hx-primary-text: var(--hx-emerald-300);
+
+  --hx-accent: var(--hx-orange-500);
+  --hx-accent-hover: var(--hx-orange-400);
+  --hx-accent-on: var(--hx-orange-950);
+  --hx-accent-soft: rgb(249 115 22 / 0.12);
+  --hx-accent-text: var(--hx-orange-400);
+  --hx-cta: var(--hx-orange-500);
+  --hx-cta-hover: var(--hx-orange-400);
+  --hx-cta-on: var(--hx-orange-950);
+
+  --hx-star: #e6c590;
+  --hx-focus: var(--hx-emerald-300);
+  --hx-selection: rgb(16 185 129 / 0.32);
+
+  --hx-shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --hx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 6px -2px rgb(0 0 0 / 0.3);
+  --hx-shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.3), 0 10px 20px -6px rgb(0 0 0 / 0.45);
+  --hx-shadow-lg: 0 4px 8px -2px rgb(0 0 0 / 0.3), 0 24px 48px -16px rgb(0 0 0 / 0.6);
+  --hx-shadow-accent: 0 2px 4px -1px rgb(0 0 0 / 0.3), 0 10px 22px -8px rgb(0 0 0 / 0.5);
+}

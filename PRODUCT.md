@@ -12,7 +12,7 @@ web
 
 ## Stack
 
-React 19 + TypeScript + Vite 8 + react-router-dom 7 + plain CSS (CSS variables trong `src/index.css`). Animation UI: **Motion** (`motion/react`, token chung trong `src/lib/motionTokens.ts`, `MotionConfig reducedMotion="user"`); **GSAP chỉ dùng cho intro thương hiệu** (`src/components/intro/BrandIntro.tsx`). Không Next.js, không RSC, không Tailwind, không shadcn. Dev proxy `/api` và `/hubs` tới backend Homeji. Entry: `src/main.tsx` → `App.tsx` (BrowserRouter).
+React 19 + TypeScript + Vite 8 + react-router-dom 7 + plain CSS (CSS variables trong `src/index.css`). Animation UI: **Motion** (`motion/react`, token chung trong `src/lib/motionTokens.ts`, `MotionConfig reducedMotion="user"`); **GSAP** cho intro thương hiệu (`src/components/intro/BrandIntro.tsx`) và guest-landing ScrollTrigger scrub (`src/components/landing/`). Không Next.js, không RSC, không Tailwind, không shadcn. Dev proxy `/api` và `/hubs` tới backend Homeji. Entry: `src/main.tsx` → `App.tsx` (BrowserRouter).
 
 ## Users
 

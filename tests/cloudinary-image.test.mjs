@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { cloudinaryResized, listingThumbSrcSet } from '../src/lib/cloudinaryImage.ts'
 
@@ -23,9 +22,4 @@ test('other hosts, other Cloudinary accounts, bad URLs and bad widths are left a
 test('srcSet lists every thumbnail width', () => {
   const srcSet = listingThumbSrcSet(upload)
   assert.match(srcSet, /c_limit,w_240\/.* 240w, .*c_limit,w_480\/.* 480w, .*c_limit,w_800\/.* 800w$/)
-})
-
-test('guest listing cards request sized thumbnails', () => {
-  const card = readFileSync(new URL('../src/components/landing/GuestListingPreview.tsx', import.meta.url), 'utf8')
-  assert.match(card, /srcSet=\{listingThumbSrcSet\(photos\[0\]\)\} sizes="\(max-width: 640px\) calc\(100vw - 48px\), 150px"/)
 })

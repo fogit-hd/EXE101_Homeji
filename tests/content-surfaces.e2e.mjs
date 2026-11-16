@@ -24,7 +24,7 @@ async function goto(view,theme){await page.goto(base+'/'+out+'/index.html?view='
 try{
  for(const[width,height]of[[1440,1000],[390,844],[320,700]])for(const theme of['dark','light']){
   await page.setViewportSize({width,height});await goto('samples',theme);await page.getByRole('button',{name:'Lưu tin',exact:true}).waitFor()
-  await contrast('.post-card-body h3','.post-card');await contrast('.post-card-price','.post-card');await contrast('.hub-market li b','.hub-market');await contrast('.hub-market li strong','.hub-market');await contrast('.guest-fixed-cta__go');await contrast('.map-chatbot__privacy p','.map-chatbot__privacy')
+  await contrast('.post-card-body h3','.post-card');await contrast('.post-card-price','.post-card');await contrast('.hub-market li b','.hub-market');await contrast('.hub-market li strong','.hub-market');await contrast('.map-chatbot__privacy p','.map-chatbot__privacy')
   assert.equal(await page.locator('.hj-nrow__main[data-glass-control]').count(),0)
   assert.equal(await page.locator('.hj-nrow__main').first().evaluate(e=>getComputedStyle(e).borderRadius),'0px')
   await page.locator('.hj-nrow__read').click();assert.equal(await page.locator('.hj-nrow.is-unread').count(),0)
@@ -32,11 +32,6 @@ try{
   await page.getByRole('button',{name:'Xóa nội dung phiên và tiêu chí',exact:true}).click();assert.equal(await page.locator('body').getAttribute('data-cleared'),'yes')
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Samples overflow')
   await page.screenshot({path:out+'/'+theme+'-'+width+'-surfaces.png',fullPage:true})
-  await goto('journey',theme);await page.locator('.guest-journey__steps li').nth(2).waitFor()
-  await contrast('.guest-journey h2','.guest-journey');await contrast('.guest-journey__steps p','.guest-journey__steps li');await contrast('.guest-journey__promises p','.guest-journey')
-  assert.equal(await page.locator('.guest-journey section').count(),2)
-  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Journey overflow')
-  await page.screenshot({path:out+'/'+theme+'-'+width+'-journey.png',fullPage:true})
   await goto('receipts',theme);await page.getByRole('button',{name:'Xem biên nhận',exact:true}).click()
   await page.getByRole('region',{name:'Chi tiết biên nhận',exact:true}).waitFor()
   assert.equal(await page.getByRole('button',{name:'Tải HTML'}).count(),0);assert.equal(await page.locator('iframe,a[download]').count(),0)
@@ -47,6 +42,6 @@ try{
   await page.getByRole('button',{name:'Đóng chi tiết',exact:true}).click();assert.ok(await page.getByRole('button',{name:'Xem biên nhận',exact:true}).evaluate(e=>e===document.activeElement))
   if(width===1440){await goto('map',theme);await page.locator('.map-listings__save').waitFor();await contrast('.map-listings__meta span');await contrast('.map-listings__preview-tags span');await contrast('.map-listings__move');await contrast('.map-listings__card-open','.map-listings__card');await page.locator('.map-listings__save').click();assert.equal(await page.locator('body').getAttribute('data-saved'),'yes');await page.screenshot({path:out+'/'+theme+'-map.png'})}
  }
- assert.deepEqual(errors,[]);console.log('PASS: journey, guest cards, inbox action, CTA, privacy/order samples, market text, map metadata/save, native receipts without HTML; dark/light 320/390/1440. API mocked; no email or transaction sent.')
+ assert.deepEqual(errors,[]);console.log('PASS: guest cards, inbox action, privacy/order samples, market text, map metadata/save, native receipts without HTML; dark/light 320/390/1440. API mocked; no email or transaction sent.')
 }catch(error){console.error({url:page.url(),errors,body:(await page.locator('body').innerText()).slice(0,800)});await page.screenshot({path:out+'/failure.png',fullPage:true});throw error}finally{await browser.close()}
 

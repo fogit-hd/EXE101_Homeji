@@ -43,6 +43,11 @@
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&amp;display=swap"
       />
     </noscript>
+    <!-- Guest landing face. Google serves the vietnamese subset via unicode-range. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;subset=latin,vietnamese&amp;display=swap"
+    />
         <script>
       /* Only opening the bare home URL starts the intro. Decide before paint so
          deep links never flash the boot layer or lock scrolling while JS loads. */
@@ -56,10 +61,10 @@
       #hj-boot { display: none }
       html[data-intro='1'] #hj-boot {
         display: block; position: fixed; inset: 0; z-index: 2147483000;
-        background:
-          radial-gradient(60% 50% at 50% 46%, rgba(0, 177, 79, 0.10) 0%, rgba(0, 177, 79, 0) 70%),
-          radial-gradient(130% 100% at 50% 40%, #ffffff 0%, #f5fcf8 45%, #eefaf3 100%);
+        /* The guest landing's ground (tokens.css --hx-bg), so the first paint leads into its skeleton. */
+        background: #f7f1e7;
       }
+      html[data-theme='dark'][data-intro='1'] #hj-boot { background: #15110d }
       html[data-intro='1'], html[data-intro='1'] body { overflow: hidden }
     </style>
   </head>
