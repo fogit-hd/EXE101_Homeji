@@ -147,6 +147,8 @@ type RentalMapProps = {
     minLongitude: number
     maxLongitude: number
   }) => void
+  /** Defaults to greedy so authenticated map chrome is unchanged. */
+  gestureHandling?: 'cooperative' | 'greedy' | 'auto' | 'none'
 }
 
 const DEFAULT_PAD: MapViewportPad = { top: 100, bottom: 230 }
@@ -226,6 +228,7 @@ function RentalMapComponent({
   navigationRequest = null,
   onNavigationResult,
   onViewportIdle,
+  gestureHandling = 'greedy',
 }: RentalMapProps) {
   const { apiKey, mapId, isLoaded, loadError } = useGoogleMaps()
   const diagnostics = useGoogleMapsDiagnostics(apiKey, loadError, Boolean(loadError))
@@ -606,7 +609,7 @@ function RentalMapComponent({
       const map = new google.maps.Map(
         mapDiv,
         createMapOptions(mapId, {
-          gestureHandling: 'greedy',
+          gestureHandling,
           ...(colorScheme != null ? { colorScheme } : {}),
         }),
       )
@@ -868,7 +871,7 @@ function RentalMapComponent({
       setStreetViewError(null)
     }
     // Remount when OS/UI light↔dark changes — colorScheme is init-only.
-  }, [isLoaded, apiKey, mapId, mapColorScheme])
+  }, [isLoaded, apiKey, mapId, mapColorScheme, gestureHandling])
 
   // Debounced host resize only — avoid resize storms during chrome layout anim.
   useEffect(() => {
@@ -1574,6 +1577,7 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.focusToken === next.focusToken &&
     prev.markerVariant === next.markerVariant &&
     prev.hideViewSwitcher === next.hideViewSwitcher &&
+    prev.gestureHandling === next.gestureHandling &&
     prev.listingsFitToken === next.listingsFitToken &&
     prev.navigationRequest?.token === next.navigationRequest?.token &&
     prev.navigationRequest?.origin.lat === next.navigationRequest?.origin.lat &&

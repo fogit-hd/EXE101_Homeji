@@ -2,7 +2,8 @@ import type { Transition, Variants } from 'motion/react'
 
 /**
  * Single source of truth for UI motion (Motion / `motion/react`).
- * GSAP is reserved for the brand intro only. CSS mirrors live in index.css
+ * GSAP: brand intro + guest-landing ScrollTrigger scrub scenes.
+ * UI chrome stays on Motion. CSS mirrors live in index.css
  * (`--ease-out`, `--dur-*`) for hover/colour transitions that stay in CSS.
  */
 export const DURATION = {

@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  // Tailwind is scoped to the guest landing (src/features/landing-hx/tailwind.css): prefix tw:, no preflight.
+  plugins: [react(), tailwindcss()],
   build: {
     rolldownOptions: {
       input: { main: resolve('index.html'), publicRentalAnalytics: resolve('src/publicRentalAnalytics.ts') },

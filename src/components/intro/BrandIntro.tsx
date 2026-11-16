@@ -54,9 +54,14 @@ function warmAssets(): Promise<unknown> {
   return Promise.all(jobs)
 }
 
+/** The guest landing has its own first view; only signed-in visitors get the logo intro. */
+function hasStoredSession(): boolean {
+  try { return Boolean(readAuthTokenState().token) || hasSessionHint() } catch { return false }
+}
+
 export function BrandIntro() {
   const location = useLocation()
-  const allowed = isBrandIntroLanding(location)
+  const allowed = isBrandIntroLanding(location) && hasStoredSession()
   useLayoutEffect(() => {
     if (!allowed) {
       document.getElementById('hj-boot')?.remove()

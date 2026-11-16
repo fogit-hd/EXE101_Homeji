@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { isGuestCoastPaused, pauseGuestCoast, resumeGuestCoast } from '../landing/guestCoast'
 import { registerConfirmPresenter, type ConfirmRequest } from './confirmDialog'
 import './confirmDialog.css'
 
@@ -14,6 +15,15 @@ export function ConfirmDialogHost() {
   useEffect(() => {
     const node = dialog.current
     if (request && node && !node.open) node.showModal()
+  }, [request])
+
+  useEffect(() => {
+    if (!request) return undefined
+    const wasPaused = isGuestCoastPaused()
+    pauseGuestCoast()
+    return () => {
+      if (!wasPaused) resumeGuestCoast()
+    }
   }, [request])
 
   if (!request) return null

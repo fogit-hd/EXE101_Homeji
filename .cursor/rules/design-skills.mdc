@@ -1,0 +1,14 @@
+---
+description: Route Homeji web UI work across impeccable, taste-skill, and the Motion skill without breaking the stack lock.
+alwaysApply: true
+---
+
+# Design skills (exe-homeji-web)
+
+Stack lock wins over every design skill. React 19 + Vite + react-router-dom + plain CSS variables in `src/index.css`. No Tailwind, no shadcn, no Next.js. Read `PRODUCT.md` and `DESIGN.md` before visual edits. Logged-in UI stays the map shell. Guest landing stays unless the user explicitly asks to change it. GSAP is for the brand intro (`src/components/intro/BrandIntro.tsx`) and guest-landing ScrollTrigger scrub scenes (`src/components/landing/`). UI motion uses `motion/react` and `src/lib/motionTokens.ts`.
+
+## Which skill
+
+- **impeccable** (`.cursor/skills/impeccable`, v4.8): default for design, redesign, critique, audit, polish, layout, type, color, and copy on existing Homeji UI. Logged-in surfaces are Operate. Subagents: `impeccable-asset-producer`, `impeccable-documenter`, `impeccable-finish-reviewer`, `impeccable-manual-edit-applier`. On Windows, run `.cursor/skills/impeccable/scripts/impeccable.cmd`.
+- **motion** (`.agents/skills/motion`, Motion AI Kit): any animation, transition, gesture, scroll effect, or jank fix. Never import `framer-motion`. Do not add `motion-plus` unless the user agrees.
+- **design-taste-frontend** (taste-skill, `.agents/skills/design-taste-frontend`): only when the user explicitly asks for a new marketing or landing visual world, or says a page looks generic or AI-made. Do not apply its landing house rules (one section per viewport, no captions, shaders, Tailwind) to the map shell, forms, chat, payments, or admin. Map any direction onto existing CSS tokens. Do not replace `DESIGN.md` unless the user asks for a redesign.

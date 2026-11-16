@@ -1,7 +1,7 @@
 import { useListingSearchParams } from '../hooks/useListingSearchParams'
 import { searchRentalMapInventory } from '../lib/rentalMapInventory'
 import { useChangedInputs } from '../hooks/useChangedInputs'
-import { memo, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   getRentalPost,
@@ -14,7 +14,6 @@ import {
 } from '../api'
 import { AiSearchReview } from '../components/ai/AiSearchReview'
 import { SERVICE_RETRY_MS, useHomejiLoading } from "../components/HomejiLoader.logic"
-import { GuestJourney } from '../components/landing/GuestJourney'
 import { trackFunnelEvent } from '../lib/ga4'
 
 import {
@@ -33,9 +32,7 @@ import { useGoogleMapsStatus } from "../contexts/GoogleMapsProvider.logic"
 import { useOnReconnect } from "../contexts/NetworkStatusContext.logic"
 
 import { AuthenticatedHub } from '../components/hub/AuthenticatedHub'
-import { GuestChrome } from '../components/landing/GuestChrome'
-import { GuestHero } from '../components/landing/GuestHero'
-import { GuestListingPreview } from '../components/landing/GuestListingPreview'
+import { LandingPage } from '../features/landing-hx/LandingPage'
 import {
   GUEST_DEFAULT_FOCUS,
   GUEST_DISTRICTS,
@@ -43,9 +40,6 @@ import {
   buildGuestSearchKeyword,
   wardsForDistrict,
 } from '../components/landing/guestMapAreas'
-import { GuestMapSection } from '../components/landing/GuestMapSection'
-const MissionConfetti = lazy(() => import('../components/landing/MissionConfetti').then(m => ({ default: m.MissionConfetti })))
-import { RevealText } from '../components/motion/RevealText'
 import { useNearbyGuestSchools } from '../components/landing/useNearbyGuestSchools'
 import { FeatureWorkspace } from '../components/layout/FeatureWorkspace'
 import {
@@ -985,31 +979,7 @@ function HomePageComponent() {
   )
 
   if (!isAuthenticated) {
-    return (
-      <div className="guest-landing">
-        <GuestChrome />
-        <GuestHero />
-        <GuestListingPreview />
-        <section className="guest-mission" id="mission">
-          <div className="guest-mission__grid">
-            <div className="guest-mission__copy">
-              <p className="guest-mission__eyebrow">Sứ mệnh</p>
-              <RevealText className="guest-mission__quote" text="Không chỉ tìm phòng — tìm nơi bạn thuộc về." />
-              <p className="guest-mission__body">
-                Homeji kết nối sinh viên tìm phòng, bạn cùng phòng và chủ nhà quanh Thủ Đức &amp; Q.9.
-                Minh bạch thông tin, rõ ràng quy trình — để việc chuyển nhà gần trường trở nên nhẹ nhàng
-                hơn.
-              </p>
-            </div>
-            <Suspense fallback={null}>
-              <MissionConfetti />
-            </Suspense>
-          </div>
-        </section>
-        <GuestMapSection />
-        <GuestJourney />
-      </div>
-    )
+    return <LandingPage />
   }
 
   if (isHubView) {

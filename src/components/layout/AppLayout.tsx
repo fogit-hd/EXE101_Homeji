@@ -29,6 +29,7 @@ export function AppLayout() {
   const isAuthCinema =
     location.pathname === '/login' || location.pathname === '/register'
   const isGuestLanding = location.pathname === '/' && !isAuthenticated
+  const MainTag = isGuestLanding ? 'div' : 'main'
   /** The admin workspace brings its own rail and top bar instead of the customer chrome. */
   const isAdminWorkspace = isAuthenticated && isAdminPath(location.pathname)
   const isAuthedApp =
@@ -82,12 +83,13 @@ export function AppLayout() {
           .filter(Boolean)
           .join(' ')}
       >
-        {isAdminWorkspace ? null : isAuthedApp ? <Suspense fallback={<div aria-hidden="true" style={{ height: 76 }} />}><AppShell /></Suspense> : <Navbar />}
+        {isAdminWorkspace || isGuestLanding ? null : isAuthedApp ? <Suspense fallback={<div aria-hidden="true" style={{ height: 76 }} />}><AppShell /></Suspense> : <Navbar />}
         <SiteLocationBootstrap enabled={!isAuthCinema} />
-        {!isAuthCinema && !isAdminWorkspace ? <PremiumLaunchOffer /> : null}
+        {!isAuthCinema && !isAdminWorkspace && !isGuestLanding ? <PremiumLaunchOffer /> : null}
         <SourceRoomDetailsHost />
         <ConfirmDialogHost />
-        <main className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
+        {/* The guest landing brings its own <main>; avoid nesting two. */}
+        <MainTag className={isAuthedApp ? 'main-content app-main' : 'main-content'}>
           {isAuthenticated && needsProfileSetup && !isProfile && !isAuthCinema ? <ProfileSetupNotice /> : null}
           <div
             ref={outletRef}
@@ -102,9 +104,9 @@ export function AppLayout() {
               <Outlet />
             </Suspense>
           </div>
-        </main>
-        {isAdminWorkspace || isAuthCinema ? null : <MobileTabBar />}
-        {isAdminWorkspace ? null : <SiteFooter compact={isMapPeer || isMessagesWorkspace} />}
+        </MainTag>
+        {isAdminWorkspace || isAuthCinema || isGuestLanding ? null : <MobileTabBar />}
+        {isAdminWorkspace || isGuestLanding ? null : <SiteFooter compact={isMapPeer || isMessagesWorkspace} />}
       </div>
     </SellerOrderAlertsProvider>
   )

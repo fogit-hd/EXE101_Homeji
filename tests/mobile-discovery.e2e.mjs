@@ -5,7 +5,7 @@ const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5542'
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local fixture only')
 const out='output/verification/mobile-discovery';await mkdir(out,{recursive:true})
 await writeFile(out+'/index.html','<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out+'/scene.tsx',`import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapListingsWorkspace}from'/src/components/map/listings/MapListingsWorkspace.tsx';import{GuestMapSection}from'/src/components/landing/GuestMapSection.tsx';import'/src/index.css';import'/src/pages/HomePage.css';import'/src/components/theme/dark-theme.css';import'/src/components/layout/AppLayout.css';document.documentElement.dataset.theme=new URLSearchParams(location.search).get('theme')||'light';const posts=Array.from({length:25},(_,i)=>({id:'room-'+i,type:1,title:'Phòng có cửa sổ '+i,price:2500000,area:25,address:'Lê Văn Việt, Thủ Đức',latitude:10.84,longitude:106.78}));const guest=new URLSearchParams(location.search).has('guest');createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={['/?section=listings&view=split&maxPrice=3000000']}><div style={{height:'100dvh'}}>{guest?<GuestMapSection/>:<MapListingsWorkspace posts={posts} selectedListingId="room-1" hoveredListingId={null} loading={false} error="" mapNode={<div style={{height:'100%',background:'var(--surface-muted)'}}>Bản đồ kiểm thử</div>} onHoverListing={()=>{}} onLeaveListing={()=>{}} onSelectListing={()=>{}} onResetFilters={()=>{}}/>}</div></MemoryRouter>);`)
+await writeFile(out+'/scene.tsx',`import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapListingsWorkspace}from'/src/components/map/listings/MapListingsWorkspace.tsx';import'/src/index.css';import'/src/pages/HomePage.css';import'/src/components/theme/dark-theme.css';import'/src/components/layout/AppLayout.css';document.documentElement.dataset.theme=new URLSearchParams(location.search).get('theme')||'light';const posts=Array.from({length:25},(_,i)=>({id:'room-'+i,type:1,title:'Phòng có cửa sổ '+i,price:2500000,area:25,address:'Lê Văn Việt, Thủ Đức',latitude:10.84,longitude:106.78}));createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={['/?section=listings&view=split&maxPrice=3000000']}><div style={{height:'100dvh'}}><MapListingsWorkspace posts={posts} selectedListingId="room-1" hoveredListingId={null} loading={false} error="" mapNode={<div style={{height:'100%',background:'var(--surface-muted)'}}>Bản đồ kiểm thử</div>} onHoverListing={()=>{}} onLeaveListing={()=>{}} onSelectListing={()=>{}} onResetFilters={()=>{}}/></div></MemoryRouter>);`)
 const browser=await chromium.launch({headless:true,channel:'msedge'}),results=[]
 try{
 for(const [width,height,theme]of[[320,568,'light'],[390,844,'dark'],[430,932,'light'],[1280,800,'light']]){
@@ -30,19 +30,7 @@ for(const [width,height,theme]of[[320,568,'light'],[390,844,'dark'],[430,932,'li
  }
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No horizontal overflow')
  await page.screenshot({path:out+'/'+theme+'-'+width+'.png'})
- await page.goto(base+'/'+out+'/index.html?guest&theme='+theme)
- await page.getByRole('button',{name:/Lọc khu vực/}).count()
- if(width<768){
-  assert.equal(await page.getByRole('combobox',{name:'Phường',exact:true}).isVisible(),false)
-  await page.getByRole('button',{name:/Lọc khu vực/}).click()
-  assert.equal(await page.getByRole('combobox',{name:'Phường',exact:true}).isVisible(),true)
-  await page.getByRole('button',{name:/Lọc khu vực/}).click()
-  assert.equal(await page.getByRole('combobox',{name:'Phường',exact:true}).isVisible(),false)
- }
  assert.deepEqual(errors,[]);results.push({width,height,theme,passed:true});await page.close()
 }
 console.log(JSON.stringify(results,null,2))
 }finally{await writeFile(out+'/results.json',JSON.stringify(results,null,2));await browser.close()}
-
-
-

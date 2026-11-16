@@ -35,6 +35,9 @@ public/mascot/render_*.log
 #cursor skill
 .cursor/skills
 
+# Agent skills installed from skills-lock.json (local; reinstall with npx skills)
+.agents/skills
+
 
 #FIGMA
 public/figma/

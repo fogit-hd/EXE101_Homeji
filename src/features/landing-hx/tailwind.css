@@ -1,0 +1,68 @@
+/*
+ * Tailwind v4 for the guest landing only.
+ * - prefix(tw): every utility is written tw:flex, tw:md:grid … so nothing collides with the app's global classes.
+ * - No preflight: base.css owns the reset inside .hx.
+ * - utilities.css is imported without layer() so utilities stay unlayered and win over the
+ *   app's unlayered global CSS the same way plain class rules do.
+ * - source(none) + @source: only files in this feature are scanned.
+ * - Colours map to the --hx- tokens, so dark mode keeps working through tokens.css.
+ */
+@import 'tailwindcss/theme.css' prefix(tw);
+@import 'tailwindcss/utilities.css' source(none);
+
+@source './';
+
+@theme inline {
+  --font-sans: var(--hx-font);
+
+  --color-canvas: var(--hx-bg);
+  --color-surface: var(--hx-surface);
+  --color-sunken: var(--hx-surface-sunken);
+  --color-ink: var(--hx-text);
+  --color-ink-muted: var(--hx-text-muted);
+  --color-ink-subtle: var(--hx-text-subtle);
+  --color-line: var(--hx-border);
+  --color-line-strong: var(--hx-border-strong);
+
+  --color-brand: var(--hx-primary);
+  --color-brand-hover: var(--hx-primary-hover);
+  --color-brand-on: var(--hx-primary-on);
+  --color-brand-soft: var(--hx-primary-soft);
+  --color-brand-text: var(--hx-primary-text);
+
+  --color-accent: var(--hx-accent);
+  --color-accent-hover: var(--hx-accent-hover);
+  --color-accent-on: var(--hx-accent-on);
+  --color-cta: var(--hx-cta);
+  --color-cta-hover: var(--hx-cta-hover);
+  --color-cta-on: var(--hx-cta-on);
+
+  --color-glass: var(--hx-glass);
+  --color-glass-line: var(--hx-glass-line);
+
+  --ease-hx: var(--hx-ease-out);
+
+  --shadow-card: var(--hx-shadow-md);
+  --shadow-float: var(--hx-shadow-lg);
+  --shadow-search: 0 1px 2px rgb(15 23 42 / 0.04), 0 12px 32px -12px rgb(15 23 42 / 0.16);
+
+  --animate-sheet-in: hx-sheet-in var(--hx-dur-slow) var(--hx-ease-out);
+}
+
+/* Glass tags on photos stay light in both themes: they sit on photography, not on the page. */
+.hx {
+  --hx-glass: rgb(255 255 255 / 0.78);
+  --hx-glass-line: rgb(255 255 255 / 0.7);
+}
+
+html[data-theme='dark'] .hx {
+  --hx-glass: rgb(15 23 42 / 0.72);
+  --hx-glass-line: rgb(255 255 255 / 0.14);
+}
+
+@keyframes hx-sheet-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
