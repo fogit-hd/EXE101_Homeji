@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ImgHTMLAttributes, type ReactNode } from 'react'
+import { Fragment, memo, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ImgHTMLAttributes, type ReactNode } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { ArrowRight, Camera, Flag, IdCard, Megaphone, ReceiptText, Users } from 'lucide-react'
 import { STORY, TRUST_STATS } from '../../../lib/mock/homeji'
@@ -7,6 +7,7 @@ import { SearchBar, type ListingQuery } from '../sections/SearchBar'
 import { ButtonLink } from '../ui/Button'
 import { useTheme } from '../useTheme'
 import { currentTheme, THEME_EVENT } from '../../../lib/theme'
+import { frameScrollY } from '../frameScroll'
 import { canDecodeVideo } from './video'
 import { FilmPlayer, flareAt, framesAt, frameUrl, playLapse, prefetchLapse, type FilmTime } from './film'
 import { SURFACES, fitScene, quadAt, quadMatrix, toView, type Surface } from './surfaces'
@@ -350,6 +351,15 @@ export function StoryFilm({ onSearch, onRoommates }: Actions) {
   return <PinnedStory actions={actions} />
 }
 
+/*
+ * The film re-renders when the scene, a check or the phone layout changes as the reader scrolls; the
+ * scenes' content only changes with its own checks, so it is kept out of those renders (memo, and each
+ * scene gets the check count only if it shows the checks).
+ */
+const SceneView = memo(SceneBlock)
+const SurfaceView = memo(SurfaceContent)
+const SloganView = memo(Slogan)
+
 /* ---------- The pinned film ---------- */
 
 /** Every frame a scene's content is on screen for. */
@@ -375,6 +385,20 @@ function PinnedStory({ actions }: { actions: Actions }) {
   const lastTime = useRef<FilmTime>(filmTime())
   const playerRef = useRef<FilmPlayer | null>(null)
   const surfaceRefs = useRef(new Map<string, HTMLElement>())
+  // One ref callback per surface for the life of the film: a new callback on each render would make
+  // React detach and re-attach every surface (and re-place it) whenever a scene or check changes.
+  const [surfaceRefCallbacks] = useState(() =>
+    new Map(
+      SURFACES.map(surface => [
+        surface.id,
+        (node: HTMLElement | null) => {
+          if (node) surfaceRefs.current.set(surface.id, node)
+          else surfaceRefs.current.delete(surface.id)
+          placed.current.delete(surface.id)
+        },
+      ]),
+    ),
+  )
   const [painted, setPainted] = useState(false)
   const [active, setActive] = useState(-1)
   const [checksOn, setChecksOn] = useState(0)
@@ -450,8 +474,15 @@ function PinnedStory({ actions }: { actions: Actions }) {
     }
   }, [])
 
+  // The last scroll progress the film was placed at: the easing step reuses it rather than measuring
+  // again after this frame's style writes, which would force a second restyle.
+  const lastProgress = useRef(0)
+
   const update = useCallback(() => {
+    // Read before any write this frame (see frameScroll.ts); the navbar reuses the number.
+    frameScrollY()
     const p = measure()
+    lastProgress.current = p
     // Only the layers that use them get the scroll variables; the rest of the film is untouched.
     // Each write restyles the layer's whole subtree, so write only when the value moves: the
     // hero is gone by p = 0.06 and the flare is 0 outside the door.
@@ -489,7 +520,7 @@ function PinnedStory({ actions }: { actions: Actions }) {
     const player = new FilmPlayer(canvas, () => setPainted(true), lastTime.current)
     playerRef.current = player
     if (import.meta.env.DEV) (window as unknown as { __film?: FilmPlayer }).__film = player
-    player.onAnimate = () => placeSurfaces(measure())
+    player.onAnimate = () => placeSurfaces(lastProgress.current)
     if (player.drawsFlare && flareRef.current) flareRef.current.hidden = true
     remeasure()
     player.start()
@@ -600,7 +631,7 @@ function PinnedStory({ actions }: { actions: Actions }) {
         <canvas ref={shiftRef} className="hx-film__canvas hx-film__shift" aria-hidden="true" />
 
         <div ref={heroRef} className="hx-film__hero">
-          <Slogan />
+          <SloganView />
         </div>
 
         {SCENES.map((scene, index) =>
@@ -613,15 +644,11 @@ function PinnedStory({ actions }: { actions: Actions }) {
               {SURFACES.filter(surface => surface.scene === scene.id).map(surface => (
                 <div
                   key={surface.id}
-                  ref={node => {
-                    if (node) surfaceRefs.current.set(surface.id, node)
-                    else surfaceRefs.current.delete(surface.id)
-                    placed.current.delete(surface.id)
-                  }}
+                  ref={surfaceRefCallbacks.get(surface.id)}
                   className={`hx-surface hx-surface--${surface.id}`}
                   style={{ width: SURFACE_PX[surface.id], height: Math.round((SURFACE_PX[surface.id] * surface.h) / surface.w) }}
                 >
-                  <SurfaceContent id={surface.id} checksOn={checksOn} actions={actions} />
+                  <SurfaceView id={surface.id} checksOn={surface.id.startsWith('trust-') ? checksOn : 0} actions={actions} />
                 </div>
               ))}
             </article>
@@ -632,7 +659,7 @@ function PinnedStory({ actions }: { actions: Actions }) {
               onFocus={() => reveal(scene)}
             >
               <div className="hx-film__panel-inner">
-                <SceneBlock id={scene.id} checksOn={checksOn} actions={actions} />
+                <SceneView id={scene.id} checksOn={scene.id === 'xac-minh' ? checksOn : 0} actions={actions} />
               </div>
             </article>
           ),

@@ -247,10 +247,12 @@ export class FilmPlayer {
           if (this.video && this.video !== video) {
             // The old film stops decoding but stays fetched, for the way back.
             this.video.pause()
+            for (const picture of this.uploads.values()) picture.close()
+            this.uploads.clear()
             for (const frame of this.bitmaps.keys()) this.stale.add(frame)
           }
           this.video = video
-          if (this.warp) video.onVideoFrame = (frame, picture) => this.receive(frame, this.warp ? this.warp.adopt(picture) : (picture.close(), null))
+          if (this.warp) video.onVideoFrame = (frame, picture) => this.queueUpload(frame, picture)
           else video.onFrame = (frame, bitmap) => this.receive(frame, bitmap)
           this.swapped = this.stale.size ? resolve : undefined
           this.keepAround()
@@ -278,6 +280,50 @@ export class FilmPlayer {
 
   /** Dev only: how often the picture had to hold an older frame, and decode timings. */
   stats = { holds: 0, draws: 0, received: 0, wasted: 0 }
+
+  /*
+   * The decoder hands frames over a group (8) at a time, and uploading a whole group to the GPU in one
+   * screen frame was the main cause of dropped frames while scrolling. Frames wait here and go up one
+   * per screen frame, nearest first; a frame the picture needs right now goes up at once.
+   */
+  private uploads = new Map<number, VideoFrame>()
+  private uploadRaf = 0
+
+  private queueUpload(frame: number, picture: VideoFrame) {
+    if (this.cancelled || !this.warp) return picture.close()
+    this.uploads.get(frame)?.close()
+    this.uploads.set(frame, picture)
+    if (frame === this.shownA || frame === this.shownB) this.upload(frame)
+    if (!this.uploadRaf && this.uploads.size) this.uploadRaf = requestAnimationFrame(this.pumpUploads)
+  }
+
+  private upload(frame: number) {
+    const picture = this.uploads.get(frame)
+    if (!picture) return
+    this.uploads.delete(frame)
+    if (this.warp) this.receive(frame, this.warp.adopt(picture))
+    else picture.close()
+  }
+
+  private pumpUploads = () => {
+    this.uploadRaf = 0
+    if (this.cancelled) return
+    // Let go of frames the scroll has left behind; upload the nearest of the rest.
+    let best = -1
+    let bestDistance = Infinity
+    for (const [frame, picture] of this.uploads) {
+      const distance = Math.abs(ALL_FRAMES.indexOf(frame) - this.index)
+      if (distance > KEEP + 2) {
+        picture.close()
+        this.uploads.delete(frame)
+      } else if (distance < bestDistance) {
+        best = frame
+        bestDistance = distance
+      }
+    }
+    if (best >= 0) this.upload(best)
+    if (this.uploads.size) this.uploadRaf = requestAnimationFrame(this.pumpUploads)
+  }
 
   private receive(frame: number, bitmap: Picture | null) {
     if (!bitmap) return
@@ -336,6 +382,9 @@ export class FilmPlayer {
     this.cancelled = true
     cancelAnimationFrame(this.raf)
     cancelAnimationFrame(this.later)
+    cancelAnimationFrame(this.uploadRaf)
+    for (const picture of this.uploads.values()) picture.close()
+    this.uploads.clear()
     window.clearTimeout(this.idleTimer)
     this.video?.close()
     for (const film of this.films.values()) film.then(video => video.close()).catch(() => {})
@@ -365,6 +414,9 @@ export class FilmPlayer {
       this.shownT = showing === a ? 0 : showing === b ? 1 : cut ? Math.round(t) : this.moving(a, b) ? t : soften(t)
       this.shownA = a
       this.shownB = b
+      // The two frames on screen never wait in the upload queue.
+      this.upload(a)
+      this.upload(b)
     }
     this.rawT = t
     this.cut = cut
@@ -443,7 +495,7 @@ export class FilmPlayer {
     for (let d = 0; d <= KEEP; d += 1) {
       for (const i of d === 0 ? [this.index] : [this.index + d, this.index - d]) {
         const frame = ALL_FRAMES[i]
-        if (frame !== undefined && (!this.bitmaps.has(frame) || this.stale.has(frame))) wanted.push(i)
+        if (frame !== undefined && !this.uploads.has(frame) && (!this.bitmaps.has(frame) || this.stale.has(frame))) wanted.push(i)
       }
     }
     // The film's frames are ALL_FRAMES in order, so an index here is a frame's place in the video.
