@@ -1,0 +1,176 @@
+/* Opening intro of the guest landing (LandingIntro.tsx). Values mirror tokens.css, which is not
+   loaded yet when this shows; the ground matches #hj-boot in index.html, the logo and name the
+   navbar's (.hx-logo), since they fly into it at the end. */
+.hx-intro {
+  --in-bg: #f7f1e7;
+  --in-ink: #221a14;
+  --in-mark: #354d2b;
+  --in-line: rgb(53 77 43 / 0.32);
+  --in-lamp: #ffc777;
+  --in-lamp-edge: #f08a3c;
+  --in-bloom: rgb(255 176 92 / 0.34);
+  position: fixed;
+  inset: 0;
+  z-index: 2147483001;
+  display: grid;
+  place-items: center;
+  color: var(--in-ink);
+  font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, sans-serif;
+}
+
+html[data-theme='dark'] .hx-intro {
+  --in-bg: #15110d;
+  --in-ink: #f4ebde;
+  --in-mark: #b9d3a8;
+  --in-line: rgb(185 211 168 / 0.3);
+  --in-lamp: #ffd08a;
+  --in-lamp-edge: #f2913f;
+  --in-bloom: rgb(255 170 80 / 0.28);
+}
+
+.hx-intro__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The page's ground, under everything; it fades off the page at the hand-off. */
+.hx-intro__ground {
+  position: absolute;
+  inset: 0;
+  background: var(--in-bg);
+}
+
+.hx-intro__stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 20px;
+}
+
+/* 1. A ground line drawn out from the middle, the house stands on it. */
+.hx-intro__line {
+  position: absolute;
+  /* The logo's base: 1048 of its 1264 units, on the 108px mark. */
+  top: 90px;
+  left: 50%;
+  width: min(360px, 80vw);
+  height: 1.5px;
+  margin-left: calc(min(360px, 80vw) / -2);
+  background: linear-gradient(90deg, transparent, var(--in-line) 22%, var(--in-line) 78%, transparent);
+  transform: scaleX(0);
+  animation: hx-intro-line 0.8s cubic-bezier(0.65, 0, 0.35, 1) 0.1s forwards;
+}
+
+.hx-intro__mark {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  overflow: visible;
+  transform-origin: 0 0;
+}
+
+/* 2. The logo's outline, drawn in one stroke. */
+.hx-intro__pen {
+  fill: none;
+  stroke: var(--in-mark);
+  stroke-width: 30;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hx-intro-draw 1.05s cubic-bezier(0.65, 0, 0.35, 1) 0.35s forwards;
+}
+
+/* 3. The colour rises from the ground up. */
+.hx-intro__fill { fill: var(--in-mark); }
+
+.hx-intro__level {
+  transform-box: fill-box;
+  transform: translateY(100%);
+  animation: hx-intro-rise 0.55s cubic-bezier(0.3, 0, 0.2, 1) 1.2s forwards;
+}
+
+/* 4. A light comes on inside the house, with its glow on the ground around it. */
+.hx-intro__room {
+  opacity: 0;
+  animation: hx-intro-lamp 0.7s ease-out 1.55s forwards, hx-intro-flicker 3.4s ease-in-out 2.4s infinite;
+}
+
+.hx-intro__glow {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  width: 260px;
+  height: 230px;
+  margin-left: -130px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--in-bloom), transparent);
+  opacity: 0;
+  transform: scale(0.7);
+  animation: hx-intro-bloom 1s ease-out 1.55s forwards;
+}
+
+/* 5. The name, letter by letter (the navbar's word, larger). */
+.hx-intro__word {
+  position: relative;
+  display: flex;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: normal;
+  transform-origin: 0 0;
+}
+
+.hx-intro__letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.35em);
+  animation: hx-intro-letter 0.5s cubic-bezier(0.2, 0.7, 0.1, 1) forwards;
+}
+
+/* The hand-off: the ground fades off the page, the light goes out, the logo and name fly into the bar. */
+.hx-intro.is-leaving { pointer-events: none; }
+
+.hx-intro.is-leaving .hx-intro__ground {
+  animation: hx-intro-out 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+}
+
+.hx-intro.is-leaving .hx-intro__glow,
+.hx-intro.is-leaving .hx-intro__line,
+.hx-intro.is-leaving .hx-intro__room {
+  animation: hx-intro-out 0.35s ease forwards;
+}
+
+.hx-intro.is-leaving .hx-intro__mark,
+.hx-intro.is-leaving .hx-intro__word {
+  transition: transform 0.85s cubic-bezier(0.65, 0, 0.2, 1);
+}
+
+/* The name follows a beat behind, so the two never cross on the way up. */
+.hx-intro.is-leaving .hx-intro__word { transition-delay: 0.14s; }
+
+/* The app's floating theme switch would sit on top of the intro. */
+body:has(.hx-intro) #root .theme-switch--floating { display: none; }
+
+@keyframes hx-intro-line { to { transform: scaleX(1); } }
+@keyframes hx-intro-draw { to { stroke-dashoffset: 0; } }
+@keyframes hx-intro-rise { to { transform: none; } }
+@keyframes hx-intro-lamp { 0% { opacity: 0; } 35% { opacity: 1; } 55% { opacity: 0.55; } 100% { opacity: 1; } }
+@keyframes hx-intro-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.86; } }
+@keyframes hx-intro-bloom { to { opacity: 1; transform: none; } }
+@keyframes hx-intro-letter { to { opacity: 1; transform: none; } }
+@keyframes hx-intro-out { from { opacity: 1; } to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-intro__line,
+  .hx-intro__level,
+  .hx-intro__letter,
+  .hx-intro__glow { animation: none; opacity: 1; transform: none; }
+  .hx-intro__pen { animation: none; stroke-dashoffset: 0; }
+  .hx-intro__room { animation: none; opacity: 1; }
+  .hx-intro.is-leaving .hx-intro__ground { animation-duration: 0.25s; animation-delay: 0s; }
+}

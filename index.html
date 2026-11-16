@@ -61,10 +61,10 @@
       #hj-boot { display: none }
       html[data-intro='1'] #hj-boot {
         display: block; position: fixed; inset: 0; z-index: 2147483000;
-        background:
-          radial-gradient(60% 50% at 50% 46%, rgba(0, 177, 79, 0.10) 0%, rgba(0, 177, 79, 0) 70%),
-          radial-gradient(130% 100% at 50% 40%, #ffffff 0%, #f5fcf8 45%, #eefaf3 100%);
+        /* The guest landing's ground (tokens.css --hx-bg), so the first paint leads into its skeleton. */
+        background: #f7f1e7;
       }
+      html[data-theme='dark'][data-intro='1'] #hj-boot { background: #15110d }
       html[data-intro='1'], html[data-intro='1'] body { overflow: hidden }
     </style>
   </head>

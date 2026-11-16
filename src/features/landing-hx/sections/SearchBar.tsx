@@ -58,7 +58,11 @@ function SelectField({ label, icon, value, options, onChange }: {
  * Floating search card. The two tabs switch what is searched (rooms or roommates);
  * submitting hands the query to the listings section below.
  */
-export function SearchBar({ onSearch }: { onSearch: (query: ListingQuery) => void }) {
+export function SearchBar({ onSearch, stacked = false }: {
+  onSearch: (query: ListingQuery) => void
+  /** Two fields over a full-width button at every width (for narrow hosts). */
+  stacked?: boolean
+}) {
   const [kind, setKind] = useState<ListingKind>('room')
   const [district, setDistrict] = useState('')
   const [price, setPrice] = useState('')
@@ -126,7 +130,9 @@ export function SearchBar({ onSearch }: { onSearch: (query: ListingQuery) => voi
           role="search"
           aria-label={active.label}
           onSubmit={submit}
-          className="tw:grid tw:gap-2 tw:p-1 tw:pt-2 tw:sm:grid-cols-2 tw:xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+          className={stacked
+            ? 'tw:grid tw:grid-cols-2 tw:gap-2 tw:p-1 tw:pt-2'
+            : 'tw:grid tw:gap-2 tw:p-1 tw:pt-2 tw:sm:grid-cols-2 tw:xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'}
         >
           <SelectField label="Khu vực" icon={<MapPin />} value={district} options={DISTRICT_OPTIONS} onChange={setDistrict} />
           <SelectField label={active.priceLabel} icon={<Wallet />} value={price} options={PRICE_OPTIONS} onChange={setPrice} />
@@ -134,7 +140,8 @@ export function SearchBar({ onSearch }: { onSearch: (query: ListingQuery) => voi
           <button
             type="submit"
             className={[
-              'tw:group/cta tw:inline-flex tw:h-16 tw:items-center tw:justify-center tw:gap-2 tw:rounded-xl tw:border-0 tw:px-7 tw:sm:col-span-2 tw:xl:col-span-1',
+              'tw:group/cta tw:inline-flex tw:h-16 tw:items-center tw:justify-center tw:gap-2 tw:rounded-xl tw:border-0 tw:px-7',
+              stacked ? 'tw:col-span-2' : 'tw:sm:col-span-2 tw:xl:col-span-1',
               'tw:bg-cta tw:text-[1.1875rem] tw:font-bold tw:text-cta-on tw:shadow-[0_10px_24px_-14px_rgb(15_23_42/0.55)]',
               'tw:transition-[background-color,transform,box-shadow] tw:duration-200 tw:ease-hx',
               'tw:hover:bg-cta-hover tw:hover:shadow-[0_14px_28px_-14px_rgb(15_23_42/0.6)] tw:motion-safe:hover:-translate-y-0.5 tw:active:translate-y-0 tw:active:scale-[0.98]',

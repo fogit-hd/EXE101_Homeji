@@ -24,26 +24,32 @@ export function HowItWorks() {
 
   return (
     <section id="cach-hoat-dong" className="hx-section hx-how" aria-labelledby="hx-how-title">
-      <Container>
-        <SectionHeading
-          id="hx-how-title"
-          title="Homeji hoạt động thế nào?"
-          lead="Ba bước, dù bạn đang tìm chỗ ở hay có phòng muốn cho thuê."
-          align="center"
-        />
-        <div className="hx-how__tabs">
-          <SegmentedControl
-            mode="tabs"
-            label="Chọn vai trò"
-            options={TABS}
-            value={audience}
-            onChange={setAudience}
-            tabId={value => `hx-how-tab-${value}`}
-            panelId={value => `hx-how-panel-${value}`}
+      <Container className="hx-how__layout">
+        <div className="hx-how__intro">
+          <SectionHeading
+            id="hx-how-title"
+            title="Homeji hoạt động thế nào?"
+            lead="Ba bước, dù bạn đang tìm chỗ ở hay có phòng muốn cho thuê."
           />
+          <div className="hx-how__tabs">
+            <SegmentedControl
+              mode="tabs"
+              label="Chọn vai trò"
+              options={TABS}
+              value={audience}
+              onChange={setAudience}
+              tabId={value => `hx-how-tab-${value}`}
+              panelId={value => `hx-how-panel-${value}`}
+            />
+          </div>
+          <div className="hx-how__cta">
+            <ButtonLink to={CTA[audience].to} variant={audience === 'poster' ? 'accent' : 'primary'} size="lg">
+              {CTA[audience].label}
+            </ButtonLink>
+          </div>
         </div>
 
-        <div id={`hx-how-panel-${audience}`} role="tabpanel" aria-labelledby={`hx-how-tab-${audience}`}>
+        <div id={`hx-how-panel-${audience}`} role="tabpanel" aria-labelledby={`hx-how-tab-${audience}`} className="hx-how__panel">
           <RevealGroup key={audience} as="ol" className="hx-how__steps">
             {steps.map((step, index) => (
               <RevealItem as="li" key={step.title} className="hx-how__step">
@@ -56,11 +62,6 @@ export function HowItWorks() {
               </RevealItem>
             ))}
           </RevealGroup>
-          <div className="hx-how__cta">
-            <ButtonLink to={CTA[audience].to} variant={audience === 'poster' ? 'accent' : 'primary'} size="lg">
-              {CTA[audience].label}
-            </ButtonLink>
-          </div>
         </div>
       </Container>
     </section>

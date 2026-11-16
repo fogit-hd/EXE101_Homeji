@@ -23,7 +23,11 @@ function TestimonialItem({ item }: { item: Testimonial }) {
         <p>{item.quote}</p>
       </blockquote>
       <figcaption className="hx-quote__who">
-        <span className="hx-quote__avatar" aria-hidden="true">{initials(item.name)}</span>
+        {item.avatar ? (
+          <img className="hx-quote__avatar" src={item.avatar} alt="" width={40} height={40} loading="lazy" decoding="async" />
+        ) : (
+          <span className="hx-quote__avatar" aria-hidden="true">{initials(item.name)}</span>
+        )}
         <span>
           <span className="hx-quote__name">{item.name}</span>
           <span className="hx-quote__role">{item.role}</span>
@@ -44,7 +48,6 @@ export function Testimonials() {
           title="Người trẻ nói gì về Homeji"
           lead="Từ sinh viên năm nhất tới chủ trọ có phòng cần cho thuê."
         />
-        <p className="hx-quotes__sample">Dữ liệu mẫu, chỉ hiện ở bản phát triển.</p>
         <RevealGroup as="ul" className="hx-quotes__grid">
           {TESTIMONIALS.map(item => (
             <RevealItem as="li" key={item.id}>

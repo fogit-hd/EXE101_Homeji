@@ -4,7 +4,8 @@ export const VerifySignupPage = lazy(() => import('./VerifySignupPage').then(mod
 export const ReceiptsPage = lazy(() => import('./ReceiptsPage').then(module => ({ default: module.ReceiptsPage })))
 
 // Reuse the same lazy identity in standalone routes, map panels and workspaces.
-export const HomePage = lazy(() => import('./HomePage').then(module => ({ default: module.HomePage })))
+// Guests and members get different pages on "/", each in its own chunk (HomeRoute).
+export const HomePage = lazy(() => import('./HomeRoute').then(module => ({ default: module.HomeRoute })))
 export const ExplorePage = lazy(() => import('./ExplorePage').then(module => ({ default: module.ExplorePage })))
 export const LoginPage = lazy(() => import('./LoginPage').then(module => ({ default: module.LoginPage })))
 export const RegisterPage = lazy(() => import('./RegisterPage').then(module => ({ default: module.RegisterPage })))

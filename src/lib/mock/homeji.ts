@@ -32,6 +32,8 @@ export type Testimonial = {
   /** e.g. "Sinh viên năm 2, ĐH Bách Khoa" or "Chủ trọ ở Thủ Đức". */
   role: string
   audience: 'student' | 'landlord'
+  /** Square photo under public/, shown in place of the initials. */
+  avatar?: string
   quote: string
   /** 1–5. */
   rating: number
@@ -69,7 +71,7 @@ export type ListingImage = {
  * its room type (provenance in public/landing/hero/README.md and public/landing/listings/README.md).
  * Swap in the owner's real photos once listings come from the API.
  */
-function photo(dir: 'hero' | 'listings', name: string, width: number, height: number, alt: string): ListingImage {
+function photo(dir: 'hero' | 'listings' | 'diorama', name: string, width: number, height: number, alt: string): ListingImage {
   return {
     src: `/landing/${dir}/${name}-${width}.webp`,
     srcSmall: `/landing/${dir}/${name}-${width / 2}.webp`,
@@ -80,14 +82,19 @@ function photo(dir: 'hero' | 'listings', name: string, width: number, height: nu
 }
 
 /**
- * The hero's three photos are three of the listings below, so a click on a tile
- * can scroll to and highlight that exact card. `label` is the short name on the tile.
+ * Blender stills of the story's sets, all Poly Haven CC0 models on one plinth
+ * (provenance in public/landing/diorama/README.md). On wide screens the acts
+ * scrub through the rendered sequence instead; these stand in on phones,
+ * tablets and with reduced motion. `room` is the hero.
  */
-export const HERO_SHOWCASE: { listingId: string; label: string }[] = [
-  { listingId: 'l-studio', label: 'Studio cửa sổ lớn' },
-  { listingId: 'l-shared', label: 'Căn hộ ở ghép, còn 1 chỗ' },
-  { listingId: 'l-kitchen', label: 'Phòng có bếp riêng' },
-]
+export type DioramaState = 'room' | 'street' | 'tea' | 'night'
+
+export const DIORAMA: Record<DioramaState, ListingImage> = {
+  room: photo('diorama', 'room-found', 1600, 1376, 'Mô hình 3D một phòng trọ ở TP.HCM: giường sắt đơn, bàn học có laptop và đèn cạnh cửa sổ song sắt, ghế nhựa, ấm đun nước và đồng hồ treo tường.'),
+  street: photo('diorama', 'set-street', 1280, 1100, 'Góc vỉa hè dưới cột đèn đường: hai chiếc vali cũ, vài thùng carton và bốt điện thoại công cộng trên bức tường trống.'),
+  tea: photo('diorama', 'set-tea', 1280, 1100, 'Bàn gỗ nhỏ với ấm trà và hai tách, hai ghế nhựa kê đối diện nhau trên tấm chiếu.'),
+  night: photo('diorama', 'room-night', 1280, 1100, 'Căn phòng trọ buổi tối, đèn vàng ấm và đèn bàn bật sáng, đã có người dọn vào ở.'),
+}
 
 export const SHOW_SAMPLE_TESTIMONIALS = import.meta.env.DEV
 
@@ -171,7 +178,7 @@ export const LISTINGS: Listing[] = [
     area: 28,
     address: 'Đường Lê Văn Việt, Hiệp Phú',
     district: 'Quận 9 (cũ)',
-    tags: ['roommate', 'new'],
+    tags: ['roommate', 'verified', 'new'],
     image: photo('listings', 'garden-shared', 1280, 960, 'Phòng ở ghép hai giường đơn ga hồng, tủ gỗ chung, sàn gạch đỏ và cửa sổ nhìn ra vườn có cây chuối'),
     owner: { name: 'Minh Thư', role: 'Người tìm ở ghép' },
   },
@@ -207,7 +214,7 @@ export const LISTINGS: Listing[] = [
     area: 26,
     address: 'Đường Quang Trung, Phường 10',
     district: 'Gò Vấp',
-    tags: ['roommate', 'available'],
+    tags: ['roommate', 'verified', 'available'],
     image: photo('listings', 'loft-shared', 1280, 960, 'Phòng trọ có gác gỗ đặt hai nệm, bên dưới kệ nhỏ, quạt đứng, giá treo đồ và cửa sổ lá sách'),
     owner: { name: 'Lan Anh', role: 'Người tìm ở ghép' },
   },
@@ -216,49 +223,55 @@ export const LISTINGS: Listing[] = [
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't-01',
-    name: 'Ngọc Hân',
-    role: 'Sinh viên năm 1, ĐH Kinh tế – Luật',
+    name: 'Dương Duy',
+    role: 'Sinh viên ĐH FPT, Kỹ thuật phần mềm',
+    avatar: '/landing/team/duy.webp',
     audience: 'student',
     quote: 'Mới lên thành phố, mình sợ nhất là cọc nhầm phòng ảo. Lọc tin đã xác minh xong là yên tâm đi xem luôn.',
     rating: 5,
   },
   {
     id: 't-02',
-    name: 'Đức Minh',
-    role: 'Sinh viên năm 3, ĐH Nông Lâm',
+    name: 'Phạm Hải',
+    role: 'Sinh viên ĐH FPT, Quan hệ công chúng',
+    avatar: '/landing/team/hai.webp',
     audience: 'student',
     quote: 'Mình cần bạn ở ghép cùng giờ học. Trên Homeji nhắn được luôn, rồi hẹn xem phòng chung một buổi.',
     rating: 5,
   },
   {
     id: 't-03',
-    name: 'Thu Hà',
-    role: 'Người đi làm, Quận 9 (cũ)',
+    name: 'Huỳnh Phong',
+    role: 'Sinh viên ĐH FPT, Kỹ thuật phần mềm',
+    avatar: '/landing/team/phong.webp',
     audience: 'student',
     quote: 'Lọc tin đã xác minh gần chỗ làm, mình đặt lịch xem phòng trong ngày mà không phải gọi lòng vòng.',
     rating: 4,
   },
   {
     id: 't-04',
-    name: 'Hoàng Nam',
-    role: 'Sinh viên năm 2, ĐH SPKT',
+    name: 'Dương Nguyễn',
+    role: 'Sinh viên ĐH FPT, Quan hệ công chúng',
+    avatar: '/landing/team/duong.webp',
     audience: 'student',
     quote: 'Tìm được bạn ở ghép hợp giờ ngủ. Chat trên app rồi cùng xuống xem phòng, đỡ phải đoán mò.',
     rating: 5,
   },
   {
     id: 't-05',
-    name: 'Cô Thanh',
-    role: 'Chủ trọ ở Bình Thạnh',
-    audience: 'landlord',
+    name: 'Khoa Hồ',
+    role: 'Sinh viên ĐH FPT, Kỹ thuật phần mềm',
+    avatar: '/landing/team/khoa.webp',
+    audience: 'student',
     quote: 'Đăng tin xong có người thuê nhắn hỏi lịch xem phòng ngay. Mình trả lời một chỗ, khỏi rải tin khắp nhóm.',
     rating: 5,
   },
   {
     id: 't-06',
-    name: 'Anh Khoa',
-    role: 'Chủ trọ ở Thủ Đức',
-    audience: 'landlord',
+    name: 'Hương Nguyễn',
+    role: 'Sinh viên ĐH FPT, Quản trị kinh doanh',
+    avatar: '/landing/team/huong.webp',
+    audience: 'student',
     quote: 'Tin có huy hiệu xác minh thì người thuê hỏi nghiêm túc hơn. Mình nhận được tin nhắn đặt lịch xem rõ ràng.',
     rating: 4,
   },

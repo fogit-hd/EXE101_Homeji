@@ -1,0 +1,850 @@
+/*
+ * The opening film (StoryFilm.tsx). The scene is dusk light in both themes, so
+ * its text is warm cream on dark scrims whatever the site theme is.
+ */
+.hx .hx-film {
+  --film-ink: #fbf3e4;
+  --film-ink-soft: #ffd2a1;
+  --film-ink-muted: rgb(251 243 228 / 0.84);
+  --film-night: #1d1712;
+  --film-scrim: 24 16 11;
+  /* The bar tucks away while scrolling down, so the pinned stage takes the whole screen. */
+  --film-stage: 100svh;
+  position: relative;
+  height: calc(var(--film-vh, 3200) * 1vh);
+  background: var(--film-night);
+  color: var(--film-ink);
+}
+
+.hx .hx-film__stage {
+  position: sticky;
+  top: 0;
+  height: var(--film-stage);
+  overflow: clip;
+  isolation: isolate;
+}
+
+.hx .hx-film__canvas,
+.hx .hx-film__poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hx .hx-film__canvas,
+.hx .hx-film__poster {
+  object-fit: cover;
+}
+
+/* A theme change: the old picture (or the sunset / sunrise) sits on top, then fades into the new film. */
+.hx .hx-film__shift {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.hx .hx-film__shift.is-on {
+  opacity: 1;
+  transition: none;
+}
+
+/* ---------- Hero: the slogan over the house ---------- */
+.hx .hx-film__hero {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Dusk falls from the top: the slogan reads on the sky and the roofline, never on bare facade. */
+.hx .hx-film__hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 62%;
+  background: linear-gradient(180deg, rgb(18 11 8 / 0.62), rgb(18 11 8 / 0.34) 55%, transparent);
+  opacity: calc(1 - var(--p, 0) * 18);
+}
+
+.hx .hx-film__slogan {
+  position: absolute;
+  inset-inline: 0;
+  /* Clear of the bar, which is back whenever the reader scrolls up to the top. */
+  top: calc(var(--hx-nav-h) + 4vh);
+  margin: 0;
+  text-align: center;
+  font-size: clamp(3rem, 6.6vw, 7.75rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  word-spacing: 0.1em;
+  color: var(--film-ink);
+  text-shadow: 0 0.03em 0.08em rgb(20 10 5 / 0.5), 0 0.05em 0.4em rgb(20 10 5 / 0.45);
+  opacity: calc(1 - var(--p, 0) * 18);
+  transform: translateY(calc(var(--p, 0) * -90vh));
+}
+
+.hx .hx-film__line {
+  display: block;
+  overflow: clip;
+  padding: 0.24em 0.08em 0.2em;
+  margin-block: -0.2em;
+  white-space: nowrap;
+}
+
+.hx .hx-film__line--2 {
+  color: var(--film-ink-soft);
+}
+
+.hx .hx-film__word {
+  display: inline-block;
+  animation: hx-film-word 1100ms cubic-bezier(0.2, 0.7, 0.1, 1) both;
+  animation-delay: calc(var(--i) * 110ms + 200ms);
+}
+
+@keyframes hx-film-word {
+  from {
+    transform: translateY(105%);
+    filter: blur(10px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    filter: none;
+    opacity: 1;
+  }
+}
+
+/* ---------- Corner panels ---------- */
+.hx .hx-film__panel {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  width: min(48vw, 42rem);
+  display: grid;
+  align-content: center;
+  padding: 6vh 4vw;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 450ms ease;
+}
+
+.hx .hx-film__panel.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hx .hx-film__panel--left {
+  left: 0;
+  background: linear-gradient(90deg, rgb(var(--film-scrim) / 0.8), rgb(var(--film-scrim) / 0.55) 62%, transparent);
+}
+
+.hx .hx-film__panel--right {
+  right: 0;
+  padding-left: 7vw;
+  background: linear-gradient(270deg, rgb(var(--film-scrim) / 0.8), rgb(var(--film-scrim) / 0.55) 62%, transparent);
+}
+
+.hx .hx-film__panel-inner {
+  max-width: 34rem;
+  transform: translateY(18px);
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+
+.hx .hx-film__panel.is-on .hx-film__panel-inner {
+  transform: none;
+}
+
+.hx .hx-film__kicker {
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  color: var(--film-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.hx .hx-film__h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 1.1rem + 2.2vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  color: var(--film-ink);
+}
+
+.hx .hx-film__h2--sm {
+  font-size: clamp(1.75rem, 1.1rem + 1.6vw, 2.6rem);
+}
+
+.hx .hx-film__h3 {
+  margin: 0;
+  font-size: clamp(1.3rem, 1rem + 0.8vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--film-ink);
+}
+
+.hx .hx-film__body {
+  margin: 14px 0 0;
+  max-width: 46ch;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--film-ink-muted);
+}
+
+.hx .hx-film__h2 + .hx-film__body,
+.hx .hx-film__kicker + .hx-film__body {
+  margin-top: 14px;
+}
+
+.hx .hx-film__chapter {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid rgb(251 243 228 / 0.22);
+}
+
+/* Trust: the three checks light up one by one with the scroll. */
+.hx .hx-film__checks {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hx .hx-film__checks li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+  opacity: 0.68;
+  transition: opacity 400ms ease, background-color 400ms ease, border-color 400ms ease;
+}
+
+.hx .hx-film__checks li.is-on {
+  opacity: 1;
+  border-color: rgb(110 231 183 / 0.35);
+  background: rgb(255 255 255 / 0.1);
+}
+
+.hx .hx-film__check-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(6 78 59 / 0.85);
+  color: #6ee7b7;
+}
+
+.hx .hx-film__check-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.hx .hx-film__checks strong {
+  display: block;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  color: var(--film-ink);
+}
+
+.hx .hx-film__check-body {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--film-ink-muted);
+}
+
+.hx .hx-film__report {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--film-ink-muted);
+}
+
+.hx .hx-film__report strong {
+  color: var(--film-ink);
+}
+
+.hx .hx-film__report svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: #fb923c;
+}
+
+.hx .hx-film__search {
+  margin-top: 22px;
+}
+
+.hx .hx-film__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+/* The outline button reads on the dark scrim. */
+.hx .hx-film .hx-film__ghost,
+.hx .hx-film .hx-film__ghost:hover {
+  border-color: rgb(251 243 228 / 0.55);
+  background: rgb(255 255 255 / 0.04);
+  color: var(--film-ink);
+}
+
+.hx .hx-film .hx-film__ghost:hover {
+  border-color: var(--film-ink);
+  background: rgb(255 255 255 / 0.12);
+}
+
+.hx .hx-film__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 30px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid rgb(251 243 228 / 0.22);
+}
+
+.hx .hx-film__stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+  padding-inline: 0 14px;
+}
+
+.hx .hx-film__stats > div + div {
+  padding-left: 14px;
+  border-left: 1px solid rgb(251 243 228 / 0.22);
+}
+
+.hx .hx-film__stats dt {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--film-ink-muted);
+}
+
+.hx .hx-film__stats dt a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgb(251 243 228 / 0.4);
+  text-underline-offset: 3px;
+}
+
+.hx .hx-film__stats dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--film-ink);
+}
+
+/* ---------- The door flare: a bloom from the doorway plus a horizontal streak ---------- */
+.hx .hx-film__flare {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: var(--flare, 0);
+  mix-blend-mode: screen;
+}
+
+.hx .hx-film__flare::before,
+.hx .hx-film__flare::after {
+  content: '';
+  position: absolute;
+}
+
+.hx .hx-film__flare::before {
+  left: 50%;
+  top: 55%;
+  width: 160vmax;
+  height: 160vmax;
+  translate: -50% -50%;
+  scale: calc(0.25 + var(--flare, 0) * 0.9);
+  background: radial-gradient(closest-side, #fffaf0 0%, #fff1d6 14%, rgb(255 205 140 / 0.75) 32%, rgb(255 170 90 / 0.25) 58%, transparent 75%);
+}
+
+.hx .hx-film__flare::after {
+  left: -10%;
+  right: -10%;
+  top: 55%;
+  height: 3.2vh;
+  translate: 0 -50%;
+  scale: 1 calc(0.4 + var(--flare, 0));
+  background: radial-gradient(closest-side, #ffffff, rgb(255 236 200 / 0.85) 40%, transparent 100%);
+  filter: blur(2px);
+}
+
+/* In-page targets: `--at` is the scroll progress the link lands on. */
+.hx .hx-film__anchor {
+  position: absolute;
+  left: 0;
+  top: calc(var(--at) * (100% - var(--film-stage)));
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* ---------- Phones: panels become a sheet over a bottom scrim ---------- */
+@media (max-width: 760px) {
+  .hx .hx-film__slogan {
+    top: 5vh;
+    font-size: clamp(2.6rem, 12.6vw, 4.6rem);
+  }
+
+  .hx .hx-film__line {
+    white-space: normal;
+  }
+
+  .hx .hx-film__panel,
+  .hx .hx-film__panel--left,
+  .hx .hx-film__panel--right {
+    left: 0;
+    right: 0;
+    top: auto;
+    width: auto;
+    max-height: 100%;
+    align-content: end;
+    padding: 18vh 16px 24px;
+    background: linear-gradient(0deg, rgb(var(--film-scrim) / 0.92), rgb(var(--film-scrim) / 0.72) 70%, transparent);
+  }
+
+  .hx .hx-film__h2 {
+    font-size: clamp(1.6rem, 7vw, 2.1rem);
+  }
+
+  .hx .hx-film__h2--sm {
+    font-size: clamp(1.45rem, 6.2vw, 1.9rem);
+  }
+
+  .hx .hx-film__h3 {
+    font-size: 1.2rem;
+  }
+
+  .hx .hx-film__body {
+    margin-top: 10px;
+    font-size: 0.9375rem;
+  }
+
+  .hx .hx-film__chapter {
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+
+  .hx .hx-film__checks {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .hx .hx-film__checks li {
+    padding: 10px 12px;
+  }
+
+  .hx .hx-film__check-body {
+    display: none;
+  }
+
+  .hx .hx-film__checks li.is-on:last-of-type .hx-film__check-body,
+  .hx .hx-film__checks li.is-on:not(:has(+ li.is-on)) .hx-film__check-body {
+    display: block;
+  }
+
+  .hx .hx-film__report {
+    display: none;
+  }
+
+  .hx .hx-film__search {
+    margin-top: 14px;
+  }
+
+  .hx .hx-film__actions {
+    margin-top: 18px;
+  }
+
+  .hx .hx-film__actions > * {
+    flex: 1 1 100%;
+  }
+
+  .hx .hx-film__stats {
+    margin-top: 18px;
+    padding-top: 14px;
+  }
+
+  .hx .hx-film__stats dd {
+    font-size: 1.25rem;
+  }
+
+  /* Inside the house the frame's lower half holds the objects, so the picture
+     takes the top of the screen and the content sits under it, never over it. */
+  .hx .hx-film__canvas,
+  .hx .hx-film__poster {
+    transition: height 450ms cubic-bezier(0.2, 0.7, 0.1, 1);
+  }
+
+  .hx .hx-film.is-inside .hx-film__canvas {
+    height: 42%;
+  }
+
+  .hx .hx-film.is-inside .hx-film__stage {
+    background: var(--film-night);
+  }
+
+  .hx .hx-film.is-inside .hx-film__panel {
+    top: 42%;
+    max-height: none;
+    align-content: start;
+    padding: 20px 16px 20px;
+    background: linear-gradient(180deg, rgb(var(--film-scrim) / 0.4), var(--film-night) 28px);
+  }
+}
+
+/* ---------- Reduced motion: the scenes as stills in the flow ---------- */
+.hx .hx-film.is-static {
+  height: auto;
+}
+
+.hx .hx-film.is-static .hx-film__hero {
+  position: relative;
+  pointer-events: auto;
+}
+
+.hx .hx-film.is-static .hx-film__still {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 72svh;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.hx .hx-film.is-static .hx-film__slogan {
+  opacity: 1;
+  transform: none;
+}
+
+.hx .hx-film.is-static .hx-film__word {
+  animation: none;
+}
+
+.hx .hx-film.is-static .hx-film__scene {
+  display: grid;
+}
+
+.hx .hx-film.is-static .hx-film__panel {
+  position: static;
+  width: auto;
+  opacity: 1;
+  pointer-events: auto;
+  padding: 40px max(var(--hx-gutter), 6vw) 56px;
+  background: var(--film-night);
+}
+
+.hx .hx-film.is-static .hx-film__checks li {
+  opacity: 1;
+}
+
+@media (max-width: 760px) {
+  .hx .hx-film.is-static .hx-film__slogan {
+    top: 3vh;
+  }
+
+  .hx .hx-film.is-static .hx-film__check-body,
+  .hx .hx-film.is-static .hx-film__report {
+    display: block;
+  }
+}
+
+/* ---------- In-world content (landscape): laid on the scene's walls and table tops ---------- */
+.hx .hx-world {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.hx .hx-surface {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  /* The box is placed by a matrix3d each frame (surfaces.ts); keep its text crisp while it moves. */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.hx .hx-world.is-on .hx-surface {
+  pointer-events: auto;
+}
+
+/* Lettering appears on the wall line by line, the way decals are pressed on: in the wall's own plane. */
+.hx .hx-surface > *,
+.hx .hx-wall__home > div > * {
+  opacity: 0;
+  translate: 0 0.35em;
+  /* No blur here: a blurred layer under a moving matrix3d re-rasterises every frame and made the scroll stutter. */
+  transition: opacity 500ms ease, translate 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+
+.hx .hx-world.is-on .hx-surface > *,
+.hx .hx-world.is-on .hx-wall__home > div > * {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.hx .hx-world.is-on .hx-surface > :nth-child(2) { transition-delay: 90ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(3) { transition-delay: 180ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(4) { transition-delay: 270ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(5) { transition-delay: 360ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(6) { transition-delay: 450ms; }
+
+/* Wall lettering: dark ink multiplied into the paint, so the wall's light and grain show through. */
+.hx .hx-surface {
+  --ink: #2a1f18;
+  --ink-soft: #5a4636;
+  --ink-accent: #9a3412;
+  color: var(--ink);
+}
+
+.hx .hx-surface .hx-film__kicker,
+.hx .hx-wall__kicker {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--ink-accent);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__h2 {
+  margin: 0;
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  color: var(--ink);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__h2--sm {
+  font-size: 36px;
+}
+
+.hx .hx-wall__h2--line {
+  font-size: 52px;
+  white-space: nowrap;
+}
+
+.hx .hx-wall__h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__body {
+  margin: 10px 0 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  mix-blend-mode: multiply;
+  text-wrap: pretty;
+}
+
+.hx .hx-wall__body--wide {
+  font-size: 20px;
+}
+
+.hx .hx-wall__rule {
+  height: 3px;
+  width: 72px;
+  margin: 22px 0 18px;
+  border-radius: 2px;
+  background: var(--ink-accent);
+  mix-blend-mode: multiply;
+}
+
+/* Trust: one note above each object on the table, with a hairline down to it. */
+.hx .hx-wall__check {
+  position: relative;
+  height: 100%;
+  opacity: 0.18;
+  transition: opacity 500ms ease;
+}
+
+.hx .hx-wall__check.is-on {
+  opacity: 1;
+}
+
+.hx .hx-wall__step {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 0 10px;
+  border: 2px solid var(--ink-accent);
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink-accent);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__check-title {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__check-body {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__search {
+  margin-top: 20px;
+}
+
+.hx .hx-wall__home {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  grid-template-areas: 'text actions' 'stats stats';
+  column-gap: 32px;
+  align-items: start;
+}
+
+.hx .hx-wall__home > :first-child {
+  grid-area: text;
+}
+
+.hx .hx-wall__home > :nth-child(2) {
+  display: contents;
+}
+
+.hx .hx-wall__home .hx-wall__actions {
+  grid-area: actions;
+  margin-top: 30px;
+}
+
+.hx .hx-wall__home .hx-film__stats {
+  grid-area: stats;
+}
+
+.hx .hx-wall__home .hx-film__stats {
+  border-top-color: rgb(42 31 24 / 0.25);
+}
+
+.hx .hx-wall__home .hx-film__stats > div + div {
+  border-left-color: rgb(42 31 24 / 0.25);
+}
+
+.hx .hx-wall__home .hx-film__stats dt,
+.hx .hx-wall__home .hx-film__stats dd {
+  color: var(--ink);
+  mix-blend-mode: multiply;
+}
+
+.hx .hx-wall__home .hx-film__stats dt a {
+  text-decoration-color: rgb(42 31 24 / 0.4);
+}
+
+.hx .hx-wall__actions {
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 4px;
+}
+
+.hx .hx-surface .hx-film__ghost,
+.hx .hx-surface .hx-film__ghost:hover {
+  border-color: rgb(42 31 24 / 0.5);
+  background: rgb(255 255 255 / 0.35);
+  color: var(--ink);
+}
+
+/* Roommate: a paper card lying on the tea table. */
+.hx .hx-teacard {
+  height: 100%;
+  padding: 16px 16px 14px;
+  border-radius: 6px;
+  background: #f8f2e7;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.18), 0 18px 24px -14px rgb(20 10 4 / 0.7);
+  color: var(--ink);
+}
+
+.hx .hx-teacard .hx-film__kicker {
+  margin-bottom: 8px;
+  font-size: 13px;
+  mix-blend-mode: normal;
+}
+
+.hx .hx-teacard__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.hx .hx-teacard__body {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.hx .hx-teacard__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #2a1f18;
+  color: #fbf3e4;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hx .hx-teacard__button:hover {
+  background: #4a3426;
+}
+
+.hx .hx-teacard__button svg {
+  width: 18px;
+  height: 18px;
+}

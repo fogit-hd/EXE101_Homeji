@@ -174,16 +174,17 @@
   margin-bottom: clamp(32px, 3vw + 16px, 56px);
 }
 
-.hx-heading--center { justify-content: center; text-align: center; }
+.hx-heading--center { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .hx-heading--center .hx-heading__lead { margin-inline: auto; }
 
 .hx-heading__text { max-width: 720px; }
 
 .hx-heading__title {
-  font-size: var(--hx-text-3xl);
+  font-size: clamp(2rem, 1.2rem + 3vw, 3.5rem);
   font-weight: 800;
-  line-height: var(--hx-leading-tight);
-  letter-spacing: var(--hx-tracking-display);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
 }
 
 .hx-heading__lead {

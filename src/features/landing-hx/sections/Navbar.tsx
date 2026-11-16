@@ -1,74 +1,29 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
-import { ArrowUpRight, House, Menu, Moon, Sun, X } from 'lucide-react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { applyTheme, currentTheme, THEME_EVENT, type Theme } from '../../../lib/theme'
+import { ThemeSwitch } from '../../../components/theme/ThemeSwitch'
+import { LANDING_GLASS } from '../ui/glass'
+import { BrandMark } from '../ui/BrandMark'
 import { IconButton } from '../ui/primitives'
+import { jumpToSection } from '../jump'
 
-export type NavItem = { label: string; to: string; onSelect?: () => void }
-
-function subscribeTheme(listener: () => void) {
-  window.addEventListener(THEME_EVENT, listener)
-  return () => window.removeEventListener(THEME_EVENT, listener)
-}
-
-function useTheme(): [Theme, () => void] {
-  const theme = useSyncExternalStore(subscribeTheme, currentTheme, (): Theme => 'light')
-  return [theme, () => applyTheme(theme === 'dark' ? 'light' : 'dark', true)]
-}
+/** A picture card in a nav word's panel (nav-cards). */
+export type NavCard = { id: string; title: string; meta: string; image: { src: string; alt: string }; onSelect: () => void }
+export type NavItem = { label: string; to: string; onSelect?: () => void; cards?: NavCard[] }
 
 export function Logo() {
   return (
     <Link to="/" className="hx-logo" aria-label="Homeji, về trang chủ">
-      <span className="hx-logo__mark" aria-hidden="true"><House /></span>
+      <BrandMark className="hx-logo__mark" />
       <span className="hx-logo__word">Homeji</span>
     </Link>
   )
 }
 
-/* Links in .hx get `color: inherit` on hover from base.css, so every link here names its hover colour. */
-const DESKTOP_LINK = [
-  'tw:relative tw:inline-flex tw:min-h-11 tw:items-center tw:px-3.5',
-  'tw:text-[15px] tw:font-medium tw:text-ink-muted tw:transition-colors tw:duration-200 tw:ease-hx',
-  'tw:hover:text-ink tw:focus-visible:text-ink',
-  // A hairline that draws in from the left on hover.
-  'tw:after:absolute tw:after:inset-x-3.5 tw:after:bottom-2 tw:after:h-px tw:after:origin-left tw:after:scale-x-0 tw:after:bg-current',
-  'tw:after:transition-transform tw:after:duration-300 tw:after:ease-hx tw:hover:after:scale-x-100',
-].join(' ')
-
-const SHEET_LINK = [
-  'tw:flex tw:min-h-13 tw:items-center tw:rounded-xl tw:px-3.5',
-  'tw:text-lg tw:font-semibold tw:text-ink tw:transition-colors tw:duration-200',
-  'tw:hover:bg-sunken tw:hover:text-ink',
-].join(' ')
-
-const CTA_BASE = [
-  'tw:group tw:inline-flex tw:items-center tw:justify-center tw:gap-1.5 tw:whitespace-nowrap tw:rounded-xl',
-  // #C2410C here, not #EA580C: the label is under 19px, and white on #EA580C only passes AA for large text.
-  'tw:bg-accent tw:font-semibold tw:text-accent-on tw:shadow-[0_1px_2px_rgb(15_23_42/0.12)]',
-  'tw:transition-[background-color,transform] tw:duration-200 tw:ease-hx',
-  'tw:hover:bg-accent-hover tw:hover:text-accent-on tw:motion-safe:hover:-translate-y-px tw:active:translate-y-0 tw:active:scale-[0.98]',
-].join(' ')
-// The header copy is secondary: in the first view the hero's "Tìm kiếm" is the one orange action.
-const CTA = [
-  'tw:group tw:inline-flex tw:min-h-11 tw:items-center tw:justify-center tw:gap-1.5 tw:whitespace-nowrap tw:rounded-xl tw:px-4 tw:sm:px-5',
-  'tw:border tw:border-line-strong tw:bg-surface tw:text-sm tw:font-semibold tw:text-ink',
-  'tw:transition-[border-color,color,transform] tw:duration-200 tw:ease-hx',
-  'tw:hover:border-brand tw:hover:text-brand-text tw:motion-safe:hover:-translate-y-px tw:active:translate-y-0 tw:active:scale-[0.98]',
-].join(' ')
-const CTA_LARGE = `${CTA_BASE} tw:min-h-14 tw:text-base`
-
-/** Scrolls to an in-page section and moves focus to its heading, as the hero search does. */
+/** Jumps to an in-page section and moves focus to its heading, as the hero search does. */
 function goToSection(hash: string) {
   const target = document.querySelector<HTMLElement>(hash)
-  if (!target) return
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  history.pushState(null, '', hash)
-  target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
-  const heading = target.querySelector<HTMLElement>('h2')
-  if (heading) {
-    heading.setAttribute('tabindex', '-1')
-    heading.focus({ preventScroll: true })
-  }
+  if (target) jumpToSection(target, hash)
 }
 
 function NavLink({ item, className, onNavigate }: { item: NavItem; className: string; onNavigate?: (to: string) => void }) {
@@ -81,10 +36,9 @@ function NavLink({ item, className, onNavigate }: { item: NavItem; className: st
           item.onSelect?.()
           // Inside the sheet the jump waits until the modal has closed (see Navbar onClose):
           // a native jump while the dialog is open lands short once focus returns to the menu button.
-          if (onNavigate) {
-            event.preventDefault()
-            onNavigate(item.to)
-          }
+          event.preventDefault()
+          if (onNavigate) onNavigate(item.to)
+          else goToSection(item.to)
         }}
       >
         {item.label}
@@ -116,53 +70,106 @@ function trapFocus(event: KeyboardEvent<HTMLDialogElement>) {
   }
 }
 
-/** Language switch is presentational for now: the app has no i18n layer yet. */
-/** `display` is a prop so callers can swap it (e.g. hidden on mobile) without two display utilities fighting. */
-function LanguageSwitch({ display = 'tw:inline-flex' }: { display?: string }) {
-  const [lang, setLang] = useState<'vi' | 'en'>('vi')
+/** The full-width panel under the bar: three or four picture cards for one nav word. */
+function CardsPanel({ item, open, onPick, onEnter, onLeave }: {
+  item: NavItem
+  open: boolean
+  onPick: () => void
+  onEnter: () => void
+  onLeave: () => void
+}) {
   return (
-    <div className={`${display} tw:items-center tw:rounded-xl tw:border tw:border-line tw:bg-surface tw:p-0.5`} role="group" aria-label="Ngôn ngữ">
-      {(['vi', 'en'] as const).map(code => (
-        <button
-          key={code}
-          type="button"
-          aria-pressed={lang === code}
-          onClick={() => setLang(code)}
-          className={[
-            'tw:min-h-11 tw:min-w-11 tw:rounded-[10px] tw:border-0 tw:text-xs tw:font-bold tw:tracking-wide tw:transition-colors tw:duration-200',
-            lang === code ? 'tw:bg-ink tw:text-surface' : 'tw:bg-transparent tw:text-ink-subtle tw:hover:text-ink',
-          ].join(' ')}
-        >
-          {code.toUpperCase()}
-        </button>
-      ))}
+    <div
+      id="hx-nav-panel"
+      className={`hx-nav__panel${open ? ' is-open' : ''}`}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      // Closed, the panel is out of the Tab order and the accessibility tree.
+      inert={!open}
+    >
+      <ul className="hx-nav__cards">
+        {item.cards!.map(card => (
+          <li key={card.id}>
+            <a
+              className="hx-nav__card"
+              href={item.to}
+              onClick={event => {
+                event.preventDefault()
+                card.onSelect()
+                onPick()
+                goToSection(item.to)
+              }}
+            >
+              <span className="hx-nav__card-media">
+                <img src={card.image.src} alt={card.image.alt} loading="lazy" decoding="async" />
+              </span>
+              <span className="hx-nav__card-title">{card.title}</span>
+              <span className="hx-nav__card-meta">{card.meta}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
 
 export function Navbar({ items }: { items: NavItem[] }) {
-  const [theme, toggleTheme] = useTheme()
-  const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const sentinel = useRef<HTMLDivElement>(null)
+  const [panel, setPanel] = useState(false)
   const sheet = useRef<HTMLDialogElement>(null)
   const menuButton = useRef<HTMLButtonElement>(null)
+  const hoverTimer = useRef(0)
   // Section a sheet link asked for; consumed once the dialog has closed.
   const pendingHash = useRef<string | null>(null)
+  const panelItem = items.find(item => item.cards?.length)
 
   const navigateFromSheet = (to: string) => {
     if (to.startsWith('#')) pendingHash.current = to
     setOpen(false)
   }
 
-  // A sentinel above the bar flips the frosted state; no scroll listener.
+  // The panel opens after a short hover, so a pointer passing over the bar does not flash it.
+  const openPanelSoon = () => {
+    window.clearTimeout(hoverTimer.current)
+    hoverTimer.current = window.setTimeout(() => setPanel(true), 150)
+  }
+  const closePanelSoon = () => {
+    window.clearTimeout(hoverTimer.current)
+    hoverTimer.current = window.setTimeout(() => setPanel(false), 120)
+  }
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), [])
+
+  // The bar slides away while the reader scrolls down and comes back on any scroll up.
+  const [tucked, setTucked] = useState(false)
+  const tuckedRef = useRef(false)
   useEffect(() => {
-    const node = sentinel.current
-    if (!node) return undefined
-    const observer = new IntersectionObserver(([entry]) => setScrolled(!entry.isIntersecting))
-    observer.observe(node)
-    return () => observer.disconnect()
+    let last = window.scrollY
+    let y = last
+    let frame = 0
+    const onScroll = () => {
+      // Read the position here, in the event: read inside the frame, after the film has written
+      // its styles, it would make the browser recalculate them on the spot.
+      y = window.scrollY
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        const delta = y - last
+        if (Math.abs(delta) < 6) return
+        last = y
+        const down = delta > 0 && y > 120
+        if (down === tuckedRef.current) return
+        tuckedRef.current = down
+        setTucked(down)
+        if (down) setPanel(false)
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(frame)
+    }
   }, [])
+  const hidden = tucked && !open && !panel
 
   // <dialog>.showModal gives the sheet Esc to close and an inert page behind it.
   useEffect(() => {
@@ -172,47 +179,63 @@ export function Navbar({ items }: { items: NavItem[] }) {
     if (!open && dialog.open) dialog.close()
   }, [open])
 
-  const themeLabel = theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'
-  const themeIcon = theme === 'dark' ? <Sun /> : <Moon />
 
   return (
     <>
-      <div ref={sentinel} className="tw:pointer-events-none tw:absolute tw:top-0 tw:h-2 tw:w-px" aria-hidden="true" />
       <header
-        className={[
-          'tw:sticky tw:top-0 tw:z-50 tw:border-b tw:transition-[background-color,border-color,box-shadow] tw:duration-500 tw:ease-hx',
-          scrolled
-            ? 'tw:border-line tw:bg-canvas/80 tw:shadow-[0_1px_0_rgb(15_23_42/0.03)] tw:backdrop-blur-xl tw:backdrop-saturate-150'
-            : 'tw:border-transparent tw:bg-canvas',
-        ].join(' ')}
+        className="hx-nav"
+        data-tucked={hidden || undefined}
+        // Keyboard focus inside the bar always brings it back.
+        onFocus={() => {
+          tuckedRef.current = false
+          setTucked(false)
+        }}
+        onKeyDown={event => { if (event.key === 'Escape') setPanel(false) }}
+        onMouseLeave={closePanelSoon}
       >
-        <div className="tw:mx-auto tw:flex tw:h-(--hx-nav-h) tw:max-w-[calc(var(--hx-container)_+_var(--hx-gutter)_*_2)] tw:items-center tw:gap-3 tw:px-(--hx-gutter)">
+        <div className="hx-nav__bar">
           <Logo />
 
-          <nav className="tw:mx-auto tw:hidden tw:items-center tw:gap-1 tw:lg:flex" aria-label="Điều hướng chính">
-            {items.map(item => <NavLink key={item.label} item={item} className={DESKTOP_LINK} />)}
+          <nav className="hx-nav__words" aria-label="Điều hướng chính">
+            {items.map(item =>
+              item === panelItem ? (
+                <span key={item.label} className="hx-nav__has-panel" onMouseEnter={openPanelSoon} onMouseLeave={closePanelSoon}>
+                  <NavLink item={item} className="hx-nav__word" />
+                  <button
+                    type="button"
+                    className="hx-nav__panel-toggle"
+                    aria-label={`Xem nhanh: ${item.label}`}
+                    aria-expanded={panel}
+                    aria-controls="hx-nav-panel"
+                    onClick={() => setPanel(value => !value)}
+                  >
+                    <ChevronDown aria-hidden="true" />
+                  </button>
+                </span>
+              ) : (
+                <NavLink key={item.label} item={item} className="hx-nav__word" />
+              ),
+            )}
           </nav>
 
-          <div className="tw:ml-auto tw:flex tw:items-center tw:gap-2 tw:lg:ml-0">
-            <LanguageSwitch display="tw:hidden tw:md:inline-flex" />
-            <IconButton label={themeLabel} icon={themeIcon} onClick={toggleTheme} className="tw:hidden tw:md:inline-flex" />
-            <span className="tw:mx-1 tw:hidden tw:h-6 tw:w-px tw:bg-line-strong tw:lg:block" aria-hidden="true" />
-            <Link
-              to="/login"
-              className="tw:hidden tw:min-h-11 tw:items-center tw:px-3 tw:text-[15px] tw:font-semibold tw:text-ink tw:transition-colors tw:duration-200 tw:hover:text-brand-text tw:lg:inline-flex"
+          <div className="hx-nav__end">
+            {/* The app's own theme switch, in the landing's colours. */}
+            <span className="hx-nav__theme hx-nav__wide"><ThemeSwitch palette={LANDING_GLASS} /></span>
+            <Link to="/login" className="hx-nav__signin">Đăng nhập</Link>
+            <a
+              href="#tin-noi-bat"
+              className="hx-nav__cta"
+              onClick={event => {
+                event.preventDefault()
+                goToSection('#tin-noi-bat')
+              }}
             >
-              Đăng nhập
-            </Link>
-            <Link to="/posts/new" className={CTA}>
-              Đăng tin ngay
-              <ArrowUpRight
-                className="tw:hidden tw:size-4 tw:transition-transform tw:duration-300 tw:ease-hx tw:sm:block tw:motion-safe:group-hover:translate-x-0.5 tw:motion-safe:group-hover:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </Link>
+              Tìm phòng
+              <ArrowRight aria-hidden="true" />
+            </a>
             <IconButton
               ref={menuButton}
-              className="tw:lg:hidden"
+              className="hx-nav__menu"
               label="Mở menu"
               icon={<Menu />}
               aria-haspopup="dialog"
@@ -222,13 +245,16 @@ export function Navbar({ items }: { items: NavItem[] }) {
             />
           </div>
         </div>
+        {panelItem ? (
+          <CardsPanel item={panelItem} open={panel} onPick={() => setPanel(false)} onEnter={openPanelSoon} onLeave={closePanelSoon} />
+        ) : null}
       </header>
 
       <dialog
         id="hx-sheet"
         ref={sheet}
         aria-label="Menu"
-        className="tw:fixed tw:inset-y-0 tw:right-0 tw:left-auto tw:m-0 tw:h-dvh tw:max-h-dvh tw:w-[min(360px,100vw)] tw:max-w-full tw:border-0 tw:bg-transparent tw:p-0 tw:font-sans tw:text-ink tw:backdrop:bg-slate-950/50 tw:backdrop:backdrop-blur-[2px]"
+        className="hx-sheet"
         onClose={() => {
           setOpen(false)
           const hash = pendingHash.current
@@ -240,26 +266,30 @@ export function Navbar({ items }: { items: NavItem[] }) {
         onClick={event => { if (event.target === sheet.current) setOpen(false) }}
         onKeyDown={trapFocus}
       >
-        <div className="tw:flex tw:h-full tw:flex-col tw:gap-6 tw:overflow-y-auto tw:bg-surface tw:px-5 tw:pt-3 tw:pb-[max(24px,env(safe-area-inset-bottom))] tw:shadow-float tw:motion-safe:animate-sheet-in">
-          <div className="tw:flex tw:items-center tw:justify-between">
+        <div className="hx-sheet__body">
+          <div className="hx-sheet__head">
             <Logo />
             <IconButton label="Đóng menu" icon={<X />} onClick={() => setOpen(false)} />
           </div>
-          <nav className="tw:grid tw:gap-0.5" aria-label="Điều hướng chính">
-            {items.map(item => <NavLink key={item.label} item={item} className={SHEET_LINK} onNavigate={navigateFromSheet} />)}
+          <nav className="hx-sheet__words" aria-label="Điều hướng chính">
+            {items.map(item => <NavLink key={item.label} item={item} className="hx-sheet__word" onNavigate={navigateFromSheet} />)}
           </nav>
-          <div className="tw:flex tw:items-center tw:justify-between tw:border-t tw:border-line tw:pt-4">
-            <LanguageSwitch />
-            <IconButton label={themeLabel} icon={themeIcon} variant="outline" onClick={toggleTheme} />
+          <div className="hx-sheet__row">
+            <span className="hx-sheet__label">Giao diện tối</span>
+            <ThemeSwitch palette={LANDING_GLASS} />
           </div>
-          <div className="tw:mt-auto tw:grid tw:gap-3">
-            <Link to="/posts/new" className={CTA_LARGE}>Đăng tin ngay</Link>
-            <Link
-              to="/login"
-              className="tw:inline-flex tw:min-h-14 tw:items-center tw:justify-center tw:rounded-xl tw:border tw:border-line-strong tw:text-base tw:font-semibold tw:text-ink tw:transition-colors tw:duration-200 tw:hover:bg-sunken tw:hover:text-ink"
+          <div className="hx-sheet__actions">
+            <a
+              href="#tin-noi-bat"
+              className="hx-nav__cta hx-nav__cta--lg"
+              onClick={event => {
+                event.preventDefault()
+                navigateFromSheet('#tin-noi-bat')
+              }}
             >
-              Đăng nhập
-            </Link>
+              Tìm phòng<ArrowRight aria-hidden="true" />
+            </a>
+            <Link to="/login" className="hx-sheet__signin">Đăng nhập</Link>
           </div>
         </div>
       </dialog>

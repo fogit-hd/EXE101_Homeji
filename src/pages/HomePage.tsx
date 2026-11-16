@@ -32,7 +32,6 @@ import { useGoogleMapsStatus } from "../contexts/GoogleMapsProvider.logic"
 import { useOnReconnect } from "../contexts/NetworkStatusContext.logic"
 
 import { AuthenticatedHub } from '../components/hub/AuthenticatedHub'
-import { LandingPage } from '../features/landing-hx/LandingPage'
 import {
   GUEST_DEFAULT_FOCUS,
   GUEST_DISTRICTS,
@@ -978,9 +977,8 @@ function HomePageComponent() {
     ],
   )
 
-  if (!isAuthenticated) {
-    return <LandingPage />
-  }
+  // Guests get the landing from HomeRoute; this page is only mounted for members.
+  if (!isAuthenticated) return null
 
   if (isHubView) {
     return <AuthenticatedHub />

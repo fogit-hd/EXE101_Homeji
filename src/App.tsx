@@ -9,6 +9,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/AuthContext'
+import { LandingIntro } from './features/landing-hx/LandingIntro'
 import { SearchProvider } from './contexts/SearchContext'
 import { ToastProvider } from './components/toast/ToastProvider'
 import { AuthModalProvider } from './contexts/AuthModalContext'
@@ -109,6 +110,7 @@ function App() {
             <AuthProvider>
             <AccountQueryProvider><BrowserRouter>
               <Suspense fallback={null}>{introRequested() && <BrandIntro />}</Suspense>
+              <LandingIntro />
               <DeferredAccountTools />
               <WebsiteTrafficTracker />
               <AnalyticsConsent />

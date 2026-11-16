@@ -46,6 +46,8 @@ export function Footer() {
             ))}
           </nav>
         </div>
+        {/* footer-dark: the name set across the page's width, then the legal row. */}
+        <p className="hx-footer__name" aria-hidden="true">Homeji</p>
         <div className="hx-footer__bottom">
           <p>© {year} Homeji. Bảo lưu mọi quyền.</p>
           <ul className="hx-footer__social" aria-label="Mạng xã hội">
