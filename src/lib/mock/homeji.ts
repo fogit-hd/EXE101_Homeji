@@ -1,10 +1,7 @@
 /**
- * Sample data for the guest landing. Every collection is typed so it can be
- * swapped for API data later without touching the components.
- *
- * MẪU: testimonials and listings below are illustrative, not real users or
- * real posts. Testimonials are hidden in production builds until real ones
- * exist (see SHOW_SAMPLE_TESTIMONIALS). Trust stats are the three real figures.
+ * Fallback data and option definitions for the guest landing.
+ * Real listings are fetched from the public API when available; these entries
+ * serve as an offline/dev fallback only.
  */
 
 export type ListingKind = 'room' | 'roommate'
@@ -24,19 +21,8 @@ export type Listing = {
   tags: ListingTag[]
   image: ListingImage
   owner: { name: string; role: 'Chủ trọ' | 'Người tìm ở ghép' }
-}
-
-export type Testimonial = {
-  id: string
-  name: string
-  /** e.g. "Sinh viên năm 2, ĐH Bách Khoa" or "Chủ trọ ở Thủ Đức". */
-  role: string
-  audience: 'student' | 'landlord'
-  /** Square photo under public/, shown in place of the initials. */
-  avatar?: string
-  quote: string
-  /** 1–5. */
-  rating: number
+  /** Optional link to the live listing detail view. */
+  href?: string
 }
 
 export type StoryChapter = {
@@ -46,8 +32,6 @@ export type StoryChapter = {
 }
 
 export type HowStep = { title: string; body: string }
-
-export type TrustStat = { value: string; label: string; /** In-page anchor that explains how the number is earned. */ href?: string }
 
 export type FooterColumn = {
   title: string
@@ -95,14 +79,6 @@ export const DIORAMA: Record<DioramaState, ListingImage> = {
   tea: photo('diorama', 'set-tea', 1280, 1100, 'Bàn gỗ nhỏ với ấm trà và hai tách, hai ghế nhựa kê đối diện nhau trên tấm chiếu.'),
   night: photo('diorama', 'room-night', 1280, 1100, 'Căn phòng trọ buổi tối, đèn vàng ấm và đèn bàn bật sáng, đã có người dọn vào ở.'),
 }
-
-export const SHOW_SAMPLE_TESTIMONIALS = import.meta.env.DEV
-
-export const TRUST_STATS: TrustStat[] = [
-  { value: '1.500+', label: 'phòng trọ ở TP.HCM' },
-  { value: '800+', label: 'bạn trẻ đã kết nối' },
-  { value: '100%', label: 'chủ tin được xác minh chính chủ', href: '#xac-minh' },
-]
 
 export const DISTRICT_OPTIONS: Option[] = [
   { value: '', label: 'Tất cả khu vực' },
@@ -178,7 +154,7 @@ export const LISTINGS: Listing[] = [
     area: 28,
     address: 'Đường Lê Văn Việt, Hiệp Phú',
     district: 'Quận 9 (cũ)',
-    tags: ['roommate', 'verified', 'new'],
+    tags: ['roommate', 'new'],
     image: photo('listings', 'garden-shared', 1280, 960, 'Phòng ở ghép hai giường đơn ga hồng, tủ gỗ chung, sàn gạch đỏ và cửa sổ nhìn ra vườn có cây chuối'),
     owner: { name: 'Minh Thư', role: 'Người tìm ở ghép' },
   },
@@ -214,66 +190,9 @@ export const LISTINGS: Listing[] = [
     area: 26,
     address: 'Đường Quang Trung, Phường 10',
     district: 'Gò Vấp',
-    tags: ['roommate', 'verified', 'available'],
+    tags: ['roommate', 'available'],
     image: photo('listings', 'loft-shared', 1280, 960, 'Phòng trọ có gác gỗ đặt hai nệm, bên dưới kệ nhỏ, quạt đứng, giá treo đồ và cửa sổ lá sách'),
     owner: { name: 'Lan Anh', role: 'Người tìm ở ghép' },
-  },
-]
-
-export const TESTIMONIALS: Testimonial[] = [
-  {
-    id: 't-01',
-    name: 'Dương Duy',
-    role: 'Sinh viên ĐH FPT, Kỹ thuật phần mềm',
-    avatar: '/landing/team/duy.webp',
-    audience: 'student',
-    quote: 'Mới lên thành phố, mình sợ nhất là cọc nhầm phòng ảo. Lọc tin đã xác minh xong là yên tâm đi xem luôn.',
-    rating: 5,
-  },
-  {
-    id: 't-02',
-    name: 'Phạm Hải',
-    role: 'Sinh viên ĐH FPT, Quan hệ công chúng',
-    avatar: '/landing/team/hai.webp',
-    audience: 'student',
-    quote: 'Mình cần bạn ở ghép cùng giờ học. Trên Homeji nhắn được luôn, rồi hẹn xem phòng chung một buổi.',
-    rating: 5,
-  },
-  {
-    id: 't-03',
-    name: 'Huỳnh Phong',
-    role: 'Sinh viên ĐH FPT, Kỹ thuật phần mềm',
-    avatar: '/landing/team/phong.webp',
-    audience: 'student',
-    quote: 'Lọc tin đã xác minh gần chỗ làm, mình đặt lịch xem phòng trong ngày mà không phải gọi lòng vòng.',
-    rating: 4,
-  },
-  {
-    id: 't-04',
-    name: 'Dương Nguyễn',
-    role: 'Sinh viên ĐH FPT, Quan hệ công chúng',
-    avatar: '/landing/team/duong.webp',
-    audience: 'student',
-    quote: 'Tìm được bạn ở ghép hợp giờ ngủ. Chat trên app rồi cùng xuống xem phòng, đỡ phải đoán mò.',
-    rating: 5,
-  },
-  {
-    id: 't-05',
-    name: 'Khoa Hồ',
-    role: 'Sinh viên ĐH FPT, Kỹ thuật phần mềm',
-    avatar: '/landing/team/khoa.webp',
-    audience: 'student',
-    quote: 'Đăng tin xong có người thuê nhắn hỏi lịch xem phòng ngay. Mình trả lời một chỗ, khỏi rải tin khắp nhóm.',
-    rating: 5,
-  },
-  {
-    id: 't-06',
-    name: 'Hương Nguyễn',
-    role: 'Sinh viên ĐH FPT, Quản trị kinh doanh',
-    avatar: '/landing/team/huong.webp',
-    audience: 'student',
-    quote: 'Tin có huy hiệu xác minh thì người thuê hỏi nghiêm túc hơn. Mình nhận được tin nhắn đặt lịch xem rõ ràng.',
-    rating: 4,
   },
 ]
 

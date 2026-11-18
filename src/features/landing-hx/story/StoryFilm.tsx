@@ -1,13 +1,15 @@
 import { Fragment, memo, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ImgHTMLAttributes, type ReactNode } from 'react'
 import { useReducedMotion } from 'motion/react'
+import { BorderBeam } from 'border-beam'
 import { ArrowRight, Camera, Flag, IdCard, Megaphone, ReceiptText, Users } from 'lucide-react'
-import { STORY, TRUST_STATS } from '../../../lib/mock/homeji'
+import { STORY } from '../../../lib/mock/homeji'
 import { useMediaQuery } from '../motion/useScrollProgress'
 import { SearchBar, type ListingQuery } from '../sections/SearchBar'
 import { ButtonLink } from '../ui/Button'
 import { useTheme } from '../useTheme'
 import { currentTheme, THEME_EVENT } from '../../../lib/theme'
 import { frameScrollY } from '../frameScroll'
+import { isFilmInScene, magneticSnapTarget, rawForFilmProgress, rubberProgress } from './rubberScroll'
 import { canDecodeVideo } from './video'
 import { FilmPlayer, flareAt, framesAt, frameUrl, playLapse, prefetchLapse, type FilmTime } from './film'
 import { SURFACES, fitScene, quadAt, quadMatrix, toView, type Surface } from './surfaces'
@@ -26,7 +28,7 @@ import { SURFACES, fitScene, quadAt, quadMatrix, toView, type Surface } from './
  */
 
 /** Scroll length of the film, in viewport heights. */
-const FILM_VH = 3200
+const FILM_VH = 1550
 
 const CHECKS: { icon: ReactNode; title: string; body: string; at: number }[] = [
   {
@@ -86,25 +88,23 @@ function ChapterKicker({ index, suffix }: { index: number; suffix?: string }) {
   )
 }
 
-function Stats() {
-  return (
-    <dl className="hx-film__stats" aria-label="Homeji trong số liệu">
-      {TRUST_STATS.map(stat => (
-        <div key={stat.label}>
-          <dt>{stat.href ? <a href={stat.href}>{stat.label}</a> : stat.label}</dt>
-          <dd>{stat.value}</dd>
-        </div>
-      ))}
-    </dl>
-  )
-}
-
 function HomeActions({ className = '' }: { className?: string }) {
+  const [theme] = useTheme()
+  const reduce = useReducedMotion()
   return (
     <div className={`hx-film__actions ${className}`}>
-      <ButtonLink to="#tin-noi-bat" variant="accent" size="lg" trailingIcon={<ArrowRight aria-hidden="true" />}>
-        Tìm phòng ngay
-      </ButtonLink>
+      <BorderBeam
+        size="sm"
+        colorVariant="sunset"
+        theme={theme}
+        strength={0.65}
+        borderRadius={999}
+        active={!reduce}
+      >
+        <ButtonLink to="#tin-noi-bat" variant="accent" size="lg" trailingIcon={<ArrowRight aria-hidden="true" />}>
+          Tìm phòng ngay
+        </ButtonLink>
+      </BorderBeam>
       <ButtonLink to="/posts/new" variant="outline" size="lg" icon={<Megaphone aria-hidden="true" />} className="hx-film__ghost">
         Đăng tin cho thuê
       </ButtonLink>
@@ -204,7 +204,6 @@ function SceneBlock({ id, checksOn, actions }: { id: string; checksOn: number; a
           <h2 className="hx-film__h2">Tổ ấm tiếp theo của bạn đang chờ.</h2>
           <p className="hx-film__body">{STORY[3].body}</p>
           <HomeActions />
-          <Stats />
         </>
       )
   }
@@ -288,7 +287,6 @@ function SurfaceContent({ id, checksOn, actions }: { id: string; checksOn: numbe
           </div>
           <div>
             <HomeActions className="hx-wall__actions" />
-            <Stats />
           </div>
         </div>
       )
@@ -477,24 +475,33 @@ function PinnedStory({ actions }: { actions: Actions }) {
   // The last scroll progress the film was placed at: the easing step reuses it rather than measuring
   // again after this frame's style writes, which would force a second restyle.
   const lastProgress = useRef(0)
+  const springRef = useRef({
+    p: 0,
+    v: 0,
+    targetRaw: 0,
+    targetP: 0,
+    raf: 0,
+    lastTime: 0,
+    wheelIdleTimer: 0,
+  })
 
-  const update = useCallback(() => {
-    // Read before any write this frame (see frameScroll.ts); the navbar reuses the number.
-    frameScrollY()
-    const p = measure()
+  const applyProgress = useCallback((p: number, kickPx = 0) => {
     lastProgress.current = p
     // Only the layers that use them get the scroll variables; the rest of the film is untouched.
     // Each write restyles the layer's whole subtree, so write only when the value moves: the
     // hero is gone by p = 0.06 and the flare is 0 outside the door.
-    const vars = `${Math.min(p, 0.06).toFixed(4)}|${flareAt(p).toFixed(3)}`
+    const hero = Math.min(p, 0.06).toFixed(4)
+    const flare = flareAt(p).toFixed(3)
+    const kick = kickPx.toFixed(1)
+    const vars = `${hero}|${flare}|${kick}`
     if (vars !== written.current) {
-      const [hero, flare] = vars.split('|')
       heroRef.current?.style.setProperty('--p', hero)
+      sectionRef.current?.style.setProperty('--rubber-kick', `${kick}px`)
       // With WebGL the player draws the flare into the picture; the page layer is only the fallback.
       if (!playerRef.current?.drawsFlare) flareRef.current?.style.setProperty('--flare', flare)
       written.current = vars
     }
-    playerRef.current?.setFlare(Number(vars.split('|')[1]), geo.current.width, geo.current.height)
+    playerRef.current?.setFlare(Number(flare), geo.current.width, geo.current.height)
     playerRef.current?.setProgress(p)
     placeSurfaces(p)
     // React only hears about it when a scene or a check actually changes.
@@ -509,7 +516,23 @@ function PinnedStory({ actions }: { actions: Actions }) {
     if (next.checks !== last.checks) setChecksOn(next.checks)
     if (next.inside !== last.inside) setInside(next.inside)
     shown.current = next
-  }, [measure, placeSurfaces])
+  }, [placeSurfaces])
+
+  const syncImmediate = useCallback(() => {
+    frameScrollY()
+    const raw = measure()
+    const p = rubberProgress(raw)
+    const spring = springRef.current
+    cancelAnimationFrame(spring.raf)
+    spring.raf = 0
+    window.clearTimeout(spring.wheelIdleTimer)
+    spring.wheelIdleTimer = 0
+    spring.targetRaw = raw
+    spring.targetP = p
+    spring.p = p
+    spring.v = 0
+    applyProgress(p, 0)
+  }, [applyProgress, measure])
 
   // One player for the life of the film; a theme change swaps its film in place (the effect below),
   // so the renderer, the depth maps and the decoded neighbours are never rebuilt.
@@ -517,6 +540,7 @@ function PinnedStory({ actions }: { actions: Actions }) {
     const canvas = canvasRef.current
     if (!canvas) return
     let cancelled = false
+    const spring = springRef.current
     const player = new FilmPlayer(canvas, () => setPainted(true), lastTime.current)
     playerRef.current = player
     if (import.meta.env.DEV) (window as unknown as { __film?: FilmPlayer }).__film = player
@@ -524,7 +548,7 @@ function PinnedStory({ actions }: { actions: Actions }) {
     if (player.drawsFlare && flareRef.current) flareRef.current.hidden = true
     remeasure()
     player.start()
-    update()
+    syncImmediate()
     // Once the page is idle, fetch the other time of day (and, near the top, its time-lapse),
     // so a theme change plays at once.
     const idle = window.setTimeout(() => {
@@ -533,30 +557,78 @@ function PinnedStory({ actions }: { actions: Actions }) {
       player.prefetch(other)
       if (measure() < 0.05) prefetchLapse(other === 'night' ? 'sunset' : 'sunrise').catch(() => {})
     }, 5000)
+
+    const stepSpring = (now: number) => {
+      spring.raf = 0
+      if (cancelled) return
+      const dt = Math.min(0.032, Math.max(0.001, (now - spring.lastTime) / 1000))
+      spring.lastTime = now
+      const inScene = isFilmInScene(spring.p) || isFilmInScene(spring.targetP)
+      // Underdamped rubber braking inside scenes; snappy follow between scenes.
+      const omega = inScene ? 19 : 28
+      const zeta = inScene ? 0.56 : 0.85
+      const h = dt * 0.5
+      for (let step = 0; step < 2; step += 1) {
+        const acc = (spring.targetP - spring.p) * omega * omega - 2 * zeta * omega * spring.v
+        spring.v += acc * h
+        spring.p = Math.min(1, Math.max(0, spring.p + spring.v * h))
+      }
+      if (Math.abs(spring.targetP - spring.p) < 0.00025 && Math.abs(spring.v) < 0.0005) {
+        spring.p = spring.targetP
+        spring.v = 0
+        applyProgress(spring.p, 0)
+        return
+      }
+      const kick = Math.max(-18, Math.min(18, -spring.v * 18))
+      applyProgress(spring.p, kick)
+      spring.raf = requestAnimationFrame(stepSpring)
+    }
+
+    const startSpring = () => {
+      if (spring.raf) return
+      spring.lastTime = performance.now()
+      spring.raf = requestAnimationFrame(stepSpring)
+    }
+
     let queued = 0
     const onScroll = () => {
       if (queued) return
       queued = requestAnimationFrame(() => {
         queued = 0
-        update()
+        if (cancelled) return
+        frameScrollY()
+        const raw = measure()
+        spring.targetRaw = raw
+        spring.targetP = rubberProgress(raw)
+        window.clearTimeout(spring.wheelIdleTimer)
+        spring.wheelIdleTimer = window.setTimeout(() => {
+          if (cancelled) return
+          const snappedRaw = magneticSnapTarget(spring.targetRaw)
+          spring.targetP = rubberProgress(snappedRaw)
+          if (Math.abs(spring.targetP - spring.p) >= 0.00025) startSpring()
+        }, 110)
+        startSpring()
       })
     }
     const onResize = () => {
       remeasure()
-      update()
+      syncImmediate()
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onResize)
     return () => {
       cancelled = true
       window.clearTimeout(idle)
+      window.clearTimeout(spring.wheelIdleTimer)
+      cancelAnimationFrame(spring.raf)
+      spring.raf = 0
       player.stop()
       playerRef.current = null
       cancelAnimationFrame(queued)
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onResize)
     }
-  }, [remeasure, update, measure, placeSurfaces])
+  }, [applyProgress, measure, placeSurfaces, remeasure, syncImmediate])
 
   // The theme changed: hold the old picture on the shift canvas while the player swaps films.
   useLayoutEffect(() => {
@@ -605,17 +677,18 @@ function PinnedStory({ actions }: { actions: Actions }) {
 
   // Surfaces mount when the layout switches to world mode: place them straight away.
   useLayoutEffect(() => {
-    if (world) placeSurfaces(measure())
+    if (world) placeSurfaces(rubberProgress(measure()))
   }, [world, measure, placeSurfaces])
 
   // Keyboard and screen-reader users reach a scene's content by focus: bring the scene up.
   const reveal = useCallback((scene: Scene) => {
     const section = sectionRef.current
-    const p = measure()
+    const p = rubberProgress(measure())
     if (!section || (p >= scene.from && p < scene.to)) return
     const { stageTop, track } = geo.current
     const top = section.getBoundingClientRect().top + window.scrollY
-    window.scrollTo({ top: top - stageTop + ((scene.from + scene.to) / 2) * track, behavior: 'auto' })
+    const targetRaw = rawForFilmProgress((scene.from + scene.to) / 2)
+    window.scrollTo({ top: top - stageTop + targetRaw * track, behavior: 'auto' })
   }, [measure])
 
   return (
@@ -668,13 +741,13 @@ function PinnedStory({ actions }: { actions: Actions }) {
         <div ref={flareRef} className="hx-film__flare" aria-hidden="true" />
       </div>
 
-      {/* In-page targets (nav, stats link, CTA): each lands mid-way through its scene. */}
+      {/* In-page targets (nav, CTA): each lands mid-way through its scene. */}
       {SCENES.map(scene => (
         <span
           key={scene.id}
           id={scene.id}
           className="hx-film__anchor"
-          style={{ '--at': (scene.from + scene.to) / 2 } as CSSProperties}
+          style={{ '--at': rawForFilmProgress((scene.from + scene.to) / 2) } as CSSProperties}
           aria-hidden="true"
         />
       ))}

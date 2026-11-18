@@ -140,6 +140,7 @@ export const PaymentMethod = {
   Momo: 1,
   PayOs: 2,
   Wallet: 3,
+  PayPal: 4,
 } as const
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
@@ -503,6 +504,47 @@ export interface PayOsPaymentResponse {
   checkoutUrl: string | null
   qrCode: string | null
   providerMessage: string | null
+}
+
+export interface PayPalCurrencyQuote {
+  amountVnd: number
+  exchangeRateVnd: number
+  rateSource: string
+  rateUpdatedAt: string
+  baseUsd: number
+  bankFeePercent: number
+  bankFeeUsd: number
+  gatewayFeePercent: number
+  gatewayFixedFeeUsd: number
+  gatewayFeeUsd: number
+  totalFeeUsd: number
+  totalUsd: number
+}
+
+export interface PayPalCheckoutConfig {
+  enabled: boolean
+  mode: 'sandbox' | 'live'
+  clientId: string | null
+  googlePay: boolean
+  applePay: boolean
+  quote: PayPalCurrencyQuote | null
+}
+
+export interface PayPalPaymentResponse {
+  paymentId: string
+  orderCode: string
+  payPalOrderId: string
+  amount: number
+  status: PaymentStatus
+  approvalUrl: string | null
+  providerMessage: string | null
+  quote: PayPalCurrencyQuote
+}
+
+export interface PayPalWalletOrder {
+  orderId: string
+  totalUsd: string
+  ticket: string
 }
 
 export interface RentalPostSearchParams {

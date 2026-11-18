@@ -11,7 +11,7 @@
   /* The bar tucks away while scrolling down, so the pinned stage takes the whole screen. */
   --film-stage: 100svh;
   position: relative;
-  height: calc(var(--film-vh, 3200) * 1vh);
+  height: calc(var(--film-vh, 1550) * 1vh);
   background: var(--film-night);
   color: var(--film-ink);
 }
@@ -151,11 +151,11 @@
 .hx .hx-film__panel-inner {
   max-width: 34rem;
   transform: translateY(18px);
-  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+  transition: transform 620ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .hx .hx-film__panel.is-on .hx-film__panel-inner {
-  transform: none;
+  transform: translateY(var(--rubber-kick, 0px));
 }
 
 .hx .hx-film__kicker {
@@ -602,20 +602,20 @@
   opacity: 0;
   translate: 0 0.35em;
   /* No blur here: a blurred layer under a moving matrix3d re-rasterises every frame and made the scroll stutter. */
-  transition: opacity 500ms ease, translate 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+  transition: opacity 420ms ease, translate 560ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .hx .hx-world.is-on .hx-surface > *,
 .hx .hx-world.is-on .hx-wall__home > div > * {
   opacity: 1;
-  translate: 0 0;
+  translate: 0 var(--rubber-kick, 0px);
 }
 
-.hx .hx-world.is-on .hx-surface > :nth-child(2) { transition-delay: 90ms; }
-.hx .hx-world.is-on .hx-surface > :nth-child(3) { transition-delay: 180ms; }
-.hx .hx-world.is-on .hx-surface > :nth-child(4) { transition-delay: 270ms; }
-.hx .hx-world.is-on .hx-surface > :nth-child(5) { transition-delay: 360ms; }
-.hx .hx-world.is-on .hx-surface > :nth-child(6) { transition-delay: 450ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(2) { transition-delay: 60ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(3) { transition-delay: 120ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(4) { transition-delay: 180ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(5) { transition-delay: 240ms; }
+.hx .hx-world.is-on .hx-surface > :nth-child(6) { transition-delay: 300ms; }
 
 /* Wall lettering: dark ink multiplied into the paint, so the wall's light and grain show through. */
 .hx .hx-surface {

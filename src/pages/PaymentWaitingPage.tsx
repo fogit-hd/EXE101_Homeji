@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { PaymentPurpose, PaymentStatus } from '../api/types'
+import { capturePayPalPayment } from '../api'
+import { PaymentMethod, PaymentPurpose, PaymentStatus } from '../api/types'
+import { PayPalCheckoutWallets } from '../components/payments/PayPalCheckoutWallets'
 import { PaymentWaitSkeleton } from '../components/skeletons/PageSkeletons'
 import { PaymentDetails } from '../components/payments/PaymentDetails'
 import { ShellIcon } from '../components/shell/ShellIcons'
@@ -30,11 +32,47 @@ export function PaymentWaitingPage() {
   const orderCode = params.get('orderCode') ?? params.get('orderId')
   const { payment, busy, error, refresh } = usePaymentTracking(paymentId, orderCode)
   const [now, setNow] = useState(Date.now)
+  const [capturing, setCapturing] = useState(false)
+  const autoCapturedKey = useRef('')
+  const token = params.get('token')
+  const isPayPalReturn = payment?.method === PaymentMethod.PayPal
+    && payment.status === PaymentStatus.Pending
+    && params.get('provider')?.toLowerCase() === 'paypal'
+    && params.get('cancel')?.toLowerCase() !== 'true'
+
+  useEffect(() => {
+    if (!isPayPalReturn || !payment) return
+    const key = `${payment.id}:${token ?? ''}`
+    if (autoCapturedKey.current === key) return
+    autoCapturedKey.current = key
+    void capturePayPalPayment(payment.id, { payPalOrderId: token ?? undefined })
+      .catch(() => undefined)
+      .finally(() => { void refresh() })
+  }, [isPayPalReturn, payment, refresh, token])
+
   useEffect(() => {
     if (payment?.status !== PaymentStatus.Pending) return
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)
   }, [payment?.status])
+
+  const handleWalletCompleted = useCallback(() => {
+    void refresh()
+  }, [refresh])
+
+  const handleRefresh = async () => {
+    if (payment?.method === PaymentMethod.PayPal && payment.status === PaymentStatus.Pending) {
+      setCapturing(true)
+      try {
+        await capturePayPalPayment(payment.id, { payPalOrderId: token ?? undefined })
+      } catch {
+        // refresh() refreshes and shows persisted status or error.
+      } finally {
+        setCapturing(false)
+      }
+    }
+    await refresh()
+  }
   const historyUrl = payment?.purpose === PaymentPurpose.WalletTopUp ? '/?section=marketplace&market=wallet&wallet=history' : '/?section=payments&tab=history'
   if (!paymentId && !orderCode) return <div className="payment-wait-page payment-result-page"><section className="payment-wait-card"><h1>Chưa có đơn thanh toán</h1><p>Chọn một giao dịch để xem trạng thái thanh toán.</p><Link className="payment-button" to={historyUrl}>Xem giao dịch</Link></section></div>
   if (!payment) return <div className="payment-wait-page payment-result-page"><Link className="payment-back" to={historyUrl}>← Lịch sử giao dịch</Link>{error ? <section className="payment-wait-card"><h1>Chưa tải được giao dịch</h1><p role="alert">{error}</p><p>Chưa thể xác nhận kết quả. Nếu bạn đã trả tiền, hãy kiểm tra lại giao dịch trước khi thử thanh toán thêm.</p><button type="button" className="payment-button" disabled={busy} onClick={() => void refresh()}>{busy ? 'Đang tải…' : 'Thử lại'}</button></section> : <PaymentWaitSkeleton />}</div>
@@ -74,10 +112,13 @@ export function PaymentWaitingPage() {
         <div className="payment-wait-actions">
           {state === 'pending' && url && <a className="payment-button" href={url} target="_blank" rel="noopener noreferrer">Thanh toán qua {provider} ↗</a>}
           {state === 'pending' && !url && <p role="alert">Chưa có liên kết thanh toán hợp lệ. Vui lòng kiểm tra trạng thái.</p>}
-          {pending && <button type="button" className={`payment-button${state === 'pending' ? ' is-secondary' : ''}`} disabled={busy} onClick={() => void refresh()}>{busy ? 'Đang kiểm tra…' : 'Kiểm tra trạng thái'}</button>}
+          {pending && <button type="button" className={`payment-button${state === 'pending' ? ' is-secondary' : ''}`} disabled={busy || capturing} onClick={() => void handleRefresh()}>{busy || capturing ? 'Đang kiểm tra…' : 'Kiểm tra trạng thái'}</button>}
           {!pending && <Link className="payment-button" to={state === 'success' ? homeUrl : retryUrl}>{state === 'success' ? topup ? 'Về ví Homeji' : premium ? 'Xem gói của tôi' : 'Xem giao dịch' : topup ? 'Tạo giao dịch nạp mới' : premium ? 'Chọn gói và thử lại' : 'Về lịch sử giao dịch'}</Link>}
           <Link className="payment-result-secondary" to={pending ? homeUrl : historyUrl}>{pending ? topup ? 'Về ví Homeji' : 'Quay lại Homeji' : 'Lịch sử giao dịch'}</Link>
         </div>
+        {state === 'pending' && payment.method === PaymentMethod.PayPal ? (
+          <PayPalCheckoutWallets paymentId={payment.id} onCompleted={handleWalletCompleted} />
+        ) : null}
         <p className="payment-wait-foot"><ShellIcon name="shield" /><span>{pending ? 'Bạn có thể rời trang và kiểm tra lại từ lịch sử giao dịch.' : 'Kết quả được lấy từ giao dịch đã lưu trên máy chủ Homeji.'}</span></p>
       </section>
       <aside className="payment-detail-card payment-result-details"><PaymentDetails payment={payment} /><details><summary>Cần hỗ trợ giao dịch?</summary><p>Giữ mã đơn và biên nhận từ ngân hàng hoặc ví điện tử. Nếu đã bị trừ tiền nhưng trạng thái chưa thành công, kiểm tra lại trước khi tạo giao dịch mới.</p><Link to="/receipts">Biên nhận của tôi →</Link></details></aside>

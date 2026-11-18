@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MotionConfig } from 'motion/react'
 import { FeaturedListings } from './sections/FeaturedListings'
 import { Footer } from './sections/Footer'
 import { HowItWorks } from './sections/HowItWorks'
 import { Navbar, type NavCard, type NavItem } from './sections/Navbar'
 import { formatMillions } from './sections/format'
-import { DISTRICT_OPTIONS, LISTINGS } from '../../lib/mock/homeji'
+import { DISTRICT_OPTIONS } from '../../lib/mock/homeji'
 import type { ListingQuery } from './sections/SearchBar'
-import { Testimonials } from './sections/Testimonials'
+import { useLandingListings } from './sections/useLandingListings'
 import { markLandingReady } from './introGate'
 import { jumpToSection } from './jump'
 import { StoryFilm } from './story/StoryFilm'
@@ -34,6 +34,9 @@ function scrollToListings() {
  */
 export function LandingPage() {
   const [query, setQuery] = useState<ListingQuery>(INITIAL_QUERY)
+  const [eagerListings, setEagerListings] = useState(false)
+  const listingsSectionRef = useRef<HTMLElement>(null)
+  const { listings } = useLandingListings(listingsSectionRef, eagerListings)
 
   // The opening intro fades out once the film's first frame is here to be seen (or after a moment).
   useEffect(() => {
@@ -46,31 +49,53 @@ export function LandingPage() {
   }, [])
 
   const onSearch = useCallback((next: ListingQuery) => {
+    setEagerListings(true)
     setQuery(next)
     requestAnimationFrame(scrollToListings)
   }, [])
 
   const onRoommates = useCallback(() => {
+    setEagerListings(true)
     setQuery(current => ({ ...current, kind: 'roommate' }))
     requestAnimationFrame(scrollToListings)
   }, [])
 
   // The "Tìm trọ" panel: one card per area that has listings, its photo and the lowest rent there.
   const areaCards = useMemo<NavCard[]>(() => DISTRICT_OPTIONS.filter(option => option.value).flatMap(option => {
-    const here = LISTINGS.filter(listing => listing.district === option.label).sort((a, b) => a.price - b.price)
+    const here = listings
+      .filter(listing => listing.district === option.label && listing.price > 0)
+      .sort((a, b) => a.price - b.price)
     if (!here.length) return []
     return [{
       id: option.value,
       title: option.label,
       meta: `Từ ${formatMillions(here[0].price)}/tháng`,
       image: { src: here[0].image.srcSmall, alt: here[0].image.alt },
-      onSelect: () => setQuery(current => ({ ...current, kind: 'all', district: option.value })),
+      onSelect: () => {
+        setEagerListings(true)
+        setQuery(current => ({ ...current, kind: 'all', district: option.value }))
+      },
     }]
-  }).slice(0, 4), [])
+  }).slice(0, 4), [listings])
 
   const navItems = useMemo<NavItem[]>(() => [
-    { label: 'Tìm trọ', to: '#tin-noi-bat', onSelect: () => setQuery(current => ({ ...current, kind: 'room' })), cards: areaCards },
-    { label: 'Ở ghép', to: '#tin-noi-bat', onSelect: () => setQuery(current => ({ ...current, kind: 'roommate' })) },
+    {
+      label: 'Tìm trọ',
+      to: '#tin-noi-bat',
+      onSelect: () => {
+        setEagerListings(true)
+        setQuery(current => ({ ...current, kind: 'room' }))
+      },
+      cards: areaCards,
+    },
+    {
+      label: 'Ở ghép',
+      to: '#tin-noi-bat',
+      onSelect: () => {
+        setEagerListings(true)
+        setQuery(current => ({ ...current, kind: 'roommate' }))
+      },
+    },
     { label: 'Xác minh', to: '#xac-minh' },
     { label: 'Cách hoạt động', to: '#cach-hoat-dong' },
   ], [areaCards])
@@ -84,9 +109,16 @@ export function LandingPage() {
         <main id="hx-main" tabIndex={-1}>
           {/* The opening film: the house, the door, then the corners of An's story (see story/StoryFilm.tsx). */}
           <StoryFilm onSearch={onSearch} onRoommates={onRoommates} />
-          <FeaturedListings query={query} onQueryChange={setQuery} />
+          <FeaturedListings
+            listings={listings}
+            sectionRef={listingsSectionRef}
+            query={query}
+            onQueryChange={next => {
+              setEagerListings(true)
+              setQuery(next)
+            }}
+          />
           <HowItWorks />
-          <Testimonials />
         </main>
         <Footer />
       </div>

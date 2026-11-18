@@ -23,6 +23,9 @@ import {
 export const formatPrice = (value: number) =>
   `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value)} đ`
 
+export const formatUsd = (value: number) =>
+  `${new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} USD`
+
 export const formatCompactRent = (value: number) => {
   if (!Number.isFinite(value) || value <= 0) return 'Chưa có thông tin'
   if (value >= 1_000_000) {
@@ -142,6 +145,7 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
   [PaymentMethod.Momo]: 'MoMo',
   [PaymentMethod.PayOs]: 'PayOS',
   [PaymentMethod.Wallet]: 'Số dư ví Homeji',
+  [PaymentMethod.PayPal]: 'PayPal · Google Pay · Apple Pay',
 }
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {

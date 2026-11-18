@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, type Ref } from 'react'
 import { SearchX, X } from 'lucide-react'
-import { DISTRICT_OPTIONS, LISTINGS, PRICE_OPTIONS } from '../../../lib/mock/homeji'
+import { DISTRICT_OPTIONS, LISTINGS, PRICE_OPTIONS, type Listing } from '../../../lib/mock/homeji'
 import { filterListings } from './filterListings'
 import { RevealGroup, RevealItem } from '../motion/Reveal'
+import { useDistortionWave } from '../motion/useDistortionWave'
 import { Button, ButtonLink } from '../ui/Button'
 import { Container, SectionHeading } from '../ui/primitives'
 import { SegmentedControl } from '../ui/SegmentedControl'
@@ -17,20 +18,30 @@ const TABS = [
 
 const PANEL_ID = 'hx-listings-panel'
 
-export function FeaturedListings({ query, onQueryChange, highlightId = null }: {
+export function FeaturedListings({
+  listings = LISTINGS,
+  sectionRef,
+  query,
+  onQueryChange,
+  highlightId = null,
+}: {
+  listings?: Listing[]
+  sectionRef?: Ref<HTMLElement>
   query: ListingQuery
   onQueryChange: (query: ListingQuery) => void
   /** Card the hero just pointed at; outlined briefly. */
   highlightId?: string | null
 }) {
-  const results = useMemo(() => filterListings(LISTINGS, query), [query])
+  const panelRef = useRef<HTMLDivElement>(null)
+  const { wave, warmup } = useDistortionWave()
+  const results = useMemo(() => filterListings(listings, query), [listings, query])
   const districtLabel = DISTRICT_OPTIONS.find(option => option.value === query.district)?.label
   const priceLabel = PRICE_OPTIONS.find(option => option.value === query.price)?.label
   const narrowed = Boolean(query.district || query.price)
   const clearFilters = () => onQueryChange({ ...query, district: '', price: '' })
 
   return (
-    <section id="tin-noi-bat" className="hx-section hx-listings" aria-labelledby="hx-listings-title">
+    <section ref={sectionRef} id="tin-noi-bat" className="hx-section hx-listings" aria-labelledby="hx-listings-title">
       <Container>
         <SectionHeading
           id="hx-listings-title"
@@ -42,7 +53,15 @@ export function FeaturedListings({ query, onQueryChange, highlightId = null }: {
               label="Lọc theo loại tin"
               options={TABS}
               value={query.kind}
-              onChange={kind => onQueryChange({ ...query, kind })}
+              onWarmup={warmup}
+              onChange={(kind, event) => {
+                if (kind === query.kind) return
+                const focus = event && 'clientX' in event ? event.nativeEvent : null
+                void wave(panelRef.current, () => onQueryChange({ ...query, kind }), {
+                  source: event?.currentTarget,
+                  focus,
+                })
+              }}
               tabId={value => `hx-tab-${value}`}
               panelId={() => PANEL_ID}
             />
@@ -59,6 +78,7 @@ export function FeaturedListings({ query, onQueryChange, highlightId = null }: {
         ) : null}
 
         <div
+          ref={panelRef}
           id={PANEL_ID}
           role="tabpanel"
           aria-labelledby={`hx-tab-${query.kind}`}

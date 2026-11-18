@@ -1,7 +1,6 @@
 import { SiteLocationBootstrap } from './SiteLocationBootstrap'
 import { SellerOrderAlertsProvider } from '../marketplace/SellerOrderAlerts'
 import { PremiumLaunchOffer } from '../payments/PremiumLaunchOffer'
-import { SourceRoomDetailsHost } from '../map/listings/SourceRoomDetailsHost'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 import { ConfirmDialogHost } from '../ui/ConfirmDialogHost'
@@ -20,6 +19,7 @@ import './AppLayout.css'
 
 const AppShell = lazy(() => import('../shell/AppShell').then(module => ({ default: module.AppShell })))
 const VoiceCallProvider = lazy(() => import('../../contexts/VoiceCallContext').then(module => ({ default: module.VoiceCallProvider })))
+const SourceRoomDetailsHost = lazy(() => import('../map/listings/SourceRoomDetailsHost').then(module => ({ default: module.SourceRoomDetailsHost })))
 
 export function AppLayout() {
   const location = useLocation()
@@ -86,7 +86,11 @@ export function AppLayout() {
         {isAdminWorkspace || isGuestLanding ? null : isAuthedApp ? <Suspense fallback={<div aria-hidden="true" style={{ height: 76 }} />}><AppShell /></Suspense> : <Navbar />}
         <SiteLocationBootstrap enabled={!isAuthCinema} />
         {!isAuthCinema && !isAdminWorkspace && !isGuestLanding ? <PremiumLaunchOffer /> : null}
-        <SourceRoomDetailsHost />
+        {new URLSearchParams(location.search).has('source') ? (
+          <Suspense fallback={null}>
+            <SourceRoomDetailsHost />
+          </Suspense>
+        ) : null}
         <ConfirmDialogHost />
         {/* The guest landing brings its own <main>; avoid nesting two. */}
         <MainTag className={isAuthedApp ? 'main-content app-main' : 'main-content'}>

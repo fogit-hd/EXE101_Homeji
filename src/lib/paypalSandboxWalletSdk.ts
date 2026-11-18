@@ -1,5 +1,12 @@
 type Wallet = 'google-pay' | 'apple-pay'
-type WalletConfig = { clientId: string; googlePay: boolean; applePay: boolean }
+type WalletConfig = {
+  clientId: string
+  googlePay: boolean
+  applePay: boolean
+  mode?: 'sandbox' | 'live'
+  totalUsd?: string
+  label?: string
+}
 type Authorize = (wallet: Wallet, confirm: (orderId: string) => Promise<void>) => Promise<boolean>
 type StartPayment = (payment: () => Promise<void>) => void
 
@@ -38,7 +45,7 @@ const sdk = window as Window & {
   }
   google?: { payments?: { api?: {
     PaymentsClient: new (options: {
-      environment: 'TEST'
+      environment: 'TEST' | 'PRODUCTION'
       paymentDataCallbacks: {
         onPaymentAuthorized(data: { paymentMethodData: unknown }): Promise<GoogleAuthorization>
       }
@@ -85,16 +92,21 @@ function loadScript(url: string) {
 export function loadPayPalWalletSdk(config: WalletConfig) {
   const url = new URL('https://www.paypal.com/sdk/js')
   const components = [config.googlePay && 'googlepay', config.applePay && 'applepay'].filter(Boolean)
-  url.search = new URLSearchParams({
+  const params: Record<string, string> = {
     'client-id': config.clientId,
-    'buyer-country': 'US',
     currency: 'USD',
     components: components.join(','),
-  }).toString()
+  }
+  if (config.mode !== 'live') params['buyer-country'] = 'US'
+  url.search = new URLSearchParams(params).toString()
   return loadScript(url.href)
 }
 
-export async function createGooglePayButton(start: StartPayment, authorize: Authorize) {
+export async function createGooglePayButton(
+  start: StartPayment,
+  authorize: Authorize,
+  options?: { environment?: 'TEST' | 'PRODUCTION'; totalPrice?: string },
+) {
   await loadScript('https://pay.google.com/gp/p/js/pay.js')
   const bridge = sdk.paypal?.Googlepay?.()
   const PaymentsClient = sdk.google?.payments?.api?.PaymentsClient
@@ -103,7 +115,7 @@ export async function createGooglePayButton(start: StartPayment, authorize: Auth
   const { allowedPaymentMethods, merchantInfo } = await bridge.config()
   const base = { apiVersion: 2, apiVersionMinor: 0, allowedPaymentMethods }
   const client = new PaymentsClient({
-    environment: 'TEST',
+    environment: options?.environment ?? 'TEST',
     paymentDataCallbacks: {
       onPaymentAuthorized: async ({ paymentMethodData }) => {
         const completed = await authorize('google-pay', async (orderId) => {
@@ -113,13 +125,13 @@ export async function createGooglePayButton(start: StartPayment, authorize: Auth
             const { liabilityShift } = await bridge.initiatePayerAction({ orderId })
             if (liabilityShift === 'POSSIBLE') return
           }
-          throw new Error('Google Pay chưa xác thực đơn thử.')
+          throw new Error('Google Pay chưa xác thực đơn hàng.')
         })
         return completed
           ? { transactionState: 'SUCCESS' }
           : { transactionState: 'ERROR', error: {
             intent: 'PAYMENT_AUTHORIZATION', reason: 'OTHER_ERROR',
-            message: 'Homeji chưa xác nhận được giao dịch thử.',
+            message: 'Homeji chưa xác nhận được giao dịch.',
           } }
       },
     },
@@ -130,7 +142,11 @@ export async function createGooglePayButton(start: StartPayment, authorize: Auth
     ...base,
     merchantInfo,
     callbackIntents: ['PAYMENT_AUTHORIZATION'],
-    transactionInfo: { currencyCode: 'USD', totalPriceStatus: 'FINAL', totalPrice: '1.00' },
+    transactionInfo: {
+      currencyCode: 'USD',
+      totalPriceStatus: 'FINAL',
+      totalPrice: options?.totalPrice ?? '1.00',
+    },
   }
   return client.createButton({
     allowedPaymentMethods,
@@ -146,7 +162,11 @@ export async function createGooglePayButton(start: StartPayment, authorize: Auth
   })
 }
 
-export async function createApplePayButton(start: StartPayment, authorize: Authorize) {
+export async function createApplePayButton(
+  start: StartPayment,
+  authorize: Authorize,
+  options?: { totalPrice?: string; label?: string },
+) {
   if (window.location.protocol !== 'https:') return null
   await loadScript('https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js')
   const Session = sdk.ApplePaySession
@@ -156,6 +176,8 @@ export async function createApplePayButton(start: StartPayment, authorize: Autho
   const { isEligible, countryCode, supportedNetworks, merchantCapabilities } = await bridge.config()
   if (!isEligible) return null
 
+  const label = options?.label ?? 'Homeji Sandbox'
+  const amount = options?.totalPrice ?? '1.00'
   const button = document.createElement('apple-pay-button')
   button.setAttribute('buttonstyle', 'black')
   button.setAttribute('type', 'pay')
@@ -163,7 +185,7 @@ export async function createApplePayButton(start: StartPayment, authorize: Autho
   button.addEventListener('click', () => start(() => new Promise<void>((resolve, reject) => {
     const session = new Session(4, {
       countryCode, supportedNetworks, merchantCapabilities, currencyCode: 'USD',
-      total: { label: 'Homeji Sandbox', type: 'final', amount: '1.00' },
+      total: { label, type: 'final', amount },
     })
     let authorizing = false
     let cancelled = false
@@ -172,7 +194,7 @@ export async function createApplePayButton(start: StartPayment, authorize: Autho
       if (!authorizing) resolve()
     }
     session.onvalidatemerchant = ({ validationURL }) => {
-      void bridge.validateMerchant({ validationUrl: validationURL, displayName: 'Homeji Sandbox' })
+      void bridge.validateMerchant({ validationUrl: validationURL, displayName: label })
         .then(({ merchantSession }) => {
           if (!cancelled) session.completeMerchantValidation(merchantSession)
         })

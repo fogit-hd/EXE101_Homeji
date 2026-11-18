@@ -33,6 +33,9 @@ import type {
   Notification,
   Payment,
   PayOsPaymentResponse,
+  PayPalCheckoutConfig,
+  PayPalPaymentResponse,
+  PayPalWalletOrder,
   PetPreference,
   PostConversation,
   PostMessage,
@@ -444,6 +447,12 @@ export const createPremiumPayOsPayment = (packageCode: string, expectedAmount?: 
     method: 'POST',
   })
 
+export const createPremiumPayPalPayment = (packageCode: string, expectedAmount?: number) =>
+  apiRequest<PayPalPaymentResponse>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/paypal/create`, {
+    params: { expectedAmount },
+    method: 'POST',
+  })
+
 // Notifications
 export const getNotifications = async (unreadOnly = false) => {
   const serverNotifications = await apiRequest<Notification[]>('/api/notifications', {
@@ -491,6 +500,35 @@ export const createPayOsPayment = (amount: number, description?: string) =>
     method: 'POST',
     body: { amount, description },
   })
+
+export const getPayPalQuote = (amount?: number, signal?: AbortSignal) =>
+  apiRequest<PayPalCheckoutConfig>('/api/payments/paypal/quote', {
+    params: amount !== undefined ? { amount } : undefined,
+    signal,
+  })
+
+export const createPayPalPayment = (amount: number, description?: string) =>
+  apiRequest<PayPalPaymentResponse>('/api/payments/paypal/create', {
+    method: 'POST',
+    body: { amount, description },
+  })
+
+export const getPayPalPaymentWallets = (paymentId: string, signal?: AbortSignal) =>
+  apiRequest<PayPalCheckoutConfig>(`/api/payments/${encodeURIComponent(paymentId)}/paypal/wallets`, { signal })
+
+export const createPayPalPaymentWalletOrder = (paymentId: string, wallet: 'google-pay' | 'apple-pay') =>
+  apiRequest<PayPalWalletOrder>(`/api/payments/${encodeURIComponent(paymentId)}/paypal/wallets/${wallet}/orders`, {
+    method: 'POST',
+  })
+
+export const capturePayPalPayment = (
+  paymentId: string,
+  data: { ticket?: string; payPalOrderId?: string } = {},
+) =>
+  apiRequest<Payment>(`/api/payments/${encodeURIComponent(paymentId)}/paypal/capture`, {
+    method: 'POST',
+    body: data,
+  }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
 // Admin Moderation
 export const getAdminActiveUsers = () =>

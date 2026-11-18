@@ -187,6 +187,7 @@ html:has(.hx) {
   position: absolute;
   top: 8px;
   right: 8px;
+  z-index: 2;
   color: var(--hx-text);
 }
 
@@ -230,6 +231,23 @@ html:has(.hx) {
   line-height: var(--hx-leading-snug);
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.hx-listing__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hx-listing__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.hx-listing__link:hover {
+  color: var(--hx-primary-text);
 }
 
 .hx-listing__facts {

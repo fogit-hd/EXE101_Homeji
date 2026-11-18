@@ -1,4 +1,12 @@
-import { useId, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
+import {
+  useId,
+  useRef,
+  type ChangeEvent,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 
 export type SegmentOption<T extends string> = {
   value: T
@@ -6,10 +14,13 @@ export type SegmentOption<T extends string> = {
   icon?: ReactNode
 }
 
+export type SegmentChangeEvent = MouseEvent<HTMLButtonElement> | ChangeEvent<HTMLInputElement>
+
 type Common<T extends string> = {
   options: readonly SegmentOption<T>[]
   value: T
-  onChange: (value: T) => void
+  onChange: (value: T, event?: SegmentChangeEvent) => void
+  onWarmup?: () => void
   size?: 'sm' | 'md'
   block?: boolean
   className?: string
@@ -24,7 +35,7 @@ type Props<T extends string> =
   | (Common<T> & { mode: 'tabs'; label: string; tabId: (value: T) => string; panelId: (value: T) => string })
 
 export function SegmentedControl<T extends string>(props: Props<T>) {
-  const { options, value, onChange, size = 'md', block = false, className } = props
+  const { options, value, onChange, onWarmup, size = 'md', block = false, className } = props
   const activeIndex = Math.max(0, options.findIndex(option => option.value === value))
   const classes = ['hx-seg', `hx-seg--${size}`, block ? 'hx-seg--block' : '', className ?? ''].filter(Boolean).join(' ')
   const style = { '--hx-seg-count': options.length, '--hx-seg-index': activeIndex } as CSSProperties
@@ -43,7 +54,14 @@ export function SegmentedControl<T extends string>(props: Props<T>) {
       tabRefs.current[next]?.focus()
     }
     return (
-      <div role="tablist" aria-label={props.label} className={classes} style={style}>
+      <div
+        role="tablist"
+        aria-label={props.label}
+        className={classes}
+        style={style}
+        onPointerEnter={onWarmup}
+        onFocus={onWarmup}
+      >
         <span className="hx-seg__thumb" aria-hidden="true" />
         {options.map((option, index) => {
           const selected = option.value === value
@@ -58,7 +76,7 @@ export function SegmentedControl<T extends string>(props: Props<T>) {
               aria-controls={props.panelId(option.value)}
               tabIndex={selected ? 0 : -1}
               className={`hx-seg__option${selected ? ' is-active' : ''}`}
-              onClick={() => onChange(option.value)}
+              onClick={event => onChange(option.value, event)}
               onKeyDown={onKeyDown}
             >
               {option.icon}
@@ -71,7 +89,7 @@ export function SegmentedControl<T extends string>(props: Props<T>) {
   }
 
   return (
-    <fieldset className={classes} style={style}>
+    <fieldset className={classes} style={style} onPointerEnter={onWarmup} onFocus={onWarmup}>
       <legend className="hx-sr-only">{props.legend}</legend>
       <span className="hx-seg__thumb" aria-hidden="true" />
       {options.map(option => {
@@ -86,7 +104,7 @@ export function SegmentedControl<T extends string>(props: Props<T>) {
               name={props.name}
               value={option.value}
               checked={selected}
-              onChange={() => onChange(option.value)}
+              onChange={event => onChange(option.value, event)}
             />
             {option.icon}
             <span>{option.label}</span>

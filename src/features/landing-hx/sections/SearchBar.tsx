@@ -1,7 +1,10 @@
 import { useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
-import { motion } from 'motion/react'
+import { BorderBeam } from 'border-beam'
+import { motion, useReducedMotion } from 'motion/react'
 import { ArrowRight, BedDouble, ChevronDown, MapPin, Users, Wallet } from 'lucide-react'
 import { DISTRICT_OPTIONS, PRICE_OPTIONS, type ListingKind, type Option } from '../../../lib/mock/homeji'
+import { useDistortionWave } from '../motion/useDistortionWave'
+import { useTheme } from '../useTheme'
 
 export type ListingQuery = {
   kind: 'all' | ListingKind
@@ -66,7 +69,11 @@ export function SearchBar({ onSearch, stacked = false }: {
   const [kind, setKind] = useState<ListingKind>('room')
   const [district, setDistrict] = useState('')
   const [price, setPrice] = useState('')
+  const [theme] = useTheme()
+  const reduce = useReducedMotion()
+  const { wave, warmup } = useDistortionWave()
   const baseId = useId()
+  const panelRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const tabId = (value: ListingKind) => `${baseId}-tab-${value}`
   const panelId = `${baseId}-panel`
@@ -87,75 +94,97 @@ export function SearchBar({ onSearch, stacked = false }: {
   }
 
   return (
-    <div className="tw:rounded-2xl tw:border tw:border-line tw:bg-surface tw:p-2 tw:shadow-search">
-      <div role="tablist" aria-label="Bạn đang tìm gì" className="tw:flex tw:gap-1 tw:p-1">
-        {TABS.map((tab, index) => {
-          const selected = tab.value === kind
-          const Icon = tab.icon
-          return (
+    <BorderBeam
+      size="line"
+      colorVariant="sunset"
+      theme={theme}
+      strength={0.75}
+      duration={3.4}
+      borderRadius={16}
+      active={!reduce}
+    >
+      <div className="tw:rounded-2xl tw:border tw:border-line tw:bg-surface tw:p-2 tw:shadow-search">
+        <div
+          role="tablist"
+          aria-label="Bạn đang tìm gì"
+          className="tw:flex tw:gap-1 tw:p-1"
+          onPointerEnter={warmup}
+          onFocus={warmup}
+        >
+          {TABS.map((tab, index) => {
+            const selected = tab.value === kind
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.value}
+                ref={node => { tabRefs.current[index] = node }}
+                type="button"
+                role="tab"
+                id={tabId(tab.value)}
+                aria-selected={selected}
+                aria-controls={panelId}
+                tabIndex={selected ? 0 : -1}
+                onClick={event => {
+                  if (tab.value === kind) return
+                  void wave(panelRef.current, () => setKind(tab.value), {
+                    source: event.currentTarget,
+                    focus: event.nativeEvent,
+                  })
+                }}
+                onKeyDown={event => onTabKey(event, index)}
+                className={[
+                  'tw:relative tw:inline-flex tw:min-h-11 tw:flex-1 tw:items-center tw:justify-center tw:gap-2 tw:whitespace-nowrap tw:rounded-xl tw:border-0 tw:bg-transparent tw:px-3 tw:sm:flex-none tw:sm:px-4',
+                  'tw:text-sm tw:font-semibold tw:transition-colors tw:duration-200',
+                  selected ? 'tw:text-brand-text' : 'tw:text-ink-muted tw:hover:text-ink',
+                ].join(' ')}
+              >
+                {selected && (
+                  <motion.span
+                    layoutId={`${baseId}-pill`}
+                    className="tw:absolute tw:inset-0 tw:rounded-xl tw:bg-brand-soft"
+                    transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                    aria-hidden="true"
+                  />
+                )}
+                <Icon className="tw:relative tw:size-4" aria-hidden="true" />
+                <span className="tw:relative">{tab.label}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div ref={panelRef} role="tabpanel" id={panelId} aria-labelledby={tabId(kind)}>
+          <form
+            role="search"
+            aria-label={active.label}
+            onSubmit={submit}
+            className={stacked
+              ? 'tw:grid tw:grid-cols-2 tw:gap-2 tw:p-1 tw:pt-2'
+              : 'tw:grid tw:gap-2 tw:p-1 tw:pt-2 tw:sm:grid-cols-2 tw:xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'}
+          >
+            <SelectField label="Khu vực" icon={<MapPin />} value={district} options={DISTRICT_OPTIONS} onChange={setDistrict} />
+            <SelectField label={active.priceLabel} icon={<Wallet />} value={price} options={PRICE_OPTIONS} onChange={setPrice} />
+            {/* 19px bold label: the large-text threshold that lets white sit on #EA580C at AA. */}
             <button
-              key={tab.value}
-              ref={node => { tabRefs.current[index] = node }}
-              type="button"
-              role="tab"
-              id={tabId(tab.value)}
-              aria-selected={selected}
-              aria-controls={panelId}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => setKind(tab.value)}
-              onKeyDown={event => onTabKey(event, index)}
+              type="submit"
               className={[
-                'tw:relative tw:inline-flex tw:min-h-11 tw:flex-1 tw:items-center tw:justify-center tw:gap-2 tw:whitespace-nowrap tw:rounded-xl tw:border-0 tw:bg-transparent tw:px-3 tw:sm:flex-none tw:sm:px-4',
-                'tw:text-sm tw:font-semibold tw:transition-colors tw:duration-200',
-                selected ? 'tw:text-brand-text' : 'tw:text-ink-muted tw:hover:text-ink',
+                'tw:group/cta tw:inline-flex tw:h-16 tw:items-center tw:justify-center tw:gap-2 tw:rounded-xl tw:border-0 tw:px-7',
+                stacked ? 'tw:col-span-2' : 'tw:sm:col-span-2 tw:xl:col-span-1',
+                'tw:bg-cta tw:text-[1.1875rem] tw:font-bold tw:text-cta-on tw:shadow-[0_10px_24px_-14px_rgb(15_23_42/0.55)]',
+                'tw:transition-[background-color,transform,box-shadow] tw:duration-200 tw:ease-hx',
+                'tw:hover:bg-cta-hover tw:hover:shadow-[0_14px_28px_-14px_rgb(15_23_42/0.6)] tw:motion-safe:hover:-translate-y-0.5 tw:active:translate-y-0 tw:active:scale-[0.98]',
               ].join(' ')}
             >
-              {selected && (
-                <motion.span
-                  layoutId={`${baseId}-pill`}
-                  className="tw:absolute tw:inset-0 tw:rounded-xl tw:bg-brand-soft"
-                  transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                  aria-hidden="true"
-                />
-              )}
-              <Icon className="tw:relative tw:size-4" aria-hidden="true" />
-              <span className="tw:relative">{tab.label}</span>
+              {/* Same label on both tabs so switching never reflows the row. */}
+              Tìm kiếm
+              <ArrowRight
+                className="tw:size-5 tw:transition-transform tw:duration-300 tw:ease-hx tw:motion-safe:group-hover/cta:translate-x-1"
+                aria-hidden="true"
+              />
             </button>
-          )
-        })}
+          </form>
+        </div>
       </div>
-
-      <div role="tabpanel" id={panelId} aria-labelledby={tabId(kind)}>
-        <form
-          role="search"
-          aria-label={active.label}
-          onSubmit={submit}
-          className={stacked
-            ? 'tw:grid tw:grid-cols-2 tw:gap-2 tw:p-1 tw:pt-2'
-            : 'tw:grid tw:gap-2 tw:p-1 tw:pt-2 tw:sm:grid-cols-2 tw:xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'}
-        >
-          <SelectField label="Khu vực" icon={<MapPin />} value={district} options={DISTRICT_OPTIONS} onChange={setDistrict} />
-          <SelectField label={active.priceLabel} icon={<Wallet />} value={price} options={PRICE_OPTIONS} onChange={setPrice} />
-          {/* 19px bold label: the large-text threshold that lets white sit on #EA580C at AA. */}
-          <button
-            type="submit"
-            className={[
-              'tw:group/cta tw:inline-flex tw:h-16 tw:items-center tw:justify-center tw:gap-2 tw:rounded-xl tw:border-0 tw:px-7',
-              stacked ? 'tw:col-span-2' : 'tw:sm:col-span-2 tw:xl:col-span-1',
-              'tw:bg-cta tw:text-[1.1875rem] tw:font-bold tw:text-cta-on tw:shadow-[0_10px_24px_-14px_rgb(15_23_42/0.55)]',
-              'tw:transition-[background-color,transform,box-shadow] tw:duration-200 tw:ease-hx',
-              'tw:hover:bg-cta-hover tw:hover:shadow-[0_14px_28px_-14px_rgb(15_23_42/0.6)] tw:motion-safe:hover:-translate-y-0.5 tw:active:translate-y-0 tw:active:scale-[0.98]',
-            ].join(' ')}
-          >
-            {/* Same label on both tabs so switching never reflows the row. */}
-            Tìm kiếm
-            <ArrowRight
-              className="tw:size-5 tw:transition-transform tw:duration-300 tw:ease-hx tw:motion-safe:group-hover/cta:translate-x-1"
-              aria-hidden="true"
-            />
-          </button>
-        </form>
-      </div>
-    </div>
+    </BorderBeam>
   )
 }

@@ -7,6 +7,7 @@ export function paymentReturnHint(params: URLSearchParams, method?: number): Pay
   const provider = params.get('provider')?.toLowerCase()
   const momo = provider === 'momo' || (!provider && (method === PaymentMethod.Momo || params.has('resultCode')))
   const payos = provider === 'payos' || (!provider && (method === PaymentMethod.PayOs || params.has('cancel') || params.has('providerStatus') || params.has('status')))
+  const paypal = provider === 'paypal' || (!provider && (method === PaymentMethod.PayPal || params.has('token')))
   if (momo && (method === undefined || method === PaymentMethod.Momo)) {
     const code = params.get('resultCode')
     if (code === '1006' || code === '1003' || code === '1017') return 'cancelled'
@@ -20,6 +21,11 @@ export function paymentReturnHint(params: URLSearchParams, method?: number): Pay
     if (status === 'EXPIRED') return 'expired'
     if (status === 'PAID' || status === 'PROCESSING') return 'verifying'
     if (params.has('code') && params.get('code') !== '00') return 'failed'
+  }
+  if (paypal && (method === undefined || method === PaymentMethod.PayPal)) {
+    const status = (params.get('providerStatus') ?? params.get('status'))?.toUpperCase()
+    if (params.get('cancel')?.toLowerCase() === 'true' || status === 'CANCELLED') return 'cancelled'
+    if (params.has('token') || status === 'APPROVED' || status === 'COMPLETED') return 'verifying'
   }
   return 'none'
 }
@@ -36,7 +42,7 @@ export function paymentResultState(status: number, hint: PaymentReturnHint, over
 
 export function paymentReturnUrl(params: URLSearchParams): string {
   const next = new URLSearchParams()
-  for (const key of ['paymentId', 'orderCode', 'orderId', 'provider', 'cancel', 'providerStatus', 'status', 'code', 'resultCode']) {
+  for (const key of ['paymentId', 'orderCode', 'orderId', 'provider', 'cancel', 'providerStatus', 'status', 'code', 'resultCode', 'token']) {
     const value = params.get(key)
     if (value) next.set(key, value)
   }

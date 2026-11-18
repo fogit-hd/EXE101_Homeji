@@ -2,15 +2,19 @@ import { MoneyInput } from '../../ui/MoneyInput'
 import { BankNameInput } from './BankNameInput'
 import { LiquidTabList } from '../../ui/LiquidTabList'
 import { ChoicePicker } from '../../ui/ChoicePicker'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { getPayPalQuote } from '../../../api'
 import {
   WalletTransactionKind,
   WalletWithdrawalStatus,
+  type PayPalCheckoutConfig,
   type Wallet,
   type WalletTransaction,
   type WalletWithdrawal,
 } from '../../../api/types'
+import { getErrorMessage } from '../../../lib/errors'
+import { formatPrice, formatUsd } from '../../../lib/labels'
 import { mapSectionUrl } from '../../../lib/mapDeepLinks'
 import {
   formatAvailableBalance,
@@ -26,7 +30,7 @@ import { WALLET_ASSETS } from './walletAssets'
 import './WalletPage.css'
 import './WalletWorkspace.css'
 
-export type DepositMethod = 'momo' | 'payos'
+export type DepositMethod = 'momo' | 'payos' | 'paypal'
 
 const QUICK_AMOUNTS = [100_000, 200_000, 500_000] as const
 const TABS: { id: WalletTabId; label: string; icon: string; idle: string }[] = [
@@ -394,10 +398,44 @@ function DepositPanel({
   const [method, setMethod] = useState<DepositMethod | ''>('momo')
   const [error, setError] = useState('')
   const [phase, setPhase] = useState<'idle' | 'processing' | 'failed'>('idle')
+  const [quoteState, setQuoteState] = useState<{
+    amount: number
+    config?: PayPalCheckoutConfig
+    error?: string
+  } | null>(null)
 
   const amount = Number(amountText)
   const recent = transactions.find((item) => item.kind === WalletTransactionKind.TopUp) ?? transactions[0] ?? null
   const gatewayPhase = depositReturn === 'none' ? phase : depositReturn
+
+  const validAmount = Number.isInteger(amount) && amount > 0
+  const isPayPal = method === 'paypal'
+  const currentQuote = isPayPal && validAmount && quoteState?.amount === amount ? quoteState : null
+  const quoteLoading = isPayPal && validAmount && currentQuote === null
+  const payPalQuote = currentQuote?.config?.quote ?? null
+  const payPalDisabled = isPayPal && currentQuote?.config?.enabled === false
+  const quoteError = currentQuote?.error
+    ?? (payPalDisabled ? 'Cổng PayPal chưa được cấu hình trên máy chủ.' : undefined)
+
+  useEffect(() => {
+    if (!isPayPal || !validAmount) return
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      void getPayPalQuote(amount, controller.signal)
+        .then((config) => {
+          if (!controller.signal.aborted) setQuoteState({ amount, config })
+        })
+        .catch((err: unknown) => {
+          if (!controller.signal.aborted) {
+            setQuoteState({ amount, error: getErrorMessage(err, 'Chưa tải được tỷ giá USD.') })
+          }
+        })
+    }, 150)
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [amount, isPayPal, validAmount])
 
   const submit = async () => {
     if (!wallet || minTopUp == null || maxTopUp == null) {
@@ -408,8 +446,12 @@ function DepositPanel({
       setError(`Nhập số nguyên từ ${formatWalletAmount(minTopUp)} đến ${formatWalletAmount(maxTopUp)}.`)
       return
     }
-    if (method !== 'momo' && method !== 'payos') {
-      setError('Chọn MoMo hoặc PayOS.')
+    if (method !== 'momo' && method !== 'payos' && method !== 'paypal') {
+      setError('Chọn MoMo, PayOS hoặc PayPal / Google Pay / Apple Pay.')
+      return
+    }
+    if (method === 'paypal' && (quoteLoading || Boolean(quoteError))) {
+      setError(quoteError || 'Đang tải tỷ giá USD theo thời giá. Vui lòng chờ giây lát.')
       return
     }
     setError('')
@@ -504,8 +546,54 @@ function DepositPanel({
               </span>
               <span className="wallet-radio" aria-hidden="true" />
             </button>
+            <button
+              type="button"
+              className={`wallet-methods__wide${method === 'paypal' ? ' is-active' : ''}`}
+              aria-pressed={method === 'paypal'}
+              onClick={() => setMethod('paypal')}
+            >
+              <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.walletCards} size={20} /></span>
+              <span>
+                <strong>PayPal · Google Pay · Apple Pay</strong>
+                <small>Thẻ quốc tế, tự quy đổi USD theo thời giá</small>
+              </span>
+              <span className="wallet-radio" aria-hidden="true" />
+            </button>
           </div>
         </fieldset>
+
+        {isPayPal && validAmount ? (
+          <div className="wallet-paypal-quote" aria-live="polite">
+            {quoteLoading ? <p role="status">Đang cập nhật tỷ giá USD theo thời giá…</p> : null}
+            {quoteError ? <p className="wallet-status is-failed" role="alert">{quoteError}</p> : null}
+            {payPalQuote ? (
+              <dl>
+                <div>
+                  <dt>Tỷ giá ({payPalQuote.rateSource})</dt>
+                  <dd>1 USD = {formatPrice(payPalQuote.exchangeRateVnd)}</dd>
+                </div>
+                <div>
+                  <dt>Quy đổi gốc</dt>
+                  <dd>{formatUsd(payPalQuote.baseUsd)}</dd>
+                </div>
+                <div>
+                  <dt>Phí chuyển đổi ngoại tệ NH ({(payPalQuote.bankFeePercent * 100).toFixed(1)}%)</dt>
+                  <dd>{formatUsd(payPalQuote.bankFeeUsd)}</dd>
+                </div>
+                <div>
+                  <dt>
+                    Phí cổng quốc tế ({(payPalQuote.gatewayFeePercent * 100).toFixed(1)}% + {formatUsd(payPalQuote.gatewayFixedFeeUsd)})
+                  </dt>
+                  <dd>{formatUsd(payPalQuote.gatewayFeeUsd)}</dd>
+                </div>
+                <div className="wallet-paypal-quote__total">
+                  <dt>Tổng thu quốc tế</dt>
+                  <dd>{formatUsd(payPalQuote.totalUsd)}</dd>
+                </div>
+              </dl>
+            ) : null}
+          </div>
+        ) : null}
 
         {shownPhase === 'processing' ? (
           <p className="wallet-status is-processing" role="status">
@@ -521,13 +609,13 @@ function DepositPanel({
             <span>Sẽ nạp vào ví</span>
             <strong>{Number.isFinite(amount) && amount > 0 ? formatWalletAmount(amount) : '—'}</strong>
           </div>
-          <button type="button" disabled={busy || !wallet || loading} onClick={() => void submit()}>
-            {busy ? 'Đang tạo giao dịch…' : `Tiếp tục · ${Number.isFinite(amount) && amount > 0 ? formatWalletAmount(amount) : ''}`.trim()}
+          <button type="button" disabled={busy || !wallet || loading || (method === 'paypal' && (quoteLoading || Boolean(quoteError)))} onClick={() => void submit()}>
+            {busy ? 'Đang tạo giao dịch…' : payPalQuote ? `Tiếp tục · ${formatUsd(payPalQuote.totalUsd)}` : `Tiếp tục · ${Number.isFinite(amount) && amount > 0 ? formatWalletAmount(amount) : ''}`.trim()}
             <Icon src={WALLET_ASSETS.arrowUpRight} size={17} />
           </button>
         </footer>
         <p className="wallet-deposit__after">Số dư dự kiến sau khi nạp <strong>{balance == null || !Number.isSafeInteger(amount) || amount <= 0 ? '—' : formatWalletAmount(balance + amount)}</strong></p>
-        <p className="wallet-deposit__confirmation"><Icon src={WALLET_ASSETS.shield} size={14} />Bạn sẽ xác nhận thanh toán trên MoMo hoặc PayOS.</p>
+        <p className="wallet-deposit__confirmation"><Icon src={WALLET_ASSETS.shield} size={14} />{method === 'paypal' ? 'Bạn sẽ xác nhận thanh toán qua PayPal, Google Pay hoặc Apple Pay.' : 'Bạn sẽ xác nhận thanh toán trên MoMo hoặc PayOS.'}</p>
       </section>
 
       <div className="wallet-deposit__details">

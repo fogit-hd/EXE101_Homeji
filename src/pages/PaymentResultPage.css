@@ -64,3 +64,51 @@ html[data-theme='dark'] :is(#root,body) .payment-result-page .payment-wait-actio
   --apple-pay-button-height: 40px;
   --apple-pay-button-border-radius: 4px;
 }
+
+.payment-paypal-wallets {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.payment-paypal-quote {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 13px;
+  text-align: left;
+}
+
+.payment-paypal-quote > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.payment-paypal-quote dt {
+  color: var(--text-secondary);
+}
+
+.payment-paypal-quote dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-heading);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.payment-paypal-quote__total {
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+}
+
+.payment-paypal-wallets__note {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 8px 0 0;
+}

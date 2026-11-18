@@ -5,6 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   createPremiumMomoPayment,
   createPremiumPayOsPayment,
+  createPremiumPayPalPayment,
   createPremiumWalletPayment,
   getMySubscription,
   getMyWallet,
@@ -15,8 +16,8 @@ import {
   type Payment,
   type SubscriptionPackage,
 } from '../api'
-import { ApiRequestError, apiRequest } from '../api/client'
-import { PaymentStatus, SubscriptionTier, UserRole } from '../api/types'
+import { ApiRequestError } from '../api/client'
+import { PaymentStatus, SubscriptionTier } from '../api/types'
 import { HomejiLoader } from "../components/HomejiLoader"
 import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MapToast } from '../components/map/MapToast'
@@ -49,18 +50,7 @@ import './PaymentPage.css'
 type PayTab = 'plans' | 'history'
 
 export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
-  const { refreshProfile, needsProfileSetup, profile } = useAuth()
-  const [sandboxAvailableFor, setSandboxAvailableFor] = useState<string | null>(null)
-  const profileId = profile?.id
-  const sandboxEligible = import.meta.env.DEV || profile?.role === UserRole.Admin
-  useEffect(() => {
-    if (!sandboxEligible || !profileId) return
-    const controller = new AbortController()
-    void apiRequest<void>('/api/payments/paypal-sandbox', { signal: controller.signal })
-      .then(() => { if (!controller.signal.aborted) setSandboxAvailableFor(profileId) })
-      .catch(() => { if (!controller.signal.aborted) setSandboxAvailableFor(null) })
-    return () => controller.abort()
-  }, [sandboxEligible, profileId])
+  const { refreshProfile, needsProfileSetup } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab: PayTab = searchParams.get('tab') === 'history' ? 'history' : 'plans'
@@ -77,7 +67,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [vipVoucher, setVipVoucher] = useState<(VoucherSelection & { packageCode: string }) | null>(null)
   const [payPickerCode, setPayPickerCode] = useState<string | null>(null)
   const [busyCode, setBusyCode] = useState<string | null>(null)
-  const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | 'wallet' | null>(null)
+  const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | 'wallet' | 'paypal' | null>(null)
   const checkoutGuard = useRef(false)
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
   const [walletError, setWalletError] = useState('')
@@ -207,16 +197,19 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     setToast({ message, tone })
   }
 
-  const startCheckout = async (packageCode: string, method: 'momo' | 'payos') => {
+  const startCheckout = async (packageCode: string, method: 'momo' | 'payos' | 'paypal') => {
     if (checkoutGuard.current || busyCode || needsProfileSetup) return
     checkoutGuard.current = true
     trackFunnelEvent('begin_checkout', { item_category: 'premium' })
     setBusyCode(packageCode)
     setBusyMethod(method)
     try {
+      const expectedAmount = packages.find(plan => plan.code === packageCode)?.price
       const res = method === 'momo'
-        ? await createPremiumMomoPayment(packageCode, packages.find(plan => plan.code === packageCode)?.price)
-        : await createPremiumPayOsPayment(packageCode, packages.find(plan => plan.code === packageCode)?.price)
+        ? await createPremiumMomoPayment(packageCode, expectedAmount)
+        : method === 'payos'
+          ? await createPremiumPayOsPayment(packageCode, expectedAmount)
+          : await createPremiumPayPalPayment(packageCode, expectedAmount)
       setPayPickerCode(null)
       navigate(paymentWaitingUrl(res.paymentId))
     } catch (err) {
@@ -500,6 +493,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           <button type="button" className="pay-method is-payos" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'payos')}>
                             {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
                           </button>
+                          <button type="button" className="pay-method is-paypal" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'paypal')}>
+                            {busy && busyMethod === 'paypal' ? 'Đang tạo…' : 'PayPal · Google Pay · Apple Pay'}
+                          </button>
                         </div>
                         <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setVipVoucher(null); setPayPickerCode(null) }}>
                           Đóng lựa chọn
@@ -555,8 +551,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               </tbody>
             </table>
           </section>
-          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo hoặc PayOS · Đơn chờ MoMo/PayOS tự hủy sau 15 phút</p>
-          {sandboxEligible && sandboxAvailableFor === profileId && <Link className="pay-btn" to="/payments/sandbox">Thử thanh toán quốc tế · PayPal Sandbox</Link>}
+          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo, PayOS hoặc PayPal / Google Pay / Apple Pay · Đơn chờ tự hủy sau 15 phút</p>
         </div>
       ) : null}
 
@@ -616,7 +611,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       aria-pressed={activePayment?.id === p.id}
                     >
                       <span className="pay-table__plan"><strong>{planName(p)}</strong><small>{p.orderCode}</small></span>
-                      <span className="pay-table__method"><i className={`pay-logo is-${p.method}`} aria-hidden="true">{p.method === 1 ? 'M' : p.method === 3 ? 'Ví' : 'P'}</i>{paymentMethodLabel[p.method]}</span>
+                      <span className="pay-table__method"><i className={`pay-logo is-${p.method}`} aria-hidden="true">{p.method === 1 ? 'M' : p.method === 3 ? 'Ví' : p.method === 4 ? 'PP' : 'P'}</i>{paymentMethodLabel[p.method]}</span>
                       <span className="pay-table__time">{formatDate(p.createdAt)}</span>
                       <span className="pay-table__amount">{formatPrice(p.amount)}</span>
                       <span className="pay-table__status"><PaymentStatusBadge status={p.status} /></span>

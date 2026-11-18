@@ -21,10 +21,12 @@
   animation: ai-capsule-orbit 3s linear infinite,ai-capsule-breathe 2.6s ease-in-out infinite;
 }
 .homeji-assistant__thinking-orb {
-  display: block; flex: 0 0 25px; width: 25px; height: 25px; border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%,#fff9,transparent 45%),conic-gradient(from var(--ai-orbit),var(--thinking-spectrum));
-  box-shadow: inset 0 0 5px #fff7,0 0 10px #9d9ce54d;
-  animation: ai-capsule-orbit 2.4s linear infinite;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
 }
 @property --ai-orbit { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 @keyframes ai-capsule-orbit { to { --ai-orbit: 360deg; } }

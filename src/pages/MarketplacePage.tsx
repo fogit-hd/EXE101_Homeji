@@ -15,6 +15,7 @@ import {
   createMarketplacePost,
   createMomoPayment,
   createPayOsPayment,
+  createPayPalPayment,
   createWalletWithdrawal,
   getMarketplacePost,
   getMyMarketplaceOrders,
@@ -86,6 +87,7 @@ import {
 } from '../lib/labels'
 import { getDeviceLocation } from '../lib/geolocation'
 import { mapMessagesUrl } from '../lib/mapDeepLinks'
+import { paymentWaitingUrl } from '../lib/paymentLifecycle'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
   primaryOf,
@@ -980,6 +982,11 @@ export function MarketplacePage({
     if (needsProfileSetup) return { ok: false as const, message: 'Lưu Thông tin cơ bản trong Hồ sơ trước khi nạp tiền. Dùng nút Bổ sung thông tin tài khoản ở đầu trang.' }
     setWalletBusy(method)
     try {
+      if (method === 'paypal') {
+        const result = await createPayPalPayment(amount, 'Nạp ví Homeji')
+        void navigate(paymentWaitingUrl(result.paymentId))
+        return { ok: true as const }
+      }
       let url: string | null | undefined
       if (method === 'momo') {
         const result = await createMomoPayment(amount, 'Nạp ví Homeji')

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type PointerEvent } from 'react'
+import { VoiceBeam } from 'voice-glow'
 import './GlassVoiceControl.css'
 
 const bands = [[75, 150], [150, 300], [300, 600], [600, 1200], [1200, 2400], [2400, 4800]] as const
@@ -22,13 +23,17 @@ type Props = {
 
 export function GlassVoiceControl({ recording, starting, seconds, disabled, getAnalyser, onStart, onStop }: Props) {
   const root = useRef<HTMLDivElement>(null)
+  const levelRef = useRef(0)
   const expanded = starting || recording
   const clock = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
 
   useEffect(() => {
     const element = root.current
     const analyser = recording ? getAnalyser() : undefined
-    if (!element || !analyser) return
+    if (!element || !analyser) {
+      levelRef.current = 0
+      return
+    }
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
     const spectrum = new Uint8Array(analyser.frequencyBinCount)
     const resolution = analyser.context.sampleRate / analyser.fftSize
@@ -38,7 +43,10 @@ export function GlassVoiceControl({ recording, starting, seconds, disabled, getA
     const energy = bands.map(() => 0)
     let frame = 0
     let previous = -Infinity
-    const clear = () => energy.forEach((_, index) => element.style.removeProperty(`--voice-${index}`))
+    const clear = () => {
+      levelRef.current = 0
+      energy.forEach((_, index) => element.style.removeProperty(`--voice-${index}`))
+    }
     const paint = (now: number) => {
       if (now - previous >= 32) {
         analyser.getByteFrequencyData(spectrum)
@@ -49,6 +57,7 @@ export function GlassVoiceControl({ recording, starting, seconds, disabled, getA
           energy[index] += (next - energy[index]) * (next > energy[index] ? .58 : .28)
           element.style.setProperty(`--voice-${index}`, energy[index].toFixed(3))
         })
+        levelRef.current = Math.min(1, Math.max(...energy))
         previous = now
       }
       frame = requestAnimationFrame(paint)
@@ -89,7 +98,21 @@ export function GlassVoiceControl({ recording, starting, seconds, disabled, getA
   return (
     <div ref={root} className="glass-voice" data-expanded={expanded || undefined} data-recording={recording || undefined}
       onPointerMove={move} onPointerLeave={reset} onPointerCancel={reset}>
-      <span className="glass-voice__shell" aria-hidden="true"><span data-glass-optics="" /></span>
+      <span className="glass-voice__shell" aria-hidden="true">
+        <VoiceBeam
+          type="pill"
+          colorVariant="ocean"
+          theme="dark"
+          active={recording}
+          level={() => levelRef.current}
+          strength={0.85}
+          distortion={0}
+          borderRadius={999}
+          style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', pointerEvents: 'none' }}
+        >
+          <span data-glass-optics="" style={{ display: 'block', width: '100%', height: '100%', borderRadius: 'inherit' }} />
+        </VoiceBeam>
+      </span>
       <span className="glass-voice__bead" aria-hidden="true"><span data-glass-optics="" /></span>
       <span className="glass-voice__mark" aria-hidden="true"><Microphone /></span>
       {expanded && <span className="glass-voice__clock" role="timer" aria-live="off">{clock}</span>}

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Megaphone, Search } from 'lucide-react'
 import { HOW_IT_WORKS } from '../../../lib/mock/homeji'
 import { RevealGroup, RevealItem } from '../motion/Reveal'
+import { useDistortionWave } from '../motion/useDistortionWave'
 import { ButtonLink } from '../ui/Button'
 import { Container, SectionHeading } from '../ui/primitives'
 import { SegmentedControl } from '../ui/SegmentedControl'
@@ -20,6 +21,8 @@ const CTA: Record<Audience, { label: string; to: string }> = {
 
 export function HowItWorks() {
   const [audience, setAudience] = useState<Audience>('seeker')
+  const panelRef = useRef<HTMLDivElement>(null)
+  const { wave, warmup } = useDistortionWave()
   const steps = HOW_IT_WORKS[audience]
 
   return (
@@ -37,7 +40,15 @@ export function HowItWorks() {
               label="Chọn vai trò"
               options={TABS}
               value={audience}
-              onChange={setAudience}
+              onWarmup={warmup}
+              onChange={(next, event) => {
+                if (next === audience) return
+                const focus = event && 'clientX' in event ? event.nativeEvent : null
+                void wave(panelRef.current, () => setAudience(next), {
+                  source: event?.currentTarget,
+                  focus,
+                })
+              }}
               tabId={value => `hx-how-tab-${value}`}
               panelId={value => `hx-how-panel-${value}`}
             />
@@ -49,7 +60,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div id={`hx-how-panel-${audience}`} role="tabpanel" aria-labelledby={`hx-how-tab-${audience}`} className="hx-how__panel">
+        <div ref={panelRef} id={`hx-how-panel-${audience}`} role="tabpanel" aria-labelledby={`hx-how-tab-${audience}`} className="hx-how__panel">
           <RevealGroup key={audience} as="ol" className="hx-how__steps">
             {steps.map((step, index) => (
               <RevealItem as="li" key={step.title} className="hx-how__step">

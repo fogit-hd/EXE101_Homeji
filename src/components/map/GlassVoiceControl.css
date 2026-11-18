@@ -61,7 +61,7 @@
   transition: left 520ms var(--voice-spring), transform 300ms var(--voice-spring);
 }
 
-.glass-voice :is(.glass-voice__shell, .glass-voice__bead) > span {
+.glass-voice :is(.glass-voice__shell, .glass-voice__bead) [data-glass-optics] {
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -171,7 +171,7 @@
 @media (prefers-reduced-transparency: reduce) {
   .glass-voice__shell { background: #263b52; }
   .glass-voice__bead { background: #405870; }
-  .glass-voice :is(.glass-voice__shell, .glass-voice__bead) > span { backdrop-filter: none; }
+  .glass-voice :is(.glass-voice__shell, .glass-voice__bead) [data-glass-optics] { backdrop-filter: none; }
 }
 
 @media (forced-colors: active) {
