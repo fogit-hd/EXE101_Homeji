@@ -9,6 +9,7 @@ import { AdminPostsQueue, AdminReportsQueue, AdminVerificationsQueue, AdminWithd
 import { AdminRegistrationsPanel } from '../components/admin/AdminRegistrationsPanel'
 import { AdminShell } from '../components/admin/AdminShell'
 import { AdminMaintenancePanel, AdminPresencePanel } from '../components/admin/AdminSystemViews'
+import { AdminPlatformPanel } from '../components/admin/AdminPlatformPanel'
 import { AiListingReviewPanel } from '../components/admin/AiListingReviewPanel'
 import { adminSectionFromSlug, adminSectionInfo, adminSectionPath, type AdminSection } from '../components/admin/adminSections'
 import { useAdminWorkspace, type AdminWorkspace } from '../components/admin/useAdminWorkspace'
@@ -73,6 +74,7 @@ function AdminWorkspaceView({ section }: { section: AdminSection }) {
       {section === 'registrations' ? <AdminRegistrationsPanel /> : null}
       {section === 'pricing' ? <AdminPremiumPricingPanel /> : null}
       {section === 'exports' ? <AdminExportsPanel /> : null}
+      {section === 'platform' ? <AdminPlatformPanel /> : null}
       {usesQueues ? ws.showLoader ? (
         ws.disrupted ? <HomejiLoader onIntroComplete={ws.onIntroComplete} message={ws.loadError} /> : <AdminSkeleton withHeader={false} />
       ) : <>

@@ -55,6 +55,14 @@ html[data-theme='dark'] .admin-shell { --admin-rail-bg: #0a151c; --admin-rail-ac
 
 /* Home */
 .admin-home { display: grid; gap: 20px; min-width: 0; }
+.admin-platform-card { display: grid; gap: 14px; padding: 20px; min-width: 0; }
+.admin-platform-card h2, .admin-platform-card p { margin: 0; }
+.admin-platform-card .admin-section-heading { flex-wrap: wrap; gap: 10px; }
+.admin-platform-card > a { justify-self: start; }
+.admin-platform-queue { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.admin-platform-days { width: 100%; border-collapse: collapse; }
+.admin-platform-days th, .admin-platform-days td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.admin-platform-days th:last-child, .admin-platform-days td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .admin-home__hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 #root .admin-home__hero .btn { flex-shrink: 0; white-space: nowrap; }
 #root .admin-panel__note a { color: var(--action-on-soft); font-weight: 600; text-decoration: none; }
