@@ -11,7 +11,7 @@ const PORT = 38475
 
 test('only extensionless and HTML paths are application routes', () => {
   for (const path of ['/', '/explore', '/posts/1dbb755c-a098-430b-ab08-0878de1419f0/edit', '/admin/', '/old-page.html', '/a.b/c']) assert.equal(isSpaRoute(path), true, path)
-  for (const path of ['/assets/index-abc.js', '/assets/index-abc.css', '/brand/logo.PNG', '/lottie/x.lottie', '/assets/map.js.map']) assert.equal(isSpaRoute(path), false, path)
+  for (const path of ['/assets/index-abc.js', '/assets/index-abc.css', '/brand/logo.PNG', '/lottie/x.lottie', '/assets/map.js.map', '/.well-known/apple-developer-merchantid-domain-association']) assert.equal(isSpaRoute(path), false, path)
 })
 
 test('production server answers 404 for a missing asset and keeps the SPA fallback', async t => {
@@ -40,7 +40,7 @@ test('production server answers 404 for a missing asset and keeps the SPA fallba
   assert.equal(real.status, 200)
   assert.match(real.headers.get('content-type'), /javascript/)
 
-  for (const path of ['/assets/missing.js', '/assets/missing.js?v=3', '/brand/missing.png']) {
+  for (const path of ['/assets/missing.js', '/assets/missing.js?v=3', '/brand/missing.png', '/.well-known/apple-developer-merchantid-domain-association']) {
     const missing = await get(path)
     assert.equal(missing.status, 404, path)
     assert.doesNotMatch(await missing.text(), /app shell/, path)

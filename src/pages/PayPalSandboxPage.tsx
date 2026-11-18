@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ApiRequestError, apiRequest } from '../api/client'
+import { PayPalSandboxWallets } from '../components/payments/PayPalSandboxWallets'
 import { getErrorMessage } from '../lib/errors'
 import { safeCheckoutUrl } from '../lib/paymentLifecycle'
 import './PaymentPage.css'
@@ -25,6 +26,7 @@ const resultMessages: Record<SandboxCapture['status'], string> = {
 export function PayPalSandboxPage() {
   const [params] = useSearchParams()
   const [busy, setBusy] = useState(false)
+  const [walletBusy, setWalletBusy] = useState(false)
   const [error, setError] = useState('')
   const [capture, setCapture] = useState<SandboxCapture | null>(null)
   const returned = params.get('paypal') === 'return'
@@ -78,7 +80,7 @@ export function PayPalSandboxPage() {
       <Link className="payment-back" to="/payments">← Thanh toán Homeji</Link>
       <section className="payment-wait-card payment-result-card" aria-labelledby="sandbox-title">
         <h1 id="sandbox-title">Thử thanh toán quốc tế</h1>
-        <p className="payment-wait-description">Dùng tài khoản người mua PayPal Sandbox để thử giao dịch. Số dư ví và gói Premium của bạn giữ nguyên.</p>
+        <p className="payment-wait-description">Dùng tài khoản hoặc thẻ thử để thanh toán. Các giao dịch trên trang này chỉ chạy trong Sandbox.</p>
         <div className="payment-result-total">
           <span>Số tiền thử</span>
           <strong>1,00 USD</strong>
@@ -93,13 +95,14 @@ export function PayPalSandboxPage() {
               {busy ? 'Đang xác nhận…' : capture ? 'Kiểm tra lại' : 'Xác nhận giao dịch thử'}
             </button>
           ) : !returned ? (
-            <button type="button" className="payment-button" disabled={busy} onClick={() => void createOrder()}>
+            <button type="button" className="payment-button" disabled={busy || walletBusy} onClick={() => void createOrder()}>
               {busy ? 'Đang tạo đơn…' : 'Mở PayPal Sandbox'}
             </button>
           ) : (
             <Link className="payment-button" reloadDocument to="/payments/sandbox">Tạo đơn thử mới</Link>
           )}
         </div>
+        {!returned && <div inert={busy}><PayPalSandboxWallets onBusyChange={setWalletBusy} /></div>}
       </section>
     </div>
   )

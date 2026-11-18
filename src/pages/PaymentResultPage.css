@@ -47,3 +47,20 @@ html[data-theme='dark'] .payment-result-card.is-neutral { --result-accent: #c4d4
 }
 html[data-theme='dark'] :is(#root,body) .payment-result-page .payment-wait-actions>.payment-button:not(.is-secondary) { background: #9cdece; color: #153a35; border-color: #9cdece; }
 
+.payment-sandbox-wallets:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.payment-sandbox-wallets > :empty {
+  display: none;
+}
+
+.payment-sandbox-wallets apple-pay-button {
+  --apple-pay-button-width: 150px;
+  --apple-pay-button-height: 40px;
+  --apple-pay-button-border-radius: 4px;
+}
