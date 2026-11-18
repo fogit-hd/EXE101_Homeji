@@ -26,6 +26,7 @@ import {
   type WalletTabId,
 } from '../../../lib/walletMoney'
 import { FOOD_ASSETS } from '../food/foodAssets'
+import { InternationalMethodBadges } from '../../payments/PaymentMethodMarks'
 import { WALLET_ASSETS } from './walletAssets'
 import './WalletPage.css'
 import './WalletWorkspace.css'
@@ -553,9 +554,10 @@ function DepositPanel({
               onClick={() => setMethod('paypal')}
             >
               <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.walletCards} size={20} /></span>
-              <span>
+              <span className="wallet-methods__paypal-copy">
                 <strong>PayPal · Google Pay · Apple Pay</strong>
                 <small>Thẻ quốc tế, tự quy đổi USD theo thời giá</small>
+                <InternationalMethodBadges compact />
               </span>
               <span className="wallet-radio" aria-hidden="true" />
             </button>
@@ -569,7 +571,7 @@ function DepositPanel({
             {payPalQuote ? (
               <dl>
                 <div>
-                  <dt>Tỷ giá ({payPalQuote.rateSource})</dt>
+                  <dt>Tỷ giá · {payPalQuote.rateSource}</dt>
                   <dd>1 USD = {formatPrice(payPalQuote.exchangeRateVnd)}</dd>
                 </div>
                 <div>

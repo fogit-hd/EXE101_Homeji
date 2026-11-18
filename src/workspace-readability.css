@@ -47,10 +47,6 @@ html:root #root .pay-table__row.is-active { background: var(--hj-accent-soft); }
 html:root #root .pay-table__row small { overflow-wrap: anywhere; font-size: 11px; }
 html:root #root .pay-table__amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
 html:root #root .pay-table__row::before, html:root #root .pay-table__row::after { display: none; }
-html:root #root .pay-plan { border-radius: 12px; box-shadow: none; padding: 26px 22px; }
-html:root #root .pay-plan.is-current { border: 2px solid var(--hj-accent); }
-html:root #root .pay-plan__ribbon { position: static; display: inline-block; margin-bottom: 12px; }
-html:root #root .pay-plan__price { white-space: nowrap; font-size: 30px; }
 @media(max-width:1250px) { html:root #root .pay-table__head { display: none; } html:root #root .pay-table__row { grid-template-columns: minmax(0,1fr) auto; } html:root #root .pay-table__plan { grid-column: 1 / -1; } html:root #root .pay-table__time { grid-column: 1; } html:root #root .pay-table__amount { grid-column: 2; grid-row: 2; } }
 html:root #root .roommate-workspace { gap: 24px; }
 html:root #root .roommate-workspace__lifestyle { order: 3; background: transparent; border-radius: 0; border: 0; border-top: 1px solid var(--border); padding: 20px 0; }

@@ -10,22 +10,28 @@ import { formatPrice, formatUsd } from '../../lib/labels'
 import {
   createApplePayButton,
   createGooglePayButton,
+  extractWalletErrorMessage,
   loadPayPalWalletSdk,
+  WalletUnavailableError,
   type Authorize,
 } from '../../lib/paypalSandboxWalletSdk'
+import { ApplePayLogo, GooglePayLogo, PayPalLogo } from './PaymentMethodMarks'
 
 type WalletState = {
   paymentId: string
   config?: PayPalCheckoutConfig
   walletAvailability?: 'checking' | 'hidden' | 'ready' | 'unavailable'
+  unavailableReason?: string
   error?: string
 }
 
 export function PayPalCheckoutWallets({
   paymentId,
+  checkoutUrl,
   onCompleted,
 }: {
   paymentId: string
+  checkoutUrl?: string | null
   onCompleted: () => void
 }) {
   const googleHost = useRef<HTMLDivElement>(null)
@@ -56,8 +62,11 @@ export function PayPalCheckoutWallets({
     void (async () => {
       try {
         await payment()
-      } catch {
-        setNotice({ text: 'Không thể hoàn tất thanh toán ví. Vui lòng thử lại.', error: true })
+      } catch (error) {
+        setNotice({
+          text: extractWalletErrorMessage(error, 'Không thể hoàn tất thanh toán ví. Vui lòng thử lại.'),
+          error: true,
+        })
       } finally {
         locked.current = false
         setBusy(false)
@@ -110,8 +119,11 @@ export function PayPalCheckoutWallets({
       pendingTicket.current = order.ticket
       setCanRetry(true)
       return await capture(order.ticket)
-    } catch {
-      setNotice({ text: 'Ví chưa xác thực đơn hàng. Bạn có thể thử lại hoặc thanh toán qua PayPal.', error: true })
+    } catch (error) {
+      setNotice({
+        text: extractWalletErrorMessage(error, 'Ví chưa xác thực đơn hàng. Bạn có thể thử lại hoặc thanh toán qua PayPal.'),
+        error: true,
+      })
       return false
     }
   }, [capture, paymentId])
@@ -159,10 +171,16 @@ export function PayPalCheckoutWallets({
         if (googleButton) googleContainer?.append(googleButton)
         if (appleButton) appleContainer?.append(appleButton)
 
+        const unavailableReasons = [google, apple]
+          .filter((result): result is PromiseRejectedResult =>
+            result.status === 'rejected' && result.reason instanceof WalletUnavailableError)
+          .map(result => (result.reason as WalletUnavailableError).message)
+
         setState({
           paymentId,
           config: fetched,
           walletAvailability: googleButton || appleButton ? 'ready' : 'unavailable',
+          unavailableReason: unavailableReasons[0],
         })
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -181,12 +199,14 @@ export function PayPalCheckoutWallets({
     }
   }, [authorize, paymentId, start])
 
+  const walletsVisible = walletAvailability !== 'hidden'
+
   return (
-    <div className="payment-paypal-wallets">
+    <div className="payment-paypal-wallets" data-glass-exclude>
       {quote ? (
         <dl className="payment-paypal-quote" aria-label="Chi tiết quy đổi USD">
-          <div>
-            <dt>Tỷ giá thời giá ({quote.rateSource})</dt>
+          <div className="payment-paypal-quote__header">
+            <dt>Tỷ giá · {quote.rateSource}</dt>
             <dd>1 USD = {formatPrice(quote.exchangeRateVnd)}</dd>
           </div>
           <div>
@@ -210,34 +230,75 @@ export function PayPalCheckoutWallets({
         </dl>
       ) : null}
 
-      <div hidden={walletAvailability === 'hidden'}>
-        {walletAvailability === 'checking' && <p role="status">Đang kiểm tra Google Pay và Apple Pay…</p>}
-        {walletAvailability === 'unavailable' && (
-          <p className="payment-paypal-wallets__note" role="status">
-            Google Pay / Apple Pay chưa khả dụng trên thiết bị này. Bạn có thể thanh toán trực tiếp qua nút PayPal ở trên.
-          </p>
-        )}
-        <div className="payment-sandbox-wallets" inert={busy || canRetry} hidden={walletAvailability !== 'ready'}>
-          <div ref={googleHost} />
-          <div ref={appleHost} />
-        </div>
-        {busy && <p role="status">Đang xử lý giao dịch ví…</p>}
-        {notice && (
-          <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'payment-inline-error' : undefined}>
-            {notice.text}
-          </p>
-        )}
-        {canRetry && (
-          <button
-            type="button"
-            className="payment-button"
-            disabled={busy}
-            onClick={() => start(async () => {
-              if (pendingTicket.current) await capture(pendingTicket.current)
-            })}
+      <div className="payment-checkout-panel" data-glass-exclude>
+        <div className="payment-express-box" hidden={!walletsVisible}>
+          <div className="payment-express-box__head">
+            <span>Thanh toán nhanh trên thiết bị</span>
+            <span className="payment-express-box__logos" aria-hidden="true">
+              <GooglePayLogo compact />
+              <ApplePayLogo compact />
+            </span>
+          </div>
+          {walletAvailability === 'checking' && (
+            <p className="payment-paypal-wallets__status" role="status">
+              Đang kiểm tra Google Pay và Apple Pay…
+            </p>
+          )}
+          {walletAvailability === 'unavailable' && (
+            <p className="payment-paypal-wallets__note" role="status">
+              {currentState?.unavailableReason ?? 'Google Pay / Apple Pay chưa khả dụng trên thiết bị này. Bạn có thể thanh toán trực tiếp qua nút PayPal bên dưới.'}
+            </p>
+          )}
+          <div
+            className="payment-sandbox-wallets"
+            data-glass-exclude
+            inert={busy || canRetry}
+            hidden={walletAvailability !== 'ready'}
           >
-            Kiểm tra lại giao dịch ví
-          </button>
+            <div ref={googleHost} data-glass-exclude />
+            <div ref={appleHost} data-glass-exclude />
+          </div>
+          {walletAvailability === 'ready' && currentState?.unavailableReason && (
+            <p className="payment-paypal-wallets__note" role="status">{currentState.unavailableReason}</p>
+          )}
+          {busy && <p className="payment-paypal-wallets__status" role="status">Đang xử lý giao dịch ví…</p>}
+          {notice && (
+            <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'payment-inline-error' : 'payment-paypal-wallets__status'}>
+              {notice.text}
+            </p>
+          )}
+          {canRetry && (
+            <button
+              type="button"
+              className="payment-button payment-button--retry"
+              disabled={busy}
+              onClick={() => start(async () => {
+                if (pendingTicket.current) await capture(pendingTicket.current)
+              })}
+            >
+              Kiểm tra lại giao dịch ví
+            </button>
+          )}
+        </div>
+
+        {walletsVisible && checkoutUrl ? (
+          <div className="payment-checkout-divider" aria-hidden="true">
+            <span>hoặc thanh toán qua cổng web</span>
+          </div>
+        ) : null}
+
+        {checkoutUrl ? (
+          <a
+            className="payment-button payment-button--paypal"
+            href={checkoutUrl}
+          >
+            <PayPalLogo compact />
+            <span>{walletsVisible ? 'Thanh toán qua PayPal →' : 'Thanh toán qua PayPal · Thẻ quốc tế →'}</span>
+          </a>
+        ) : (
+          <p className="payment-inline-error" role="alert">
+            Chưa có liên kết thanh toán hợp lệ. Vui lòng kiểm tra trạng thái.
+          </p>
         )}
       </div>
     </div>

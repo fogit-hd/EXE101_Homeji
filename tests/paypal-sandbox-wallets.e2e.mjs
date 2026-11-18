@@ -78,6 +78,9 @@ await context.route('**/*', async (route) => {
   if (url.hostname === 'pay.google.com') return route.fulfill({ contentType: 'application/javascript', body: google })
   if (url.hostname === 'applepay.cdn-apple.com') return route.fulfill({ contentType: 'application/javascript', body: apple })
   if (url.origin !== origin) return route.abort()
+  if (url.pathname === '/.well-known/apple-developer-merchantid-domain-association') {
+    return route.fulfill({ contentType: 'text/plain', body: 'fixture-apple-pay-domain' })
+  }
   if (url.pathname === sandbox + '/wallets') {
     return enabled ? route.fulfill({ json: { clientId: 'fixture', googlePay: true, applePay: true } })
       : route.fulfill({ status: 204 })

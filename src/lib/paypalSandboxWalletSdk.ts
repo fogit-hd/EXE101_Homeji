@@ -10,7 +10,7 @@ type WalletConfig = {
 type Authorize = (wallet: Wallet, confirm: (orderId: string) => Promise<void>) => Promise<boolean>
 type StartPayment = (payment: () => Promise<void>) => void
 
-type GoogleConfig = { allowedPaymentMethods: unknown[]; merchantInfo: object }
+type GoogleConfig = { isEligible?: boolean; allowedPaymentMethods?: unknown[]; merchantInfo: object }
 type GoogleAuthorization = { transactionState: 'SUCCESS' } | {
   transactionState: 'ERROR'
   error: { intent: 'PAYMENT_AUTHORIZATION'; reason: 'OTHER_ERROR'; message: string }
@@ -62,6 +62,52 @@ const sdk = window as Window & {
 
 const scripts = new Map<string, Promise<void>>()
 
+export class WalletUnavailableError extends Error {}
+
+export function extractWalletErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) return error.message.trim()
+  if (typeof error === 'string' && error.trim()) return error.trim()
+  if (error && typeof error === 'object') {
+    const record = error as {
+      statusMessage?: unknown
+      message?: unknown
+      name?: unknown
+      details?: Array<{ issue?: unknown; description?: unknown }>
+    }
+    const detail = Array.isArray(record.details) ? record.details[0] : undefined
+    const detailText = typeof detail?.description === 'string' && detail.description.trim()
+      ? detail.description.trim()
+      : typeof detail?.issue === 'string' && detail.issue.trim()
+        ? detail.issue.trim()
+        : ''
+    const main = typeof record.statusMessage === 'string' && record.statusMessage.trim()
+      ? record.statusMessage.trim()
+      : typeof record.message === 'string' && record.message.trim()
+        ? record.message.trim()
+        : typeof record.name === 'string' && record.name.trim()
+          ? record.name.trim()
+          : ''
+    if (main && detailText && !main.includes(detailText)) return `${main} (${detailText})`
+    if (main || detailText) return main || detailText
+  }
+  return fallback
+}
+
+async function hasApplePayDomainAssociation() {
+  try {
+    const response = await fetch('/.well-known/apple-developer-merchantid-domain-association', {
+      cache: 'no-store',
+    })
+    if (!response.ok) return false
+    const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
+    if (contentType.includes('text/html')) return false
+    const body = (await response.text()).trim()
+    return body.length > 0 && !body.startsWith('<')
+  } catch {
+    return false
+  }
+}
+
 function loadScript(url: string) {
   const loaded = scripts.get(url)
   if (loaded) return loaded
@@ -112,7 +158,8 @@ export async function createGooglePayButton(
   const PaymentsClient = sdk.google?.payments?.api?.PaymentsClient
   if (!bridge || !PaymentsClient) return null
 
-  const { allowedPaymentMethods, merchantInfo } = await bridge.config()
+  const { isEligible, allowedPaymentMethods, merchantInfo } = await bridge.config()
+  if (isEligible === false || !allowedPaymentMethods?.length) return null
   const base = { apiVersion: 2, apiVersionMinor: 0, allowedPaymentMethods }
   const client = new PaymentsClient({
     environment: options?.environment ?? 'TEST',
@@ -150,7 +197,10 @@ export async function createGooglePayButton(
   }
   return client.createButton({
     allowedPaymentMethods,
+    buttonColor: 'black',
     buttonType: 'pay',
+    buttonRadius: 12,
+    buttonSizeMode: 'fill',
     buttonLocale: 'vi',
     onClick: () => start(async () => {
       try {
@@ -173,10 +223,16 @@ export async function createApplePayButton(
   const bridge = sdk.paypal?.Applepay?.()
   if (!Session || !bridge || !Session.supportsVersion(4) || !Session.canMakePayments()) return null
 
+  if (!(await hasApplePayDomainAssociation())) {
+    throw new WalletUnavailableError(
+      'Apple Pay chưa được xác thực tên miền (/.well-known/apple-developer-merchantid-domain-association). Bạn có thể thanh toán trực tiếp qua PayPal hoặc thẻ quốc tế ở trên.',
+    )
+  }
+
   const { isEligible, countryCode, supportedNetworks, merchantCapabilities } = await bridge.config()
   if (!isEligible) return null
 
-  const label = options?.label ?? 'Homeji Sandbox'
+  const label = options?.label ?? 'Homeji'
   const amount = options?.totalPrice ?? '1.00'
   const button = document.createElement('apple-pay-button')
   button.setAttribute('buttonstyle', 'black')
@@ -200,7 +256,7 @@ export async function createApplePayButton(
         })
         .catch((error: unknown) => {
           if (cancelled) return
-          reject(error instanceof Error ? error : new Error('Không xác minh được Apple Pay.'))
+          reject(new Error(extractWalletErrorMessage(error, 'Không xác minh được Apple Pay với PayPal.')))
           session.abort()
         })
     }

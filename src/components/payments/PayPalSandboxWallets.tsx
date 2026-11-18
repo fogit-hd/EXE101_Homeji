@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiRequestError, apiRequest } from '../../api/client'
 import {
-  createApplePayButton, createGooglePayButton, loadPayPalWalletSdk,
+  createApplePayButton, createGooglePayButton, extractWalletErrorMessage, loadPayPalWalletSdk,
 } from '../../lib/paypalSandboxWalletSdk'
 import type { Authorize, WalletConfig } from '../../lib/paypalSandboxWalletSdk'
 
@@ -28,8 +28,8 @@ export function PayPalSandboxWallets({ onBusyChange }: { onBusyChange: (busy: bo
     void (async () => {
       try {
         await payment()
-      } catch {
-        setNotice({ text: 'Không thể hoàn tất thanh toán thử. Vui lòng thử lại.', error: true })
+      } catch (error) {
+        setNotice({ text: extractWalletErrorMessage(error, 'Không thể hoàn tất thanh toán thử. Vui lòng thử lại.'), error: true })
       } finally {
         locked.current = false
         setBusy(false)
@@ -126,22 +126,27 @@ export function PayPalSandboxWallets({ onBusyChange }: { onBusyChange: (busy: bo
   }, [authorize, start])
 
   return (
-    <div hidden={availability === 'hidden'}>
-      {availability === 'checking' && <p role="status">Đang kiểm tra Google Pay và Apple Pay…</p>}
-      {availability === 'unavailable' && <p role="status">Ví thử chưa khả dụng trên thiết bị này hoặc chưa được PayPal bật.</p>}
-      <div className="payment-sandbox-wallets" inert={busy || canRetry} hidden={availability !== 'ready'}>
-        <div ref={googleHost} />
-        <div ref={appleHost} />
+    <div className="payment-paypal-wallets" data-glass-exclude hidden={availability === 'hidden'}>
+      <div className="payment-express-box">
+        <div className="payment-express-box__head">
+          <span>Ví thử nghiệm trên thiết bị</span>
+        </div>
+        {availability === 'checking' && <p className="payment-paypal-wallets__status" role="status">Đang kiểm tra Google Pay và Apple Pay…</p>}
+        {availability === 'unavailable' && <p className="payment-paypal-wallets__note" role="status">Ví thử chưa khả dụng trên thiết bị này hoặc chưa được PayPal bật.</p>}
+        <div className="payment-sandbox-wallets" data-glass-exclude inert={busy || canRetry} hidden={availability !== 'ready'}>
+          <div ref={googleHost} data-glass-exclude />
+          <div ref={appleHost} data-glass-exclude />
+        </div>
+        {busy && <p className="payment-paypal-wallets__status" role="status">Đang xử lý giao dịch thử…</p>}
+        {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'payment-inline-error' : 'payment-paypal-wallets__status'}>{notice.text}</p>}
+        {canRetry && (
+          <button type="button" className="payment-button payment-button--retry" disabled={busy} onClick={() => start(async () => {
+            if (pendingTicket.current) await capture(pendingTicket.current)
+          })}>
+            Kiểm tra lại giao dịch ví
+          </button>
+        )}
       </div>
-      {busy && <p role="status">Đang xử lý giao dịch thử…</p>}
-      {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'payment-inline-error' : undefined}>{notice.text}</p>}
-      {canRetry && (
-        <button type="button" className="payment-button" disabled={busy} onClick={() => start(async () => {
-          if (pendingTicket.current) await capture(pendingTicket.current)
-        })}>
-          Kiểm tra lại giao dịch ví
-        </button>
-      )}
     </div>
   )
 }

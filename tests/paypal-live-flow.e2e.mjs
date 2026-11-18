@@ -65,6 +65,7 @@ const createCalls = []
 const walletOrderCalls = []
 const captureCalls = []
 const pageErrors = []
+let appleDomainVerified = false
 
 await context.addInitScript((id) => {
   localStorage.setItem('homeji_access_token', 'fixture-session')
@@ -137,6 +138,12 @@ await context.route('**/*', async (route) => {
   }
   if (url.origin !== origin) return route.abort()
 
+  if (url.pathname === '/.well-known/apple-developer-merchantid-domain-association') {
+    return appleDomainVerified
+      ? route.fulfill({ contentType: 'text/plain', body: 'fixture-apple-pay-domain' })
+      : route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })
+  }
+
   if (url.pathname.startsWith('/hubs/')) {
     return route.fulfill({ status: 503, body: '' })
   }
@@ -189,7 +196,7 @@ await context.route('**/*', async (route) => {
     return route.fulfill({
       json: {
         enabled: true,
-        mode: 'sandbox',
+        mode: 'live',
         clientId: 'fixture-client',
         googlePay: true,
         applePay: true,
@@ -212,7 +219,7 @@ await context.route('**/*', async (route) => {
       orderCode: 'PPPREMIUM1',
       requestId: 'PPORDPREM1',
       description: 'Homeji Gói Trải Nghiệm 30 ngay',
-      paymentUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=PPORDPREM1',
+      paymentUrl: 'https://www.paypal.com/checkoutnow?token=PPORDPREM1',
       deeplink: null,
       qrCodeUrl: null,
       qrCode: null,
@@ -232,7 +239,7 @@ await context.route('**/*', async (route) => {
         payPalOrderId: 'PPORDPREM1',
         amount: 99000,
         status: 1,
-        approvalUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=PPORDPREM1',
+        approvalUrl: 'https://www.paypal.com/checkoutnow?token=PPORDPREM1',
         providerMessage: null,
         quote,
       },
@@ -254,7 +261,7 @@ await context.route('**/*', async (route) => {
       orderCode: 'PPWALLET1',
       requestId: 'PPORDWAL1',
       description: body.description,
-      paymentUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=PPORDWAL1',
+      paymentUrl: 'https://www.paypal.com/checkoutnow?token=PPORDWAL1',
       deeplink: null,
       qrCodeUrl: null,
       qrCode: null,
@@ -274,7 +281,7 @@ await context.route('**/*', async (route) => {
         payPalOrderId: 'PPORDWAL1',
         amount: body.amount,
         status: 1,
-        approvalUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=PPORDWAL1',
+        approvalUrl: 'https://www.paypal.com/checkoutnow?token=PPORDWAL1',
         providerMessage: null,
         quote,
       },
@@ -287,7 +294,7 @@ await context.route('**/*', async (route) => {
     return route.fulfill({
       json: {
         enabled: true,
-        mode: 'sandbox',
+        mode: 'live',
         clientId: 'fixture-client',
         googlePay: true,
         applePay: true,
@@ -363,12 +370,18 @@ try {
   await confirmDialog.getByRole('button', { name: /Xác nhận thanh toán 4,47 USD/ }).click()
   await page.waitForURL(/\/payments\/wait\?paymentId=pay-premium-1/)
   await page.getByText('4,47 USD', { exact: true }).first().waitFor()
+  await page.getByText(/Apple Pay chưa được xác thực tên miền/).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Apple Pay', exact: true }).count(), 0)
+  const paypalLink = page.getByRole('link', { name: /Thanh toán qua PayPal/ })
+  assert.equal(await paypalLink.getAttribute('target'), null)
+  assert.equal(await paypalLink.getAttribute('href'), 'https://www.paypal.com/checkoutnow?token=PPORDPREM1')
   await page.getByRole('button', { name: 'Google Pay', exact: true }).click()
   await page.getByRole('heading', { name: 'Thanh toán thành công', exact: true }).waitFor()
   assert.equal(await page.evaluate(() => window.__lastGoogleAmount), '4.47')
   assert.equal(await page.evaluate(() => window.googleResult.transactionState), 'SUCCESS')
 
-  // 2. Wallet top-up with live USD quote + Apple Pay on /payments/wait
+  // 2. Wallet top-up with live USD quote + Apple Pay on /payments/wait (when domain association exists)
+  appleDomainVerified = true
   await page.goto(origin + '/?section=marketplace&market=wallet&wallet=deposit')
   await page.getByRole('button', { name: /PayPal · Google Pay · Apple Pay/ }).click()
   await page.getByText('8,71 USD', { exact: true }).first().waitFor()

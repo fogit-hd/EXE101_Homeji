@@ -2,7 +2,7 @@ import { GLASS_CONTENT_CONTROLS } from './glassControlScope'
 import type { ButtonGlassPaint } from './buttonGlassRenderer'
 
 export const BUTTON_GLASS_CANDIDATES = 'button,a.btn,a.liquid-action,a[class*="__cta"],a[class*="__btn"],a[class*="__action"]'
-const exclusions = '.gm-style,gmp-map,[data-glass-webgl],[data-glass-exclude],.ai-spectrum-button,.theme-switch,.liquid-switch,.food-qty,.food-cart-fab,.food-cart-sheet'
+const exclusions = '.gm-style,gmp-map,[data-glass-webgl],[data-glass-exclude],.ai-spectrum-button,.theme-switch,.liquid-switch,.food-qty,.food-cart-fab,.food-cart-sheet,.payment-sandbox-wallets,.gpay-card-info-container,apple-pay-button'
 
 export function supportsButtonGlass(element: HTMLElement) {
   return element.matches(BUTTON_GLASS_CANDIDATES) && !element.closest(exclusions)

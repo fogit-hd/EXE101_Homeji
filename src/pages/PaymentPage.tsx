@@ -23,6 +23,7 @@ import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MapToast } from '../components/map/MapToast'
 import { RevealText } from '../components/motion/RevealText'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
+import { InternationalMethodBadges, MomoBadge, PayOsBadge } from '../components/payments/PaymentMethodMarks'
 import { PremiumListingPreview } from '../components/payments/PremiumListingPreview'
 import { PremiumPurchaseConfirmation, type PremiumPurchase } from '../components/payments/PremiumPurchaseConfirmation'
 import { marketplaceHref } from '../components/shell/navigation'
@@ -364,8 +365,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 : 'Gói Premium giúp tin đăng được ưu tiên hiển thị và có nhãn Premium.'}
           </p>
         </div>
-        <div className="pay-current__actions">
-          <span className="pay-pill">Ví Homeji: {walletBalance === null ? (walletLoading ? 'Đang tải…' : '—') : formatPrice(walletBalance)}</span>
+        <div className="pay-current__actions" data-glass-exclude>
+          <span className="pay-pill pay-current__wallet">Ví Homeji: {walletBalance === null ? (walletLoading ? 'Đang tải…' : '—') : formatPrice(walletBalance)}</span>
           <Link className="pay-btn pay-btn--primary" to={marketplaceHref('wallet')}>Nạp tiền vào ví</Link>
           <button type="button" className="pay-btn" onClick={() => void reload()}>Làm mới</button>
         </div>
@@ -469,7 +470,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     <p className="pay-plan__total">
                       {isPremium ? (
                         <>
-                          <span>Tổng thanh toán</span>
+                          <span>Tổng</span>
                           <strong>{formatPrice(amountDue)}</strong>
                           <span>/ {plan.durationDays} ngày</span>
                         </>
@@ -513,13 +514,15 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         {walletBalance !== null && walletBalance < amountDue && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp thêm tiền vào ví</Link>}
                         <div className="pay-plan__external-methods">
                           <button type="button" className="pay-method is-momo" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'momo')}>
-                            {busy && busyMethod === 'momo' ? 'Đang tạo…' : 'MoMo'}
+                            {busy && busyMethod === 'momo' ? 'Đang tạo…' : <><MomoBadge compact /><span className="sr-only">MoMo</span></>}
                           </button>
                           <button type="button" className="pay-method is-payos" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'payos')}>
-                            {busy && busyMethod === 'payos' ? 'Đang tạo…' : 'PayOS'}
+                            {busy && busyMethod === 'payos' ? 'Đang tạo…' : <><PayOsBadge compact /><span className="sr-only">PayOS</span></>}
                           </button>
                           <button type="button" className="pay-method is-paypal" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'paypal')}>
-                            {busy && busyMethod === 'paypal' ? 'Đang tạo…' : 'PayPal · Google Pay · Apple Pay'}
+                            {busy && busyMethod === 'paypal'
+                              ? 'Đang tạo…'
+                              : <><InternationalMethodBadges compact /><span className="pay-method__caption">PayPal · Google Pay · Apple Pay</span></>}
                           </button>
                         </div>
                         <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setVipVoucher(null); setPayPickerCode(null) }}>
@@ -544,6 +547,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       <button
                         type="button"
                         className="pay-method is-paypal pay-plan__quick-paypal"
+                        data-glass-exclude
                         disabled={busy}
                         onClick={() => {
                           setSelectedCode(plan.code)
@@ -551,7 +555,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           confirmPurchase(plan, 'paypal')
                         }}
                       >
-                        Mua bằng PayPal · Google Pay · Apple Pay
+                        <InternationalMethodBadges compact />
+                        <span className="pay-method__caption">Mua bằng PayPal · Google Pay · Apple Pay</span>
                       </button>
                     ) : null}
                   </div>

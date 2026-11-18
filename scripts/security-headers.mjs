@@ -15,7 +15,7 @@ export function inlineScriptHashes(html) {
 export function contentSecurityPolicy(scriptHashes = []) {
   const directives = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", ...scriptHashes, "'wasm-unsafe-eval'", 'https://accounts.google.com/gsi/client', 'https://maps.googleapis.com', 'https://www.googletagmanager.com', 'https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/'],
+    'script-src': ["'self'", ...scriptHashes, "'wasm-unsafe-eval'", 'https://accounts.google.com/gsi/client', 'https://maps.googleapis.com', 'https://www.googletagmanager.com', 'https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/', 'https://www.paypal.com', 'https://pay.google.com', 'https://applepay.cdn-apple.com'],
     // React style props, Google Maps and Google Identity all rely on inline styles.
     'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com/gsi/style'],
     'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
@@ -23,9 +23,9 @@ export function contentSecurityPolicy(scriptHashes = []) {
     'img-src': ["'self'", 'data:', 'blob:', 'https:'],
     'media-src': ["'self'", 'blob:', 'https://res.cloudinary.com'],
     // 'self' covers the same-origin SignalR WebSocket. WebRTC relays (Metered) are not governed by connect-src.
-    'connect-src': ["'self'", 'https://maps.googleapis.com', 'https://places.googleapis.com', 'https://accounts.google.com/gsi/', 'https://api.giphy.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://www.google.com/g/collect', 'https://*.googletagmanager.com', 'https://cdn.jsdelivr.net', 'https://unpkg.com', 'https://www.google.com/recaptcha/'],
+    'connect-src': ["'self'", 'https://maps.googleapis.com', 'https://places.googleapis.com', 'https://accounts.google.com/gsi/', 'https://api.giphy.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://www.google.com/g/collect', 'https://*.googletagmanager.com', 'https://cdn.jsdelivr.net', 'https://unpkg.com', 'https://www.google.com/recaptcha/', 'https://www.paypal.com', 'https://*.paypal.com', 'https://pay.google.com', 'https://applepay.cdn-apple.com'],
     'worker-src': ["'self'", 'blob:'],
-    'frame-src': ['https://accounts.google.com/gsi/', 'https://www.google.com/recaptcha/', 'https://recaptcha.google.com/recaptcha/'],
+    'frame-src': ['https://accounts.google.com/gsi/', 'https://www.google.com/recaptcha/', 'https://recaptcha.google.com/recaptcha/', 'https://www.paypal.com', 'https://*.paypal.com', 'https://pay.google.com'],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],

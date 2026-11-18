@@ -2,6 +2,7 @@ import type { Payment } from '../../api'
 import { formatDate, formatPrice, paymentMethodLabel, paymentStatusLabel } from '../../lib/labels'
 import { paymentDeadline } from '../../lib/paymentLifecycle'
 import { ShellIcon } from '../shell/ShellIcons'
+import { PaymentMethodBadges } from './PaymentMethodMarks'
 
 export function PaymentStatusBadge({ status }: { status: Payment['status'] }) {
   return <span className={`payment-status is-${status}`}><i aria-hidden="true" />{paymentStatusLabel[status] ?? 'Đang xử lý'}</span>
@@ -16,7 +17,13 @@ export function PaymentDetails({ payment }: { payment: Payment }) {
       <dl className="payment-facts">
         <div><dt>Mã đơn</dt><dd>{payment.orderCode}</dd></div>
         <div><dt>Nội dung</dt><dd>{payment.description}</dd></div>
-        <div><dt>Phương thức</dt><dd>{paymentMethodLabel[payment.method]}</dd></div>
+        <div>
+          <dt>Phương thức</dt>
+          <dd className="payment-facts__method">
+            <span>{paymentMethodLabel[payment.method]}</span>
+            <PaymentMethodBadges method={payment.method} compact />
+          </dd>
+        </div>
         <div><dt>Tạo lúc</dt><dd>{formatDate(payment.createdAt)}</dd></div>
         {deadline !== null && <div><dt>Hạn thanh toán</dt><dd>{formatDate(new Date(deadline).toISOString())}</dd></div>}
         {payment.paidAt && <div><dt>Thanh toán lúc</dt><dd>{formatDate(payment.paidAt)}</dd></div>}

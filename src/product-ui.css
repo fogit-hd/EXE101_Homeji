@@ -107,7 +107,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   color: var(--text-secondary);
 }
 #root :is(.profile-section, .rental-edit-form, .rental-media-card, .wanted-post-form,
-  .admin-item, .admin-analytics__panel, .admin-maintenance-card, .pay-plan) {
+  .admin-item, .admin-analytics__panel, .admin-maintenance-card) {
   border: 1px solid var(--border);
   box-shadow: none;
   background: var(--surface-elevated);

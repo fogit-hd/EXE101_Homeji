@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getPayPalQuote, type PayPalCheckoutConfig, type SubscriptionPackage } from '../../api'
+import { PaymentMethod } from '../../api/types'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, formatUsd } from '../../lib/labels'
 import { formatDailyEquivalentPrice } from '../../lib/subscriptionPlanDisplay'
+import { PaymentMethodBadges } from './PaymentMethodMarks'
 import './PremiumPurchaseConfirmation.css'
 
 export type PremiumPurchase = {
@@ -19,6 +21,13 @@ const methodNames = {
   momo: 'MoMo',
   payos: 'PayOS',
   paypal: 'PayPal · Google Pay · Apple Pay',
+}
+
+const methodEnumMap: Record<PremiumPurchase['method'], PaymentMethod> = {
+  wallet: PaymentMethod.Wallet,
+  momo: PaymentMethod.Momo,
+  payos: PaymentMethod.PayOs,
+  paypal: PaymentMethod.PayPal,
 }
 
 type QuoteState = { amountDue: number; config?: PayPalCheckoutConfig; error?: string }
@@ -73,39 +82,61 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
     cancel.current?.focus()
     return () => { element.close(); if (previous?.isConnected) previous.focus() }
   }, [])
-  return createPortal(<dialog ref={dialog} className="premium-purchase-confirm" aria-labelledby={titleId} aria-describedby={descriptionId} aria-busy={busy}
-    onCancel={event => { event.preventDefault(); if (!busy) onCancel() }} data-glass-exclude>
-    <h2 id={titleId}>Xác nhận mua gói Premium</h2>
-    <p id={descriptionId}>Kiểm tra gói và số tiền trước khi tiếp tục thanh toán.</p>
-    <dl>
-      <div><dt>Gói</dt><dd>{purchase.plan.name}</dd></div>
-      <div><dt>Thời hạn</dt><dd>{purchase.plan.durationDays} ngày</dd></div>
-      <div><dt>Thanh toán bằng</dt><dd>{methodNames[purchase.method]}</dd></div>
-      <div><dt>Giá gói</dt><dd>{formatPrice(purchase.plan.price)}</dd></div>
-      {purchase.discount > 0 ? <div><dt>Voucher giảm</dt><dd>−{formatPrice(purchase.discount)}</dd></div> : null}
-      {dailyEquivalentPrice ? <div><dt>Bình quân/ngày · tham khảo</dt><dd>{dailyEquivalentPrice}</dd></div> : null}
-      <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
+  return createPortal(
+    <dialog
+      ref={dialog}
+      className="premium-purchase-confirm"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      aria-busy={busy}
+      onCancel={event => { event.preventDefault(); if (!busy) onCancel() }}
+      data-glass-exclude
+    >
+      <header className="premium-purchase-confirm__head">
+        <span className="premium-purchase-confirm__eyebrow">Xác nhận đơn hàng</span>
+        <h2 id={titleId}>Xác nhận mua gói Premium</h2>
+        <p id={descriptionId}>Kiểm tra gói và số tiền trước khi tiếp tục thanh toán.</p>
+      </header>
+
+      <dl className="premium-purchase-confirm__summary">
+        <div><dt>Gói</dt><dd>{purchase.plan.name}</dd></div>
+        <div><dt>Thời hạn</dt><dd>{purchase.plan.durationDays} ngày</dd></div>
+        <div>
+          <dt>Thanh toán bằng</dt>
+          <dd className="premium-purchase-confirm__method">
+            <span className="sr-only">{methodNames[purchase.method]}</span>
+            <PaymentMethodBadges method={methodEnumMap[purchase.method]} compact />
+          </dd>
+        </div>
+        <div><dt>Giá gói</dt><dd>{formatPrice(purchase.plan.price)}</dd></div>
+        {purchase.discount > 0 ? <div className="is-discount"><dt>Voucher giảm</dt><dd>−{formatPrice(purchase.discount)}</dd></div> : null}
+        {dailyEquivalentPrice ? <div><dt>Bình quân/ngày · tham khảo</dt><dd>{dailyEquivalentPrice}</dd></div> : null}
+        <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
+      </dl>
+
       {quote ? (
-        <>
-          <div><dt>Tỷ giá ({quote.rateSource})</dt><dd>1 USD = {formatPrice(quote.exchangeRateVnd)}</dd></div>
+        <dl className="premium-purchase-confirm__quote" aria-label="Chi tiết quy đổi USD">
+          <div><dt>Tỷ giá · {quote.rateSource}</dt><dd>1 USD = {formatPrice(quote.exchangeRateVnd)}</dd></div>
           <div><dt>Quy đổi gốc</dt><dd>{formatUsd(quote.baseUsd)}</dd></div>
           <div><dt>Phí chuyển đổi & cổng quốc tế</dt><dd>{formatUsd(quote.totalFeeUsd)}</dd></div>
-          <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán quốc tế</dt><dd>{formatUsd(quote.totalUsd)}</dd></div>
-        </>
+          <div className="premium-purchase-confirm__total is-usd"><dt>Tổng thanh toán quốc tế</dt><dd>{formatUsd(quote.totalUsd)}</dd></div>
+        </dl>
       ) : null}
-    </dl>
-    {quoteLoading ? <p className="premium-purchase-confirm__note" role="status">Đang lấy tỷ giá USD theo thời giá…</p> : null}
-    {quoteError ? <p className="payment-inline-error" role="alert">{quoteError}</p> : null}
-    <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'
-      ? `Sẽ trừ ${formatPrice(purchase.amountDue)} từ ví Homeji.${walletBalance === null ? '' : ` Số dư dự kiến còn ${formatPrice(Math.max(0, walletBalance - purchase.amountDue))}.`}`
-      : purchase.method === 'paypal'
-        ? 'Sau khi xác nhận, bạn có thể thanh toán bằng PayPal, Google Pay hoặc Apple Pay theo số tiền USD đã khóa tỷ giá.'
-        : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
-    <div className="premium-purchase-confirm__actions">
-      <button ref={cancel} type="button" className="pay-btn" disabled={busy} onClick={onCancel}>Quay lại</button>
-      <button type="button" className="pay-btn pay-btn--primary" disabled={busy || quoteLoading || Boolean(quoteError)} onClick={onConfirm}>
-        {busy ? 'Đang xử lý…' : quote ? `Xác nhận thanh toán ${formatUsd(quote.totalUsd)}` : `Xác nhận thanh toán ${formatPrice(purchase.amountDue)}`}
-      </button>
-    </div>
-  </dialog>, document.body)
+
+      {quoteLoading ? <p className="premium-purchase-confirm__note" role="status">Đang lấy tỷ giá USD theo thời giá…</p> : null}
+      {quoteError ? <p className="payment-inline-error" role="alert">{quoteError}</p> : null}
+      <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'
+        ? `Sẽ trừ ${formatPrice(purchase.amountDue)} từ ví Homeji.${walletBalance === null ? '' : ` Số dư dự kiến còn ${formatPrice(Math.max(0, walletBalance - purchase.amountDue))}.`}`
+        : purchase.method === 'paypal'
+          ? 'Sau khi xác nhận, bạn có thể thanh toán nhanh bằng Google Pay, Apple Pay hoặc PayPal theo số tiền USD đã khóa tỷ giá.'
+          : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
+      <div className="premium-purchase-confirm__actions">
+        <button ref={cancel} type="button" className="pay-btn" disabled={busy} onClick={onCancel}>Quay lại</button>
+        <button type="button" className="pay-btn pay-btn--primary" disabled={busy || quoteLoading || Boolean(quoteError)} onClick={onConfirm}>
+          {busy ? 'Đang xử lý…' : quote ? `Xác nhận thanh toán ${formatUsd(quote.totalUsd)}` : `Xác nhận thanh toán ${formatPrice(purchase.amountDue)}`}
+        </button>
+      </div>
+    </dialog>,
+    document.body,
+  )
 }

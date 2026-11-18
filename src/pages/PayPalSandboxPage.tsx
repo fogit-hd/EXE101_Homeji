@@ -76,7 +76,7 @@ export function PayPalSandboxPage() {
   }
 
   return (
-    <div className="payment-wait-page payment-result-page">
+    <div className="payment-wait-page payment-result-page" data-glass-exclude>
       <Link className="payment-back" to="/payments">← Thanh toán Homeji</Link>
       <section className="payment-wait-card payment-result-card" aria-labelledby="sandbox-title">
         <h1 id="sandbox-title">Thử thanh toán quốc tế</h1>

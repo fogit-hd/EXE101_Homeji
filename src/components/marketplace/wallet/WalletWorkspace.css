@@ -173,3 +173,47 @@ html[data-theme='dark'] .wallet-load-error { background: #382f22; border-color: 
 html[data-theme='dark'] #root .wallet-submit .wallet-withdraw-submit { background: #80d9db; border-color: #80d9db; color: #102a30; }
 html[data-theme='dark'] #root .wallet-submit .wallet-withdraw-submit:hover:not(:disabled) { background: #a5e7e8; }
 html[data-theme='dark'] #root .wallet-submit .wallet-withdraw-submit img { filter: brightness(0); }
+
+.wallet-methods__paypal-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.wallet-deposit__card .wallet-paypal-quote {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-muted);
+}
+
+.wallet-deposit__card .wallet-paypal-quote dt {
+  color: var(--text-secondary);
+}
+
+.wallet-deposit__card .wallet-paypal-quote dd {
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet-deposit__card .wallet-paypal-quote__total {
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.wallet-deposit__card .wallet-paypal-quote__total dd {
+  color: var(--hj-accent);
+  font-size: 16px;
+}
+
+@media (max-width: 500px) {
+  .wallet-deposit__card .wallet-paypal-quote dl > div {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .wallet-deposit__card .wallet-paypal-quote dd {
+    text-align: left;
+  }
+}
