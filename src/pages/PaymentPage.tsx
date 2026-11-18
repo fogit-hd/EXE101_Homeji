@@ -15,8 +15,8 @@ import {
   type Payment,
   type SubscriptionPackage,
 } from '../api'
-import { ApiRequestError } from '../api/client'
-import { PaymentStatus, SubscriptionTier } from '../api/types'
+import { ApiRequestError, apiRequest } from '../api/client'
+import { PaymentStatus, SubscriptionTier, UserRole } from '../api/types'
 import { HomejiLoader } from "../components/HomejiLoader"
 import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MapToast } from '../components/map/MapToast'
@@ -49,7 +49,18 @@ import './PaymentPage.css'
 type PayTab = 'plans' | 'history'
 
 export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
-  const { refreshProfile, needsProfileSetup } = useAuth()
+  const { refreshProfile, needsProfileSetup, profile } = useAuth()
+  const [sandboxAvailableFor, setSandboxAvailableFor] = useState<string | null>(null)
+  const profileId = profile?.id
+  const sandboxEligible = import.meta.env.DEV || profile?.role === UserRole.Admin
+  useEffect(() => {
+    if (!sandboxEligible || !profileId) return
+    const controller = new AbortController()
+    void apiRequest<void>('/api/payments/paypal-sandbox', { signal: controller.signal })
+      .then(() => { if (!controller.signal.aborted) setSandboxAvailableFor(profileId) })
+      .catch(() => { if (!controller.signal.aborted) setSandboxAvailableFor(null) })
+    return () => controller.abort()
+  }, [sandboxEligible, profileId])
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab: PayTab = searchParams.get('tab') === 'history' ? 'history' : 'plans'
@@ -545,6 +556,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             </table>
           </section>
           <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo hoặc PayOS · Đơn chờ MoMo/PayOS tự hủy sau 15 phút</p>
+          {sandboxEligible && sandboxAvailableFor === profileId && <Link className="pay-btn" to="/payments/sandbox">Thử thanh toán quốc tế · PayPal Sandbox</Link>}
         </div>
       ) : null}
 

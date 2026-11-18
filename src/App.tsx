@@ -31,6 +31,7 @@ import {
 } from './pages/deferredPages'
 
 const BrandIntro = lazy(() => import('./components/intro/BrandIntro').then(module => ({ default: module.BrandIntro })))
+const PayPalSandboxPage = lazy(() => import('./pages/PayPalSandboxPage').then(module => ({ default: module.PayPalSandboxPage })))
 const SearchInterestCenter = lazy(() => import('./components/ai/SearchInterestCenter').then(module => ({ default: module.SearchInterestCenter })))
 
 function DeferredAccountTools() {
@@ -73,6 +74,9 @@ function AppRoutes() {
         <Route path="/invitations" element={<ProtectedRoute><MapHomeSectionRedirect section="invitations" /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><MapHomeSectionRedirect section="payments" /></ProtectedRoute>} />
         <Route path="/payments/wait" element={<ProtectedRoute><PaymentWaitingPage /></ProtectedRoute>} />
+        <Route path="/payments/sandbox" element={<ProtectedRoute>
+          {import.meta.env.DEV ? <PayPalSandboxPage /> : <AdminRoute><PayPalSandboxPage /></AdminRoute>}
+        </ProtectedRoute>} />
 
         <Route
           path="/admin/:section?"
