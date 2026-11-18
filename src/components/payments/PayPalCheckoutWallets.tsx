@@ -304,6 +304,12 @@ export function PayPalCheckoutWallets({
             Chưa có liên kết thanh toán hợp lệ. Vui lòng kiểm tra trạng thái.
           </p>
         )}
+
+        <div className="payment-paypal-wallets__info" role="note">
+          <p>
+            <strong>Thanh toán thẻ &amp; ví điện tử:</strong> Bấm nút trên để mở cổng PayPal. Bạn có thể chọn <em>&ldquo;Thanh toán bằng thẻ ghi nợ hoặc tín dụng&rdquo;</em> (Visa, Mastercard, JCB) mà không bắt buộc có tài khoản PayPal. Trên iPhone hoặc Android, bạn có thể dùng thẻ đã liên kết trong <strong>Apple Pay</strong> / <strong>Google Pay</strong> để thanh toán an toàn.
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -556,7 +556,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         }}
                       >
                         <InternationalMethodBadges compact />
-                        <span className="pay-method__caption">Mua bằng PayPal · Google Pay · Apple Pay</span>
+                        <span className="pay-method__caption">
+                          Mua bằng PayPal · <span className="pay-nowrap">Google Pay</span> · <span className="pay-nowrap">Apple Pay</span>
+                        </span>
                       </button>
                     ) : null}
                   </div>

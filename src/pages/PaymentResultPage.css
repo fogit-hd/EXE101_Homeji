@@ -304,6 +304,25 @@
   background: color-mix(in srgb, var(--result-wash) 26%, var(--surface-elevated));
 }
 
+.payment-paypal-wallets__info {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--result-accent) 30%, var(--border));
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.payment-paypal-wallets__info p {
+  margin: 0;
+}
+
+.payment-paypal-wallets__info strong {
+  color: var(--text-heading);
+}
+
 .payment-express-box {
   display: flex;
   flex-direction: column;

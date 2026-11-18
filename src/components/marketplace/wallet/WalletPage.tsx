@@ -553,7 +553,7 @@ function DepositPanel({
               aria-pressed={method === 'paypal'}
               onClick={() => setMethod('paypal')}
             >
-              <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.walletCards} size={20} /></span>
+              <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.card} size={20} /></span>
               <span className="wallet-methods__paypal-copy">
                 <strong>PayPal · Google Pay · Apple Pay</strong>
                 <small>Thẻ quốc tế, tự quy đổi USD theo thời giá</small>

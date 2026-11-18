@@ -1018,8 +1018,11 @@ html:root[data-theme=dark] #root .pay-v2 .pay-plan .pay-btn--primary { color: #0
 .pay-method__caption {
   font-size: 11.5px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--pay-muted);
+}
+.pay-nowrap {
+  white-space: nowrap;
 }
 .pay-v2 .pay-plan .pay-plan__quick-paypal {
   width: 100%;
