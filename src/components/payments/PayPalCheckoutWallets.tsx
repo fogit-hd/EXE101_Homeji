@@ -139,7 +139,7 @@ export function PayPalCheckoutWallets({
         const fetched = await getPayPalPaymentWallets(paymentId, controller.signal)
         if (controller.signal.aborted) return
 
-        if (!fetched.enabled || !fetched.clientId || (!fetched.googlePay && !fetched.applePay)) {
+        if (fetched.mode === 'live' || !fetched.enabled || !fetched.clientId || (!fetched.googlePay && !fetched.applePay)) {
           setState({ paymentId, config: fetched, walletAvailability: 'hidden' })
           return
         }
@@ -154,11 +154,9 @@ export function PayPalCheckoutWallets({
         if (controller.signal.aborted) return
 
         const totalPrice = fetched.quote ? fetched.quote.totalUsd.toFixed(2) : '1.00'
-        const googleEnvironment = fetched.mode === 'live' ? 'PRODUCTION' : 'TEST'
-
         const [google, apple] = await Promise.allSettled([
           fetched.googlePay
-            ? createGooglePayButton(start, authorize, { environment: googleEnvironment, totalPrice })
+            ? createGooglePayButton(start, authorize, { totalPrice })
             : null,
           fetched.applePay
             ? createApplePayButton(start, authorize, { totalPrice, label: 'Homeji' })

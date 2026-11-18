@@ -1,3 +1,5 @@
+import { loadPaymentScript } from './paymentScript'
+
 type Wallet = 'google-pay' | 'apple-pay'
 type WalletConfig = {
   clientId: string
@@ -60,7 +62,6 @@ const sdk = window as Window & {
   }
 }
 
-const scripts = new Map<string, Promise<void>>()
 
 export class WalletUnavailableError extends Error {}
 
@@ -108,33 +109,6 @@ async function hasApplePayDomainAssociation() {
   }
 }
 
-function loadScript(url: string) {
-  const loaded = scripts.get(url)
-  if (loaded) return loaded
-
-  const script = document.createElement('script')
-  const loading = new Promise<void>((resolve, reject) => {
-    const timer = window.setTimeout(fail, 12_000)
-    function fail() {
-      window.clearTimeout(timer)
-      script.remove()
-      reject(new Error('Không tải được SDK thanh toán.'))
-    }
-    script.onload = () => {
-      window.clearTimeout(timer)
-      resolve()
-    }
-    script.onerror = fail
-    script.src = url
-    document.head.append(script)
-  }).catch((error: unknown) => {
-    scripts.delete(url)
-    throw error
-  })
-  scripts.set(url, loading)
-  return loading
-}
-
 export function loadPayPalWalletSdk(config: WalletConfig) {
   const url = new URL('https://www.paypal.com/sdk/js')
   const components = [config.googlePay && 'googlepay', config.applePay && 'applepay'].filter(Boolean)
@@ -145,7 +119,7 @@ export function loadPayPalWalletSdk(config: WalletConfig) {
   }
   if (config.mode !== 'live') params['buyer-country'] = 'US'
   url.search = new URLSearchParams(params).toString()
-  return loadScript(url.href)
+  return loadPaymentScript(url.href)
 }
 
 export async function createGooglePayButton(
@@ -153,7 +127,7 @@ export async function createGooglePayButton(
   authorize: Authorize,
   options?: { environment?: 'TEST' | 'PRODUCTION'; totalPrice?: string },
 ) {
-  await loadScript('https://pay.google.com/gp/p/js/pay.js')
+  await loadPaymentScript('https://pay.google.com/gp/p/js/pay.js')
   const bridge = sdk.paypal?.Googlepay?.()
   const PaymentsClient = sdk.google?.payments?.api?.PaymentsClient
   if (!bridge || !PaymentsClient) return null
@@ -218,7 +192,7 @@ export async function createApplePayButton(
   options?: { totalPrice?: string; label?: string },
 ) {
   if (window.location.protocol !== 'https:') return null
-  await loadScript('https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js')
+  await loadPaymentScript('https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js')
   const Session = sdk.ApplePaySession
   const bridge = sdk.paypal?.Applepay?.()
   if (!Session || !bridge || !Session.supportsVersion(4) || !Session.canMakePayments()) return null

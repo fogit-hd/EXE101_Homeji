@@ -23,7 +23,7 @@ import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MapToast } from '../components/map/MapToast'
 import { RevealText } from '../components/motion/RevealText'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
-import { InternationalMethodBadges, MomoBadge, PayOsBadge } from '../components/payments/PaymentMethodMarks'
+import { MomoBadge, PayOsBadge, PayPalLogo } from '../components/payments/PaymentMethodMarks'
 import { PremiumListingPreview } from '../components/payments/PremiumListingPreview'
 import { PremiumPurchaseConfirmation, type PremiumPurchase } from '../components/payments/PremiumPurchaseConfirmation'
 import { marketplaceHref } from '../components/shell/navigation'
@@ -44,6 +44,7 @@ import {
 } from '../lib/labels'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
 import { paymentReturnUrl } from '../lib/paymentReturn'
+import { isMomoWallet, momoWalletLabels, useMomoWallets } from '../hooks/useMomoWallets'
 import { getDailyEquivalentAmount, getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import './MarketplacePage.css'
 import './PaymentPage.css'
@@ -68,7 +69,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [vipVoucher, setVipVoucher] = useState<(VoucherSelection & { packageCode: string }) | null>(null)
   const [payPickerCode, setPayPickerCode] = useState<string | null>(null)
   const [busyCode, setBusyCode] = useState<string | null>(null)
-  const [busyMethod, setBusyMethod] = useState<'momo' | 'payos' | 'wallet' | 'paypal' | null>(null)
+  const [busyMethod, setBusyMethod] = useState<PremiumPurchase['method'] | null>(null)
+  const momoWallets = useMomoWallets(payPickerCode !== null)
   const checkoutGuard = useRef(false)
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
   const [walletError, setWalletError] = useState('')
@@ -198,7 +200,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     setToast({ message, tone })
   }
 
-  const startCheckout = async (packageCode: string, method: 'momo' | 'payos' | 'paypal') => {
+  const startCheckout = async (packageCode: string, method: Exclude<PremiumPurchase['method'], 'wallet'>) => {
     if (checkoutGuard.current || busyCode || needsProfileSetup) return
     checkoutGuard.current = true
     trackFunnelEvent('begin_checkout', { item_category: 'premium' })
@@ -206,8 +208,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     setBusyMethod(method)
     try {
       const expectedAmount = packages.find(plan => plan.code === packageCode)?.price
-      const res = method === 'momo'
-        ? await createPremiumMomoPayment(packageCode, expectedAmount)
+      const momoWallet = isMomoWallet(method) ? method : undefined
+      const res = method === 'momo' || momoWallet
+        ? await createPremiumMomoPayment(packageCode, expectedAmount, momoWallet)
         : method === 'payos'
           ? await createPremiumPayOsPayment(packageCode, expectedAmount)
           : await createPremiumPayPalPayment(packageCode, expectedAmount)
@@ -522,8 +525,13 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           <button type="button" className="pay-method is-paypal" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, 'paypal')}>
                             {busy && busyMethod === 'paypal'
                               ? 'Đang tạo…'
-                              : <><InternationalMethodBadges compact /><span className="pay-method__caption">PayPal · Google Pay · Apple Pay</span></>}
+                              : <><PayPalLogo compact /><span className="pay-method__caption">PayPal · Thẻ quốc tế</span></>}
                           </button>
+                          {momoWallets.map(wallet => (
+                            <button key={wallet} type="button" className="pay-method" disabled={busy || Boolean(planVoucher)} onClick={() => confirmPurchase(plan, wallet)}>
+                              {busy && busyMethod === wallet ? 'Đang tạo…' : `${momoWalletLabels[wallet]} qua MoMo`}
+                            </button>
+                          ))}
                         </div>
                         <button type="button" className="pay-plan__cancel" disabled={busy} onClick={() => { setVipVoucher(null); setPayPickerCode(null) }}>
                           Đóng lựa chọn
@@ -555,10 +563,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           confirmPurchase(plan, 'paypal')
                         }}
                       >
-                        <InternationalMethodBadges compact />
-                        <span className="pay-method__caption">
-                          Mua bằng PayPal · <span className="pay-nowrap">Google Pay</span> · <span className="pay-nowrap">Apple Pay</span>
-                        </span>
+                        <PayPalLogo compact />
+                        <span className="pay-method__caption">Mua bằng PayPal · Thẻ quốc tế</span>
                       </button>
                     ) : null}
                   </div>
@@ -593,7 +599,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               </tbody>
             </table>
           </section>
-          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo, PayOS hoặc PayPal / Google Pay / Apple Pay · Đơn chờ tự hủy sau 15 phút</p>
+          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo, PayOS hoặc PayPal · Đơn chờ tự hủy sau 15 phút</p>
         </div>
       ) : null}
 

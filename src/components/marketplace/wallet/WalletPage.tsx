@@ -4,7 +4,8 @@ import { LiquidTabList } from '../../ui/LiquidTabList'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { getPayPalQuote } from '../../../api'
+import { getPayPalQuote, type MomoWallet } from '../../../api'
+import { isMomoWallet, momoWalletLabels, useMomoWallets } from '../../../hooks/useMomoWallets'
 import {
   WalletTransactionKind,
   WalletWithdrawalStatus,
@@ -26,12 +27,12 @@ import {
   type WalletTabId,
 } from '../../../lib/walletMoney'
 import { FOOD_ASSETS } from '../food/foodAssets'
-import { InternationalMethodBadges } from '../../payments/PaymentMethodMarks'
+import { PayPalLogo } from '../../payments/PaymentMethodMarks'
 import { WALLET_ASSETS } from './walletAssets'
 import './WalletPage.css'
 import './WalletWorkspace.css'
 
-export type DepositMethod = 'momo' | 'payos' | 'paypal'
+export type DepositMethod = 'momo' | 'payos' | 'paypal' | MomoWallet
 
 const QUICK_AMOUNTS = [100_000, 200_000, 500_000] as const
 const TABS: { id: WalletTabId; label: string; icon: string; idle: string }[] = [
@@ -397,6 +398,7 @@ function DepositPanel({
 }) {
   const [amountText, setAmountText] = useState('200000')
   const [method, setMethod] = useState<DepositMethod | ''>('momo')
+  const momoWallets = useMomoWallets()
   const [error, setError] = useState('')
   const [phase, setPhase] = useState<'idle' | 'processing' | 'failed'>('idle')
   const [quoteState, setQuoteState] = useState<{
@@ -447,8 +449,8 @@ function DepositPanel({
       setError(`Nhập số nguyên từ ${formatWalletAmount(minTopUp)} đến ${formatWalletAmount(maxTopUp)}.`)
       return
     }
-    if (method !== 'momo' && method !== 'payos' && method !== 'paypal') {
-      setError('Chọn MoMo, PayOS hoặc PayPal / Google Pay / Apple Pay.')
+    if (!method || (isMomoWallet(method) && !momoWallets.includes(method))) {
+      setError('Chọn một phương thức thanh toán khả dụng.')
       return
     }
     if (method === 'paypal' && (quoteLoading || Boolean(quoteError))) {
@@ -534,6 +536,13 @@ function DepositPanel({
               </span>
               <span className="wallet-radio" aria-hidden="true" />
             </button>
+            {momoWallets.map(wallet => (
+              <button key={wallet} type="button" className={method === wallet ? 'is-active' : ''} aria-pressed={method === wallet} onClick={() => setMethod(wallet)}>
+                <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.card} size={20} /></span>
+                <span><strong>{momoWalletLabels[wallet]}</strong><small>Thanh toán VND qua MoMo</small></span>
+                <span className="wallet-radio" aria-hidden="true" />
+              </button>
+            ))}
             <button
               type="button"
               className={method === 'payos' ? 'is-active' : ''}
@@ -555,9 +564,9 @@ function DepositPanel({
             >
               <span className="wallet-methods__icon"><Icon src={WALLET_ASSETS.card} size={20} /></span>
               <span className="wallet-methods__paypal-copy">
-                <strong>PayPal · Google Pay · Apple Pay</strong>
+                <strong>PayPal · Thẻ quốc tế</strong>
                 <small>Thẻ quốc tế, tự quy đổi USD theo thời giá</small>
-                <InternationalMethodBadges compact />
+                <PayPalLogo compact />
               </span>
               <span className="wallet-radio" aria-hidden="true" />
             </button>
@@ -617,7 +626,7 @@ function DepositPanel({
           </button>
         </footer>
         <p className="wallet-deposit__after">Số dư dự kiến sau khi nạp <strong>{balance == null || !Number.isSafeInteger(amount) || amount <= 0 ? '—' : formatWalletAmount(balance + amount)}</strong></p>
-        <p className="wallet-deposit__confirmation"><Icon src={WALLET_ASSETS.shield} size={14} />{method === 'paypal' ? 'Bạn sẽ xác nhận thanh toán qua PayPal, Google Pay hoặc Apple Pay.' : 'Bạn sẽ xác nhận thanh toán trên MoMo hoặc PayOS.'}</p>
+        <p className="wallet-deposit__confirmation"><Icon src={WALLET_ASSETS.shield} size={14} />{method === 'paypal' ? 'Bạn sẽ xác nhận thanh toán qua PayPal.' : isMomoWallet(method) ? 'Homeji gửi email tài khoản cho MoMo để tạo đơn và bạn xác nhận trên trang MoMo.' : 'Bạn sẽ xác nhận thanh toán trên MoMo hoặc PayOS.'}</p>
       </section>
 
       <div className="wallet-deposit__details">

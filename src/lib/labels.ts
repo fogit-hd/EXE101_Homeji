@@ -145,7 +145,7 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
   [PaymentMethod.Momo]: 'MoMo',
   [PaymentMethod.PayOs]: 'PayOS',
   [PaymentMethod.Wallet]: 'Số dư ví Homeji',
-  [PaymentMethod.PayPal]: 'PayPal · Google Pay · Apple Pay',
+  [PaymentMethod.PayPal]: 'PayPal · Thẻ quốc tế',
 }
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {

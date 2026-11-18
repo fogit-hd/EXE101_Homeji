@@ -80,18 +80,8 @@ export function WalletBadge({ compact = false }: { compact?: boolean }) {
   )
 }
 
-export function InternationalMethodBadges({ compact = false }: { compact?: boolean }) {
-  return (
-    <span className={`pay-brand-group${compact ? ' is-compact' : ''}`} aria-hidden="true">
-      <PayPalLogo compact={compact} />
-      <GooglePayLogo compact={compact} />
-      <ApplePayLogo compact={compact} />
-    </span>
-  )
-}
-
 export function PaymentMethodBadges({ method, compact = false }: { method: PaymentMethod; compact?: boolean }) {
-  if (method === PaymentMethod.PayPal) return <InternationalMethodBadges compact={compact} />
+  if (method === PaymentMethod.PayPal) return <PayPalLogo compact={compact} />
   if (method === PaymentMethod.Momo) return <MomoBadge compact={compact} />
   if (method === PaymentMethod.PayOs) return <PayOsBadge compact={compact} />
   return <WalletBadge compact={compact} />

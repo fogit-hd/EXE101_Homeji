@@ -435,9 +435,9 @@ export const createPremiumWalletPayment = (packageCode: string, requestId: strin
     method: 'POST', body: { requestId, expectedAmount, voucherId },
   }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
-export const createPremiumMomoPayment = (packageCode: string, expectedAmount?: number) =>
+export const createPremiumMomoPayment = (packageCode: string, expectedAmount?: number, wallet?: MomoWallet) =>
   apiRequest<MomoPaymentResponse>(`/api/subscriptions/premium/${packageCode}/momo/create`, {
-    params: { expectedAmount },
+    params: { expectedAmount, wallet },
     method: 'POST',
   })
 
@@ -489,8 +489,14 @@ export const getPayment = (paymentId: string) =>
 export const getPaymentByOrderCode = (orderCode: string) =>
   apiRequest<Payment>(`/api/payments/orders/${encodeURIComponent(orderCode)}`).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
-export const createMomoPayment = (amount: number, description?: string) =>
+export type MomoWallet = 'apple-pay' | 'google-pay'
+
+export const getMomoWalletAvailability = (signal?: AbortSignal) =>
+  apiRequest<{ applePay: boolean; googlePay: boolean; test: boolean }>('/api/payments/momo/wallets', { signal })
+
+export const createMomoPayment = (amount: number, description?: string, wallet?: MomoWallet) =>
   apiRequest<MomoPaymentResponse>('/api/payments/momo/create', {
+    params: { wallet },
     method: 'POST',
     body: { amount, description },
   })

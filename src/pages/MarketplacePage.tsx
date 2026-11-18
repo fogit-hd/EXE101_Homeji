@@ -88,6 +88,7 @@ import {
 import { getDeviceLocation } from '../lib/geolocation'
 import { mapMessagesUrl } from '../lib/mapDeepLinks'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
+import { isMomoWallet } from '../hooks/useMomoWallets'
 import { catalogCategories, filterCatalog } from '../lib/marketplaceFilters'
 import {
   primaryOf,
@@ -984,6 +985,11 @@ export function MarketplacePage({
     try {
       if (method === 'paypal') {
         const result = await createPayPalPayment(amount, 'Nạp ví Homeji')
+        void navigate(paymentWaitingUrl(result.paymentId))
+        return { ok: true as const }
+      }
+      if (isMomoWallet(method)) {
+        const result = await createMomoPayment(amount, 'Nạp ví Homeji', method)
         void navigate(paymentWaitingUrl(result.paymentId))
         return { ok: true as const }
       }

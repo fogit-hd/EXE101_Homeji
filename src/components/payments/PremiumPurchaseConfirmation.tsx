@@ -1,16 +1,17 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { getPayPalQuote, type PayPalCheckoutConfig, type SubscriptionPackage } from '../../api'
+import { getPayPalQuote, type MomoWallet, type PayPalCheckoutConfig, type SubscriptionPackage } from '../../api'
 import { PaymentMethod } from '../../api/types'
 import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, formatUsd } from '../../lib/labels'
 import { formatDailyEquivalentPrice } from '../../lib/subscriptionPlanDisplay'
 import { PaymentMethodBadges } from './PaymentMethodMarks'
+import { isMomoWallet } from '../../hooks/useMomoWallets'
 import './PremiumPurchaseConfirmation.css'
 
 export type PremiumPurchase = {
   plan: SubscriptionPackage
-  method: 'wallet' | 'momo' | 'payos' | 'paypal'
+  method: 'wallet' | 'momo' | 'payos' | 'paypal' | MomoWallet
   amountDue: number
   discount: number
   voucherId?: string
@@ -20,7 +21,9 @@ const methodNames = {
   wallet: 'Ví Homeji',
   momo: 'MoMo',
   payos: 'PayOS',
-  paypal: 'PayPal · Google Pay · Apple Pay',
+  paypal: 'PayPal · Thẻ quốc tế',
+  'apple-pay': 'Apple Pay qua MoMo',
+  'google-pay': 'Google Pay qua MoMo',
 }
 
 const methodEnumMap: Record<PremiumPurchase['method'], PaymentMethod> = {
@@ -28,6 +31,8 @@ const methodEnumMap: Record<PremiumPurchase['method'], PaymentMethod> = {
   momo: PaymentMethod.Momo,
   payos: PaymentMethod.PayOs,
   paypal: PaymentMethod.PayPal,
+  'apple-pay': PaymentMethod.Momo,
+  'google-pay': PaymentMethod.Momo,
 }
 
 type QuoteState = { amountDue: number; config?: PayPalCheckoutConfig; error?: string }
@@ -104,7 +109,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
         <div>
           <dt>Thanh toán bằng</dt>
           <dd className="premium-purchase-confirm__method">
-            <span className="sr-only">{methodNames[purchase.method]}</span>
+            <span className={isMomoWallet(purchase.method) ? undefined : 'sr-only'}>{methodNames[purchase.method]}</span>
             <PaymentMethodBadges method={methodEnumMap[purchase.method]} compact />
           </dd>
         </div>
@@ -128,8 +133,10 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
       <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'
         ? `Sẽ trừ ${formatPrice(purchase.amountDue)} từ ví Homeji.${walletBalance === null ? '' : ` Số dư dự kiến còn ${formatPrice(Math.max(0, walletBalance - purchase.amountDue))}.`}`
         : purchase.method === 'paypal'
-          ? 'Sau khi xác nhận, bạn có thể thanh toán nhanh bằng Google Pay, Apple Pay hoặc PayPal theo số tiền USD đã khóa tỷ giá.'
-          : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
+          ? 'PayPal sẽ hiển thị các cách thanh toán khả dụng, gồm thẻ quốc tế nếu tài khoản và khu vực hỗ trợ. Số tiền USD đã được khóa tỷ giá.'
+          : isMomoWallet(purchase.method)
+            ? 'Homeji gửi email tài khoản cho MoMo để tạo đơn. Bạn xác nhận thanh toán trên trang MoMo.'
+            : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
       <div className="premium-purchase-confirm__actions">
         <button ref={cancel} type="button" className="pay-btn" disabled={busy} onClick={onCancel}>Quay lại</button>
         <button type="button" className="pay-btn pay-btn--primary" disabled={busy || quoteLoading || Boolean(quoteError)} onClick={onConfirm}>
