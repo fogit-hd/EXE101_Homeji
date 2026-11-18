@@ -301,6 +301,13 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const premiumPlans = packages.filter((p) => p.tier === SubscriptionTier.Premium)
+  const shortestPremiumPlan = premiumPlans.reduce<SubscriptionPackage | null>(
+    (shortest, candidate) => (!shortest || candidate.durationDays < shortest.durationDays ? candidate : shortest),
+    null,
+  )
+  const baselineDailyRate = shortestPremiumPlan
+    ? getDailyEquivalentAmount(shortestPremiumPlan.price, shortestPremiumPlan.durationDays)
+    : null
   const premiumAreaLimit = premiumPlans.some(plan => plan.maxFollowedAreas === 30) ? 30 : 10
   const premiumComparisonLimit = premiumPlans.some(plan => plan.maxComparedPosts === 5) ? 5 : 3
   const basicPlan = packages.find((p) => p.tier === SubscriptionTier.Basic)
@@ -357,7 +364,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 : 'Gói Premium giúp tin đăng được ưu tiên hiển thị và có nhãn Premium.'}
           </p>
         </div>
-        <button type="button" className="pay-btn" onClick={() => void reload()}>Làm mới</button>
+        <div className="pay-current__actions">
+          <span className="pay-pill">Ví Homeji: {walletBalance === null ? (walletLoading ? 'Đang tải…' : '—') : formatPrice(walletBalance)}</span>
+          <Link className="pay-btn pay-btn--primary" to={marketplaceHref('wallet')}>Nạp tiền vào ví</Link>
+          <button type="button" className="pay-btn" onClick={() => void reload()}>Làm mới</button>
+        </div>
       </section>
 
       <LiquidTabList className="pay-tabs" role="tablist" aria-label="Gói và giao dịch">
@@ -397,6 +408,10 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               const discountPercent = plan.originalPrice && plan.originalPrice > plan.price
                 ? Math.round((plan.originalPrice - plan.price) / plan.originalPrice * 100)
                 : 0
+              const savingsVsBaselinePercent = isPremium && discountPercent === 0 && baselineDailyRate && dailyAmount && plan.durationDays > (shortestPremiumPlan?.durationDays ?? 0)
+                ? Math.max(0, Math.round((1 - dailyAmount / baselineDailyRate) * 100))
+                : 0
+              const effectiveSavePercent = discountPercent > 0 ? discountPercent : savingsVsBaselinePercent
               const pickingPay = payPickerCode === plan.code
               const isRecommended = isPremium && (plan.durationDays === 30 || (!displayPlans.some((p) => p.tier === SubscriptionTier.Premium && p.durationDays === 30) && index === 1))
 
@@ -414,52 +429,62 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     isCurrent ? 'is-current' : '',
                   ].filter(Boolean).join(' ')}
                 >
-                  {isRecommended && (
-                    <div className="pay-plan__recommended-badge" aria-label="Gói được khuyên dùng">
-                      <StarIcon size={12} fill="currentColor" />
-                      <span>Gói khuyên dùng</span>
-                    </div>
-                  )}
-                  <div className="pay-plan__identity" aria-hidden="true">
-                    <span>{isPremium ? <CrownIcon size={16} /> : <ShieldCheckIcon size={16} />}</span>
-                    <small>{isPremium ? 'Premium' : 'Cơ bản'}</small>
-                    {isCurrent && <em>Đang dùng</em>}
+                  <div className="pay-plan__identity">
+                    <span className="pay-plan__icon" aria-hidden="true">
+                      {isPremium ? <CrownIcon size={16} /> : <ShieldCheckIcon size={16} />}
+                    </span>
+                    <small className="pay-plan__tier-tag">{isPremium ? 'Premium' : 'Cơ bản'}</small>
+                    {isRecommended ? (
+                      <span className="pay-plan__recommended-badge" aria-label="Gói được khuyên dùng">
+                        <StarIcon size={11} fill="currentColor" />
+                        <span>Khuyên dùng</span>
+                      </span>
+                    ) : isCurrent ? (
+                      <em className="pay-plan__current-tag">Đang dùng</em>
+                    ) : effectiveSavePercent > 0 ? (
+                      <span className="pay-plan__save-badge">Tiết kiệm {effectiveSavePercent}%</span>
+                    ) : null}
                   </div>
-                  <h3>{view.title}</h3>
-                  <p className="pay-plan__duration">
-                    {isPremium ? `${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
-                  </p>
-                  {isPremium ? <p className="pay-plan__rate-label"><span>Mỗi ngày chỉ khoảng</span>{discountPercent > 0 ? <strong>GIẢM {discountPercent}%</strong> : null}</p> : null}
-                  <p className={`pay-plan__price${isPremium ? ' is-daily-rate' : ''}`}>
-                    {isPremium && previousDailyAmount ? <del>{formatPrice(previousDailyAmount)}</del> : null}
-                    <strong>{isPremium && dailyAmount !== null ? formatPrice(dailyAmount) : view.headlinePrice}</strong>
-                    <small>{isPremium ? '/ ngày' : view.headlineSuffix}</small>
-                  </p>
-                  {plan.offerUsed ? <p className="pay-plan__offer-used">Ưu đãi đợt này đã dùng. Bạn vẫn có thể gia hạn với giá thường.</p> : null}
-                  <p className="pay-plan__total">
-                    {isPremium ? (
-                      <>
-                        <span>Tổng</span>
-                        <strong>{formatPrice(amountDue)}</strong>
-                        <span>cho {plan.durationDays} ngày</span>
-                      </>
-                    ) : '\u00a0'}
-                  </p>
+                  <div className="pay-plan__heading">
+                    <h3>{view.title}</h3>
+                    <p className="pay-plan__duration">
+                      {isPremium ? `Thời hạn ${plan.durationDays} ngày` : 'Dành cho mọi tài khoản'}
+                    </p>
+                  </div>
+                  <div className="pay-plan__price-box">
+                    <p className="pay-plan__rate-label">
+                      <span>{isPremium ? 'Chi phí mỗi ngày' : 'Chi phí sử dụng'}</span>
+                      {isPremium && isRecommended && effectiveSavePercent > 0 ? (
+                        <strong>Giảm {effectiveSavePercent}%</strong>
+                      ) : isPremium && discountPercent > 0 && !isRecommended ? (
+                        <strong>Giảm {discountPercent}%</strong>
+                      ) : null}
+                    </p>
+                    <p className={`pay-plan__price${isPremium ? ' is-daily-rate' : ''}`}>
+                      {isPremium && previousDailyAmount ? <del>{formatPrice(previousDailyAmount)}</del> : null}
+                      <strong>{isPremium && dailyAmount !== null ? formatPrice(dailyAmount) : '0 ₫'}</strong>
+                      <small>{isPremium ? '/ ngày' : '/ không giới hạn'}</small>
+                    </p>
+                    {plan.offerUsed ? <p className="pay-plan__offer-used">Ưu đãi đợt này đã dùng. Bạn vẫn có thể gia hạn với giá thường.</p> : null}
+                    <p className="pay-plan__total">
+                      {isPremium ? (
+                        <>
+                          <span>Tổng thanh toán</span>
+                          <strong>{formatPrice(amountDue)}</strong>
+                          <span>/ {plan.durationDays} ngày</span>
+                        </>
+                      ) : (
+                        <span>Mặc định · Không giới hạn thời gian</span>
+                      )}
+                    </p>
+                  </div>
                   <ul className="pay-plan__benefits-list">
                     {view.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}
-                    {isPremium ? (
-                      <>
-                        <li>Đẩy tin tự động mỗi ngày (Auto-bump)</li>
-                        <li>Ghim top & ưu tiên hiển thị trên bản đồ</li>
-                        <li>Huy hiệu VIP Pro sáng đẹp trên tin & hồ sơ</li>
-                        <li>Trợ lý AI hỗ trợ phân tích tin & tối ưu tìm kiếm</li>
-                      </>
-                    ) : null}
                   </ul>
 
                   <div className="pay-plan__actions">
                     {!isPremium ? (
-                      <span className="pay-btn pay-btn--current">{isCurrent ? <><CheckIcon size={14} /> Gói hiện tại</> : 'Gói miễn phí'}</span>
+                      <span className="pay-btn pay-btn--current" data-glass-exclude>{isCurrent ? <><CheckIcon size={14} /> Gói hiện tại</> : 'Gói miễn phí'}</span>
                     ) : isCurrent && !pickingPay ? (
                       <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={() => { setVipVoucher(null); setSelectedCode(plan.code); setPayPickerCode(plan.code) }}>Gia hạn gói</button>
                     ) : pickingPay ? (
@@ -515,6 +540,20 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         Chọn gói
                       </button>
                     )}
+                    {isPremium && !pickingPay ? (
+                      <button
+                        type="button"
+                        className="pay-method is-paypal pay-plan__quick-paypal"
+                        disabled={busy}
+                        onClick={() => {
+                          setSelectedCode(plan.code)
+                          setVipVoucher(null)
+                          confirmPurchase(plan, 'paypal')
+                        }}
+                      >
+                        Mua bằng PayPal · Google Pay · Apple Pay
+                      </button>
+                    ) : null}
                   </div>
                 </motion.article>
               )
@@ -532,22 +571,18 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               <thead>
                 <tr>
                   <th scope="col">Quyền lợi</th>
-                  <th scope="col">Miễn phí (Free)</th>
-                  <th scope="col">Gói Cơ bản</th>
-                  <th scope="col">VIP Pro (Khuyên dùng)</th>
+                  <th scope="col">Miễn phí</th>
+                  <th scope="col">Premium</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Tìm và lưu phòng</th><td>Có</td><td>Có</td><td>Có</td></tr>
-                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td>Tối đa 15</td><td>Tối đa {premiumAreaLimit}</td></tr>
-                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 phòng/lần</td><td>Tối đa 5 phòng/lần</td><td>Tối đa {premiumComparisonLimit} phòng/lần</td></tr>
-                <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td>Có</td><td>Huy hiệu VIP Pro sáng đẹp</td></tr>
-                <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td>Có, kèm hiệu ứng nhẹ</td><td>Khung viền phát sáng VIP</td></tr>
-                <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td>Có</td><td>Ưu tiên cao nhất bản đồ & danh sách</td></tr>
-                <tr><th scope="row">Đẩy tin tự động mỗi ngày (Auto-bump)</th><td>Không</td><td>Thủ công</td><td>Tự động mỗi ngày</td></tr>
-                <tr><th scope="row">Ghim top nổi bật trên bản đồ</th><td>Không</td><td>Không</td><td>Ghim vị trí đầu & ghim top</td></tr>
-                <tr><th scope="row">Huy hiệu VIP Pro trên hồ sơ & tin</th><td>Không</td><td>Không</td><td>Huy hiệu VIP vàng uy tín</td></tr>
-                <tr><th scope="row">Trợ lý AI phân tích & tối ưu tin</th><td>Cơ bản</td><td>Tiêu chuẩn</td><td>Ưu tiên & không giới hạn</td></tr>
+                <tr><th scope="row">Tìm và lưu phòng</th><td>Có</td><td className="is-accent">Có</td></tr>
+                <tr><th scope="row">Theo dõi khu vực để nhận tin mới</th><td>Tối đa 10</td><td className="is-accent">Tối đa {premiumAreaLimit}</td></tr>
+                <tr><th scope="row">So sánh trong mục Đã lưu</th><td>Tối đa 3 phòng/lần</td><td className="is-accent">Tối đa {premiumComparisonLimit} phòng/lần</td></tr>
+                <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td className="is-accent">Có</td></tr>
+                <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td className="is-accent">Có, kèm hiệu ứng nhẹ</td></tr>
+                <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td className="is-accent">Có</td></tr>
+                <tr><th scope="row">AI soạn bài từ ảnh</th><td>Không</td><td className="is-accent">Có, đăng sau khi xác nhận</td></tr>
               </tbody>
             </table>
           </section>

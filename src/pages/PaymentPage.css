@@ -944,3 +944,5 @@ html:root #root .pay-v2 .pay-plan .pay-btn--primary { background:var(--plan-acce
 html:root[data-theme=dark] #root .pay-v2 .pay-plan .pay-btn--primary { color:#132a30 !important; }
 @keyframes pay-plan-sheen { to { transform:translateX(120%); } }
 @media(prefers-reduced-motion:reduce) { .pay-v2 .pay-plan,.pay-v2 .pay-plan .pay-btn--primary { transition:none; translate:none; } .pay-v2 .pay-plan:is(:hover,:focus-within)::after { animation:none; } }
+.pay-current__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.pay-plan__quick-paypal { width: 100%; margin-top: 8px; padding: 8px 12px; font-size: 13px; }

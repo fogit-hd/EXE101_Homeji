@@ -349,6 +349,8 @@ try {
 
   // 1. Premium subscription checkout with live USD quote + Google Pay on /payments/wait
   await page.goto(origin + '/?section=payments')
+  await page.getByRole('link', { name: 'Nạp tiền vào ví', exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Mua bằng PayPal · Google Pay · Apple Pay', exact: true }).first().waitFor()
   await page.getByRole('button', { name: 'Chọn gói', exact: true }).click()
   await page.getByRole('button', { name: 'PayPal · Google Pay · Apple Pay', exact: true }).click()
 
