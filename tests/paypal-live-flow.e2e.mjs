@@ -411,7 +411,7 @@ try {
   await page.getByRole('heading', { name: 'Thanh toán thành công', exact: true }).waitFor()
   assert.equal(captureCalls.at(-1).payPalOrderId, 'PAYPALRET1')
 
-  // 4. Ineligible Live merchant (e.g. PayPal VN) hides wallets cleanly without domain error
+  // 4. Ineligible provider wallets explain why no button is shown and keep PayPal available.
   vnIneligible = true
   appleDomainVerified = false
   payments.set('pay-vn-pending', {
@@ -426,7 +426,8 @@ try {
   vnPage.setDefaultTimeout(10_000)
   vnPage.on('pageerror', (error) => pageErrors.push(error.message))
   await vnPage.goto(origin + '/payments/wait?paymentId=pay-vn-pending')
-  await vnPage.getByRole('link', { name: /Thanh toán qua PayPal · Thẻ quốc tế/ }).waitFor()
+  await vnPage.getByText(/PayPal chưa cung cấp Google Pay hoặc Apple Pay/).waitFor()
+  await vnPage.getByRole('link', { name: /Thanh toán qua PayPal/ }).waitFor()
   assert.equal(await vnPage.getByText(/Apple Pay chưa được xác thực tên miền/).count(), 0)
   assert.equal(await vnPage.getByRole('button', { name: 'Apple Pay', exact: true }).count(), 0)
   assert.equal(await vnPage.getByRole('button', { name: 'Google Pay', exact: true }).count(), 0)

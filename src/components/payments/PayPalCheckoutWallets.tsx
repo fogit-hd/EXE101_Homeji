@@ -179,11 +179,7 @@ export function PayPalCheckoutWallets({
         setState({
           paymentId,
           config: fetched,
-          walletAvailability: googleButton || appleButton
-            ? 'ready'
-            : unavailableReasons.length > 0
-              ? 'unavailable'
-              : 'hidden',
+          walletAvailability: googleButton || appleButton ? 'ready' : 'unavailable',
           unavailableReason: unavailableReasons[0],
         })
       } catch (error) {
@@ -250,7 +246,7 @@ export function PayPalCheckoutWallets({
           )}
           {walletAvailability === 'unavailable' && (
             <p className="payment-paypal-wallets__note" role="status">
-              {currentState?.unavailableReason ?? 'Google Pay / Apple Pay chưa khả dụng trên thiết bị này. Bạn có thể thanh toán trực tiếp qua nút PayPal bên dưới.'}
+              {currentState?.unavailableReason ?? 'PayPal chưa cung cấp Google Pay hoặc Apple Pay cho lần thanh toán này. Tùy chọn ví phụ thuộc vào khu vực, tài khoản PayPal và thiết bị. Bạn có thể tiếp tục qua PayPal.'}
             </p>
           )}
           <div
