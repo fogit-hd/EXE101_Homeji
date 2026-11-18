@@ -66,6 +66,7 @@ const walletOrderCalls = []
 const captureCalls = []
 const pageErrors = []
 let appleDomainVerified = false
+let vnIneligible = false
 
 await context.addInitScript((id) => {
   localStorage.setItem('homeji_access_token', 'fixture-session')
@@ -128,7 +129,19 @@ customElements.define('apple-pay-button', class extends HTMLElement {
 await context.route('**/*', async (route) => {
   const url = new URL(route.request().url())
   if (url.href.startsWith('https://www.paypal.com/sdk/js?')) {
-    return route.fulfill({ contentType: 'application/javascript', body: paypalSdk })
+    const body = vnIneligible
+      ? `
+        window.paypal = {
+          Googlepay: () => ({
+            config: async () => { throw new Error('Not Eligible for GooglePay Payments') },
+          }),
+          Applepay: () => ({
+            config: async () => ({ isEligible: false, countryCode: 'VN', supportedNetworks: ['visa'], merchantCapabilities: ['supports3DS'] }),
+          }),
+        };
+      `
+      : paypalSdk
+    return route.fulfill({ contentType: 'application/javascript', body })
   }
   if (url.hostname === 'pay.google.com') {
     return route.fulfill({ contentType: 'application/javascript', body: googleSdk })
@@ -397,6 +410,26 @@ try {
   await page.goto(origin + '/payments/wait?orderCode=PPORDERRETURN&provider=paypal&token=PAYPALRET1')
   await page.getByRole('heading', { name: 'Thanh toán thành công', exact: true }).waitFor()
   assert.equal(captureCalls.at(-1).payPalOrderId, 'PAYPALRET1')
+
+  // 4. Ineligible Live merchant (e.g. PayPal VN) hides wallets cleanly without domain error
+  vnIneligible = true
+  appleDomainVerified = false
+  payments.set('pay-vn-pending', {
+    ...payments.get('pay-return-1'),
+    id: 'pay-vn-pending',
+    orderCode: 'PPVNCHECK',
+    requestId: 'PPORDVN1',
+    paymentUrl: 'https://www.paypal.com/checkoutnow?token=PPORDVN1',
+    status: 1,
+  })
+  const vnPage = await context.newPage()
+  vnPage.setDefaultTimeout(10_000)
+  vnPage.on('pageerror', (error) => pageErrors.push(error.message))
+  await vnPage.goto(origin + '/payments/wait?paymentId=pay-vn-pending')
+  await vnPage.getByRole('link', { name: /Thanh toán qua PayPal · Thẻ quốc tế/ }).waitFor()
+  assert.equal(await vnPage.getByText(/Apple Pay chưa được xác thực tên miền/).count(), 0)
+  assert.equal(await vnPage.getByRole('button', { name: 'Apple Pay', exact: true }).count(), 0)
+  assert.equal(await vnPage.getByRole('button', { name: 'Google Pay', exact: true }).count(), 0)
 
   assert.deepEqual(createCalls, [
     { kind: 'premium', amount: 99000 },

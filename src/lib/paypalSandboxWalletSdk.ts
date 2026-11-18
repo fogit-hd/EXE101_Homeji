@@ -223,14 +223,14 @@ export async function createApplePayButton(
   const bridge = sdk.paypal?.Applepay?.()
   if (!Session || !bridge || !Session.supportsVersion(4) || !Session.canMakePayments()) return null
 
-  if (!(await hasApplePayDomainAssociation())) {
-    throw new WalletUnavailableError(
-      'Apple Pay chưa được xác thực tên miền (/.well-known/apple-developer-merchantid-domain-association). Bạn có thể thanh toán trực tiếp qua PayPal hoặc thẻ quốc tế ở trên.',
-    )
-  }
-
   const { isEligible, countryCode, supportedNetworks, merchantCapabilities } = await bridge.config()
   if (!isEligible) return null
+
+  if (!(await hasApplePayDomainAssociation())) {
+    throw new WalletUnavailableError(
+      'Apple Pay chưa được xác thực tên miền (/.well-known/apple-developer-merchantid-domain-association). Bạn có thể thanh toán trực tiếp qua PayPal hoặc thẻ quốc tế bên dưới.',
+    )
+  }
 
   const label = options?.label ?? 'Homeji'
   const amount = options?.totalPrice ?? '1.00'

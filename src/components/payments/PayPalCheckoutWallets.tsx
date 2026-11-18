@@ -179,7 +179,11 @@ export function PayPalCheckoutWallets({
         setState({
           paymentId,
           config: fetched,
-          walletAvailability: googleButton || appleButton ? 'ready' : 'unavailable',
+          walletAvailability: googleButton || appleButton
+            ? 'ready'
+            : unavailableReasons.length > 0
+              ? 'unavailable'
+              : 'hidden',
           unavailableReason: unavailableReasons[0],
         })
       } catch (error) {
