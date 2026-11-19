@@ -22,6 +22,7 @@ import { RentalContextCard } from '../../ai/RentalContextCard'
 import { ChatbotMessageContent } from '../ChatbotMessageContent'
 import { ChatbotMediaPreview } from '../ChatbotMediaComposer'
 import { AssistantIcon, HomejiAvatar } from '../ChatbotVisuals'
+import { BotAvatar } from 'bot-avatars'
 import { rentalTargetKey } from './chatbotModels'
 import type { DisplayMessage } from './ChatbotMessageTypes'
 
@@ -56,6 +57,17 @@ type Actions = {
 }
 type Props = { state: State; context: Context; refs: Refs; actions: Actions }
 
+function AssistantWelcomeAvatar({ busy }: { busy: boolean }) {
+  if (
+    typeof window === 'undefined' ||
+    typeof globalThis.requestAnimationFrame !== 'function' ||
+    typeof window.CanvasRenderingContext2D === 'undefined'
+  ) {
+    return <img src="/brand/homeji-logo2.png" alt="" draggable={false} />
+  }
+  return <BotAvatar type="clover" size={36} state={busy ? 'working' : 'default'} color="#388e3c" />
+}
+
 export function ChatbotTranscript({ state, context, refs, actions }: Props) {
   const { messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId } = state
   const { rentalContext, rentalSelection, sharedLocation } = context
@@ -75,7 +87,9 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                 <small>Giá và phí lấy từ tin này. Khi tìm phòng mới, hãy nhập nhu cầu mới của bạn.</small>
               </section> : null}
               {showGreeting ? <div className="map-chatbot__greeting">
-                <div className="homeji-assistant__welcome-mark" aria-hidden="true"><img src="/brand/homeji-logo2.png" alt="" draggable={false} /></div>
+                <div className="homeji-assistant__welcome-mark" aria-hidden="true">
+                  <AssistantWelcomeAvatar busy={busy} />
+                </div>
                 <h2>Homeji giúp gì cho bạn?</h2>
                 <div className="homeji-assistant__starters">
                   <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><b aria-hidden>↗</b></button>

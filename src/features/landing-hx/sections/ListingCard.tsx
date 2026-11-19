@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { BorderBeam } from 'border-beam'
 import { BadgeCheck, DoorOpen, Heart, MapPin, Ruler, Sparkles, Users } from 'lucide-react'
 import type { Listing, ListingTag } from '../../../lib/mock/homeji'
 import { listingThumbSrcSet } from '../../../lib/cloudinaryImage'
@@ -23,7 +24,7 @@ export function ListingCard({ listing, highlighted = false }: { listing: Listing
     ? `${image.srcSmall} ${image.width / 2}w, ${image.src} ${image.width}w`
     : listingThumbSrcSet(image.src)
 
-  return (
+  const card = (
     <Card
       as="article"
       interactive
@@ -98,4 +99,14 @@ export function ListingCard({ listing, highlighted = false }: { listing: Listing
       </div>
     </Card>
   )
+
+  if (highlighted) {
+    return (
+      <BorderBeam colorVariant="forest" size="md" active={highlighted} theme="auto">
+        {card}
+      </BorderBeam>
+    )
+  }
+
+  return card
 }
