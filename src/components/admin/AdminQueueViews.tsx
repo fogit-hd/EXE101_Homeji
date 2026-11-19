@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ReportStatus, ReportTargetType } from '../../api/types'
 import { ChoicePicker } from '../ui/ChoicePicker'
@@ -26,9 +27,96 @@ function Waiting({ since }: { since: string | null | undefined }) {
 }
 
 export function AdminPostsQueue({ ws }: Props) {
-  const busy = ws.pendingAction !== null
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [batchRejectReason, setBatchRejectReason] = useState('')
+  const [batchBusy, setBatchBusy] = useState(false)
+
+  const handleApproveAll = async () => {
+    if (ws.visiblePosts.length === 0 || batchBusy) return
+    if (!window.confirm(`Bạn có chắc muốn duyệt tất cả ${ws.visiblePosts.length} tin đăng đang chờ duyệt?`)) return
+    setBatchBusy(true)
+    try {
+      await ws.approveAllPosts(ws.visiblePosts)
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
+  const handleConfirmRejectAll = async () => {
+    const reason = batchRejectReason.trim()
+    if (!reason || ws.visiblePosts.length === 0 || batchBusy) return
+    setBatchBusy(true)
+    try {
+      await ws.rejectAllPosts(ws.visiblePosts, reason)
+      setShowRejectModal(false)
+      setBatchRejectReason('')
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
   return <div className="admin-list">
-    {ws.visiblePosts.length === 0 ? <QueueEmpty searching={!!ws.query}>Không có tin chờ duyệt.</QueueEmpty> : ws.visiblePosts.map(post => (
+    {ws.visiblePosts.length > 0 ? (
+      <div className="card admin-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, padding: '12px 16px' }}>
+        <span>Có <strong>{ws.visiblePosts.length}</strong> tin chờ duyệt</span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={batchBusy}
+            onClick={() => void handleApproveAll()}
+          >
+            {batchBusy ? 'Đang duyệt…' : `Duyệt tất cả (${ws.visiblePosts.length})`}
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger btn-sm"
+            disabled={batchBusy}
+            onClick={() => {
+              setBatchRejectReason('')
+              setShowRejectModal(true)
+            }}
+          >
+            Từ chối tất cả
+          </button>
+        </div>
+      </div>
+    ) : null}
+
+    {showRejectModal && (
+      <div className="ai-review-modal-backdrop" onClick={() => !batchBusy && setShowRejectModal(false)}>
+        <div className="ai-review-modal" role="dialog" aria-modal="true" aria-labelledby="posts-reject-all-title" onClick={e => e.stopPropagation()}>
+          <h3 id="posts-reject-all-title">Từ chối tất cả tin chờ duyệt</h3>
+          <p>Hệ thống sẽ từ chối toàn bộ <strong>{ws.visiblePosts.length}</strong> tin đăng trong danh sách.</p>
+          <label className="form-label" htmlFor="posts-batch-reject-reason">Lý do từ chối (bắt buộc):</label>
+          <textarea
+            id="posts-batch-reject-reason"
+            className="form-textarea"
+            rows={3}
+            maxLength={500}
+            placeholder="Nhập lý do từ chối áp dụng cho tất cả tin..."
+            value={batchRejectReason}
+            onChange={e => setBatchRejectReason(e.target.value)}
+            autoFocus
+          />
+          <div className="ai-review-modal__actions">
+            <button type="button" className="btn btn-secondary btn-sm" disabled={batchBusy} onClick={() => setShowRejectModal(false)}>Hủy</button>
+            <button
+              type="button"
+              className="btn btn-danger btn-sm"
+              disabled={batchBusy || !batchRejectReason.trim()}
+              onClick={() => void handleConfirmRejectAll()}
+            >
+              {batchBusy ? 'Đang từ chối…' : `Xác nhận từ chối (${ws.visiblePosts.length} tin)`}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {ws.visiblePosts.length === 0 ? <QueueEmpty searching={!!ws.query}>Không có tin chờ duyệt.</QueueEmpty> : ws.visiblePosts.map(post => {
+      const isPostBusy = ws.isActionPending(post.id) || batchBusy
+      return (
       <article key={post.id} id={`admin-posts-${post.id}`} tabIndex={-1} className="card admin-item admin-task-target" aria-label={post.title || 'Tin chờ duyệt'}>
         <div className="admin-item__body">
           {post.ownerConsentContact ? <>
@@ -36,7 +124,7 @@ export function AdminPostsQueue({ ws }: Props) {
             <label className="form-label" htmlFor={`consent-note-${post.id}`}>Nhật ký xác minh bắt buộc</label>
             <textarea
               id={`consent-note-${post.id}`}
-              disabled={busy}
+              disabled={isPostBusy}
               className="form-textarea"
               maxLength={500}
               placeholder="Ví dụ: Đã gọi số trên hợp đồng lúc 14:30; chủ nhà xác nhận cho chuyển hợp đồng đến 01/02/2027."
@@ -56,20 +144,20 @@ export function AdminPostsQueue({ ws }: Props) {
           <Link to={mapPostUrl(post.id)} className="btn btn-ghost btn-sm">Xem trên bản đồ</Link>
         </div>
         <div className="admin-actions">
-          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void ws.runAction(post.id, () => ws.approvePost(post))}>Duyệt</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={isPostBusy} onClick={() => void ws.runAction(post.id, () => ws.approvePost(post))}>Duyệt</button>
           <label className="admin-review-label" htmlFor={`reject-${post.id}`}>Lý do nếu từ chối</label>
           <input id={`reject-${post.id}`}
-            disabled={busy}
+            disabled={isPostBusy}
             className="form-input"
             placeholder="Lý do từ chối"
             aria-label={`Lý do từ chối: ${post.title}`}
             value={ws.rejectReasons[post.id] ?? ''}
             onChange={event => ws.setRejectReasons(current => ({ ...current, [post.id]: event.target.value }))}
           />
-          <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => void ws.runAction(post.id, () => ws.rejectPost(post.id))}>Từ chối</button>
+          <button type="button" className="btn btn-danger btn-sm" disabled={isPostBusy} onClick={() => void ws.runAction(post.id, () => ws.rejectPost(post.id))}>Từ chối</button>
         </div>
       </article>
-    ))}
+    )})}
   </div>
 }
 

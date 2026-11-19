@@ -64,7 +64,8 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
   const [consentVerificationNotes, setConsentVerificationNotes] = useState<Notes>({})
   const [query, setQuery] = useState('')
   const [pendingAction, setPendingAction] = useState<string | null>(null)
-  const actionLock = useRef(false)
+  const [pendingActionKeys, setPendingActionKeys] = useState<Set<string>>(new Set())
+  const activeActionKeys = useRef<Set<string>>(new Set())
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [taskNotice, setTaskNotice] = useState('')
@@ -258,6 +259,32 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
     }
   }
 
+  const approveAllPosts = async (posts: RentalPostSummary[]) => {
+    if (posts.length === 0) return
+    setError('')
+    setMessage('')
+    try {
+      await Promise.all(posts.map(p => approveRentalPost(p.id, p.ownerConsentContact ? (consentVerificationNotes[p.id]?.trim() || 'Đã xác minh qua thông tin liên hệ') : undefined)))
+      setMessage(`Đã duyệt tất cả ${posts.length} tin đăng.`)
+      await reload()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Chưa thể duyệt tất cả tin. Vui lòng thử lại.'))
+    }
+  }
+
+  const rejectAllPosts = async (posts: RentalPostSummary[], reason: string) => {
+    if (posts.length === 0) return
+    setError('')
+    setMessage('')
+    try {
+      await Promise.all(posts.map(p => rejectRentalPost(p.id, reason.trim() || rejectReasons[p.id] || 'Nội dung không phù hợp quy định')))
+      setMessage(`Đã từ chối tất cả ${posts.length} tin đăng.`)
+      await reload()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Chưa thể từ chối tất cả tin. Vui lòng thử lại.'))
+    }
+  }
+
   const confirmReportViolation = async (reportId: string) => {
     try {
       await resolveReport(reportId, reportResolutionNotes[reportId]?.trim() || undefined)
@@ -325,16 +352,27 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
     }
   }
 
-  // Lock synchronously so rapid clicks cannot submit the same decision twice.
+  // Run actions asynchronously per key so separate items do not block each other
   const runAction = async (key: string, action: () => Promise<void>) => {
-    if (actionLock.current) return
-    actionLock.current = true
+    if (activeActionKeys.current.has(key)) return
+    activeActionKeys.current.add(key)
+    setPendingActionKeys(prev => new Set(prev).add(key))
     setPendingAction(key)
     setError('')
     setMessage('')
     try { await action() }
-    finally { actionLock.current = false; setPendingAction(null) }
+    finally {
+      activeActionKeys.current.delete(key)
+      setPendingActionKeys(prev => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+      setPendingAction(activeActionKeys.current.size > 0 ? Array.from(activeActionKeys.current)[0] : null)
+    }
   }
+
+  const isActionPending = (key: string) => pendingActionKeys.has(key)
 
   const term = query.trim().toLocaleLowerCase('vi-VN')
   const matches = (...values: (string | null | undefined)[]) => !term
@@ -364,7 +402,7 @@ export function useAdminWorkspace(section: AdminSection, openSection: (section: 
     terminationTargetId, setTerminationTargetId, terminationReasons, setTerminationReasons, terminatingUserId,
     maintenanceTitle, setMaintenanceTitle, maintenanceMessage, setMaintenanceMessage,
     maintenanceStart, setMaintenanceStart, maintenanceEnd, setMaintenanceEnd, sendingMaintenance,
-    openTask, approvePost, rejectPost, confirmReportViolation, dismissReport,
+    openTask, approvePost, rejectPost, approveAllPosts, rejectAllPosts, isActionPending, confirmReportViolation, dismissReport,
     completeWithdrawal, rejectWithdrawal, reviewVerification, terminateSession, sendMaintenance,
   }
 }

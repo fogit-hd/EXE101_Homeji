@@ -5,4 +5,7 @@ export type AiReviewDashboard = { settings: AiReviewSettings; nextAllowedAt: str
 export const getAiReviews = () => apiRequest<AiReviewDashboard>('/api/admin/ai-reviews')
 export const saveAiReviewSettings = (settings: AiReviewSettings) => apiRequest<void>('/api/admin/ai-reviews/settings', { method: 'PUT', body: settings })
 export const queueAiReviewBackfill = () => apiRequest<void>('/api/admin/ai-reviews/backfill', { method: 'POST' })
-export const resolveAiReview = (id: string, restore: boolean) => apiRequest<void>(`/api/admin/ai-reviews/${id}/resolve`, { method: 'POST', body: { restore } })
+export const resolveAiReview = (id: string, restore: boolean, reason?: string) =>
+  apiRequest<void>(`/api/admin/ai-reviews/${id}/resolve`, { method: 'POST', body: reason ? { restore, reason } : { restore } })
+export const resolveAllAiReviews = (restore: boolean, reason?: string, ids?: string[]) =>
+  apiRequest<{ resolvedCount: number }>('/api/admin/ai-reviews/resolve-all', { method: 'POST', body: reason ? { restore, reason, ids } : { restore, ids } })

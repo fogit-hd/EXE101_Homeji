@@ -15,6 +15,9 @@
 .ai-review-panel__backfill { padding: 20px; margin: 24px 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-muted); }
 .ai-review-panel__backfill p { margin-bottom: 0; }
 .ai-review-panel__backfill button { flex-shrink: 0; }
+.ai-review-panel__queue-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: 24px; margin-bottom: 16px; }
+.ai-review-panel__queue-count { margin: 4px 0 0; font-size: 13px; color: var(--text-secondary); }
+.ai-review-panel__batch-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ai-review-panel__items { display: grid; gap: 14px; }
 .ai-review-panel__item { padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated); }
 .ai-review-panel__item--blocked, .ai-review-panel__item--needs_review { border-left: 4px solid #bf8d39; }
@@ -23,4 +26,54 @@
 .ai-review-panel__item h4 { font-size: 16px; margin: 14px 0 8px; overflow-wrap: anywhere; }
 .ai-review-panel__item blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--border); background: var(--surface-muted); overflow-wrap: anywhere; }
 .ai-review-panel__error { color: var(--error, #ba3838); }
-@media (max-width: 700px) { .ai-review-panel > header, .ai-review-panel__backfill { flex-direction: column; } .ai-review-panel__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.ai-review-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.ai-review-modal {
+  background: var(--surface-elevated, #1e242b);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  color: var(--text-primary);
+}
+.ai-review-modal h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+.ai-review-modal p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.ai-review-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+.ai-review-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+  .ai-review-panel > header, .ai-review-panel__backfill, .ai-review-panel__queue-header { flex-direction: column; align-items: flex-start; }
+  .ai-review-panel__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
