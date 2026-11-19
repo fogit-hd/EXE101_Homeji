@@ -20,9 +20,10 @@ html:root #root .listing-trust-badges > :is(.premium-badge, .verified-owner-badg
 
 html:root #root .listing-trust-badges > .premium-badge {
   gap: 5px;
-  background: linear-gradient(135deg, #fff8e7, #f5e5bb);
-  color: #705015;
-  border-color: #dec587;
+  background: linear-gradient(135deg, #fff7db 0%, #feeab3 60%, #fedd8a 100%);
+  color: #5e4002;
+  border-color: rgba(218, 165, 32, 0.45);
+  box-shadow: 0 1px 3px rgba(160, 115, 20, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .map-listings__card > .listing-trust-badges { margin: 12px 14px 0; }
@@ -30,9 +31,10 @@ html:root #root .listing-trust-badges > .premium-badge {
 .map-listings__preview > .listing-trust-badges { margin: 0 0 12px; }
 
 html[data-theme='dark']:root #root .listing-trust-badges > .premium-badge {
-  background: linear-gradient(135deg, #3c321e, #45371e);
-  color: #f5d991;
-  border-color: #826a36;
+  background: linear-gradient(135deg, rgba(62, 46, 18, 0.92) 0%, rgba(82, 60, 22, 0.95) 100%);
+  color: #ffe79a;
+  border-color: rgba(225, 185, 85, 0.38);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 235, 170, 0.15);
 }
 
 @media (forced-colors: active) {
