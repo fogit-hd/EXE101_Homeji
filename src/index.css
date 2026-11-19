@@ -44,6 +44,12 @@
   --success: #39b54a;
   --error-soft: rgba(234, 67, 53, 0.1);
   --success-soft: rgba(57, 181, 74, 0.12);
+  /* Bảng Màu Ẩm Thực Sinh Viên (Grainient Culinary Palette) */
+  --food-warm-amber: #ff9f43;
+  --food-warm-terracotta: #ee5253;
+  --food-warm-honey: #feca57;
+  --food-warm-surface: #fff9f4;
+  --food-warm-border: #fce7d8;
   /* One elevation tier (Airbnb-style): hairline + soft lift — no glow stack */
   --shadow-sm: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
     rgba(28, 42, 34, 0.08) 0 4px 10px;
@@ -173,6 +179,12 @@ html[data-theme='dark'] {
   --shadow-md: rgba(0, 0, 0, 0.36) 0px 12px 28px 0px;
   --error: #f28b82;
   --success: #81c995;
+  /* Bảng Màu Ẩm Thực Sinh Viên (Grainient Dark Overrides) */
+  --food-warm-amber: #ffaa5b;
+  --food-warm-terracotta: #f06a6b;
+  --food-warm-honey: #fed372;
+  --food-warm-surface: #1e2621;
+  --food-warm-border: #314237;
   --error-soft: rgba(242, 139, 130, 0.14);
   --success-soft: rgba(129, 201, 149, 0.14);
   --map-canvas-bg: #1b303b;

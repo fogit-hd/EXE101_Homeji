@@ -1,5 +1,14 @@
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { SPRING } from '../../../lib/motionTokens'
 import { attachPointerSpot } from '../../motion/pointerSpot'
+
+if (typeof window !== 'undefined') {
+  const g = globalThis as unknown as { HTMLElement?: unknown; SVGElement?: unknown }
+  const w = window as unknown as { HTMLElement?: unknown; SVGElement?: unknown }
+  if (typeof g.HTMLElement === 'undefined' && w.HTMLElement) g.HTMLElement = w.HTMLElement
+  if (typeof g.SVGElement === 'undefined' && w.SVGElement) g.SVGElement = w.SVGElement
+}
 import { Sk } from '../../skeletons/Skeleton'
 import type { MarketplacePost } from '../../../api'
 import { formatPrice } from '../../../lib/labels'
@@ -61,6 +70,19 @@ function estimatedEtaFromCart(cartItems: FoodCartLine[], posts: MarketplacePost[
   return `${Math.max(15, base - 5)}–${base + 5} phút`
 }
 
+export function ProceduralNoiseFilter() {
+  return (
+    <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+      <defs>
+        <filter id="culinary-grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.035 0" />
+        </filter>
+      </defs>
+    </svg>
+  )
+}
+
 export function FoodMarketplaceView({
   posts,
   sellerGroups,
@@ -92,6 +114,13 @@ export function FoodMarketplaceView({
   onCartOpenChange,
   onSelectKitchen,
 }: Props) {
+  if (typeof window !== 'undefined') {
+    const g = globalThis as unknown as Record<string, unknown>
+    const w = window as unknown as Record<string, unknown>
+    for (const k of ['Element', 'HTMLElement', 'SVGElement', 'Node', 'MutationObserver']) {
+      if (typeof g[k] === 'undefined' && w[k]) g[k] = w[k]
+    }
+  }
   const cartDialogRef = useRef<HTMLDialogElement>(null)
   // Dot cards: the hovered card lights the dots under the pointer.
   const dotSpotRef = useCallback((node: HTMLDivElement | null) => node ? attachPointerSpot(node, '.food-card') : undefined, [])
@@ -186,8 +215,9 @@ export function FoodMarketplaceView({
 
   return (
     <div className="food-market-body">
+      <ProceduralNoiseFilter />
       <div className="food-catalog">
-        {/* Bộ lọc bữa ăn sinh viên & khoảng cách */}
+        {/* Bộ lọc bữa ăn sinh viên & khoảng cách (uiarc.dev Spring Motion Pattern) */}
         <div className="food-meal-filter-bar" style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -196,7 +226,7 @@ export function FoodMarketplaceView({
           justifyContent: 'space-between',
           marginBottom: '16px',
         }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }} role="tablist" aria-label="Bộ lọc bữa ăn">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', position: 'relative' }} role="tablist" aria-label="Bộ lọc bữa ăn">
             {MEAL_TABS.map((tab) => {
               const active = mealCategory === tab.id
               return (
@@ -207,17 +237,31 @@ export function FoodMarketplaceView({
                   aria-selected={active}
                   onClick={() => setMealCategory(tab.id)}
                   style={{
+                    position: 'relative',
                     padding: '6px 14px',
                     borderRadius: '20px',
                     fontSize: '0.82rem',
                     fontWeight: active ? 600 : 500,
-                    border: active ? '1px solid var(--grab-green, #24543e)' : '1px solid #dbe2de',
-                    background: active ? 'var(--grab-green, #24543e)' : '#fff',
-                    color: active ? '#fff' : '#24382d',
+                    border: active ? '1px solid transparent' : '1px solid var(--border)',
+                    background: 'transparent',
+                    color: active ? '#ffffff' : 'var(--text-primary)',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
+                    zIndex: 1,
                   }}
                 >
+                  {active && (
+                    <motion.div
+                      layoutId="activeMealCategoryTab"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: '20px',
+                        backgroundColor: 'var(--grab-green, #087f8c)',
+                        zIndex: -1,
+                      }}
+                      transition={SPRING.soft}
+                    />
+                  )}
                   {tab.label}
                 </button>
               )
@@ -225,17 +269,17 @@ export function FoodMarketplaceView({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', color: '#526358' }}>Bán kính:</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #5b6b76)' }}>Bán kính:</span>
             <select
               value={maxDistanceKm}
               onChange={(e) => setMaxDistanceKm(Number(e.target.value) || 0)}
               style={{
                 padding: '4px 10px',
                 borderRadius: '12px',
-                border: '1px solid #dbe2de',
+                border: '1px solid var(--border)',
                 fontSize: '0.8rem',
-                background: '#fff',
-                color: '#24382d',
+                background: 'var(--surface-elevated, #ffffff)',
+                color: 'var(--text-primary, #243742)',
                 cursor: 'pointer',
               }}
               aria-label="Lọc theo khoảng cách"
@@ -365,7 +409,7 @@ export function FoodMarketplaceView({
 
       <button
         type="button"
-        className="food-cart-fab"
+        className={`food-cart-fab${cartItemCount > 0 && !cartOpen ? ' has-sticky-cart' : ''}`}
         data-glass-exclude
         onClick={() => onCartOpenChange(true)}
         aria-label={`Mở giỏ hàng, ${cartItemCount} món, ${formatPrice(cartTotal)}`}
@@ -424,45 +468,46 @@ export function FoodMarketplaceView({
             <FoodUtilityRail {...railProps} compact />
       </dialog>
 
-      {/* Thanh Giỏ Hàng Dính Đáy (Sticky Floating Cart Bar) */}
-      {cartItemCount > 0 && !cartOpen ? (
-        <aside
-          className="food-sticky-floating-cart"
-          data-glass-exclude
-          aria-label="Giỏ hàng đã chọn món"
-        >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.92rem', fontWeight: 700 }}>
-                {cartItemCount} món · {formatPrice(cartTotal)}
-              </span>
-            </div>
-            <small style={{ fontSize: '0.74rem', opacity: 0.9, display: 'block', marginTop: '2px' }}>
-              {cartTotal < minimumCartTotal
-                ? `Thêm ${formatPrice(minimumCartTotal - cartTotal)} để đạt đơn tối thiểu 25k`
-                : '✓ Đạt đơn tối thiểu · Sẵn sàng đặt món'}
-            </small>
-          </div>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{
-              background: '#fff',
-              color: '#24543e',
-              fontWeight: 700,
-              fontSize: '0.84rem',
-              borderRadius: '20px',
-              padding: '8px 16px',
-              border: 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-            onClick={() => onCartOpenChange(true)}
+      {/* Thanh Giỏ Hàng Dính Đáy (Sticky Floating Cart Bar — Arc UI Spring Pattern) */}
+      <AnimatePresence>
+        {cartItemCount > 0 && !cartOpen ? (
+          <motion.aside
+            className="food-sticky-floating-cart"
+            data-glass-exclude
+            aria-label="Giỏ hàng đã chọn món"
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={SPRING.soft}
           >
-            Xem giỏ & Thanh toán →
-          </button>
-        </aside>
-      ) : null}
+            <div className="food-sticky-floating-cart__content">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <motion.span
+                  key={cartItemCount}
+                  initial={{ scale: 0.88 }}
+                  animate={{ scale: 1 }}
+                  transition={SPRING.snappy}
+                  style={{ fontSize: '0.92rem', fontWeight: 700 }}
+                >
+                  {cartItemCount} món · {formatPrice(cartTotal)}
+                </motion.span>
+              </div>
+              <small style={{ fontSize: '0.74rem', opacity: 0.9, display: 'block', marginTop: '2px', color: 'var(--text-secondary)' }}>
+                {cartTotal < minimumCartTotal
+                  ? `Thêm ${formatPrice(minimumCartTotal - cartTotal)} để đạt đơn tối thiểu 25k`
+                  : '✓ Đạt đơn tối thiểu · Sẵn sàng đặt món'}
+              </small>
+            </div>
+            <button
+              type="button"
+              className="food-sticky-floating-cart__cta"
+              onClick={() => onCartOpenChange(true)}
+            >
+              Xem giỏ & Thanh toán →
+            </button>
+          </motion.aside>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

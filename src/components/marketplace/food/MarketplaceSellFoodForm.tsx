@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { FOOD_PRESETS, type FoodPreset } from '../../../lib/foodPresets'
 import { ProfitMarginCalculator } from './ProfitMarginCalculator'
 import { LiveFoodCardPreview } from './LiveFoodCardPreview'
@@ -189,8 +189,9 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                 style={{
                   padding: '6px 12px',
                   borderRadius: '100px',
-                  border: '1px solid var(--border-color, #cbd5e1)',
-                  backgroundColor: 'var(--surface-1, #ffffff)',
+                  border: '1px solid var(--border, #dce5eb)',
+                  backgroundColor: 'var(--surface-elevated, #ffffff)',
+                  color: 'var(--text-primary, #243742)',
                   fontSize: '0.85rem',
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
@@ -206,7 +207,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+      <div className="marketplace-sell-food-studio__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px', alignItems: 'start' }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Tên món & danh mục */}
           <div>
@@ -221,7 +222,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
               onChange={(e) => setTitle(e.target.value)}
               placeholder="VD: Cơm gà sốt teriyaki, Bún chả..."
               required
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
             />
           </div>
 
@@ -235,7 +236,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                 className="form-control"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -253,7 +254,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
                 placeholder="suất, hộp, phần, ly..."
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
               />
             </div>
           </div>
@@ -269,7 +270,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Thịt gà ta tươi ngon, canh rau ngót kèm dưa chua. Đóng hộp giấy bảo vệ môi trường..."
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
             />
           </div>
 
@@ -287,7 +288,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                 className="form-control"
                 value={price}
                 onChange={(e) => setPrice(Number(e.target.value) || 0)}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
               />
             </div>
             <div>
@@ -302,7 +303,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                 className="form-control"
                 value={estimatedCost}
                 onChange={(e) => setEstimatedCost(Number(e.target.value) || 0)}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
               />
             </div>
           </div>
@@ -327,7 +328,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                   setDailyQuota(val)
                   setAvailableQuantity(val)
                 }}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
               />
             </div>
             <div>
@@ -342,7 +343,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                 className="form-control"
                 value={preparationMinutes}
                 onChange={(e) => setPreparationMinutes(Number(e.target.value) || 20)}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)' }}
               />
             </div>
           </div>
@@ -382,9 +383,9 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
                   style={{
                     padding: '4px 10px',
                     borderRadius: '6px',
-                    border: '1px solid var(--border-color, #cbd5e1)',
-                    backgroundColor: allergenAlerts === p ? 'var(--color-primary, #0284c7)' : 'var(--surface-2, #f8fafc)',
-                    color: allergenAlerts === p ? '#fff' : 'inherit',
+                    border: '1px solid var(--border, #dce5eb)',
+                    backgroundColor: allergenAlerts === p ? 'var(--grab-green, #087f8c)' : 'var(--surface-muted, #f3f7fa)',
+                    color: allergenAlerts === p ? '#fff' : 'var(--text-primary, #243742)',
                     fontSize: '0.8rem',
                     cursor: 'pointer',
                   }}
@@ -400,7 +401,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
               value={allergenAlerts}
               onChange={(e) => setAllergenAlerts(e.target.value)}
               placeholder="VD: Không cay, có mè rang..."
-              style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem' }}
+              style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border, #dce5eb)', backgroundColor: 'var(--surface, #ffffff)', color: 'var(--text-primary, #243742)', fontSize: '0.85rem' }}
             />
           </div>
 
@@ -448,7 +449,7 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
               borderRadius: '8px',
               fontSize: '1rem',
               fontWeight: 600,
-              backgroundColor: 'var(--color-primary, #0284c7)',
+              backgroundColor: 'var(--grab-green, #087f8c)',
               color: '#fff',
               border: 'none',
               cursor: uploading ? 'not-allowed' : 'pointer',
@@ -459,9 +460,9 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
         </form>
 
         {/* Cột Live Preview */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="marketplace-sell-food-studio__preview-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '16px', alignSelf: 'start' }}>
           <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 10px 0', color: 'var(--text-secondary, #64748b)' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 10px 0', color: 'var(--text-secondary, #5b6b76)' }}>
               Xem trước hiển thị trên ứng dụng:
             </h3>
             <LiveFoodCardPreview
@@ -481,10 +482,10 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
             style={{
               padding: '12px 14px',
               borderRadius: '10px',
-              backgroundColor: 'var(--surface-2, #f8fafc)',
-              border: '1px dashed var(--border-color, #cbd5e1)',
+              backgroundColor: 'var(--surface-muted, #f3f7fa)',
+              border: '1px dashed var(--border, #dce5eb)',
               fontSize: '0.8rem',
-              color: 'var(--text-secondary, #64748b)',
+              color: 'var(--text-secondary, #5b6b76)',
             }}
           >
             <strong>Quy tắc cộng đồng:</strong>

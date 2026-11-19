@@ -1767,6 +1767,9 @@ export function MarketplacePage({
 
           {checkoutConfirmationOpen && <VoucherPicker key={cartTotal} purpose="food" amount={cartTotal} disabled={cartBusy} onChange={setFoodVoucher} />}
           <p>Voucher: −{formatPrice(foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0)} · Cần trả {formatPrice(cartTotal - (foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0))}</p>
+          <p style={{ fontSize: '0.74rem', color: '#526358', margin: '4px 0 8px 0' }}>
+            🔒 Tiền thanh toán được bảo vệ bởi Homeji Escrow và chỉ giải ngân cho người bán sau 24 giờ kể từ khi nhận món.
+          </p>
           {actionError && <p className="form-error" role="alert" style={{ color: '#dc2626', fontSize: '0.82rem', margin: '6px 0' }}>{actionError}</p>}
           <div className="food-checkout-confirmation__actions">
           <button type="button" className="btn btn-secondary" autoFocus disabled={cartBusy} onClick={() => setCheckoutConfirmationOpen(false)}>Quay lại giỏ</button>

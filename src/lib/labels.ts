@@ -42,8 +42,12 @@ export const formatListingRent = (value: number) =>
 export const formatListingArea = (value: number) =>
   Number.isFinite(value) && value > 0 ? `${value} m²` : 'Chưa có thông tin'
 
-export const formatDate = (value: string) =>
-  new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+export const formatDate = (value?: string | null) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
 
 export const rentalPostTypeLabel: Record<RentalPostType, string> = {
   [RentalPostType.VacantRoom]: 'Phòng trống',

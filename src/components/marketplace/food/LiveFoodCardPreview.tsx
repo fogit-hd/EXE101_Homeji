@@ -1,5 +1,3 @@
-import React from 'react'
-
 export interface LiveFoodCardPreviewProps {
   title: string
   price: number
@@ -38,18 +36,22 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
 
   return (
     <div
-      className="live-food-card-preview"
+      className="live-food-card-preview food-card-surface"
       style={{
         borderRadius: '16px',
         overflow: 'hidden',
-        border: '1px solid var(--border-color, #e2e8f0)',
-        backgroundColor: 'var(--surface-1, #ffffff)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+        border: '1px solid var(--food-warm-border, var(--border))',
+        backgroundColor: 'var(--food-warm-surface, var(--surface))',
+        boxShadow: 'var(--shadow-sm, 0 4px 12px rgba(0,0,0,0.06))',
         maxWidth: '320px',
+        width: '100%',
+        boxSizing: 'border-box',
         margin: '0 auto',
+        position: 'relative',
+        transition: 'transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s ease',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', paddingTop: '75%', backgroundColor: '#f1f5f9' }}>
+      <div style={{ position: 'relative', width: '100%', paddingTop: '75%', backgroundColor: 'var(--surface-muted, #f3f7fa)' }}>
         <img
           src={displayImage}
           alt={title || 'Xem trước món ăn'}
@@ -85,8 +87,8 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
             position: 'absolute',
             bottom: '8px',
             left: '8px',
-            backgroundColor: 'var(--surface-1, #ffffff)',
-            color: 'var(--color-primary, #0284c7)',
+            backgroundColor: 'var(--surface-elevated, #ffffff)',
+            color: 'var(--grab-green, #087f8c)',
             fontSize: '0.75rem',
             fontWeight: 600,
             padding: '3px 8px',
@@ -107,7 +109,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
             margin: '0 0 6px 0',
             fontSize: '1rem',
             fontWeight: 600,
-            color: 'var(--text-primary, #0f172a)',
+            color: 'var(--text-heading, #19323b)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -129,16 +131,16 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
               style={{
                 fontSize: '1.1rem',
                 fontWeight: 700,
-                color: 'var(--color-primary, #0284c7)',
+                color: 'var(--grab-green, #087f8c)',
               }}
             >
               {(price || 0).toLocaleString('vi-VN')} đ
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #5b6b76)' }}>
               /{unit || 'suất'}
             </span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #5b6b76)' }}>
             Còn {availableQuantity || 0} suất
           </span>
         </div>
@@ -147,8 +149,8 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
           <div
             style={{
               fontSize: '0.75rem',
-              color: 'var(--text-secondary, #64748b)',
-              backgroundColor: 'var(--surface-2, #f8fafc)',
+              color: 'var(--text-secondary, #5b6b76)',
+              backgroundColor: 'var(--surface-muted, #f3f7fa)',
               padding: '4px 8px',
               borderRadius: '6px',
               marginBottom: '8px',
@@ -162,7 +164,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
           <div
             style={{
               fontSize: '0.75rem',
-              color: 'var(--text-secondary, #64748b)',
+              color: 'var(--text-secondary, #5b6b76)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',

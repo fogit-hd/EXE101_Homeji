@@ -30,7 +30,7 @@ export function FoodCard({
       : post.freshnessBadge || null
 
   return (
-    <article data-glass-exclude className={`food-card${inCart ? ' is-in-cart' : ''}`}>
+    <article data-glass-exclude className={`food-card food-card-surface${inCart ? ' is-in-cart' : ''}`}>
       <button
         type="button"
         className="food-card__media"

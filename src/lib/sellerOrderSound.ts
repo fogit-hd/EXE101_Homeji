@@ -1,8 +1,49 @@
-/** Short, self-contained three-tone alert. Audio must be armed from a user gesture. */
+/** Short, self-contained three-tone alert and tactile micro-sounds. Audio must be armed from a user gesture. */
 export class SellerOrderSound {
+  static readonly SILENT_KEY = 'homeji_dorm_silent_mode'
+  private static sharedSound: SellerOrderSound | null = null
+
   private context: AudioContext | null = null
   private enabled = false
   private revision = 0
+
+  static get isDormSilent(): boolean {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return false
+    try {
+      return localStorage.getItem(SellerOrderSound.SILENT_KEY) === 'true'
+    } catch {
+      return false
+    }
+  }
+
+  static setDormSilent(silent: boolean): void {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return
+    try {
+      localStorage.setItem(SellerOrderSound.SILENT_KEY, silent ? 'true' : 'false')
+    } catch {}
+  }
+
+  static getShared(): SellerOrderSound {
+    if (!this.sharedSound) {
+      this.sharedSound = new SellerOrderSound()
+    }
+    return this.sharedSound
+  }
+
+  static playPop(): boolean {
+    const shared = this.getShared()
+    if (!shared.ready) {
+      void shared.arm().then((ready) => {
+        if (ready) shared.playPop()
+      })
+      return true
+    }
+    return shared.playPop()
+  }
+
+  static async armShared(): Promise<boolean> {
+    return this.getShared().arm()
+  }
 
   async arm() {
     if (!window.AudioContext) return false
@@ -22,7 +63,7 @@ export class SellerOrderSound {
 
   play() {
     const context = this.context
-    if (!this.ready || !context) return false
+    if (!this.ready || !context || SellerOrderSound.isDormSilent) return false
     try {
       const start = context.currentTime
       for (const [index, frequency] of [659, 784, 988].entries()) {
@@ -40,8 +81,35 @@ export class SellerOrderSound {
         oscillator.start(at)
         oscillator.stop(at + .18)
       }
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate([100, 50, 100]) } catch {}
+      }
       return true
     } catch { this.enabled = false; return false }
+  }
+
+  playPop() {
+    const context = this.context
+    if (!this.ready || !context || SellerOrderSound.isDormSilent) return false
+    try {
+      const start = context.currentTime
+      const oscillator = context.createOscillator()
+      const gain = context.createGain()
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(320, start)
+      oscillator.frequency.exponentialRampToValueAtTime(120, start + .06)
+      gain.gain.setValueAtTime(.08, start)
+      gain.gain.exponentialRampToValueAtTime(.001, start + .06)
+      oscillator.connect(gain)
+      gain.connect(context.destination)
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect() }
+      oscillator.start(start)
+      oscillator.stop(start + .06)
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate(30) } catch {}
+      }
+      return true
+    } catch { return false }
   }
 
   mute() { this.revision++; this.enabled = false }

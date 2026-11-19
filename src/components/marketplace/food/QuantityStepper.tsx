@@ -1,4 +1,6 @@
 
+import { SellerOrderSound } from '../../../lib/sellerOrderSound'
+
 type Props = {
   value: number
   min?: number
@@ -24,7 +26,10 @@ export function QuantityStepper({
         data-glass-exclude=""
         aria-label={`Giảm ${label}`}
         disabled={disabled || value <= min}
-        onClick={() => onChange(Math.max(min, value - 1))}
+        onClick={() => {
+          SellerOrderSound.playPop()
+          onChange(Math.max(min, value - 1))
+        }}
       >
         <span aria-hidden="true">−</span>
       </button>
@@ -37,7 +42,10 @@ export function QuantityStepper({
         data-glass-exclude=""
         aria-label={`Tăng ${label}`}
         disabled={disabled || value >= max}
-        onClick={() => onChange(Math.min(max, value + 1))}
+        onClick={() => {
+          SellerOrderSound.playPop()
+          onChange(Math.min(max, value + 1))
+        }}
       >
         <span aria-hidden="true">+</span>
       </button>
