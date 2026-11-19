@@ -206,6 +206,23 @@ export function PremiumBadge({
 }
 ```
 
+### 2.3. Hợp Nhất Phương Án 3 & 4 (Combined Frosted Glass Overlay + BorderBeam Glow)
+
+Theo yêu cầu chuẩn hóa giao diện người dùng mới nhất (`/goal` & `/boost`):
+1. **Phương Án 3 — Floating Frosted Glass Overlay (`variant="glass"`):**
+   - Đặt trực tiếp huy hiệu kính mờ (`backdrop-filter: blur(10px)`) ở góc trên của ảnh phòng trọ.
+   - Ảnh thẻ phòng trọ nằm sát mép trên cùng (flush with top), triệt tiêu hoàn toàn lỗi lệch nhịp bố cục dạng bậc thang (Staircase Grid Misalignment) giữa các thẻ có gói Premium và không có Premium.
+   - Tự động chuyển tông màu kính hổ phách trong suốt ở cả Light Mode (`rgba(255, 248, 225, 0.78)`) và Dark Mode (`rgba(45, 33, 14, 0.78)`), đáp ứng độ tương phản chuẩn WCAG AA/AAA.
+2. **Phương Án 4 — Luminous Champagne Gold Traveling Light Beam (`BorderBeam`):**
+   - Viền chu vi thẻ phòng trọ được bao bọc bởi dải sáng chuyển động vàng ánh kim hoàng kim (`colorVariant="gold"`, `size="md"` từ gói `border-beam`).
+   - Tự động kích hoạt khi tin đăng thuộc gói Premium (`isOwnerPremium === true`) hoặc đang được spotlight (`highlighted = true`).
+   - 0% CPU idle nhờ GPU-composited CSS `@keyframes` và tự động tắt chuyển động khi người dùng bật `prefers-reduced-motion: reduce`.
+3. **Phạm vi áp dụng đồng bộ:**
+   - Thẻ phòng trọ trang chủ HorizonX (`src/features/landing-hx/sections/ListingCard.tsx`).
+   - Thẻ lưu tin phòng trọ (`src/components/RentalPostCard.tsx`).
+   - Thẻ danh sách bản đồ nhỏ (`src/components/MapListingCard.tsx`).
+   - Cụm nhãn tin cậy bản đồ (`src/components/ListingTrustBadges.tsx`).
+
 ---
 
 ## 3. Kết Quả Kiểm Thử & Xác Nhận (Verification Record)
@@ -213,11 +230,13 @@ export function PremiumBadge({
 1. **Unit Tests:**
    - Lệnh kiểm tra: `node --test tests/premium-listing.test.mjs`
    - Kết quả: **3/3 PASS** (Bảo toàn entitlement, pin content, marker safety).
+   - Lệnh kiểm tra: `node --test tests/map-listing-card-layout.test.mjs`
+   - Kết quả: **2/2 PASS** (Đảm bảo định vị góc ảnh và regex contract).
    - Lệnh kiểm tra: `node --test tests/premium-badge-variants.test.mjs`
-   - Kết quả: **5/5 PASS** (Kiểm thử toàn diện 5 variant, các bộ icon rocket/bolt/crown/sparkle, fallback tiếng Việt "Nổi bật").
+   - Kết quả: **9/9 PASS** (Kiểm thử toàn diện 5 variant, các bộ icon, kết hợp Frosted Glass Overlay 10px blur + BorderBeam gold glow trên tất cả các loại thẻ).
 2. **Platform-Wide Test Suite:**
    - Lệnh kiểm tra: `npm test` (`node --test tests/*.test.mjs`)
-   - Kết quả: **572/572 PASS**, 0 fail, thời lượng 15.7 giây.
+   - Kết quả: **572/572 PASS**, 0 fail.
 3. **Bundle Budget:**
    - Lệnh kiểm tra: `npm run check:bundle`
-   - Kết quả: `entryBytes: 244,121 bytes` (đáp ứng trần ngân sách khắt khe `< 250 kB`).
+   - Kết quả: `entryBytes: 244,271 bytes` (đáp ứng trần ngân sách khắt khe `< 250,000 bytes`).

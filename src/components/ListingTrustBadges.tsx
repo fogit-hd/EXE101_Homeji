@@ -14,7 +14,7 @@ export type ListingTrustBadgesProps = {
 export function ListingTrustBadges({
   premium,
   verified,
-  premiumVariant,
+  premiumVariant = 'glass',
   premiumLabel,
   premiumIcon,
 }: ListingTrustBadgesProps) {

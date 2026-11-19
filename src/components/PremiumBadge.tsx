@@ -53,6 +53,12 @@ export function PremiumBadge({
   className = '',
   title = 'Tin đăng nổi bật (Gói Premium). Đây không phải dấu xác minh tin đăng.',
 }: PremiumBadgeProps = {}) {
+  const hasLeadingSparkle = typeof label === 'string' && /^[✦✨\s]+/.test(label)
+  const displayLabel =
+    typeof label === 'string' && hasLeadingSparkle && icon === 'sparkle'
+      ? label.replace(/^[✦✨\s]+/, '')
+      : label
+
   const renderedIcon =
     icon === 'sparkle' ? (
       <SparkleIcon size={12} fill="currentColor" />
@@ -62,6 +68,8 @@ export function PremiumBadge({
       <RocketSvg size={12} />
     ) : icon === 'bolt' ? (
       <ElectricBoltIcon size={12} fill="currentColor" />
+    ) : icon === 'none' ? (
+      null
     ) : (
       icon
     )
@@ -72,7 +80,7 @@ export function PremiumBadge({
       title={title}
     >
       {renderedIcon}
-      <span className="premium-badge__text">{label}</span>
+      <span className="premium-badge__text">{displayLabel}</span>
       {showStars ? <PremiumStars /> : null}
     </span>
   )

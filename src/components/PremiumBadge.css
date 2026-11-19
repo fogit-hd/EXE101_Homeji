@@ -46,8 +46,8 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
 /* Variant: Glass (Floating frosted glass on images) */
 .premium-badge--glass {
   background: rgba(255, 248, 225, 0.78);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #533902;
   border-color: rgba(218, 165, 32, 0.55);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -77,18 +77,38 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
   position: absolute;
   top: 8px;
   right: 8px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2;
 }
 .map-listings__card-photo > .premium-badge {
   position: absolute;
   left: 8px;
   bottom: 8px;
   z-index: 1;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .ai-rental-result > .premium-badge { margin-bottom: 10px; }
+
+/* BorderBeam container integration for cards */
+[data-beam]:has(> .post-card),
+[data-beam]:has(> .map-listing-card),
+[data-beam]:has(> .hx-listing) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+[data-beam] > .post-card,
+[data-beam] > .map-listing-card,
+[data-beam] > .hx-listing {
+  width: 100%;
+  height: 100%;
+  border-color: transparent !important;
+}
+[data-beam] > .hx-listing.is-highlighted {
+  box-shadow: none !important;
+}
 
 [data-theme=dark] .premium-badge {
   color: #ffe79a;
@@ -103,8 +123,11 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
 }
 [data-theme=dark] .premium-badge--glass {
   background: rgba(45, 33, 14, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-color: rgba(225, 185, 85, 0.45);
   color: #ffe79a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 235, 170, 0.15);
 }
 [data-theme=dark] .premium-badge--subtle {
   background: rgba(62, 46, 18, 0.45);

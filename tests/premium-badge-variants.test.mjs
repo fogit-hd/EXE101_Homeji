@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { MemoryRouter } from 'react-router-dom'
 import { reactDomModule } from './helpers/react-dom-module.mjs'
 
 const { PremiumBadge } = await import(reactDomModule('src/components/PremiumBadge.tsx'))
 const { ListingTrustBadges } = await import(reactDomModule('src/components/ListingTrustBadges.tsx'))
+const noop = 'data:text/javascript;base64,' + Buffer.from('export const RentalConsiderationToggle=()=>null').toString('base64')
+const { RentalPostCard } = await import(reactDomModule('src/components/RentalPostCard.tsx', { './ai/RentalConsiderationToggle': noop }))
+const { MapListingCard } = await import(reactDomModule('src/components/MapListingCard.tsx'))
+const { ListingCard } = await import(reactDomModule('src/features/landing-hx/sections/ListingCard.tsx'))
 
 test('PremiumBadge renders localized "Nổi bật" by default without ugly "Premium" text', () => {
   const html = renderToStaticMarkup(React.createElement(PremiumBadge))
@@ -16,7 +22,7 @@ test('PremiumBadge renders localized "Nổi bật" by default without ugly "Prem
   assert.ok(!html.includes('>Premium<'), 'Does not contain raw ugly English text "Premium"')
 })
 
-test('PremiumBadge supports custom labels and all icons (rocket, bolt, crown, sparkle)', () => {
+test('PremiumBadge supports custom labels and all icons (rocket, bolt, crown, sparkle, none)', () => {
   const boost = renderToStaticMarkup(React.createElement(PremiumBadge, {
     label: 'Ưu tiên',
     icon: 'rocket',
@@ -40,6 +46,22 @@ test('PremiumBadge supports custom labels and all icons (rocket, bolt, crown, sp
   }))
   assert.ok(crown.includes('VIP'))
   assert.ok(crown.includes('premium-badge--compact'))
+
+  const none = renderToStaticMarkup(React.createElement(PremiumBadge, {
+    label: '✦ Nổi bật',
+    icon: 'none',
+  }))
+  assert.ok(none.includes('✦ Nổi bật'))
+  assert.ok(!none.includes('<svg'))
+})
+
+test('PremiumBadge handles leading sparkle without duplicate symbols', () => {
+  const html = renderToStaticMarkup(React.createElement(PremiumBadge, {
+    label: '✦ Nổi bật',
+  }))
+  assert.ok(html.includes('premium-badge'))
+  assert.ok(html.includes('premium-badge__text'))
+  assert.ok(!html.includes('✦ ✦'))
 })
 
 test('PremiumBadge supports all variants (pill, boost, glass, compact, subtle)', () => {
@@ -66,4 +88,81 @@ test('ListingTrustBadges correctly proxies variant, label and icon props', () =>
   assert.ok(html.includes('Ưu tiên hiển thị'))
   assert.ok(html.includes('premium-badge--boost'))
   assert.ok(!html.includes('verified-owner-badge'))
+})
+
+test('Method 3 (Frosted Glass Overlay): styles support 10px blur and glass variant defaults', () => {
+  const css = readFileSync(new URL('../src/components/PremiumBadge.css', import.meta.url), 'utf8')
+  assert.match(css, /\.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
+  assert.match(css, /\.map-listing-card-image > \.premium-badge\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
+  assert.match(css, /\[data-theme=dark\] \.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
+
+  const trustCss = readFileSync(new URL('../src/components/ListingTrustBadges.css', import.meta.url), 'utf8')
+  assert.match(trustCss, /\.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
+  assert.match(trustCss, /\[data-theme='dark'\]:root #root \.listing-trust-badges > \.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
+
+  // BorderBeam card integration styles include .post-card, .map-listing-card, and .hx-listing
+  assert.match(css, /\[data-beam\] > \.hx-listing\s*\{[^}]*border-color:\s*transparent !important;/s)
+  assert.match(css, /\[data-beam\] > \.hx-listing\.is-highlighted\s*\{[^}]*box-shadow:\s*none !important;/s)
+
+  // ListingTrustBadges defaults to glass variant
+  const trustHtml = renderToStaticMarkup(React.createElement(ListingTrustBadges, {
+    premium: true,
+    verified: false,
+  }))
+  assert.ok(trustHtml.includes('premium-badge--glass'), 'ListingTrustBadges defaults to glass variant')
+})
+
+test('Method 3 & Method 4 Combined: RentalPostCard and MapListingCard render glass badge and BorderBeam glow', () => {
+  const post = {
+    id: 'room-1',
+    title: 'Phòng trọ cao cấp',
+    type: 1,
+    price: 4500000,
+    area: 28,
+    address: 'Thủ Đức, TP.HCM',
+    isOwnerPremium: true,
+    thumbnailPath: '/thumb.webp',
+  }
+
+  const rentalHtml = renderToStaticMarkup(
+    React.createElement(MemoryRouter, null, React.createElement(RentalPostCard, { post }))
+  )
+  assert.ok(rentalHtml.includes('data-beam'), 'RentalPostCard renders BorderBeam container when premium')
+  assert.ok(rentalHtml.includes('premium-badge--glass'), 'RentalPostCard renders floating frosted glass badge')
+  assert.ok(rentalHtml.includes('premium-stars'), 'RentalPostCard retains premium-stars contract')
+
+  const mapHtml = renderToStaticMarkup(
+    React.createElement(MemoryRouter, null, React.createElement(MapListingCard, { post }))
+  )
+  assert.ok(mapHtml.includes('data-beam'), 'MapListingCard renders BorderBeam container when premium')
+  assert.ok(mapHtml.includes('premium-badge--glass'), 'MapListingCard renders floating frosted glass badge')
+  assert.ok(mapHtml.includes('premium-stars'), 'MapListingCard retains premium-stars contract')
+})
+
+test('Method 3 & Method 4 Combined: Landing ListingCard renders gold BorderBeam and glass badge when highlighted', () => {
+  const listing = {
+    id: 'land-1',
+    kind: 'room',
+    title: 'Phòng mẫu HorizonX',
+    price: 5000000,
+    area: 35,
+    address: 'Linh Trung, Thủ Đức',
+    district: 'Thủ Đức',
+    tags: ['verified', 'available'],
+    image: { src: '/img.webp', srcSmall: '/img-sm.webp', width: 640, height: 480, alt: '' },
+    owner: { name: 'Chủ nhà mẫu', role: 'Chủ trọ' },
+  }
+
+  const highlightedHtml = renderToStaticMarkup(
+    React.createElement(MemoryRouter, null, React.createElement(ListingCard, { listing, highlighted: true }))
+  )
+  assert.ok(highlightedHtml.includes('data-beam'), 'Highlighted landing card renders BorderBeam')
+  assert.ok(highlightedHtml.includes('premium-badge--glass'), 'Highlighted landing card renders frosted glass badge')
+  assert.ok(highlightedHtml.includes('Nổi bật'), 'Highlighted landing card displays Nổi bật')
+
+  const plainHtml = renderToStaticMarkup(
+    React.createElement(MemoryRouter, null, React.createElement(ListingCard, { listing, highlighted: false }))
+  )
+  assert.ok(!plainHtml.includes('data-beam'), 'Non-highlighted card does not render BorderBeam')
+  assert.ok(!plainHtml.includes('premium-badge--glass'), 'Non-highlighted card does not render badge')
 })

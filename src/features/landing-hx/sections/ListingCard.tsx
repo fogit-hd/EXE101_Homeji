@@ -6,6 +6,7 @@ import type { Listing, ListingTag } from '../../../lib/mock/homeji'
 import { listingThumbSrcSet } from '../../../lib/cloudinaryImage'
 import { Badge, Card, IconButton, type BadgeTone } from '../ui/primitives'
 import { formatPrice, initials, listingCardId } from './format'
+import { PremiumBadge } from '../../../components/PremiumBadge'
 
 const TAG: Record<ListingTag, { label: string; tone: BadgeTone; icon: ReactNode }> = {
   verified: { label: 'Đã xác minh', tone: 'verified', icon: <BadgeCheck aria-hidden="true" /> },
@@ -57,6 +58,9 @@ export function ListingCard({ listing, highlighted = false }: { listing: Listing
           }}
         />
         <div className="hx-listing__tags">
+          {highlighted ? (
+            <PremiumBadge variant="glass" showStars={false} />
+          ) : null}
           {listing.tags.map(tag => (
             <Badge key={tag} tone={TAG[tag].tone} icon={TAG[tag].icon}>{TAG[tag].label}</Badge>
           ))}
@@ -102,7 +106,7 @@ export function ListingCard({ listing, highlighted = false }: { listing: Listing
 
   if (highlighted) {
     return (
-      <BorderBeam colorVariant="forest" size="md" active={highlighted} theme="auto">
+      <BorderBeam colorVariant="gold" size="md" active={highlighted} theme="auto" borderRadius={24}>
         {card}
       </BorderBeam>
     )

@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { BorderBeam } from 'border-beam'
 import { type RentalPostSummary } from '../api/types'
 import { formatCompactRent, formatListingArea, formatPrice, rentalPostTypeLabel } from '../lib/labels'
 import './MapListingCard.css'
@@ -31,12 +32,14 @@ export const MapListingCard = memo(function MapListingCard({
 }: Props) {
   const title = shortListingTitle(post.title || 'Tin đăng')
   const address = shortListingAddress(post.address || 'Chưa có địa chỉ')
+  const isPremium = post.isOwnerPremium === true
+  const isBeamActive = isPremium || highlighted
 
-  return (
+  const card = (
     <article
       className={[
         'map-listing-card',
-        post.isOwnerPremium === true ? 'premium-listing' : '',
+        isPremium ? 'premium-listing' : '',
         active ? 'is-active' : '',
         highlighted ? 'is-highlighted' : '',
       ]
@@ -78,7 +81,7 @@ export const MapListingCard = memo(function MapListingCard({
             <HeartIcon size={16} filled={isSaved} />
           </button>
         ) : null}
-        {post.isOwnerPremium === true ? <PremiumBadge /> : null}
+        {post.isOwnerPremium === true ? <PremiumBadge variant="glass" /> : null}
         <span className="map-listing-card-price">{formatCompactRent(post.price)}/tháng</span>
       </div>
       <div className="map-listing-card-body">
@@ -91,4 +94,14 @@ export const MapListingCard = memo(function MapListingCard({
       </div>
     </article>
   )
+
+  if (isBeamActive) {
+    return (
+      <BorderBeam colorVariant="gold" size="md" active={isBeamActive} theme="auto" borderRadius={12}>
+        {card}
+      </BorderBeam>
+    )
+  }
+
+  return card
 })
