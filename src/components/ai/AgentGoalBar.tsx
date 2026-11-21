@@ -8,6 +8,45 @@ const STATUS_LABELS: Record<string, string> = {
   completed: 'Đã hoàn tất bước',
 }
 
+const FACT_KEY_LABELS: Record<string, string> = {
+  userrole: 'Vai trò',
+  role: 'Vai trò',
+  school: 'Trường',
+  preferredarea: 'Khu vực',
+  area: 'Khu vực',
+  location: 'Khu vực',
+  maxbudget: 'Ngân sách',
+  budget: 'Ngân sách',
+  rentalneed: 'Nhu cầu',
+  sleephabit: 'Giờ giấc',
+  petpreference: 'Thú cưng',
+  smokingpreference: 'Hút thuốc',
+  kind: 'Loại tin',
+}
+
+const FACT_VALUE_LABELS: Record<string, string> = {
+  landlord: 'Chủ nhà',
+  renter: 'Người thuê',
+  tenant: 'Người thuê',
+  admin: 'Quản trị viên',
+  rental: 'Cho thuê phòng',
+  roommate: 'Tìm ở ghép',
+  roomtransfer: 'Nhượng phòng',
+  secondhand: 'Đồ cũ',
+  food: 'Đồ ăn',
+  wanted: 'Tìm mua',
+}
+
+function formatFactKey(rawKey: string): string {
+  const normalized = rawKey.trim().toLowerCase()
+  return FACT_KEY_LABELS[normalized] ?? rawKey.trim()
+}
+
+function formatFactValue(rawValue: string): string {
+  const normalized = rawValue.trim().toLowerCase()
+  return FACT_VALUE_LABELS[normalized] ?? rawValue.trim()
+}
+
 function formatExpiryTime(expiresAt?: string | null): string | null {
   if (!expiresAt) return null
   const ms = Date.parse(expiresAt)
@@ -36,6 +75,8 @@ export function AgentGoalBar({
     ([key, value]) => key.trim() && value.trim(),
   )
   const expiresTime = formatExpiryTime(goal.expiresAt)
+  const visibleFacts = factEntries.slice(0, 5)
+  const missingItems = goal.missingInfo?.slice(0, 3) ?? []
 
   return (
     <section
@@ -43,7 +84,10 @@ export function AgentGoalBar({
       aria-label="Mục tiêu hiện tại của Agent"
     >
       <div className="agent-goal-bar__top">
-        <span className="agent-goal-bar__status">{statusLabel}</span>
+        <div className="agent-goal-bar__headline">
+          <span className="agent-goal-bar__status">{statusLabel}</span>
+          <strong className="agent-goal-bar__title">{goal.title}</strong>
+        </div>
         <div className="agent-goal-bar__meta">
           {expiresTime ? (
             <span className="agent-goal-bar__ttl" title="Bộ nhớ tạm của Agent được giữ trong phiên">
@@ -62,22 +106,24 @@ export function AgentGoalBar({
         </div>
       </div>
 
-      <strong className="agent-goal-bar__title">{goal.title}</strong>
+      {visibleFacts.length > 0 || missingItems.length > 0 ? (
+        <div className="agent-goal-bar__sub">
+          {visibleFacts.length > 0 ? (
+            <ul className="agent-goal-bar__facts" aria-label="Thông tin đã ghi nhớ">
+              {visibleFacts.map(([key, value]) => (
+                <li key={key}>
+                  <span>{formatFactKey(key)}:</span> {formatFactValue(value)}
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
-      {factEntries.length > 0 ? (
-        <ul className="agent-goal-bar__facts" aria-label="Thông tin đã ghi nhớ">
-          {factEntries.slice(0, 5).map(([key, value]) => (
-            <li key={key}>
-              <span>{key}:</span> {value}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {goal.missingInfo?.length ? (
-        <p className="agent-goal-bar__missing">
-          Cần làm rõ: {goal.missingInfo.slice(0, 3).join(' · ')}
-        </p>
+          {missingItems.length > 0 ? (
+            <p className="agent-goal-bar__missing">
+              Cần làm rõ: {missingItems.join(' · ')}
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </section>
   )
