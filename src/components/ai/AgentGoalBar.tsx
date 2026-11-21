@@ -47,6 +47,12 @@ function formatFactValue(rawValue: string): string {
   return FACT_VALUE_LABELS[normalized] ?? rawValue.trim()
 }
 
+function formatGoalTitle(rawTitle: string): string {
+  return rawTitle
+    .replace(/\bLandlord\b/gi, 'chủ nhà')
+    .replace(/\bRenter\b/gi, 'người thuê')
+}
+
 function formatExpiryTime(expiresAt?: string | null): string | null {
   if (!expiresAt) return null
   const ms = Date.parse(expiresAt)
@@ -86,7 +92,7 @@ export function AgentGoalBar({
       <div className="agent-goal-bar__top">
         <div className="agent-goal-bar__headline">
           <span className="agent-goal-bar__status">{statusLabel}</span>
-          <strong className="agent-goal-bar__title">{goal.title}</strong>
+          <strong className="agent-goal-bar__title">{formatGoalTitle(goal.title)}</strong>
         </div>
         <div className="agent-goal-bar__meta">
           {expiresTime ? (
