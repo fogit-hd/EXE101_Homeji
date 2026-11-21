@@ -10,6 +10,7 @@ import { getErrorMessage } from '../../lib/errors'
 import { formatPrice, petPreferenceLabel, sleepHabitLabel, smokingPreferenceLabel } from '../../lib/labels'
 import { reconcileRoommateInvitations, upsertRoommateInvitation } from './roommateInvitationState'
 import { SparkleIcon, CheckCircleIcon } from '../icons/SvgIcons'
+import { InvitationsSkeleton } from '../skeletons/PageSkeletons'
 import './RoommatePeople.css'
 
 const INTENTS = [
@@ -282,7 +283,12 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
     {notice ? <p role="status" className="roommate-people__notice">{notice}</p> : null}
     {actionError ? <p role="alert" className="roommate-workspace__error">{actionError}</p> : null}
     {error ? <div role="alert"><p className="roommate-workspace__error">{error}</p><button className="btn btn-secondary" type="button" onClick={() => setReload(value => value + 1)}>Thử lại</button></div> : null}
-    {loading ? <p role="status">Đang tìm người cùng ở…</p> : !error && directory ? <>
+    {loading ? (
+      <>
+        <p role="status" className="sr-only">Đang tìm người cùng ở…</p>
+        <InvitationsSkeleton />
+      </>
+    ) : !error && directory ? <>
       <p aria-live="polite">{directory.totalCount} hồ sơ tìm bạn ở ghép</p>
       {directory.items.length === 0 ? <p>Chưa có hồ sơ phù hợp. Thử trường hoặc đường gần đó, hoặc đổi nhu cầu.</p> : <div className="roommate-people__grid">{directory.items.map(person => {
         const existing = invitations.find(invitation => (invitation.senderId === person.userId || invitation.receiverId === person.userId) &&

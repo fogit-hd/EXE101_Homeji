@@ -264,6 +264,12 @@ test('Free user sees 1 LƯỢT/TUẦN badge, enters Agent mode, sees GoalBar + Q
 
   try {
     await renderOpen(env.root)
+    const newChatBtn = document.querySelector('[aria-label="Cuộc trò chuyện mới"]')
+    assert.ok(newChatBtn)
+    await click(newChatBtn)
+    assert.equal(document.querySelector('.homeji-assistant__reset'), null, 'Empty conversation should not prompt confirmation banner')
+    assert.equal(document.activeElement, composer())
+
     const agentSwitch = [...document.querySelectorAll('button')].find(btn => btn.textContent.includes('Agent'))
     assert.ok(agentSwitch, 'Expected Agent switch button to render')
     assert.equal(agentSwitch.disabled, false)
@@ -277,6 +283,8 @@ test('Free user sees 1 LƯỢT/TUẦN badge, enters Agent mode, sees GoalBar + Q
 
     const req1 = globalThis.__agentUi.requests[0]
     assert.equal(req1.body.postingAgent, true)
+    assert.match(agentSwitch.textContent, /ĐANG DÙNG FREE/)
+    assert.equal(globalThis.__agentUi.subscriptionCalls, 1, 'Expected reply.agentAccess to update badge without extra /api/subscriptions/me fetch')
 
     const goalBar = document.querySelector('[aria-label="Mục tiêu hiện tại của Agent"]')
     assert.ok(goalBar, 'Expected AgentGoalBar to render')

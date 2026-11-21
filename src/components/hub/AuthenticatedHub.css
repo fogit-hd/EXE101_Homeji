@@ -24,7 +24,6 @@
 
 .hub-welcome,
 .hub-search,
-.hub-skel,
 .hub-error {
   grid-column: 1 / -1;
 }
@@ -368,25 +367,6 @@
 
 .hub-progress li.is-done { color: var(--hub-leaf); }
 
-.hub-skel {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 0.8fr;
-  gap: 16px;
-  min-height: 180px;
-}
-
-.hub-skel span {
-  border-radius: 16px;
-  background: linear-gradient(90deg, var(--surface-input) 0%, var(--surface-elevated) 50%, var(--surface-input) 100%);
-  background-size: 200% 100%;
-  animation: hub-shimmer 1.2s ease-in-out infinite;
-}
-
-@keyframes hub-shimmer {
-  from { background-position: 100% 0; }
-  to { background-position: -100% 0; }
-}
-
 .hub-error {
   display: flex;
   align-items: center;
@@ -427,9 +407,7 @@
   .hub-viewings,
   .hub-messages,
   .hub-alerts,
-  .hub-progress,
-  .hub-skel { grid-column: 1 / -1; }
-  .hub-skel { grid-template-columns: 1fr; }
+  .hub-progress { grid-column: 1 / -1; }
   .hub-home { overflow-x: hidden; }
 }
 

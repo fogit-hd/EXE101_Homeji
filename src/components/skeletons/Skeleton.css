@@ -1,4 +1,4 @@
-/* Shared skeleton primitive — light theme, shimmer always on (intentionally no reduced-motion opt-out). */
+/* Shared skeleton primitive — light & dark theme aware, shimmer always on (intentionally no reduced-motion opt-out). */
 .sk-screen {
   --sk-base: #e2e8eb;
   --sk-shine: #f6f9fa;
@@ -7,8 +7,11 @@
   gap: 18px;
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   animation: sk-in .24s ease-out both;
 }
+.sk-screen, .sk-screen * { box-sizing: border-box; }
 .sk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .sk {
   display: block;
@@ -24,10 +27,11 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  overflow: hidden;
   padding: 16px;
-  border: 1px solid #e6ecee;
+  border: 1px solid var(--border, #e6ecee);
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface-elevated, #fff);
 }
 .sk-row { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
 .sk-stack { display: flex; flex-direction: column; gap: 9px; min-width: 0; flex: 1 1 auto; }
@@ -36,6 +40,7 @@
 .sk-grow { flex: 1 1 auto; min-width: 0; }
 .sk-grid { display: grid; gap: 16px; min-width: 0; }
 .sk-split { display: grid; gap: 18px; align-items: start; min-width: 0; }
+.sk-list-row { border-bottom: 1px solid var(--border, #eef2f3); }
 @keyframes sk-shimmer { from { background-position: 100% 0 } to { background-position: -50% 0 } }
 @keyframes sk-in { from { opacity: 0 } to { opacity: 1 } }
 
@@ -45,36 +50,61 @@
 .sk-route--fill { padding: 0; height: calc(100dvh - 64px); max-width: none; }
 
 /* ---------- Hub ---------- */
-.sk-hub__hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px; border-radius: 18px; background: #eef7f6; }
 .sk-hub__main { grid-template-columns: minmax(0, 1fr) clamp(320px, 28%, 360px); align-items: start; gap: 24px; }
 .sk-hub__rooms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.sk-hub__promo-rail { display: flex; flex-direction: column; gap: 10px; min-height: 256px; padding: 20px; border: 1px solid #e6ecee; border-radius: 18px; background: #fbf4ec; }
-.sk-hub__promo { grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); }
-.sk-hub__banner { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; min-height: 212px; padding: 22px; border-radius: 18px; background: #fbf4ec; }
-.sk-hub__lower { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
-.sk-room-row { display: flex; gap: 14px; align-items: center; }
+.sk-hub__promo-rail { display: flex; flex-direction: column; gap: 10px; min-height: 256px; padding: 20px; border: 1px solid var(--border, #e6ecee); border-radius: 18px; background: #fbf4ec; }
+.sk-room-row { display: flex; gap: 14px; align-items: center; min-width: 0; }
 
 /* ---------- Listings (explore) ---------- */
-.sk-listings__body { grid-template-columns: 400px minmax(0, 1fr); }
-.sk-listings__map { height: calc(100dvh - 210px); min-height: 360px; border-radius: 18px; }
+.sk-listings__toolbar { align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border, #e6ecee); }
+.sk-listings__chips { flex-wrap: nowrap; overflow: hidden; }
+.sk-listings__body { grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
+.sk-listings__map { height: calc(100dvh - 230px); min-height: 360px; border-radius: 18px; }
+.sk-listing-card { flex-direction: row; align-items: flex-start; gap: 12px; padding: 12px; }
+.map-listings--list .sk-listing-card { flex-direction: column; padding: 0; gap: 0; }
+.map-listings--list .sk-listing-card .sk-listing-card__thumb { width: 100% !important; height: 116px !important; border-radius: 12px 12px 0 0 !important; }
+.map-listings--list .sk-listing-card > .sk-stack { width: 100%; padding: 10px 12px 12px; }
 
 /* ---------- Messages ---------- */
-.sk-messages { flex-direction: row; gap: 0; height: 100%; min-height: 520px; border: 1px solid #e6ecee; border-radius: 16px; overflow: hidden; background: #fff; }
-.sk-messages__list { display: flex; flex-direction: column; gap: 14px; width: 320px; flex: none; padding: 16px; border-right: 1px solid #e6ecee; }
+.sk-messages { flex-direction: row; gap: 0; height: 100%; min-height: 520px; border: 1px solid var(--border, #e6ecee); border-radius: 16px; overflow: hidden; background: var(--surface-elevated, #fff); }
+.sk-messages__list { display: flex; flex-direction: column; gap: 14px; width: 320px; flex: none; padding: 16px; border-right: 1px solid var(--border, #e6ecee); }
 .sk-messages__thread { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.sk-messages__bar { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #eef2f3; }
+.sk-messages__bar { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border, #eef2f3); }
 .sk-messages__bubbles { display: flex; flex-direction: column; gap: 14px; flex: 1; padding: 22px; }
 .sk-messages__bubbles .is-mine { align-self: flex-end; }
-.sk-messages__composer { padding: 14px 18px; border-top: 1px solid #eef2f3; }
+.sk-messages__composer { padding: 14px 18px; border-top: 1px solid var(--border, #eef2f3); }
+
+/* ---------- Profile / MyPosts / Roommate / Appointments / Admin ---------- */
+.sk-profile__banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border-radius: 24px;
+  background: #153f43;
+  --sk-base: #2d5a5f;
+  --sk-shine: #43777c;
+}
+.sk-profile__details { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.sk-owner-card { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.sk-owner-card__actions { flex: 0 1 320px; justify-content: flex-end; }
+.sk-rm-card__band { padding: 16px 18px; background: var(--surface-muted, #f3f7fa); border-bottom: 1px solid var(--border, #e6ecee); }
+.sk-appt-item { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: start; }
+.sk-appt-item__row { flex-wrap: nowrap; align-items: flex-start; }
+.sk-admin-card { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.sk-admin-card__actions { flex: 0 0 auto; align-items: flex-end; }
 
 /* ---------- Payments ---------- */
+.sk-pay__current { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
 .sk-pay__plans { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.sk-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; align-items: center; padding: 12px 4px; border-bottom: 1px solid #eef2f3; }
+.sk-pay-wait { grid-template-columns: minmax(0, 1fr) 330px; gap: 22px; align-items: start; }
+.sk-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--border, #eef2f3); }
 
 /* ---------- Generic grids ---------- */
-.sk-cards-4 { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-.sk-cards-3 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-.sk-two-col { grid-template-columns: 1fr 1fr; }
+.sk-cards-4 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.sk-cards-3 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.sk-two-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .sk-appt { grid-template-columns: 300px minmax(0, 1fr); }
 .sk-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
 .sk-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -85,16 +115,24 @@
   .sk-hub__rail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
 @media (max-width: 900px) {
-  .sk-hub__promo, .sk-hub__lower, .sk-listings__body, .sk-appt { grid-template-columns: minmax(0, 1fr); }
+  .sk-listings__body, .sk-appt, .sk-pay-wait, .sk-profile__details { grid-template-columns: minmax(0, 1fr); }
   .sk-listings__map, .sk-hide-tablet { display: none; }
   .sk-pay__plans, .sk-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .sk-route { padding: 14px 14px 24px; }
-  .sk-hub__banner { grid-template-columns: 1fr; min-height: 180px; }
-  .sk-hub__banner > :last-child { display: none; }
   .sk-hub__rooms-grid, .sk-hub__rail { grid-template-columns: minmax(0, 1fr); }
+  .sk-hub__rooms-grid .sk-room-card { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; }
+  .sk-hub__rooms-grid .sk-room-card__media { width: 104px !important; height: 112px !important; }
+  .sk-hub__rooms-grid .sk-room-card__body { padding: 12px !important; gap: 7px; }
   .sk-pay__plans, .sk-two-col, .sk-cards-3, .sk-cards-4 { grid-template-columns: minmax(0, 1fr); }
+  .sk-profile__banner { padding: 20px; border-radius: 20px; }
+  .sk-profile__avatar { width: 64px !important; height: 64px !important; border-radius: 19px !important; }
+  .sk-owner-card, .sk-admin-card { flex-direction: column; align-items: stretch; }
+  .sk-owner-card__actions { flex: none; justify-content: flex-start; }
+  .sk-admin-card__actions { align-items: stretch; width: 100%; }
+  .sk-appt-item { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .sk-appt-item__row { flex-wrap: wrap; }
   .sk-messages { border-radius: 0; border: 0; }
   .sk-messages__list { width: 100%; border-right: 0; }
   .sk-messages__thread, .sk-hide-mobile { display: none; }
@@ -103,12 +141,46 @@
 }
 .hub-skel-page { grid-column: 1 / -1; order: 2; }
 
-/* Food marketplace: skeleton cards reuse the food grid sizing. */
-.food-skeleton-card.sk-card { background: #fff; animation: none; height: 320px; }
+/* Food marketplace: skeleton cards reuse the food grid sizing and load cleanly before FoodMarketplaceView.css arrives. */
+.food-catalog__state.food-catalog__state--loading { padding: 0; border-radius: 0; background: transparent; text-align: left; }
+.food-skeleton-grid.sk-screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.food-skeleton-grid.sk-screen .food-seller { min-width: 0; padding: 18px; border: 1px solid var(--border, #e6ecee); border-radius: 16px; background: var(--surface-elevated, #fff); }
+.food-skeleton-grid.sk-screen .food-seller__header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.food-skeleton-grid.sk-screen .food-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.food-skeleton-card.sk-card { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: start; gap: 12px; padding: 10px; height: auto; min-height: 118px; border-radius: 12px; background: var(--surface-elevated, #fff); animation: none; }
+@media (max-width: 720px) {
+  .food-skeleton-grid.sk-screen .food-seller { padding: 12px; }
+}
+
 .food-featured--loading .food-featured__media { display: flex; }
 .sk-candidates { gap: 8px; }
-.food-featured.food-featured--loading { background: #fff; border: 1px solid #e6ecee; color: inherit; }
+.food-featured.food-featured--loading { background: var(--surface-elevated, #fff); border: 1px solid var(--border, #e6ecee); color: inherit; }
 .food-rail__kitchen-row--skeleton { display: flex; align-items: center; gap: 10px; cursor: default; }
 .food-rail__kitchen-row--skeleton .food-rail__kitchen-info { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
 .food-rail__cart-empty--skeleton { display: flex; flex-direction: column; gap: 8px; }
 .food-rail .sk, .marketplace-page .sk { --sk-base: #e2e8eb; --sk-shine: #f6f9fa; }
+
+html[data-theme='dark'] .sk-screen {
+  --sk-base: #344e60;
+  --sk-shine: #4b6879;
+}
+html[data-theme='dark'] .sk-card,
+html[data-theme='dark'] .sk-messages,
+html[data-theme='dark'] .food-skeleton-card.sk-card,
+html[data-theme='dark'] .food-skeleton-grid.sk-screen .food-seller {
+  background: var(--surface-elevated);
+  border-color: var(--border);
+}
+html[data-theme='dark'] .sk-hub__promo-rail {
+  background: #1d2a33;
+  border-color: var(--border);
+}
+html[data-theme='dark'] .sk-rm-card__band {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+html[data-theme='dark'] .food-rail .sk,
+html[data-theme='dark'] .marketplace-page .sk {
+  --sk-base: #344e60;
+  --sk-shine: #4b6879;
+}

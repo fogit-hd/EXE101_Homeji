@@ -1,6 +1,6 @@
 import './ContentSkeleton.css'
 
-type ContentSkeletonVariant = 'list' | 'dashboard' | 'form' | 'profile' | 'detail'
+type ContentSkeletonVariant = 'list' | 'detail'
 
 type Props = {
   variant?: ContentSkeletonVariant
@@ -41,37 +41,7 @@ export function ContentSkeleton({
       aria-busy="true"
     >
       <span className="sr-only">{label}</span>
-      {variant === 'profile' ? (
-        <>
-          <div className="content-skeleton__profile-head">
-            <Block className="content-skeleton__avatar" />
-            <div className="content-skeleton__copy">
-              <Block className="content-skeleton__line content-skeleton__line--title" />
-              <Block className="content-skeleton__line content-skeleton__line--short" />
-            </div>
-          </div>
-          <div className="content-skeleton__grid">
-            {Array.from({ length: count }, (_, index) => <ListRow key={index} />)}
-          </div>
-        </>
-      ) : variant === 'form' ? (
-        <div className="content-skeleton__form">
-          <Block className="content-skeleton__line content-skeleton__line--title" />
-          {Array.from({ length: count }, (_, index) => (
-            <Block className="content-skeleton__field" key={index} />
-          ))}
-          <Block className="content-skeleton__button" />
-        </div>
-      ) : variant === 'dashboard' ? (
-        <>
-          <div className="content-skeleton__metrics">
-            {Array.from({ length: 3 }, (_, index) => <Block key={index} />)}
-          </div>
-          <div className="content-skeleton__grid">
-            {Array.from({ length: count }, (_, index) => <ListRow key={index} />)}
-          </div>
-        </>
-      ) : variant === 'detail' ? (
+      {variant === 'detail' ? (
         <div className="content-skeleton__detail">
           <Block className="content-skeleton__hero" />
           <Block className="content-skeleton__line content-skeleton__line--title" />

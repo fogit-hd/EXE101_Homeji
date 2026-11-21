@@ -376,11 +376,12 @@
 /* ── Sticky Floating Cart Bar (Arc UI Spring Pattern) ── */
 .food-sticky-floating-cart {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   width: min(540px, calc(100vw - 32px));
   bottom: 24px;
-  z-index: 85;
+  z-index: 75;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -429,11 +430,12 @@
   .food-sticky-floating-cart {
     left: 16px;
     right: 16px;
-    transform: none;
+    margin-inline: 0;
     width: auto;
     bottom: calc(12px + var(--mobile-tabbar-height, 64px) + env(safe-area-inset-bottom, 0px));
     padding: 10px 16px;
     border-radius: var(--radius-lg, 14px);
+    z-index: 75;
   }
 }
 
@@ -1298,7 +1300,7 @@
     gap: 8px;
     position: fixed;
     right: 16px;
-    bottom: calc(16px + var(--mobile-tabbar-height, 56px) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(16px + var(--mobile-tabbar-height, 64px) + env(safe-area-inset-bottom, 0px));
     z-index: 80;
     height: 48px;
     padding: 0 16px;
@@ -1313,7 +1315,8 @@
   }
 
   .food-cart-fab.has-sticky-cart {
-    bottom: calc(80px + var(--mobile-tabbar-height, 56px) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(88px + var(--mobile-tabbar-height, 64px) + env(safe-area-inset-bottom, 0px));
+    z-index: 95;
   }
 
   .food-cart-fab strong {
@@ -1510,29 +1513,4 @@ html[data-theme='dark'] .food-card__empty { background: radial-gradient(circle a
 @media (hover: none), (forced-colors: active) { .food-card::after { display: none; } .food-card::before { opacity: .2; } }
 @media (forced-colors: active) { .food-card::before { display: none; } }
 
-/* Sticky Floating Cart Bar with safe mobile positioning */
-.food-sticky-floating-cart {
-  position: fixed;
-  bottom: calc(var(--mobile-tabbar-height, 56px) + 16px + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 520px;
-  z-index: 90;
-  background: var(--grab-green, #24543e);
-  color: #fff;
-  border-radius: 16px;
-  padding: 12px 18px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-@media (min-width: 769px) {
-  .food-sticky-floating-cart {
-    bottom: 24px;
-  }
-}
 

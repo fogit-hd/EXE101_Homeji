@@ -13,7 +13,7 @@ import {
 import { RentalPostType, UserRole } from '../api/types'
 import { savedPostsKey } from '../lib/queryKeys'
 import { PageNotice } from '../components/toast/PageNotice'
-import { ContentSkeleton } from '../components/ContentSkeleton'
+import { RoommateCandidatesSkeleton, SavedSkeleton } from '../components/skeletons/PageSkeletons'
 import { RentalPostCard } from '../components/RentalPostCard'
 import { RentalShortlistWorkspace } from '../components/ai/RentalJourney'
 import { aiFeatureFlags } from '../lib/aiFeatureFlags'
@@ -122,7 +122,7 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
       {aiFeatureFlags.decisionTools && !accessDenied ? <RentalShortlistWorkspace /> : null}
 
       {savedQuery.isPending && !savedQuery.isError ? (
-        <ContentSkeleton variant="list" label="Đang tải tin đã lưu…" />
+        <SavedSkeleton />
       ) : savedQuery.isError && (!savedQuery.data || accessDenied) ? null : posts.length === 0 ? (
         <div className="page-frame-empty">
           <p className="page-frame-empty__title">Chưa có tin nào được lưu</p>
@@ -160,7 +160,7 @@ function OwnedSavedPostsPage({ embedded, roommateOnly }: { embedded: boolean; ro
                   </button>
                   {candidatesFor === post.id ? (
                     candLoading ? (
-                      <ContentSkeleton compact count={2} label="Đang tải gợi ý người ở ghép…" />
+                      <RoommateCandidatesSkeleton count={2} />
                     ) : candidates.length === 0 ? (
                       <p className="map-appointments__empty">Chưa có ứng viên phù hợp.</p>
                     ) : (

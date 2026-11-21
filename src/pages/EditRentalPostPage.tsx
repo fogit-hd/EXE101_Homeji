@@ -367,7 +367,7 @@ export function EditRentalPostPage() {
       />
     ) : (
       <PageFrame title="Chỉnh sửa tin đăng">
-        <PostFormSkeleton />
+        <PostFormSkeleton withHeader={false} />
       </PageFrame>
     )
   }

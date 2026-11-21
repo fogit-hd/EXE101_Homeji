@@ -6,6 +6,7 @@ import { formatPrice } from '../../../lib/labels'
 import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import { filterRentalSourcesForList, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
 import { HouseIcon, SparkleIcon, NoteEditIcon, UsersIcon, ArrowUpRightIcon } from '../../icons/SvgIcons'
+import { Sk, SkCard } from '../../skeletons/Skeleton'
 import type { ListingQuery } from './listingAdapters'
 import './RentalSourceResults.css'
 import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
@@ -57,7 +58,31 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
     if (index < filtered.length) combined.push({ key: filtered[index].id, row: filtered[index] })
   }
   return <section className="source-results" aria-label="Danh sách phòng">
-    {!loaded && !error ? <p className="source-results__note" role="status">Đang tải danh sách…</p> : null}
+    {!loaded && !error ? (
+      <>
+        <p className="source-results__note" role="status">Đang tải danh sách…</p>
+        {combined.length === 0 ? (
+          <ul className="map-listings__cards sk-screen" aria-hidden="true">
+            {Array.from({ length: 6 }, (_, index) => (
+              <li key={index}>
+                <SkCard className="sk-listing-card sk-source-card" style={{ width: '100%' }}>
+                  <Sk w={104} h={84} r={10} className="sk-listing-card__thumb" />
+                  <div className="sk-stack">
+                    <Sk w="44%" h={14} />
+                    <Sk w="86%" h={14} />
+                    <Sk w="64%" h={11} />
+                    <div className="sk-row">
+                      <Sk w={58} h={20} r={999} />
+                      <Sk w={64} h={20} r={999} />
+                    </div>
+                  </div>
+                </SkCard>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </>
+    ) : null}
     {unsupported ? <p className="source-results__note">Một số tin chưa đủ dữ liệu để đối chiếu bộ lọc tiện ích, số người hoặc danh sách AI đang chọn. Bỏ các điều kiện này để xem thêm.</p> : null}
     {error ? <p role="alert">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p> : null}
     {loaded && !error && combined.length === 0 ? (

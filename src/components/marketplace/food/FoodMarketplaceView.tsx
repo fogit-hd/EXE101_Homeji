@@ -10,6 +10,7 @@ if (typeof window !== 'undefined') {
   if (typeof g.SVGElement === 'undefined' && w.SVGElement) g.SVGElement = w.SVGElement
 }
 import { Sk } from '../../skeletons/Skeleton'
+import { FoodCatalogSkeleton } from '../../MarketplaceLoadingSkeleton'
 import type { MarketplacePost } from '../../../api'
 import { formatPrice } from '../../../lib/labels'
 import {
@@ -306,17 +307,8 @@ export function FoodMarketplaceView({
         </div>
 
         {loading ? (
-          <div className="food-catalog__state" role="status">
-            <div className="food-skeleton-grid sk-screen" aria-hidden="true">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="food-skeleton-card sk-card">
-                  <Sk h={170} r={14} />
-                  <Sk w="75%" h={16} />
-                  <Sk w="50%" h={11} />
-                  <div className="sk-row" style={{ marginTop: 'auto', justifyContent: 'space-between' }}><Sk w={90} h={18} /><Sk w={96} h={36} r={999} /></div>
-                </div>
-              ))}
-            </div>
+          <div className="food-catalog__state food-catalog__state--loading" role="status" aria-live="polite" aria-busy="true">
+            <FoodCatalogSkeleton />
             <span className="sr-only">Đang tải món ăn…</span>
           </div>
         ) : error ? (

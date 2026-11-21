@@ -1,6 +1,6 @@
 import { siteLocationSnapshot, subscribeSiteLocation, setSiteLocation as setSharedLocation } from '../../lib/siteLocation'
 import { confirmDialog } from '../ui/confirmDialog'
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as chatbotApi from '../../api'
 import {
@@ -9,6 +9,7 @@ import {
   deleteChatbotConversation,
   getChatbotPopupConfig,
   sendChatbotMessage,
+  type AgentAccess,
   type AiHighlightResponse,
   type AiParsedSearchCriteria,
   type ChatbotNavigationAction,
@@ -166,6 +167,7 @@ export function MapChatbot({
   const agentFlow = useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheetMode })
   const { agentMode, setAgentMode, agentSessionId, agentGoal, agentDraftId, workspaceDraft, draftWorkspaceId, draftOverlay, workspaceCloseRef, closeDraftWorkspace } = agentFlow
   const [agentAccessRefresh, setAgentAccessRefresh] = useState(0)
+  const [latestServerAgentAccess, setLatestServerAgentAccess] = useState<AgentAccess | null>(null)
   const [agentAccessStatus, setAgentAccessStatus] = useState<{ canUse: boolean; isPremium: boolean; hasActiveFreeSession: boolean }>({ canUse: false, isPremium: false, hasActiveFreeSession: false })
   const agentHydratedRef = useRef(false)
   const messagesCountRef = useRef(0)
@@ -173,7 +175,11 @@ export function MapChatbot({
     messagesCountRef.current = messages.length
   }, [messages.length])
   const handleAccessResolved = useCallback((next: { canUse: boolean; isPremium: boolean; hasActiveFreeSession: boolean }) => {
-    setAgentAccessStatus(next)
+    setAgentAccessStatus(prev =>
+      prev.canUse === next.canUse && prev.isPremium === next.isPremium && prev.hasActiveFreeSession === next.hasActiveFreeSession
+        ? prev
+        : next,
+    )
   }, [])
   const bottomRef = useRef<HTMLDivElement>(null)
   const latestMessageRef = useRef<HTMLElement | null>(null)
@@ -186,11 +192,6 @@ export function MapChatbot({
   if (useChangedInputs([openRequestToken], true) && openRequestToken) {
     setOpen(true)
   }
-
-  useLayoutEffect(() => {
-    const input = inputRef.current
-    if (input) { input.style.height = 'auto'; input.style.height = `${Math.min(100, Math.max(28, input.scrollHeight))}px` }
-  }, [draft, expanded])
 
   useEffect(() => () => {
     activeRequest.current?.controller.abort()
@@ -213,11 +214,122 @@ export function MapChatbot({
   const panel = navPanelLayout(expanded, sheetMode, viewport)
   const modal = expanded || sheetMode
   const panelVisible = open && config?.enabled !== false
+  const showGreeting = messages.length === 0
 
-  const closeChat = () => {
+  const closeChat = useCallback(() => {
     setOpen(false)
     setToolsOpen(false)
-  }
+  }, [])
+
+  const prepareDraft = useCallback((text: string) => {
+    draftRevision.current += 1
+    setDraft(text)
+    setToolsOpen(false)
+    setError(null)
+    inputRef.current?.focus()
+  }, [])
+
+  const copyReply = useCallback(async (content: string) => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
+      await navigator.clipboard.writeText(content)
+      setCopyStatus('Đã sao chép câu trả lời.')
+    } catch {
+      setCopyStatus('Chưa sao chép được. Bạn có thể chọn nội dung để sao chép thủ công.')
+    }
+  }, [])
+
+  const openPayments = useCallback(() => {
+    void navigate('/?section=payments')
+    setOpen(false)
+  }, [navigate])
+
+  const openMarketplace = useCallback(() => {
+    void navigate('/?section=marketplace')
+    setOpen(false)
+  }, [navigate])
+
+  const handleUpgrade = useCallback(() => {
+    setOpen(false)
+    if (!isAuthenticated) openAuthModal({ intent: 'premium', onSuccess: () => { void navigate('/?section=payments') } })
+    else void navigate('/?section=payments')
+  }, [isAuthenticated, openAuthModal, navigate])
+
+  const actionHandlersRef = useRef<{
+    send: (text: string, fromSuggestion?: boolean, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria, locationOverride?: ChatbotLocation) => Promise<void>
+    handleNavigationAction: (action: ChatbotNavigationAction) => void
+    startNewConversation: () => void
+  } | null>(null)
+
+  const stableSend = useCallback(
+    (text: string, fromSuggestion?: boolean, task?: ChatbotRentalContext['task'] | 'compare', retryMessage?: DisplayMessage, foodContext?: ChatbotFoodContext, foodCriteria?: ChatbotFoodCriteria, locationOverride?: ChatbotLocation) =>
+      actionHandlersRef.current?.send(text, fromSuggestion, task, retryMessage, foodContext, foodCriteria, locationOverride) ?? Promise.resolve(),
+    [],
+  )
+
+  const stableHandleNavigation = useCallback((action: ChatbotNavigationAction) => {
+    actionHandlersRef.current?.handleNavigationAction(action)
+  }, [])
+
+  const stableGoalReset = useCallback(() => {
+    if (agentAccessStatus.isPremium) actionHandlersRef.current?.startNewConversation()
+    else setResetRequested(true)
+  }, [agentAccessStatus.isPremium])
+
+  const transcriptState = useMemo(
+    () => ({ messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId, agentMode }),
+    [messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId, agentMode],
+  )
+  const transcriptContext = useMemo(
+    () => ({ rentalContext, rentalSelection, sharedLocation }),
+    [rentalContext, rentalSelection, sharedLocation],
+  )
+  const transcriptRefs = useMemo(() => ({ latestMessageRef, bottomRef }), [])
+  const transcriptActions = useMemo(
+    () => ({
+      onDismissRentalContext,
+      send: stableSend,
+      prepareDraft,
+      openDraftWorkspace: agentFlow.openDraftWorkspace,
+      closeChat,
+      handleNavigationAction: stableHandleNavigation,
+      onSearchUpdate,
+      openPayments,
+      openMarketplace,
+      copyReply,
+    }),
+    [
+      onDismissRentalContext,
+      stableSend,
+      prepareDraft,
+      agentFlow.openDraftWorkspace,
+      closeChat,
+      stableHandleNavigation,
+      onSearchUpdate,
+      openPayments,
+      openMarketplace,
+      copyReply,
+    ],
+  )
+
+  const locationControl = useMemo(
+    () =>
+      isAuthenticated ? (
+        <ChatbotLocationControl
+          value={sharedLocation}
+          disabled={busy || mediaBusy || recordingActive}
+          onChange={location => {
+            setSharedLocation(location)
+            if (location && awaitingLocation.current && !busy) {
+              const text = awaitingLocation.current
+              awaitingLocation.current = null
+              void actionHandlersRef.current?.send(text, false, undefined, undefined, undefined, undefined, location)
+            }
+          }}
+        />
+      ) : null,
+    [isAuthenticated, sharedLocation, busy, mediaBusy, recordingActive],
+  )
 
   useEffect(() => onHomejiAiToggle(({ open: want }) => {
     setOpen((value) => {
@@ -278,10 +390,17 @@ export function MapChatbot({
     return () => {
       document.removeEventListener('pointerdown', onDown)
     }
-  }, [panelVisible, modal])
+  }, [panelVisible, modal, closeChat])
 
   useEffect(() => {
-    const update = () => setViewport(assistantViewport())
+    if (!panelVisible) return
+    const update = () => {
+      const next = assistantViewport()
+      setViewport(prev =>
+        prev.width === next.width && prev.height === next.height && prev.offsetTop === next.offsetTop ? prev : next,
+      )
+    }
+    update()
     window.addEventListener('resize', update)
     window.visualViewport?.addEventListener('resize', update)
     window.visualViewport?.addEventListener('scroll', update)
@@ -290,14 +409,18 @@ export function MapChatbot({
       window.visualViewport?.removeEventListener('resize', update)
       window.visualViewport?.removeEventListener('scroll', update)
     }
-  }, [])
+  }, [panelVisible])
 
   useLayoutEffect(() => {
     const input = inputRef.current
-    if (!input) return
+    if (!panelVisible || !input) return
+    if (!draft) {
+      input.style.height = ''
+      return
+    }
     input.style.height = 'auto'
-    input.style.height = `${Math.min(110, Math.max(28, input.scrollHeight))}px`
-  }, [draft, expanded])
+    input.style.height = `${Math.min(124, Math.max(36, input.scrollHeight))}px`
+  }, [draft, expanded, panelVisible])
 
   useEffect(() => {
     if (!panelVisible || !modal) return
@@ -407,7 +530,7 @@ export function MapChatbot({
       document.removeEventListener('keydown', closeOnEscape)
       if (opener?.isConnected) opener.focus()
     }
-  }, [panelVisible, closeDraftWorkspace, workspaceCloseRef])
+  }, [panelVisible, closeDraftWorkspace, workspaceCloseRef, closeChat])
 
   useEffect(() => {
     onOpenChange?.(panelVisible)
@@ -421,9 +544,6 @@ export function MapChatbot({
     closeChat()
   }
 
-  if (config && !config.enabled) return null
-
-  const showGreeting = messages.length === 0
   const showTyping = busy && messages.some((m) => m.pending)
 
 
@@ -520,7 +640,8 @@ export function MapChatbot({
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       agentFlow.acceptReply(reply, request.postingAgent === true)
-      if (request.postingAgent) setAgentAccessRefresh(value => value + 1)
+      if (reply.agentAccess) setLatestServerAgentAccess(reply.agentAccess)
+      else if (request.postingAgent) setAgentAccessRefresh(value => value + 1)
       if (reply.nearbyRooms?.status === "locationRequired" || reply.foodDiscovery?.status === "locationRequired") awaitingLocation.current = request.message
       const contextualUnavailable = reply.agentDraft || reply.agentRequested || reply.nearbyRooms ? false : request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
@@ -585,16 +706,8 @@ export function MapChatbot({
     if (action.kind === ChatbotNavigationActionKind.Navigate && /^\/(?!\/)[^\\]*$/.test(action.target)) {
       setOpen(false)
       setToolsOpen(false)
-      navigate(action.target)
+      void navigate(action.target)
     }
-  }
-
-  const prepareDraft = (text: string) => {
-    draftRevision.current += 1
-    setDraft(text)
-    setToolsOpen(false)
-    setError(null)
-    inputRef.current?.focus()
   }
 
   const startNewConversation = () => {
@@ -602,6 +715,7 @@ export function MapChatbot({
     if (agentMode || agentSessionId || agentGoal) {
       const clearAgentSession = chatbotApi.resetAgentSession
       if (typeof clearAgentSession === 'function') void clearAgentSession().catch(() => {})
+      setLatestServerAgentAccess(null)
       setAgentAccessRefresh(value => value + 1)
     }
     setConversationId(undefined)
@@ -621,15 +735,17 @@ export function MapChatbot({
     inputRef.current?.focus()
   }
 
-  const copyReply = async (content: string) => {
-    try {
-      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
-      await navigator.clipboard.writeText(content)
-      setCopyStatus('Đã sao chép câu trả lời.')
-    } catch {
-      setCopyStatus('Chưa sao chép được. Bạn có thể chọn nội dung để sao chép thủ công.')
-    }
-  }
+  useEffect(() => {
+    actionHandlersRef.current = { send, handleNavigationAction, startNewConversation }
+  })
+
+  if (config && !config.enabled) return null
+
+  const hasSessionContent =
+    messages.length > 0 ||
+    Boolean(draft.trim()) ||
+    attachments.length > 0 ||
+    Boolean(agentGoal || agentSessionId || agentDraftId || conversationId)
 
   const shortcuts: Array<{ section: MapAppSection; label: string; icon: AssistantIconName }> = [
     { section: 'listings', label: 'Tìm phòng', icon: 'search' },
@@ -684,8 +800,27 @@ export function MapChatbot({
                 <span className="homeji-assistant__scroll-arrow" aria-hidden="true">↓</span>
               </button>
             ) : null}
-            <button type="button" className="homeji-assistant__icon-button" disabled={busy} onClick={() => { agentFlow.closeDraftWorkspace(); setResetRequested(true) }}
-              aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><AssistantIcon name="plus" /></button>
+            <button
+              type="button"
+              className="homeji-assistant__icon-button"
+              disabled={busy}
+              onClick={() => {
+                agentFlow.closeDraftWorkspace()
+                if (hasSessionContent) {
+                  setResetRequested(true)
+                } else {
+                  setToolsOpen(false)
+                  setError(null)
+                  setCopyStatus('')
+                  setResetRequested(false)
+                  inputRef.current?.focus()
+                }
+              }}
+              aria-label="Cuộc trò chuyện mới"
+              title="Cuộc trò chuyện mới"
+            >
+              <AssistantIcon name="plus" />
+            </button>
             <button type="button" className="homeji-assistant__icon-button" onClick={() => setExpanded(value => !value)}
               aria-pressed={expanded} aria-label={expanded ? 'Thu gọn cuộc trò chuyện' : 'Mở rộng cuộc trò chuyện'}
               title={expanded ? 'Thu gọn cuộc trò chuyện' : 'Mở rộng cuộc trò chuyện'}><AssistantIcon name={expanded ? 'shrink' : 'expand'} /></button>
@@ -702,8 +837,18 @@ export function MapChatbot({
             </button>)}</nav>
           </aside> : null}
           <div className="homeji-assistant__conversation" inert={draftOverlay} aria-hidden={draftOverlay || undefined}>
-            <AgentModeSwitch active={agentMode} busy={busy || mediaBusy || recordingActive} enabled={panelVisible} authenticated={isAuthenticated} refreshTrigger={agentAccessRefresh} onAccessResolved={handleAccessResolved} onChange={setAgentMode} onUpgrade={() => { setOpen(false); if (!isAuthenticated) openAuthModal({ intent: 'premium', onSuccess: () => navigate('/?section=payments') }); else navigate('/?section=payments') }} />
-            {agentMode && agentGoal ? <AgentGoalBar goal={agentGoal} busy={busy} onReset={() => { if (agentAccessStatus.isPremium) startNewConversation(); else setResetRequested(true) }} /> : null}
+            <AgentModeSwitch
+              active={agentMode}
+              busy={busy || mediaBusy || recordingActive}
+              enabled={panelVisible}
+              authenticated={isAuthenticated}
+              refreshTrigger={agentAccessRefresh}
+              serverAccess={latestServerAgentAccess}
+              onAccessResolved={handleAccessResolved}
+              onChange={setAgentMode}
+              onUpgrade={handleUpgrade}
+            />
+            {agentMode && agentGoal ? <AgentGoalBar goal={agentGoal} busy={busy} onReset={stableGoalReset} /> : null}
             {resetRequested ? <div className="homeji-assistant__reset" role="alert">
               <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.{agentMode && !agentAccessStatus.isPremium && agentAccessStatus.hasActiveFreeSession ? ' Lưu ý: bạn đang dùng lượt Agent miễn phí duy nhất trong tuần; bắt đầu mới sẽ kết thúc lượt miễn phí này.' : ''}</p>
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
@@ -711,21 +856,10 @@ export function MapChatbot({
             <div className={`homeji-assistant__transcript-viewport${showTyping ? ' is-pending' : ''}`}>
             <div className="map-chatbot__body" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
             <ChatbotTranscript
-              state={{ messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId, agentMode }}
-              context={{ rentalContext, rentalSelection, sharedLocation }}
-              refs={{ latestMessageRef, bottomRef }}
-              actions={{
-                onDismissRentalContext,
-                send,
-                prepareDraft,
-                openDraftWorkspace: agentFlow.openDraftWorkspace,
-                closeChat,
-                handleNavigationAction,
-                onSearchUpdate,
-                openPayments: () => { navigate('/?section=payments'); setOpen(false) },
-                openMarketplace: () => { navigate('/?section=marketplace'); setOpen(false) },
-                copyReply,
-              }}
+              state={transcriptState}
+              context={transcriptContext}
+              refs={transcriptRefs}
+              actions={transcriptActions}
             />
             </div>
             <ThinkingCapsule visible={showTyping} />
@@ -761,7 +895,7 @@ export function MapChatbot({
               conversationId={conversationId}
               rentalContext={Boolean(rentalContext)}
               closeChat={closeChat}
-              locationControl={isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
+              locationControl={locationControl}
             />
           </div>
           {workspaceDraft ? <AgentDraftWorkspace

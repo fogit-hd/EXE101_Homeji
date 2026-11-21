@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AgentPostDraft } from '../../api/chatbotAgent'
 import type { AgentGoal, AgentSessionState } from '../../api/types'
 
@@ -34,7 +34,7 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
     if (draftOverlay) workspaceCloseRef.current?.focus()
   }, [draftOverlay, draftWorkspaceId])
 
-  const acceptReply = (reply: AgentReply, postingAgent: boolean) => {
+  const acceptReply = useCallback((reply: AgentReply, postingAgent: boolean) => {
     const stayInAgent = reply.agentRequested === true || Boolean(reply.agentDraft) || (postingAgent && !reply.upgradeRequired)
     setAgentMode(stayInAgent)
     if (reply.agentSessionId) {
@@ -51,7 +51,7 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
     } else if (reply.upgradeRequired) {
       setAgentDraftId(undefined)
     }
-  }
+  }, [setExpanded])
 
   const hydrateSession = useCallback((session: AgentSessionState, autoEnableAgent: boolean) => {
     setAgentSessionId(session.sessionId)
@@ -65,15 +65,15 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
     }
   }, [])
 
-  const openDraftWorkspace = (draftId: string) => {
+  const openDraftWorkspace = useCallback((draftId: string) => {
     setDraftWorkspaceId(draftId)
     setWorkspaceOpen(true)
     setExpanded(true)
-  }
+  }, [setExpanded])
 
-  const finishDraft = (draftId: string) => {
+  const finishDraft = useCallback((draftId: string) => {
     setAgentDraftId(current => current === draftId ? undefined : current)
-  }
+  }, [])
 
   const closeDraftWorkspace = useCallback(() => setWorkspaceOpen(false), [])
 
@@ -86,7 +86,7 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
     setWorkspaceOpen(false)
   }, [])
 
-  return {
+  return useMemo(() => ({
     agentMode,
     setAgentMode,
     agentSessionId,
@@ -104,5 +104,20 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
     finishDraft,
     closeDraftWorkspace,
     reset,
-  }
+  }), [
+    agentMode,
+    agentSessionId,
+    agentGoal,
+    agentDraftId,
+    workspaceDraft,
+    draftWorkspaceId,
+    workspaceOpen,
+    draftOverlay,
+    acceptReply,
+    hydrateSession,
+    openDraftWorkspace,
+    finishDraft,
+    closeDraftWorkspace,
+    reset,
+  ])
 }

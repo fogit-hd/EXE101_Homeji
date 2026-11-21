@@ -216,7 +216,7 @@ function readView(params: URLSearchParams): MapListingsView {
 }
 
 export function parseFiltersFromURL(params: URLSearchParams): ListingQuery {
-  const searchOnMove = params.get('searchOnMove') !== '0'
+  const searchOnMove = params.get('searchOnMove') === '1'
   const placeId = params.get('placeId')?.trim() || undefined
   const minLatitude = readNumber(params, 'minLatitude')
   const maxLatitude = readNumber(params, 'maxLatitude')
@@ -395,8 +395,9 @@ export function serializeFiltersToQuery(
   if (query.catalog === 'market' || query.catalog === 'apartments') next.set('catalog', query.catalog)
   else next.delete('catalog')
 
-  if (query.searchOnMove) next.delete('searchOnMove')
-  else next.set('searchOnMove', '0')
+  if (query.searchOnMove) next.set('searchOnMove', '1')
+  else if (incoming.get('searchOnMove') === '0') next.set('searchOnMove', '0')
+  else next.delete('searchOnMove')
 
   if (query.keyword) next.set('keyword', query.keyword)
   else next.delete('keyword')

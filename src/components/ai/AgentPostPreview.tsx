@@ -21,8 +21,15 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
   const [error, setError] = useState('')
   const lock = useRef(false)
   const [now, setNow] = useState(Date.now)
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(timer) }, [])
-  const expired = now >= Date.parse(draft.expiresAt)
+  const expiresAtMs = Date.parse(draft.expiresAt)
+  useEffect(() => {
+    if (!active || status !== 'draft' || !Number.isFinite(expiresAtMs)) return
+    const remaining = expiresAtMs - Date.now()
+    const delay = Math.max(0, Math.min(remaining + 50, 2_147_483_647))
+    const timer = window.setTimeout(() => setNow(Date.now()), delay)
+    return () => window.clearTimeout(timer)
+  }, [active, status, expiresAtMs])
+  const expired = Number.isFinite(expiresAtMs) && now >= expiresAtMs
   const disabled = !active || expired || status !== 'draft'
   if (useChangedInputs([sharedLocation?.capturedAt]) && sharedLocation && active && status === 'draft' && (!details.latitude || !details.address.trim()) && (sharedLocation.accuracyMeters == null || sharedLocation.accuracyMeters <= 1000)) {
     setDetails({ ...details, address: sharedLocation.address || details.address, latitude: sharedLocation.latitude, longitude: sharedLocation.longitude })

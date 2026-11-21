@@ -1,6 +1,7 @@
 import { HomejiAgentMark } from './HomejiAgentMark'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { getMySubscription } from '../../api'
+import type { AgentAccess } from '../../api/types'
 import './AgentModeSwitch.css'
 
 type AccessState =
@@ -32,12 +33,13 @@ function formatResetDate(iso?: string | null): string | null {
   }
 }
 
-export function AgentModeSwitch({
+export const AgentModeSwitch = memo(function AgentModeSwitch({
   active,
   busy,
   enabled,
   authenticated,
   refreshTrigger = 0,
+  serverAccess = null,
   onChange,
   onUpgrade,
   onAccessResolved,
@@ -47,6 +49,7 @@ export function AgentModeSwitch({
   enabled: boolean
   authenticated: boolean
   refreshTrigger?: number
+  serverAccess?: AgentAccess | null
   onChange: (active: boolean) => void
   onUpgrade: () => void
   onAccessResolved?: (access: {
@@ -58,6 +61,20 @@ export function AgentModeSwitch({
   const [access, setAccess] = useState<AccessState | null>(null)
   const [attempt, setAttempt] = useState(0)
   const [now, setNow] = useState(Date.now)
+
+  useEffect(() => {
+    if (!serverAccess || !authenticated) return
+    setAccess(prev => ({
+      kind: 'ready',
+      canUse: serverAccess.canUse,
+      isPremium: serverAccess.isPremium,
+      premiumExpiresAt: prev?.kind === 'ready' ? prev.premiumExpiresAt : null,
+      freeWeeklyLimit: serverAccess.freeWeeklyLimit,
+      freeWeeklyRemaining: serverAccess.freeWeeklyRemaining,
+      hasActiveFreeSession: serverAccess.hasActiveFreeSession,
+      nextFreeResetAt: serverAccess.nextFreeResetAt ?? null,
+    }))
+  }, [serverAccess, authenticated])
 
   useEffect(() => {
     if (!enabled || !authenticated) return
@@ -106,17 +123,17 @@ export function AgentModeSwitch({
     }
 
     void refresh()
-    const timer = window.setInterval(() => {
-      setNow(Date.now())
+    const onWake = () => {
       void refresh()
-    }, 60000)
-    window.addEventListener('focus', refresh)
-    document.addEventListener('visibilitychange', refresh)
+    }
+    const timer = window.setInterval(onWake, 60000)
+    window.addEventListener('focus', onWake)
+    document.addEventListener('visibilitychange', onWake)
     return () => {
       alive = false
       window.clearInterval(timer)
-      window.removeEventListener('focus', refresh)
-      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('focus', onWake)
+      document.removeEventListener('visibilitychange', onWake)
     }
   }, [enabled, authenticated, attempt, refreshTrigger])
 
@@ -246,4 +263,4 @@ export function AgentModeSwitch({
       ) : null}
     </section>
   )
-}
+})

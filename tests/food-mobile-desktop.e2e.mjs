@@ -213,21 +213,18 @@ try {
   const sellSubTab = page.getByRole('tab', { name: 'Đăng bán' })
   await sellSubTab.click()
 
-  // Make sure listing type is Food (listingType=2)
-  const foodRadio = page.locator('input[value="2"]')
-  if (await foodRadio.isVisible()) {
-    await foodRadio.check()
+  // Wait for any tab transition loading skeleton to settle
+  await page.locator('.marketplace-loading-skeleton').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {})
+
+  // Ensure food listing type is selected
+  const foodTypeBtn = page.getByRole('button', { name: 'Đồ ăn' })
+  if (await foodTypeBtn.isVisible()) {
+    await foodTypeBtn.click()
   }
 
-  await page.locator('.marketplace-sell-food-studio').waitFor({ timeout: 10000 })
   const gridLocator = page.locator('.marketplace-sell-food-studio__grid')
-  console.log('Grid count:', await gridLocator.count())
-  if (await gridLocator.count() > 0) {
-    console.log('Grid isVisible:', await gridLocator.first().isVisible())
-    console.log('Grid boundingBox:', await gridLocator.first().boundingBox())
-    console.log('Grid outerHTML snippet:', (await gridLocator.first().evaluate(el => el.outerHTML)).slice(0, 200))
-  }
-  assert.equal(await page.locator('.marketplace-sell-food-studio__grid').isVisible(), true)
+  await gridLocator.waitFor({ state: 'visible', timeout: 10000 })
+  assert.equal(await gridLocator.isVisible(), true)
   assert.equal(await page.locator('.marketplace-sell-food-studio__preview-column').isVisible(), true)
 
   // Verify dynamic chroma margin gauge
@@ -285,8 +282,9 @@ try {
   assert.equal(await mobileFloatingCart.isVisible(), true)
   const mobileFloatingCartPos = await mobileFloatingCart.evaluate(el => window.getComputedStyle(el).position)
   assert.equal(mobileFloatingCartPos, 'fixed', 'Mobile floating cart must be fixed')
-  const fabVisible = await page.locator('.food-cart-fab').isVisible()
-  assert.equal(fabVisible, false, '.food-cart-fab must be hidden when sticky floating cart bar is shown')
+  const fab = page.locator('.food-cart-fab')
+  assert.equal(await fab.isVisible(), true, '.food-cart-fab must remain visible and accessible on mobile')
+  assert.match(await fab.getAttribute('class'), /has-sticky-cart/, '.food-cart-fab must have has-sticky-cart class')
 
   // Click View Cart in floating cart
   await mobileFloatingCart.getByRole('button', { name: /Xem giỏ & Thanh toán/ }).click()

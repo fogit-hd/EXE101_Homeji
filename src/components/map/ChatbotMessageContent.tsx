@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, memo, useMemo, type ReactNode } from 'react'
 
 type MessageBlock =
   | { type: 'heading'; level: number; text: string }
@@ -6,7 +6,24 @@ type MessageBlock =
   | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'code'; text: string }
 
-const INLINE_MARKUP_PATTERN = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^)\s]+\)|https?:\/\/[^\s<]+)/gi
+const INLINE_MARKUP_PATTERN =
+  /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^)\s]+\)|https?:\/\/[^\s<]+|(?<![\w*])\*(?:[^\s*]|[^\s*][^*]*[^\s*])\*(?![\w*]))/gi
+
+function splitTrailingUrlPunctuation(rawUrl: string): [string, string] {
+  let url = rawUrl
+  let trailing = ''
+  while (/[.,;:!?)]$/.test(url)) {
+    const last = url.at(-1) ?? ''
+    if (last === ')') {
+      const opens = (url.match(/\(/g) ?? []).length
+      const closes = (url.match(/\)/g) ?? []).length
+      if (closes <= opens) break
+    }
+    trailing = last + trailing
+    url = url.slice(0, -1)
+  }
+  return [url, trailing]
+}
 
 function parseBlocks(content: string): MessageBlock[] {
   const lines = content.replace(/\r\n?/g, '\n').split('\n')
@@ -45,7 +62,7 @@ function parseBlocks(content: string): MessageBlock[] {
       continue
     }
 
-    const heading = trimmed.match(/^(#{1,3})\s+(.+)$/)
+    const heading = trimmed.match(/^(#{1,4})\s+(.+)$/)
     if (heading) {
       flushParagraph()
       blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] })
@@ -85,25 +102,40 @@ function renderInline(text: string): ReactNode[] {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={index}>{part.slice(2, -2)}</strong>
     }
+    if (part.startsWith('*') && part.endsWith('*') && part.length >= 3) {
+      return <em key={index}>{part.slice(1, -1)}</em>
+    }
     if (part.startsWith('`') && part.endsWith('`')) {
       return <code key={index}>{part.slice(1, -1)}</code>
     }
 
     const markdownLink = part.match(/^\[([^\]]+)]\((https?:\/\/[^)\s]+)\)$/i)
-    const href = markdownLink?.[2] ?? (part.match(/^https?:\/\//i) ? part : null)
-    if (href) {
+    if (markdownLink) {
       return (
-        <a key={index} href={href} target="_blank" rel="noopener noreferrer">
-          {markdownLink?.[1] ?? part}
+        <a key={index} href={markdownLink[2]} target="_blank" rel="noopener noreferrer">
+          {markdownLink[1]}
         </a>
+      )
+    }
+
+    if (/^https?:\/\//i.test(part)) {
+      const [href, trailing] = splitTrailingUrlPunctuation(part)
+      if (!href) return <Fragment key={index}>{part}</Fragment>
+      return (
+        <Fragment key={index}>
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {href}
+          </a>
+          {trailing}
+        </Fragment>
       )
     }
     return <Fragment key={index}>{part}</Fragment>
   })
 }
 
-export function ChatbotMessageContent({ content }: { content: string }) {
-  const blocks = parseBlocks(content)
+export const ChatbotMessageContent = memo(function ChatbotMessageContent({ content }: { content: string }) {
+  const blocks = useMemo(() => parseBlocks(content), [content])
 
   return (
     <div className="map-chatbot__formatted-content">
@@ -138,4 +170,4 @@ export function ChatbotMessageContent({ content }: { content: string }) {
       })}
     </div>
   )
-}
+})

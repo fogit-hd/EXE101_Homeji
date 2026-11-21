@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { memo, type RefObject } from 'react'
 import {
   ChatMessageSender,
   ChatbotNavigationActionKind,
@@ -69,7 +69,7 @@ function AssistantWelcomeAvatar({ busy }: { busy: boolean }) {
   return <BotAvatar type="clover" size={36} state={busy ? 'working' : 'default'} color="#388e3c" />
 }
 
-export function ChatbotTranscript({ state, context, refs, actions }: Props) {
+export const ChatbotTranscript = memo(function ChatbotTranscript({ state, context, refs, actions }: Props) {
   const { messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId, agentMode = false } = state
   const { rentalContext, rentalSelection, sharedLocation } = context
   const { latestMessageRef, bottomRef } = refs
@@ -192,4 +192,4 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
               <div ref={bottomRef} />
     </>
   )
-}
+})

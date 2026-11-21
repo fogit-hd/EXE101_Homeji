@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { AgentGoal } from '../../api/types'
 import './AgentGoalBar.css'
 
@@ -67,7 +68,7 @@ function formatExpiryTime(expiresAt?: string | null): string | null {
   }
 }
 
-export function AgentGoalBar({
+export const AgentGoalBar = memo(function AgentGoalBar({
   goal,
   busy,
   onReset,
@@ -133,4 +134,4 @@ export function AgentGoalBar({
       ) : null}
     </section>
   )
-}
+})
