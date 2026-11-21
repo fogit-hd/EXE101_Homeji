@@ -1,7 +1,8 @@
 import { siteLocationSnapshot, subscribeSiteLocation, setSiteLocation as setSharedLocation } from '../../lib/siteLocation'
 import { confirmDialog } from '../ui/confirmDialog'
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
+import * as chatbotApi from '../../api'
 import {
   ChatMessageSender,
   ChatbotNavigationActionKind,
@@ -45,6 +46,7 @@ import { useChatbotAgentWorkflow } from './useChatbotAgentWorkflow'
 import { ChatbotLocationControl } from '../ai/ChatbotLocationControl'
 import { rentalPriceBasis } from '../ai/rentalPriceBasis'
 import { freshChatbotLocation, type ChatbotLocation } from '../../lib/chatbotLocation'
+import { AgentGoalBar } from '../ai/AgentGoalBar'
 import { AgentModeSwitch } from '../ai/AgentModeSwitch'
 import { ChatbotTranscript } from './chatbot/ChatbotTranscript'
 import { ChatbotComposer } from './ChatbotComposer'
@@ -162,7 +164,17 @@ export function MapChatbot({
   const [error, setError] = useState<string | null>(null)
   const [sheetMode, setSheetMode] = useState(isSheetViewport)
   const agentFlow = useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheetMode })
-  const { agentMode, setAgentMode, agentDraftId, workspaceDraft, draftWorkspaceId, draftOverlay, workspaceCloseRef, closeDraftWorkspace } = agentFlow
+  const { agentMode, setAgentMode, agentSessionId, agentGoal, agentDraftId, workspaceDraft, draftWorkspaceId, draftOverlay, workspaceCloseRef, closeDraftWorkspace } = agentFlow
+  const [agentAccessRefresh, setAgentAccessRefresh] = useState(0)
+  const [agentAccessStatus, setAgentAccessStatus] = useState<{ canUse: boolean; isPremium: boolean; hasActiveFreeSession: boolean }>({ canUse: false, isPremium: false, hasActiveFreeSession: false })
+  const agentHydratedRef = useRef(false)
+  const messagesCountRef = useRef(0)
+  useEffect(() => {
+    messagesCountRef.current = messages.length
+  }, [messages.length])
+  const handleAccessResolved = useCallback((next: { canUse: boolean; isPremium: boolean; hasActiveFreeSession: boolean }) => {
+    setAgentAccessStatus(next)
+  }, [])
   const bottomRef = useRef<HTMLDivElement>(null)
   const latestMessageRef = useRef<HTMLElement | null>(null)
   const lastScrolledMessage = useRef<string | null>(null)
@@ -218,6 +230,39 @@ export function MapChatbot({
   useEffect(() => {
     publishHomejiAiOpen(panelVisible)
   }, [panelVisible])
+
+  useEffect(() => {
+    if (!panelVisible || !isAuthenticated || agentHydratedRef.current) return
+    agentHydratedRef.current = true
+    const fetchAgentSession = chatbotApi.getAgentSession
+    if (typeof fetchAgentSession !== 'function') return
+    let cancelled = false
+    void fetchAgentSession()
+      .then((session) => {
+        if (cancelled || !session || messagesCountRef.current > 0 || activeRequest.current) return
+        if (session.searchCriteria) sessionCriteria.current = session.searchCriteria
+        if (session.foodCriteria) sessionFood.current = session.foodCriteria
+        const lastAssistantIdx = session.turns.reduce((acc, item, idx) => (item.sender === ChatMessageSender.Assistant ? idx : acc), -1)
+        const restored: DisplayMessage[] = session.turns.map((turn, idx) =>
+          idx === lastAssistantIdx
+            ? {
+                ...turn,
+                quickReplies: session.quickReplies,
+                agentGoal: session.goal,
+                agentDraft: session.activeDraft ?? null,
+              }
+            : turn,
+        )
+        if (restored.length > 0) setMessages(restored)
+        agentFlow.hydrateSession(session, true)
+      })
+      .catch(() => {
+        // Working memory hydration is best-effort and must never break Chat mode.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [panelVisible, isAuthenticated, agentFlow])
 
   useEffect(() => {
     if (!panelVisible) return
@@ -428,13 +473,14 @@ export function MapChatbot({
     const refersToRoom = /\b(?:phong|tin|cho) (?:nay|dang xem)\b/.test(normalized)
     const startsSearch = /\b(?:tim|kiem|loc|goi y|de xuat)\b.*\b(?:phong|tro|o ghep|nha)\b|\b(?:phong|tro) khac\b|\b(?:tim lai|bat dau lai)\b/.test(normalized)
     const refersToChoices = /\b(?:(?:hai|ba|2|3|cac|nhung) (?:lua chon|phong|tin)|so sanh|danh sach (?:nay|can nhac))\b/.test(normalized)
-    const selection = !agentMode && !hasMedia && !foodQuery && rentalSelection && !startsSearch && (task || refersToChoices)
+    const selection = !hasMedia && !foodQuery && rentalSelection && !startsSearch && (agentMode || task || refersToChoices)
       ? { ...rentalSelection, postIds: [...rentalSelection.postIds], scenario: rentalScenarioSnapshot(rentalSelection.scenario), task } : undefined
-    const context = !agentMode && !hasMedia && !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (task || refersToRoom) ? { ...rentalContext, task } : undefined
+    const context = !hasMedia && !foodQuery && !selection && rentalContext && task !== 'compare' && !startsSearch && (agentMode || task || refersToRoom) ? { ...rentalContext, task } : undefined
     const request: ChatRequest = retryMessage?.retry ?? {
       message, context, selection,
       attachments: selectedMedia,
       agentDraftId: agentMode ? agentDraftId : undefined,
+      agentSessionId: agentMode ? agentSessionId : undefined,
       postingAgent: agentMode,
       location: selectedLocation,
       sessionMessages: messages.filter(row => !row.pending && !row.failure).slice(-6).map(({ id, conversationId, sender, content, createdAt }) => ({ id, conversationId, sender, content: content.slice(0, 1000), createdAt })),
@@ -468,19 +514,21 @@ export function MapChatbot({
 
     try {
       const reply = await sendChatbotMessage({ conversationId: request.conversationId, message: request.message, saveHistory: request.saveHistory,
-        attachments: request.attachments, agentDraftId: request.agentDraftId, postingAgent: request.postingAgent, location: request.location, sessionMessages: request.sessionMessages,
+        attachments: request.attachments, agentDraftId: request.agentDraftId, agentSessionId: request.agentSessionId, postingAgent: request.postingAgent, location: request.location, sessionMessages: request.sessionMessages,
         previousCriteria: request.previousCriteria, foodContext: request.foodContext, previousFoodCriteria: request.previousFoodCriteria, rentalContext: request.context ? { postId: request.context.postId, task: request.context.task } : undefined,
         rentalSelection: request.selection ? { postIds: request.selection.postIds, task: request.selection.task, scenario: request.selection.scenario } : undefined }, pending.controller.signal, config?.recaptchaSiteKey)
       if (activeRequest.current !== pending || pending.controller.signal.aborted) return
       setConversationId(request.saveHistory ? reply.conversationId : undefined)
       agentFlow.acceptReply(reply, request.postingAgent === true)
+      if (request.postingAgent) setAgentAccessRefresh(value => value + 1)
       if (reply.nearbyRooms?.status === "locationRequired" || reply.foodDiscovery?.status === "locationRequired") awaitingLocation.current = request.message
       const contextualUnavailable = reply.agentDraft || reply.agentRequested || reply.nearbyRooms ? false : request.selection ? !decisionMatchesChoices(reply.rentalDecision, request.selection.postIds)
         : Boolean(request.context) && !decisionMatchesChoices(reply.rentalDecision, [request.context!.postId])
       const foodExpected = !reply.agentRequested && !reply.agentDraft && !reply.upgradeRequired && !reply.nearbyRooms && !hasMedia && (isFoodDiscoveryChat(request.message) || Boolean(request.previousFoodCriteria && isFoodRefinement(request.message)))
       const foodUnavailable = foodExpected && !reply.foodDiscovery
       sessionFood.current = reply.foodDiscovery && !request.context && !request.selection ? foodCriteriaSnapshot(reply.foodDiscovery) : undefined
-      if (reply.searchUpdate && !request.context && !request.selection && !foodExpected) {
+      const suppressForRentalTarget = !reply.agentRequested && Boolean(request.context || request.selection)
+      if (reply.searchUpdate && !suppressForRentalTarget && !foodExpected) {
         sessionCriteria.current = reply.searchUpdate.criteria
         if (!reply.searchUpdate.criteria.unknown?.length && !reply.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')) onSearchUpdate?.(reply.searchUpdate)
       }
@@ -488,13 +536,13 @@ export function MapChatbot({
         const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
           content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở mục Đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
-          roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, sourceRooms: request.context || request.selection || foodExpected ? null : reply.sourceRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired,
+          roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, sourceRooms: suppressForRentalTarget || foodExpected ? null : reply.sourceRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired, quickReplies: reply.quickReplies, agentGoal: reply.agentGoal,
           actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở mục Đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
             target: request.selection ? '/?section=saved&view=considering' : `/?section=listings&post=${encodeURIComponent(request.context!.postId)}` }] : reply.actions,
-          searchUpdate: request.context || request.selection || foodExpected ? null : reply.searchUpdate,
+          searchUpdate: suppressForRentalTarget || foodExpected ? null : reply.searchUpdate,
           rentalContext: request.context, rentalSelection: request.selection, rentalDecision: contextualUnavailable || foodExpected ? null : reply.rentalDecision,
-          foodDiscovery: request.context || request.selection ? null : reply.foodDiscovery, foodQuery: request.message }
+          foodDiscovery: suppressForRentalTarget ? null : reply.foodDiscovery, foodQuery: request.message }
         return prev.flatMap(item => item.id === pendingId ? [userMessage, assistantMessage] : [item])
       })
     } catch (e) {
@@ -551,10 +599,15 @@ export function MapChatbot({
 
   const startNewConversation = () => {
     if (busy) return
+    if (agentMode || agentSessionId || agentGoal) {
+      const clearAgentSession = chatbotApi.resetAgentSession
+      if (typeof clearAgentSession === 'function') void clearAgentSession().catch(() => {})
+      setAgentAccessRefresh(value => value + 1)
+    }
     setConversationId(undefined)
     sessionCriteria.current = undefined
     sessionFood.current = undefined
-    agentFlow.reset()
+    agentFlow.reset(agentMode && agentAccessStatus.isPremium)
     awaitingLocation.current = null
     setSharedLocation(null)
     setMessages([])
@@ -649,15 +702,16 @@ export function MapChatbot({
             </button>)}</nav>
           </aside> : null}
           <div className="homeji-assistant__conversation" inert={draftOverlay} aria-hidden={draftOverlay || undefined}>
-            <AgentModeSwitch active={agentMode} busy={busy || mediaBusy || recordingActive} enabled={panelVisible} authenticated={isAuthenticated} onChange={setAgentMode} onUpgrade={() => { setOpen(false); if (!isAuthenticated) openAuthModal({ intent: 'premium', onSuccess: () => navigate('/?section=payments') }); else navigate('/?section=payments') }} />
+            <AgentModeSwitch active={agentMode} busy={busy || mediaBusy || recordingActive} enabled={panelVisible} authenticated={isAuthenticated} refreshTrigger={agentAccessRefresh} onAccessResolved={handleAccessResolved} onChange={setAgentMode} onUpgrade={() => { setOpen(false); if (!isAuthenticated) openAuthModal({ intent: 'premium', onSuccess: () => navigate('/?section=payments') }); else navigate('/?section=payments') }} />
+            {agentMode && agentGoal ? <AgentGoalBar goal={agentGoal} busy={busy} onReset={() => { if (agentAccessStatus.isPremium) startNewConversation(); else setResetRequested(true) }} /> : null}
             {resetRequested ? <div className="homeji-assistant__reset" role="alert">
-              <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.</p>
+              <strong>Bắt đầu một cuộc trò chuyện mới?</strong><p>Nội dung và bản nháp trong cửa sổ này sẽ được bỏ. Lịch sử đã lưu trên máy chủ vẫn được giữ.{agentMode && !agentAccessStatus.isPremium && agentAccessStatus.hasActiveFreeSession ? ' Lưu ý: bạn đang dùng lượt Agent miễn phí duy nhất trong tuần; bắt đầu mới sẽ kết thúc lượt miễn phí này.' : ''}</p>
               <div><button type="button" disabled={busy} onClick={startNewConversation}>Bắt đầu cuộc trò chuyện mới</button><button type="button" onClick={() => setResetRequested(false)}>Giữ cuộc trò chuyện</button></div>
             </div> : null}
             <div className={`homeji-assistant__transcript-viewport${showTyping ? ' is-pending' : ''}`}>
             <div className="map-chatbot__body" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
             <ChatbotTranscript
-              state={{ messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId }}
+              state={{ messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId, agentMode }}
               context={{ rentalContext, rentalSelection, sharedLocation }}
               refs={{ latestMessageRef, bottomRef }}
               actions={{

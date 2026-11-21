@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AgentPostDraft } from '../../api/chatbotAgent'
+import type { AgentGoal, AgentSessionState } from '../../api/types'
 
 type AgentMessage = { agentDraft?: AgentPostDraft | null }
-type AgentReply = { agentRequested?: boolean; agentDraft?: AgentPostDraft | null; upgradeRequired?: boolean }
+type AgentReply = {
+  agentRequested?: boolean
+  agentDraft?: AgentPostDraft | null
+  upgradeRequired?: boolean
+  agentSessionId?: string | null
+  agentGoal?: AgentGoal | null
+}
 
 type Options = {
   messages: readonly AgentMessage[]
@@ -11,9 +18,11 @@ type Options = {
   sheetMode: boolean
 }
 
-/** Owns the Agent mode and its short-lived, user-reviewed post draft. */
+/** Owns the Agent mode, short-lived working memory goal, and user-reviewed post draft. */
 export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheetMode }: Options) {
   const [agentMode, setAgentMode] = useState(false)
+  const [agentSessionId, setAgentSessionId] = useState<string | undefined>()
+  const [agentGoal, setAgentGoal] = useState<AgentGoal | null>(null)
   const [draftWorkspaceId, setDraftWorkspaceId] = useState<string | null>(null)
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const [agentDraftId, setAgentDraftId] = useState<string | undefined>()
@@ -26,7 +35,14 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
   }, [draftOverlay, draftWorkspaceId])
 
   const acceptReply = (reply: AgentReply, postingAgent: boolean) => {
-    setAgentMode(reply.agentRequested === true || Boolean(reply.agentDraft) || (postingAgent && !reply.upgradeRequired))
+    const stayInAgent = reply.agentRequested === true || Boolean(reply.agentDraft) || (postingAgent && !reply.upgradeRequired)
+    setAgentMode(stayInAgent)
+    if (reply.agentSessionId) {
+      setAgentSessionId(reply.agentSessionId)
+    }
+    if (reply.agentGoal !== undefined) {
+      setAgentGoal(reply.agentGoal ?? null)
+    }
     if (reply.agentDraft) {
       setAgentDraftId(reply.agentDraft.id)
       setDraftWorkspaceId(reply.agentDraft.id)
@@ -36,6 +52,18 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
       setAgentDraftId(undefined)
     }
   }
+
+  const hydrateSession = useCallback((session: AgentSessionState, autoEnableAgent: boolean) => {
+    setAgentSessionId(session.sessionId)
+    setAgentGoal(session.goal)
+    if (session.activeDraft && !session.activeDraft.publishedPostId) {
+      setAgentDraftId(session.activeDraft.id)
+      setDraftWorkspaceId(session.activeDraft.id)
+    }
+    if (autoEnableAgent) {
+      setAgentMode(true)
+    }
+  }, [])
 
   const openDraftWorkspace = (draftId: string) => {
     setDraftWorkspaceId(draftId)
@@ -49,16 +77,21 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
 
   const closeDraftWorkspace = useCallback(() => setWorkspaceOpen(false), [])
 
-  const reset = () => {
+  const reset = useCallback((keepMode = false) => {
     setAgentDraftId(undefined)
-    setAgentMode(false)
+    setAgentSessionId(undefined)
+    setAgentGoal(null)
+    if (!keepMode) setAgentMode(false)
     setDraftWorkspaceId(null)
     setWorkspaceOpen(false)
-  }
+  }, [])
 
   return {
     agentMode,
     setAgentMode,
+    agentSessionId,
+    agentGoal,
+    setAgentGoal,
     agentDraftId,
     workspaceDraft,
     draftWorkspaceId,
@@ -66,6 +99,7 @@ export function useChatbotAgentWorkflow({ messages, expanded, setExpanded, sheet
     draftOverlay,
     workspaceCloseRef,
     acceptReply,
+    hydrateSession,
     openDraftWorkspace,
     finishDraft,
     closeDraftWorkspace,

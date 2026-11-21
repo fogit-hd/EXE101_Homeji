@@ -757,6 +757,46 @@ export interface ChatbotNavigationAction {
   target: string
 }
 
+export interface AgentQuickReply {
+  label: string
+  value: string
+  kind?: string | null
+}
+
+export interface AgentGoal {
+  title: string
+  kind: string
+  status: 'active' | 'awaiting_clarification' | 'awaiting_confirmation' | 'completed' | string
+  summary?: string | null
+  facts?: Record<string, string> | null
+  missingInfo?: string[] | null
+  pendingQuestion?: string | null
+  expiresAt?: string | null
+  turnCount?: number
+}
+
+export interface AgentSessionState {
+  sessionId: string
+  goal: AgentGoal | null
+  quickReplies: AgentQuickReply[]
+  turns: ChatbotMessage[]
+  searchCriteria?: AiParsedSearchCriteria | null
+  foodCriteria?: ChatbotFoodCriteria | null
+  activeDraft?: import('./chatbotAgent').AgentPostDraft | null
+  expiresAt: string
+}
+
+export interface AgentAccess {
+  canUse: boolean
+  isPremium: boolean
+  freeWeeklyLimit: number
+  freeWeeklyUsed: number
+  freeWeeklyRemaining: number
+  hasActiveFreeSession: boolean
+  activeFreeSessionExpiresAt?: string | null
+  nextFreeResetAt?: string | null
+}
+
 export interface ChatbotReply {
   roommateCandidates?: import('./chatbotAgent').AgentRoommateCandidate[] | null
   nearbyRooms?: import("./chatbotAgent").ChatbotNearbyResponse | null
@@ -764,6 +804,10 @@ export interface ChatbotReply {
   agentRequested?: boolean
   agentDraft?: import("./chatbotAgent").AgentPostDraft | null
   upgradeRequired?: boolean
+  agentSessionId?: string | null
+  agentGoal?: AgentGoal | null
+  quickReplies?: AgentQuickReply[] | null
+  agentAccess?: AgentAccess | null
   conversationId: string
   userMessage: ChatbotMessage
   assistantMessage: ChatbotMessage
@@ -830,6 +874,7 @@ export interface MySubscription {
   premiumExpiresAt: string | null
   maxFollowedAreas?: number
   maxComparedPosts?: number
+  agentAccess?: AgentAccess | null
 }
 
 export interface RentalPostOwnerStatsItem {

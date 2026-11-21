@@ -1,4 +1,6 @@
 import type {
+  AgentGoal,
+  AgentQuickReply,
   AiHighlightResponse,
   AiParsedSearchCriteria,
   ChatbotFoodContext,
@@ -19,6 +21,7 @@ import type { ChatbotNearbyResponse } from '../../ai/ChatbotNearbyResults'
 export type ChatRequest = {
   location?: ChatbotLocation
   agentDraftId?: string
+  agentSessionId?: string
   postingAgent?: boolean
   sessionMessages?: ChatbotMessage[]
   attachments?: ChatbotDraftAttachment[]
@@ -38,6 +41,8 @@ export type DisplayMessage = ChatbotMessage & {
   sourceRooms?: ChatbotSourceMatch | null
   agentDraft?: AgentPostDraft | null
   upgradeRequired?: boolean
+  quickReplies?: AgentQuickReply[] | null
+  agentGoal?: AgentGoal | null
   attachments?: ChatbotDraftAttachment[]
   pending?: boolean
   retry?: ChatRequest

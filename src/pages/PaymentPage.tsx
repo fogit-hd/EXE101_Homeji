@@ -595,7 +595,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 <tr><th scope="row">Nhãn Premium trên tin</th><td>Không</td><td className="is-accent">Có</td></tr>
                 <tr><th scope="row">Khung viền nổi bật cho tin phòng</th><td>Không</td><td className="is-accent">Có, kèm hiệu ứng nhẹ</td></tr>
                 <tr><th scope="row">Ưu tiên hiển thị tin đăng</th><td>Không</td><td className="is-accent">Có</td></tr>
-                <tr><th scope="row">AI soạn bài từ ảnh</th><td>Không</td><td className="is-accent">Có, đăng sau khi xác nhận</td></tr>
+                <tr><th scope="row">Trợ lý Agent AI &amp; soạn bài từ ảnh</th><td>1 lượt miễn phí / tuần</td><td className="is-accent">Không giới hạn, đăng sau khi xác nhận</td></tr>
               </tbody>
             </table>
           </section>

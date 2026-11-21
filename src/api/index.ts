@@ -365,6 +365,7 @@ export const highlightRentalPosts = (data: { text?: string; maxResults?: number;
   }).then(result => { trackFunnelEvent('rental_search', { search_mode: 'ai', result_count_bucket: resultCountBucket(result.posts.length) }); return result })
 
 // Chatbot
+export { getAgentSession, resetAgentSession } from './chatbotAgent'
 export const deleteChatbotConversation = (id: string) =>
   apiRequest<void>(`/api/chatbot/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' })
 
@@ -377,9 +378,9 @@ export const getChatbotConversations = () =>
 export const getChatbotMessages = (conversationId: string) =>
   apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
 
-async function postChatbot<T>(path: string, action: ChatbotAction, body: unknown, signal?: AbortSignal, siteKey?: string | null) {
+async function postChatbot<T>(path: string, action: ChatbotAction, body: unknown, signal?: AbortSignal, siteKey?: string | null, timeoutMs = AI_REQUEST_TIMEOUT_MS) {
   const send = (headers?: Record<string, string>) =>
-    apiRequest<T>(path, { method: 'POST', body, signal, timeoutMs: AI_REQUEST_TIMEOUT_MS, headers })
+    apiRequest<T>(path, { method: 'POST', body, signal, timeoutMs, headers })
   const headers = siteKey ? await chatbotRecaptchaHeaders(siteKey, action, signal) : undefined
   try {
     return await send(headers)
@@ -395,12 +396,13 @@ async function postChatbot<T>(path: string, action: ChatbotAction, body: unknown
 export const transcribeChatbotAudio = (audio: ChatbotAttachment, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
   postChatbot<{ text: string }>('/api/chatbot/transcriptions', 'chatbot_transcription', { audio }, signal, recaptchaSiteKey)
 
-export const sendChatbotMessage = (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
+export const sendChatbotMessage = (data: { location?: import("../lib/chatbotLocation").ChatbotLocation; postingAgent?: boolean; agentDraftId?: string; agentSessionId?: string; sessionMessages?: ChatbotMessage[]; conversationId?: string; message: string; saveHistory?: boolean; previousCriteria?: AiParsedSearchCriteria; rentalContext?: ChatbotRentalContext; rentalSelection?: ChatbotRentalSelection; foodContext?: ChatbotFoodContext; previousFoodCriteria?: ChatbotFoodCriteria; attachments?: ChatbotAttachment[] }, signal?: AbortSignal, recaptchaSiteKey?: string | null) =>
   postChatbot<ChatbotReply>('/api/chatbot/messages', 'chatbot_message', {
     message: data.message,
     ...(data.location ? { location: data.location } : {}),
     ...(data.postingAgent ? { postingAgent: true } : {}),
     ...(data.agentDraftId ? { agentDraftId: data.agentDraftId } : {}),
+    ...(data.agentSessionId ? { agentSessionId: data.agentSessionId } : {}),
     ...(data.sessionMessages ? { sessionMessages: data.sessionMessages.slice(-6).map(row => ({ ...row, content: row.content.slice(0, 1000) })) } : {}),
     ...(data.attachments?.length ? { attachments: data.attachments.map(({ mimeType, data }) => ({ mimeType, data })) } : {}),
     saveHistory: data.saveHistory === true,
@@ -413,7 +415,7 @@ export const sendChatbotMessage = (data: { location?: import("../lib/chatbotLoca
     } } : {}),
     ...(data.previousCriteria ? { previousCriteria: data.previousCriteria } : {}),
     ...(data.conversationId ? { conversationId: data.conversationId } : {}),
-  }, signal, recaptchaSiteKey)
+  }, signal, recaptchaSiteKey, data.postingAgent ? 55_000 : AI_REQUEST_TIMEOUT_MS)
 
 // Upload
 export const uploadImages = (files: File[], folder?: string) => {

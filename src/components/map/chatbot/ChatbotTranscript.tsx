@@ -33,6 +33,7 @@ type State = {
   mediaBusy: boolean
   recordingActive: boolean
   draftWorkspaceId: string | null
+  agentMode?: boolean
 }
 type Context = {
   rentalContext: RentalAssistantSelection | null
@@ -69,7 +70,7 @@ function AssistantWelcomeAvatar({ busy }: { busy: boolean }) {
 }
 
 export function ChatbotTranscript({ state, context, refs, actions }: Props) {
-  const { messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId } = state
+  const { messages, showGreeting, busy, mediaBusy, recordingActive, draftWorkspaceId, agentMode = false } = state
   const { rentalContext, rentalSelection, sharedLocation } = context
   const { latestMessageRef, bottomRef } = refs
   const { onDismissRentalContext, send, prepareDraft, openDraftWorkspace, closeChat, handleNavigationAction, onSearchUpdate, openPayments, openMarketplace, copyReply } = actions
@@ -90,12 +91,19 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                 <div className="homeji-assistant__welcome-mark" aria-hidden="true">
                   <AssistantWelcomeAvatar busy={busy} />
                 </div>
-                <h2>Homeji giúp gì cho bạn?</h2>
+                <h2>{agentMode ? 'Agent sẵn sàng hỗ trợ theo mục tiêu' : 'Homeji giúp gì cho bạn?'}</h2>
                 <div className="homeji-assistant__starters">
-                  <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}><AssistantIcon name="home" /><strong>Hiểu trước khi thuê</strong><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}><AssistantIcon name="bag" /><strong>Xem Chợ Homeji</strong><b aria-hidden>↗</b></button>
-                  <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}><AssistantIcon name="chat" /><strong>Hỏi điều bạn muốn</strong><b aria-hidden>↗</b></button>
+                  {agentMode ? <>
+                    <button type="button" onClick={() => void send('Giúp mình tìm phòng trọ phù hợp nhu cầu')}><AssistantIcon name="search" /><strong>Tìm phòng theo mục tiêu</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => void send('Kiểm tra và so sánh các phòng mình đã lưu')}><AssistantIcon name="home" /><strong>Phân tích phòng đã lưu</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => prepareDraft('Giúp mình soạn bài đăng ')}><AssistantIcon name="bag" /><strong>Soạn bài đăng từ ảnh</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => void send('Mình muốn tìm bạn ở ghép phù hợp')}><AssistantIcon name="chat" /><strong>Tìm bạn ở ghép</strong><b aria-hidden>↗</b></button>
+                  </> : <>
+                    <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}><AssistantIcon name="home" /><strong>Hiểu trước khi thuê</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}><AssistantIcon name="bag" /><strong>Xem Chợ Homeji</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}><AssistantIcon name="chat" /><strong>Hỏi điều bạn muốn</strong><b aria-hidden>↗</b></button>
+                  </>}
                 </div>
               </div> : null}
               {messages.map((m, index) => {
@@ -112,7 +120,23 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                         {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => closeChat()} /></section> : null}
                         {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} hasOtherRooms={Boolean(m.sourceRooms?.rooms.length)} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => closeChat()} /> : null}
                         {m.sourceRooms ? <ChatbotSourceResults data={m.sourceRooms} startAt={(m.searchUpdate?.posts.length ?? 0) + 1} onOpen={() => closeChat()} /> : null}
-                        {m.sourceRooms && index === messages.length - 1 ? <div className="map-chatbot__context-prompts" aria-label="Gợi ý hỏi tiếp"><button type="button" disabled={busy} onClick={() => void send('Phòng nào rẻ nhất?')}>Phòng nào rẻ nhất?</button><button type="button" disabled={busy} onClick={() => void send('So sánh 2 phòng đầu')}>So sánh 2 phòng đầu</button></div> : null}
+                        {m.quickReplies?.length && index === messages.length - 1 ? (
+                          <div className="homeji-assistant__quick-replies" role="group" aria-label="Trả lời nhanh">
+                            {m.quickReplies.map((replyItem, replyIdx) => (
+                              <button
+                                key={`${replyItem.label}-${replyIdx}`}
+                                type="button"
+                                disabled={busy || mediaBusy || recordingActive}
+                                onClick={() => {
+                                  if (replyItem.value.endsWith(' ')) prepareDraft(replyItem.value)
+                                  else void send(replyItem.value)
+                                }}
+                              >
+                                {replyItem.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : m.sourceRooms && index === messages.length - 1 ? <div className="map-chatbot__context-prompts" aria-label="Gợi ý hỏi tiếp"><button type="button" disabled={busy} onClick={() => void send('Phòng nào rẻ nhất?')}>Phòng nào rẻ nhất?</button><button type="button" disabled={busy} onClick={() => void send('So sánh 2 phòng đầu')}>So sánh 2 phòng đầu</button></div> : null}
                         {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => openDraftWorkspace(m.agentDraft!.id)}><span>Loại tin · nội dung · chi phí · vị trí</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
                         {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={openPayments}>Xem gói Premium</button><button className="map-chatbot__action" type="button" onClick={() => { if (m.actions?.[0]) handleNavigationAction(m.actions[0]); else { openMarketplace() } }}>Tự đăng bài</button></div> : null}
                         {m.roommateCandidates ? <AgentRoommateResults items={m.roommateCandidates} onOpen={() => closeChat()} /> : null}
