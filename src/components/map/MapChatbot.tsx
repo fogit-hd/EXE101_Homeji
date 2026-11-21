@@ -656,8 +656,8 @@ export function MapChatbot({
             <div className="map-chatbot__brand">
               <HomejiAvatar />
               <div className="map-chatbot__brand-titles">
-                <span className="homeji-assistant__eyebrow">HOMEJI / AI</span>
                 <strong>Homeji</strong>
+                <span className="homeji-assistant__eyebrow">AI</span>
               </div>
             </div>
             <button
@@ -730,7 +730,6 @@ export function MapChatbot({
             </div>
             <ThinkingCapsule visible={showTyping} />
             </div>
-            {isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
             {error ? <p className="map-chatbot__error" role="alert">{error}</p> : null}
             {copyStatus ? <p className="homeji-assistant__feedback" role="status">{copyStatus}</p> : null}
             <div className="homeji-assistant__wait-tools" hidden={!showTyping}>
@@ -762,6 +761,7 @@ export function MapChatbot({
               conversationId={conversationId}
               rentalContext={Boolean(rentalContext)}
               closeChat={closeChat}
+              locationControl={isAuthenticated ? <ChatbotLocationControl value={sharedLocation} disabled={busy || mediaBusy || recordingActive} onChange={location => { setSharedLocation(location); if (location && awaitingLocation.current && !busy) { const text = awaitingLocation.current; awaitingLocation.current = null; void send(text, false, undefined, undefined, undefined, undefined, location) } }} /> : null}
             />
           </div>
           {workspaceDraft ? <AgentDraftWorkspace

@@ -15,10 +15,11 @@ export function ChatbotMediaPreview({ attachments, onRemove }: { attachments: Ch
   </div>
 }
 
-export function ChatbotMediaComposer({ attachments, disabled, recaptchaSiteKey, onChange, onDictation, onError, onBusyChange, onRecordingChange }: {
+export function ChatbotMediaComposer({ attachments, disabled, recaptchaSiteKey, showPreview = true, onChange, onDictation, onError, onBusyChange, onRecordingChange }: {
   attachments: ChatbotDraftAttachment[]
   disabled: boolean
   recaptchaSiteKey?: string | null
+  showPreview?: boolean
   onChange: (attachments: ChatbotDraftAttachment[]) => void
   onDictation: (text: string) => void
   onError: (error: string) => void
@@ -47,7 +48,7 @@ export function ChatbotMediaComposer({ attachments, disabled, recaptchaSiteKey, 
   }
 
   return <>
-    <ChatbotMediaPreview attachments={attachments} onRemove={disabled ? undefined : id => onChange(attachments.filter(file => file.id !== id))} />
+    {showPreview ? <ChatbotMediaPreview attachments={attachments} onRemove={disabled ? undefined : id => onChange(attachments.filter(file => file.id !== id))} /> : null}
     <div className="homeji-assistant__media-tools">
       <input ref={input} hidden type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={disabled} aria-label="Chọn ảnh gửi Homeji" onChange={event => {
         const files = Array.from(event.target.files ?? [])

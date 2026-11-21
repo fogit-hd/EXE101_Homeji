@@ -88,21 +88,58 @@ export function ChatbotTranscript({ state, context, refs, actions }: Props) {
                 <small>Giá và phí lấy từ tin này. Khi tìm phòng mới, hãy nhập nhu cầu mới của bạn.</small>
               </section> : null}
               {showGreeting ? <div className="map-chatbot__greeting">
-                <div className="homeji-assistant__welcome-mark" aria-hidden="true">
-                  <AssistantWelcomeAvatar busy={busy} />
+                <div className="homeji-assistant__greeting-hero">
+                  <div className="homeji-assistant__welcome-mark" aria-hidden="true">
+                    <AssistantWelcomeAvatar busy={busy} />
+                  </div>
+                  <h2>{agentMode ? 'Agent sẵn sàng hỗ trợ theo mục tiêu' : 'Homeji giúp gì cho bạn?'}</h2>
+                  <p className="homeji-assistant__greeting-sub">
+                    {agentMode ? 'Ghi nhớ ngữ cảnh xuyên phiên, tìm phòng chuẩn nhu cầu và hỗ trợ soạn bài đăng.' : 'Tìm phòng theo khu vực, tính chi phí hàng tháng hoặc khám phá Chợ Homeji.'}
+                  </p>
                 </div>
-                <h2>{agentMode ? 'Agent sẵn sàng hỗ trợ theo mục tiêu' : 'Homeji giúp gì cho bạn?'}</h2>
                 <div className="homeji-assistant__starters">
                   {agentMode ? <>
-                    <button type="button" onClick={() => void send('Giúp mình tìm phòng trọ phù hợp nhu cầu')}><AssistantIcon name="search" /><strong>Tìm phòng theo mục tiêu</strong><b aria-hidden>↗</b></button>
-                    <button type="button" onClick={() => void send('Kiểm tra và so sánh các phòng mình đã lưu')}><AssistantIcon name="home" /><strong>Phân tích phòng đã lưu</strong><b aria-hidden>↗</b></button>
-                    <button type="button" onClick={() => prepareDraft('Giúp mình soạn bài đăng ')}><AssistantIcon name="bag" /><strong>Soạn bài đăng từ ảnh</strong><b aria-hidden>↗</b></button>
-                    <button type="button" onClick={() => void send('Mình muốn tìm bạn ở ghép phù hợp')}><AssistantIcon name="chat" /><strong>Tìm bạn ở ghép</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => void send('Giúp mình tìm phòng trọ phù hợp nhu cầu')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="search" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Tìm phòng theo mục tiêu</strong><span>Khu vực & ngân sách</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
+                    <button type="button" onClick={() => void send('Kiểm tra và so sánh các phòng mình đã lưu')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="home" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Phân tích phòng đã lưu</strong><span>So sánh giá & chi phí</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
+                    <button type="button" onClick={() => prepareDraft('Giúp mình soạn bài đăng ')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="bag" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Soạn bài đăng từ ảnh</strong><span>Tạo nháp trước khi đăng</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
+                    <button type="button" onClick={() => void send('Mình muốn tìm bạn ở ghép phù hợp')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="chat" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Tìm bạn ở ghép</strong><span>Hồ sơ cùng thói quen</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
                   </> : <>
-                    <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}><AssistantIcon name="search" /><strong>Tìm nơi phù hợp</strong><b aria-hidden>↗</b></button>
-                    <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}><AssistantIcon name="home" /><strong>Hiểu trước khi thuê</strong><b aria-hidden>↗</b></button>
-                    <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}><AssistantIcon name="bag" /><strong>Xem Chợ Homeji</strong><b aria-hidden>↗</b></button>
-                    <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}><AssistantIcon name="chat" /><strong>Hỏi điều bạn muốn</strong><b aria-hidden>↗</b></button>
+                    <button type="button" onClick={() => prepareDraft('Mình muốn tìm phòng ở ')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="search" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Tìm nơi phù hợp</strong><span>Phòng trọ & căn hộ</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
+                    <button type="button" onClick={() => prepareDraft('Hướng dẫn mình các khoản chi phí cần hỏi trước khi thuê phòng.')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="home" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Hiểu trước khi thuê</strong><span>Điện nước & hợp đồng</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
+                    <button type="button" onClick={() => prepareDraft('Hướng dẫn mình mua đồ ăn và đồ dùng trên Homeji.')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="bag" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Xem Chợ Homeji</strong><span>Đồ ăn & đồ cũ gần bạn</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
+                    <button type="button" onClick={() => prepareDraft('Homeji có thể giúp mình làm những gì?')}>
+                      <span className="homeji-assistant__starter-icon"><AssistantIcon name="chat" /></span>
+                      <span className="homeji-assistant__starter-copy"><strong>Hỏi điều bạn muốn</strong><span>Khám phá mọi tính năng</span></span>
+                      <b aria-hidden>↗</b>
+                    </button>
                   </>}
                 </div>
               </div> : null}
