@@ -28,7 +28,7 @@ export const adminSections: AdminSectionInfo[] = [
   { id: 'pricing', slug: 'pricing', label: 'Giá gói Premium', group: 'Kinh doanh', title: 'Giá gói Premium', description: 'Sửa giá, nêu lý do và công bố cho người xem.' },
   { id: 'exports', slug: 'exports', label: 'Báo cáo Excel', group: 'Kinh doanh', title: 'Báo cáo Excel', description: 'Tạo báo cáo, theo dõi email và tải lại các file đã xuất.' },
   { id: 'active', slug: 'active', label: 'Đang hoạt động', group: 'Hệ thống', title: 'Người đang hoạt động', description: 'Theo dõi kết nối và quản lý phiên đăng nhập.' },
-  { id: 'platform', slug: 'platform', label: 'Vận hành hệ thống', group: 'Hệ thống', title: 'Vận hành hệ thống', description: 'Kiểm tra API, hàng đợi Kafka và thống kê duyệt tin.' },
+  { id: 'platform', slug: 'platform', label: 'Vận hành hệ thống', group: 'Hệ thống', title: 'Vận hành hệ thống', description: 'Sức khỏe dịch vụ cho người dùng, việc cần xử lý ngay và nhịp vận hành 7 ngày.' },
   { id: 'maintenance', slug: 'maintenance', label: 'Bảo trì', group: 'Hệ thống', title: 'Bảo trì', description: 'Soạn nội dung và thời gian dự kiến để thông báo cho người dùng.' },
 ]
 
