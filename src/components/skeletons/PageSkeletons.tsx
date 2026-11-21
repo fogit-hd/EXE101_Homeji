@@ -44,40 +44,46 @@ function ListRow({ icon = 40, round = false, trailing = true }: { icon?: number;
 export function HubSkeleton() {
   return (
     <SkScreen name="hub" label="Đang tải trang chủ…">
-      <SkHeader eyebrow titleWidth={300} actions={1} />
-      <div className="sk-hub__hero">
-        <div className="sk-stack"><Sk w={90} h={10} /><Sk w={280} h={24} className="sk-max" /><Sk w={360} h={12} className="sk-max" /></div>
-        <Sk w={150} h={40} r={999} className="sk-hide-mobile" />
+      <SkHeader titleWidth={280} actions={0} />
+      <div className="sk-row">
+        <Sk w={64} h={14} />
+        <Sk w={110} h={32} r={8} />
+        <Sk w={128} h={32} r={8} />
+        <Sk w={96} h={32} r={8} />
       </div>
-      <div className="sk-row"><Sk w={120} h={12} /><Sk w={200} h={12} /></div>
       <HubBodySkeleton />
     </SkScreen>
   )
 }
 
-/** Data part of the hub only (header/hero already rendered by the hub). */
+/** Data part of the hub only (header/recent bar already rendered by the hub). */
 export function HubBodySkeleton() {
   return (
-    <div className="sk-stack" style={{ gap: 18 }} aria-hidden="true">
-      <div className="sk-grid sk-hub__promo">
-        <div className="sk-hub__banner">
-          <div className="sk-stack"><Sk w={110} h={10} /><Sk w="80%" h={30} /><Sk w="90%" h={12} /><Sk w={130} h={36} r={999} /></div>
-          <Sk h={170} r={16} />
+    <div className="sk-stack" style={{ gap: 24 }} aria-hidden="true">
+      <div className="sk-grid sk-hub__main">
+        <div className="sk-stack" style={{ gap: 16 }}>
+          <div className="sk-header"><Sk w={180} h={22} /><Sk w={84} h={14} /></div>
+          <div className="sk-grid sk-hub__rooms-grid">
+            {range(4).map(i => <RoomCard key={i} />)}
+          </div>
         </div>
-        <SkCard><Sk w="60%" h={18} /><Sk w={40} h={10} />{range(5).map(i => <Sk key={i} w={`${80 - i * 8}%`} h={11} />)}</SkCard>
+        <div className="sk-stack sk-hub__rail" style={{ gap: 20 }}>
+          <div className="sk-hub__promo-rail">
+            <Sk w={96} h={10} />
+            <Sk w="82%" h={24} />
+            <Sk w="66%" h={24} />
+            <Sk w="62%" h={12} />
+            <Sk w="54%" h={12} />
+            <Sk w={132} h={34} r={999} style={{ marginTop: 'auto' }} />
+          </div>
+          <SkCard>
+            <div className="sk-header"><Sk w={110} h={18} /><Sk w={76} h={12} /></div>
+            {range(4).map(i => <RoomRow key={i} thumb={48} />)}
+          </SkCard>
+        </div>
       </div>
       <div className="sk-grid sk-two-col">
         {range(2).map(i => <SkCard key={i}><div className="sk-header"><Sk w={170} h={16} /><Sk w={50} h={12} /></div><ListRow icon={36} round={i === 1} trailing={false} /></SkCard>)}
-      </div>
-      <div className="sk-grid sk-hub__lower">
-        <SkCard>
-          <div className="sk-header"><Sk w={180} h={18} /><Sk w={60} h={12} /></div>
-          {range(3).map(i => <RoomRow key={i} />)}
-        </SkCard>
-        <div className="sk-stack" style={{ gap: 16 }}>
-          <SkCard><Sk w={110} h={16} /><Sk w={60} h={30} /><Sk h={36} r={999} /></SkCard>
-          <SkCard><Sk w={90} h={16} />{range(2).map(i => <RoomRow key={i} thumb={52} />)}</SkCard>
-        </div>
       </div>
     </div>
   )

@@ -147,17 +147,72 @@
 .hub-promo button:focus-visible,
 .hub-promo a:focus-visible { outline: 2px solid #00b14f; outline-offset: 2px; }
 
+.hub-promo--rail {
+  grid-column: auto;
+  order: 0;
+  width: 100%;
+  min-height: 256px;
+}
+.hub-promo--rail .hub-promo__slide {
+  align-items: flex-start;
+  padding: 20px 20px 52px;
+}
+.hub-promo--rail .hub-promo__art {
+  top: auto;
+  bottom: 20px;
+  right: -14px;
+  margin-top: 0;
+  width: 172px;
+  height: 100px;
+  opacity: 0.94;
+}
+.hub-promo--rail .hub-promo__copy {
+  max-width: 100%;
+  z-index: 1;
+}
+.hub-promo--rail .hub-promo__eyebrow {
+  margin-bottom: 6px;
+}
+.hub-promo--rail .hub-promo__title {
+  font-size: 21px;
+  line-height: 27px;
+}
+.hub-promo--rail .hub-promo__sub {
+  margin: 6px 0 14px;
+  max-width: 64%;
+  font-size: 13px;
+  line-height: 19px;
+}
+.hub-promo--rail .hub-promo__cta {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.hub-promo--rail .hub-promo__dots {
+  left: 20px;
+  bottom: 14px;
+}
+.hub-promo--rail .hub-promo__arrows {
+  right: 12px;
+  bottom: 10px;
+}
+
 @media (max-width: 1024px) {
   .hub-promo { grid-column: 1 / -1; }
+  .hub-promo--rail { grid-column: auto; }
   .hub-promo__art { width: 360px; height: 209px; margin-top: -105px; }
+  .hub-promo--rail .hub-promo__art { width: 172px; height: 100px; margin-top: 0; }
 }
 
 @media (max-width: 720px) {
   .hub-promo { min-height: 300px; }
+  .hub-promo--rail { min-height: 256px; }
   .hub-promo__slide { align-items: flex-start; padding: 22px 20px 52px; }
+  .hub-promo--rail .hub-promo__slide { padding: 20px 20px 52px; }
   .hub-promo__copy { max-width: 100%; }
   .hub-promo__title { font-size: 24px; line-height: 30px; }
+  .hub-promo--rail .hub-promo__title { font-size: 21px; line-height: 27px; }
   .hub-promo__sub { margin-bottom: 14px; font-size: 13px; line-height: 19px; max-width: 62%; }
   .hub-promo__art { top: auto; bottom: 0; margin: 0; width: 240px; height: 139px; right: -24px; opacity: 0.95; }
+  .hub-promo--rail .hub-promo__art { bottom: 20px; right: -14px; width: 172px; height: 100px; }
   .hub-promo__dots { left: 20px; }
 }

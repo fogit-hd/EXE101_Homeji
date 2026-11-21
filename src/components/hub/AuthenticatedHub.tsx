@@ -10,6 +10,7 @@ import {
   getViewingAppointments,
   searchMarketplacePosts,
   searchRentalPosts,
+  MarketplaceListingType,
   NotificationType,
   RentalPostType,
   UserRole,
@@ -26,11 +27,13 @@ import { useAuth } from '../../contexts/AuthContext'
 import { HeartIcon } from '../icons/SvgIcons'
 import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import { mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
+import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
+import { PremiumBadge } from '../PremiumBadge'
+import { HubBodySkeleton } from '../skeletons/PageSkeletons'
 import { PromoBanner } from './PromoBanner'
 import './AuthenticatedHub.css'
-import { HubBodySkeleton } from '../skeletons/PageSkeletons'
 
 const RECENT_SEARCH_KEY = 'homeji:map-search-recent'
 
@@ -138,8 +141,8 @@ export function AuthenticatedHub() {
         getConversations(),
         profile?.role === UserRole.Renter ? getSavedPosts() : Promise.resolve([]),
         profile?.role === UserRole.Renter ? getMyInvitations() : Promise.resolve([]),
-        searchRentalPosts({ pageSize: 3 }),
-        searchMarketplacePosts({ pageSize: 2 }),
+        searchRentalPosts({ pageSize: 4 }),
+        searchMarketplacePosts({ pageSize: 4 }),
       ])
       if (cancelled) return
       const saved = savedPosts.status === 'fulfilled' ? savedPosts.value : []
@@ -216,11 +219,7 @@ export function AuthenticatedHub() {
     ? `${matchingNotes.length} tin mới khớp tìm kiếm của bạn.`
     : null
   const hasSide = Boolean(
-    bundle &&
-      (bundle.candidates.length > 0 ||
-        bundle.invitations.length > 0 ||
-        bundle.failed.market ||
-        bundle.market.length > 0),
+    bundle && (bundle.candidates.length > 0 || bundle.invitations.length > 0),
   )
 
   return (
@@ -231,8 +230,6 @@ export function AuthenticatedHub() {
           {lead ? <Link className="hub-welcome__lead" to={mapSectionUrl('notifications')}>{lead} <span aria-hidden="true">↗</span></Link> : null}
         </div>
       </header>
-
-      <PromoBanner />
 
       {recentSearches.length > 0 ? (
         <section className="hub-search" aria-label="Tìm kiếm gần đây">
@@ -258,27 +255,124 @@ export function AuthenticatedHub() {
 
       {phase === 'ready' && bundle ? (
         <>
-          {bundle.failed.appointments || upcoming.length > 0 ? <section className="hub-section hub-viewings" aria-labelledby="hub-viewings">
-            <header>
-              <h2 id="hub-viewings">Lịch xem phòng sắp tới</h2>
-              <Link to={mapSectionUrl('appointments')}>
-                {upcoming.length > 0 ? `${upcoming.length} lịch` : 'Xem lịch'}
-              </Link>
-            </header>
-            {bundle.failed.appointments ? <p className="hub-quiet">Không tải được lịch xem.</p> : null}
-            <ul>
-              {upcoming.map((item) => (
-                <li key={item.id}>
-                  <time dateTime={item.scheduledAt}>{clock(item.scheduledAt)}</time>
-                  <div>
-                    <strong>{item.rentalPostTitle}</strong>
-                    {item.note?.trim() ? <span>{item.note.trim()}</span> : null}
-                  </div>
-                  <em>{appointmentStatus(item.status)}</em>
-                </li>
-              ))}
-            </ul>
-          </section> : null}
+          <div className="hub-main">
+            <section className="hub-section hub-rooms" aria-labelledby="hub-rooms">
+              <header>
+                <div>
+                  <h2 id="hub-rooms">Phòng đang mở</h2>
+                </div>
+                <Link to={exploreListUrl()}>Xem tất cả →</Link>
+              </header>
+              {bundle.failed.rooms ? <p className="hub-quiet">Không tải được phòng.</p> : null}
+              {!bundle.failed.rooms && bundle.rooms.length === 0 ? <p className="hub-quiet">Chưa có phòng để gợi ý.</p> : null}
+              <ul>
+                {bundle.rooms.map((post, index) => (
+                  <motion.li
+                    key={post.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.32, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Link
+                      to={`/?post=${encodeURIComponent(post.id)}`}
+                      className={post.isOwnerPremium ? 'premium-listing' : undefined}
+                    >
+                      <span className="hub-room__photo">
+                        {post.thumbnailPath ? (
+                          <img
+                            src={post.thumbnailPath}
+                            alt=""
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.hidden = true
+                            }}
+                          />
+                        ) : null}
+                        <span className="hub-room__nophoto">Chưa có ảnh</span>
+                        {savedIds.has(post.id) ? (
+                          <em className="hub-room__saved">
+                            <HeartIcon size={12} filled style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            Đã lưu
+                          </em>
+                        ) : null}
+                        {post.isOwnerPremium === true ? <PremiumBadge variant="glass" /> : null}
+                      </span>
+                      <span className="hub-room__copy">
+                        <b>{post.title}</b>
+                        <span>{post.address}</span>
+                        <small>
+                          {post.area > 0 ? `${post.area} m² · ` : ''}
+                          {rentalPostTypeLabel[post.type]}
+                        </small>
+                      </span>
+                      <span className="hub-room__price">
+                        <strong>{formatPrice(post.price)}</strong>
+                        <small>/tháng</small>
+                      </span>
+                    </Link>
+                  </motion.li>
+                ))}
+              </ul>
+            </section>
+
+            <aside className="hub-rail" aria-label="Ưu đãi và Chợ Homeji">
+              <PromoBanner variant="rail" role={profile?.role} />
+
+              {bundle.failed.market || bundle.market.length > 0 ? (
+                <section className="hub-section hub-market" aria-labelledby="hub-market">
+                  <header>
+                    <h2 id="hub-market">Chợ Homeji</h2>
+                    <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ →</Link>
+                  </header>
+                  {bundle.failed.market ? (
+                    <p className="hub-quiet">Không tải được món quanh khu phố.</p>
+                  ) : (
+                    <ul>
+                      {bundle.market.map((item) => (
+                        <li key={item.id}>
+                          <Link to={item.sellerId ? marketplaceItemUrl(item) : mapSectionUrl('marketplace')}>
+                            <span className="hub-market__thumb">
+                              {item.mediaUrls[0] ? (
+                                <img
+                                  src={item.mediaUrls[0]}
+                                  alt=""
+                                  loading="lazy"
+                                  onError={(event) => {
+                                    event.currentTarget.hidden = true
+                                  }}
+                                />
+                              ) : null}
+                              <span className="hub-market__thumb-fallback" aria-hidden="true">
+                                {item.listingType === MarketplaceListingType.Food ? (
+                                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 12h18" />
+                                    <path d="M5 12a7 7 0 0 0 14 0" />
+                                    <path d="M9 19h6" />
+                                  </svg>
+                                ) : (
+                                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M6 7h12l1 12H5L6 7z" />
+                                    <path d="M9 7a3 3 0 0 1 6 0" />
+                                  </svg>
+                                )}
+                              </span>
+                            </span>
+                            <b>{item.title}</b>
+                            <span className="hub-market__meta">
+                              <strong>{formatPrice(item.price)}</strong>
+                              <small className="hub-market__kind">
+                                {item.listingType === MarketplaceListingType.Food ? 'Đồ ăn' : 'Đồ cũ'}
+                              </small>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              ) : null}
+            </aside>
+          </div>
 
           {savedAlerts[0] ? (
             <Link className="hub-update" to={mapSectionUrl('notifications')}>
@@ -289,60 +383,29 @@ export function AuthenticatedHub() {
             </Link>
           ) : null}
 
-          <section className="hub-section hub-rooms" aria-labelledby="hub-rooms">
-            <header>
-              <div>
-                <h2 id="hub-rooms">Phòng đang mở</h2>
-              </div>
-              <Link to={exploreListUrl()}>Xem tất cả →</Link>
-            </header>
-            {bundle.failed.rooms ? <p className="hub-quiet">Không tải được phòng.</p> : null}
-            {!bundle.failed.rooms && bundle.rooms.length === 0 ? <p className="hub-quiet">Chưa có phòng để gợi ý.</p> : null}
-            <ul>
-              {bundle.rooms.map((post, index) => (
-                <motion.li
-                  key={post.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.32, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <Link to={`/?post=${encodeURIComponent(post.id)}`}>
-                    <span className="hub-room__photo">
-                      {post.thumbnailPath ? (
-                        <img
-                          src={post.thumbnailPath}
-                          alt=""
-                          loading="lazy"
-                          onError={(event) => {
-                            event.currentTarget.hidden = true
-                          }}
-                        />
-                      ) : null}
-                      <span className="hub-room__nophoto">Chưa có ảnh</span>
-                      {savedIds.has(post.id) ? (
-                        <em className="hub-room__saved">
-                          <HeartIcon size={12} filled style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                          Đã lưu
-                        </em>
-                      ) : null}
-                    </span>
-                    <span className="hub-room__copy">
-                      <b>{post.title}</b>
-                      <span>{post.address}</span>
-                      <small>
-                        {post.area > 0 ? `${post.area} m² · ` : ''}
-                        {rentalPostTypeLabel[post.type]}
-                      </small>
-                    </span>
-                    <span className="hub-room__price">
-                      <strong>{formatPrice(post.price)}</strong>
-                      <small>/tháng</small>
-                    </span>
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-          </section>
+          {bundle.failed.appointments || upcoming.length > 0 ? (
+            <section className="hub-section hub-viewings" aria-labelledby="hub-viewings">
+              <header>
+                <h2 id="hub-viewings">Lịch xem phòng sắp tới</h2>
+                <Link to={mapSectionUrl('appointments')}>
+                  {upcoming.length > 0 ? `${upcoming.length} lịch` : 'Xem lịch'}
+                </Link>
+              </header>
+              {bundle.failed.appointments ? <p className="hub-quiet">Không tải được lịch xem.</p> : null}
+              <ul>
+                {upcoming.map((item) => (
+                  <li key={item.id}>
+                    <time dateTime={item.scheduledAt}>{clock(item.scheduledAt)}</time>
+                    <div>
+                      <strong>{item.rentalPostTitle}</strong>
+                      {item.note?.trim() ? <span>{item.note.trim()}</span> : null}
+                    </div>
+                    <em>{appointmentStatus(item.status)}</em>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           {bundle.failed.conversations || chats.length > 0 || hasSide ? (
             <div className={`hub-community${(bundle.failed.conversations || chats.length > 0) && hasSide ? '' : ' hub-community--single'}`}>
@@ -407,41 +470,6 @@ export function AuthenticatedHub() {
                       {bundle.candidates.length === 0 ? (
                         <Link className="hub-roommates__cta liquid-action" to={ROOMMATE_INVITATIONS_URL}>Xem lời mời</Link>
                       ) : null}
-                    </section>
-                  ) : null}
-
-                  {bundle.failed.market || bundle.market.length > 0 ? (
-                    <section className="hub-section hub-market" aria-labelledby="hub-market">
-                      <header>
-                        <h2 id="hub-market">Chợ Homeji</h2>
-                        <Link to={mapSectionUrl('marketplace')}>Dạo chợ đồ →</Link>
-                      </header>
-                      {bundle.failed.market ? (
-                        <p className="hub-quiet">Không tải được món quanh khu phố.</p>
-                      ) : (
-                        <ul>
-                          {bundle.market.map((item) => (
-                            <li key={item.id}>
-                              <Link to={mapSectionUrl('marketplace')}>
-                                <span className="hub-market__thumb">
-                                  {item.mediaUrls[0] ? (
-                                    <img
-                                      src={item.mediaUrls[0]}
-                                      alt=""
-                                      loading="lazy"
-                                      onError={(event) => {
-                                        event.currentTarget.hidden = true
-                                      }}
-                                    />
-                                  ) : null}
-                                </span>
-                                <b>{item.title}</b>
-                                <strong>{formatPrice(item.price)}</strong>
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
                     </section>
                   ) : null}
                 </div>

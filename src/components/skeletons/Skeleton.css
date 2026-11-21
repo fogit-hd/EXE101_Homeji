@@ -46,6 +46,9 @@
 
 /* ---------- Hub ---------- */
 .sk-hub__hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px; border-radius: 18px; background: #eef7f6; }
+.sk-hub__main { grid-template-columns: minmax(0, 1fr) clamp(320px, 28%, 360px); align-items: start; gap: 24px; }
+.sk-hub__rooms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.sk-hub__promo-rail { display: flex; flex-direction: column; gap: 10px; min-height: 256px; padding: 20px; border: 1px solid #e6ecee; border-radius: 18px; background: #fbf4ec; }
 .sk-hub__promo { grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); }
 .sk-hub__banner { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; min-height: 212px; padding: 22px; border-radius: 18px; background: #fbf4ec; }
 .sk-hub__lower { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
@@ -77,6 +80,10 @@
 .sk-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .sk-center { align-self: center; width: min(440px, 100%); }
 
+@media (max-width: 1024px) {
+  .sk-hub__main { grid-template-columns: minmax(0, 1fr); }
+  .sk-hub__rail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
 @media (max-width: 900px) {
   .sk-hub__promo, .sk-hub__lower, .sk-listings__body, .sk-appt { grid-template-columns: minmax(0, 1fr); }
   .sk-listings__map, .sk-hide-tablet { display: none; }
@@ -86,6 +93,7 @@
   .sk-route { padding: 14px 14px 24px; }
   .sk-hub__banner { grid-template-columns: 1fr; min-height: 180px; }
   .sk-hub__banner > :last-child { display: none; }
+  .sk-hub__rooms-grid, .sk-hub__rail { grid-template-columns: minmax(0, 1fr); }
   .sk-pay__plans, .sk-two-col, .sk-cards-3, .sk-cards-4 { grid-template-columns: minmax(0, 1fr); }
   .sk-messages { border-radius: 0; border: 0; }
   .sk-messages__list { width: 100%; border-right: 0; }

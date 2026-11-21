@@ -120,7 +120,7 @@ function HomePageComponent() {
 
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
   const [marketPosts, setMarketPosts] = useState<MarketplacePost[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => isExploreView)
   const [error, setError] = useState('')
   const [disrupted, setDisrupted] = useState(false)
   const [districtId, setDistrictId] = useState(GUEST_DISTRICTS[0].id)
@@ -293,9 +293,9 @@ function HomePageComponent() {
   // Brand intro hand-off: first listing response settled and (when used) the Maps script is in.
   useEffect(() => {
     if (isLoading || loading) return
-    if (isAuthenticated && apiKey && !mapsLoaded && !mapsLoadError) return
+    if (isExploreView && isAuthenticated && apiKey && !mapsLoaded && !mapsLoadError) return
     markHomeReady()
-  }, [isLoading, loading, isAuthenticated, apiKey, mapsLoaded, mapsLoadError])
+  }, [isLoading, loading, isExploreView, isAuthenticated, apiKey, mapsLoaded, mapsLoadError])
 
   const { showLoader: showPostsLoader, onIntroComplete: onPostsIntroComplete } = useHomejiLoading(
     loading,
@@ -449,16 +449,10 @@ function HomePageComponent() {
     [],
   )
 
-  if (useChangedInputs([isAuthenticated], true) && !isAuthenticated) {
+  if (useChangedInputs([isAuthenticated, isExploreView], true) && (!isAuthenticated || !isExploreView)) {
     setLoading(false)
     setDisrupted(false)
   }
-  useEffect(() => {
-    if (isLoading || isExploreView || !isAuthenticated) return
-    let cancelled = false
-    void Promise.resolve().then(() => { if (!cancelled) void loadPosts() })
-    return () => { cancelled = true }
-  }, [isAuthenticated, isLoading, isExploreView, loadPosts])
 
   const [exploreReload, setExploreReload] = useState(0)
   const exploreFitKey = useRef('')
@@ -545,12 +539,8 @@ function HomePageComponent() {
   ])
 
   useOnReconnect(() => {
-    if (!isAuthenticated) return
-    if (isExploreView) {
-      setExploreReload((n) => n + 1)
-      return
-    }
-    void loadPosts()
+    if (!isAuthenticated || !isExploreView) return
+    setExploreReload((n) => n + 1)
   })
 
   useEffect(() => {

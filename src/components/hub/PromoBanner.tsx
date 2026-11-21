@@ -1,49 +1,28 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { mapSectionUrl } from '../../lib/mapDeepLinks'
+import { UserRole } from '../../api/types'
 import { toggleHomejiAi } from '../../lib/homejiAiLauncher'
 import { promoBannerArt } from './promoBannerArt'
+import { getPromoSlidesForRole, type PromoBannerVariant } from './promoBannerSlides'
 import './PromoBanner.css'
-
-type Slide = {
-  eyebrow: string
-  title: string
-  keyword: string
-  sub: string
-  cta: string
-  to?: string
-  accent: string
-  bg: [string, string]
-  dot: string
-}
-
-const SLIDES: Slide[] = [
-  { eyebrow: 'Mời bạn cùng dùng', title: 'Cả hai nhận voucher', keyword: 'tối đa 50k/người', sub: 'Bạn mới xác nhận email và nhận lời mời. Đợt này có 10 lượt nhận quà; xem điều kiện áp dụng.', cta: 'Mời bạn & nhận quà', to: '/referrals', accent: '#a43c22', bg: ['#fff8ee', '#ffe9d6'], dot: '#f3d9c2' },
-  { eyebrow: 'Tính năng mới', title: 'Tìm bạn ở ghép', keyword: 'hợp gu', sub: 'Ghép theo giờ giấc, ngân sách và thói quen sinh hoạt của bạn.', cta: 'Thử ngay', to: mapSectionUrl('invitations'), accent: '#00b14f', bg: ['#f1faf4', '#d9f3e3'], dot: '#cfe9d8' },
-  { eyebrow: 'Quanh nơi bạn ở', title: 'Đồ cũ và đồ ăn', keyword: 'quanh trọ', sub: 'Tìm đồ dùng và món ăn theo người bán. Xem địa chỉ nhận trước khi đặt.', cta: 'Xem chợ', to: mapSectionUrl('marketplace'), accent: '#0f7c80', bg: ['#eef8f8', '#d5eeee'], dot: '#c8e3e3' },
-  { eyebrow: 'Xem phòng', title: 'Đặt lịch xem phòng', keyword: 'theo giờ bạn rảnh', sub: 'Chọn giờ rảnh, chờ chủ trọ xác nhận trong ứng dụng.', cta: 'Đặt lịch ngay', to: mapSectionUrl('listings'), accent: '#b7791f', bg: ['#fffaf0', '#ffeec7'], dot: '#f0dfb6' },
-  { eyebrow: 'Trợ lý Homeji AI', title: 'AI gợi ý phòng', keyword: 'hợp gu', sub: 'Nói nhu cầu của bạn, AI chọn ra những phòng phù hợp nhất.', cta: 'Hỏi AI ngay', accent: '#00a047', bg: ['#effaf6', '#d4f1e6'], dot: '#c9e8dc' },
-  { eyebrow: 'Gói Premium', title: 'Chọn gói Premium', keyword: 'phù hợp nhu cầu', sub: 'Xem giá, thời hạn và quyền lợi của từng gói trước khi thanh toán.', cta: 'Xem các gói', to: mapSectionUrl('payments'), accent: '#24543e', bg: ['#f1f6f8', '#d9eaf0'], dot: '#cfe0e6' },
-  { eyebrow: 'Quản lý tin cho thuê', title: 'Đăng và quản lý', keyword: 'tin của bạn', sub: 'Thêm ảnh, giá và địa chỉ rõ ràng để người thuê dễ tìm hiểu.', cta: 'Quản lý tin', to: mapSectionUrl('myPosts'), accent: '#a43c22', bg: ['#fdf3ef', '#f9dccf'], dot: '#f0d5c8' },
-  { eyebrow: 'Voucher của bạn', title: 'Ưu đãi đồ ăn', keyword: 'và gói Premium', sub: 'Xem voucher còn hạn, mức giảm và điều kiện dùng trong tài khoản của bạn.', cta: 'Xem voucher', to: '/referrals', accent: '#3f7d1f', bg: ['#f5faec', '#e1f0c9'], dot: '#d9e8c2' },
-]
 
 const INTERVAL_MS = 5000
 const EASE = [0.22, 1, 0.36, 1] as const
 
-/** Eight-slide promo carousel on the signed-in home. */
-export function PromoBanner() {
+/** Promo carousel on the signed-in home (supports full hero or compact rail layout). */
+export function PromoBanner({ variant = 'hero', role }: { variant?: PromoBannerVariant; role?: UserRole | null } = {}) {
+  const slides = useMemo(() => getPromoSlidesForRole(role), [role])
+  const count = slides.length
   const [[index, dir], setState] = useState<[number, number]>([0, 1])
   const [paused, setPaused] = useState(false)
   const ctaRef = useRef<HTMLButtonElement>(null)
-  const count = SLIDES.length
 
   const go = useCallback(
     (step: number) => setState(([i]) => [(i + step + count) % count, step >= 0 ? 1 : -1]),
     [count],
   )
-  const jump = (to: number) => setState(([i]) => [to, to >= i ? 1 : -1])
+  const jump = (to: number) => setState(([i]) => [to, to >= (i % count) ? 1 : -1])
 
   useEffect(() => {
     if (paused) return
@@ -51,12 +30,13 @@ export function PromoBanner() {
     return () => window.clearTimeout(id)
   }, [index, paused, go])
 
-  const slide = SLIDES[index]
+  const safeIndex = index % count
+  const slide = slides[safeIndex]
   const ctaLabel = `${slide.cta} →`
 
   return (
     <section
-      className="hub-promo"
+      className={`hub-promo${variant === 'rail' ? ' hub-promo--rail' : ''}`}
       aria-roledescription="carousel"
       aria-label="Ưu đãi và tính năng Homeji"
       onMouseEnter={() => setPaused(true)}
@@ -66,11 +46,11 @@ export function PromoBanner() {
     >
       <AnimatePresence initial={false} custom={dir} mode="popLayout">
         <motion.div
-          key={index}
+          key={`${role ?? 'all'}-${safeIndex}`}
           className="hub-promo__slide"
           role="group"
           aria-roledescription="slide"
-          aria-label={`${index + 1} / ${count}`}
+          aria-label={`${safeIndex + 1} / ${count}`}
           custom={dir}
           style={{
             backgroundImage: `radial-gradient(${slide.dot} 1.2px, transparent 1.3px), linear-gradient(100deg, ${slide.bg[0]} 55%, ${slide.bg[1]})`,
@@ -93,7 +73,7 @@ export function PromoBanner() {
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.08 }}
-            dangerouslySetInnerHTML={{ __html: promoBannerArt[index] }}
+            dangerouslySetInnerHTML={{ __html: promoBannerArt[slide.artIndex] ?? '' }}
           />
           <div className="hub-promo__copy">
             <p className="hub-promo__eyebrow" style={{ color: slide.accent }}>{slide.eyebrow}</p>
@@ -121,17 +101,17 @@ export function PromoBanner() {
       </AnimatePresence>
 
       <div className="hub-promo__dots">
-        {SLIDES.map((s, i) => (
+        {slides.map((s, i) => (
           <button
             key={s.eyebrow + s.keyword}
             type="button"
-            className={i === index ? 'is-on' : undefined}
+            className={i === safeIndex ? 'is-on' : undefined}
             data-glass-exclude=""
             aria-label={`Banner ${i + 1}`}
-            aria-current={i === index}
+            aria-current={i === safeIndex}
             onClick={() => jump(i)}
           >
-            {i === index ? <motion.span layoutId="hub-promo-dot" transition={{ duration: 0.35, ease: EASE }} /> : null}
+            {i === safeIndex ? <motion.span layoutId="hub-promo-dot" transition={{ duration: 0.35, ease: EASE }} /> : null}
           </button>
         ))}
       </div>
