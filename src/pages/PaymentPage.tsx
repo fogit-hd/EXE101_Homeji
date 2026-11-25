@@ -669,7 +669,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
               </tbody>
             </table>
           </section>
-          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng số dư ví, MoMo, PayOS hoặc PayPal · Đơn chờ tự hủy sau 15 phút</p>
+          <p className="pay-foot"><ShellIcon name="shield" />Thanh toán bằng Ví Homeji, MoMo hoặc PayOS. Đơn chờ tự hủy sau 15 phút.</p>
         </div>
       ) : null}
 
