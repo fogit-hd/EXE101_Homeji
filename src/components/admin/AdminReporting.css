@@ -12,6 +12,7 @@
 .admin-data-table th { padding: 14px 18px; text-align: left; background: var(--surface-muted); color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; }
 .admin-data-table td { padding: 18px; border-top: 1px solid var(--border); vertical-align: top; color: var(--text-heading); line-height: 1.6; }
 .admin-data-table td strong, .admin-data-table td small { display: block; }
+.admin-data-table .admin-register__contact { min-width: 11rem; max-width: 22rem; overflow-wrap: anywhere; }
 .admin-data-table td small { color: var(--text-secondary); font-size: 0.75rem; margin-top: 5px; overflow-wrap: anywhere; }
 .admin-data-table td details summary { font-size: 0.75rem; min-height: 30px; }
 .admin-state { display: inline-block; width: fit-content; margin: 4px 0; border-radius: 7px; padding: 4px 8px; font-size: 0.75rem; font-weight: 650; color: var(--text-secondary); background: var(--surface-muted); }

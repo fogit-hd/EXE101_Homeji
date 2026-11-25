@@ -1,13 +1,21 @@
-import { useEffect, useState } from 'react'
-import { getAdminMembers, getAdminRegisteredAccounts, type AdminMember, type AdminRegisteredAccount } from '../../api/adminReporting'
+import { useEffect, useRef, useState } from 'react'
+import { downloadAdminRegistrations, getAdminMembers, getAdminRegisteredAccounts, type AdminMember, type AdminRegisteredAccount, type AdminRegistrationContact, type AdminRegistrationView } from '../../api/adminReporting'
 import { formatDate, formatPrice, paymentMethodLabel, paymentStatusLabel, userRoleLabel } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
 import './AdminReporting.css'
 
 const memberStateLabel: Record<string, string> = { active: 'Đang có hiệu lực', expired: 'Đã hết hạn', scheduled: 'Chưa bắt đầu', cancelled: 'Đã hủy' }
 
+function RegistrationContact({ email, phone, contactAddress }: Pick<AdminRegistrationContact, 'email' | 'phone' | 'contactAddress'>) {
+  return <td className="admin-register__contact">
+    <span>{email || 'Chờ bổ sung email'}</span>
+    <small>{phone ? `SĐT ${phone}` : 'Chưa có số điện thoại'}</small>
+    <small>{contactAddress || 'Chưa có địa chỉ liên hệ'}</small>
+  </td>
+}
+
 export function AdminRegistrationsPanel() {
-  const [view, setView] = useState<'accounts' | 'members'>('accounts')
+  const [view, setView] = useState<AdminRegistrationView>('accounts')
   const [keyword, setKeyword] = useState('')
   const [query, setQuery] = useState('')
   const [state, setState] = useState('all')
@@ -15,6 +23,9 @@ export function AdminRegistrationsPanel() {
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<{ key: string; accounts?: AdminRegisteredAccount[]; members?: AdminMember[]; total: number }>({ key: '', total: 0 })
   const [error, setError] = useState<{ key: string; message: string }>({ key: '', message: '' })
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<{ key: string; message: string }>({ key: '', message: '' })
+  const exportPending = useRef(false)
   const key = `${view}|${query}|${state}|${page}|${attempt}`
   const loading = result.key !== key && error.key !== key
   useEffect(() => {
@@ -26,29 +37,63 @@ export function AdminRegistrationsPanel() {
     return () => { active = false }
   }, [view, query, state, page, key])
   const shown = result.key === key
+
+  const exportExcel = async (button: HTMLButtonElement) => {
+    if (exportPending.current) return
+    exportPending.current = true
+    setExporting(true)
+    setExportError({ key: '', message: '' })
+    try {
+      const blob = await downloadAdminRegistrations(view, query, state)
+      if (!button.isConnected) return
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = view === 'accounts' ? 'Homeji-tai-khoan.xlsx' : 'Homeji-goi-thanh-vien.xlsx'
+      document.body.append(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (reason) {
+      if (button.isConnected) setExportError({ key, message: getErrorMessage(reason, 'Chưa tải được file Excel. Vui lòng thử lại.') })
+    } finally {
+      exportPending.current = false
+      if (button.isConnected) setExporting(false)
+    }
+  }
+
   return <section className="admin-register" aria-label="Danh sách đăng ký">
     <div className="admin-register__switch" role="group" aria-label="Loại đăng ký">
       <button type="button" aria-pressed={view === 'accounts'} onClick={() => { setView('accounts'); setPage(1) }}>Tài khoản đăng ký</button>
       <button type="button" aria-pressed={view === 'members'} onClick={() => { setView('members'); setPage(1) }}>Gói thành viên</button>
     </div>
     <form className="admin-report-tools" onSubmit={event => { event.preventDefault(); setQuery(keyword.trim()); setPage(1); setAttempt(value => value + 1) }}>
-      <label>Tìm đăng ký<input className="form-input" type="search" value={keyword} maxLength={100} onChange={event => setKeyword(event.target.value)} placeholder="Tên hoặc email…" /></label>
+      <label>Tìm đăng ký<input className="form-input" type="search" value={keyword} maxLength={100} onChange={event => setKeyword(event.target.value)} placeholder={view === 'accounts' ? 'Tên, email, SĐT hoặc địa chỉ' : 'Tên, liên hệ hoặc tên gói'} /></label>
       {view === 'members' ? <label>Trạng thái gói<select className="form-select" value={state} onChange={event => { setState(event.target.value); setPage(1) }}><option value="all">Tất cả trạng thái</option>{Object.entries(memberStateLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label> : null}
       <button type="submit" className="btn btn-secondary">Tìm kiếm</button>
       <button type="button" className="btn btn-ghost" disabled={loading} onClick={() => setAttempt(value => value + 1)}>Làm mới danh sách</button>
+      <button type="button" className="btn btn-primary" disabled={exporting || !shown || !result.total} onClick={event => void exportExcel(event.currentTarget)}>{exporting ? 'Đang tải Excel…' : 'Tải Excel'}</button>
     </form>
-    <p className="admin-report-note">{view === 'accounts' ? 'Bao gồm tài khoản chưa hoàn tất hồ sơ. Tài khoản mới nhất hiển thị trước.' : 'Mỗi dòng là một lượt đăng ký hoặc gia hạn. Trạng thái gói và thanh toán được hiển thị riêng.'}</p>
+    <p className="admin-report-note">{view === 'accounts' ? 'Danh sách gồm cả tài khoản chưa tạo hồ sơ và chủ tin nhập từ nguồn.' : 'Mỗi dòng là một lượt đăng ký hoặc gia hạn.'} File Excel gồm toàn bộ kết quả theo bộ lọc đã áp dụng.</p>
+    {exportError.key === key ? <p role="alert">{exportError.message}</p> : null}
     {loading ? <p role="status">Đang tải danh sách…</p> : error.key === key ? <div role="alert">{error.message} <button type="button" className="btn btn-secondary" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></div> : null}
     {shown ? <>
       <div className="admin-register__count">{result.total.toLocaleString('vi-VN')} {view === 'accounts' ? 'tài khoản' : 'lượt đăng ký gói'}</div>
       {!result.total ? <p className="empty-state">Chưa có đăng ký phù hợp.</p> : <div className="admin-data-table" tabIndex={0} role="region" aria-label={view === 'accounts' ? 'Bảng tài khoản' : 'Bảng gói Premium'}><table>
-        <thead><tr><th>Người đăng ký</th>{view === 'accounts' ? <><th>Tài khoản</th><th>Ngày đăng ký</th><th>Gói hiện tại</th></> : <><th>Gói</th><th>Thời hạn</th><th>Thanh toán</th></>}</tr></thead>
+        <thead><tr><th scope="col">Người đăng ký</th><th scope="col">Liên hệ</th>{view === 'accounts' ? <><th scope="col">Tài khoản</th><th scope="col">Ngày đăng ký</th><th scope="col">Gói hiện tại</th></> : <><th scope="col">Gói</th><th scope="col">Thời hạn</th><th scope="col">Thanh toán</th></>}</tr></thead>
         <tbody>{view === 'accounts' ? result.accounts?.map(account => <tr key={account.userId}>
-          <td><strong>{account.displayName}</strong><small>{account.email || 'Chưa có email'}</small><details><summary>Mã tài khoản</summary><small>{account.userId}</small></details></td>
-          <td>{account.role ? userRoleLabel[account.role] ?? 'Chưa cập nhật' : 'Chưa có hồ sơ'}<small>{account.emailConfirmed ? 'Email đã xác nhận' : 'Email chưa xác nhận'}</small><small>{account.profileCompleted ? 'Hồ sơ đã hoàn tất' : 'Hồ sơ chưa hoàn tất'}</small></td>
+          <td><strong>{account.displayName}</strong>{account.isImportedPublisher ? <small>Chủ tin nhập từ nguồn</small> : null}<details><summary>Mã tài khoản</summary><small>{account.userId}</small></details></td>
+          <RegistrationContact email={account.email} phone={account.phone} contactAddress={account.contactAddress} />
+          <td>
+            <strong>{account.role === null ? 'Chưa tạo hồ sơ cơ bản' : 'Đã tạo hồ sơ cơ bản'}</strong>
+            {account.role !== null ? <small>{userRoleLabel[account.role] ?? 'Chưa cập nhật vai trò'}</small> : null}
+            <small>{account.profileCompleted ? 'Đã lưu nhu cầu ở ghép' : 'Chưa lưu nhu cầu ở ghép'}</small>
+            {account.email ? <small>{account.emailConfirmed ? 'Email đã xác nhận' : 'Email chưa xác nhận'}</small> : null}
+          </td>
           <td>{formatDate(account.registeredAt)}</td><td><span className={`admin-state ${account.isPremium ? 'is-active' : ''}`}>{account.isPremium ? 'Premium' : 'Miễn phí'}</span>{account.premiumExpiresAt ? <small>Đến {formatDate(account.premiumExpiresAt)}</small> : null}</td>
         </tr>) : result.members?.map(member => <tr key={member.id}>
-          <td><strong>{member.displayName}</strong><small>{member.email || 'Chưa có email'}</small><small>Đăng ký {formatDate(member.registeredAt)}</small></td>
+          <td><strong>{member.displayName}</strong>{member.isImportedPublisher ? <small>Chủ tin nhập từ nguồn</small> : null}<small>Đăng ký {formatDate(member.registeredAt)}</small></td>
+          <RegistrationContact email={member.email} phone={member.phone} contactAddress={member.contactAddress} />
           <td><strong>{member.packageName}</strong><span className={`admin-state ${member.state === 'active' ? 'is-active' : ''}`}>{memberStateLabel[member.state] ?? 'Chưa rõ'}</span></td>
           <td>{formatDate(member.startedAt)}<small>đến {formatDate(member.expiresAt)}</small></td>
           <td>{member.amount === null ? 'Không có giao dịch' : formatPrice(member.amount)}<small>{member.paymentId ? member.paymentStatus ? paymentStatusLabel[member.paymentStatus] ?? 'Chưa rõ trạng thái' : 'Chưa rõ trạng thái' : 'Gói được cấp trực tiếp'}</small>{member.paymentMethod ? <small>{paymentMethodLabel[member.paymentMethod] ?? 'Chưa rõ phương thức'}</small> : null}</td>
