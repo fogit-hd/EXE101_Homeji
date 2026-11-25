@@ -468,22 +468,18 @@ export const createPremiumWalletPayment = (packageCode: string, requestId: strin
     method: 'POST', body: { requestId, expectedAmount, voucherId, promotionCode },
   }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
-export const createPremiumMomoPayment = (packageCode: string, expectedAmount?: number, wallet?: MomoWallet) =>
+export const createPremiumMomoPayment = (packageCode: string, expectedAmount?: number, wallet?: MomoWallet, promotionCode?: string) =>
   apiRequest<MomoPaymentResponse>(`/api/subscriptions/premium/${packageCode}/momo/create`, {
     params: { expectedAmount, wallet },
     method: 'POST',
+    body: promotionCode ? { code: promotionCode } : undefined,
   })
 
-export const createPremiumPayOsPayment = (packageCode: string, expectedAmount?: number) =>
+export const createPremiumPayOsPayment = (packageCode: string, expectedAmount?: number, promotionCode?: string) =>
   apiRequest<PayOsPaymentResponse>(`/api/subscriptions/premium/${packageCode}/payos/create`, {
     params: { expectedAmount },
     method: 'POST',
-  })
-
-export const createPremiumPayPalPayment = (packageCode: string, expectedAmount?: number) =>
-  apiRequest<PayPalPaymentResponse>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/paypal/create`, {
-    params: { expectedAmount },
-    method: 'POST',
+    body: promotionCode ? { code: promotionCode } : undefined,
   })
 
 // Notifications

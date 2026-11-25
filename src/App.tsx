@@ -74,9 +74,7 @@ function AppRoutes() {
         <Route path="/invitations" element={<ProtectedRoute><MapHomeSectionRedirect section="invitations" /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><MapHomeSectionRedirect section="payments" /></ProtectedRoute>} />
         <Route path="/payments/wait" element={<ProtectedRoute><PaymentWaitingPage /></ProtectedRoute>} />
-        <Route path="/payments/sandbox" element={<ProtectedRoute>
-          {import.meta.env.DEV ? <PayPalSandboxPage /> : <AdminRoute><PayPalSandboxPage /></AdminRoute>}
-        </ProtectedRoute>} />
+        <Route path="/payments/sandbox" element={<ProtectedRoute><PayPalSandboxPage /></ProtectedRoute>} />
 
         <Route
           path="/admin/:section?"

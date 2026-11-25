@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 
-// Run against local Vite preview. PayPal, Google Pay, Apple Pay and API responses are fixtures.
+// Run against local Vite preview. The live API and provider return are fixtures.
 const preview = process.env.HOMEJI_TEST_BASE_URL || 'http://127.0.0.1:4197'
 const origin = 'https://homeji-wallet.test'
 const browser = await chromium.launch({ channel: process.env.HOMEJI_TEST_BROWSER || 'msedge', headless: true })
@@ -62,12 +62,8 @@ const payments = new Map([
 ])
 
 const createCalls = []
-const walletOrderCalls = []
 const captureCalls = []
 const pageErrors = []
-let appleDomainVerified = false
-let vnIneligible = false
-
 await context.addInitScript((id) => {
   localStorage.setItem('homeji_access_token', 'fixture-session')
   localStorage.setItem('homeji_user_id', id)
@@ -75,87 +71,9 @@ await context.addInitScript((id) => {
   sessionStorage.setItem('hj-intro-seen', '1')
 }, userId)
 
-const paypalSdk = `
-  window.paypal = {
-    Googlepay: () => ({
-      config: async () => ({ allowedPaymentMethods: [{ type: 'CARD' }], merchantInfo: {} }),
-      confirmOrder: async ({ orderId }) => {
-        window.__lastGoogleOrder = orderId;
-        return { status: 'APPROVED' };
-      },
-      initiatePayerAction: async () => ({ liabilityShift: 'POSSIBLE' }),
-    }),
-    Applepay: () => ({
-      config: async () => ({ isEligible: true, countryCode: 'US', supportedNetworks: ['visa'], merchantCapabilities: ['supports3DS'] }),
-      validateMerchant: async () => ({ merchantSession: {} }),
-      confirmOrder: async ({ orderId }) => { window.__lastAppleOrder = orderId; },
-    }),
-  };
-`
-
-const googleSdk = `window.google = { payments: { api: { PaymentsClient: class {
-  constructor(options) { this.authorize = options.paymentDataCallbacks.onPaymentAuthorized }
-  async isReadyToPay() { return { result: true } }
-  createButton({ onClick }) {
-    const button = document.createElement('button');
-    button.textContent = 'Google Pay';
-    button.onclick = onClick;
-    return button;
-  }
-  async loadPaymentData(request) {
-    window.__lastGoogleAmount = request.transactionInfo.totalPrice;
-    window.googleResult = await this.authorize({ paymentMethodData: {} });
-  }
-} } } };`
-
-const appleSdk = `window.ApplePaySession = class {
-  static supportsVersion = () => true;
-  static canMakePayments = () => true;
-  static STATUS_SUCCESS = 1;
-  static STATUS_FAILURE = 2;
-  constructor(_, request) { window.__lastAppleAmount = request.total.amount }
-  begin() { this.onvalidatemerchant({ validationURL: 'fixture' }) }
-  completeMerchantValidation() { this.onpaymentauthorized({ payment: { token: 'fixture' } }) }
-  completePayment(status) { window.appleResult = status }
-};
-customElements.define('apple-pay-button', class extends HTMLElement {
-  connectedCallback() {
-    const button = document.createElement('button');
-    button.textContent = 'Apple Pay';
-    this.append(button);
-  }
-});`
-
 await context.route('**/*', async (route) => {
   const url = new URL(route.request().url())
-  if (url.href.startsWith('https://www.paypal.com/sdk/js?')) {
-    const body = vnIneligible
-      ? `
-        window.paypal = {
-          Googlepay: () => ({
-            config: async () => { throw new Error('Not Eligible for GooglePay Payments') },
-          }),
-          Applepay: () => ({
-            config: async () => ({ isEligible: false, countryCode: 'VN', supportedNetworks: ['visa'], merchantCapabilities: ['supports3DS'] }),
-          }),
-        };
-      `
-      : paypalSdk
-    return route.fulfill({ contentType: 'application/javascript', body })
-  }
-  if (url.hostname === 'pay.google.com') {
-    return route.fulfill({ contentType: 'application/javascript', body: googleSdk })
-  }
-  if (url.hostname === 'applepay.cdn-apple.com') {
-    return route.fulfill({ contentType: 'application/javascript', body: appleSdk })
-  }
   if (url.origin !== origin) return route.abort()
-
-  if (url.pathname === '/.well-known/apple-developer-merchantid-domain-association') {
-    return appleDomainVerified
-      ? route.fulfill({ contentType: 'text/plain', body: 'fixture-apple-pay-domain' })
-      : route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })
-  }
 
   if (url.pathname.startsWith('/hubs/')) {
     return route.fulfill({ status: 503, body: '' })
@@ -218,45 +136,7 @@ await context.route('**/*', async (route) => {
     })
   }
   if (url.pathname === '/api/subscriptions/premium/PREMIUM_MONTHLY/paypal/create') {
-    const quote = quoteFor(99000)
-    const id = 'pay-premium-1'
-    createCalls.push({ kind: 'premium', amount: 99000 })
-    payments.set(id, {
-      id,
-      userId,
-      method: 4,
-      status: 1,
-      amount: 99000,
-      purpose: 2,
-      packageCode: 'PREMIUM_MONTHLY',
-      orderCode: 'PPPREMIUM1',
-      requestId: 'PPORDPREM1',
-      description: 'Homeji Gói Trải Nghiệm 30 ngay',
-      paymentUrl: 'https://www.paypal.com/checkoutnow?token=PPORDPREM1',
-      deeplink: null,
-      qrCodeUrl: null,
-      qrCode: null,
-      qrDataUrl: null,
-      externalTransactionId: null,
-      providerMessage: null,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      paidAt: null,
-      expiresAt,
-      quote,
-    })
-    return route.fulfill({
-      json: {
-        paymentId: id,
-        orderCode: 'PPPREMIUM1',
-        payPalOrderId: 'PPORDPREM1',
-        amount: 99000,
-        status: 1,
-        approvalUrl: 'https://www.paypal.com/checkoutnow?token=PPORDPREM1',
-        providerMessage: null,
-        quote,
-      },
-    })
+    throw new Error('Premium PayPal must never create a live order')
   }
   if (url.pathname === '/api/payments/paypal/create') {
     const body = route.request().postDataJSON()
@@ -316,20 +196,6 @@ await context.route('**/*', async (route) => {
     })
   }
 
-  const walletOrderMatch = url.pathname.match(/^\/api\/payments\/([^/]+)\/paypal\/wallets\/(google-pay|apple-pay)\/orders$/)
-  if (walletOrderMatch) {
-    const [, id, wallet] = walletOrderMatch
-    const record = payments.get(id)
-    walletOrderCalls.push({ id, wallet })
-    return route.fulfill({
-      json: {
-        orderId: `ORDER-${id}-${wallet}`,
-        totalUsd: record.quote.totalUsd.toFixed(2),
-        ticket: `ticket-${id}-${wallet}`,
-      },
-    })
-  }
-
   const captureMatch = url.pathname.match(/^\/api\/payments\/([^/]+)\/paypal\/capture$/)
   if (captureMatch) {
     const id = captureMatch[1]
@@ -367,43 +233,53 @@ try {
   page.setDefaultTimeout(10_000)
   page.on('pageerror', (error) => pageErrors.push(error.message))
 
-  // 1. Premium subscription checkout with live USD quote + Google Pay on /payments/wait
+  // New Premium checkouts link to Demo; an existing live order can still settle.
   await page.goto(origin + '/?section=payments')
-  await page.getByRole('link', { name: 'Nạp tiền vào ví', exact: true }).waitFor()
-  await page.getByRole('button', { name: 'Mua bằng PayPal · Google Pay · Apple Pay', exact: true }).first().waitFor()
-  await page.getByRole('button', { name: 'Chọn gói', exact: true }).click()
-  await page.getByRole('button', { name: 'PayPal · Google Pay · Apple Pay', exact: true }).click()
-
-  const confirmDialog = page.getByRole('dialog', { name: 'Xác nhận mua gói Premium' })
-  await confirmDialog.waitFor()
-  await confirmDialog.getByText(/Vietcombank \(Tỷ giá bán USD\)/).waitFor()
-  await confirmDialog.getByText('4,47 USD', { exact: true }).first().waitFor()
+  await page.getByRole('link', { name: 'PayPal · Demo', exact: true }).first().click()
+  await page.getByRole('heading', { name: 'PayPal Demo', exact: true }).waitFor()
   assert.equal(createCalls.length, 0)
-
-  await confirmDialog.getByRole('button', { name: /Xác nhận thanh toán 4,47 USD/ }).click()
-  await page.waitForURL(/\/payments\/wait\?paymentId=pay-premium-1/)
+  payments.set('pay-premium-1', {
+    id: 'pay-premium-1',
+    userId,
+    method: 4,
+    status: 1,
+    amount: 99000,
+    purpose: 2,
+    packageCode: 'PREMIUM_MONTHLY',
+    orderCode: 'PPPREMIUM1',
+    requestId: 'PPORDPREM1',
+    description: 'Homeji Gói Trải Nghiệm 30 ngay',
+    paymentUrl: 'https://www.paypal.com/checkoutnow?token=PPORDPREM1',
+    deeplink: null,
+    qrCodeUrl: null,
+    qrCode: null,
+    qrDataUrl: null,
+    externalTransactionId: null,
+    providerMessage: null,
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    paidAt: null,
+    expiresAt,
+    quote: quoteFor(99000),
+  })
+  await page.goto(origin + '/payments/wait?paymentId=pay-premium-1')
   await page.getByText('4,47 USD', { exact: true }).first().waitFor()
-  await page.getByText(/Apple Pay chưa được xác thực tên miền/).waitFor()
-  assert.equal(await page.getByRole('button', { name: 'Apple Pay', exact: true }).count(), 0)
   const paypalLink = page.getByRole('link', { name: /Thanh toán qua PayPal/ })
-  assert.equal(await paypalLink.getAttribute('target'), null)
   assert.equal(await paypalLink.getAttribute('href'), 'https://www.paypal.com/checkoutnow?token=PPORDPREM1')
-  await page.getByRole('button', { name: 'Google Pay', exact: true }).click()
+  await page.goto(origin + '/payments/wait?orderCode=PPPREMIUM1&provider=paypal&token=PPORDPREM1')
   await page.getByRole('heading', { name: 'Thanh toán thành công', exact: true }).waitFor()
-  assert.equal(await page.evaluate(() => window.__lastGoogleAmount), '4.47')
-  assert.equal(await page.evaluate(() => window.googleResult.transactionState), 'SUCCESS')
+  assert.equal(captureCalls.at(-1).payPalOrderId, 'PPORDPREM1')
 
-  // 2. Wallet top-up with live USD quote + Apple Pay on /payments/wait (when domain association exists)
-  appleDomainVerified = true
+  // Wallet top-up still creates a live PayPal web order.
   await page.goto(origin + '/?section=marketplace&market=wallet&wallet=deposit')
-  await page.getByRole('button', { name: /PayPal · Google Pay · Apple Pay/ }).click()
+  await page.getByRole('button', { name: /PayPal · Thẻ quốc tế/ }).click()
   await page.getByText('8,71 USD', { exact: true }).first().waitFor()
   await page.getByRole('button', { name: /Tiếp tục · 8,71 USD/ }).click()
   await page.waitForURL(/\/payments\/wait\?paymentId=pay-wallet-1/)
-  await page.getByRole('button', { name: 'Apple Pay', exact: true }).click()
+  assert.equal(await page.getByRole('link', { name: /Thanh toán qua PayPal/ }).getAttribute('href'),
+    'https://www.paypal.com/checkoutnow?token=PPORDWAL1')
+  await page.goto(origin + '/payments/wait?orderCode=PPWALLET1&provider=paypal&token=PPORDWAL1')
   await page.getByRole('heading', { name: 'Thanh toán thành công', exact: true }).waitFor()
-  assert.equal(await page.evaluate(() => window.__lastAppleAmount), '8.71')
-  assert.equal(await page.evaluate(() => window.appleResult), 1)
   assert.equal(await page.getByRole('link', { name: 'Về ví Homeji', exact: true }).getAttribute('href'), '/?section=marketplace&market=wallet')
 
   // 3. PayPal redirect return auto-capture
@@ -411,37 +287,11 @@ try {
   await page.getByRole('heading', { name: 'Thanh toán thành công', exact: true }).waitFor()
   assert.equal(captureCalls.at(-1).payPalOrderId, 'PAYPALRET1')
 
-  // 4. Ineligible provider wallets explain why no button is shown and keep PayPal available.
-  vnIneligible = true
-  appleDomainVerified = false
-  payments.set('pay-vn-pending', {
-    ...payments.get('pay-return-1'),
-    id: 'pay-vn-pending',
-    orderCode: 'PPVNCHECK',
-    requestId: 'PPORDVN1',
-    paymentUrl: 'https://www.paypal.com/checkoutnow?token=PPORDVN1',
-    status: 1,
-  })
-  const vnPage = await context.newPage()
-  vnPage.setDefaultTimeout(10_000)
-  vnPage.on('pageerror', (error) => pageErrors.push(error.message))
-  await vnPage.goto(origin + '/payments/wait?paymentId=pay-vn-pending')
-  await vnPage.getByText(/PayPal chưa cung cấp Google Pay hoặc Apple Pay/).waitFor()
-  await vnPage.getByRole('link', { name: /Thanh toán qua PayPal/ }).waitFor()
-  assert.equal(await vnPage.getByText(/Apple Pay chưa được xác thực tên miền/).count(), 0)
-  assert.equal(await vnPage.getByRole('button', { name: 'Apple Pay', exact: true }).count(), 0)
-  assert.equal(await vnPage.getByRole('button', { name: 'Google Pay', exact: true }).count(), 0)
-
   assert.deepEqual(createCalls, [
-    { kind: 'premium', amount: 99000 },
     { kind: 'wallet', amount: 200000 },
   ])
-  assert.deepEqual(walletOrderCalls, [
-    { id: 'pay-premium-1', wallet: 'google-pay' },
-    { id: 'pay-wallet-1', wallet: 'apple-pay' },
-  ])
   assert.deepEqual(pageErrors, [])
-  console.log('Real PayPal/Google Pay/Apple Pay flow passed: Premium quote+Google Pay, Wallet top-up quote+Apple Pay, and redirect return capture.')
+  console.log('PASS Premium PayPal Demo, existing live Premium settlement and live wallet top-up web checkout')
 } finally {
   await browser.close()
 }

@@ -705,6 +705,7 @@
 .pay-method.is-momo { color: #a50064; }
 .pay-method.is-payos { color: #136fd8; }
 .pay-method.is-paypal { grid-column: 1 / -1; color: #003087; }
+a.pay-method.is-paypal { text-decoration: none; }
 html[data-theme='dark'] .pay-method.is-paypal { color: #8ec5ff; }
 .pay-method:hover { border-color: currentColor; background: var(--pay-surface); }
 .pay-method:disabled { opacity: .6; cursor: wait; }
@@ -853,6 +854,7 @@ html[data-theme='dark'] .pay-method.is-paypal { color: #8ec5ff; }
 .pay-v2 .voucher-picker label { color:var(--pay-ink); font-size:0.75rem; font-weight:650; }
 .pay-v2 .voucher-picker select { display:block; width:100%; min-width:0; min-height:46px; box-sizing:border-box; padding:9px 38px 9px 12px; border:1px solid var(--pay-line); border-radius:11px; background-color:var(--surface-elevated); color:var(--pay-ink); font:inherit; font-size:0.8125rem; line-height:1.4; }
 .pay-v2 .voucher-picker small,.pay-v2 .voucher-picker [role=alert] { margin:0; color:var(--pay-muted); font-size:0.75rem; line-height:1.55; overflow-wrap:anywhere; }
+.pay-promotion-form { display:grid; gap:7px; min-width:0; }
 .pay-promotion-code { display:flex; flex-wrap:wrap; gap:8px; }
 .pay-promotion-code input { flex:1 1 140px; width:100%; min-width:0; min-height:46px; box-sizing:border-box; padding:9px 12px; border:1px solid var(--pay-line); border-radius:11px; background:var(--surface-elevated); color:var(--pay-ink); font:inherit; }
 .pay-promotion-code input:focus-visible { outline:2px solid var(--pay-accent, currentColor); outline-offset:2px; }

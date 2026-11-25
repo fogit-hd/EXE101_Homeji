@@ -1,9 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { getPayPalQuote, type MomoWallet, type PayPalCheckoutConfig, type SubscriptionPackage } from '../../api'
+import type { MomoWallet, SubscriptionPackage } from '../../api'
 import { PaymentMethod } from '../../api/types'
-import { getErrorMessage } from '../../lib/errors'
-import { formatPrice, formatUsd } from '../../lib/labels'
+import { formatPrice } from '../../lib/labels'
 import { formatDailyEquivalentPrice } from '../../lib/subscriptionPlanDisplay'
 import { PaymentMethodBadges } from './PaymentMethodMarks'
 import { isMomoWallet } from '../../hooks/useMomoWallets'
@@ -11,7 +10,7 @@ import './PremiumPurchaseConfirmation.css'
 
 export type PremiumPurchase = {
   plan: SubscriptionPackage
-  method: 'wallet' | 'momo' | 'payos' | 'paypal' | MomoWallet
+  method: 'wallet' | 'momo' | 'payos' | MomoWallet
   amountDue: number
   discount: number
   voucherId?: string
@@ -23,7 +22,6 @@ const methodNames = {
   wallet: 'Ví Homeji',
   momo: 'MoMo',
   payos: 'PayOS',
-  paypal: 'PayPal · Thẻ quốc tế',
   'apple-pay': 'Apple Pay qua MoMo',
   'google-pay': 'Google Pay qua MoMo',
 }
@@ -32,12 +30,9 @@ const methodEnumMap: Record<PremiumPurchase['method'], PaymentMethod> = {
   wallet: PaymentMethod.Wallet,
   momo: PaymentMethod.Momo,
   payos: PaymentMethod.PayOs,
-  paypal: PaymentMethod.PayPal,
   'apple-pay': PaymentMethod.Momo,
   'google-pay': PaymentMethod.Momo,
 }
-
-type QuoteState = { amountDue: number; config?: PayPalCheckoutConfig; error?: string }
 
 export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onCancel, onConfirm }: {
   purchase: PremiumPurchase
@@ -50,36 +45,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
   const cancel = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const descriptionId = useId()
-  const [quoteState, setQuoteState] = useState<QuoteState | null>(null)
   const dailyEquivalentPrice = formatDailyEquivalentPrice(purchase.amountDue, purchase.plan.durationDays)
-
-  const isPayPal = purchase.method === 'paypal'
-  const currentQuoteState = isPayPal && quoteState?.amountDue === purchase.amountDue ? quoteState : null
-  const quoteLoading = isPayPal && currentQuoteState === null
-  const quote = currentQuoteState?.config?.quote ?? null
-  const payPalDisabled = isPayPal && currentQuoteState?.config?.enabled === false
-  const quoteError = currentQuoteState?.error
-    ?? (payPalDisabled ? 'Cổng PayPal chưa được cấu hình trên máy chủ.' : undefined)
-
-  useEffect(() => {
-    if (!isPayPal) return
-    const controller = new AbortController()
-    void getPayPalQuote(purchase.amountDue, controller.signal)
-      .then((config) => {
-        if (!controller.signal.aborted) {
-          setQuoteState({ amountDue: purchase.amountDue, config })
-        }
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
-          setQuoteState({
-            amountDue: purchase.amountDue,
-            error: getErrorMessage(error, 'Chưa tải được tỷ giá USD.'),
-          })
-        }
-      })
-    return () => controller.abort()
-  }, [isPayPal, purchase.amountDue])
 
   useEffect(() => {
     const element = dialog.current
@@ -121,28 +87,15 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
         <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
       </dl>
 
-      {quote ? (
-        <dl className="premium-purchase-confirm__quote" aria-label="Chi tiết quy đổi USD">
-          <div><dt>Tỷ giá · {quote.rateSource}</dt><dd>1 USD = {formatPrice(quote.exchangeRateVnd)}</dd></div>
-          <div><dt>Quy đổi gốc</dt><dd>{formatUsd(quote.baseUsd)}</dd></div>
-          <div><dt>Phí chuyển đổi & cổng quốc tế</dt><dd>{formatUsd(quote.totalFeeUsd)}</dd></div>
-          <div className="premium-purchase-confirm__total is-usd"><dt>Tổng thanh toán quốc tế</dt><dd>{formatUsd(quote.totalUsd)}</dd></div>
-        </dl>
-      ) : null}
-
-      {quoteLoading ? <p className="premium-purchase-confirm__note" role="status">Đang lấy tỷ giá USD theo thời giá…</p> : null}
-      {quoteError ? <p className="payment-inline-error" role="alert">{quoteError}</p> : null}
       <p className="premium-purchase-confirm__note">{purchase.method === 'wallet'
         ? `Sẽ trừ ${formatPrice(purchase.amountDue)} từ ví Homeji.${walletBalance === null ? '' : ` Số dư dự kiến còn ${formatPrice(Math.max(0, walletBalance - purchase.amountDue))}.`}`
-        : purchase.method === 'paypal'
-          ? 'PayPal sẽ hiển thị các cách thanh toán khả dụng, gồm thẻ quốc tế nếu tài khoản và khu vực hỗ trợ. Số tiền USD đã được khóa tỷ giá.'
-          : isMomoWallet(purchase.method)
-            ? 'Homeji gửi email tài khoản cho MoMo để tạo đơn. Bạn xác nhận thanh toán trên trang MoMo.'
-            : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
+        : isMomoWallet(purchase.method)
+          ? 'Homeji gửi email tài khoản cho MoMo để tạo đơn. Bạn xác nhận thanh toán trên trang MoMo.'
+          : `Sau khi xác nhận, Homeji sẽ tạo yêu cầu thanh toán qua ${methodNames[purchase.method]}.`}</p>
       <div className="premium-purchase-confirm__actions">
         <button ref={cancel} type="button" className="pay-btn" disabled={busy} onClick={onCancel}>Quay lại</button>
-        <button type="button" className="pay-btn pay-btn--primary" disabled={busy || quoteLoading || Boolean(quoteError)} onClick={onConfirm}>
-          {busy ? 'Đang xử lý…' : quote ? `Xác nhận thanh toán ${formatUsd(quote.totalUsd)}` : `Xác nhận thanh toán ${formatPrice(purchase.amountDue)}`}
+        <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={onConfirm}>
+          {busy ? 'Đang xử lý…' : `Xác nhận thanh toán ${formatPrice(purchase.amountDue)}`}
         </button>
       </div>
     </dialog>,
