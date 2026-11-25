@@ -23,6 +23,7 @@ import { HomejiLoader } from "../components/HomejiLoader"
 import { usePersistentLoad } from "../components/HomejiLoader.logic"
 import { MapToast } from '../components/map/MapToast'
 import { RevealText } from '../components/motion/RevealText'
+import { CancelPendingPaymentButton } from '../components/payments/CancelPendingPaymentButton'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
 import { MomoBadge, PayOsBadge, PayPalLogo } from '../components/payments/PaymentMethodMarks'
 import { PremiumListingPreview } from '../components/payments/PremiumListingPreview'
@@ -358,6 +359,21 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
     } finally {
       setChecking(false)
     }
+  }
+
+  const handlePaymentCancellation = (updated: Payment) => {
+    setPayments(previous => previous.map(payment => payment.id === updated.id ? updated : payment))
+    if (updated.status === PaymentStatus.Completed) {
+      showToast('Homeji đã xác nhận đơn này được thanh toán.', 'info')
+      void reload()
+    } else if (updated.status === PaymentStatus.Cancelled) {
+      showToast('Đã hủy đơn thanh toán.', 'success')
+    }
+  }
+
+  const handlePaymentCancellationError = (message: string) => {
+    showToast(message, 'error')
+    void reload()
   }
 
   if (showLoader) {
@@ -699,6 +715,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 <span> — tự hủy sau 15 phút kể từ lúc tạo</span>
               </p>
               <Link className="pay-btn pay-btn--primary" to={paymentWaitingUrl(pendingPayment.id)}>Tiếp tục thanh toán →</Link>
+              <CancelPendingPaymentButton key={pendingPayment.id} payment={pendingPayment} className="pay-btn"
+                onUpdated={handlePaymentCancellation} onError={handlePaymentCancellationError} />
             </div>
           ) : null}
 
@@ -762,6 +780,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <>
                     <div className="payment-detail-note is-pending"><p>Đơn tự hủy nếu chưa thanh toán trong 15 phút kể từ lúc tạo.</p></div>
                     <Link className="pay-btn pay-btn--primary" to={paymentWaitingUrl(activePayment.id)}>Tiếp tục thanh toán →</Link>
+                    {pendingPayment?.id !== activePayment.id && <CancelPendingPaymentButton key={activePayment.id} payment={activePayment} className="pay-btn"
+                      onUpdated={handlePaymentCancellation} onError={handlePaymentCancellationError} />}
                   </>
                 ) : activePayment.status === PaymentStatus.Cancelled || activePayment.status === PaymentStatus.Expired ? (
                   <div className="payment-detail-note"><p>{activePayment.providerMessage || 'Đơn đã hủy. Bạn có thể tạo một giao dịch mới.'}</p></div>

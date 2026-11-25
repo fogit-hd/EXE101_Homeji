@@ -518,6 +518,10 @@ export const getPayment = (paymentId: string) =>
 export const getPaymentByOrderCode = (orderCode: string) =>
   apiRequest<Payment>(`/api/payments/orders/${encodeURIComponent(orderCode)}`).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
+export const cancelPremiumPayment = (paymentId: string) =>
+  apiRequest<Payment>(`/api/payments/${encodeURIComponent(paymentId)}/cancel`, { method: 'POST' })
+    .then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
+
 export type MomoWallet = 'apple-pay' | 'google-pay'
 
 export const getMomoWalletAvailability = (signal?: AbortSignal) =>

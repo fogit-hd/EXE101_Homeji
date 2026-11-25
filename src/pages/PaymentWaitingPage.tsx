@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { capturePayPalPayment } from '../api'
+import { capturePayPalPayment, type Payment } from '../api'
 import { PaymentMethod, PaymentPurpose, PaymentStatus } from '../api/types'
+import { CancelPendingPaymentButton } from '../components/payments/CancelPendingPaymentButton'
 import { PayPalCheckoutWallets } from '../components/payments/PayPalCheckoutWallets'
 import { PaymentMethodBadges } from '../components/payments/PaymentMethodMarks'
 import { PaymentWaitSkeleton } from '../components/skeletons/PageSkeletons'
@@ -32,7 +33,11 @@ export function PaymentWaitingPage() {
   const [params] = useSearchParams()
   const paymentId = params.get('paymentId')
   const orderCode = params.get('orderCode') ?? params.get('orderId')
-  const { payment, busy, error, refresh } = usePaymentTracking(paymentId, orderCode)
+  const { payment: trackedPayment, busy, error, refresh } = usePaymentTracking(paymentId, orderCode)
+  const [cancellationResult, setCancellationResult] = useState<Payment | null>(null)
+  const [cancellationError, setCancellationError] = useState<{ paymentId: string; message: string } | null>(null)
+  const payment = trackedPayment?.status === PaymentStatus.Pending && cancellationResult?.id === trackedPayment.id
+    ? cancellationResult : trackedPayment
   const [now, setNow] = useState(Date.now)
   const [capturing, setCapturing] = useState(false)
   const [captureError, setCaptureError] = useState('')
@@ -101,7 +106,7 @@ export function PaymentWaitingPage() {
     : state === 'cancel-return' ? `Bạn đã trở về từ thao tác hủy trên ${provider}. Homeji đang đối chiếu trạng thái giao dịch; trang này sẽ không yêu cầu bạn tiếp tục trả tiền.`
       : state === 'failed-return' ? `${provider} trả về thông báo chưa hoàn tất. Homeji đang kiểm tra kết quả cuối cùng. Nếu tài khoản đã bị trừ tiền, hãy kiểm tra trạng thái trước khi tạo giao dịch mới.`
         : state === 'verifying' ? `Đang chờ xác nhận cuối cùng từ hệ thống thanh toán ${provider}. Bạn chưa cần thanh toán lại; kết quả sẽ tự cập nhật tại đây.`
-          : state === 'cancelled' ? 'Giao dịch này đã được hệ thống ghi nhận hủy. Đơn cũ không còn được dùng để thanh toán.'
+          : state === 'cancelled' ? 'Homeji đã ghi nhận hủy đơn. Hãy bỏ liên kết và mã QR cũ. Nếu đã trả tiền, hãy kiểm tra lại giao dịch.'
             : state === 'expired' || state === 'expired-return' || state === 'overdue' ? 'Không tiếp tục dùng liên kết hoặc mã QR của đơn này. Nếu đã trả tiền, hãy kiểm tra trạng thái trước khi tạo đơn khác.'
               : state === 'failed' ? 'Hệ thống ghi nhận giao dịch chưa thành công. Kiểm tra tài khoản thanh toán trước khi thử lại nếu bạn thấy có khoản tiền bị trừ.'
                 : payment.method === PaymentMethod.PayPal
@@ -141,6 +146,7 @@ export function PaymentWaitingPage() {
         )}
         {pending && state !== 'pending' && <p className="payment-result-reconciling"><ShellIcon name="shield" />Trạng thái máy chủ: đang đối chiếu. Thông báo trả về từ cổng chưa phải xác nhận ghi nhận tiền.</p>}
         {(error || captureError) && <p className="payment-inline-error" role="alert">{captureError || `${error} Thông tin trên là lần kiểm tra gần nhất.`}</p>}
+        {pending && cancellationError?.paymentId === payment.id && <p className="payment-inline-error" role="alert">{cancellationError.message}</p>}
 
         {isPayPalCheckout ? (
           <PayPalCheckoutWallets paymentId={payment.id} checkoutUrl={url} onCompleted={handleWalletCompleted} />
@@ -162,23 +168,24 @@ export function PaymentWaitingPage() {
                 : topup ? 'Tạo giao dịch nạp mới' : premium ? 'Chọn gói và thử lại' : 'Về lịch sử giao dịch'}
             </Link>
           )}
-          {pending || !pending ? (
-            <div className={`payment-secondary-actions${pending ? ' is-split' : ''}`}>
-              {pending && (
-                <button
-                  type="button"
-                  className="payment-button is-secondary"
-                  disabled={busy || capturing}
-                  onClick={() => void handleRefresh()}
-                >
-                  {busy || capturing ? 'Đang kiểm tra…' : 'Kiểm tra trạng thái'}
-                </button>
-              )}
-              <Link className="payment-result-secondary" to={pending ? homeUrl : historyUrl}>
-                {pending ? topup ? 'Về ví Homeji' : 'Quay lại Homeji' : 'Lịch sử giao dịch'}
-              </Link>
-            </div>
-          ) : null}
+          <div className={`payment-secondary-actions${pending ? ' is-split' : ''}`}>
+            {pending && (
+              <button
+                type="button"
+                className="payment-button is-secondary"
+                disabled={busy || capturing}
+                onClick={() => void handleRefresh()}
+              >
+                {busy || capturing ? 'Đang kiểm tra…' : 'Kiểm tra trạng thái'}
+              </button>
+            )}
+            <Link className="payment-result-secondary" to={pending ? homeUrl : historyUrl}>
+              {pending ? topup ? 'Về ví Homeji' : 'Quay lại Homeji' : 'Lịch sử giao dịch'}
+            </Link>
+          </div>
+          <CancelPendingPaymentButton key={payment.id} payment={payment} className="payment-button is-secondary"
+            onUpdated={(updated) => { setCancellationError(null); setCancellationResult(updated); void refresh() }}
+            onError={(message) => { setCancellationError({ paymentId: payment.id, message }); void refresh() }} />
         </div>
         <p className="payment-wait-foot"><ShellIcon name="shield" /><span>{pending ? 'Bạn có thể rời trang và kiểm tra lại từ lịch sử giao dịch.' : 'Kết quả được lấy từ giao dịch đã lưu trên máy chủ Homeji.'}</span></p>
       </section>

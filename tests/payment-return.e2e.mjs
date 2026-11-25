@@ -9,8 +9,13 @@ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Fi
 const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'})
 const id='11111111-1111-4111-8111-111111111111',paymentId='22222222-2222-4222-8222-222222222222'
 await context.addInitScript(id=>{localStorage.setItem('homeji_access_token','payment-return-fixture');localStorage.setItem('homeji_user_id',id);localStorage.setItem('hj-intro-seen','1');localStorage.setItem('homeji_analytics_consent_v1','rejected')},id)
-let status=1,method=2,purpose=3,lookupError=false,expired=false
+let status=1,method=2,purpose=3,lookupError=false,expired=false,cancellationCalls=0,cancellationFails=false
 await context.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==new URL(base).origin)return r.abort();if(u.pathname.startsWith('/hubs/'))return r.abort();if(!u.pathname.startsWith('/api/'))return r.continue();
+ const payment=()=>({id:paymentId,userId:id,status,method,purpose,packageCode:purpose===2?'PREMIUM_MONTHLY':null,amount:200000,orderCode:'803347',description:purpose===3?'Nạp Số dư Homeji':'Gói Premium',paymentUrl:'https://pay.payos.vn/fixture',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+(expired?-60000:600000)).toISOString(),paidAt:status===2?new Date().toISOString():null})
+ if(u.pathname===`/api/payments/${paymentId}/cancel`&&r.request().method()==='POST'){
+  cancellationCalls++;if(cancellationFails)return r.fulfill({status:409,json:{detail:'Cổng thanh toán đang xử lý đơn.'}})
+  status=4;return r.fulfill({json:payment()})
+ }
  if(r.request().method()!=='GET'&&/\/api\/(payments|wallet)/.test(u.pathname))throw Error('No payment writes in UI fixtures')
  let json=[]
  if(u.pathname==='/api/profile/me')json={id,displayName:'Nguyễn Văn An',role:1,onboardingCompleted:true}
@@ -18,7 +23,8 @@ await context.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==
  if(u.pathname==='/api/wallet')json={balance:3205600,isActivated:true}
  if(u.pathname==='/api/chatbot/popup-config')json={enabled:false}
  if(u.pathname==='/api/search-interests')json={settings:{enabled:false},suggestions:[],following:[],rooms:[]}
- if(u.pathname.startsWith('/api/payments/')&&!u.pathname.includes('packages')){if(lookupError)return r.fulfill({status:503,json:{detail:'Fixture unavailable'}});json={id:paymentId,userId:id,status,method,purpose,amount:200000,orderCode:'803347',description:purpose===3?'Nạp Số dư Homeji':'Gói Premium',paymentUrl:'https://pay.payos.vn/fixture',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+(expired?-60000:600000)).toISOString(),paidAt:status===2?new Date().toISOString():null}}
+ if(u.pathname==='/api/payments')json=[payment()]
+ if(u.pathname.startsWith('/api/payments/')&&!u.pathname.includes('packages')){if(lookupError)return r.fulfill({status:503,json:{detail:'Fixture unavailable'}});json=payment()}
  return r.fulfill({json})})
 const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message))
 async function open(query,viaPlans=false){await page.goto(base+(viaPlans?'/?section=payments&':'/payments/wait?')+'orderCode=803347&'+query);const skip=page.getByRole('button',{name:'Bỏ qua',exact:true});if(await skip.isVisible().catch(()=>false))await skip.click();await page.locator('.hj-intro').waitFor({state:'hidden'})}
@@ -49,5 +55,20 @@ try{
  lookupError=false;status=3;method=2;purpose=3
  await page.setViewportSize({width:390,height:844});await open('provider=payos');await page.getByRole('heading',{name:'Thanh toán không thành công',exact:true}).waitFor()
  for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`${out}/mobile-${theme}.png`,fullPage:true})}
+ status=1;purpose=2;await open('provider=payos')
+ const cancel=page.getByRole('button',{name:'Hủy đơn thanh toán',exact:true})
+ const confirm=page.getByRole('dialog',{name:'Hủy đơn thanh toán?'})
+ await cancel.click();await confirm.getByRole('button',{name:'Giữ đơn'}).click()
+ assert.equal(cancellationCalls,0)
+ cancellationFails=true;await cancel.click();await confirm.getByRole('button',{name:'Xác nhận hủy'}).click()
+ await page.getByText('Cổng thanh toán đang xử lý đơn.',{exact:true}).waitFor()
+ cancellationFails=false;await cancel.click();await confirm.getByRole('button',{name:'Xác nhận hủy'}).click()
+ await page.getByRole('heading',{name:'Thanh toán đã hủy',exact:true}).waitFor()
+ assert.equal(await cancel.count(),0);assert.equal(cancellationCalls,2)
+ status=1;method=1;await page.goto(base+'/?section=payments&tab=history')
+ await cancel.click();await confirm.getByText(/bỏ liên kết hoặc mã QR MoMo cũ/).waitFor()
+ await confirm.getByRole('button',{name:'Xác nhận hủy'}).click()
+ await page.getByText('Đã hủy đơn thanh toán.',{exact:true}).waitFor()
+ assert.equal(await cancel.count(),0);assert.equal(cancellationCalls,3)
  assert.deepEqual(errors,[]);console.log('PASS provider cancel through legacy redirect/reload; both gateways terminal/waiting/verification; server success beats cancel; lookup error; purpose-aware actions; mobile light/dark. API fixtures, no real payments.')
 }finally{await browser.close()}
