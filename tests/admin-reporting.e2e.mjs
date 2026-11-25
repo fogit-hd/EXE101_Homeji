@@ -13,6 +13,7 @@ try{
  const accounts=[{userId:'account-a',displayName:'Nguyễn Minh An',email:'an@example.invalid',phone:'0912345678',contactAddress:'Đường Nguyễn Huệ',isImportedPublisher:false,role:1,registeredAt:stamp,emailConfirmed:true,profileCompleted:true,isPremium:true,premiumExpiresAt:'2026-12-01T07:00:00Z'}, {userId:'account-b',displayName:'Chủ trọ mẫu',email:null,phone:'0987654321',contactAddress:null,isImportedPublisher:true,role:2,registeredAt:stamp,emailConfirmed:false,profileCompleted:false,isPremium:false,premiumExpiresAt:null}]
  accounts.push({userId:'account-c',displayName:'Chưa cập nhật hồ sơ',email:'new@example.invalid',phone:null,contactAddress:null,isImportedPublisher:false,role:null,registeredAt:stamp,emailConfirmed:true,profileCompleted:false,isPremium:false,premiumExpiresAt:null})
  const members=[{id:'member-a',userId:'account-a',displayName:'Nguyễn Minh An',email:'an@example.invalid',phone:'0912345678',contactAddress:'Đường Nguyễn Huệ',isImportedPublisher:false,packageName:'Premium 30 ngày',packageCode:'premium-30',startedAt:stamp,expiresAt:'2026-12-01T07:00:00Z',registeredAt:stamp,state:'active',paymentId:'payment-a',amount:100000,paymentStatus:1,paymentMethod:3}]
+ members.push({...members[0],id:'member-b',paymentId:'payment-b',paymentStatus:2,paymentMethod:1,state:'scheduled',startedAt:members[0].expiresAt,expiresAt:'2026-12-31T07:00:00Z'})
  const exports=[],writes=[],errors=[],directDownloads=[];let failOnce=true
  page.on('pageerror',error=>{errors.push(error.message);console.log('Fixture page error',error.message)})
  await page.route('**/*',async route=>{
@@ -24,7 +25,10 @@ try{
   if(path==='/api/admin/analytics/product')return route.fulfill({json:{generatedAt:stamp,periodDays:30,kpis:{totalUsers:2,newUsers:2,activeListings:0,newListings:0,medianMonthlyPrice:0,averagePricePerSquareMeter:0,searches:0,listingViews:0,saves:0,viewingRequests:0,saveToViewRate:0,viewingRequestToSaveRate:0},trend:[],areas:[]}})
   if(path==='/api/admin/analytics/traffic')return route.fulfill({json:{generatedAt:stamp,periodDays:30,trackingStartedAt:null,pageViews:0,sessions:0,activeSessions:0,trend:[],topPages:[]}})
   if(path==='/api/admin/reporting/accounts'){const keyword=url.searchParams.get('keyword')??'';const rows=accounts.filter(row=>[row.displayName,row.email,row.phone,row.contactAddress].some(value=>value?.includes(keyword)));return route.fulfill({json:{items:rows,totalCount:rows.length,page:1,pageSize:25}})}
-  if(path==='/api/admin/reporting/members')return route.fulfill({json:{items:members,totalCount:1,page:1,pageSize:25}})
+  if(path==='/api/admin/reporting/members'){
+   const state=url.searchParams.get('state');const rows=members.filter(member=>!state||state==='all'||member.state===state)
+   return route.fulfill({json:{items:rows,totalCount:rows.length,page:1,pageSize:25}})
+  }
   if(path==='/api/admin/reporting/registrations.xlsx'){
    directDownloads.push(Object.fromEntries(url.searchParams))
    return route.fulfill({contentType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',body:Buffer.from('fixture transport only')})
@@ -62,8 +66,18 @@ try{
  await lookup.fill('0912345678');await page.getByRole('button',{name:'Tìm kiếm',exact:true}).click();await page.getByText('1 tài khoản',{exact:true}).waitFor()
  const accountsDownload=page.waitForEvent('download');await exportButton.click();assert.equal((await accountsDownload).suggestedFilename(),'Homeji-tai-khoan.xlsx')
  assert.deepEqual(directDownloads[0],{view:'accounts',keyword:'0912345678'})
- await page.getByRole('button',{name:'Gói thành viên',exact:true}).click();await page.getByText('Premium 30 ngày',{exact:true}).waitFor();await page.getByText('Chờ thanh toán',{exact:true}).waitFor();await page.locator('.admin-state').filter({hasText:'Đang có hiệu lực'}).waitFor()
+ await page.getByRole('button',{name:'Gói thành viên',exact:true}).click();await page.getByText('Chờ thanh toán',{exact:true}).waitFor();await page.locator('.admin-state').filter({hasText:'Đang có hiệu lực'}).waitFor()
+ const scheduled=page.getByRole('row').filter({hasText:'Nối tiếp thời hạn Premium trước đó'})
+ await scheduled.getByText('Đã lên lịch',{exact:true}).waitFor()
+ await scheduled.getByText('Đã thanh toán',{exact:true}).waitFor()
+ await scheduled.getByRole('cell',{name:/^Hiệu lực từ/}).waitFor()
+ assert.equal(await scheduled.locator('time').first().getAttribute('datetime'),members[1].startedAt)
+ assert.equal(await scheduled.locator('time').last().getAttribute('datetime'),members[1].expiresAt)
+ await page.getByLabel('Trạng thái gói').selectOption({label:'Đã lên lịch'})
+ await page.getByText('1 lượt đăng ký gói',{exact:true}).waitFor()
+ await scheduled.getByText('Đã thanh toán',{exact:true}).waitFor()
  await page.getByLabel('Trạng thái gói').selectOption('active')
+ await page.getByText('Chờ thanh toán',{exact:true}).waitFor()
  const membersDownload=page.waitForEvent('download');await exportButton.click();assert.equal((await membersDownload).suggestedFilename(),'Homeji-goi-thanh-vien.xlsx')
  assert.deepEqual(directDownloads[1],{view:'members',keyword:'0912345678',state:'active'});assert.equal(writes.length,0,'Direct downloads do not queue an email')
  await open('Báo cáo Excel');await page.getByText('Chưa có báo cáo Excel nào được tạo.',{exact:true}).waitFor();assert.equal(writes.length,0,'Navigation does not send email')

@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { downloadAdminRegistrations, getAdminMembers, getAdminRegisteredAccounts, type AdminMember, type AdminRegisteredAccount, type AdminRegistrationContact, type AdminRegistrationView } from '../../api/adminReporting'
+import { PaymentStatus } from '../../api/types'
 import { formatDate, formatPrice, paymentMethodLabel, paymentStatusLabel, userRoleLabel } from '../../lib/labels'
 import { getErrorMessage } from '../../lib/errors'
 import './AdminReporting.css'
 
-const memberStateLabel: Record<string, string> = { active: 'Đang có hiệu lực', expired: 'Đã hết hạn', scheduled: 'Chưa bắt đầu', cancelled: 'Đã hủy' }
+const memberStateLabel: Record<string, string> = { active: 'Đang có hiệu lực', expired: 'Đã hết hạn', scheduled: 'Đã lên lịch', cancelled: 'Đã hủy' }
+
+function membershipPaymentLabel({ paymentId, paymentStatus }: AdminMember) {
+  if (!paymentId) return 'Gói được cấp trực tiếp'
+  if (paymentStatus === PaymentStatus.Completed) return 'Đã thanh toán'
+  return (paymentStatus && paymentStatusLabel[paymentStatus]) ?? 'Chưa rõ trạng thái'
+}
 
 function RegistrationContact({ email, phone, contactAddress }: Pick<AdminRegistrationContact, 'email' | 'phone' | 'contactAddress'>) {
   return <td className="admin-register__contact">
@@ -94,9 +101,20 @@ export function AdminRegistrationsPanel() {
         </tr>) : result.members?.map(member => <tr key={member.id}>
           <td><strong>{member.displayName}</strong>{member.isImportedPublisher ? <small>Chủ tin nhập từ nguồn</small> : null}<small>Đăng ký {formatDate(member.registeredAt)}</small></td>
           <RegistrationContact email={member.email} phone={member.phone} contactAddress={member.contactAddress} />
-          <td><strong>{member.packageName}</strong><span className={`admin-state ${member.state === 'active' ? 'is-active' : ''}`}>{memberStateLabel[member.state] ?? 'Chưa rõ'}</span></td>
-          <td>{formatDate(member.startedAt)}<small>đến {formatDate(member.expiresAt)}</small></td>
-          <td>{member.amount === null ? 'Không có giao dịch' : formatPrice(member.amount)}<small>{member.paymentId ? member.paymentStatus ? paymentStatusLabel[member.paymentStatus] ?? 'Chưa rõ trạng thái' : 'Chưa rõ trạng thái' : 'Gói được cấp trực tiếp'}</small>{member.paymentMethod ? <small>{paymentMethodLabel[member.paymentMethod] ?? 'Chưa rõ phương thức'}</small> : null}</td>
+          <td>
+            <strong>{member.packageName}</strong>
+            <span className={`admin-state ${member.state === 'active' ? 'is-active' : ''}`}>{memberStateLabel[member.state] ?? 'Chưa rõ'}</span>
+            {member.state === 'scheduled' && member.paymentStatus === PaymentStatus.Completed ? <small>Nối tiếp thời hạn Premium trước đó</small> : null}
+          </td>
+          <td>
+            Hiệu lực từ <time dateTime={member.startedAt}>{formatDate(member.startedAt)}</time>
+            <small>Đến <time dateTime={member.expiresAt}>{formatDate(member.expiresAt)}</time></small>
+          </td>
+          <td>
+            {member.amount === null ? 'Không có giao dịch' : formatPrice(member.amount)}
+            <small>{membershipPaymentLabel(member)}</small>
+            {member.paymentMethod ? <small>{paymentMethodLabel[member.paymentMethod] ?? 'Chưa rõ phương thức'}</small> : null}
+          </td>
         </tr>)}</tbody>
       </table></div>}
       <div className="admin-report-pagination"><button className="btn btn-secondary" type="button" disabled={page <= 1} onClick={() => setPage(value => value - 1)}>Trang trước</button><span>Trang {page} / {Math.max(1, Math.ceil(result.total / 25))}</span><button className="btn btn-secondary" type="button" disabled={page * 25 >= result.total} onClick={() => setPage(value => value + 1)}>Trang sau</button></div>
