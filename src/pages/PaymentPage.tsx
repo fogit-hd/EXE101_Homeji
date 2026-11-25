@@ -80,6 +80,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const [packages, setPackages] = useState<SubscriptionPackage[]>([])
   const [mine, setMine] = useState<MySubscription | null>(null)
   const [subscriptionError, setSubscriptionError] = useState('')
+  const isPurchaseLocked = (plan: SubscriptionPackage) =>
+    plan.tier === SubscriptionTier.Premium && plan.durationDays < (mine?.minimumPurchaseDurationDays ?? 0)
   const [payments, setPayments] = useState<Payment[]>([])
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [vipVoucher, setVipVoucher] = useState<(VoucherSelection & { packageCode: string }) | null>(null)
@@ -273,7 +275,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       navigate(paymentWaitingUrl(res.paymentId))
     } catch (err) {
       showToast(getErrorMessage(err, 'Không tạo được thanh toán gói'), 'error')
-      if (err instanceof ApiRequestError && err.status === 400 && (err.body.errors?.promotionCode || err.body.errors?.expectedAmount)) {
+      if (err instanceof ApiRequestError && err.status === 400 && (err.body.errors?.promotionCode || err.body.errors?.expectedAmount || err.body.errors?.packageCode)) {
         resetPromotion()
         void reload()
       }
@@ -310,7 +312,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
       showToast(uncertain ? 'Chưa xác nhận được kết quả. Kiểm tra lịch sử hoặc thử lại; hệ thống giữ cùng mã yêu cầu để tránh trừ tiền hai lần.' : getErrorMessage(err, 'Không thể thanh toán bằng ví.'), 'error')
       if (err instanceof ApiRequestError && err.status === 400) {
         void getMyWallet().then(wallet => setWalletBalance(wallet.balance)).catch(() => setWalletBalance(null))
-        if (purchase.promotionCode && (err.body.errors?.promotionCode || err.body.errors?.expectedAmount)) {
+        if (err.body.errors?.packageCode || (purchase.promotionCode && (err.body.errors?.promotionCode || err.body.errors?.expectedAmount))) {
           resetPromotion()
           void reload()
         }
@@ -325,7 +327,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   }
 
   const confirmPurchase = (plan: SubscriptionPackage, method: PremiumPurchase['method']) => {
-    if (checkoutGuard.current || busyCode || needsProfileSetup) return
+    if (checkoutGuard.current || busyCode || needsProfileSetup || isPurchaseLocked(plan)) return
     const voucher = vipVoucher?.packageCode === plan.code && vipVoucher.amount === plan.price ? vipVoucher : null
     const appliedPromotion = promotionFor(plan)
     if (voucher?.pending || (plan.code === payPickerCode && promotionPending)
@@ -468,6 +470,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
             {displayPlans.map((plan, index) => {
               const view = getPlanDisplay(plan)
               const isPremium = plan.tier === SubscriptionTier.Premium && plan.price > 0
+              const purchaseLocked = isPurchaseLocked(plan)
               const isCurrent = isPremium
                 ? !!(current.premium && current.code === plan.code.trim().toUpperCase())
                 : current.premium === false
@@ -561,6 +564,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <div className="pay-plan__actions">
                     {!isPremium ? (
                       <span className="pay-btn pay-btn--current" data-glass-exclude>{isCurrent ? <><CheckIcon size={14} /> Gói hiện tại</> : 'Gói miễn phí'}</span>
+                    ) : purchaseLocked ? (
+                      <>
+                        <button type="button" className="pay-btn pay-btn--current" disabled>Đã khóa</button>
+                        <p className="pay-plan__offer-used">Bạn còn thời hạn gói Premium cao hơn.</p>
+                      </>
                     ) : isCurrent && !pickingPay ? (
                       <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={() => { setVipVoucher(null); resetPromotion(); setSelectedCode(plan.code); setPayPickerCode(plan.code) }}>Gia hạn gói</button>
                     ) : pickingPay ? (
@@ -644,7 +652,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         Chọn gói
                       </button>
                     )}
-                    {isPremium && !pickingPay ? <PayPalComingSoon quick /> : null}
+                    {isPremium && !purchaseLocked && !pickingPay ? <PayPalComingSoon quick /> : null}
                   </div>
                 </motion.article>
               )

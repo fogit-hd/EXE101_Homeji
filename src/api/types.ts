@@ -877,6 +877,7 @@ export interface MySubscription {
   packageName: string | null
   premiumStartedAt: string | null
   premiumExpiresAt: string | null
+  minimumPurchaseDurationDays?: number
   maxFollowedAreas?: number
   maxComparedPosts?: number
   agentAccess?: AgentAccess | null

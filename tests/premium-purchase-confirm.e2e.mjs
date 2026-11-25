@@ -10,15 +10,23 @@ const browser=await chromium.launch({headless:true,channel:'msedge'})
 try{
  const page=await browser.newPage({viewport:{width:1100,height:900}});const calls=[],errors=[]
  let packageCode='PREMIUM_MONTHLY'
+ let minimumPurchaseDurationDays=0
  page.on('pageerror',error=>errors.push(error.message))
  await page.addInitScript(()=>{localStorage.setItem('homeji_access_token','fixture');localStorage.setItem('homeji_user_id','me')})
  await page.route('**/src/contexts/AuthContext.tsx*',route=>route.fulfill({contentType:'application/javascript',body:'const refreshProfile=async()=>{};export const useAuth=()=>({isAuthenticated:true,needsProfileSetup:false,refreshProfile,profile:{id:"me"}})'}))
  await page.route('**/api/**',async route=>{
   const path=new URL(route.request().url()).pathname;if(!path.startsWith('/api/'))return route.continue()
-  if(path==='/api/subscriptions/packages')return route.fulfill({json:[packageCode==='PREMIUM_MONTHLY'
-   ? {code:packageCode,name:'Gói Trải Nghiệm',tier:2,price:100000,durationDays:30,benefits:[]}
-   : {code:packageCode,name:'Gói An Tâm',tier:2,price:450000,durationDays:180,benefits:[]}]})
-  if(path==='/api/subscriptions/me')return route.fulfill({json:{tier:1,isPremium:false,packageCode:'free'}})
+  if(path==='/api/subscriptions/packages'){
+   const plans=[
+    {code:'PREMIUM_MONTHLY',name:'Gói Trải Nghiệm',tier:2,price:100000,durationDays:30,benefits:[]},
+    {code:'PREMIUM_6MONTHS',name:'Gói An Tâm',tier:2,price:450000,durationDays:180,benefits:[]},
+    {code:'PREMIUM_YEARLY',name:'Gói Tối Ưu',tier:2,price:780000,durationDays:365,benefits:[]},
+   ]
+   return route.fulfill({json:minimumPurchaseDurationDays ? plans : plans.filter(plan=>plan.code===packageCode)})
+  }
+  if(path==='/api/subscriptions/me')return route.fulfill({json:minimumPurchaseDurationDays
+   ? {tier:2,isPremium:true,packageCode:'PREMIUM_MONTHLY',packageName:'Gói Trải Nghiệm',minimumPurchaseDurationDays}
+   : {tier:1,isPremium:false,packageCode:'free'}})
   if(path==='/api/wallet')return route.fulfill({json:{balance:350000}})
   if(path==='/api/referrals')return route.fulfill({json:{vouchers:[{id:'voucher-1',purpose:'vip',rate:0.2,minimumSpend:0,maximumDiscount:20000,used:false,expiresAt:'2099-01-01T00:00:00Z'}]}})
   if(path==='/api/referrals/quote')return route.fulfill({json:{discount:20000}})
@@ -88,5 +96,14 @@ try{
  const payPalInCheckout=page.getByRole('group',{name:'Chọn hình thức thanh toán'}).getByRole('button',{name:'PayPal · Sẽ có mặt sớm',exact:true})
  assert.equal(await payPalInCheckout.isDisabled(),true)
  assert.equal(await page.getByRole('link',{name:/PayPal/}).count(),0)
- assert.deepEqual(errors,[]);console.log('PASS Wallet, MoMo and PayOS promotion checkout and disabled PayPal in both placements')
+ minimumPurchaseDurationDays=180
+ await page.reload()
+ const card=name=>page.getByRole('article').filter({has:page.getByRole('heading',{name,exact:true})})
+ const lower=card('Gói Trải Nghiệm')
+ await lower.getByRole('button',{name:'Đã khóa'}).waitFor()
+ assert.equal(await lower.getByRole('button',{name:'Đã khóa'}).isDisabled(),true)
+ assert.equal(await lower.getByRole('button',{name:/Chọn gói|Gia hạn gói/}).count(),0)
+ assert.equal(await card('Gói An Tâm').getByRole('button',{name:'Chọn gói',exact:true}).isEnabled(),true)
+ assert.equal(await card('Gói Tối Ưu').getByRole('button',{name:'Chọn gói',exact:true}).isEnabled(),true)
+ assert.deepEqual(errors,[]);console.log('PASS payment methods, vouchers and lower-plan lock after a paid upgrade')
 }finally{await browser.close()}
