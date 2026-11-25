@@ -52,6 +52,21 @@ import './PaymentPage.css'
 
 type PayTab = 'plans' | 'history'
 
+function PayPalComingSoon({ quick = false }: { quick?: boolean }) {
+  return (
+    <button
+      type="button"
+      className={`pay-method is-paypal${quick ? ' pay-plan__quick-paypal' : ''}`}
+      aria-label="PayPal · Sẽ có mặt sớm"
+      data-glass-exclude
+      disabled
+    >
+      <PayPalLogo compact />
+      <span className="pay-method__caption">Sẽ có mặt sớm</span>
+    </button>
+  )
+}
+
 export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const { refreshProfile, needsProfileSetup } = useAuth()
   const navigate = useNavigate()
@@ -603,9 +618,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           <button type="button" className="pay-method is-payos" disabled={gatewayDisabled} onClick={() => confirmPurchase(plan, 'payos')}>
                             {busy && busyMethod === 'payos' ? 'Đang tạo…' : <><PayOsBadge compact /><span className="sr-only">PayOS</span></>}
                           </button>
-                          <Link className="pay-method is-paypal" to="/payments/sandbox">
-                            <PayPalLogo compact /><span className="pay-method__caption">PayPal · Demo</span>
-                          </Link>
+                          <PayPalComingSoon />
                           {momoWallets.map(wallet => (
                             <button key={wallet} type="button" className="pay-method" disabled={gatewayDisabled} onClick={() => confirmPurchase(plan, wallet)}>
                               {busy && busyMethod === wallet ? 'Đang tạo…' : `${momoWalletLabels[wallet]} qua MoMo`}
@@ -631,12 +644,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         Chọn gói
                       </button>
                     )}
-                    {isPremium && !pickingPay ? (
-                      <Link className="pay-method is-paypal pay-plan__quick-paypal" data-glass-exclude to="/payments/sandbox">
-                        <PayPalLogo compact />
-                        <span className="pay-method__caption">PayPal · Demo</span>
-                      </Link>
-                    ) : null}
+                    {isPremium && !pickingPay ? <PayPalComingSoon quick /> : null}
                   </div>
                 </motion.article>
               )

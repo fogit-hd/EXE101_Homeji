@@ -705,10 +705,11 @@
 .pay-method.is-momo { color: #a50064; }
 .pay-method.is-payos { color: #136fd8; }
 .pay-method.is-paypal { grid-column: 1 / -1; color: #003087; }
-a.pay-method.is-paypal { text-decoration: none; }
 html[data-theme='dark'] .pay-method.is-paypal { color: #8ec5ff; }
-.pay-method:hover { border-color: currentColor; background: var(--pay-surface); }
+.pay-method:hover:not(:disabled) { border-color: currentColor; background: var(--pay-surface); }
 .pay-method:disabled { opacity: .6; cursor: wait; }
+.pay-method.is-paypal:disabled { opacity: .72; cursor: default; }
+.pay-method.is-paypal:disabled .pay-brand-pill { filter: grayscale(1); }
 .pay-plan__cancel { display: block; width: 100%; min-height: 44px; margin: 0; padding: 10px 12px; border: 1px solid var(--pay-line); border-radius: 12px; background: transparent; color: var(--pay-muted); font: inherit; font-size: 0.8125rem; cursor: pointer; }
 .pay-plan__cancel:hover { color: var(--pay-ink); }
 .pay-empty-line { padding: 16px; border: 1px dashed var(--pay-line); border-radius: 12px; color: var(--pay-muted); text-align: center; }

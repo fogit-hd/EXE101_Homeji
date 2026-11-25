@@ -233,10 +233,11 @@ try {
   page.setDefaultTimeout(10_000)
   page.on('pageerror', (error) => pageErrors.push(error.message))
 
-  // New Premium checkouts link to Demo; an existing live order can still settle.
+  // PayPal is unavailable for new Premium purchases; an existing live order can still settle.
   await page.goto(origin + '/?section=payments')
-  await page.getByRole('link', { name: 'PayPal · Demo', exact: true }).first().click()
-  await page.getByRole('heading', { name: 'PayPal Demo', exact: true }).waitFor()
+  const comingSoon = page.getByRole('button', { name: 'PayPal · Sẽ có mặt sớm', exact: true }).first()
+  await comingSoon.waitFor()
+  assert.equal(await comingSoon.isDisabled(), true)
   assert.equal(createCalls.length, 0)
   payments.set('pay-premium-1', {
     id: 'pay-premium-1',
@@ -291,7 +292,7 @@ try {
     { kind: 'wallet', amount: 200000 },
   ])
   assert.deepEqual(pageErrors, [])
-  console.log('PASS Premium PayPal Demo, existing live Premium settlement and live wallet top-up web checkout')
+  console.log('PASS PayPal coming soon on Premium, existing live settlement and live wallet top-up checkout')
 } finally {
   await browser.close()
 }

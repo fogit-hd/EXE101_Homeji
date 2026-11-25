@@ -5,7 +5,7 @@ const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5541'
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local payment fixtures only')
 const out='output/verification/premium-purchase-confirm';await mkdir(out,{recursive:true})
 await writeFile(out+'/index.html','<html><meta charset="utf-8"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out+'/scene.tsx',`import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter,Routes,Route}from'react-router-dom';import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import{PaymentPage}from'/src/pages/PaymentPage.tsx';import{PayPalSandboxPage}from'/src/pages/PayPalSandboxPage.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';createRoot(document.getElementById('root')).render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><ToastProvider><Routes><Route path="/" element={<PaymentPage embedded/>}/><Route path="/payments/sandbox" element={<PayPalSandboxPage/>}/></Routes></ToastProvider></MemoryRouter></QueryClientProvider>);`)
+await writeFile(out+'/scene.tsx',`import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import{PaymentPage}from'/src/pages/PaymentPage.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';createRoot(document.getElementById('root')).render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><ToastProvider><PaymentPage embedded/></ToastProvider></MemoryRouter></QueryClientProvider>);`)
 const browser=await chromium.launch({headless:true,channel:'msedge'})
 try{
  const page=await browser.newPage({viewport:{width:1100,height:900}});const calls=[],errors=[]
@@ -30,12 +30,15 @@ try{
    assert.equal(route.request().postDataJSON().code,'sinhvien30')
    return route.fulfill({json:{code:'sinhvien30',basePrice:450000,discount:135000,amountDue:315000}})
   }
-  if(path==='/api/payments/paypal-sandbox/orders')return route.fulfill({status:404})
-  if(path.startsWith('/api/payments/paypal-sandbox'))return route.fulfill({status:204})
   if(path.startsWith('/api/subscriptions/premium/')){calls.push({path,amount:new URL(route.request().url()).searchParams.get('expectedAmount'),body:route.request().postData()?route.request().postDataJSON():null});await new Promise(resolve=>setTimeout(resolve,250));return route.fulfill({status:503,json:{detail:'Fixture payment unavailable'}})}
   return route.fulfill({json:[]})
  })
- await page.goto(base+'/'+out+'/index.html');await page.getByRole('button',{name:'Chọn gói',exact:true}).click()
+ await page.goto(base+'/'+out+'/index.html')
+ const upcomingPayPal=page.getByRole('button',{name:'PayPal · Sẽ có mặt sớm',exact:true})
+ await upcomingPayPal.waitFor()
+ assert.equal(await upcomingPayPal.isDisabled(),true)
+ assert.ok(await upcomingPayPal.evaluate(button=>Number(getComputedStyle(button).opacity)<1))
+ await page.getByRole('button',{name:'Chọn gói',exact:true}).click()
  const dialog=page.getByRole('dialog',{name:'Xác nhận mua gói Premium'})
  const wallet=page.getByRole('button',{name:/Thanh toán bằng ví/})
  await wallet.click();await dialog.waitFor();assert.equal(calls.length,0);assert.match(await dialog.innerText(),/Gói Trải Nghiệm/);assert.match(await dialog.innerText(),/100.000/)
@@ -82,12 +85,8 @@ try{
  await dialog.waitFor({state:'hidden'})
  assert.equal(calls.at(-1).path,'/api/subscriptions/premium/PREMIUM_6MONTHS/wallet')
  assert.equal(calls.at(-1).body.promotionCode,'sinhvien30')
- const beforeDemo=calls.length
- await page.getByRole('link',{name:'PayPal · Demo'}).click()
- await page.getByRole('heading',{name:'PayPal Demo'}).waitFor()
- await page.getByRole('button',{name:'Mở PayPal Sandbox'}).click()
- await page.getByRole('button',{name:'Xác nhận mô phỏng'}).click()
- await page.getByRole('status').filter({hasText:'Đã hoàn tất mô phỏng trên Homeji.'}).waitFor()
- assert.equal(calls.length,beforeDemo)
- assert.deepEqual(errors,[]);console.log('PASS Wallet, MoMo and PayOS promotion checkout and PayPal Demo routing')
+ const payPalInCheckout=page.getByRole('group',{name:'Chọn hình thức thanh toán'}).getByRole('button',{name:'PayPal · Sẽ có mặt sớm',exact:true})
+ assert.equal(await payPalInCheckout.isDisabled(),true)
+ assert.equal(await page.getByRole('link',{name:/PayPal/}).count(),0)
+ assert.deepEqual(errors,[]);console.log('PASS Wallet, MoMo and PayOS promotion checkout and disabled PayPal in both placements')
 }finally{await browser.close()}
