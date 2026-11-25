@@ -853,6 +853,9 @@ html[data-theme='dark'] .pay-method.is-paypal { color: #8ec5ff; }
 .pay-v2 .voucher-picker label { color:var(--pay-ink); font-size:12px; font-weight:650; }
 .pay-v2 .voucher-picker select { display:block; width:100%; min-width:0; min-height:46px; box-sizing:border-box; padding:9px 38px 9px 12px; border:1px solid var(--pay-line); border-radius:11px; background-color:var(--surface-elevated); color:var(--pay-ink); font:inherit; font-size:13px; line-height:1.4; }
 .pay-v2 .voucher-picker small,.pay-v2 .voucher-picker [role=alert] { margin:0; color:var(--pay-muted); font-size:12px; line-height:1.55; overflow-wrap:anywhere; }
+.pay-promotion-code { display:flex; flex-wrap:wrap; gap:8px; }
+.pay-promotion-code input { flex:1 1 140px; width:100%; min-width:0; min-height:46px; box-sizing:border-box; padding:9px 12px; border:1px solid var(--pay-line); border-radius:11px; background:var(--surface-elevated); color:var(--pay-ink); font:inherit; }
+.pay-promotion-code input:focus-visible { outline:2px solid var(--pay-accent, currentColor); outline-offset:2px; }
 .pay-wallet-card { display:grid; gap:10px; min-width:0; padding:13px; border:1px solid var(--pay-line); border-radius:14px; background:var(--surface-elevated); }
 .pay-wallet-card__balance { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:6px 10px; color:var(--pay-muted); font-size:13px; }
 .pay-wallet-card__balance strong { color:var(--pay-ink); font-size:14px; font-weight:700; text-align:right; white-space:nowrap; }

@@ -15,6 +15,8 @@ export type PremiumPurchase = {
   amountDue: number
   discount: number
   voucherId?: string
+  promotionCode?: string
+  basePrice?: number
 }
 
 const methodNames = {
@@ -113,8 +115,8 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
             <PaymentMethodBadges method={methodEnumMap[purchase.method]} compact />
           </dd>
         </div>
-        <div><dt>Giá gói</dt><dd>{formatPrice(purchase.plan.price)}</dd></div>
-        {purchase.discount > 0 ? <div className="is-discount"><dt>Voucher giảm</dt><dd>−{formatPrice(purchase.discount)}</dd></div> : null}
+        <div><dt>Giá gói</dt><dd>{formatPrice(purchase.basePrice ?? purchase.plan.price)}</dd></div>
+        {purchase.discount > 0 ? <div className="is-discount"><dt>{purchase.promotionCode ? `Mã ${purchase.promotionCode}` : 'Voucher giảm'}</dt><dd>−{formatPrice(purchase.discount)}</dd></div> : null}
         {dailyEquivalentPrice ? <div><dt>Bình quân/ngày · tham khảo</dt><dd>{dailyEquivalentPrice}</dd></div> : null}
         <div className="premium-purchase-confirm__total"><dt>Tổng thanh toán</dt><dd>{formatPrice(purchase.amountDue)}</dd></div>
       </dl>

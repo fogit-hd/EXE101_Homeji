@@ -5,6 +5,7 @@ import { AdminAnalyticsDashboard } from '../components/admin/AdminAnalyticsDashb
 import { AdminExportsPanel } from '../components/admin/AdminExportsPanel'
 import { AdminHome } from '../components/admin/AdminHome'
 import { AdminPremiumPricingPanel } from '../components/admin/AdminPremiumPricingPanel'
+import { AdminPremiumVouchersPanel } from '../components/admin/AdminPremiumVouchersPanel'
 import { AdminPostsQueue, AdminReportsQueue, AdminVerificationsQueue, AdminWithdrawalsQueue } from '../components/admin/AdminQueueViews'
 import { AdminRegistrationsPanel } from '../components/admin/AdminRegistrationsPanel'
 import { AdminShell } from '../components/admin/AdminShell'
@@ -73,6 +74,7 @@ function AdminWorkspaceView({ section }: { section: AdminSection }) {
       {section === 'aiReviews' ? <AiListingReviewPanel /> : null}
       {section === 'registrations' ? <AdminRegistrationsPanel /> : null}
       {section === 'pricing' ? <AdminPremiumPricingPanel /> : null}
+      {section === 'premiumVouchers' ? <AdminPremiumVouchersPanel /> : null}
       {section === 'exports' ? <AdminExportsPanel /> : null}
       {section === 'platform' ? <AdminPlatformPanel /> : null}
       {usesQueues ? ws.showLoader ? (

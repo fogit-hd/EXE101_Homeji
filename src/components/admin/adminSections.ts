@@ -3,7 +3,7 @@ export type AdminQueue = 'posts' | 'reports' | 'verifications' | 'withdrawals'
 export type AdminSection =
   | 'home' | 'analytics'
   | AdminQueue | 'aiReviews'
-  | 'registrations' | 'pricing' | 'exports'
+  | 'registrations' | 'pricing' | 'premiumVouchers' | 'exports'
   | 'active' | 'maintenance' | 'platform'
 
 export type AdminSectionInfo = {
@@ -26,6 +26,7 @@ export const adminSections: AdminSectionInfo[] = [
   { id: 'withdrawals', slug: 'withdrawals', label: 'Rút tiền', group: 'Hàng chờ', title: 'Yêu cầu rút tiền', description: 'Đối chiếu người nhận và mã chuyển khoản trước khi xác nhận.' },
   { id: 'registrations', slug: 'registrations', label: 'Tài khoản & thành viên', group: 'Kinh doanh', title: 'Tài khoản & thành viên', description: 'Xem người đã đăng ký tài khoản, lịch sử mua gói và thời hạn thành viên.' },
   { id: 'pricing', slug: 'pricing', label: 'Giá gói Premium', group: 'Kinh doanh', title: 'Giá gói Premium', description: 'Sửa giá, nêu lý do và công bố cho người xem.' },
+  { id: 'premiumVouchers', slug: 'premium-vouchers', label: 'Voucher Premium', group: 'Kinh doanh', title: 'Voucher Premium', description: 'Tạo mã giảm giá dùng một lần mỗi tài khoản khi thanh toán bằng Ví Homeji.' },
   { id: 'exports', slug: 'exports', label: 'Báo cáo Excel', group: 'Kinh doanh', title: 'Báo cáo Excel', description: 'Tạo báo cáo, theo dõi email và tải lại các file đã xuất.' },
   { id: 'active', slug: 'active', label: 'Đang hoạt động', group: 'Hệ thống', title: 'Người đang hoạt động', description: 'Theo dõi kết nối và quản lý phiên đăng nhập.' },
   { id: 'platform', slug: 'platform', label: 'Vận hành hệ thống', group: 'Hệ thống', title: 'Vận hành hệ thống', description: 'Sức khỏe dịch vụ cho người dùng, việc cần xử lý ngay và nhịp vận hành 7 ngày.' },

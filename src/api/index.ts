@@ -432,9 +432,16 @@ export const getSubscriptionPackages = () =>
 
 export const getMySubscription = () => apiRequest<MySubscription>('/api/subscriptions/me')
 
-export const createPremiumWalletPayment = (packageCode: string, requestId: string, expectedAmount: number, voucherId?: string) =>
+export type PremiumPromotionQuote = { code: string; basePrice: number; discount: number; amountDue: number }
+
+export const quotePremiumWalletPromotion = (packageCode: string, code: string, signal: AbortSignal) =>
+  apiRequest<PremiumPromotionQuote>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/wallet/promotion/quote`, {
+    method: 'POST', body: { code }, signal,
+  })
+
+export const createPremiumWalletPayment = (packageCode: string, requestId: string, expectedAmount: number, voucherId?: string, promotionCode?: string) =>
   apiRequest<Payment>(`/api/subscriptions/premium/${encodeURIComponent(packageCode)}/wallet`, {
-    method: 'POST', body: { requestId, expectedAmount, voucherId },
+    method: 'POST', body: { requestId, expectedAmount, voucherId, promotionCode },
   }).then(payment => { trackVerifiedPremiumPurchase(payment); return payment })
 
 export const createPremiumMomoPayment = (packageCode: string, expectedAmount?: number, wallet?: MomoWallet) =>
