@@ -1,3 +1,4 @@
+import { CONVERSATION_READ } from '../../lib/conversationRealtime'
 import { useListingSearchParams } from '../../hooks/useListingSearchParams'
 import { useBackButtonClose } from '../../hooks/useBackButtonClose'
 import { AnimatePresence, motion } from 'motion/react'
@@ -229,6 +230,14 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   /** Map destination always mounts the map; list mode never does. */
   const mapBlockVisible = isMapMode
 
+  const [conversationReadVersion, setConversationReadVersion] = useState(0)
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const refreshCounts = () => setConversationReadVersion(version => version + 1)
+    window.addEventListener(CONVERSATION_READ, refreshCounts)
+    return () => window.removeEventListener(CONVERSATION_READ, refreshCounts)
+  }, [isAuthenticated])
+
   useNotificationHub({
     enabled: isAuthenticated,
     onNotification: (n: Notification) => {
@@ -271,7 +280,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated, notificationRefreshKey])
+  }, [isAuthenticated, notificationRefreshKey, conversationReadVersion])
 
   const dismissHomie = useCallback(() => {
     setHomieDismiss((n) => n + 1)

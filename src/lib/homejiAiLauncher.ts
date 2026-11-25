@@ -1,6 +1,7 @@
 /** Navbar entry ↔ global MapChatbot. The chat window has no floating launcher; it opens only from here. */
 const TOGGLE = 'homeji-ai:toggle'
 const STATE = 'homeji-ai:state'
+const LOAD = 'homeji-ai:load'
 export const HOMEJI_AI_PANEL_ID = 'homeji-ai-conversation'
 
 export type HomejiAiToggleDetail = { anchor: DOMRect | null; open?: boolean }
@@ -12,10 +13,24 @@ let pending: HomejiAiToggleDetail | null = null
 export function toggleHomejiAi(anchor: Element | null, open?: boolean) {
   const detail = { anchor: anchor?.getBoundingClientRect() ?? null, open }
   // The global chat is lazy loaded; retain the latest intent until it subscribes.
-  if (!listeners.size) { pending = { ...detail, open: open ?? !(pending?.open ?? lastOpen) }; return }
+  if (!listeners.size) {
+    pending = { ...detail, open: open ?? !(pending?.open ?? lastOpen) }
+    if (pending.open) requestHomejiAiLoad()
+    return
+  }
   window.dispatchEvent(new CustomEvent<HomejiAiToggleDetail>(TOGGLE, {
     detail,
   }))
+}
+
+export function requestHomejiAiLoad() {
+  window.dispatchEvent(new Event(LOAD))
+}
+
+export function onHomejiAiLoad(load: () => void) {
+  window.addEventListener(LOAD, load)
+  if (pending?.open) load()
+  return () => window.removeEventListener(LOAD, load)
 }
 
 export function onHomejiAiToggle(fn: (detail: HomejiAiToggleDetail) => void) {

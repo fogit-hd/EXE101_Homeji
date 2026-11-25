@@ -767,7 +767,19 @@
   gap: 10px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  overflow-anchor: none;
 }
+
+.map-messages__page-button {
+  align-self: center;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: .75rem;
+  color: inherit;
+  padding: .35rem .75rem;
+  cursor: pointer;
+}
+.map-messages__page-button:disabled { cursor: wait; }
 
 .map-messages__bubbles::-webkit-scrollbar {
   display: none;

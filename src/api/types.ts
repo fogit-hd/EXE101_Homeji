@@ -597,6 +597,11 @@ export interface PostMessage {
   attachments?: PostMessageAttachment[]
 }
 
+export type MessagePageCursor = { sentAt: string; id: string }
+export type PostMessagePage = { items: PostMessage[]; nextCursor: MessagePageCursor | null }
+export type ConversationReadState = { unreadCount: number; notificationsChanged: boolean }
+export type ConversationAttachmentDeletion = { messageId: string; attachmentId: string }
+
 export interface PostMessageAttachment {
   id: string
   uploaderId: string

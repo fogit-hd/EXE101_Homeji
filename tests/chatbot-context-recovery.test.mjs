@@ -31,6 +31,9 @@ const overrides = {
   '../../lib/marketplaceNavigation': moduleUrl('export const requestMarketplaceCart=()=>{};export const requestMarketplaceTab=()=>{}'),
   '../../lib/nearbyChatIntent': moduleUrl('export const nearbyChatIntent=()=>null'),
   './ChatbotMessageContent': moduleUrl(`import React from '${reactUrl}';export const ChatbotMessageContent=({content})=>React.createElement('p',null,content)`),
+  '../ErrorBoundary': moduleUrl('export const ErrorBoundary = ({ children }) => children'),
+  '../../ErrorBoundary': moduleUrl('export const ErrorBoundary = ({ children }) => children'),
+  './ChatbotMediaPreview': moduleUrl('export const ChatbotMediaPreview = () => null'),
   './ChatbotMediaComposer': moduleUrl('export const ChatbotMediaComposer=()=>null;export const ChatbotMediaPreview=()=>null'),
   '../games/GameLauncher': moduleUrl('export const GameLauncher=()=>null'),
   '../ai/AgentPostPreview': moduleUrl('export const AgentPostPreview=()=>null'),
@@ -435,6 +438,8 @@ test('nested selection cleanup restores the underlying room and account changes 
       base ? React.createElement(Surface, { key: 'base', room: roomA }) : null,
       nested ? React.createElement(Surface, { key: 'nested', room: roomB }) : null)))
     await show(true, true)
+    assert.equal(globalThis.__chatFixture.chatProps, undefined, 'Load the assistant on first intent')
+    await act(async () => globalThis.__chatFixture.contextOpener())
     assert.equal(globalThis.__chatFixture.chatProps.rentalContext.postId, 'room-b')
     await show(false, true)
     assert.equal(globalThis.__chatFixture.chatProps.rentalContext.postId, 'room-b', 'Old cleanup must not remove the newer selection')

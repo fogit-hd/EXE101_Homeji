@@ -1,18 +1,21 @@
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { confirmDialog } from '../ui/confirmDialog'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
-import { useIncomingConversationMessages } from '../../hooks/useIncomingConversationMessages'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { mergeConversationMessages, useIncomingConversationMessages } from '../../hooks/useIncomingConversationMessages'
+import { useConversationInbox } from '../../hooks/useConversationInbox'
+import { useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ConversationSubjectType,
-  getConversations,
+  searchConversationMessages,
+  MessageAttachmentStatus,
+  type MessagePageCursor,
   getMarketplacePost,
   getRentalPost,
   MessageAttachmentContext,
   sendConversationImages,
   sendConversationMessage,
   setConversationUserBlocked,
-  type PostConversation,
   type PostMessage,
 } from '../../api'
 import { getStoredSession } from '../../api/client'
@@ -24,6 +27,7 @@ import {
   type ChatLocationPayload,
 } from '../../lib/chatLocation'
 import { getErrorMessage } from '../../lib/errors'
+import { NOTIFICATION_CONNECTED } from '../../lib/sellerOrderAlerts'
 import { getDeviceLocation } from '../../lib/geolocation'
 import { formatPrice } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
@@ -41,7 +45,6 @@ import { MessagesTimeline } from './messages/MessagesTimeline'
 import { MessagesThreadHeader } from './messages/MessagesThreadHeader'
 import { MessageComposer } from './messages/MessageComposer'
 import {
-  messageSearchText,
   directionsUrl,
   subjectTag,
   type ChatShareTarget,
@@ -80,12 +83,12 @@ type Props = {
 
 
 export function MapMessagesPanel(props: Props) {
-  const { isAuthenticated, needsProfileSetup } = useAuth()
+  const { isAuthenticated, needsProfileSetup, profile } = useAuth()
   if (isAuthenticated && needsProfileSetup) return <section className={`map-messages${props.embedded ? ' map-messages--embedded' : ''}${props.layout?.startsWith('floating-') ? ' is-floating' : ''}${props.layout === 'floating-inbox' ? ' is-floating-inbox' : ''}`}>
     {props.onCloseWindow ? <button type="button" className="map-messages__icon-btn" aria-label="Đóng tin nhắn" onClick={props.onCloseWindow}>×</button> : null}
     <ProfileSetupNotice action="xem và gửi tin nhắn" onNavigate={props.onCloseWindow} />
   </section>
-  return <MapMessagesPanelContent {...props} />
+  return <MapMessagesPanelContent key={profile?.id ?? getStoredSession()?.userId ?? "guest"} {...props} />
 }
 
 function MapMessagesPanelContent({
@@ -112,7 +115,8 @@ function MapMessagesPanelContent({
   const [profileId, setProfileId] = useState<string | null>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
 
-  const [conversations, setConversations] = useState<PostConversation[]>([])
+  const me = getStoredSession()?.userId ?? profile?.id ?? null
+  const { conversations, update: setConversations, cancel: cancelInbox, loading, error: inboxError, refresh: refreshInbox, reconcileRead } = useConversationInbox(me, profile?.id ?? null)
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
   const [appliedInitialId, setAppliedInitialId] = useState(initialConversationId)
   const [contactedAt, setContactedAt] = useState<Record<string, number>>(() => initialConversationId ? { [initialConversationId]: Date.now() } : {})
@@ -123,7 +127,6 @@ function MapMessagesPanelContent({
   }, [activeId])
   const [messages, setMessages] = useState<PostMessage[]>([])
   const [draft, setDraft] = useState('')
-  const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [blocking, setBlocking] = useState(false)
   const blockGate = useRef(createAsyncActionGate())
@@ -145,8 +148,9 @@ function MapMessagesPanelContent({
   const [imageContext, setImageContext] = useState<MessageAttachmentContext>(
     MessageAttachmentContext.CurrentRoom,
   )
-  const me = getStoredSession()?.userId
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const followsLatest = useRef(true)
+  const beforePrepend = useRef<{ first: HTMLElement | null; offset: number; height: number; top: number } | null>(null)
   const attachRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchBarRef = useRef<HTMLDivElement>(null)
@@ -176,42 +180,100 @@ function MapMessagesPanelContent({
     }
   }
 
-  const inboxLoadVersion = useRef(0)
-  const loadConversations = useCallback(async (opts?: { soft?: boolean }) => {
-    const version = ++inboxLoadVersion.current
-    if (!opts?.soft) { setLoading(true); setError(null) }
-    try {
-      const list = await getConversations()
-      if (version === inboxLoadVersion.current) setConversations(list)
-    } catch (e) {
-      if (!opts?.soft && version === inboxLoadVersion.current) setError(getErrorMessage(e, 'Không tải được tin nhắn'))
-    } finally {
-      if (version === inboxLoadVersion.current) setLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
-    let cancelled = false
-    void Promise.resolve().then(() => { if (!cancelled) void loadConversations() })
-    return () => { cancelled = true }
-  }, [loadConversations])
-
-  useEffect(() => {
-    if (!refreshKey) return
-    void Promise.resolve().then(() => loadConversations({ soft: true }))
-  }, [refreshKey, loadConversations])
+    if (refreshKey) refreshInbox()
+  }, [refreshKey, refreshInbox])
 
   if (useChangedInputs([activeId], true)) {
     setMessages([])
-    setConversations(prev => prev.map(c => c.id === activeId ? { ...c, unreadCount: 0 } : c))
+    setSearchOpen(false)
+    setSearchQuery('')
   }
-  const refreshInbox = useCallback(() => { void loadConversations({ soft: true }) }, [loadConversations])
-  const history = useIncomingConversationMessages({ conversationId: threadVisible ? activeId : null, ownerId: me, setMessages, refreshInbox })
-
+  const visibleConversationId = threadVisible ? activeId : null
+  const history = useIncomingConversationMessages({
+    conversationId: visibleConversationId, ownerId: me, cacheOwnerId: profile?.id ?? null, messages, setMessages, refreshInbox, onRead: reconcileRead,
+  })
+  const { acknowledge, headId } = history
+  const term = searchOpen ? searchQuery.trim() : ''
+  const searching = Boolean(term)
+  const [debouncedTerm, setDebouncedTerm] = useState('')
   useEffect(() => {
-    if (searchQuery.trim()) return
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, threadVisible, searchQuery])
+    const timer = setTimeout(() => setDebouncedTerm(term), 250)
+    return () => clearTimeout(timer)
+  }, [term])
+  const search = useInfiniteQuery({
+    queryKey: ['conversation-search', me, visibleConversationId, debouncedTerm],
+    enabled: Boolean(me && visibleConversationId && term && term === debouncedTerm),
+    initialPageParam: null as MessagePageCursor | null,
+    queryFn: ({ pageParam, signal }) => searchConversationMessages(visibleConversationId!, debouncedTerm, pageParam, signal),
+    getNextPageParam: page => page.nextCursor ?? undefined,
+  })
+  const searchMessages = useMemo(() => term && term === debouncedTerm
+    ? search.data?.pages.slice().reverse().flatMap(page => page.items) ?? [] : [], [search.data, term, debouncedTerm])
+  const timelineMessages = useMemo(() => {
+    const rows = term ? searchMessages : messages
+    if (!history.deletedAttachments?.size) return rows
+    const deleted = history.deletedAttachments
+    return rows.map(message => message.attachments?.some(item => deleted.has(item.id) && item.status !== MessageAttachmentStatus.Deleted)
+      ? { ...message, attachments: message.attachments.map(item => deleted.has(item.id)
+        ? { ...item, status: MessageAttachmentStatus.Deleted, bytes: 0 } : item) }
+      : message)
+  }, [term, searchMessages, messages, history.deletedAttachments])
+
+  const loadOlder = () => {
+    const viewport = scrollRef.current
+    if (term) {
+      if (search.hasNextPage && !search.isFetchingNextPage) void search.fetchNextPage()
+      return
+    }
+    if (!viewport || !history.hasOlder || history.loadingOlder || beforePrepend.current) return
+    const first = viewport.querySelector<HTMLElement>('.map-messages__bubble')
+    beforePrepend.current = {
+      first, offset: first?.offsetTop ?? 0, height: viewport.scrollHeight, top: viewport.scrollTop,
+    }
+    history.loadOlder()
+  }
+  const acknowledgeVisible = () => {
+    const viewport = scrollRef.current
+    if (!visibleConversationId || term || !viewport?.clientHeight) return
+    const atBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 20
+    if (atBottom) acknowledge(headId)
+  }
+  useLayoutEffect(() => {
+    followsLatest.current = true
+    beforePrepend.current = null
+  }, [visibleConversationId, searching])
+  useLayoutEffect(() => {
+    const viewport = scrollRef.current
+    if (term || !viewport || !visibleConversationId) return
+    const anchor = beforePrepend.current
+    if (anchor) {
+      if (!history.loadingOlder) {
+        if (anchor.first?.isConnected) viewport.scrollTop += anchor.first.offsetTop - anchor.offset
+        else viewport.scrollTop = anchor.top + viewport.scrollHeight - anchor.height
+        beforePrepend.current = null
+      }
+      return
+    }
+    if (followsLatest.current) viewport.scrollTop = viewport.scrollHeight
+  }, [messages, visibleConversationId, term, history.loadingOlder])
+  useEffect(() => {
+    const verify = () => {
+      const viewport = scrollRef.current
+      if (visibleConversationId && !term && viewport?.clientHeight &&
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 20) acknowledge(headId)
+    }
+    const frame = requestAnimationFrame(verify)
+    document.addEventListener('visibilitychange', verify)
+    window.addEventListener('online', verify)
+    window.addEventListener(NOTIFICATION_CONNECTED, verify)
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('visibilitychange', verify)
+      window.removeEventListener('online', verify)
+      window.removeEventListener(NOTIFICATION_CONNECTED, verify)
+    }
+  }, [visibleConversationId, term, headId, acknowledge])
 
   useEffect(() => {
     if (!attachMode) return
@@ -245,7 +307,8 @@ function MapMessagesPanelContent({
     try {
       const state = await setConversationUserBlocked(conversation.id, nextBlocked)
       if (getStoredSession()?.userId !== ownerId) return
-      inboxLoadVersion.current++
+      await cancelInbox()
+      if (getStoredSession()?.userId !== ownerId) return
       setConversations(previous => previous.map(item => item.otherParticipantId === state.otherParticipantId
         ? { ...item, isBlockedByMe: state.isBlockedByMe, isBlockedByOther: state.isBlockedByOther } : item))
       if (currentThread.current.id === conversation.id) {
@@ -323,13 +386,7 @@ function MapMessagesPanelContent({
   }, [active, subject, messages, onFocusMap])
   const primaryContext = contextItems[0] ?? null
 
-  const matchedIds = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return [] as string[]
-    return messages
-      .filter((m) => messageSearchText(m.body).toLowerCase().includes(q))
-      .map((m) => m.id)
-  }, [messages, searchQuery])
+  const matchedIds = useMemo(() => searchMessages.map(message => message.id), [searchMessages])
 
   if (useChangedInputs([searchQuery, activeId])) {
     setMatchIndex(0)
@@ -349,12 +406,9 @@ function MapMessagesPanelContent({
   }
 
   const openThread = (id: string) => {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
-    )
     if (onPickConversation) {
       onPickConversation(id)
-      // The opened thread fetches history and marks it read itself.
+      // The opened thread confirms the messages it displays.
       return
     }
     setActiveId(id)
@@ -385,9 +439,12 @@ function MapMessagesPanelContent({
   }
 
   const appendSentMessage = (msg: PostMessage) => {
-    setConversations((prev) => {
-      const next = prev.map(c => c.id === msg.conversationId ? { ...c, lastMessage: msg.body, lastMessageSenderId: msg.senderId, updatedAt: msg.sentAt, unreadCount: 0 } : c)
-      return sortConversationsByActivity(next)
+    void cancelInbox().then(() => {
+      if (getStoredSession()?.userId !== me) return
+      setConversations((prev) => {
+        const next = prev.map(c => c.id === msg.conversationId ? { ...c, lastMessage: msg.body, lastMessageSenderId: msg.senderId, updatedAt: msg.sentAt, unreadCount: 0 } : c)
+        return sortConversationsByActivity(next)
+      })
     })
   }
 
@@ -555,7 +612,7 @@ function MapMessagesPanelContent({
         </header>
       ) : null}
 
-      {error ? <p className="map-messages__error map-motion-fade">{error}</p> : null}
+      {error || inboxError ? <p className="map-messages__error map-motion-fade">{error ?? getErrorMessage(inboxError, 'Không tải được tin nhắn')}{inboxError ? <button type="button" onClick={refreshInbox}>Thử lại</button> : null}</p> : null}
 
       <div className={isWorkspace ? 'map-messages__split' : undefined}>
 <MessagesInbox
@@ -623,16 +680,31 @@ function MapMessagesPanelContent({
           }}
         />
 <MessagesTimeline
-          history={history}
-          messages={messages}
+          history={term ? {
+            loading: term !== debouncedTerm || search.isPending,
+            error: search.isError && !search.isFetchNextPageError ? getErrorMessage(search.error, 'Chưa tìm được tin nhắn.') : '',
+            olderError: search.isFetchNextPageError ? getErrorMessage(search.error, 'Chưa tải thêm được kết quả.') : '',
+            loadingOlder: search.isFetchingNextPage,
+            hasOlder: Boolean(search.hasNextPage),
+            retry: () => { void search.refetch() },
+          } : history}
+          messages={timelineMessages}
+          scrollRef={scrollRef}
+          onLoadOlder={loadOlder}
+          onScroll={() => {
+            const viewport = scrollRef.current
+            if (!viewport || term) return
+            followsLatest.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 72
+            acknowledgeVisible()
+            if (viewport.scrollTop <= 80 && !history.olderError) loadOlder()
+          }}
           currentUserId={me}
           activeId={activeId}
           peerName={peerName}
           matchedIds={matchedIds}
           matchIndex={matchIndex}
-          searchQuery={searchQuery}
+          searchQuery={term}
           matchRefs={matchRefs}
-          bottomRef={bottomRef}
           setMessages={setMessages}
           onError={setError}
           onFocusMap={onFocusMap}
@@ -673,8 +745,10 @@ function MapMessagesPanelContent({
           onSend={handleSend}
           onSendImages={handleSendImages}
           onSentMessage={(message) => {
-            setMessages(previous => [...previous, message])
-            void loadConversations({ soft: true })
+            if (currentThread.current.id === message.conversationId && getStoredSession()?.userId === me) {
+              setMessages(previous => mergeConversationMessages(previous, [message]))
+              appendSentMessage(message)
+            }
           }}
           voiceBusy={voice.busy}
         />          </>

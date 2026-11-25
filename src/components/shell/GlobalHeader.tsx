@@ -1,3 +1,4 @@
+import { CONVERSATION_READ } from '../../lib/conversationRealtime'
 import { SellerOrderAlertsSlot } from '../marketplace/SellerOrderAlerts'
 import { navigateMenu } from '../ui/menuNavigation'
 import { ThemeSwitch } from '../theme/ThemeSwitch'
@@ -234,6 +235,14 @@ export function GlobalHeader() {
     syncBarRef.current()
   }, [menuOpen, accountOpen, notifyOpen])
 
+  const [conversationReadVersion, setConversationReadVersion] = useState(0)
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const refreshCounts = () => setConversationReadVersion(version => version + 1)
+    window.addEventListener(CONVERSATION_READ, refreshCounts)
+    return () => window.removeEventListener(CONVERSATION_READ, refreshCounts)
+  }, [isAuthenticated])
+
   useNotificationHub({
     enabled: isAuthenticated,
     onNotification: (notification: Notification) => {
@@ -271,7 +280,7 @@ export function GlobalHeader() {
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated, refreshKey, location.pathname, location.search])
+  }, [isAuthenticated, refreshKey, location.pathname, location.search, conversationReadVersion])
 
   useEffect(() => {
     if (!notifyOpen) return

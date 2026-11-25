@@ -8,16 +8,28 @@ import { ChatbotSurfaceContext, type ChatbotSurface } from './chatbot-surface'
 import { RentalAssistantOpenerContext, RentalAssistantSelectionContext, RentalAssistantComparisonContext, type RentalAssistantSelection, type RentalAssistantComparison } from './rental-assistant-context'
 import { rentalMessageDraftStore } from '../lib/rentalMessageDraft'
 import { RentalJourneyProvider } from './RentalJourneyProvider'
-import { RentalJourneyTray } from '../components/ai/RentalJourney'
+import { useRentalJourney } from './rental-journey'
+import { onHomejiAiLoad } from '../lib/homejiAiLauncher'
 
+const RentalJourneyTray = lazy(() => import('../components/ai/RentalJourney').then(module => ({ default: module.RentalJourneyTray })))
 const MapChatbot = lazy(() => import('../components/map/MapChatbot').then(module => ({ default: module.MapChatbot })))
 
 /** One conversation follows the user across routes; map controls register their callbacks. */
 export function ChatbotProvider({ children }: { children: ReactNode }) {
-  return <RentalJourneyProvider><ContextualChatbotProvider>{children}</ContextualChatbotProvider></RentalJourneyProvider>
+  const [assistantMounted, setAssistantMounted] = useState(false)
+  const mountAssistant = useCallback(() => setAssistantMounted(true), [])
+  useEffect(() => onHomejiAiLoad(mountAssistant), [mountAssistant])
+  return <RentalJourneyProvider>
+    <ContextualChatbotProvider assistantMounted={assistantMounted} mountAssistant={mountAssistant}>{children}</ContextualChatbotProvider>
+  </RentalJourneyProvider>
 }
 
-function ContextualChatbotProvider({ children }: { children: ReactNode }) {
+function ContextualChatbotProvider({ children, assistantMounted, mountAssistant }: {
+  children: ReactNode
+  assistantMounted: boolean
+  mountAssistant: () => void
+}) {
+  const choiceCount = useRentalJourney()?.choices.length ?? 0
   const [surface, setSurface] = useState<ChatbotSurface | null>(null)
   const { profile, isAuthenticated } = useAuth()
   const identity = isAuthenticated ? profile?.id ?? 'guest' : 'guest'
@@ -42,10 +54,11 @@ function ContextualChatbotProvider({ children }: { children: ReactNode }) {
   const { isOpen } = useAuthModal()
   const navigate = useNavigate()
   const openAssistant = useCallback(() => {
+    mountAssistant()
     setDismissedSelection(null)
     awaitingOpen.current = true
     setOpenRequest(current => ({ owner: identity, token: (current?.token ?? 0) + 1 }))
-  }, [identity])
+  }, [identity, mountAssistant])
   const onSurfaceOpenChange = surface?.onOpenChange
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) awaitingOpen.current = false
@@ -57,8 +70,8 @@ function ContextualChatbotProvider({ children }: { children: ReactNode }) {
   const requested = openRequest?.owner === identity && Boolean(selection)
   return <ChatbotSurfaceContext.Provider value={setSurface}><RentalAssistantSelectionContext.Provider value={registerSelection}><RentalAssistantComparisonContext.Provider value={registerComparison}><RentalAssistantOpenerContext.Provider value={openAssistant}>
     {children}
-    <RentalJourneyTray />
-    <Suspense fallback={null}><MapChatbot key={identity} {...surface}
+    {choiceCount > 0 ? <Suspense fallback={null}><RentalJourneyTray /></Suspense> : null}
+    {assistantMounted ? <Suspense fallback={null}><MapChatbot key={identity} {...surface}
       rentalContext={selection?.room ?? null}
       rentalSelection={selection?.comparison ?? null}
       onDismissRentalContext={() => setDismissedSelection(selection?.token ?? null)}
@@ -66,6 +79,6 @@ function ContextualChatbotProvider({ children }: { children: ReactNode }) {
       onOpenChange={handleOpenChange}
       onSearchUpdate={surface?.onSearchUpdate ?? (update => navigate('/?section=listings', { state: { aiSearchUpdate: update } }))}
       hideFab={isOpen || !requested && surface?.hideFab}
-      onOpenSection={surface?.onOpenSection ?? (section => navigate(`/?section=${encodeURIComponent(section)}`))} /></Suspense>
+      onOpenSection={surface?.onOpenSection ?? (section => navigate(`/?section=${encodeURIComponent(section)}`))} /></Suspense> : null}
   </RentalAssistantOpenerContext.Provider></RentalAssistantComparisonContext.Provider></RentalAssistantSelectionContext.Provider></ChatbotSurfaceContext.Provider>
 }

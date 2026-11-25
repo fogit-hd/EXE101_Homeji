@@ -6,8 +6,8 @@ export type AgentPostDraft = { id: string; details: AgentPostDetails; images: st
 export const confirmAgentPost = (id: string, details: AgentPostDetails) => apiRequest<{ postId: string }>(`/api/chatbot/agent-drafts/${encodeURIComponent(id)}/confirm`, { method: 'POST', body: details, timeoutMs: 60000 })
 export const cancelAgentPost = (id: string) => apiRequest<void>(`/api/chatbot/agent-drafts/${encodeURIComponent(id)}`, { method: 'DELETE' })
 
-export async function getAgentSession(): Promise<AgentSessionState | null> {
-  const data = await apiRequest<AgentSessionState | null | unknown[]>('/api/chatbot/agent/session')
+export async function getAgentSession(signal?: AbortSignal): Promise<AgentSessionState | null> {
+  const data = await apiRequest<AgentSessionState | null | unknown[]>('/api/chatbot/agent/session', { signal })
   if (!data || Array.isArray(data) || typeof data !== 'object' || typeof (data as AgentSessionState).sessionId !== 'string') {
     return null
   }

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import {
-  getConversations,
   getMyInvitations,
   getNotifications,
   getRoommateCandidates,
@@ -17,13 +16,13 @@ import {
   ViewingAppointmentStatus,
   type MarketplacePost,
   type Notification,
-  type PostConversation,
   type RentalPostSummary,
   type RoommateCandidate,
   type RoommateInvitation,
   type ViewingAppointment,
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+import { useConversationInbox } from '../../hooks/useConversationInbox'
 import { HeartIcon } from '../icons/SvgIcons'
 import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
 import { mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
@@ -40,7 +39,6 @@ const RECENT_SEARCH_KEY = 'homeji:map-search-recent'
 type Bundle = {
   notifications: Notification[]
   appointments: ViewingAppointment[]
-  conversations: PostConversation[]
   saved: RentalPostSummary[]
   invitations: RoommateInvitation[]
   candidates: RoommateCandidate[]
@@ -50,7 +48,6 @@ type Bundle = {
   failed: {
     rooms: boolean
     appointments: boolean
-    conversations: boolean
     market: boolean
     notifications: boolean
   }
@@ -125,6 +122,7 @@ function readRecentSearches(): string[] {
 
 export function AuthenticatedHub() {
   const { profile } = useAuth()
+  const { conversations, error: inboxError, refresh: refreshInbox } = useConversationInbox(profile?.id ?? null)
   const displayName = profile?.displayName?.trim() || 'bạn'
   const [now] = useState(() => new Date())
   const [recentSearches] = useState(readRecentSearches)
@@ -135,10 +133,9 @@ export function AuthenticatedHub() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const [notify, appoint, chats, savedPosts, invites, rooms, market] = await Promise.allSettled([
+      const [notify, appoint, savedPosts, invites, rooms, market] = await Promise.allSettled([
         getNotifications(true),
         getViewingAppointments(),
-        getConversations(),
         profile?.role === UserRole.Renter ? getSavedPosts() : Promise.resolve([]),
         profile?.role === UserRole.Renter ? getMyInvitations() : Promise.resolve([]),
         searchRentalPosts({ pageSize: 4 }),
@@ -156,7 +153,7 @@ export function AuthenticatedHub() {
         }
       }
       if (cancelled) return
-      const failed = [notify, appoint, chats, savedPosts, invites, rooms, market].every(
+      const failed = [notify, appoint, savedPosts, invites, rooms, market].every(
         (result) => result.status === 'rejected',
       )
       if (failed) {
@@ -167,7 +164,6 @@ export function AuthenticatedHub() {
       setBundle({
         notifications: notify.status === 'fulfilled' ? notify.value : [],
         appointments: appoint.status === 'fulfilled' ? appoint.value : [],
-        conversations: chats.status === 'fulfilled' ? chats.value : [],
         saved,
         invitations: invites.status === 'fulfilled' ? invites.value : [],
         candidates: candidates.slice(0, 3),
@@ -177,7 +173,6 @@ export function AuthenticatedHub() {
         failed: {
           rooms: rooms.status === 'rejected',
           appointments: appoint.status === 'rejected',
-          conversations: chats.status === 'rejected',
           market: market.status === 'rejected',
           notifications: notify.status === 'rejected',
         },
@@ -207,8 +202,8 @@ export function AuthenticatedHub() {
       .slice(0, 2)
   }, [bundle])
 
-  const chats = (bundle?.conversations ?? []).slice(0, 3)
-  const unreadMessages = (bundle?.conversations ?? []).reduce((sum, item) => sum + item.unreadCount, 0)
+  const chats = conversations.slice(0, 3)
+  const unreadMessages = conversations.reduce((sum, item) => sum + item.unreadCount, 0)
   const savedAlerts = (bundle?.notifications ?? []).filter(
     (item) => item.type === NotificationType.SavedPostChanged,
   ).slice(0, 2)
@@ -407,16 +402,16 @@ export function AuthenticatedHub() {
             </section>
           ) : null}
 
-          {bundle.failed.conversations || chats.length > 0 || hasSide ? (
-            <div className={`hub-community${(bundle.failed.conversations || chats.length > 0) && hasSide ? '' : ' hub-community--single'}`}>
-              {bundle.failed.conversations || chats.length > 0 ? <section className="hub-section hub-messages" aria-labelledby="hub-messages">
+          {inboxError || chats.length > 0 || hasSide ? (
+            <div className={`hub-community${(inboxError || chats.length > 0) && hasSide ? '' : ' hub-community--single'}`}>
+              {inboxError || chats.length > 0 ? <section className="hub-section hub-messages" aria-labelledby="hub-messages">
                 <header>
                   <h2 id="hub-messages">Tin nhắn gần đây</h2>
                   <Link to={mapSectionUrl('messages')}>
                     {unreadMessages > 0 ? `${unreadMessages} mới` : 'Mở hộp thư'}
                   </Link>
                 </header>
-                {bundle.failed.conversations ? <p className="hub-quiet">Không tải được tin nhắn.</p> : null}
+                {inboxError ? <p className="hub-quiet">Không tải được tin nhắn. <button type="button" onClick={refreshInbox}>Thử lại</button></p> : null}
                 <ul>
                   {chats.map((chat) => (
                     <li key={chat.id}>

@@ -5,7 +5,7 @@ const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5541'
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local fixture only')
 const out='output/verification/chat-block';await mkdir(out,{recursive:true})
 await writeFile(out+'/index.html','<html><meta charset="utf-8"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out+'/scene.tsx',`import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';function Scene(){const[id,setId]=useState(null);return location.search.includes('floating')?<><MapMessagesPanel layout="floating-inbox" onPickConversation={setId}/>{id&&<MapMessagesPanel layout="floating-thread" initialConversationId={id}/>}</>:<MapMessagesPanel embedded initialConversationId="thread-a"/>}createRoot(document.getElementById('root')).render(<MemoryRouter><ToastProvider><Scene/></ToastProvider></MemoryRouter>);`)
+await writeFile(out+'/scene.tsx',`import {QueryClient,QueryClientProvider} from '@tanstack/react-query';import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';function Scene(){const[id,setId]=useState(null);return location.search.includes('floating')?<><MapMessagesPanel layout="floating-inbox" onPickConversation={setId}/>{id&&<MapMessagesPanel layout="floating-thread" initialConversationId={id}/>}</>:<MapMessagesPanel embedded initialConversationId="thread-a"/>}createRoot(document.getElementById('root')).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><ToastProvider><Scene/></ToastProvider></MemoryRouter></QueryClientProvider>);`)
 const browser=await chromium.launch({headless:true,channel:'msedge'})
 try{
  const page=await browser.newPage({viewport:{width:1200,height:850}})
@@ -17,8 +17,8 @@ try{
   const path=new URL(route.request().url()).pathname;if(!path.startsWith('/api/'))return route.continue()
   if(path==='/api/conversations'){inboxReads++;return route.fulfill({json:['thread-a','thread-b'].map(id=>({id,otherParticipantId:'peer',otherParticipantName:id,subjectType:0,subjectId:'room',updatedAt:'2026-11-01T07:00:00Z',isBlockedByMe:blocked,isBlockedByOther:otherBlocked,unreadCount:0}))})}
   if(path.endsWith('/block')){blockWrites++;if(failBlock)return route.fulfill({status:503,json:{detail:'Chưa cập nhật được trạng thái chặn'}});blocked=route.request().method()==='PUT';return route.fulfill({json:{otherParticipantId:'peer',isBlockedByMe:blocked,isBlockedByOther:otherBlocked}})}
-  const match=path.match(/^\/api\/conversations\/(.+)\/messages$/)
-  if(match){messageReads++;return route.fulfill({json:[{id:'saved',conversationId:match[1],senderId:'peer',body:'Lịch sử được giữ',sentAt:'2026-11-01T07:00:00Z'}]})}
+  if(path.endsWith('/read'))return route.fulfill({json:{unreadCount:0,notificationsChanged:false}}); const match=path.match(/^\/api\/conversations\/(.+)\/messages(?:\/page)?$/)
+  if(match){messageReads++;return route.fulfill({json:{items:[{id:'saved',conversationId:match[1],senderId:'peer',body:'Lịch sử được giữ',sentAt:'2026-11-01T07:00:00Z'}],nextCursor:null}})}
   return route.fulfill({json:[]})
  })
  // Vite reloads the page once while it optimizes this scene's dependencies; count requests only after that settles.

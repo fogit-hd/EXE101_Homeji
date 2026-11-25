@@ -5,7 +5,7 @@ const base=process.env.HOMEJI_TEST_BASE_URL||'http://127.0.0.1:5541'
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local fixtures only')
 const out='output/verification/chat-incoming';await mkdir(out,{recursive:true})
 await writeFile(out+'/index.html','<html><meta charset="utf-8"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeFile(out+'/scene.tsx',`import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';createRoot(document.getElementById('root')).render(<MemoryRouter><ToastProvider><MapMessagesPanel embedded initialConversationId="thread-a"/></ToastProvider></MemoryRouter>);`)
+await writeFile(out+'/scene.tsx',`import {QueryClient,QueryClientProvider} from '@tanstack/react-query';import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';createRoot(document.getElementById('root')).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><ToastProvider><MapMessagesPanel embedded initialConversationId="thread-a"/></ToastProvider></MemoryRouter></QueryClientProvider>);`)
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'})
 try{
  const context=await browser.newContext();await context.addInitScript(()=>{localStorage.setItem('homeji_access_token','fixture');localStorage.setItem('homeji_user_id','me')})
@@ -15,7 +15,7 @@ try{
  await context.route('**/api/**',async r=>{
   const path=new URL(r.request().url()).pathname;if(!path.startsWith('/api/'))return r.continue()
   if(path==='/api/conversations'){inboxReads++;return r.fulfill({json:['thread-a','thread-b'].map((id,i)=>({id,otherParticipantId:'peer',otherParticipantName:i?'Peer B':'Peer A',subjectType:0,subjectId:'item',updatedAt:'2026-11-01T04:00:00Z',unreadCount:0,lastMessage:messages[id].at(-1)?.body??''}))})}
-  const match=path.match(/^\/api\/conversations\/(.+)\/messages$/);if(match){reads++;if(failMessages)return r.fulfill({status:503,json:{title:'Fixture offline'}});if(holdA&&match[1]==='thread-a'){const snapshot=[...messages['thread-a']];markStarted();await new Promise(resolve=>{releaseA=resolve});return r.fulfill({json:snapshot})}return r.fulfill({json:messages[match[1]]})}
+  if(path.endsWith('/read'))return r.fulfill({json:{unreadCount:0,notificationsChanged:false}}); const match=path.match(/^\/api\/conversations\/(.+)\/messages(?:\/page)?$/);if(match){reads++;if(failMessages)return r.fulfill({status:503,json:{title:'Fixture offline'}});if(holdA&&match[1]==='thread-a'){const snapshot=[...messages['thread-a']];markStarted();await new Promise(resolve=>{releaseA=resolve});return r.fulfill({json:{items:snapshot,nextCursor:null}})}return r.fulfill({json:{items:messages[match[1]],nextCursor:null}})}
   return r.fulfill({json:[]})
  })
  await page.goto(base+'/'+out+'/index.html');await page.locator('.map-messages__bubble-body').getByText('Old message',{exact:true}).waitFor()

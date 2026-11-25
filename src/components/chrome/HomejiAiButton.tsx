@@ -2,6 +2,7 @@ import { HomejiAgentMark } from '../ai/HomejiAgentMark'
 import { useRef, useSyncExternalStore } from 'react'
 import {
   HOMEJI_AI_TRIGGER_ATTR,
+  requestHomejiAiLoad,
   HOMEJI_AI_PANEL_ID,
   homejiAiOpenSnapshot,
   subscribeHomejiAiOpen,
@@ -24,6 +25,8 @@ export function HomejiAiButton({ tone = 'light' }: { tone?: 'light' | 'glass' })
       aria-controls={HOMEJI_AI_PANEL_ID}
       aria-label="Homeji AI"
       {...{ [HOMEJI_AI_TRIGGER_ATTR]: '' }}
+      onPointerEnter={event => { if (event.pointerType === 'mouse') requestHomejiAiLoad() }}
+      onFocus={requestHomejiAiLoad}
       onClick={() => toggleHomejiAi(ref.current)}
     >
       <span className="ai-spectrum-launcher__edge" aria-hidden="true" />

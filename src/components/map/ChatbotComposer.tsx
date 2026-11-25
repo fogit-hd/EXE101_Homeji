@@ -1,9 +1,12 @@
-import type { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react'
+import { lazy, Suspense, type Dispatch, type MutableRefObject, type ReactNode, type SetStateAction } from 'react'
 import type { ChatbotPopupConfig } from '../../api'
 import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
-import { ChatbotMediaComposer, ChatbotMediaPreview } from './ChatbotMediaComposer'
+import { ChatbotMediaPreview } from './ChatbotMediaPreview'
+import { ErrorBoundary } from '../ErrorBoundary'
 import { ProfileGate } from '../auth/ProfileGate'
 import { AssistantIcon } from './ChatbotVisuals'
+
+const ChatbotMediaComposer = lazy(() => import('./ChatbotMediaComposer').then(module => ({ default: module.ChatbotMediaComposer })))
 
 type Props = {
   open: boolean
@@ -70,7 +73,8 @@ export function ChatbotComposer({
                 />
                 <div className="homeji-assistant__composer-toolbar">
                   <div className="homeji-assistant__composer-tools">
-                    {open ? <ChatbotMediaComposer
+                    {open ? <ErrorBoundary fallback={<span role="alert">Chưa tải được công cụ đính kèm.</span>}>
+                    <Suspense fallback={null}><ChatbotMediaComposer
                       key={mediaSession}
                       showPreview={false}
                       attachments={attachments}
@@ -87,7 +91,7 @@ export function ChatbotComposer({
                         setDraft(current => current ? `${current} ${text}` : text)
                         inputRef.current?.focus()
                       }}
-                    /> : null}
+                    /></Suspense></ErrorBoundary> : null}
                     {locationControl}
                   </div>
                   <div className="homeji-assistant__composer-submit">
@@ -116,7 +120,7 @@ export function ChatbotComposer({
                             startNewConversation()
                           }}
                         />
-                        Đồng ý lưu hội thoại và tiêu chí theo chính sách lưu lịch sử
+                        Đồng ý lưu hội thoại và tiêu chí. Homeji mã hóa các tin gần đây trên thiết bị này.
                       </label>
                     ) : (
                       <p>Lưu lịch sử hiện đang tắt.</p>

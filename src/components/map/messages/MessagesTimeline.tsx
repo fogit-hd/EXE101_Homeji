@@ -10,7 +10,10 @@ import { clock, dayLabel, startOfDay } from './MessageFormatting'
 const GROUP_GAP_MS = 5 * 60_000
 
 type Props = {
-  history: { loading: boolean; error: string | null; retry: () => void }
+  history: { loading: boolean; error: string | null; cached?: boolean; olderError: string; hasOlder: boolean; loadingOlder: boolean; retry: () => void }
+  scrollRef: MutableRefObject<HTMLDivElement | null>
+  onLoadOlder: () => void
+  onScroll: () => void
   messages: PostMessage[]
   currentUserId?: string | null
   activeId: string | null
@@ -19,7 +22,6 @@ type Props = {
   matchIndex: number
   searchQuery: string
   matchRefs: MutableRefObject<Map<string, HTMLDivElement>>
-  bottomRef: MutableRefObject<HTMLDivElement | null>
   setMessages: Dispatch<SetStateAction<PostMessage[]>>
   onError: (message: string) => void
   onFocusMap?: (loc: { lat: number; lng: number; title?: string; address?: string; kind?: ChatLocationPayload['kind']; conversationId?: string }) => void
@@ -27,11 +29,17 @@ type Props = {
 
 export function MessagesTimeline({
   history, messages, currentUserId, activeId, peerName, matchedIds, matchIndex,
-  searchQuery, matchRefs, bottomRef, setMessages, onError, onFocusMap,
+  searchQuery, matchRefs, setMessages, onError, onFocusMap, scrollRef, onLoadOlder, onScroll,
 }: Props) {
   return (
-        <div className="map-messages__bubbles">
-          {history.loading && !messages.length ? <p className="map-messages__empty" role="status">Đang tải tin nhắn…</p> : null}
+        <div className="map-messages__bubbles" ref={scrollRef} onScroll={onScroll}>
+          {history.cached ? <p className="map-messages__empty" role="status">Đang xem tin nhắn đã lưu trên thiết bị.</p> : null}
+          {history.hasOlder && !searchQuery.trim() ? <button type="button" className="map-messages__page-button" onClick={onLoadOlder} disabled={history.loadingOlder}>
+            {history.loadingOlder ? 'Đang tải…' : history.olderError ? 'Thử tải tin cũ lại' : 'Xem tin nhắn cũ hơn'}
+          </button> : null}
+          {history.olderError ? <p className="map-messages__empty" role="alert">{history.olderError}</p> : null}
+          {history.loading && !messages.length ? <p className="map-messages__empty" role="status">{searchQuery ? 'Đang tìm tin nhắn…' : 'Đang tải tin nhắn…'}</p> : null}
+          {searchQuery && !history.loading && !history.error && !messages.length ? <p className="map-messages__empty" role="status">Không tìm thấy tin nhắn.</p> : null}
           {history.error ? <div className="map-messages__block-notice" role="alert">{history.error} <button type="button" onClick={history.retry}>Thử lại</button></div> : null}
           <AnimatePresence initial={false}>
           {messages.map((m, idx) => {
@@ -78,6 +86,7 @@ export function MessagesTimeline({
                         conversationId={m.conversationId}
                         messageId={m.id}
                         mine={mine}
+                        canLoad={!history.cached}
                         onError={onError}
                         onDeleted={() => {
                           setMessages((previous) => previous.map((message) =>
@@ -114,7 +123,9 @@ export function MessagesTimeline({
             )
           })}
           </AnimatePresence>
-          <div ref={bottomRef} />
+          {history.hasOlder && searchQuery.trim() ? <button type="button" className="map-messages__page-button" onClick={onLoadOlder} disabled={history.loadingOlder}>
+            {history.loadingOlder ? 'Đang tải…' : 'Tìm thêm tin cũ'}
+          </button> : null}
         </div>
 
   )

@@ -147,6 +147,7 @@ export function MessagesThreadHeader({ state, refs, actions }: Props) {
             <input
               ref={searchInputRef}
               className="map-messages__search-input"
+              maxLength={160}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo từ khóa…"

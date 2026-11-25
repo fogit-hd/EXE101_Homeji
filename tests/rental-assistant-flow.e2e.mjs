@@ -9,7 +9,7 @@ const out = 'output/verification/rental-assistant-context'
 await mkdir(out, { recursive: true })
 await writeFile(`${out}/index.html`, '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rental assistant fixture</title><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
 await writeFile(`${out}/scene.tsx`, `
-import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter,useLocation}from'react-router-dom';
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter,useLocation}from'react-router-dom';
 import{RoomDetailModal}from'/src/components/map/listings/RoomDetailModal.tsx';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';
 import{toggleHomejiAi}from'/src/lib/homejiAiLauncher.ts';import{MapPlaceDetailPanel}from'/src/components/map/MapPlaceDetailPanel.tsx';import{ChatbotProvider}from'/src/contexts/ChatbotContext.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';
 import'/src/index.css';import'/src/ui-consistency.css';import'/src/ai-spectrum.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';
@@ -17,7 +17,7 @@ function Scene(){const route=useLocation();const[room,setRoom]=useState('room-a'
 useEffect(()=>{const listener=e=>{window.localStorage.setItem('homeji_user_id',e.detail);window.__fixtureUser=e.detail;setIdentity(e.detail)};window.addEventListener('fixture-account',listener);return()=>window.removeEventListener('fixture-account',listener)},[]);
 const map=new URLSearchParams(location.search).get('scene')==='map';useEffect(()=>{if(map)fetch('/api/rental-posts/room-a').then(r=>r.json()).then(setPost)},[map]);
 return <main key={identity} className={map?"home-map-page--dest":""} style={{height:'95dvh',padding:16}}><button data-homeji-ai-trigger="" style={{position:"fixed",top:8,right:8,zIndex:1000}} onClick={event=>toggleHomejiAi(event.currentTarget)}>Mở trợ lý từ thanh điều hướng</button><output data-testid="fixture-route">{route.pathname+route.search}</output><p>Kiểm thử local với dữ liệu giả; không gửi giao dịch thật.</p>{conversation?<MapMessagesPanel key={identity} embedded initialConversationId={conversation}/>:map?<MapPlaceDetailPanel open listing={post}/>:<RoomDetailModal listingId={room} onClose={()=>setRoom(null)} onOpenMessages={id=>{setRoom(null);setConversation(id)}}/>}</main>}
-createRoot(document.getElementById('root')).render(<MemoryRouter><ToastProvider><ChatbotProvider><Scene/></ChatbotProvider></ToastProvider></MemoryRouter>);`)
+createRoot(document.getElementById('root')).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><ToastProvider><ChatbotProvider><Scene/></ChatbotProvider></ToastProvider></MemoryRouter></QueryClientProvider>);`)
 
 const post = { id: 'room-a', ownerId: 'owner-a', ownerRole: 2, title: 'Phòng gần trường · dữ liệu kiểm thử', description: 'Thông tin giả dùng để kiểm tra giao diện.', address: 'Khu vực kiểm thử', price: 3000000, deposit: 3000000, area: 24, type: 1, status: 3, electricityPrice: 3500, waterPrice: 0, internetPrice: 100000, amenities: ['KITCHEN'], maxOccupants: 2, availableSlots: 2, latitude: 10.84, longitude: 106.8, viewCount: 0, saveCount: 0, ownerDisplayName: 'Chủ phòng kiểm thử', media: [], thumbnailPath: null, createdAt: '2026-10-20T00:00:00Z', updatedAt: '2026-10-21T00:00:00Z' }
 const conversation = { id: 'conversation-a', subjectType: 1, subjectId: post.id, otherParticipantId: post.ownerId, otherParticipantName: post.ownerDisplayName, lastMessage: null, unreadCount: 0, createdAt: post.createdAt, updatedAt: post.updatedAt }
@@ -52,6 +52,8 @@ try {
         json = conversation
       }
       else if (pathname === '/api/rental-posts/room-a/reviews') json = { reviews: [], reviewCount: 0, averageRating: 0 }
+      else if (pathname.endsWith('/messages/page')) json = { items: [], nextCursor: null }
+      else if (pathname.endsWith('/read')) json = { unreadCount: 0, notificationsChanged: false }
       else if (pathname === '/api/conversations/conversation-a/messages' && req.method() === 'POST') {
         sends.push(req.postDataJSON())
         json = { id: 'message-' + sends.length, conversationId: conversation.id, senderId: 'renter', body: req.postDataJSON().body, sentAt: post.updatedAt }

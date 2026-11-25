@@ -1,6 +1,7 @@
 import { siteLocationSnapshot, subscribeSiteLocation, setSiteLocation as setSharedLocation } from '../../lib/siteLocation'
 import { confirmDialog } from '../ui/confirmDialog'
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { readChatSnapshot, removeChatSnapshot, writeChatSnapshot } from '../../lib/chatCache'
+import { lazy, Suspense, useCallback, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as chatbotApi from '../../api'
 import {
@@ -10,10 +11,12 @@ import {
   getChatbotPopupConfig,
   sendChatbotMessage,
   type AgentAccess,
+  type AgentSessionState,
   type AiHighlightResponse,
   type AiParsedSearchCriteria,
   type ChatbotNavigationAction,
   type ChatbotPopupConfig,
+  type ChatbotMessage,
   type ChatbotRentalContext,
   type ChatbotFoodContext,
   type ChatbotFoodCriteria,
@@ -41,7 +44,7 @@ import { decisionMatchesChoices, rentalScenarioSnapshot } from '../../lib/rental
 import { isVisibleFocusTarget } from '../../lib/isVisibleFocusTarget'
 import type { ChatbotDraftAttachment } from '../../lib/chatbotMedia'
 import { GameLauncher } from '../games/GameLauncher'
-import { AgentDraftWorkspace } from './AgentDraftWorkspace'
+import { ErrorBoundary } from '../ErrorBoundary'
 import { recoverPostingImages } from '../../lib/chatbotPostingContext'
 import { useChatbotAgentWorkflow } from './useChatbotAgentWorkflow'
 import { ChatbotLocationControl } from '../ai/ChatbotLocationControl'
@@ -55,6 +58,8 @@ import { AssistantIcon, HomejiAvatar, type AssistantIconName } from './ChatbotVi
 import { rentalTargetKey } from './chatbot/chatbotModels'
 import type { ChatRequest, DisplayMessage } from './chatbot/ChatbotMessageTypes'
 import './MapChatbot.css'
+
+const AgentDraftWorkspace = lazy(() => import('./AgentDraftWorkspace').then(module => ({ default: module.AgentDraftWorkspace })))
 
 const HOMEJI_TITLE = 'Homeji'
 const HOMEJI_GREETING =
@@ -98,6 +103,8 @@ type Props = {
   openRequestToken?: number
 }
 
+type SavedAssistantChat = { conversationId: string; messages: ChatbotMessage[] }
+
 type PanelLayout = {
   left: number
   top: number
@@ -135,7 +142,8 @@ export function MapChatbot({
   openRequestToken = 0,
 }: Props) {
   const navigate = useNavigate()
-  const { isAuthenticated, needsProfileSetup } = useAuth()
+  const { isAuthenticated, needsProfileSetup, profile } = useAuth()
+  const cacheOwner = isAuthenticated ? profile?.id ?? null : null
   const { openAuthModal } = useAuthModal()
   const reactId = useId()
   const [open, setOpen] = useState(false)
@@ -170,6 +178,11 @@ export function MapChatbot({
   const [latestServerAgentAccess, setLatestServerAgentAccess] = useState<AgentAccess | null>(null)
   const [agentAccessStatus, setAgentAccessStatus] = useState<{ canUse: boolean; isPremium: boolean; hasActiveFreeSession: boolean }>({ canUse: false, isPremium: false, hasActiveFreeSession: false })
   const agentHydratedRef = useRef(false)
+  const sessionRevision = useRef(0)
+  const savedAssistantChat = useRef<SavedAssistantChat | undefined>(undefined)
+  const [checkedAssistantCache, setCheckedAssistantCache] = useState(false)
+  const [showingSavedAssistant, setShowingSavedAssistant] = useState(false)
+  const wasAuthenticatedRef = useRef(isAuthenticated)
   const messagesCountRef = useRef(0)
   useEffect(() => {
     messagesCountRef.current = messages.length
@@ -331,50 +344,143 @@ export function MapChatbot({
     [isAuthenticated, sharedLocation, busy, mediaBusy, recordingActive],
   )
 
-  useEffect(() => onHomejiAiToggle(({ open: want }) => {
-    setOpen((value) => {
-      const next = want ?? !value
-      if (!next) setToolsOpen(false)
-      return next
+  useEffect(() => {
+    const unsubscribe = onHomejiAiToggle(({ open: want }) => {
+      setOpen((value) => {
+        const next = want ?? !value
+        if (!next) setToolsOpen(false)
+        return next
+      })
     })
-  }), [])
+    return () => { unsubscribe(); publishHomejiAiOpen(false) }
+  }, [])
 
   useEffect(() => {
     publishHomejiAiOpen(panelVisible)
   }, [panelVisible])
 
   useEffect(() => {
-    if (!panelVisible || !isAuthenticated || agentHydratedRef.current) return
-    agentHydratedRef.current = true
-    const fetchAgentSession = chatbotApi.getAgentSession
-    if (typeof fetchAgentSession !== 'function') return
-    let cancelled = false
-    void fetchAgentSession()
-      .then((session) => {
-        if (cancelled || !session || messagesCountRef.current > 0 || activeRequest.current) return
-        if (session.searchCriteria) sessionCriteria.current = session.searchCriteria
-        if (session.foodCriteria) sessionFood.current = session.foodCriteria
-        const lastAssistantIdx = session.turns.reduce((acc, item, idx) => (item.sender === ChatMessageSender.Assistant ? idx : acc), -1)
-        const restored: DisplayMessage[] = session.turns.map((turn, idx) =>
-          idx === lastAssistantIdx
-            ? {
-                ...turn,
-                quickReplies: session.quickReplies,
-                agentGoal: session.goal,
-                agentDraft: session.activeDraft ?? null,
-              }
-            : turn,
-        )
-        if (restored.length > 0) setMessages(restored)
-        agentFlow.hydrateSession(session, true)
-      })
-      .catch(() => {
-        // Working memory hydration is best-effort and must never break Chat mode.
-      })
-    return () => {
-      cancelled = true
+    const wasAuthenticated = wasAuthenticatedRef.current
+    wasAuthenticatedRef.current = isAuthenticated
+    if (wasAuthenticated && !isAuthenticated) {
+      if (activeRequest.current) {
+        activeRequest.current.controller.abort()
+        activeRequest.current = null
+      }
+      agentHydratedRef.current = false
+      savedAssistantChat.current = undefined
+      setCheckedAssistantCache(false)
+      setShowingSavedAssistant(false)
+      setSaveHistory(false)
+      setBusy(false)
+      setLatestServerAgentAccess(null)
+      setConversationId(undefined)
+      sessionCriteria.current = undefined
+      sessionFood.current = undefined
+      awaitingLocation.current = null
+      agentFlow.reset(false)
+      setMessages([])
+      setDraft('')
+      setAttachments([])
+      setMediaSession(value => value + 1)
+      setError(null)
+      setCopyStatus('')
+      setResetRequested(false)
     }
-  }, [panelVisible, isAuthenticated, agentFlow])
+  }, [isAuthenticated, agentFlow])
+
+  const allowHistoryStorage = config?.historyStorageEnabled === true
+  useEffect(() => {
+    if (config?.historyStorageEnabled !== false || !cacheOwner) return
+    savedAssistantChat.current = undefined
+    void removeChatSnapshot(cacheOwner, 'assistant')
+  }, [cacheOwner, config?.historyStorageEnabled])
+
+  useEffect(() => {
+    if (!allowHistoryStorage || !panelVisible || !cacheOwner || sessionRevision.current !== 0) return
+    const controller = new AbortController()
+    const current = () => !controller.signal.aborted && sessionRevision.current === 0 && !activeRequest.current
+    let syncing = false
+    const synchronize = async (saved: SavedAssistantChat) => {
+      if (!current() || syncing || navigator.onLine === false || document.visibilityState === 'hidden') return
+      if (typeof chatbotApi.getChatbotMessages !== 'function') return
+      syncing = true
+      try {
+        const rows = await chatbotApi.getChatbotMessages(saved.conversationId, controller.signal)
+        if (!current() || !Array.isArray(rows)) return
+        const cachedById = new Map(saved.messages.map(message => [message.id, message]))
+        const updated = { conversationId: saved.conversationId, messages: rows.slice(-40).map(row => cachedById.get(row.id) ?? row) }
+        savedAssistantChat.current = updated
+        setMessages(updated.messages)
+        setShowingSavedAssistant(false)
+        void writeChatSnapshot(cacheOwner, 'assistant', updated)
+      } catch (error) {
+        if (!current() || typeof chatbotApi.ApiRequestError !== 'function' || !(error instanceof chatbotApi.ApiRequestError)
+          || ![401, 403, 404].includes(error.status)) return
+        savedAssistantChat.current = undefined
+        setConversationId(undefined)
+        setMessages([])
+        setShowingSavedAssistant(false)
+        void removeChatSnapshot(cacheOwner, 'assistant')
+      } finally {
+        syncing = false
+      }
+    }
+    void Promise.resolve().then(() => readChatSnapshot<SavedAssistantChat>(cacheOwner, 'assistant')).then(saved => {
+      if (controller.signal.aborted) return
+      if (current() && saved?.messages.length && (savedAssistantChat.current || !messagesCountRef.current)) {
+        savedAssistantChat.current = saved
+        setSaveHistory(true)
+        setConversationId(saved.conversationId)
+        setMessages(saved.messages)
+        setShowingSavedAssistant(true)
+        void synchronize(saved)
+      }
+      setCheckedAssistantCache(true)
+    })
+    const online = () => {
+      const saved = savedAssistantChat.current
+      if (saved) void synchronize(saved)
+    }
+    window.addEventListener('online', online)
+    document.addEventListener('visibilitychange', online)
+    return () => {
+      controller.abort()
+      window.removeEventListener('online', online)
+      document.removeEventListener('visibilitychange', online)
+    }
+  }, [allowHistoryStorage, panelVisible, cacheOwner])
+
+  const restoreAgentSession = useEffectEvent((session: AgentSessionState | null) => {
+    if (!session || messagesCountRef.current > 0 || activeRequest.current || savedAssistantChat.current) return
+    if (session.searchCriteria) sessionCriteria.current = session.searchCriteria
+    if (session.foodCriteria) sessionFood.current = session.foodCriteria
+    const lastAssistantIdx = session.turns.findLastIndex(turn => turn.sender === ChatMessageSender.Assistant)
+    const restored: DisplayMessage[] = session.turns.map((turn, idx) => idx === lastAssistantIdx
+      ? { ...turn, quickReplies: session.quickReplies, agentGoal: session.goal, agentDraft: session.activeDraft ?? null }
+      : turn)
+    if (restored.length) setMessages(restored)
+    agentFlow.hydrateSession(session, true)
+  })
+
+  useEffect(() => {
+    if (!panelVisible || !isAuthenticated || agentHydratedRef.current) return
+    if (cacheOwner && (!config || allowHistoryStorage && !checkedAssistantCache)) return
+    const controller = new AbortController()
+    const revision = sessionRevision.current
+    queueMicrotask(() => {
+      if (controller.signal.aborted || agentHydratedRef.current) return
+      if (typeof chatbotApi.getAgentSession !== 'function') return
+      void chatbotApi.getAgentSession(controller.signal).then(session => {
+        if (controller.signal.aborted) return
+        agentHydratedRef.current = true
+        if (revision === sessionRevision.current) restoreAgentSession(session)
+      }).catch(() => {
+        // Keep chat usable and try again when the user reopens the panel.
+      })
+    })
+    return () => controller.abort()
+  }, [panelVisible, isAuthenticated, cacheOwner, config, allowHistoryStorage, checkedAssistantCache])
 
   useEffect(() => {
     if (!panelVisible) return
@@ -584,6 +690,10 @@ export function MapChatbot({
       setError('Chatbot đang tải cấu hình. Vui lòng thử lại sau giây lát.')
       return
     }
+    if (showingSavedAssistant) {
+      setError('Hãy chờ Homeji đồng bộ hội thoại đã lưu trước khi gửi.')
+      return
+    }
     if (message.length > 1000) {
       setError('Tin nhắn không được vượt quá 1.000 ký tự.')
       return
@@ -613,6 +723,7 @@ export function MapChatbot({
     const pendingId = retryMessage?.id ?? `${reactId}-pending-${++pendingIdRef.current}`
     const pending = { controller: new AbortController(), pendingId, request, draftRevision: draftRevision.current,
       restoreDraft: !retryMessage && (draft.trim() === text.trim()) }
+    sessionRevision.current++
     activeRequest.current = pending
     setBusy(true); setError(null)
     if (pending.restoreDraft) { setDraft(''); setAttachments([]) }
@@ -653,10 +764,22 @@ export function MapChatbot({
         sessionCriteria.current = reply.searchUpdate.criteria
         if (!reply.searchUpdate.criteria.unknown?.length && !reply.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')) onSearchUpdate?.(reply.searchUpdate)
       }
+      const displayContent = foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở mục Đồ ăn để xem thực đơn.'
+        : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.'
+        : reply.assistantMessage.content
+      if (request.saveHistory && cacheOwner && allowHistoryStorage) {
+        const saved = savedAssistantChat.current
+        const earlier = saved?.conversationId === reply.conversationId ? saved.messages : []
+        const rows = new Map([...earlier, reply.userMessage, { ...reply.assistantMessage, content: displayContent }].map(row => [row.id, row]))
+        const snapshot = { conversationId: reply.conversationId, messages: [...rows.values()].slice(-40) }
+        savedAssistantChat.current = snapshot
+        setShowingSavedAssistant(false)
+        void writeChatSnapshot(cacheOwner, 'assistant', snapshot)
+      }
       setMessages((prev) => {
         const userMessage = { ...reply.userMessage, attachments: request.attachments, rentalContext: request.context, rentalSelection: request.selection }
         const assistantMessage = { ...reply.assistantMessage,
-          content: foodUnavailable ? 'Chưa nhận được dữ liệu món ăn từ Chợ Homeji. Bạn có thể thử lại hoặc mở mục Đồ ăn để xem thực đơn.' : contextualUnavailable ? 'Trợ lý chưa nhận được dữ liệu đúng các lựa chọn đang chọn. Mở chi tiết hoặc màn so sánh để dùng công cụ chi phí, hoặc thử lại sau. Câu trả lời chung không được dùng làm giá hay phí của các phòng này.' : reply.assistantMessage.content,
+          content: displayContent,
           roommateCandidates: reply.roommateCandidates, nearbyRooms: reply.nearbyRooms, sourceRooms: suppressForRentalTarget || foodExpected ? null : reply.sourceRooms, agentDraft: reply.agentDraft, upgradeRequired: reply.upgradeRequired, quickReplies: reply.quickReplies, agentGoal: reply.agentGoal,
           actions: foodUnavailable ? [{ id: 'food-menu', kind: ChatbotNavigationActionKind.OpenSection, label: 'Mở mục Đồ ăn', description: 'Xem món đang bán', target: 'marketplace:food' }] : contextualUnavailable ? [{ id: 'open-context-room', kind: ChatbotNavigationActionKind.Navigate,
             label: request.selection ? 'Mở danh sách cân nhắc' : 'Mở chi tiết phòng', description: 'Xem thông tin và công cụ chi phí của các lựa chọn',
@@ -679,9 +802,13 @@ export function MapChatbot({
   const deleteConversation = async () => {
     if (!conversationId || busy) return
     if (!await confirmDialog({ title: 'Xóa hội thoại này?', message: 'Tiêu chí đã lưu cũng bị xóa và không khôi phục được.', confirmLabel: 'Xóa hội thoại', danger: true })) return
+    sessionRevision.current++
     setBusy(true); setError(null)
     try {
       await deleteChatbotConversation(conversationId)
+      savedAssistantChat.current = undefined
+      setShowingSavedAssistant(false)
+      if (cacheOwner) void removeChatSnapshot(cacheOwner, 'assistant')
       setConversationId(undefined); agentFlow.reset(); setMessages([]); setDraft(''); setAttachments([]); setMediaSession(value => value + 1); sessionCriteria.current = undefined; sessionFood.current = undefined
     } catch (reason) { setError(getErrorMessage(reason, 'Chưa xóa được hội thoại.')) }
     finally { setBusy(false) }
@@ -712,6 +839,10 @@ export function MapChatbot({
 
   const startNewConversation = () => {
     if (busy) return
+    sessionRevision.current++
+    savedAssistantChat.current = undefined
+    setShowingSavedAssistant(false)
+    if (cacheOwner) void removeChatSnapshot(cacheOwner, 'assistant')
     if (agentMode || agentSessionId || agentGoal) {
       const clearAgentSession = chatbotApi.resetAgentSession
       if (typeof clearAgentSession === 'function') void clearAgentSession().catch(() => {})
@@ -855,6 +986,7 @@ export function MapChatbot({
             </div> : null}
             <div className={`homeji-assistant__transcript-viewport${showTyping ? ' is-pending' : ''}`}>
             <div className="map-chatbot__body" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
+            {showingSavedAssistant ? <p className="homeji-assistant__feedback" role="status">Đang xem hội thoại AI đã lưu trên thiết bị.</p> : null}
             <ChatbotTranscript
               state={transcriptState}
               context={transcriptContext}
@@ -898,7 +1030,11 @@ export function MapChatbot({
               locationControl={locationControl}
             />
           </div>
-          {workspaceDraft ? <AgentDraftWorkspace
+          {workspaceDraft ? <ErrorBoundary fallback={<div role="alert">
+            <p>Chưa tải được bản nháp. Hãy tải lại trang để thử lại.</p>
+            <button type="button" onClick={agentFlow.closeDraftWorkspace}>Quay lại chat</button>
+          </div>}>
+            <Suspense fallback={agentFlow.workspaceOpen ? <p role="status">Đang mở bản nháp…</p> : null}><AgentDraftWorkspace
             draft={workspaceDraft}
             sharedLocation={sharedLocation}
             active={agentDraftId === workspaceDraft.id}
@@ -906,7 +1042,7 @@ export function MapChatbot({
             closeRef={agentFlow.workspaceCloseRef}
             onReturnToChat={() => { agentFlow.closeDraftWorkspace(); requestAnimationFrame(() => inputRef.current?.focus()) }}
             onFinished={() => agentFlow.finishDraft(workspaceDraft.id)}
-          /> : null}
+          /></Suspense></ErrorBoundary> : null}
         </div>
       </div>
     </div>

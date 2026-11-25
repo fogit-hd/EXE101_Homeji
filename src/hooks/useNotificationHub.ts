@@ -7,6 +7,8 @@ import {
   LogLevel,
 } from '@microsoft/signalr'
 import { NOTIFICATION_RECEIVED, NOTIFICATION_CONNECTED } from '../lib/sellerOrderAlerts'
+import { CONVERSATION_ATTACHMENT_DELETED, setNotificationConnection } from '../lib/conversationRealtime'
+import type { ConversationAttachmentDeletion } from '../api/types'
 import type { Notification } from '../api/types'
 import { getApiBaseUrl, getStoredSession } from '../api/client'
 import { AUTH_EXPIRED_EVENT, terminateStoredAuth } from '../api/authSession'
@@ -75,6 +77,13 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
       .build()
 
     connectionRef.current = connection
+    const connectionKey = Symbol('notification connection')
+    const connected = () => {
+      if (!isCurrent()) return
+      setNotificationConnection(connectionKey, getStoredSession()?.userId)
+      window.dispatchEvent(new Event(NOTIFICATION_CONNECTED))
+    }
+    const disconnected = () => setNotificationConnection(connectionKey)
 
     connection.on('notificationReceived', (payload: Notification) => {
       if (isCurrent()) {
@@ -82,7 +91,14 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
         window.dispatchEvent(new CustomEvent(NOTIFICATION_RECEIVED, { detail: { ownerId: getStoredSession()?.userId, notification: payload } }))
       }
     })
-    connection.onreconnected(() => { if (isCurrent()) window.dispatchEvent(new Event(NOTIFICATION_CONNECTED)) })
+    connection.on('conversationAttachmentDeleted', (payload: ConversationAttachmentDeletion & { conversationId: string }) => {
+      if (isCurrent()) window.dispatchEvent(new CustomEvent(CONVERSATION_ATTACHMENT_DELETED, {
+        detail: { ...payload, ownerId: getStoredSession()?.userId },
+      }))
+    })
+    connection.onreconnected(connected)
+    connection.onreconnecting(disconnected)
+    connection.onclose(disconnected)
     connection.on('sessionTerminated', (payload: { reason?: string }) => {
       if (!isCurrent()) return
       terminateStoredAuth(payload?.reason || 'Phiên đăng nhập đã được kết thúc bởi quản trị viên.')
@@ -90,6 +106,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
 
     const stopForExpiredSession = () => {
       cancelled = true
+      disconnected()
       void connection.stop().catch(() => undefined)
     }
     window.addEventListener(AUTH_EXPIRED_EVENT, stopForExpiredSession)
@@ -98,7 +115,7 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
       try {
         if (cancelled) return
         await connection.start()
-        if (isCurrent()) window.dispatchEvent(new Event(NOTIFICATION_CONNECTED))
+        connected()
       } catch (err) {
         if (isUnauthorizedHubError(err)) expireCurrentSession()
         if (cancelled || isBenignHubError(err)) return
@@ -108,8 +125,10 @@ export function useNotificationHub({ enabled = true, onNotification }: Options) 
 
     return () => {
       cancelled = true
+      disconnected()
       window.removeEventListener(AUTH_EXPIRED_EVENT, stopForExpiredSession)
       connection.off('notificationReceived')
+      connection.off('conversationAttachmentDeleted')
       connection.off('sessionTerminated')
       connectionRef.current = null
       void (async () => {

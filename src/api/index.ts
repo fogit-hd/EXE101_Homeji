@@ -28,6 +28,10 @@ import type {
   MarketplaceOrder,
   MarketplacePost,
   MessageAttachmentContext,
+  MessagePageCursor,
+  PostMessagePage,
+  ConversationAttachmentDeletion,
+  ConversationReadState,
   MomoPaymentResponse,
   MySubscription,
   Notification,
@@ -261,7 +265,7 @@ export const cancelInvitation = (invitationId: string) =>
   apiRequest<RoommateInvitation>(`/api/roommate-invitations/${invitationId}/cancel`, { method: 'POST' })
 
 // Conversations
-export const getConversations = () => apiRequest<PostConversation[]>('/api/conversations')
+export const getConversations = (signal?: AbortSignal) => apiRequest<PostConversation[]>('/api/conversations', { signal })
 
 export const setConversationUserBlocked = (conversationId: string, blocked: boolean) =>
   apiRequest<{ otherParticipantId: string; isBlockedByMe: boolean; isBlockedByOther: boolean }>(`/api/conversations/${encodeURIComponent(conversationId)}/block`, { method: blocked ? 'PUT' : 'DELETE' })
@@ -271,6 +275,26 @@ export const startRentalPostConversation = (postId: string) =>
 
 export const getConversationMessages = (conversationId: string) =>
   apiRequest<PostMessage[]>(`/api/conversations/${conversationId}/messages`)
+
+export const getConversationMessagePage = (conversationId: string, before?: MessagePageCursor | null, signal?: AbortSignal) =>
+  apiRequest<PostMessagePage>(`/api/conversations/${encodeURIComponent(conversationId)}/messages/page`, {
+    params: { beforeAt: before?.sentAt, beforeId: before?.id }, signal,
+  })
+
+export const searchConversationMessages = (conversationId: string, query: string, before: MessagePageCursor | null, signal: AbortSignal) =>
+  apiRequest<PostMessagePage>(`/api/conversations/${encodeURIComponent(conversationId)}/messages/search`, {
+    params: { query, beforeAt: before?.sentAt, beforeId: before?.id }, signal,
+  })
+
+export const markConversationRead = (conversationId: string, messageId: string, signal: AbortSignal) =>
+  apiRequest<ConversationReadState>(`/api/conversations/${encodeURIComponent(conversationId)}/read`, {
+    method: 'PUT', body: { messageId }, signal,
+  })
+
+export const getConversationAttachmentDeletions = (conversationId: string, messageIds: string[], signal: AbortSignal) =>
+  apiRequest<ConversationAttachmentDeletion[]>(`/api/conversations/${encodeURIComponent(conversationId)}/messages/attachment-deletions`, {
+    method: 'POST', body: { messageIds }, signal,
+  })
 
 export const sendConversationMessage = (conversationId: string, body: string) =>
   apiRequest<PostMessage>(`/api/conversations/${conversationId}/messages`, {
@@ -375,8 +399,8 @@ export const getChatbotPopupConfig = () =>
 export const getChatbotConversations = () =>
   apiRequest<ChatbotConversation[]>('/api/chatbot/conversations')
 
-export const getChatbotMessages = (conversationId: string) =>
-  apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${conversationId}/messages`)
+export const getChatbotMessages = (conversationId: string, signal?: AbortSignal) =>
+  apiRequest<ChatbotMessage[]>(`/api/chatbot/conversations/${encodeURIComponent(conversationId)}/messages`, { params: { limit: 40 }, signal })
 
 async function postChatbot<T>(path: string, action: ChatbotAction, body: unknown, signal?: AbortSignal, siteKey?: string | null, timeoutMs = AI_REQUEST_TIMEOUT_MS) {
   const send = (headers?: Record<string, string>) =>

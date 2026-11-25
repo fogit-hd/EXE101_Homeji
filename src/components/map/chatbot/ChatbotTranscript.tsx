@@ -1,4 +1,4 @@
-import { memo, type RefObject } from 'react'
+import { lazy, memo, Suspense, type RefObject } from 'react'
 import {
   ChatMessageSender,
   ChatbotNavigationActionKind,
@@ -12,19 +12,21 @@ import type { RentalAssistantComparison, RentalAssistantSelection } from '../../
 import type { ChatbotLocation } from '../../../lib/chatbotLocation'
 import { foodCriteriaSnapshot } from '../../../lib/foodChatIntent'
 import { rentalPriceBasis } from '../../ai/rentalPriceBasis'
-import { AgentPostPreview } from '../../ai/AgentPostPreview'
-import { AgentRoommateResults } from '../../ai/AgentRoommateResults'
-import { AiSearchReview } from '../../ai/AiSearchReview'
-import { ChatbotNearbyResults } from '../../ai/ChatbotNearbyResults'
-import { ChatbotSourceResults } from '../../ai/ChatbotSourceResults'
-import { FoodDiscoveryCard } from '../../ai/FoodDiscoveryCard'
-import { RentalContextCard } from '../../ai/RentalContextCard'
 import { ChatbotMessageContent } from '../ChatbotMessageContent'
-import { ChatbotMediaPreview } from '../ChatbotMediaComposer'
+import { ChatbotMediaPreview } from '../ChatbotMediaPreview'
+import { ErrorBoundary } from '../../ErrorBoundary'
 import { AssistantIcon, HomejiAvatar } from '../ChatbotVisuals'
-import { BotAvatar } from 'bot-avatars'
 import { rentalTargetKey } from './chatbotModels'
 import type { DisplayMessage } from './ChatbotMessageTypes'
+
+const AgentPostPreview = lazy(() => import('../../ai/AgentPostPreview').then(module => ({ default: module.AgentPostPreview })))
+const AgentRoommateResults = lazy(() => import('../../ai/AgentRoommateResults').then(module => ({ default: module.AgentRoommateResults })))
+const AiSearchReview = lazy(() => import('../../ai/AiSearchReview').then(module => ({ default: module.AiSearchReview })))
+const ChatbotNearbyResults = lazy(() => import('../../ai/ChatbotNearbyResults').then(module => ({ default: module.ChatbotNearbyResults })))
+const ChatbotSourceResults = lazy(() => import('../../ai/ChatbotSourceResults').then(module => ({ default: module.ChatbotSourceResults })))
+const FoodDiscoveryCard = lazy(() => import('../../ai/FoodDiscoveryCard').then(module => ({ default: module.FoodDiscoveryCard })))
+const RentalContextCard = lazy(() => import('../../ai/RentalContextCard').then(module => ({ default: module.RentalContextCard })))
+const BotAvatar = lazy(() => import('bot-avatars').then(module => ({ default: module.BotAvatar })))
 
 type State = {
   messages: DisplayMessage[]
@@ -66,7 +68,11 @@ function AssistantWelcomeAvatar({ busy }: { busy: boolean }) {
   ) {
     return <img src="/brand/homeji-logo2.png" alt="" draggable={false} />
   }
-  return <BotAvatar type="clover" size={36} state={busy ? 'working' : 'default'} color="#388e3c" />
+  return <ErrorBoundary fallback={<img src="/brand/homeji-logo2.png" alt="" draggable={false} />}>
+    <Suspense fallback={<img src="/brand/homeji-logo2.png" alt="" draggable={false} />}>
+      <BotAvatar type="clover" size={36} state={busy ? 'working' : 'default'} color="#388e3c" />
+    </Suspense>
+  </ErrorBoundary>
 }
 
 export const ChatbotTranscript = memo(function ChatbotTranscript({ state, context, refs, actions }: Props) {
@@ -154,9 +160,9 @@ export const ChatbotTranscript = memo(function ChatbotTranscript({ state, contex
                     {m.rentalSelection ? <small className="map-chatbot__message-context">Về lựa chọn: {m.rentalSelection.title}</small> : null}
                     {isUser ? <><ChatbotMediaPreview attachments={m.attachments ?? []} /><span className="map-chatbot__bubble-text">{m.content}</span>{m.failure ? <div className="map-chatbot__recovery"><p role="status">{m.failure}</p><button type="button" disabled={busy || mediaBusy || recordingActive} onClick={() => void send(m.content, false, undefined, m)}>Thử lại câu hỏi này</button></div> : null}</>
                       : <><ChatbotMessageContent content={m.content} />
-                        {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><RentalContextCard data={m.rentalDecision} onOpenDetail={() => closeChat()} /></section> : null}
-                        {m.searchUpdate ? <AiSearchReview result={m.searchUpdate} hasOtherRooms={Boolean(m.sourceRooms?.rooms.length)} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => closeChat()} /> : null}
-                        {m.sourceRooms ? <ChatbotSourceResults data={m.sourceRooms} startAt={(m.searchUpdate?.posts.length ?? 0) + 1} onOpen={() => closeChat()} /> : null}
+                        {m.rentalDecision ? <section className="map-chatbot__decision" aria-label="Thông tin và chi phí theo tin phòng"><ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><RentalContextCard data={m.rentalDecision} onOpenDetail={() => closeChat()} /></Suspense></ErrorBoundary></section> : null}
+                        {m.searchUpdate ? <ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><AiSearchReview result={m.searchUpdate} hasOtherRooms={Boolean(m.sourceRooms?.rooms.length)} applied={Boolean(onSearchUpdate) && !m.searchUpdate.criteria.unknown?.length && !m.searchUpdate.posts.some(item => rentalPriceBasis(item.post) === 'unknown')} onApply={update => { onSearchUpdate?.(update) }} onRefine={prepareDraft} onOpenListing={() => closeChat()} /></Suspense></ErrorBoundary> : null}
+                        {m.sourceRooms ? <ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><ChatbotSourceResults data={m.sourceRooms} startAt={(m.searchUpdate?.posts.length ?? 0) + 1} onOpen={() => closeChat()} /></Suspense></ErrorBoundary> : null}
                         {m.quickReplies?.length && index === messages.length - 1 ? (
                           <div className="homeji-assistant__quick-replies" role="group" aria-label="Trả lời nhanh">
                             {m.quickReplies.map((replyItem, replyIdx) => (
@@ -174,11 +180,11 @@ export const ChatbotTranscript = memo(function ChatbotTranscript({ state, contex
                             ))}
                           </div>
                         ) : m.sourceRooms && index === messages.length - 1 ? <div className="map-chatbot__context-prompts" aria-label="Gợi ý hỏi tiếp"><button type="button" disabled={busy} onClick={() => void send('Phòng nào rẻ nhất?')}>Phòng nào rẻ nhất?</button><button type="button" disabled={busy} onClick={() => void send('So sánh 2 phòng đầu')}>So sánh 2 phòng đầu</button></div> : null}
-                        {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => openDraftWorkspace(m.agentDraft!.id)}><span>Loại tin · nội dung · chi phí · vị trí</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /> : null}
+                        {m.agentDraft ? m.agentDraft.id === draftWorkspaceId ? <button type="button" className="homeji-assistant__draft-open" onClick={() => openDraftWorkspace(m.agentDraft!.id)}><span>Loại tin · nội dung · chi phí · vị trí</span><strong>Mở bản nháp để xem và chỉnh sửa ↗</strong></button> : <ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><AgentPostPreview key={m.agentDraft.id} draft={m.agentDraft} sharedLocation={sharedLocation} active={false} onFinished={() => {}} /></Suspense></ErrorBoundary> : null}
                         {m.upgradeRequired ? <div className="map-chatbot__actions"><button className="map-chatbot__action" type="button" onClick={openPayments}>Xem gói Premium</button><button className="map-chatbot__action" type="button" onClick={() => { if (m.actions?.[0]) handleNavigationAction(m.actions[0]); else { openMarketplace() } }}>Tự đăng bài</button></div> : null}
-                        {m.roommateCandidates ? <AgentRoommateResults items={m.roommateCandidates} onOpen={() => closeChat()} /> : null}
-                        {m.nearbyRooms ? <ChatbotNearbyResults data={m.nearbyRooms} onOpen={() => closeChat()} /> : null}
-                        {m.foodDiscovery ? <FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => closeChat()} /> : null}
+                        {m.roommateCandidates ? <ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><AgentRoommateResults items={m.roommateCandidates} onOpen={() => closeChat()} /></Suspense></ErrorBoundary> : null}
+                        {m.nearbyRooms ? <ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><ChatbotNearbyResults data={m.nearbyRooms} onOpen={() => closeChat()} /></Suspense></ErrorBoundary> : null}
+                        {m.foodDiscovery ? <ErrorBoundary fallback={<small role="alert">Chưa tải được kết quả.</small>}><Suspense fallback={null}><FoodDiscoveryCard data={m.foodDiscovery} busy={busy} onSearch={origin => void send(m.foodQuery || '', false, undefined, undefined, origin, foodCriteriaSnapshot(m.foodDiscovery!))} onOpen={() => closeChat()} /></Suspense></ErrorBoundary> : null}
                         {m.actions?.length && !m.upgradeRequired ? <div className="map-chatbot__actions" aria-label="Đi tới tính năng Homeji">{m.actions.map(action => <button key={action.id} type="button" className="map-chatbot__action" title={action.description} onClick={() => handleNavigationAction(action)}>{action.label}<AssistantIcon name="arrow" /></button>)}</div> : null}
                         <div className="homeji-assistant__reply-actions"><button type="button" onClick={() => void copyReply(m.content)} aria-label="Sao chép câu trả lời"><AssistantIcon name="copy" />Sao chép</button><button type="button" onClick={() => {
                           if (needsChoiceReselection) handleNavigationAction({ id: `reselect-${m.id}`, kind: ChatbotNavigationActionKind.Navigate, label: 'Chọn lại danh sách', description: '', target: '/?section=saved&view=considering' })

@@ -16,6 +16,7 @@ export function SecureMessageAttachment({
   conversationId,
   messageId,
   mine,
+  canLoad = true,
   onDeleted,
   onError,
 }: {
@@ -23,6 +24,7 @@ export function SecureMessageAttachment({
   conversationId: string
   messageId: string
   mine: boolean
+  canLoad?: boolean
   onDeleted: () => void
   onError: (message: string) => void
 }) {
@@ -33,7 +35,7 @@ export function SecureMessageAttachment({
   const nearViewport = useInView(attachmentRef, { once: true, margin: '300px' })
 
   useEffect(() => {
-    if (!nearViewport || attachment.status !== MessageAttachmentStatus.Ready) return
+    if (!canLoad || !nearViewport || attachment.status !== MessageAttachmentStatus.Ready) return
     let cancelled = false
     let objectUrl: string | null = null
     void downloadConversationAttachment(attachment.contentPath)
@@ -49,7 +51,7 @@ export function SecureMessageAttachment({
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [attachment.contentPath, attachment.status, nearViewport])
+  }, [attachment.contentPath, attachment.status, nearViewport, canLoad])
 
   if (attachment.status === MessageAttachmentStatus.Deleted) {
     return <span className="map-messages__image-deleted">Tệp đã được người gửi xóa</span>
@@ -63,12 +65,12 @@ export function SecureMessageAttachment({
         </button>
       ) : (
         <span className="map-messages__image-loading">
-          {loadFailed ? 'Không tải được tệp' : 'Đang tải…'}
+          {!canLoad ? 'Tệp sẽ tải sau khi đồng bộ' : loadFailed ? 'Không tải được tệp' : 'Đang tải…'}
         </span>
       )}
       <figcaption>
         {attachment.mimeType === 'audio/wav' ? '🎙 Tin nhắn thoại' : attachmentContextLabel[attachment.context] ?? 'Ảnh khác'}
-        {mine ? (
+        {mine && canLoad ? (
           <button
             type="button"
             disabled={deleting}
