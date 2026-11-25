@@ -49,6 +49,13 @@ html[data-theme='dark'] .admin-shell { --admin-rail-bg: #0a151c; --admin-rail-ac
 .admin-topbar__title span { display: block; color: var(--text-secondary); font-size: 0.75rem; line-height: 1.4; }
 .admin-topbar__title h1 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-heading); font-size: 1.125rem; font-weight: 700; line-height: 1.4; letter-spacing: -.01em; }
 .admin-topbar__tools { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+#root .admin-topbar__tools button.theme-switch {
+  flex-basis: 48px;
+  width: 48px;
+  min-width: 48px;
+  overflow-clip-margin: 4px;
+}
+.admin-topbar__tools .theme-switch__fallback { font-size: 1rem; }
 #root .admin-topbar__link { color: var(--action-on-soft); font-size: 0.875rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
 #root .admin-topbar__link:hover { text-decoration: underline; }
 .admin-content { display: grid; align-content: start; gap: 20px; width: 100%; max-width: 1280px; min-width: 0; margin: 0 auto; padding: 28px 32px 72px; }

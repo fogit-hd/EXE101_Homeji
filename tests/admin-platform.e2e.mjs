@@ -231,6 +231,16 @@ try {
   assert.equal(await link.getAttribute('aria-current'), 'page')
   await page.getByRole('heading', { level: 1, name: 'Vận hành hệ thống' }).waitFor()
 
+  const themeSwitch = page.getByRole('switch', { name: 'Chế độ tối' })
+  const desktopSwitch = await themeSwitch.boundingBox()
+  assert.equal(desktopSwitch?.width, 48)
+  assert.ok(desktopSwitch.height >= 44)
+  const initialTheme = await themeSwitch.getAttribute('aria-checked')
+  await themeSwitch.press('Space')
+  await page.getByRole('switch', { name: 'Chế độ tối', checked: initialTheme !== 'true' }).waitFor()
+  await themeSwitch.press('Space')
+  await page.getByRole('switch', { name: 'Chế độ tối', checked: initialTheme === 'true' }).waitFor()
+
   const overview = page.getByRole('region', { name: '3 đầu việc cần quản trị viên chú ý' })
   const kpis = overview.locator('.admin-platform-kpis')
   await kpis.getByText('Mục chờ xử lý').waitFor()
@@ -307,6 +317,9 @@ try {
   // Narrow viewport 320px check with <details> open and closed
   await page.setViewportSize({ width: 320, height: 900 })
   await page.locator('.admin-rail').waitFor({ state: 'hidden' })
+  const mobileSwitch = await themeSwitch.boundingBox()
+  assert.equal(mobileSwitch?.width, 48)
+  assert.ok(mobileSwitch.height >= 44)
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
 
   if (process.env.HOMEJI_TEST_PLATFORM_SCREENSHOT_DIR) {
