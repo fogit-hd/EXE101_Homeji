@@ -76,13 +76,13 @@
 }
 
 .feature-workspace.is-saved .page-frame__title {
-  font-size: 28px;
-  line-height: 34px;
+  font-size: 1.75rem;
+  line-height: 2.125rem;
 }
 
 .feature-workspace.is-saved .page-frame__lead {
-  font-size: 13px;
-  line-height: 20px;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
 }
 
 .saved-posts-embed .grid-posts,
@@ -101,7 +101,7 @@
 .saved-posts-page .grid-posts .btn {
   min-height: 32px;
   padding: 0 10px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   border-radius: 8px;
 }
 

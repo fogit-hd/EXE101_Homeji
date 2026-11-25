@@ -14,7 +14,7 @@
   display: flex; align-items: center; gap: 10px; isolation: isolate;
   box-sizing: border-box; max-width: 100%; min-height: 48px; padding: 10px 18px 10px 12px;
   border: 2px solid transparent; border-radius: 999px;
-  color: var(--text-heading); font: 600 13px/1.5 var(--font-ui);
+  color: var(--text-heading); font: 600 0.8125rem/1.5 var(--font-ui);
   background: linear-gradient(var(--surface-elevated),var(--surface-elevated)) padding-box,
     conic-gradient(from var(--ai-orbit),var(--thinking-spectrum)) border-box;
   box-shadow: 0 6px 24px rgb(76 98 148 / .2),0 0 18px rgb(162 119 230 / .15);

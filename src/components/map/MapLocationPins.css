@@ -33,7 +33,7 @@
   border-radius: 999px;
   background: #18231d;
   color: #fff;
-  font: 400 11px/1 var(--font-ui);
+  font: 400 0.6875rem/1 var(--font-ui);
   white-space: nowrap;
   box-shadow: 0 4px 10px rgba(24, 35, 29, 0.2);
   transition: transform 0.15s ease, background 0.15s ease;
@@ -120,18 +120,18 @@
 
 .map-pin-cluster__count {
   display: block;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 900;
   letter-spacing: -0.03em;
 }
 .map-pin-cluster--premium .map-pin-cluster__bubble { box-shadow: 0 0 0 2px #d5ac45, 0 4px 14px #0f172a60; }
 .map-pin-cluster--premium .map-pin-cluster__lift:hover .map-pin-cluster__bubble { box-shadow: 0 0 0 3px #d5ac45, 0 7px 20px #0f172a70; }
-.map-pin-cluster__vip { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); padding: 4px 7px; border: 1px solid #c79c32; border-radius: 8px; background: #fff2c7; color: #6b4913; font: 750 10px/1 var(--font-ui, sans-serif); white-space: nowrap; pointer-events: none; }
+.map-pin-cluster__vip { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); padding: 4px 7px; border: 1px solid #c79c32; border-radius: 8px; background: #fff2c7; color: #6b4913; font: 750 0.625rem/1 var(--font-ui, sans-serif); white-space: nowrap; pointer-events: none; }
 
 .map-pin-cluster__label {
   display: block;
   margin-top: 2px;
-  font-size: 8px;
+  font-size: 0.5rem;
   font-weight: 750;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -232,7 +232,7 @@
 .map-rental-pin__kind,
 .map-roommate-pin__kind {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -260,7 +260,7 @@
 .map-rental-pin__title,
 .map-roommate-pin__title {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #fff;
   overflow: hidden;
@@ -272,7 +272,7 @@
 .map-market-pin__price {
   display: block;
   margin-top: 3px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #fb923c;
 }
@@ -345,7 +345,7 @@
   display: grid;
   place-items: center;
   color: #c2410c;
-  font-size: calc(var(--map-market-pin-size, 44px) * 0.3);
+  font-size: calc(var(--map-market-pin-size, 2.75rem) * 0.3);
   font-weight: 850;
   line-height: 1;
 }

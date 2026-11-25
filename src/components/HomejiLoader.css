@@ -35,7 +35,7 @@
 
 .homeji-loader__label {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #69727d);
 }
@@ -44,7 +44,7 @@
   margin: 0;
   max-width: 28rem;
   text-align: center;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--danger, #c0392b);
 }

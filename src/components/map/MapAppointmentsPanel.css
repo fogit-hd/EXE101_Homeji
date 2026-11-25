@@ -37,7 +37,7 @@
 }
 
 .map-appointments__eyebrow {
-  font: 700 10px/1.2 var(--font-ui);
+  font: 700 0.625rem/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--hj-accent);
@@ -46,9 +46,9 @@
 .map-appointments__page-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 36px;
+  font-size: 2.25rem;
   font-weight: 600;
-  line-height: 44px;
+  line-height: 2.75rem;
   color: var(--hj-ink, #18231d);
 }
 

@@ -12,7 +12,7 @@
 .auth-city__panorama figcaption {
   margin-top: 10px;
   color: var(--text-secondary);
-  font: 400 12px/1.6 var(--font-ui);
+  font: 400 0.75rem/1.6 var(--font-ui);
   text-align: center;
 }
 @media (max-width: 900px) {

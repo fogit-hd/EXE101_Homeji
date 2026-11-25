@@ -1,8 +1,8 @@
-.ai-search-review { min-width: 0; margin: 16px 0; padding: 14px; border-radius: 16px; color: var(--text-primary); font-size: 13px; }
+.ai-search-review { min-width: 0; margin: 16px 0; padding: 14px; border-radius: 16px; color: var(--text-primary); font-size: 0.8125rem; }
 .homeji-assistant .ai-search-review { padding: 0; }
 .ai-search-review__heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.ai-search-review__heading > strong { font-size: 14px; }
-.ai-search-review__heading > span { flex-shrink: 0; color: var(--text-secondary); font-size: 11px; }
+.ai-search-review__heading > strong { font-size: 0.875rem; }
+.ai-search-review__heading > span { flex-shrink: 0; color: var(--text-secondary); font-size: 0.6875rem; }
 .ai-search-review__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
 .ai-search-review__chips :is(button, span) { background: var(--surface-input); border: 1px solid var(--border); color: var(--text-primary); border-radius: 20px; padding: 6px 9px; font: inherit; }
 .ai-search-review button { cursor: pointer; }

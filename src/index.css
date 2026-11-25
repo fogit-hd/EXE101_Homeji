@@ -111,12 +111,12 @@
   --map-canvas-bg: #e7eef3;
   color-scheme: light;
   font-family: var(--font-ui);
+  /* Keep rem tied to the browser's preferred font size. */
+  font-size: 100%;
   line-height: 1.6;
   font-synthesis: none;
   color: var(--text-primary);
   background: var(--surface-muted);
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 /* Match system appearance with the same slate and teal semantic roles. */
@@ -255,6 +255,7 @@ label {
 
 button, input, select, textarea {
   font-family: var(--font-ui);
+  font-size: inherit;
 }
 
 html {
@@ -440,14 +441,14 @@ p {
 }
 
 .page-title {
-  font-size: 40px;
+  font-size: 2.5rem;
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 8px;
 }
 
 .page-subtitle {
-  font-size: 18px;
+  font-size: 1.125rem;
   margin-bottom: 32px;
 }
 
@@ -460,7 +461,7 @@ p {
   padding: 12px 24px;
   border-radius: var(--radius-sm);
   border: none;
-  font: 600 16px/1 var(--font-ui);
+  font: 600 1rem/1 var(--font-ui);
   cursor: pointer;
   transition:
     background var(--dur-fast) var(--ease-out),
@@ -532,7 +533,7 @@ p {
 .btn-sm {
   min-height: 36px;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .card {
@@ -557,7 +558,7 @@ p {
 
 .form-label {
   display: block;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-heading);
   margin-bottom: 8px;
@@ -571,7 +572,7 @@ p {
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   padding: 12px 20px;
-  font: 400 14px var(--font-ui);
+  font: 400 0.875rem var(--font-ui);
   color: var(--text-primary);
 }
 
@@ -598,7 +599,7 @@ p {
 
 .form-error {
   color: var(--error);
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-top: 6px;
 }
 
@@ -606,7 +607,7 @@ p {
   padding: 12px 16px;
   border-radius: var(--radius-md);
   margin-bottom: 16px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .alert-error {
@@ -631,7 +632,7 @@ p {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -674,7 +675,7 @@ p {
   border: none;
   border-bottom: 2px solid transparent;
   padding: 12px 16px 12px 0;
-  font: 400 16px var(--font-ui);
+  font: 400 1rem var(--font-ui);
   color: var(--text-secondary);
   cursor: pointer;
   transition:
@@ -778,12 +779,12 @@ p {
   }
 
   .page-title {
-    font-size: 26px;
+    font-size: 1.625rem;
     line-height: 1.15;
   }
 
   .page-subtitle {
-    font-size: 15px;
+    font-size: 0.9375rem;
     margin-bottom: 20px;
   }
 
@@ -808,7 +809,7 @@ p {
   .form-input,
   .form-select,
   .form-textarea {
-    font-size: 16px; /* tránh zoom tự động trên iOS */
+    font-size: 1rem; /* tránh zoom tự động trên iOS */
     border-radius: 14px;
   }
 
@@ -840,7 +841,7 @@ p {
 
 @media (max-width: 639px) {
   .page-title {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
 }
 

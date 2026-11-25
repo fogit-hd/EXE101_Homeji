@@ -6,7 +6,7 @@
   border-radius: 12px;
   background: var(--surface);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 .rental-accordion > summary {
@@ -22,7 +22,7 @@
   background: transparent;
   box-shadow: none;
   color: var(--text-heading);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.6;
   list-style: none;

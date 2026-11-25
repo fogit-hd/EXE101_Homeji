@@ -38,7 +38,7 @@
 
 .hub-promo__eyebrow {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -47,9 +47,9 @@
 .hub-promo__title {
   margin: 0;
   color: #354d2b;
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 700;
-  line-height: 40px;
+  line-height: 2.5rem;
 }
 
 .hub-promo__title em { font-style: normal; }
@@ -58,8 +58,8 @@
   margin: 8px 0 18px;
   max-width: 440px;
   color: #5d6b60;
-  font-size: 14px;
-  line-height: 21px;
+  font-size: 0.875rem;
+  line-height: 1.3125rem;
 }
 
 .hub-promo__cta {
@@ -73,7 +73,7 @@
   background: color-mix(in srgb,var(--promo-accent) 14%,#fff);
   color: var(--glass-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -136,7 +136,7 @@
   border-radius: 50%;
   background: #fff;
   color: #354d2b;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease;
@@ -174,18 +174,18 @@
   margin-bottom: 6px;
 }
 .hub-promo--rail .hub-promo__title {
-  font-size: 21px;
-  line-height: 27px;
+  font-size: 1.3125rem;
+  line-height: 1.6875rem;
 }
 .hub-promo--rail .hub-promo__sub {
   margin: 6px 0 14px;
   max-width: 64%;
-  font-size: 13px;
-  line-height: 19px;
+  font-size: 0.8125rem;
+  line-height: 1.1875rem;
 }
 .hub-promo--rail .hub-promo__cta {
   padding: 8px 14px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .hub-promo--rail .hub-promo__dots {
   left: 20px;
@@ -209,9 +209,9 @@
   .hub-promo__slide { align-items: flex-start; padding: 22px 20px 52px; }
   .hub-promo--rail .hub-promo__slide { padding: 20px 20px 52px; }
   .hub-promo__copy { max-width: 100%; }
-  .hub-promo__title { font-size: 24px; line-height: 30px; }
-  .hub-promo--rail .hub-promo__title { font-size: 21px; line-height: 27px; }
-  .hub-promo__sub { margin-bottom: 14px; font-size: 13px; line-height: 19px; max-width: 62%; }
+  .hub-promo__title { font-size: 1.5rem; line-height: 1.875rem; }
+  .hub-promo--rail .hub-promo__title { font-size: 1.3125rem; line-height: 1.6875rem; }
+  .hub-promo__sub { margin-bottom: 14px; font-size: 0.8125rem; line-height: 1.1875rem; max-width: 62%; }
   .hub-promo__art { top: auto; bottom: 0; margin: 0; width: 240px; height: 139px; right: -24px; opacity: 0.95; }
   .hub-promo--rail .hub-promo__art { bottom: 20px; right: -14px; width: 172px; height: 100px; }
   .hub-promo__dots { left: 20px; }

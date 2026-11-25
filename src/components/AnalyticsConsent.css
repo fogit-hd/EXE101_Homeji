@@ -18,6 +18,6 @@ html:root #root .analytics-choice > .analytics-choice__trigger {
   filter: none;
 }
 
-.analytics-choice__panel p { font-size: 14px; }
+.analytics-choice__panel p { font-size: 0.875rem; }
 .analytics-choice__actions .btn { min-height: 44px; }
 @media (max-width: 767px) { .analytics-choice { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); max-width: none; } .analytics-choice__panel p { margin: 6px 0; } .analytics-choice__actions { flex-wrap: nowrap; margin-top: 8px; } .analytics-choice__actions .btn { flex: 1; } }

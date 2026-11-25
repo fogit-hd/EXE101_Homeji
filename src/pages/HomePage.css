@@ -774,7 +774,7 @@
 .home-map-pin-preview__thumb--empty {
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
 }
 
@@ -786,7 +786,7 @@
 
 .home-map-pin-preview__type {
   margin: 0 0 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--grab-blue);
 }
@@ -812,7 +812,7 @@
 
 .home-map-pin-preview__addr {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -821,7 +821,7 @@
 }
 
 .home-map-pin-preview__cta {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--grab-blue);
   text-decoration: none;
@@ -859,7 +859,7 @@
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface-elevated);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   color: var(--text-secondary);
@@ -902,7 +902,7 @@
   background: var(--surface-glass);
   padding: 12px 16px;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-primary);
   box-shadow: 0 4px 16px rgba(var(--shadow-color), 0.12);
   border: 1px solid color-mix(in srgb, var(--grab-green) 28%, var(--border));
@@ -988,7 +988,7 @@
   background: var(--error-soft);
   border: 1px solid color-mix(in srgb, var(--error) 35%, var(--border));
   color: var(--error);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.08);
 }
@@ -1427,7 +1427,7 @@
     right: 20px;
     bottom: 64px;
     max-width: none;
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
 
   .home-map-banner ~ .home-map-locate {
@@ -1450,7 +1450,7 @@
     border-radius: 12px;
     background: var(--surface-elevated);
     box-shadow: none;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-heading);
     cursor: pointer;
@@ -1482,7 +1482,7 @@
 
   .home-map-search-toggle-chevron {
     color: var(--grab-green);
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .home-map-filters,
@@ -1517,7 +1517,7 @@
   }
 
   .home-list-header h1 {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 }
 
@@ -1830,7 +1830,7 @@
   }
 
   .is-explore-list .map-listing-card-body h3 {
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 600;
     color: #242a2e;
   }
@@ -2020,4 +2020,4 @@
 }
 /* Read-only AI results stay reviewable before replacing the map filters. */
 .home-ai-review { position: fixed; z-index: 1500; top: 90px; left: 24px; width: min(420px, calc(100vw - 48px)); max-height: calc(100dvh - 125px); overflow: auto; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 18px; padding: 12px; box-shadow: var(--shadow-lg); }
-.home-ai-review > button { float: right; border: 0; background: transparent; color: var(--text-primary); font-size: 24px; cursor: pointer; }
+.home-ai-review > button { float: right; border: 0; background: transparent; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; }

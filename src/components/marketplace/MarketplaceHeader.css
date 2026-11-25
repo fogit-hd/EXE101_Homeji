@@ -32,7 +32,7 @@
 
 .marketplace-header__eyebrow {
   margin: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -42,9 +42,9 @@
 .marketplace-header__title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 600;
-  line-height: 32px;
+  line-height: 2rem;
   color: var(--text-heading);
 }
 
@@ -84,7 +84,7 @@
   border: 1px solid var(--mh-accent);
   background: var(--mh-accent);
   color: #fff;
-  font: 600 14px/20px var(--font-ui);
+  font: 600 0.875rem/1.25rem var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -119,9 +119,9 @@
 
 .marketplace-header__wallet-label {
   color: var(--mh-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 400;
-  line-height: 18px;
+  line-height: 1.125rem;
   white-space: nowrap;
 }
 
@@ -144,7 +144,7 @@
   border: 0;
   background: transparent;
   color: var(--mh-accent);
-  font: 700 13px/1 var(--font-ui);
+  font: 700 0.8125rem/1 var(--font-ui);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -154,7 +154,7 @@
 .marketplace-header__wallet-amount,
 .marketplace-header__wallet-error {
   font-family: var(--font-ui);
-  font-size: 21px;
+  font-size: 1.3125rem;
   font-weight: 600;
   line-height: 1.15;
   color: var(--mh-ink);
@@ -180,9 +180,9 @@
 
 .marketplace-header__wallet-error {
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 1.375rem;
   color: var(--mh-muted);
 }
 
@@ -229,7 +229,7 @@
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--mh-ink);
-  font: 600 14px/20px var(--font-ui);
+  font: 600 0.875rem/1.25rem var(--font-ui);
   cursor: pointer;
   flex: none;
   white-space: nowrap;
@@ -274,7 +274,7 @@
   border-radius: 8px;
   background: var(--mh-paper);
   color: var(--mh-ink);
-  font: 600 14px/20px var(--font-ui);
+  font: 600 0.875rem/1.25rem var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -299,7 +299,7 @@
   border-radius: 999px;
   background: var(--mh-accent);
   color: #fff;
-  font: 800 11px/1 var(--font-ui);
+  font: 800 0.6875rem/1 var(--font-ui);
 }
 
 @media (max-width: 1100px) {
@@ -396,19 +396,19 @@ html[data-theme='dark'] #root .marketplace-header :is(.marketplace-header__tab, 
   background: transparent;
 }
 /* The two actions share one clear glass face; the balance stays unfiltered. */
-#root .marketplace-header__utilities { gap: 16px; width: auto; }
+#root .marketplace-header__utilities { flex-wrap: wrap; gap: 16px; width: auto; max-width: 100%; min-width: 0; }
 #root .marketplace-header__wallet { display: flex; align-items: flex-start; gap: 4px; }
 #root .marketplace-header__wallet-amount { font-variant-numeric: tabular-nums; }
-#root .marketplace-header__utility-actions { display: flex; align-items: center; gap: 10px; }
+#root .marketplace-header__utility-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
 html:root #root .marketplace-header .marketplace-header__utility-action,
 :is(html:root #root,html:root body) .marketplace-header .marketplace-header__utility-action[data-glass-control] {
   --utility-reflection-x: var(--utility-light-x,26%);
   --glass-scene-blur: .2px; --glass-scene-saturation: 1.08;
   position: relative; isolation: isolate; box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center;
-  height: 44px; min-height: 44px; min-width: 104px; padding: 0 20px;
+  height: auto; min-height: 44px; min-width: min(104px, 100%); max-width: 100%; padding: 6px 20px;
   border: 0; border-radius: 999px; margin: 0;
-  font: 650 14px/20px var(--font-ui); color: var(--text-heading);
+  font: 650 0.875rem/1.25rem var(--font-ui); color: var(--text-heading);
   text-decoration: none; text-shadow: none; filter: none;
   background-color: transparent;
   background-image:
@@ -457,12 +457,12 @@ html[data-theme='dark'] #root .marketplace-header .marketplace-header__utility-a
   background: linear-gradient(155deg, rgba(255, 255, 255, 0.4) 5%, rgba(255, 255, 255, 0.15) 28%, rgba(128, 217, 219, 0.08) 48%, rgba(128, 217, 219, 0.25) 72%, rgba(255, 255, 255, 0.3) 96%);
 }
 html:root #root .marketplace-header .marketplace-header__utility-action:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
-@media(max-width:1100px) { #root .marketplace-header__summary { flex-wrap: wrap; } }
+@media(max-width:68.75em) { #root .marketplace-header__summary { flex-wrap: wrap; } }
 @media(max-width:720px) {
-  #root .marketplace-header__utilities { flex-wrap: nowrap; gap: 8px; width: 100%; }
-  #root .marketplace-header__utility-actions { flex: 1 1 auto; justify-content: flex-end; gap: 8px; }
+  #root .marketplace-header__utilities { gap: 8px; width: 100%; }
+  #root .marketplace-header__utility-actions { flex: 1 1 max-content; justify-content: flex-end; gap: 8px; }
   html:root #root .marketplace-header .marketplace-header__utility-action,
-  :is(html:root #root,html:root body) .marketplace-header .marketplace-header__utility-action[data-glass-control] { flex: 1; min-width: 0; }
+  :is(html:root #root,html:root body) .marketplace-header .marketplace-header__utility-action[data-glass-control] { flex: 1 1 auto; min-width: 0; }
 }
 @media(prefers-reduced-motion:reduce) {
   html:root #root .marketplace-header .marketplace-header__utility-action,
@@ -482,8 +482,6 @@ html:root #root .marketplace-header .marketplace-header__utility-action:focus-vi
   :is(html:root #root,html:root body) .marketplace-header .marketplace-header__utility-action[data-glass-control] { background: ButtonFace; color: ButtonText; }
 }
 
-.marketplace-header__game { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 18px; color: var(--text-primary); background: var(--surface-elevated); font: inherit; font-size: 12px; cursor: pointer; }
-@media (max-width: 600px) { #root .marketplace-header__utility-actions { flex-wrap: wrap; } }
-
+.marketplace-header__game { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 18px; color: var(--text-primary); background: var(--surface-elevated); font: inherit; font-size: 0.75rem; cursor: pointer; }
 /* The game stays reachable without pushing the wallet actions onto three lines. */
-@media (max-width: 767px) { .marketplace-header__game .homeji-game-launcher__label { display: none; } .marketplace-header__utility-action { white-space: nowrap; } }
+@media (max-width: 767px) { .marketplace-header__game .homeji-game-launcher__label { display: none; } }

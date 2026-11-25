@@ -26,7 +26,7 @@
 
 .app-error__message {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--text-heading, #363a45);
 }

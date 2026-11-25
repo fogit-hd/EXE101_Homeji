@@ -74,9 +74,9 @@
   color: var(--tabs-muted-ink);
   text-shadow: none;
   filter: none;
-  font: 550 13px/1.5 var(--font-ui);
+  font: 550 0.8125rem/1.5 var(--font-ui);
   cursor: pointer;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   user-select: none;
   transform: none;
   transition: color 160ms ease;
@@ -175,7 +175,7 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
     rgba(255, 255, 255, 0.18) 100%
   );
 }
-@media(max-width:600px) { #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 72px; padding-inline: 16px; font-size: 12px; } }
+@media(max-width:600px) { #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 72px; padding-inline: 16px; font-size: 0.75rem; } }
 @media(prefers-reduced-motion:reduce) { #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens { transition: none; } }
 @media(forced-colors:active) {
   #root .liquid-tabs::before { background: Canvas; border: 1px solid ButtonText; }
@@ -189,7 +189,7 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 @media(max-width:767px) { #root .marketplace-header > .liquid-tabs { margin-left: 18px; max-width: calc(100% - 36px); } }
 
 @media(max-width:767px) {
-  #root .marketplace-header :is(>, .marketplace-header__subtabs) .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 60px; padding-inline: 11px; font-size: 12px; }
+  #root .marketplace-header :is(>, .marketplace-header__subtabs) .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 60px; padding-inline: 11px; font-size: 0.75rem; }
 }
 
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
@@ -237,5 +237,5 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 /* Touch: the selected tab is the lens, so it owns its gestures and a thumb's
    curved swipe slides it instead of being taken for a page scroll. Idle tabs
    keep vertical page scrolling, and also scroll an overflowing rail sideways. */
-#root .liquid-tabs > button[role='tab'][aria-selected='true'] { touch-action: none; }
-#root .liquid-tabs[data-tabs-overflow] > button[role='tab'][aria-selected='false'] { touch-action: pan-x pan-y; }
+#root .liquid-tabs > button[role='tab'][aria-selected='true'] { touch-action: pinch-zoom; }
+#root .liquid-tabs[data-tabs-overflow] > button[role='tab'][aria-selected='false'] { touch-action: manipulation; }

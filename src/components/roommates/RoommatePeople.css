@@ -14,8 +14,8 @@
 .roommate-people__grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); gap: 16px; }
 .roommate-people__person { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-elevated); display: flex; flex-direction: column; gap: 14px; min-width: 0; overflow-wrap: anywhere; }
 .roommate-people__person-header { display: flex; align-items: center; gap: 12px; }
-.roommate-people__person-header h3 { margin: 0 0 5px; font-size: 18px; }
-.roommate-people__person-header span:not(.roommate-people__avatar) { font-size: 13px; color: var(--text-secondary); }
+.roommate-people__person-header h3 { margin: 0 0 5px; font-size: 1.125rem; }
+.roommate-people__person-header span:not(.roommate-people__avatar) { font-size: 0.8125rem; color: var(--text-secondary); }
 .roommate-people__avatar { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--hj-accent-soft); color: var(--hj-accent); font-weight: 600; }
 .roommate-people__bio { margin: 0; white-space: pre-wrap; }
 .roommate-people dl { display: grid; gap: 8px; margin: 0; }
@@ -23,8 +23,8 @@
 .roommate-people dt { color: var(--text-secondary); }
 .roommate-people dd { text-align: right; margin: 0; }
 .roommate-people__habits { display: flex; gap: 6px; flex-wrap: wrap; padding: 0; margin: 0; list-style: none; }
-.roommate-people__habits li { border-radius: 8px; padding: 5px 8px; background: var(--surface-muted); font-size: 13px; }
-.roommate-people__score { font-size: 13px; color: var(--text-secondary); margin: 0; }
+.roommate-people__habits li { border-radius: 8px; padding: 5px 8px; background: var(--surface-muted); font-size: 0.8125rem; }
+.roommate-people__score { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
 .roommate-people__person > button { margin-top: auto; }
 .roommate-people__notice { color: var(--hj-accent); }
 @media (max-width: 540px) { .roommate-people__intents { grid-template-columns: 1fr; } .roommate-people__profile, .roommate-people__person { padding: 16px; } }
@@ -36,7 +36,7 @@
   gap: 5px;
   padding: 3px 8px;
   border-radius: 12px;
-  font-size: 11.5px;
+  font-size: 0.71875rem;
   font-weight: 600;
   margin-left: auto;
   white-space: nowrap;
@@ -61,7 +61,7 @@
 }
 
 .roommate-compat-tier {
-  font-size: 10.5px;
+  font-size: 0.65625rem;
   font-weight: 500;
   opacity: 0.9;
 }
@@ -76,7 +76,7 @@
 }
 
 .roommate-compat-reasons li {
-  font-size: 11.5px;
+  font-size: 0.71875rem;
   color: var(--text-secondary, #3b5745);
   display: flex;
   align-items: center;

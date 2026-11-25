@@ -104,7 +104,7 @@ html[data-theme='dark'] .hl .explore-scene {
   margin: 0;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font: 18px/1 var(--nb-hand);
+  font: 1.125rem/1 var(--nb-hand);
   color: var(--nb-ink-soft);
   white-space: nowrap;
 }
@@ -121,7 +121,7 @@ html[data-theme='dark'] .hl .explore-scene {
 
 .explore-scene__title {
   margin: 0 112px 0 0;
-  font: 800 clamp(30px, 3.5vw, 52px) / 1.08 var(--nb-print);
+  font: 800 clamp(1.875rem, 3.5vw, 3.25rem) / 1.08 var(--nb-print);
   letter-spacing: -0.03em;
   color: var(--nb-text);
   text-wrap: balance;
@@ -173,7 +173,7 @@ html[data-theme='dark'] .hl .explore-scene {
   border-radius: 0;
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10.4 3.6c-3.9-.2-7 2.8-6.9 6.6.1 3.6 3.1 6.6 6.8 6.5 3.7-.1 6.5-3 6.4-6.7-.1-3.5-2.8-6.2-6.3-6.4Zm4.7 11.6 5.4 5.3' fill='none' stroke='%231c3aa6' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") 2px 55% / 24px no-repeat;
   color: var(--nb-ink);
-  font: 26px/1.2 var(--nb-hand);
+  font: 1.625rem/1.2 var(--nb-hand);
   appearance: none;
 }
 
@@ -216,7 +216,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-search__group {
   padding: 8px 16px 2px;
-  font: 17px/1.2 var(--nb-hand);
+  font: 1.0625rem/1.2 var(--nb-hand);
   color: var(--nb-margin);
 }
 
@@ -234,7 +234,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 }
 
 .explore-search__list [role='option'] span {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--nb-muted);
 }
 
@@ -257,7 +257,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   border: 0;
   background: transparent;
   color: var(--nb-ink);
-  font: 25px/1 var(--nb-hand);
+  font: 1.5625rem/1 var(--nb-hand);
   cursor: pointer;
 }
 
@@ -292,7 +292,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   border-radius: 0;
   background: transparent;
   color: var(--nb-ink-soft);
-  font: 21px/1 var(--nb-hand);
+  font: 1.3125rem/1 var(--nb-hand);
   cursor: pointer;
   max-width: 100%;
 }
@@ -319,7 +319,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-scene__select select option {
   font-family: var(--nb-print);
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: #16213f;
 }
 
@@ -355,13 +355,13 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-scene__list-head h3 {
   margin: 0 0 4px;
-  font: 400 24px/1.2 var(--nb-hand);
+  font: 400 1.5rem/1.2 var(--nb-hand);
   color: var(--nb-ink);
 }
 
 .explore-scene__hint {
   margin: 4px 0 0;
-  font: 18px/1.3 var(--nb-hand);
+  font: 1.125rem/1.3 var(--nb-hand);
   color: var(--nb-margin);
 }
 
@@ -437,7 +437,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   margin-top: 2px;
   border: 2px solid var(--nb-ink);
   border-radius: 50% 46% 52% 48%;
-  font: 19px/1 var(--nb-hand);
+  font: 1.1875rem/1 var(--nb-hand);
   color: var(--nb-ink);
   font-variant-numeric: tabular-nums;
 }
@@ -487,7 +487,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 }
 
 .explore-card__photo-empty {
-  font: 15px/1.1 var(--nb-hand);
+  font: 0.9375rem/1.1 var(--nb-hand);
   color: var(--nb-muted);
   text-align: center;
 }
@@ -501,7 +501,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-card__price {
   font-weight: 800;
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1.15;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
@@ -510,12 +510,12 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-card__price small {
   font-weight: 400;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--nb-muted);
 }
 
 .explore-card__title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.35;
   color: var(--nb-text);
@@ -526,7 +526,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 }
 
 .explore-card__meta {
-  font: 19px/1.2 var(--nb-hand);
+  font: 1.1875rem/1.2 var(--nb-hand);
   color: var(--nb-ink);
 }
 
@@ -535,7 +535,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   align-items: center;
   gap: 4px;
   justify-self: start;
-  font: 17px/1.2 var(--nb-hand);
+  font: 1.0625rem/1.2 var(--nb-hand);
   color: var(--nb-verified);
 }
 
@@ -570,7 +570,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   border-bottom: 2px solid var(--nb-ink);
   background: transparent;
   color: var(--nb-ink);
-  font: 21px/1.1 var(--nb-hand);
+  font: 1.3125rem/1.1 var(--nb-hand);
   cursor: pointer;
 }
 
@@ -600,12 +600,12 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-scene__state p {
   margin: 0;
-  font: 22px/1.3 var(--nb-hand);
+  font: 1.375rem/1.3 var(--nb-hand);
   color: var(--nb-ink);
 }
 
 .explore-scene__state .explore-scene__hint {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .explore-scene__state-actions {
@@ -697,7 +697,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   margin: 0;
   padding: 16px;
   text-align: center;
-  font: 21px/1.3 var(--nb-hand);
+  font: 1.3125rem/1.3 var(--nb-hand);
   color: var(--nb-ink);
   background:
     linear-gradient(var(--nb-cell) 1px, transparent 1px) 0 0 / 20px 20px,
@@ -749,7 +749,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   align-items: baseline;
   justify-content: center;
   gap: 2px;
-  line-height: 24px;
+  line-height: 1.5rem;
   white-space: nowrap;
   min-width: 30px;
   height: 30px;
@@ -759,7 +759,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   border-radius: 999px;
   background: var(--nb-paper);
   color: var(--nb-ink);
-  font: 18px/1 var(--nb-hand);
+  font: 1.125rem/1 var(--nb-hand);
   font-variant-numeric: tabular-nums;
   box-shadow: 0 2px 4px rgba(var(--nb-shadow), 0.3);
   cursor: pointer;
@@ -768,7 +768,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-scene .explore-pin small {
   margin-left: 1px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--nb-ink-soft);
 }
 
@@ -789,7 +789,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   position: absolute;
   left: 38px;
   top: -4px;
-  font: 20px/1 var(--nb-hand);
+  font: 1.25rem/1 var(--nb-hand);
   white-space: nowrap;
   color: var(--nb-margin);
   text-shadow: 0 0 3px var(--nb-paper), 0 0 6px var(--nb-paper);
@@ -817,7 +817,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   border-bottom: 2px solid var(--nb-ink);
   background: transparent;
   color: var(--nb-ink);
-  font: 23px/1 var(--nb-hand);
+  font: 1.4375rem/1 var(--nb-hand);
   cursor: pointer;
 }
 
@@ -861,7 +861,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
   .explore-scene__title {
     margin-right: 84px;
-    font-size: clamp(24px, 6.6vw, 30px);
+    font-size: clamp(1.5rem, 6.6vw, 1.875rem);
   }
 
   .explore-scene__toolbar {
@@ -875,7 +875,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
   .explore-search__input {
     min-height: 44px;
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 
   .explore-scene__radius {
@@ -886,7 +886,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
   .explore-scene__radius button {
     min-height: 40px;
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 
   .explore-scene__filters--desktop { display: none; }
@@ -973,7 +973,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   }
 
   .explore-scene__list-head h3 {
-    font-size: 20px;
+    font-size: 1.25rem;
     margin: 0;
   }
 
@@ -1019,7 +1019,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   .explore-card__num {
     width: 26px;
     height: 26px;
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .explore-card__photo {
@@ -1027,12 +1027,12 @@ html[data-theme='dark'] .hl .explore-search__input {
     height: 72px;
   }
 
-  .explore-card__price { font-size: 17px; }
+  .explore-card__price { font-size: 1.0625rem; }
   /* Monthly rent is implied on the narrow index cards. */
   .explore-card__price small { display: none; }
-  .explore-card__title { font-size: 14px; }
-  .explore-card__meta { font-size: 17px; }
-  .explore-card__verified { font-size: 15px; }
+  .explore-card__title { font-size: 0.875rem; }
+  .explore-card__meta { font-size: 1.0625rem; }
+  .explore-card__verified { font-size: 0.9375rem; }
 
   .explore-card__save {
     top: 6px;
@@ -1056,10 +1056,10 @@ html[data-theme='dark'] .hl .explore-search__input {
     border-bottom: 1.5px solid var(--nb-ink);
     background: transparent;
     color: var(--nb-ink);
-    font: 18px/1 var(--nb-hand);
+    font: 1.125rem/1 var(--nb-hand);
     cursor: pointer;
   }
 
   .explore-scene__continue { margin-top: 6px; }
-  .explore-scene__continue-link { font-size: 20px; min-height: 36px; }
+  .explore-scene__continue-link { font-size: 1.25rem; min-height: 36px; }
 }

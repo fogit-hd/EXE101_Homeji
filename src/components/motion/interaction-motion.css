@@ -41,7 +41,7 @@
   .map-chatbot__privacy summary::-webkit-details-marker { display: none; }
   .map-chatbot__privacy summary::before {
     content: '›'; display: inline-block; margin-right: 8px;
-    transition: rotate 180ms var(--motion-ease); font-size: 16px;
+    transition: rotate 180ms var(--motion-ease); font-size: 1rem;
   }
   .map-chatbot__privacy[open] summary::before { rotate: 90deg; }
   .map-chatbot__privacy[open] > :not(summary) { animation: interaction-content-enter 180ms var(--motion-ease); }

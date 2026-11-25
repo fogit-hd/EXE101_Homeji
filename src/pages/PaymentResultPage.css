@@ -9,7 +9,7 @@
   gap: 6px;
   margin-bottom: 18px;
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -70,7 +70,7 @@
   flex-wrap: wrap;
   gap: 10px 12px;
   width: 100%;
-  font-size: 11.5px;
+  font-size: 0.71875rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   color: var(--text-secondary);
@@ -99,13 +99,13 @@
   margin-bottom: 4px;
   background: var(--result-wash);
   color: var(--result-accent);
-  font: 600 28px/1 var(--font-ui);
+  font: 600 1.75rem/1 var(--font-ui);
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--result-wash) 45%, transparent);
 }
 
 .payment-result-label {
   color: var(--result-accent);
-  font-size: 11.5px;
+  font-size: 0.71875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -114,7 +114,7 @@
 .payment-result-page .payment-wait-card h1 {
   margin: 0;
   color: var(--text-heading);
-  font-size: clamp(24px, 2.8vw, 31px);
+  font-size: clamp(1.5rem, 2.8vw, 1.9375rem);
   font-weight: 750;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -124,7 +124,7 @@
   margin: 0;
   color: var(--text-secondary);
   max-width: 480px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   line-height: 1.6;
 }
 
@@ -144,12 +144,12 @@
 .payment-result-total > span,
 .payment-result-total > small {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
   overflow-wrap: anywhere;
 }
 
 .payment-result-total > strong {
-  font-size: clamp(28px, 3vw, 34px);
+  font-size: clamp(1.75rem, 3vw, 2.125rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -167,7 +167,7 @@
   padding: 12px 14px;
   border-radius: 12px;
   margin: 0;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   line-height: 1.55;
   text-align: left;
 }
@@ -199,12 +199,12 @@
 
 .payment-result-page .payment-countdown span {
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
 }
 
 .payment-result-page .payment-countdown strong {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
   line-height: 1;
   color: var(--text-heading);
@@ -247,7 +247,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: left;
 }
 
@@ -280,7 +280,7 @@
   padding-top: 8px;
   margin-top: 2px;
   border-top: 1px dashed var(--border);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 
 .payment-paypal-quote__total dt {
@@ -289,7 +289,7 @@
 }
 
 .payment-paypal-quote__total dd {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--result-accent);
 }
@@ -310,7 +310,7 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 75%, transparent);
   border: 1px dashed color-mix(in srgb, var(--result-accent) 30%, var(--border));
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.45;
   color: var(--text-secondary);
 }
@@ -335,7 +335,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 700;
   color: var(--text-heading);
 }
@@ -384,7 +384,7 @@
   border-radius: 12px;
   background: #14171a;
   color: #ffffff;
-  font: 700 14px/1 var(--font-ui);
+  font: 700 0.875rem/1 var(--font-ui);
   cursor: pointer;
   transition: opacity 0.16s ease, transform 0.12s ease;
 }
@@ -406,7 +406,7 @@
 .payment-paypal-wallets__note {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   line-height: 1.5;
   text-align: left;
 }
@@ -423,7 +423,7 @@
   align-items: center;
   gap: 10px;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 0.71875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -453,7 +453,7 @@
   min-height: 48px;
   padding: 11px 18px;
   border-radius: 12px;
-  font: 700 14px/1.3 var(--font-ui);
+  font: 700 0.875rem/1.3 var(--font-ui);
   text-decoration: none;
   box-sizing: border-box;
   cursor: pointer;
@@ -520,7 +520,7 @@
   border-radius: 12px;
   background: var(--surface-elevated);
   color: var(--text-heading);
-  font: 600 13.5px/1.2 var(--font-ui);
+  font: 600 0.84375rem/1.2 var(--font-ui);
   text-decoration: none;
   box-sizing: border-box;
   transition: background-color 0.16s ease, border-color 0.16s ease;
@@ -537,7 +537,7 @@
   text-align: center;
   color: var(--text-secondary);
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .payment-result-page .payment-result-details {
@@ -558,7 +558,7 @@
   border-top: 1px solid var(--border);
   margin-top: 4px;
   padding-top: 4px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   line-height: 1.6;
   color: var(--text-secondary);
 }
@@ -572,7 +572,7 @@
   list-style: none;
   cursor: pointer;
   color: var(--text-heading);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -581,7 +581,7 @@
 }
 
 .payment-support-box summary > span:last-child {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 400;
   color: var(--text-secondary);
   transition: transform 0.18s ease;

@@ -15,7 +15,7 @@ html body #root button.theme-switch {
   isolation: isolate;
   overflow: clip;
   overflow-clip-margin: 14px;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   vertical-align: middle;
 }
 html body #root button.theme-switch:focus-visible {
@@ -46,7 +46,7 @@ html body #root button.theme-switch:focus-visible {
   border-radius: 29%;
   background: #fff0cf;
   color: #3e2b11;
-  font: 20px/1 system-ui;
+  font: 1.25rem/1 system-ui;
 }
 .theme-switch[aria-checked='true'] .theme-switch__fallback {
   justify-self: start;

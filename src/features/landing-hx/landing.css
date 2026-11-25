@@ -655,7 +655,7 @@ a.hx-footer__social-link:hover { background: var(--hx-surface); color: var(--hx-
   min-height: 44px;
   padding-inline: 12px;
   color: var(--hx-text-muted);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   white-space: nowrap;
   transition: color var(--hx-dur-fast) var(--hx-ease-out);
@@ -748,7 +748,7 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
   margin-inline: 6px 4px;
   padding-inline: 10px;
   color: var(--hx-text);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   transition: color var(--hx-dur-fast) var(--hx-ease-out);
 }
@@ -768,7 +768,7 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
   border-radius: 12px;
   background: color-mix(in srgb, var(--hx-accent) 13%, var(--hx-bg));
   color: var(--hx-accent-text);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
   transition:
@@ -797,7 +797,7 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
 
 .hx .hx-nav__cta--lg {
   min-height: 56px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 html[data-theme="dark"] .hx .hx-nav__cta {
@@ -898,7 +898,7 @@ html[data-theme="dark"] .hx .hx-nav__cta:hover {
 }
 
 .hx .hx-nav__card-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 
@@ -908,7 +908,7 @@ html[data-theme="dark"] .hx .hx-nav__cta:hover {
 
 .hx .hx-nav__card-meta {
   color: var(--hx-text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 1099px) {
@@ -971,7 +971,7 @@ html[data-theme="dark"] .hx .hx-nav__cta:hover {
   padding-inline: 4px;
   border-bottom: 1px solid var(--hx-border);
   color: var(--hx-text);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
 }
 
@@ -990,7 +990,7 @@ html[data-theme="dark"] .hx .hx-nav__cta:hover {
   /* Lines up with the sheet's words above. */
   padding-inline: 4px;
   color: var(--hx-text);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
 }
 

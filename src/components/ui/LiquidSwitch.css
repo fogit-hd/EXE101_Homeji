@@ -45,7 +45,7 @@
 .liquid-switch__content {
   position: relative;
   z-index: 2;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1;
   width: 20px;
   text-align: center;

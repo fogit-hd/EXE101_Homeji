@@ -115,7 +115,7 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
       if (event.defaultPrevented || !current || current.pointerId !== event.pointerId || !lens || !root) return
       const dx = event.clientX - current.x, dy = event.clientY - current.y
       // Let a vertical gesture on an idle tab scroll the page. The lens owns its
-      // gestures (touch-action: none), so a thumb's curved swipe still slides it.
+      // single-finger gestures, so a thumb's curved swipe still slides it.
       if (!current.moved && !current.lensGrip && Math.abs(dy) > 6 && Math.abs(dy) > Math.abs(dx)) { cancelDrag(); return }
       if (!current.moved && Math.abs(dx) < 5) return
       current.moved = true

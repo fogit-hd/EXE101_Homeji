@@ -39,7 +39,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   height: auto;
   padding: 10px 16px;
   line-height: 1.5;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   border-radius: 12px;
   white-space: normal;
@@ -75,7 +75,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
 #root :is(.form-input, .form-select, .form-textarea, .auth-cinema__field input, .auth-login-field input) {
   box-sizing: border-box;
   padding: 11px 14px;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
   min-height: 48px;
   border: 1px solid var(--control-border);
@@ -84,7 +84,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   border-radius: 10px;
 }
 #root :is(.form-label, .auth-cinema__field label, .auth-login-field label) {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-heading);
   line-height: 1.5;
@@ -94,7 +94,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   opacity: 1;
 }
 #root :is(.page-frame__title, .pay-head__title, .profile-hero h1) {
-  font-size: clamp(24px, 2.7vw, 34px);
+  font-size: clamp(1.5rem, 2.7vw, 2.125rem);
   line-height: 1.35;
   font-weight: 700;
   letter-spacing: -.025em;
@@ -102,7 +102,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
 }
 #root :is(.page-frame__lead, .pay-head__lead, .empty-state p) {
   max-width: var(--reading-width);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.7;
   color: var(--text-secondary);
 }
@@ -113,7 +113,7 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   background: var(--surface-elevated);
 }
 #root :is(.map-listings__name, .marketplace-card__title, .post-card-body h3) {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 650;
   line-height: 1.5;
 }
@@ -160,18 +160,18 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
 }
 #root .admin-workspace :is(th, td) { padding: 14px 16px; line-height: 1.6; }
 #root .admin-workspace th { background: var(--surface-muted); color: var(--text-heading); }
-#root .map-messages__composer :is(input, textarea) { font-size: 16px; line-height: 1.5; }
+#root .map-messages__composer :is(input, textarea) { font-size: 1rem; line-height: 1.5; }
 #root :is(.wallet-field, .wallet-methods small, .wallet-deposit__after, .wallet-empty p) {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
-#root :is(.form-error, .auth-cinema__error) { font-size: 14px; line-height: 1.6; }
+#root :is(.form-error, .auth-cinema__error) { font-size: 0.875rem; line-height: 1.6; }
 @media (max-width: 767px) {
   #root :is(.profile-section, .rental-edit-form, .wanted-post-form, .admin-maintenance-card) { padding: 20px 16px; }
   #root .profile-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   #root .rental-form-actions { display: flex; flex-wrap: wrap; }
   #root .rental-form-actions > .btn { flex: 1 1 160px; }
-  #root :is(.pay-head__lead, .page-frame__lead) { font-size: 15px; }
+  #root :is(.pay-head__lead, .page-frame__lead) { font-size: 0.9375rem; }
   #root .wallet-deposit__presets button { min-height: 44px; }
 }
 @media (forced-colors: active) {
@@ -188,19 +188,19 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   border-radius: 16px;
 }
 #root .food-featured__copy { padding: 22px; gap: 10px; }
-#root .food-featured__title { color: var(--text-heading); font-size: 24px; font-weight: 650; line-height: 1.4; }
-#root .food-featured__desc { color: var(--text-secondary); font-size: 14px; line-height: 1.6; max-width: 60ch; }
+#root .food-featured__title { color: var(--text-heading); font-size: 1.5rem; font-weight: 650; line-height: 1.4; }
+#root .food-featured__desc { color: var(--text-secondary); font-size: 0.875rem; line-height: 1.6; max-width: 60ch; }
 #root .food-featured__status { color: var(--text-secondary); }
 #root .food-featured__eyebrow { color: var(--action-on-soft); letter-spacing: .06em; }
-#root .food-featured__price { color: var(--text-heading); font-size: 15px; }
+#root .food-featured__price { color: var(--text-heading); font-size: 0.9375rem; }
 #root .food-featured__media { min-height: 180px; }
 #root .food-featured__cta { min-height: 44px; height: auto; padding: 10px 16px; border-radius: 10px; }
 #root .food-seller-list { gap: 16px; }
 #root .food-seller { padding: 0; border-radius: 16px; overflow: hidden; }
 #root .food-seller__header { padding: 12px 16px; margin: 0; background: var(--surface-elevated); border-bottom: 1px solid var(--border); }
 #root .food-seller__avatar { background: var(--action-soft); color: var(--action-on-soft); }
-#root .food-seller__info h3 { font-size: 16px; line-height: 1.4; font-weight: 700; }
-#root .food-seller__info p { font-size: 14px; }
+#root .food-seller__info h3 { font-size: 1rem; line-height: 1.4; font-weight: 700; }
+#root .food-seller__info p { font-size: 0.875rem; }
 #root .food-seller .food-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
 #root .food-seller .food-card {
   display: grid;
@@ -219,9 +219,9 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
 #root .food-seller .food-card.is-in-cart { background: color-mix(in srgb, var(--action-soft) 40%, var(--surface-elevated)); }
 #root .food-seller .food-card__media { width: 80px; height: 80px; border-radius: 8px; }
 #root .food-seller .food-card__body { padding: 0; gap: 6px; min-width: 0; }
-#root .food-seller .food-card__title { font-size: 16px; line-height: 1.5; font-weight: 650; }
-#root .food-seller .food-card__price { font-size: 16px; color: var(--action-on-soft); font-weight: 700; }
-#root .food-seller .food-card__seller { font-size: 13px; line-height: 1.5; }
+#root .food-seller .food-card__title { font-size: 1rem; line-height: 1.5; font-weight: 650; }
+#root .food-seller .food-card__price { font-size: 1rem; color: var(--action-on-soft); font-weight: 700; }
+#root .food-seller .food-card__seller { font-size: 0.8125rem; line-height: 1.5; }
 #root .food-seller .food-card__purchase { grid-column: 1 / -1; flex-wrap: wrap; gap: 12px; padding-top: 8px; }
 #root .food-card__cart-btn {
   --glass-radius: 10px;
@@ -231,37 +231,37 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
   border: 1px solid var(--action-primary);
   color: var(--action-on-primary);
   box-shadow: none;
-  font-size: 14px;
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 #root .food-card__cart-btn.is-added { background: var(--action-soft); color: var(--action-on-soft); border-color: var(--action-primary); }
 #root .food-qty { gap: 6px; }
-#root .food-qty__btn { width: 40px; height: 44px; background: var(--surface-elevated); color: var(--text-heading); border: 1px solid var(--control-border); border-radius: 10px; box-shadow: none; font-size: 22px; }
-#root .food-qty__value { min-width: 20px; font-size: 15px; }
+#root .food-qty__btn { width: 40px; height: 44px; background: var(--surface-elevated); color: var(--text-heading); border: 1px solid var(--control-border); border-radius: 10px; box-shadow: none; font-size: 1.375rem; }
+#root .food-qty__value { min-width: 20px; font-size: 0.9375rem; }
 #root .food-rail { padding: 20px 16px; gap: 20px; }
 #root .food-rail__cart { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 16px; }
-#root .food-rail__checkout { height: auto; min-height: 48px; padding: 12px 16px; white-space: normal; font-size: 14px; line-height: 1.5; }
+#root .food-rail__checkout { height: auto; min-height: 48px; padding: 12px 16px; white-space: normal; font-size: 0.875rem; line-height: 1.5; }
 #root .food-rail__checkout img { filter: brightness(0) invert(1); }
-#root .food-rail__cart-item-head strong { font-size: 14px; line-height: 1.5; }
+#root .food-rail__cart-item-head strong { font-size: 0.875rem; line-height: 1.5; }
 #root .food-rail__cart-item-foot { flex-wrap: wrap; gap: 10px; }
 #root .food-rail__remove { min-width: 32px; min-height: 32px; }
-#root .food-rail__note input { font-size: 16px; }
+#root .food-rail__note input { font-size: 1rem; }
 #root .food-source-directory { margin: 0; padding: 20px; background: var(--surface-elevated); border-color: var(--border); }
-#root .food-source-directory :is(p, small) { color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
-#root .food-source-directory h2 { font-size: 18px; color: var(--text-heading); }
+#root .food-source-directory :is(p, small) { color: var(--text-secondary); font-size: 0.875rem; line-height: 1.65; }
+#root .food-source-directory h2 { font-size: 1.125rem; color: var(--text-heading); }
 #root .food-source-directory article { background: var(--surface); border-color: var(--border); }
 #root .food-source-directory a { color: var(--action-on-soft); }
-@media (max-width: 760px) {
+@media (max-width: 47.5em) {
   #root .food-seller .food-card-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
   #root .marketplace-page--food .food-catalog { padding: 20px 16px 110px; gap: 20px; }
   #root .marketplace-page--food .food-featured { grid-template-columns: minmax(0, 1fr); }
   #root .food-featured__media { display: none; }
-  #root .food-featured__title { font-size: 20px; }
+  #root .food-featured__title { font-size: 1.25rem; }
   #root .food-featured__copy { padding: 18px; }
   #root .food-seller__header { padding: 18px 16px; }
-  #root .food-seller__info h3 { font-size: 18px; }
+  #root .food-seller__info h3 { font-size: 1.125rem; }
   #root .food-seller .food-card { grid-template-columns: 76px minmax(0, 1fr); padding: 16px 12px; gap: 12px; }
   #root .food-seller .food-card__media { width: 76px; height: 84px; }
   #root .food-seller .food-card__purchase { margin-left: 0; }
@@ -279,30 +279,30 @@ html { scroll-padding-block: calc(var(--hj-header-h, 80px) + 20px) 96px; }
 }
 #root .map-listings--list .map-listings__card-photo { height: 190px; max-height: none; }
 #root .map-listings--list .map-listings__card-copy { padding: 16px; gap: 10px; }
-#root .map-listings__name { font-size: 17px; line-height: 1.5; font-weight: 650; }
-#root .map-listings__address { font-size: 14px; line-height: 1.5; }
+#root .map-listings__name { font-size: 1.0625rem; line-height: 1.5; font-weight: 650; }
+#root .map-listings__address { font-size: 0.875rem; line-height: 1.5; }
 #root .map-listings__save { width: 40px; height: 40px; background: var(--surface-elevated); color: var(--text-heading); border: 1px solid var(--control-border); }
 #root .map-listings__catalog button { min-height: 44px; padding-inline: 12px; border-radius: 8px; border: 0; box-shadow: none; background: transparent; }
 #root .map-listings__catalog button.is-on { background: var(--action-soft); color: var(--action-on-soft); }
 #root .marketplace-header__subtabs { padding-block: 12px; }
 #root .marketplace-header__subtabs .liquid-tabs { margin-block: 0; }
 #root .marketplace-header__primary { background: var(--action-primary); color: var(--action-on-primary); border-color: var(--action-primary); min-height: 44px; }
-@media (max-width: 1100px) {
+@media (max-width: 68.75em) {
   #root .map-listings--list .map-listings__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 720px) {
+@media (max-width: 45em) {
   #root .map-listings--list .map-listings__cards { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   #root .food-nearby-head { flex-direction: column; align-items: flex-start; gap: 8px; }
-  #root .food-nearby-head h2 { font-size: 22px; line-height: 1.4; }
-  #root .food-nearby-head__count { margin: 0; font-size: 14px; }
+  #root .food-nearby-head h2 { font-size: 1.375rem; line-height: 1.4; }
+  #root .food-nearby-head__count { margin: 0; font-size: 0.875rem; }
 }
 
-#root :is(.mfp-button, .mfp-apply, .mfp-reset) { min-height: 44px; font-size: 14px; }
+#root :is(.mfp-button, .mfp-apply, .mfp-reset) { min-height: 44px; font-size: 0.875rem; }
 #root .mfp-tile { border-radius: 12px; background: var(--surface-elevated); color: var(--text-heading); border: 1px solid var(--control-border); box-shadow: none; }
 #root .mfp-tile.is-on { background: var(--action-soft); border-color: var(--action-primary); color: var(--action-on-soft); }
 #root .mfp-apply { background: var(--action-primary); color: var(--action-on-primary); }
 #root .marketplace-item-confirmation { padding: 16px; border: 1px solid var(--action-primary); border-radius: 12px; background: var(--action-soft); color: var(--action-on-soft); margin-block: 16px; }
-#root .marketplace-item-confirmation p { color: inherit; font-size: 14px; line-height: 1.6; }
+#root .marketplace-item-confirmation p { color: inherit; font-size: 0.875rem; line-height: 1.6; }
 #root .marketplace-detail-dialog__actions { display: flex; flex-wrap: wrap; gap: 12px; }
 #root .marketplace-detail-dialog__actions > button { flex: 1 1 180px; }
 #root .marketplace-detail-dialog__summary { min-width: 0; overflow-wrap: anywhere; }

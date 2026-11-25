@@ -1,18 +1,18 @@
-.rental-detail-assistant { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text-primary); font-size: 14px; line-height: 1.6; }
+.rental-detail-assistant { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text-primary); font-size: 0.875rem; line-height: 1.6; }
 .rental-detail-assistant__heading { display: flex; align-items: flex-start; gap: 8px; }
-.rental-detail-assistant__heading > span { color: var(--accent, #0f766e); font-size: 20px; line-height: 1.4; }
-.rental-detail-assistant h3 { margin: 0; font-size: 16px; line-height: 1.5; }
-.rental-detail-assistant__source { margin: 8px 0; color: var(--text-secondary); font-size: 13px; }
+.rental-detail-assistant__heading > span { color: var(--accent, #0f766e); font-size: 1.25rem; line-height: 1.4; }
+.rental-detail-assistant h3 { margin: 0; font-size: 1rem; line-height: 1.5; }
+.rental-detail-assistant__source { margin: 8px 0; color: var(--text-secondary); font-size: 0.8125rem; }
 .rental-detail-assistant__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 20px 0 12px; }
-.rental-detail-assistant__facts dt { color: var(--text-secondary); font-size: 12px; }
+.rental-detail-assistant__facts dt { color: var(--text-secondary); font-size: 0.75rem; }
 .rental-detail-assistant__facts dd { margin: 2px 0 0; font-weight: 700; overflow-wrap: anywhere; }
-.rental-detail-assistant__note { margin: 12px 0 16px; font-size: 13px; }
+.rental-detail-assistant__note { margin: 12px 0 16px; font-size: 0.8125rem; }
 
 
 .rental-detail-assistant__fees { margin: 16px 0 12px; }
 .rental-detail-assistant__fees ul { padding-left: 20px; margin: 8px 0; }
 .rental-detail-assistant__fees li { margin: 6px 0; }
-.rental-detail-assistant__fees p { color: var(--text-secondary); font-size: 13px; }
+.rental-detail-assistant__fees p { color: var(--text-secondary); font-size: 0.8125rem; }
 .rental-detail-assistant__prepare { margin-top: 14px; }
 .rental-detail-assistant__draft { margin-top: 16px; }
 .rental-detail-assistant__draft label { display: block; margin-bottom: 8px; font-weight: 600; }

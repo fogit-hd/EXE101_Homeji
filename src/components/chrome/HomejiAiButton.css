@@ -9,7 +9,7 @@
   border-radius: 999px;
   background: #effaf3;
   color: #087a3c;
-  font: 600 13px/1 var(--font-ui);
+  font: 600 0.8125rem/1 var(--font-ui);
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 120ms ease;

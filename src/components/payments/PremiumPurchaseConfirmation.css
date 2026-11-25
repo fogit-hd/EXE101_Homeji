@@ -28,7 +28,7 @@
 
 .premium-purchase-confirm__eyebrow {
   color: var(--confirm-accent);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -37,7 +37,7 @@
 .premium-purchase-confirm h2 {
   margin: 0;
   color: var(--text-heading, #19323b);
-  font-size: 21px;
+  font-size: 1.3125rem;
   font-weight: 750;
   line-height: 1.25;
 }
@@ -45,7 +45,7 @@
 .premium-purchase-confirm__head p {
   margin: 0;
   color: var(--text-secondary, #5b6b76);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   line-height: 1.5;
 }
 
@@ -58,7 +58,7 @@
   border: 1px solid var(--border, #dce5eb);
   border-radius: 14px;
   background: var(--surface-muted, #f3f7fa);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 
 .premium-purchase-confirm__quote {
@@ -101,7 +101,7 @@
   margin-top: 4px;
   padding-top: 10px !important;
   border-top: 1px dashed var(--border, #dce5eb);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .premium-purchase-confirm__total dt {
@@ -110,7 +110,7 @@
 }
 
 .premium-purchase-confirm__total dd {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
 }
 
@@ -120,7 +120,7 @@
 
 .premium-purchase-confirm__note {
   margin: 14px 0 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.55;
   color: var(--text-secondary, #5b6b76);
 }
@@ -137,7 +137,7 @@
   min-height: 46px;
   padding: 10px 16px;
   border-radius: 12px;
-  font: 700 14px/1.3 var(--font-ui);
+  font: 700 0.875rem/1.3 var(--font-ui);
   white-space: normal;
   cursor: pointer;
 }

@@ -7,7 +7,7 @@
 }
 
 .detail-price {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--grab-green) !important;
 }
@@ -53,7 +53,7 @@
 
 .detail-facts dt {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .detail-facts dd {

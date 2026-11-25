@@ -12,7 +12,7 @@ body:has(.sk-auth--login,.sk-auth--register) .navbar { display: none; }
 .sk-auth__field { flex: none; gap: 10px; }
 .sk-auth__visual { padding: 32px 32px 32px 0; min-height: 620px; min-width: 0; box-sizing: border-box; }
 .sk-auth__visual > .sk { min-height: 100%; opacity: .65; }
-.sk-auth__status { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
+.sk-auth__status { margin: 8px 0 0; font-size: 0.8125rem; line-height: 1.6; }
 .sk-auth--register { background: var(--surface-muted,#f3f7fa); }
 .sk-auth--register .sk-auth__layout { grid-template-columns: minmax(0,620px) minmax(0,400px); justify-content: center; gap: 48px; padding: 40px 32px; box-sizing: border-box; }
 .sk-auth--register .sk-auth__visual { order: 1; align-self: center; min-height: 320px; height: 48vh; padding: 32px 64px; }

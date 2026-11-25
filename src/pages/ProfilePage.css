@@ -381,7 +381,7 @@
 }
 
 .profile-page-eyebrow {
-  font: 700 10px/1.2 var(--font-ui);
+  font: 700 0.625rem/1.2 var(--font-ui);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: #a43c22;
@@ -390,8 +390,8 @@
 .profile-page-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 36px;
-  line-height: 44px;
+  font-size: 2.25rem;
+  line-height: 2.75rem;
   font-weight: 600;
   color: var(--hj-ink, #18231d);
   line-height: 1.2;

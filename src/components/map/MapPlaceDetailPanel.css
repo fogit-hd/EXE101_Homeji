@@ -845,7 +845,7 @@
   border: 1px solid var(--border, #e2e8f0);
   background: var(--surface-muted, #f8fafc);
   color: var(--text-heading, #102e32);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;

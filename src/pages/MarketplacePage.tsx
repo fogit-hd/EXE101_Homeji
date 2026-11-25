@@ -1730,7 +1730,7 @@ export function MarketplacePage({
                 <input
                   id="checkout-recipient-name"
                   className="form-input"
-                  style={{ fontSize: '0.82rem', padding: '6px 8px', height: '36px' }}
+                  style={{ fontSize: '0.82rem', padding: '6px 8px', minHeight: '36px' }}
                   placeholder="Ví dụ: Nguyễn Văn Sinh Viên"
                   value={recipientName}
                   onChange={e => setRecipientName(e.target.value)}
@@ -1742,7 +1742,7 @@ export function MarketplacePage({
                   id="checkout-recipient-phone"
                   type="tel"
                   className="form-input"
-                  style={{ fontSize: '0.82rem', padding: '6px 8px', height: '36px' }}
+                  style={{ fontSize: '0.82rem', padding: '6px 8px', minHeight: '36px' }}
                   placeholder="Ví dụ: 0912345678"
                   value={recipientPhone}
                   onChange={e => setRecipientPhone(e.target.value)}
@@ -1753,7 +1753,7 @@ export function MarketplacePage({
                 <input
                   id="checkout-delivery-address"
                   className="form-input"
-                  style={{ fontSize: '0.82rem', padding: '6px 8px', height: '36px' }}
+                  style={{ fontSize: '0.82rem', padding: '6px 8px', minHeight: '36px' }}
                   placeholder="Ví dụ: Phòng 314, Nhà B4, KTX Khu B"
                   value={deliveryAddress}
                   onChange={e => setDeliveryAddress(e.target.value)}

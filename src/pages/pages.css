@@ -245,7 +245,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--error) 48%, var(--pastel-sand));
   color: color-mix(in srgb, var(--text-heading) 72%, var(--error));
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
@@ -273,13 +273,13 @@
   border-radius: 15px;
   background: color-mix(in srgb, var(--error) 36%, var(--pastel-sand));
   color: color-mix(in srgb, var(--text-heading) 72%, var(--error));
-  font-size: 23px;
+  font-size: 1.4375rem;
 }
 
 .admin-maintenance-intro h2 {
   margin: 0 0 5px;
   color: var(--text-heading);
-  font-size: 21px;
+  font-size: 1.3125rem;
 }
 
 .admin-maintenance-intro p {
@@ -371,7 +371,7 @@
 .admin-report-content h3 {
   margin: 10px 0 6px;
   color: var(--text-heading);
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .admin-report-target {
@@ -394,12 +394,12 @@
   display: grid;
   place-items: center;
   color: #b8871c;
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .admin-report-target-caption {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .admin-report-badges {

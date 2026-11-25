@@ -1,6 +1,6 @@
 .roommate-workspace { display: grid; gap: 20px; min-width: 0; }
 .roommate-workspace__lifestyle { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-elevated); }
-.roommate-workspace__lifestyle h2 { font-size: 20px; margin-bottom: 6px; }
+.roommate-workspace__lifestyle h2 { font-size: 1.25rem; margin-bottom: 6px; }
 .roommate-workspace__lifestyle p { margin: 0; color: var(--text-secondary); }
 .roommate-workspace__lifestyle-toggle.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 12px 20px; flex-shrink: 0; background: #087f8c; border: 1px solid #087f8c; color: #fff; font-weight: 700; box-shadow: 0 3px 8px rgba(8,127,140,.18); }
 .roommate-workspace__lifestyle-toggle.btn:hover { background: #066773; border-color: #066773; color: #fff; }

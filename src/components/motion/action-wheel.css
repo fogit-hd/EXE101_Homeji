@@ -65,7 +65,7 @@
 }
 .action-wheel__icon { display: grid; width: 22px; height: 22px; }
 .action-wheel__icon svg { width: 100%; height: 100%; }
-.action-wheel__label { max-width: 58px; font-size: 9.5px; font-weight: 700; line-height: 1.05; text-align: center; }
+.action-wheel__label { max-width: 58px; font-size: 0.59375rem; font-weight: 700; line-height: 1.05; text-align: center; }
 .action-wheel__item[data-active],
 .action-wheel[data-mode='menu'] .action-wheel__item:is(:hover, :focus-visible) {
   scale: 1.16;
@@ -85,7 +85,7 @@
   background: radial-gradient(circle at 35% 30%, #fff, #e3f4f2);
   box-shadow: inset 0 0 0 1px #10302a14, 0 4px 14px #0c2b251f;
   color: var(--wheel-ink);
-  font-size: 10.5px;
+  font-size: 0.65625rem;
   font-weight: 750;
   line-height: 1.15;
   text-align: center;

@@ -41,7 +41,7 @@ function SelectField({ label, icon, value, options, onChange }: {
         onChange={event => onChange(event.target.value)}
         className={[
           'tw:h-16 tw:w-full tw:cursor-pointer tw:appearance-none tw:truncate tw:rounded-xl tw:border tw:border-line tw:bg-canvas',
-          'tw:pt-5 tw:pr-10 tw:pl-4 tw:text-[15px] tw:font-semibold tw:text-ink',
+          'tw:pt-5 tw:pr-10 tw:pl-4 tw:text-[0.9375rem] tw:font-semibold tw:text-ink',
           'tw:transition-[border-color,background-color] tw:duration-200 tw:ease-hx',
           'tw:hover:border-line-strong tw:hover:bg-surface tw:focus-visible:border-brand tw:focus-visible:bg-surface',
           'tw:[&>option]:bg-surface tw:[&>option]:text-ink',

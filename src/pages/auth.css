@@ -132,13 +132,13 @@
   text-align: center;
   color: var(--text-secondary);
   margin: 20px 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .auth-footer {
   text-align: center;
   margin-top: 24px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 @media not all /* reduced-motion ignored: Homeji always animates */ {
