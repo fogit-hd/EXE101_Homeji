@@ -17,9 +17,9 @@ const snapshotPayload = {
   publicationDays: [{ date: '2026-11-21', count: 3 }],
   overview: {
     status: 'attention',
-    headline: '2 đầu việc cần quản trị viên chú ý',
-    summary: 'Hệ thống vẫn đang chạy ổn định; hiện có 5 mục chờ người duyệt/đối soát và 14 người đang kết nối trực tiếp.',
-    actionRequiredCount: 2,
+    headline: '3 đầu việc cần quản trị viên chú ý',
+    summary: 'Có 5 mục cần người duyệt hoặc đối soát.',
+    actionRequiredCount: 3,
     pendingQueueTotal: 5,
     onlineUsersCount: 14,
     operatingMode: 'postgresql_native',
@@ -29,7 +29,7 @@ const snapshotPayload = {
     {
       id: 'pending-withdrawals',
       severity: 'high',
-      title: '2 yêu cầu rút tiền đang chờ xử lý (lâu nhất 2 ngày)',
+      title: '2 yêu cầu rút tiền đang chờ xử lý',
       userImpact: 'Người dùng đang đợi nhận tiền từ ví Homeji chuyển về tài khoản ngân hàng của họ.',
       whatToDo: 'Mở mục Rút tiền để đối chiếu thông tin ngân hàng, chuyển khoản và nhập mã giao dịch xác nhận.',
       targetSection: 'withdrawals',
@@ -48,6 +48,15 @@ const snapshotPayload = {
       count: 3,
       oldestAt: null,
     },
+    {
+      id: 'publication-sync-delayed',
+      severity: 'high',
+      title: 'Thống kê duyệt tin cập nhật chậm',
+      userImpact: 'Tin đã duyệt vẫn hiển thị trên bản đồ.',
+      whatToDo: 'Nếu số lượt chờ tiếp tục tăng, hãy báo đội kỹ thuật.',
+      targetSection: null,
+      actionLabel: null,
+    },
   ],
   services: [
     {
@@ -60,7 +69,7 @@ const snapshotPayload = {
       targetSection: null,
       actionLabel: null,
       metrics: [
-        { label: 'Kết nối dữ liệu', value: 'Ổn định', hint: null },
+        { label: 'Chế độ đồng bộ', value: 'Đồng bộ nội bộ qua cơ sở dữ liệu (PostgreSQL)', hint: null },
         { label: 'Tác vụ nền tự động', value: 'Đang chạy', hint: null },
       ],
     },
@@ -188,6 +197,7 @@ try {
   }, admin)
 
   let requests = 0
+  let platformPayload = snapshotPayload
   await page.route('**/*', route => {
     const url = new URL(route.request().url())
     if (url.pathname === '/api/profile/me') {
@@ -197,7 +207,7 @@ try {
       requests++
       return requests === 2
         ? route.fulfill({ status: 503, json: { detail: 'Fixture outage' } })
-        : route.fulfill({ json: snapshotPayload })
+        : route.fulfill({ json: platformPayload })
     }
     if (url.pathname === '/api/subscriptions/me') return route.fulfill({ json: { tier: 1, isPremium: false } })
     if (url.pathname === '/api/search-interests') {
@@ -221,26 +231,28 @@ try {
   assert.equal(await link.getAttribute('aria-current'), 'page')
   await page.getByRole('heading', { level: 1, name: 'Vận hành hệ thống' }).waitFor()
 
-  // Tầng 1: Hero Verdict Banner + 4 KPIs + Active Maintenance Banner
-  await page.getByRole('heading', { level: 2, name: '2 đầu việc cần quản trị viên chú ý' }).waitFor()
-  await page.getByText(/hiện có 5 mục chờ người duyệt\/đối soát/).waitFor()
-  await page.locator('.admin-platform-kpis').getByText('Đồng bộ nội bộ qua cơ sở dữ liệu (PostgreSQL)').waitFor()
-  const maintenanceRegion = page.getByRole('region', { name: 'Banner bảo trì đang hiển thị' })
+  const overview = page.getByRole('region', { name: '3 đầu việc cần quản trị viên chú ý' })
+  const kpis = overview.locator('.admin-platform-kpis')
+  await kpis.getByText('Mục chờ xử lý').waitFor()
+  assert.equal(await kpis.locator('strong').count(), 3)
+  assert.equal(await kpis.getByRole('link', { name: 'Xem người đang hoạt động' }).getAttribute('href'), '/admin/active')
+  assert.equal(await overview.getByRole('link', { name: 'Công cụ kỹ thuật' }).getAttribute('href'), '#platform-tools-title')
+  const maintenanceRegion = page.getByRole('region', { name: 'Thông báo bảo trì đang hiển thị' })
   await maintenanceRegion.getByText(/Nâng cấp định kỳ ban đêm/).waitFor()
-  assert.equal(await maintenanceRegion.getByRole('link', { name: 'Quản lý Bảo trì' }).getAttribute('href'), '/admin/maintenance')
+  assert.equal(await maintenanceRegion.getByRole('link', { name: 'Quản lý bảo trì' }).getAttribute('href'), '/admin/maintenance')
 
   // Tầng 2: Priority Action Center
   const actionsList = page.locator('.admin-platform-actions')
-  await actionsList.getByText('Ảnh hưởng người dùng').first().waitFor()
-  await actionsList.getByText('Việc bạn nên làm').first().waitFor()
-  await actionsList.getByText(/^Chờ /).first().waitFor()
+  await actionsList.getByText('Ảnh hưởng', { exact: true }).first().waitFor()
+  await actionsList.getByText('Bước tiếp theo').first().waitFor()
+  await actionsList.getByText('Chờ 2 ngày', { exact: true }).waitFor()
   assert.equal(await actionsList.getByRole('link', { name: /Xử lý Rút tiền/ }).getAttribute('href'), '/admin/withdrawals')
   assert.equal(await actionsList.getByRole('link', { name: /Mở AI kiểm tra tin/ }).getAttribute('href'), '/admin/ai-reviews')
+  await actionsList.getByRole('link', { name: 'Xem công cụ kỹ thuật' }).click()
+  assert.equal(await page.locator(':focus').getAttribute('id'), 'platform-tools-title')
 
-  // Tầng 3: All 6 user-journey Service Pillars
   const servicesSection = page.locator('.admin-platform-services')
   for (const title of [
-    'Máy chủ & Cơ sở dữ liệu',
     'Tin phòng & Hàng chờ duyệt',
     'AI tìm phòng & Kiểm duyệt tự động',
     'Thanh toán, Ví & Chợ sinh viên',
@@ -249,19 +261,36 @@ try {
   ]) {
     await servicesSection.getByRole('heading', { level: 3, name: title, exact: true }).waitFor()
   }
+  await servicesSection.locator('summary[aria-label="Xem số liệu Tin phòng & Hàng chờ duyệt"]').click()
+  await servicesSection.getByText('28', { exact: true }).waitFor()
+  assert.equal(await page.getByText(/PostgreSQL/).count(), 0)
 
-  // Tầng 4: 7-Day Operational Pulse
   await page.locator('.admin-platform-pulse-totals').getByText('Đơn chợ sinh viên').waitFor()
+  await page.getByText('Xem số liệu từng ngày', { exact: true }).click()
   await page.getByRole('table').getByRole('cell', { name: '5', exact: true }).waitFor()
 
-  // Tầng 5: Progressive Disclosure Diagnostics (<details>)
+  const technical = page.getByRole('region', { name: 'Công cụ kỹ thuật' })
+  await technical.getByText('Chỉ thu thập nội bộ').waitFor()
+  await technical.getByText('Chưa tích hợp').waitFor()
+  await technical.getByText('Đồng bộ nội bộ').waitFor()
+  await technical.getByText('1.000+', { exact: true }).waitFor()
+  for (const [name, href, unavailable] of [
+    ['Mở Grafana', 'https://grafana.example.test/d/homeji', 'Chưa có liên kết Grafana cho môi trường này.'],
+    ['Mở bảng điều khiển Kubernetes', 'https://kubernetes.example.test/', 'Chưa có liên kết bảng điều khiển cho môi trường này.'],
+  ]) {
+    const tool = technical.getByRole('link', { name: `${name} (mở tab mới)` })
+    if (process.env.HOMEJI_TEST_PLATFORM_LINKS === 'configured') {
+      assert.equal(await tool.getAttribute('href'), href)
+      assert.equal(await tool.getAttribute('rel'), 'noopener noreferrer')
+    } else {
+      assert.equal(await tool.count(), 0)
+      await technical.getByText(unavailable).waitFor()
+    }
+  }
   const diagnosticsToggle = page.locator('.admin-platform-diagnostics > summary')
   assert.equal(await page.locator('.admin-platform-diagnostics').getAttribute('open'), null)
   await diagnosticsToggle.click()
-  assert.equal(await page.locator('.admin-platform-queue strong').first().textContent(), '1.000+')
-  await page.locator('.admin-platform-diag-grid').getByText('Đồng bộ PostgreSQL nội bộ').waitFor()
-  const grafana = page.getByRole('link', { name: 'Mở Grafana (tab mới)' })
-  if (await grafana.isVisible()) assert.equal(await grafana.getAttribute('rel'), 'noopener noreferrer')
+  await technical.getByText('Số đã thử gửi lại được tính trong 1.000 lượt chờ đầu tiên.').waitFor()
 
   // Refresh outage & recovery while keeping rendered data
   await page.getByRole('button', { name: 'Làm mới' }).click()
@@ -270,14 +299,38 @@ try {
   await page.getByRole('button', { name: 'Làm mới' }).click()
   await page.getByText(/Không làm mới được/).waitFor({ state: 'hidden' })
 
+  if (process.env.HOMEJI_TEST_PLATFORM_SCREENSHOT_DIR) {
+    await page.locator('.admin-platform-verdict').scrollIntoViewIfNeeded()
+    await page.screenshot({ path: `${process.env.HOMEJI_TEST_PLATFORM_SCREENSHOT_DIR}/admin-platform-desktop.png`, fullPage: true })
+  }
+
   // Narrow viewport 320px check with <details> open and closed
   await page.setViewportSize({ width: 320, height: 900 })
+  await page.locator('.admin-rail').waitFor({ state: 'hidden' })
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+
+  if (process.env.HOMEJI_TEST_PLATFORM_SCREENSHOT_DIR) {
+    await page.screenshot({ path: `${process.env.HOMEJI_TEST_PLATFORM_SCREENSHOT_DIR}/admin-platform-mobile.png`, fullPage: true })
+  }
   await diagnosticsToggle.click()
   assert.equal(await page.locator('.admin-platform-diagnostics').getAttribute('open'), null)
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
 
-  console.log('PASS admin navigation, status, refresh recovery and narrow viewport')
+  platformPayload = {
+    checkedAt: snapshotPayload.checkedAt,
+    publisherConfigured: true,
+    telemetryConfigured: true,
+    pendingSample: 0,
+    retryingInSample: 0,
+    sampleLimited: false,
+    publicationDays: snapshotPayload.publicationDays,
+  }
+  await page.reload()
+  await page.getByText('Dữ liệu giới hạn', { exact: true }).waitFor()
+  assert.equal(await page.locator('.admin-platform-kpis').count(), 0)
+  await technical.getByText('Chưa rõ cấu hình Kafka').waitFor()
+
+  console.log('PASS admin navigation, technical links, refresh recovery, limited data and narrow viewport')
 } finally {
   await browser.close()
 }

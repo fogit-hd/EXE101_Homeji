@@ -29,7 +29,7 @@ export const adminSections: AdminSectionInfo[] = [
   { id: 'premiumVouchers', slug: 'premium-vouchers', label: 'Voucher Premium', group: 'Kinh doanh', title: 'Voucher Premium', description: 'Tạo mã giảm giá dùng một lần mỗi tài khoản khi thanh toán bằng Ví Homeji.' },
   { id: 'exports', slug: 'exports', label: 'Báo cáo Excel', group: 'Kinh doanh', title: 'Báo cáo Excel', description: 'Tạo báo cáo, theo dõi email và tải lại các file đã xuất.' },
   { id: 'active', slug: 'active', label: 'Đang hoạt động', group: 'Hệ thống', title: 'Người đang hoạt động', description: 'Theo dõi kết nối và quản lý phiên đăng nhập.' },
-  { id: 'platform', slug: 'platform', label: 'Vận hành hệ thống', group: 'Hệ thống', title: 'Vận hành hệ thống', description: 'Sức khỏe dịch vụ cho người dùng, việc cần xử lý ngay và nhịp vận hành 7 ngày.' },
+  { id: 'platform', slug: 'platform', label: 'Vận hành hệ thống', group: 'Hệ thống', title: 'Vận hành hệ thống', description: 'Xem việc cần xử lý và tình trạng các tính năng Homeji.' },
   { id: 'maintenance', slug: 'maintenance', label: 'Bảo trì', group: 'Hệ thống', title: 'Bảo trì', description: 'Soạn nội dung và thời gian dự kiến để thông báo cho người dùng.' },
 ]
 
