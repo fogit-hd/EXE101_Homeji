@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { FOOD_PRESETS, type FoodPreset } from '../../../lib/foodPresets'
 import { ProfitMarginCalculator } from './ProfitMarginCalculator'
 import { LiveFoodCardPreview } from './LiveFoodCardPreview'
@@ -66,12 +66,12 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
   const [title, setTitle] = useState(initialValues?.title || '')
   const [description, setDescription] = useState(initialValues?.description || '')
   const [price, setPrice] = useState<number>(initialValues?.price || 30000)
-  const [estimatedCost, setEstimatedCost] = useState<number>(initialValues?.estimatedCost || 15000)
+  const [estimatedCost, setEstimatedCost] = useState<number>(initialValues?.estimatedCost ?? 15000)
   const [category, setCategory] = useState(initialValues?.category || 'Cơm nhà')
   const [unit, setUnit] = useState(initialValues?.unit || 'suất')
   const [preparationMinutes, setPreparationMinutes] = useState<number>(initialValues?.preparationMinutes || 20)
   const [dailyQuota, setDailyQuota] = useState<number>(initialValues?.dailyQuota || 20)
-  const [availableQuantity, setAvailableQuantity] = useState<number>(initialValues?.availableQuantity || 20)
+  const [availableQuantity, setAvailableQuantity] = useState<number>(initialValues?.availableQuantity ?? 20)
   const [freshnessBadge, setFreshnessBadge] = useState(initialValues?.freshnessBadge || 'CookToOrder')
   const [allergenAlerts, setAllergenAlerts] = useState(initialValues?.allergenAlerts || 'Không cay')
   const [isSamplePhoto, setIsSamplePhoto] = useState<boolean>(initialValues?.isSamplePhoto ?? false)
@@ -80,26 +80,6 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
   const [previewUrl, setPreviewUrl] = useState<string>(initialValues?.mediaUrls?.[0] || '')
   const [formError, setFormError] = useState('')
 
-  useEffect(() => {
-    if (initialValues) {
-      if (initialValues.title !== undefined) setTitle(initialValues.title)
-      if (initialValues.description !== undefined) setDescription(initialValues.description)
-      if (initialValues.price !== undefined) setPrice(initialValues.price)
-      if (initialValues.estimatedCost !== undefined) setEstimatedCost(initialValues.estimatedCost)
-      if (initialValues.category !== undefined) setCategory(initialValues.category)
-      if (initialValues.unit !== undefined) setUnit(initialValues.unit)
-      if (initialValues.preparationMinutes !== undefined) setPreparationMinutes(initialValues.preparationMinutes)
-      if (initialValues.dailyQuota !== undefined) setDailyQuota(initialValues.dailyQuota)
-      if (initialValues.availableQuantity !== undefined) setAvailableQuantity(initialValues.availableQuantity)
-      if (initialValues.freshnessBadge !== undefined) setFreshnessBadge(initialValues.freshnessBadge)
-      if (initialValues.allergenAlerts !== undefined) setAllergenAlerts(initialValues.allergenAlerts)
-      if (initialValues.isSamplePhoto !== undefined) setIsSamplePhoto(initialValues.isSamplePhoto)
-      if (initialValues.mediaUrls !== undefined && initialValues.mediaUrls.length > 0) {
-        setMediaUrls(initialValues.mediaUrls)
-        setPreviewUrl(initialValues.mediaUrls[0] || '')
-      }
-    }
-  }, [editingPostId, initialValues])
 
   const applyPreset = (preset: FoodPreset) => {
     setTitle(preset.title)

@@ -144,6 +144,9 @@ test('AuthenticatedHub fetches 4 rooms + 4 market items, renders 2-column main b
     reactDomModule(src('components/hub/AuthenticatedHub.tsx'), {
       '../../api': apiOverride,
       '../../contexts/AuthContext': authOverride,
+      '../../hooks/useConversationInbox': 'data:text/javascript,' + encodeURIComponent(
+        'export const useConversationInbox = () => ({ conversations: [], error: null, refresh: () => {} })',
+      ),
     })
   )
 

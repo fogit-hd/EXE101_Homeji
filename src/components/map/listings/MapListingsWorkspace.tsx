@@ -613,7 +613,7 @@ export function MapListingsWorkspace({
                 <path d="m3 16 4 4 4-4M7 20V4m14 4-4-4-4 4m4-4v16" />
               </svg>
               <span className="map-listings__sr-only">Sắp xếp</span>
-              <ChoicePicker value={sortBy} onChange={(event) => setSortBy(event.target.value as any)}>
+              <ChoicePicker value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
                 {sortChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
               </ChoicePicker>
             </label>

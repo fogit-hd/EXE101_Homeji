@@ -102,7 +102,7 @@ function GoogleOAuthRoot({ children }: { children: ReactNode }) {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
-      <MotionConfig reducedMotion="never">
+      <MotionConfig reducedMotion="user">
       <ThemeSync>
       <AiInteractionEffects />
       <InteractionMotion />
