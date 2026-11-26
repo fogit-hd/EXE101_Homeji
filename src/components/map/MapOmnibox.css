@@ -12,7 +12,7 @@
   padding: 10px 0 12px;
   background: var(--surface-muted);
   border-right: 1px solid var(--border);
-  box-shadow: 1px 0 2px rgba(var(--shadow-color), 0.08);
+  box-shadow: var(--shadow-pop);
   pointer-events: auto;
   overflow: visible;
   transition:
@@ -22,8 +22,8 @@
 }
 
 .gmaps-nav-rail__btn {
-  --rail-accent: #475569;
-  --rail-soft: rgba(71, 85, 105, 0.12);
+  --rail-accent: var(--text-secondary);
+  --rail-soft: var(--surface-input);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -34,7 +34,7 @@
   min-height: 60px;
   padding: 7px 3px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-heading);
   font: inherit;
@@ -64,7 +64,7 @@
   right: -3px;
   width: 4px;
   height: 34px;
-  border-radius: 4px 0 0 4px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   background: var(--rail-accent);
   content: '';
 }
@@ -94,8 +94,8 @@
 }
 
 .gmaps-nav-rail__btn--appointments {
-  --rail-accent: #047857;
-  --rail-soft: rgba(4, 120, 87, 0.13);
+  --rail-accent: var(--grab-green);
+  --rail-soft: var(--brand-soft);
 }
 
 .gmaps-nav-rail__btn--invitations {
@@ -122,7 +122,7 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   background: var(--rail-soft);
   color: var(--rail-accent);
   flex: 0 0 auto;
@@ -135,7 +135,7 @@
 .gmaps-nav-rail__btn:hover .gmaps-nav-rail__icon-wrap,
 .gmaps-nav-rail__btn.is-active .gmaps-nav-rail__icon-wrap {
   background: var(--rail-accent);
-  color: #fff;
+  color: var(--on-brand);
   box-shadow: 0 5px 12px color-mix(in srgb, var(--rail-accent) 28%, transparent);
 }
 
@@ -152,19 +152,19 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 999px;
-  background: var(--error, #ea4335);
-  color: #fff;
-  font-size: 0.62rem;
+  border-radius: var(--radius-pill);
+  background: var(--error);
+  color: var(--on-brand);
+  font-size: var(--fs-xs);
   font-weight: 700;
   line-height: 1rem;
   text-align: center;
   pointer-events: none;
-  box-shadow: 0 0 0 2px var(--surface-elevated, #1a1d21);
+  box-shadow: none;
 }
 
 .gmaps-nav-rail__label {
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
   font-weight: 650;
   line-height: 1.15;
   text-align: center;
@@ -195,7 +195,7 @@
   width: auto;
   max-width: none;
   /* Transparent hit-test shell — map receives all gestures underneath */
-  pointer-events: none !important;
+  pointer-events: none;
   transition:
     opacity 200ms ease,
     transform 200ms ease;
@@ -215,7 +215,7 @@
   z-index: 2;
   width: 100%;
   max-width: none;
-  pointer-events: auto !important;
+  pointer-events: auto;
 }
 
 /* Map destination — search/chips float over the full map stage */
@@ -228,7 +228,7 @@
   z-index: 1100;
   width: auto;
   max-width: min(560px, calc(100% - 24px));
-  pointer-events: none !important;
+  pointer-events: none;
 }
 
 .home-map-page--dest:not(.is-map-destination) .gmaps-omnibox__card {
@@ -238,11 +238,11 @@
   border-radius: var(--radius-control, 999px);
   border: 1px solid var(--border);
   background: var(--surface-elevated);
-  box-shadow: 0 1px 2px rgba(var(--shadow-color), 0.06);
+  box-shadow: var(--shadow-pop);
 }
 
 .home-map-page--dest:not(.is-map-destination) .gmaps-omnibox__card.is-open {
-  border-radius: var(--radius-card, 16px) var(--radius-card, 16px) 0 0;
+  border-radius: var(--radius-card, var(--radius-lg)) var(--radius-card, var(--radius-lg)) 0 0;
 }
 
 .home-map-page--dest:not(.is-map-destination).has-listings-panel:not(.is-sidebar-collapsed) .gmaps-omnibox,
@@ -252,17 +252,16 @@
 
 /* Soft destination omnibox — warm product chrome, not old Maps admin shell */
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__card {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   background: var(--surface-elevated);
   box-shadow:
-    0 8px 24px rgba(var(--shadow-color), 0.1),
-    0 1px 2px rgba(var(--shadow-color), 0.04);
+    var(--shadow-pop);
 }
 
 .home-map-page--dest:not(.is-map-destination) .gmaps-omnibox--no-app-nav .gmaps-omnibox__card {
   border-radius: var(--radius-control, 999px);
-  box-shadow: 0 1px 2px rgba(var(--shadow-color), 0.06);
+  box-shadow: var(--shadow-pop);
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__card.is-open {
@@ -278,38 +277,38 @@
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__input {
   font-family: var(--font-ui);
-  font-size: 0.98rem;
+  font-size: var(--fs-lg);
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__dropdown {
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   border-top-color: color-mix(in srgb, var(--border) 70%, transparent);
-  box-shadow: 0 16px 36px rgba(var(--shadow-color), 0.14);
+  box-shadow: var(--shadow-pop);
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__chip {
   min-height: 40px;
   padding: 0 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border-color: color-mix(in srgb, var(--border) 85%, transparent);
   background: var(--surface-elevated);
-  box-shadow: 0 4px 14px rgba(var(--shadow-color), 0.06);
+  box-shadow: none;
   font-weight: 600;
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__chip:hover {
-  background: color-mix(in srgb, var(--grab-green) 8%, var(--surface-elevated));
-  border-color: color-mix(in srgb, var(--grab-green) 28%, var(--border));
+  background: var(--brand-soft);
+  border-color: var(--control-border);
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__chip.is-on {
-  border-color: color-mix(in srgb, var(--grab-green) 45%, var(--border));
-  background: color-mix(in srgb, var(--grab-green) 12%, var(--surface-elevated));
+  border-color: var(--control-border);
+  background: var(--brand-soft);
   color: var(--grab-green-hover);
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__apply {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--grab-green);
 }
 
@@ -318,14 +317,14 @@
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__amenity.is-on {
-  border-color: color-mix(in srgb, var(--grab-green) 40%, var(--border));
-  background: color-mix(in srgb, var(--grab-green) 12%, var(--surface-elevated));
+  border-color: var(--control-border);
+  background: var(--brand-soft);
   color: var(--grab-green-hover);
 }
 
 .gmaps-omnibox--no-app-nav .gmaps-omnibox__chips-arrow {
   border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.08);
+  box-shadow: var(--shadow-pop);
 }
 
 .home-map-page.is-ui-collapsed .gmaps-nav-rail {
@@ -379,10 +378,9 @@
   min-width: min(260px, 100%);
   max-width: var(--map-omnibox-card-width);
   background: var(--surface-elevated);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   box-shadow:
-    0 1px 2px rgba(var(--shadow-color), 0.24),
-    0 2px 6px 2px rgba(var(--shadow-color), 0.12);
+    var(--shadow-pop);
   /* Keep overflow visible so absolute dropdown can paint below the bar
      without growing the card and pushing chips. */
   overflow: visible;
@@ -393,10 +391,9 @@
 }
 
 .gmaps-omnibox__card.is-open {
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   box-shadow:
-    0 1px 2px rgba(var(--shadow-color), 0.24),
-    0 1px 3px rgba(var(--shadow-color), 0.1);
+    var(--shadow-pop);
 }
 
 .gmaps-omnibox__bar {
@@ -434,7 +431,7 @@
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: var(--fs-xl);
   line-height: 1;
 }
 
@@ -443,7 +440,7 @@
 }
 
 .gmaps-omnibox__icon-btn:focus-visible {
-  outline: 2px solid var(--maps-blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
@@ -467,7 +464,7 @@
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: 0.98rem;
+  font-size: var(--fs-lg);
   color: var(--text-heading);
 }
 
@@ -480,10 +477,10 @@
 }
 
 .gmaps-omnibox__ai {
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: var(--maps-blue, #1a73e8);
+  color: var(--grab-green);
 }
 
 .gmaps-omnibox__ai:disabled {
@@ -496,7 +493,7 @@
 
 .gmaps-omnibox__detail-close {
   color: var(--text-heading);
-  font-size: 1.35rem;
+  font-size: var(--fs-xl);
 }
 
 .gmaps-omnibox__dropdown {
@@ -506,7 +503,7 @@
   top: 100%;
   z-index: 3;
   border-top: 1px solid var(--border);
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   max-height: min(68vh, 520px);
   overflow: auto;
   opacity: 0;
@@ -519,8 +516,7 @@
   -ms-overflow-style: none;
   background: var(--surface-elevated);
   box-shadow:
-    0 4px 8px rgba(var(--shadow-color), 0.16),
-    0 2px 6px 2px rgba(var(--shadow-color), 0.1);
+    var(--shadow-pop);
   will-change: opacity, transform;
 }
 
@@ -548,7 +544,7 @@
 .gmaps-omnibox__section-title {
   margin: 0;
   padding: 8px 16px 4px;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -573,7 +569,7 @@
   padding: 0 16px 8px;
   overflow: hidden;
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -583,7 +579,7 @@
   flex: 0 0 auto;
   margin-top: 8px;
   color: var(--text-secondary);
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
 }
 
 .gmaps-omnibox__nearby-categories {
@@ -602,26 +598,26 @@
   flex: 0 0 auto;
   padding: 6px 10px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--text-secondary);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .gmaps-omnibox__nearby-category:hover,
 .gmaps-omnibox__nearby-category.is-active {
-  border-color: var(--maps-blue);
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text, var(--maps-blue));
+  border-color: var(--focus-ring);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .gmaps-omnibox__nearby-source {
   margin: 2px 16px 0;
   color: var(--text-secondary);
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   text-align: right;
 }
 
@@ -657,13 +653,13 @@
   border-radius: 50%;
   background: var(--surface-input);
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
 }
 
 .gmaps-omnibox__row.is-active .gmaps-omnibox__row-icon,
 .gmaps-omnibox__row-icon.is-post {
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .gmaps-omnibox__row-icon.is-school {
@@ -672,8 +668,8 @@
 }
 
 .gmaps-omnibox__row-icon.is-place {
-  background: color-mix(in srgb, var(--maps-blue) 18%, var(--surface-input));
-  color: var(--maps-blue-text, var(--maps-blue));
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .gmaps-omnibox__row-icon.is-nearby {
@@ -689,7 +685,7 @@
 }
 
 .gmaps-omnibox__row-copy strong {
-  font-size: 0.92rem;
+  font-size: var(--fs-md);
   font-weight: 500;
   line-height: 1.3;
   display: -webkit-box;
@@ -699,7 +695,7 @@
 }
 
 .gmaps-omnibox__row-sub {
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   color: var(--text-secondary);
   line-height: 1.35;
   display: -webkit-box;
@@ -709,7 +705,7 @@
 }
 
 .gmaps-omnibox__row-meta {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--success);
   line-height: 1.35;
   display: -webkit-box;
@@ -722,7 +718,7 @@
   flex: 0 0 auto;
   max-width: 72px;
   margin-top: 2px;
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-secondary);
   text-align: right;
@@ -732,7 +728,7 @@
 .gmaps-omnibox__empty {
   margin: 0;
   padding: 14px 16px;
-  font-size: 0.86rem;
+  font-size: var(--fs-md);
   color: var(--text-secondary);
 }
 
@@ -747,9 +743,9 @@
 .gmaps-omnibox__link {
   border: 0;
   background: transparent;
-  color: var(--maps-blue);
+  color: var(--grab-green);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-weight: 500;
   cursor: pointer;
   padding: 0;
@@ -798,7 +794,7 @@
 }
 
 .gmaps-omnibox__price span {
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
   font-weight: 600;
 }
@@ -808,33 +804,33 @@
   min-height: 36px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font: inherit;
-  font-size: 0.86rem;
+  font-size: var(--fs-md);
 }
 
 .gmaps-omnibox__price input:focus {
   outline: none;
-  border-color: var(--maps-blue);
-  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring) 20%, transparent);
 }
 
 .gmaps-omnibox__apply {
   min-height: 36px;
   padding: 0 12px;
   border: 0;
-  border-radius: 8px;
-  background: var(--maps-blue);
-  color: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--grab-green);
+  color: var(--on-brand);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .gmaps-omnibox__apply:hover {
-  background: var(--maps-blue-hover);
+  background: var(--grab-green-hover);
 }
 
 .gmaps-omnibox__amenities {
@@ -847,10 +843,10 @@
   border: 1px solid var(--border);
   background: var(--surface-elevated);
   color: var(--text-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 6px 10px;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   cursor: pointer;
   transition:
     background-color var(--map-dur-fast, 160ms) ease,
@@ -860,9 +856,9 @@
 }
 
 .gmaps-omnibox__amenity.is-on {
-  border-color: var(--maps-blue);
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text);
+  border-color: var(--focus-ring);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .gmaps-omnibox__chips-wrap {
@@ -925,8 +921,7 @@
   background: var(--surface-elevated);
   color: var(--text-secondary);
   box-shadow:
-    0 1px 2px rgba(var(--shadow-color), 0.24),
-    0 1px 3px 1px rgba(var(--shadow-color), 0.12);
+    var(--shadow-pop);
   cursor: pointer;
   transform: translateY(-50%);
 }
@@ -943,7 +938,7 @@
 }
 
 .gmaps-omnibox__chips-arrow:focus-visible {
-  outline: 2px solid var(--maps-blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
@@ -962,13 +957,13 @@
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-elevated);
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-weight: 500;
-  box-shadow: 0 1px 2px rgba(var(--shadow-color), 0.16);
+  box-shadow: none;
   cursor: pointer;
   white-space: nowrap;
   animation: map-chip-in var(--map-dur, 260ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
@@ -985,9 +980,9 @@
 }
 
 .gmaps-omnibox__chip.is-on {
-  border-color: var(--maps-blue);
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text);
+  border-color: var(--focus-ring);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .gmaps-omnibox__chip-dot {
@@ -996,7 +991,7 @@
   height: 8px;
   margin-right: 8px;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 18%, transparent);
+  box-shadow: none;
 }
 
 .gmaps-nav-backdrop {
@@ -1027,7 +1022,7 @@
   display: flex;
   flex-direction: column;
   background: var(--surface-elevated);
-  box-shadow: 2px 0 16px rgba(var(--shadow-color), 0.28);
+  box-shadow: var(--shadow-sheet);
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
@@ -1105,16 +1100,16 @@
   gap: 5px;
   margin: 2px 6px 8px;
   padding: 11px 12px;
-  border: 1px solid color-mix(in srgb, var(--maps-blue) 28%, var(--border));
-  border-radius: 12px;
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text);
-  font-size: 0.76rem;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--grab-green);
+  font-size: var(--fs-xs);
   line-height: 1.4;
 }
 
 .gmaps-tour__drawer-note strong {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 .gmaps-tour__drawer-note span {
@@ -1128,8 +1123,8 @@
   gap: 7px;
   width: min(340px, calc(100vw - 32px));
   padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--maps-blue) 30%, var(--border));
-  border-radius: 16px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-lg);
   background: var(--surface-elevated);
   color: var(--text-primary);
   box-shadow: 0 14px 42px rgba(var(--shadow-color), 0.24);
@@ -1147,8 +1142,8 @@
   left: 14px;
   width: 16px;
   height: 16px;
-  border-top: 1px solid color-mix(in srgb, var(--maps-blue) 30%, var(--border));
-  border-left: 1px solid color-mix(in srgb, var(--maps-blue) 30%, var(--border));
+  border-top: 1px solid var(--control-border);
+  border-left: 1px solid var(--control-border);
   background: var(--surface-elevated);
   content: '';
   transform: rotate(45deg);
@@ -1159,17 +1154,9 @@
   bottom: 24px;
 }
 
-.gmaps-tour__eyebrow {
-  color: var(--maps-blue-text);
-  font-size: 0.7rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .gmaps-tour strong {
   color: var(--text-heading);
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   line-height: 1.35;
 }
 
@@ -1177,13 +1164,13 @@
 .gmaps-tour small {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   line-height: 1.5;
 }
 
 .gmaps-tour small {
   padding: 9px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
 }
 
@@ -1197,17 +1184,17 @@
 .gmaps-tour__actions button {
   min-height: 36px;
   padding: 0 13px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   font-weight: 700;
   cursor: pointer;
 }
 
 .gmaps-tour__primary {
   border: 0;
-  background: var(--maps-blue);
-  color: #fff;
+  background: var(--grab-green);
+  color: var(--on-brand);
 }
 
 .gmaps-tour__secondary {
@@ -1217,7 +1204,7 @@
 }
 
 .gmaps-tour__actions button:focus-visible {
-  outline: 2px solid var(--maps-blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -1235,12 +1222,12 @@
   box-sizing: border-box;
   padding: 10px 12px;
   border: 0;
-  border-radius: 0 20px 20px 0;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
   margin-right: 4px;
   background: transparent;
   color: var(--text-heading);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--fs-md);
   font-weight: 500;
   text-align: left;
   text-decoration: none;
@@ -1262,8 +1249,8 @@
 
 .gmaps-nav-drawer__nav a.active,
 .gmaps-nav-drawer__item.is-active {
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text);
+  background: var(--brand-soft);
+  color: var(--grab-green);
   font-weight: 600;
 }
 
@@ -1337,17 +1324,17 @@
   .gmaps-omnibox__bar {
     padding: 0 78px 0 4px;
     min-height: 48px;
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
   }
 
   .gmaps-omnibox__card {
     width: 100%;
     max-width: none;
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
   }
 
   .gmaps-omnibox__card.is-open {
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 
   /* GMaps mobile idle: menu | input | avatar — no magnifying glass */
@@ -1356,7 +1343,7 @@
   }
 
   .gmaps-omnibox__input {
-    font-size: 0.95rem;
+    font-size: var(--fs-lg);
   }
 
   .gmaps-omnibox__chips-wrap {
@@ -1383,7 +1370,7 @@
     border: 0;
     margin: 0;
     padding: 0;
-    background: rgba(32, 33, 36, 0.45);
+    background: var(--overlay-scrim);
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
@@ -1407,27 +1394,26 @@
     z-index: 1;
     width: 100%;
     max-width: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow:
-      0 2px 6px rgba(var(--shadow-color), 0.18),
-      0 8px 28px rgba(var(--shadow-color), 0.22);
+      var(--shadow-pop);
     animation: map-scale-in var(--map-dur, 280ms) var(--map-ease, ease-in-out) both;
   }
 
   .gmaps-omnibox.is-mobile-search .gmaps-omnibox__card.is-open {
-    border-radius: 12px;
+    border-radius: var(--radius-md);
   }
 
   .gmaps-omnibox.is-mobile-search .gmaps-omnibox__bar {
-    border-radius: 12px 12px 0 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 
   .gmaps-omnibox.is-mobile-search .gmaps-omnibox__dropdown {
     position: relative;
     top: auto;
     max-height: 0;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
     box-shadow: none;
   }
 

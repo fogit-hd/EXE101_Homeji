@@ -7,6 +7,10 @@ const sections: Record<string, string> = {
 }
 export function analyticsScreen(pathname: string, search: string): string | null {
   const query = new URLSearchParams(search)
+  if (pathname.replace(/\/+$/, '') === '/auth') {
+    const section = query.get('section')
+    return section === 'register' || section === 'forgot-password' ? section : 'login'
+  }
   if (pathname === '/') {
     if (query.has('post')) return 'rental-detail'
     const section = query.get('section')

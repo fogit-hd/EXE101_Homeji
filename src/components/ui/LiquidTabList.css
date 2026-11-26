@@ -3,10 +3,10 @@
    The moving face always stays below the unfiltered label plane. */
 .liquid-tabs__webgl { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
 #root .liquid-tabs {
-  --tabs-track: rgba(28, 111, 96, 0.07);
-  --tabs-track-light: rgba(255, 255, 255, 0.55);
-  --tabs-ink: #0f2e28;
-  --tabs-muted-ink: #385953;
+  --tabs-track: color-mix(in srgb, var(--grab-green) 7%, transparent);
+  --tabs-track-light: color-mix(in srgb, var(--text-primary) 55%, transparent);
+  --tabs-ink: var(--text-heading);
+  --tabs-muted-ink: var(--text-secondary);
   --tabs-lens-tint: var(--glass-clear-fill);
   --tabs-rim: var(--glass-clear-edge);
   /* Background softness never filters foreground labels. */
@@ -25,7 +25,7 @@
   padding: 13px 3px;
   margin-block: 4px 20px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   box-shadow: none;
   overflow-x: auto;
@@ -42,9 +42,9 @@
   left: 0;
   width: var(--tabs-track-width, 100%);
   z-index: -1;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(115deg, var(--tabs-track-light), var(--tabs-track) 65%);
-  border: 1px solid rgba(47, 104, 94, 0.14);
+  border: 1px solid var(--border);
   box-sizing: border-box;
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.85), inset 0 -1px 1px rgba(20, 50, 40, 0.04);
   pointer-events: none;
@@ -65,7 +65,7 @@
   padding: 12px 30px;
   margin: 0;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   background-image: none;
   box-shadow: none;
@@ -74,7 +74,7 @@
   color: var(--tabs-muted-ink);
   text-shadow: none;
   filter: none;
-  font: 550 0.8125rem/1.5 var(--font-ui);
+  font: 550 var(--fs-sm)/1.5 var(--font-ui);
   cursor: pointer;
   touch-action: pan-y pinch-zoom;
   user-select: none;
@@ -99,23 +99,18 @@
   pointer-events: none;
   z-index: 1;
   box-sizing: border-box;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   transform-origin: center;
   scale: 1;
   border: 0;
   --lens-specular-x: var(--lens-light-x, 26%);
   background:
-    radial-gradient(ellipse 72% 48% at var(--lens-specular-x, 26%) 0%, rgba(255, 255, 255, 0.45), transparent 72%),
-    radial-gradient(ellipse 60% 40% at 75% 100%, rgba(255, 255, 255, 0.18), transparent 60%),
-    linear-gradient(170deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.14) 100%),
-    var(--tabs-lens-tint, var(--glass-clear-fill));
+    linear-gradient(170deg, color-mix(in srgb, var(--surface) 22%, transparent) 0%, color-mix(in srgb, var(--surface) 5%, transparent) 50%, color-mix(in srgb, var(--surface) 14%, transparent) 100%), var(--tabs-lens-tint, var(--glass-clear-fill));
   box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 1px 0 rgba(18, 50, 42, 0.05),
-    0 2px 6px -1px rgba(18, 50, 42, 0.08),
-    0 6px 16px -4px rgba(18, 50, 42, 0.1);
-  -webkit-backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(.35px) saturate(1.12);
-  backdrop-filter: var(--glass-lens-filter, saturate(1.2)) blur(.35px) saturate(1.12);
+    none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: var(--surface-elevated);
 }
 /* Subtle 1px specular highlight rim along the top and curved edge */
 #root .liquid-tabs__lens::before {
@@ -127,10 +122,10 @@
   padding: 1px;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.45) 28%,
-    rgba(255, 255, 255, 0.08) 65%,
-    rgba(255, 255, 255, 0.3) 100%
+    color-mix(in srgb, var(--surface) 95%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 45%, transparent) 28%,
+    color-mix(in srgb, var(--surface) 8%, transparent) 65%,
+    color-mix(in srgb, var(--surface) 30%, transparent) 100%
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -145,37 +140,31 @@
 }
 #root .liquid-tabs :is(.pay-tabs__pill,.segmented-tabs__pill,.motion-tabs__indicator) { display: none; }
 html[data-theme='dark'] #root .liquid-tabs {
-  --tabs-track: rgba(104, 194, 166, 0.1);
-  --tabs-track-light: rgba(192, 238, 224, 0.05);
-  --tabs-ink: #f0fdf9;
-  --tabs-muted-ink: #b2d5cc;
+  --tabs-track: color-mix(in srgb, var(--grab-green) 10%, transparent);
+  --tabs-track-light: color-mix(in srgb, var(--grab-green) 5%, transparent);
+  --tabs-ink: var(--text-heading);
+  --tabs-muted-ink: var(--text-secondary);
 }
 html[data-theme='dark'] #root .liquid-tabs::before {
-  border-color: rgba(104, 194, 166, 0.18);
+  border-color: color-mix(in srgb, var(--grab-green) 18%, transparent);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
 }
 html[data-theme='dark'] #root .liquid-tabs > .liquid-tabs__lens {
   background:
-    radial-gradient(ellipse 72% 48% at var(--lens-specular-x, 26%) 0%, rgba(255, 255, 255, 0.14), transparent 72%),
-    radial-gradient(ellipse 60% 40% at 75% 100%, rgba(255, 255, 255, 0.06), transparent 60%),
-    linear-gradient(170deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.05) 100%),
-    var(--tabs-lens-tint, var(--glass-clear-fill));
+    linear-gradient(170deg, color-mix(in srgb, var(--surface) 8%, transparent) 0%, color-mix(in srgb, var(--surface) 2%, transparent) 50%, color-mix(in srgb, var(--surface) 5%, transparent) 100%), var(--tabs-lens-tint, var(--glass-clear-fill));
   box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
-    0 2px 6px -1px rgba(0, 0, 0, 0.4),
-    0 6px 16px -4px rgba(0, 0, 0, 0.3);
+    none;
 }
 html[data-theme='dark'] #root .liquid-tabs__lens::before {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.55) 0%,
-    rgba(255, 255, 255, 0.22) 28%,
-    rgba(255, 255, 255, 0.04) 65%,
-    rgba(255, 255, 255, 0.18) 100%
+    color-mix(in srgb, var(--surface) 55%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 22%, transparent) 28%,
+    color-mix(in srgb, var(--surface) 4%, transparent) 65%,
+    color-mix(in srgb, var(--surface) 18%, transparent) 100%
   );
 }
-@media(max-width:600px) { #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 72px; padding-inline: 16px; font-size: 0.75rem; } }
+@media(max-width:600px) { #root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 72px; padding-inline: 16px; font-size: var(--fs-xs); } }
 @media(prefers-reduced-motion:reduce) { #root .liquid-tabs[data-lens-ready] > .liquid-tabs__lens { transition: none; } }
 @media(forced-colors:active) {
   #root .liquid-tabs::before { background: Canvas; border: 1px solid ButtonText; }
@@ -189,7 +178,7 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 @media(max-width:767px) { #root .marketplace-header > .liquid-tabs { margin-left: 18px; max-width: calc(100% - 36px); } }
 
 @media(max-width:767px) {
-  #root .marketplace-header :is(>, .marketplace-header__subtabs) .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 60px; padding-inline: 11px; font-size: 0.75rem; }
+  #root .marketplace-header :is(>, .marketplace-header__subtabs) .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) { min-width: 60px; padding-inline: 11px; font-size: var(--fs-xs); }
 }
 
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
@@ -201,8 +190,8 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
   }
   #root .liquid-tabs > button[role='tab'][aria-selected='true'] {
     color: var(--tabs-ink);
-    background: var(--hj-accent-soft);
-    border-color: var(--hj-accent);
+    background: var(--brand-soft);
+    border-color: var(--focus-ring);
   }
 }
 
@@ -211,8 +200,9 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 #root .liquid-tabs[data-lens-dragging] > .liquid-tabs__lens { scale: 1.025 .99; transition: scale 180ms ease; }
 #root .liquid-tabs[data-lens-travel] > .liquid-tabs__lens { z-index: 1; scale: 1; }
 #root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(.5px) saturate(1.15);
-  backdrop-filter: var(--glass-lens-active-filter, saturate(1.25)) blur(.5px) saturate(1.15);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: var(--surface-elevated);
 }
 @media(prefers-reduced-motion:reduce) {
   #root .liquid-tabs > .liquid-tabs__lens { --lens-specular-x: 26%; }
@@ -228,14 +218,44 @@ html[data-theme='dark'] #root .liquid-tabs__lens::before {
 
 /* The WebGL pilot paints its own bounded tab scene. No SVG displacement or
    backdrop-filter participates, including its plain-HTML fallback. */
-#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens,#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens[data-glass-interacting]{filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--hj-accent-soft,var(--surface));box-shadow:none}
+#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens,#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens[data-glass-interacting]{filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--brand-soft);box-shadow:none}
 #root .liquid-tabs[data-glass-webgl]>.liquid-tabs__lens::before{display:none}
 #root .liquid-tabs[data-glass-renderer=webgl-refraction]>.liquid-tabs__lens{opacity:0}
 #root .liquid-tabs[data-glass-renderer=webgl-refraction]>button[role=tab]{opacity:0}
-#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__webgl{position:absolute;left:0;top:0;z-index:3;max-width:none;border-radius:999px;pointer-events:none;filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#root .liquid-tabs[data-glass-webgl]>.liquid-tabs__webgl{position:absolute;left:0;top:0;z-index:3;max-width:none;border-radius:var(--radius-pill);pointer-events:none;filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 
 /* Touch: the selected tab is the lens, so it owns its gestures and a thumb's
    curved swipe slides it instead of being taken for a page scroll. Idle tabs
    keep vertical page scrolling, and also scroll an overflowing rail sideways. */
-#root .liquid-tabs > button[role='tab'][aria-selected='true'] { touch-action: pinch-zoom; }
-#root .liquid-tabs[data-tabs-overflow] > button[role='tab'][aria-selected='false'] { touch-action: manipulation; }
+#root .liquid-tabs > button[role='tab'][aria-selected='true'] { touch-action: none; }
+#root .liquid-tabs[data-tabs-overflow] > button[role='tab'][aria-selected='false'] { touch-action: pan-x pan-y; }
+
+/* N6: one segmented control. A quiet tinted track the height of its tabs, and a raised
+   surface pill for the selected tab; no gradients or specular rims. The lens geometry is
+   still measured from the tabs, so only paint and spacing change here. */
+#root .liquid-tabs {
+  --tabs-track-fill: color-mix(in srgb, var(--text-heading) 6%, var(--surface));
+  min-height: 0;
+  padding: 3px;
+  margin-block: 4px 16px;
+}
+#root .liquid-tabs::before,
+html[data-theme='dark'] #root .liquid-tabs::before {
+  top: 0;
+  bottom: 0;
+  background: var(--tabs-track-fill);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+#root .liquid-tabs > button[role='tab']:is([aria-selected='true'],[aria-selected='false']) {
+  min-height: 44px;
+  padding-block: 8px;
+}
+#root .liquid-tabs > .liquid-tabs__lens,
+#root .liquid-tabs > .liquid-tabs__lens[data-glass-interacting],
+html[data-theme='dark'] #root .liquid-tabs > .liquid-tabs__lens {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+#root .liquid-tabs__lens::before { display: none; }

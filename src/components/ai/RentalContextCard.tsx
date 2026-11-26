@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { DecisionResponse } from '../../api/rentalAssistant'
-import { formatListingRent, formatPrice } from '../../lib/labels'
+import { formatMonthlyRent, formatPrice } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import './RentalContextCard.css'
@@ -20,7 +20,7 @@ export function RentalContextCard({ data, onOpenDetail }: { data: DecisionRespon
       return <article key={post.id}>
         <h4>{post.title || 'Tin phòng đã chọn'}</h4>
         <dl>
-          <div><dt>Tiền thuê theo tin</dt><dd><strong>{formatListingRent(post.price)}</strong><small>{rentalPriceLabel(basis)}</small></dd></div>
+          <div><dt>Tiền thuê theo tin</dt><dd><strong>{formatMonthlyRent(post.price)}</strong><small>{rentalPriceLabel(basis)}</small></dd></div>
           <div><dt>Cọc theo tin</dt><dd>{Number.isFinite(post.deposit) && post.deposit > 0 ? formatPrice(post.deposit) : 'Chưa xác nhận'}</dd></div>
           <div><dt>Phần chi phí đã biết / tháng</dt><dd>{monthlyKnown ? formatPrice(cost.knownMonthlySubtotal!) : 'Cần xác nhận đơn vị và phạm vi chi phí'}</dd></div>
           {totalKnown ? <div><dt>Tổng tháng theo kịch bản</dt><dd>{formatPrice(cost.estimatedMonthlyTotal!)}</dd></div> : null}

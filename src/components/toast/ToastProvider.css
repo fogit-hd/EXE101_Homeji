@@ -15,37 +15,37 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 10px 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface-elevated);
   color: var(--text-heading);
-  box-shadow: 0 8px 24px rgba(20, 39, 31, 0.12);
+  box-shadow: var(--shadow-pop);
   pointer-events: auto;
 }
 
 .app-toast p {
   margin: 0;
   flex: 1;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   line-height: 1.4;
 }
 
 .app-toast--error {
-  border-color: #e7b4ae;
-  background: #fdf3f1;
-  color: #8d2d24;
+  border-color: var(--error);
+  background: var(--error-soft);
+  color: var(--error);
 }
 
 .app-toast--warning {
-  border-color: #e3d0a4;
-  background: #fbf6ea;
-  color: #6d5420;
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 
 .app-toast--success {
-  border-color: #b7d7c4;
-  background: #f3faf6;
-  color: #1d5c38;
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .app-toast--info {
@@ -59,19 +59,19 @@
   width: 28px;
   height: 28px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
-  font-size: 1.125rem;
+  font-size: var(--fs-lg);
   line-height: 1;
   cursor: pointer;
 }
 
 .app-toast__close:hover {
-  background: rgba(20, 39, 31, 0.06);
+  background: color-mix(in srgb, var(--surface-muted) 6%, transparent);
 }
 
 .app-toast p { color: inherit; }
-html[data-theme='dark'] .app-toast--error { color: #ffc4bb; background: #42272b; border-color: #855157; }
-html[data-theme='dark'] .app-toast--success { color: #b5ead1; background: #183c32; border-color: #396c59; }
-html[data-theme='dark'] .app-toast--warning { color: #f5dfaa; background: #403722; border-color: #78653a; }
+html[data-theme='dark'] .app-toast--error { color: var(--error); background: var(--error-soft); border-color: var(--error); }
+html[data-theme='dark'] .app-toast--success { color: var(--success); background: var(--success-soft); border-color: var(--success); }
+html[data-theme='dark'] .app-toast--warning { color: var(--warning); background: var(--warning-soft); border-color: var(--warning-border); }

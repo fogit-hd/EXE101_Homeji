@@ -90,29 +90,17 @@ test('ListingTrustBadges correctly proxies variant, label and icon props', () =>
   assert.ok(!html.includes('verified-owner-badge'))
 })
 
-test('Method 3 (Frosted Glass Overlay): styles support 10px blur and glass variant defaults', () => {
-  const css = readFileSync(new URL('../src/components/PremiumBadge.css', import.meta.url), 'utf8')
-  assert.match(css, /\.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
-  assert.match(css, /\.map-listing-card-image > \.premium-badge\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
-  assert.match(css, /\[data-theme=dark\] \.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
-
-  const trustCss = readFileSync(new URL('../src/components/ListingTrustBadges.css', import.meta.url), 'utf8')
-  assert.match(trustCss, /\.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
-  assert.match(trustCss, /\[data-theme='dark'\]:root #root \.listing-trust-badges > \.premium-badge--glass\s*\{[^}]*backdrop-filter:\s*blur\(10px\);/s)
-
-  // BorderBeam card integration styles include .post-card, .map-listing-card, and .hx-listing
-  assert.match(css, /\[data-beam\] > \.hx-listing\s*\{[^}]*border-color:\s*transparent !important;/s)
-  assert.match(css, /\[data-beam\] > \.hx-listing\.is-highlighted\s*\{[^}]*box-shadow:\s*none !important;/s)
-
-  // ListingTrustBadges defaults to glass variant
-  const trustHtml = renderToStaticMarkup(React.createElement(ListingTrustBadges, {
-    premium: true,
-    verified: false,
-  }))
-  assert.ok(trustHtml.includes('premium-badge--glass'), 'ListingTrustBadges defaults to glass variant')
+test("premium content badges retain their variant API on solid surfaces", async () => {
+  for (const file of ['PremiumBadge.css', 'ListingTrustBadges.css']) {
+    const css=readFileSync(new URL('../src/components/'+file,import.meta.url),'utf8')
+    assert.doesNotMatch(css, /backdrop-filter:\s*(?!none)[a-z]+\(/)
+    assert.match(css, /background(?:-color)?: var\(--surface-elevated\)/)
+  }
+  const html=renderToStaticMarkup(React.createElement(ListingTrustBadges,{premium:true,verified:false}))
+  assert.ok(html.includes('premium-badge--glass'))
 })
 
-test('Method 3 & Method 4 Combined: RentalPostCard and MapListingCard render glass badge and BorderBeam glow', () => {
+test('rental and map cards retain premium badges without BorderBeam', () => {
   const post = {
     id: 'room-1',
     title: 'Phòng trọ cao cấp',
@@ -127,14 +115,14 @@ test('Method 3 & Method 4 Combined: RentalPostCard and MapListingCard render gla
   const rentalHtml = renderToStaticMarkup(
     React.createElement(MemoryRouter, null, React.createElement(RentalPostCard, { post }))
   )
-  assert.ok(rentalHtml.includes('data-beam'), 'RentalPostCard renders BorderBeam container when premium')
+  assert.ok(!rentalHtml.includes('data-beam'), 'RentalPostCard has no decorative beam')
   assert.ok(rentalHtml.includes('premium-badge--glass'), 'RentalPostCard renders floating frosted glass badge')
   assert.ok(rentalHtml.includes('premium-stars'), 'RentalPostCard retains premium-stars contract')
 
   const mapHtml = renderToStaticMarkup(
     React.createElement(MemoryRouter, null, React.createElement(MapListingCard, { post }))
   )
-  assert.ok(mapHtml.includes('data-beam'), 'MapListingCard renders BorderBeam container when premium')
+  assert.ok(!mapHtml.includes('data-beam'), 'MapListingCard has no decorative beam')
   assert.ok(mapHtml.includes('premium-badge--glass'), 'MapListingCard renders floating frosted glass badge')
   assert.ok(mapHtml.includes('premium-stars'), 'MapListingCard retains premium-stars contract')
 })

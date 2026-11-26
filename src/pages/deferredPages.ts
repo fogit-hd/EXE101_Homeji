@@ -7,6 +7,7 @@ export const ReceiptsPage = lazy(() => import('./ReceiptsPage').then(module => (
 // Guests and members get different pages on "/", each in its own chunk (HomeRoute).
 export const HomePage = lazy(() => import('./HomeRoute').then(module => ({ default: module.HomeRoute })))
 export const ExplorePage = lazy(() => import('./ExplorePage').then(module => ({ default: module.ExplorePage })))
+export const AuthPage = lazy(() => import('./AuthPage').then(module => ({ default: module.AuthPage })))
 export const LoginPage = lazy(() => import('./LoginPage').then(module => ({ default: module.LoginPage })))
 export const RegisterPage = lazy(() => import('./RegisterPage').then(module => ({ default: module.RegisterPage })))
 export const ForgotPasswordPage = lazy(() => import('./ForgotPasswordPage').then(module => ({ default: module.ForgotPasswordPage })))
@@ -24,6 +25,7 @@ export const PaymentPage = lazy(() => import('./PaymentPage').then(module => ({ 
 export const ProfilePage = lazy(() => import('./ProfilePage').then(module => ({ default: module.ProfilePage })))
 export const MarketplacePage = lazy(() => import('./MarketplacePage').then(module => ({ default: module.MarketplacePage })))
 export const WantedPostsPage = lazy(() => import('./WantedPostsPage').then(module => ({ default: module.WantedPostsPage })))
+export const HelpPage = lazy(() => import('./HelpPage').then(module => ({ default: module.HelpPage })))
 export const ActivitiesPage = lazy(() => import('./ActivitiesPage').then(module => ({ default: module.ActivitiesPage })))
 export const MyPostsPage = lazy(() => import('./MyPostsPage').then(module => ({ default: module.MyPostsPage })))
 export const RoommateWorkspace = lazy(() => import('../components/roommates/RoommateWorkspace').then(module => ({ default: module.RoommateWorkspace })))

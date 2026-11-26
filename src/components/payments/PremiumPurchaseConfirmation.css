@@ -7,17 +7,17 @@
   overflow-y: auto;
   margin: auto;
   padding: 24px;
-  border: 1px solid var(--border, #dce5eb);
-  border-radius: 22px;
-  background: var(--surface-elevated, #ffffff);
-  color: var(--text-primary, #243742);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
   font-family: var(--font-ui);
-  box-shadow: 0 24px 70px rgba(8, 28, 38, 0.28);
+  box-shadow: var(--shadow-sheet);
 }
 
 .premium-purchase-confirm::backdrop {
-  background: rgba(9, 25, 34, 0.52);
-  backdrop-filter: blur(6px);
+  background: var(--overlay-scrim);
+  backdrop-filter: none;
 }
 
 .premium-purchase-confirm__head {
@@ -26,26 +26,18 @@
   gap: 6px;
 }
 
-.premium-purchase-confirm__eyebrow {
-  color: var(--confirm-accent);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .premium-purchase-confirm h2 {
   margin: 0;
-  color: var(--text-heading, #19323b);
-  font-size: 1.3125rem;
+  color: var(--text-heading);
+  font-size: var(--fs-xl);
   font-weight: 750;
   line-height: 1.25;
 }
 
 .premium-purchase-confirm__head p {
   margin: 0;
-  color: var(--text-secondary, #5b6b76);
-  font-size: 0.84375rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
   line-height: 1.5;
 }
 
@@ -55,16 +47,16 @@
   gap: 2px;
   margin: 16px 0 0;
   padding: 12px 16px;
-  border: 1px solid var(--border, #dce5eb);
-  border-radius: 14px;
-  background: var(--surface-muted, #f3f7fa);
-  font-size: 0.84375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  font-size: var(--fs-md);
 }
 
 .premium-purchase-confirm__quote {
   margin-top: 12px;
-  border-color: color-mix(in srgb, var(--confirm-accent) 26%, var(--border, #dce5eb));
-  background: color-mix(in srgb, var(--confirm-accent) 6%, var(--surface-elevated, #ffffff));
+  border-color: var(--control-border);
+  background: var(--brand-soft);
 }
 
 .premium-purchase-confirm dl > div {
@@ -76,12 +68,12 @@
 }
 
 .premium-purchase-confirm dt {
-  color: var(--text-secondary, #5b6b76);
+  color: var(--text-secondary);
 }
 
 .premium-purchase-confirm dd {
   margin: 0;
-  color: var(--text-heading, #19323b);
+  color: var(--text-heading);
   text-align: right;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
@@ -94,35 +86,36 @@
 }
 
 .premium-purchase-confirm .is-discount dd {
-  color: var(--confirm-accent);
+  color: var(--text-accent);
 }
 
-.premium-purchase-confirm__total {
+/* dl > prefix outranks the generic `.premium-purchase-confirm dl > div` row padding. */
+.premium-purchase-confirm dl > .premium-purchase-confirm__total {
   margin-top: 4px;
-  padding-top: 10px !important;
-  border-top: 1px dashed var(--border, #dce5eb);
-  font-size: 0.9375rem;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: var(--fs-lg);
 }
 
 .premium-purchase-confirm__total dt {
-  color: var(--text-heading, #19323b);
+  color: var(--text-heading);
   font-weight: 700;
 }
 
 .premium-purchase-confirm__total dd {
-  font-size: 1.125rem;
+  font-size: var(--fs-lead);
   font-weight: 800;
 }
 
 .premium-purchase-confirm__total.is-usd dd {
-  color: var(--confirm-accent);
+  color: var(--text-accent);
 }
 
 .premium-purchase-confirm__note {
   margin: 14px 0 0;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   line-height: 1.55;
-  color: var(--text-secondary, #5b6b76);
+  color: var(--text-secondary);
 }
 
 .premium-purchase-confirm__actions {
@@ -136,27 +129,27 @@
   width: 100%;
   min-height: 46px;
   padding: 10px 16px;
-  border-radius: 12px;
-  font: 700 0.875rem/1.3 var(--font-ui);
+  border-radius: var(--radius-md);
+  font: 700 14px/1.3 var(--font-ui);
   white-space: normal;
   cursor: pointer;
 }
 
 .premium-purchase-confirm__actions .pay-btn:not(.pay-btn--primary) {
-  border: 1px solid var(--border, #dce5eb);
-  background: var(--surface-elevated, #ffffff);
-  color: var(--text-heading, #19323b);
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
 }
 
 .premium-purchase-confirm__actions .pay-btn--primary {
-  border: 1px solid var(--confirm-accent);
-  background: var(--confirm-accent);
-  color: #ffffff;
+  border: 1px solid var(--control-border);
+  background: var(--grab-green);
+  color: var(--on-brand);
 }
 
 .premium-purchase-confirm__actions .pay-btn--primary:hover:not(:disabled) {
-  background: var(--confirm-accent-hover);
-  border-color: var(--confirm-accent-hover);
+  background: var(--grab-green-hover);
+  border-color: var(--control-border);
 }
 
 .premium-purchase-confirm .pay-btn:disabled {
@@ -165,18 +158,18 @@
 }
 
 .premium-purchase-confirm .pay-btn:focus-visible {
-  outline: 3px solid var(--confirm-accent);
+  outline: 3px solid var(--control-border);
   outline-offset: 2px;
 }
 
 html[data-theme='dark'] .premium-purchase-confirm {
   --confirm-accent: #6ee0bf;
   --confirm-accent-hover: #8ae8cc;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-sheet);
 }
 
 html[data-theme='dark'] .premium-purchase-confirm__actions .pay-btn--primary {
-  color: #0e1e24;
+  color: var(--on-brand);
 }
 
 @media (max-width: 480px) {

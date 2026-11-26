@@ -1,10 +1,10 @@
+import { ArrowUpRight } from 'lucide-react'
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ChatbotFoodContext, ChatbotFoodResponse } from '../../api/types'
 import { AddressAutocomplete, type PlaceResult } from '../map/AddressAutocomplete'
+import { formatPrice } from '../../lib/labels'
 import './FoodDiscoveryCard.css'
-
-const money = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 
 export function FoodDiscoveryCard({ data, busy, onSearch, onOpen }: {
   data: ChatbotFoodResponse; busy: boolean; onSearch: (origin: ChatbotFoodContext) => void; onOpen: () => void
@@ -16,14 +16,14 @@ export function FoodDiscoveryCard({ data, busy, onSearch, onOpen }: {
   const [choosing, setChoosing] = useState(data.status === 'locationRequired')
   return <section className="ai-food" aria-label="Gợi ý món ăn từ Chợ Homeji">
     <div className="ai-food__heading"><strong>Món ăn trên Homeji</strong><span>{data.origin ? `Trong ${data.origin.radiusKm} km từ mốc đã chọn` : 'Chưa lọc theo vị trí'}</span></div>
-    {data.keyword || data.maxPrice != null ? <p className="ai-food__filters">{[data.keyword && `Từ khóa: ${data.keyword}`, data.maxPrice != null && `Giá món tối đa ${money(data.maxPrice)}`].filter(Boolean).join(' · ')}</p> : null}
+    {data.keyword || data.maxPrice != null ? <p className="ai-food__filters">{[data.keyword && `Từ khóa: ${data.keyword}`, data.maxPrice != null && `Giá món tối đa ${formatPrice(data.maxPrice)}`].filter(Boolean).join(' · ')}</p> : null}
     {data.items.length ? <ol className="ai-food__items">{data.items.map((item, index) => <li key={item.id} className="ai-food__item">
       <span className="ai-food__number" aria-hidden="true">{index + 1}</span>
-      <div className="ai-food__info"><h4>{item.title}</h4><strong className="ai-food__price">{money(item.price)} <small>/ {item.unit || 'món'}</small></strong>
+      <div className="ai-food__info"><h4>{item.title}</h4><strong className="ai-food__price">{formatPrice(item.price)} <small>/ {item.unit || 'món'}</small></strong>
         <p>{item.sellerName}</p><p className="ai-food__meta">{[`${item.availableQuantity} ${item.unit || 'món'} theo tin`,
           item.preparationMinutes != null && `Chuẩn bị ~${item.preparationMinutes} phút`,
           item.distanceKm != null && `${item.distanceKm.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} km đường thẳng`].filter(Boolean).join(' · ')}</p>
-        <Link className="ai-food__open" to={`/?section=marketplace&market=food&seller=${encodeURIComponent(item.sellerId)}&item=${encodeURIComponent(item.id)}`} onClick={onOpen}>Xem món & thực đơn <span aria-hidden="true">↗</span></Link>
+        <Link className="ai-food__open" to={`/?section=marketplace&market=food&seller=${encodeURIComponent(item.sellerId)}&item=${encodeURIComponent(item.id)}`} onClick={onOpen}>Xem món & thực đơn <span aria-hidden="true"><ArrowUpRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span></Link>
       </div>
     </li>)}</ol> : null}
     <p className="ai-food__note">Theo tin người bán; số lượng có thể thay đổi. Giá chưa gồm phí giao và khoản khác. Homeji chưa xác nhận khẩu vị hay thành phần món.</p>

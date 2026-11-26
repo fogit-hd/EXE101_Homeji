@@ -3,164 +3,39 @@
 /* Shared optical material. Local SVG refraction is a progressive enhancement;
    transparency, edge lighting and readable foregrounds do not depend on it. */
 :root {
-  --glass-tint: var(--glass-tint-dynamic, rgb(249 253 252 / .86));
-  --glass-border: rgb(161 187 187 / .48);
-  --glass-panel: var(--glass-panel-dynamic, rgb(249 253 251 / .9));
-  --glass-edge: rgb(255 255 255 / .72);
-  --glass-shadow: rgb(25 63 61 / .1);
-  --glass-ink: #183b46;
-  --glass-spring: cubic-bezier(.22,.9,.3,1.06);
-  --glass-action: rgb(8 127 140 / .14);
-  --glass-danger: rgb(255 220 224 / .8);
-  --glass-danger-ink: #a3212e;
+  --glass-tint: color-mix(in srgb, var(--surface) 80%, transparent);
+  --glass-border: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+  --glass-panel: color-mix(in srgb, var(--surface) 86%, transparent);
+  --glass-edge: color-mix(in srgb, var(--color-white) 70%, transparent);
+  --glass-shadow: color-mix(in srgb, var(--text-heading) 12%, transparent);
+  --glass-ink: var(--text-heading);
+  --glass-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --glass-action: color-mix(in srgb, var(--action-primary) 12%, transparent);
+  --glass-danger: color-mix(in srgb, var(--error-soft) 80%, transparent);
+  --glass-danger-ink: var(--error);
 }
 @supports (animation-timing-function: linear(0,1)) {
   :root { --glass-spring: linear(0, .23 12%, .65 28%, .91 44%, 1.035 60%, .99 80%, 1); }
 }
 html[data-theme='dark'] {
-  --glass-tint: var(--glass-tint-dynamic, rgb(25 47 58 / .92));
-  --glass-border: rgb(198 227 225 / .23);
-  --glass-panel: var(--glass-panel-dynamic, rgb(18 39 51 / .9));
-  --glass-edge: rgb(233 255 251 / .26);
-  --glass-shadow: rgb(0 6 15 / .35);
-  --glass-ink: #e8f8ff;
-  --glass-action: rgb(83 187 170 / .10);
-  --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
+  --glass-tint: color-mix(in srgb, var(--surface) 84%, transparent);
+  --glass-border: color-mix(in srgb, var(--text-heading) 14%, transparent);
+  --glass-panel: color-mix(in srgb, var(--surface) 88%, transparent);
+  --glass-edge: color-mix(in srgb, var(--text-heading) 18%, transparent);
+  --glass-shadow: color-mix(in srgb, var(--color-black) 40%, transparent);
+  --glass-ink: var(--text-heading);
+  --glass-action: color-mix(in srgb, var(--action-primary) 14%, transparent);
+  --glass-danger: color-mix(in srgb, var(--error-soft) 80%, transparent); --glass-danger-ink: var(--error);
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme='light']) {
-    --glass-tint: rgb(25 47 58 / .92); --glass-border: rgb(198 227 225 / .23);
-    --glass-panel: rgb(18 39 51 / .9); --glass-edge: rgb(233 255 251 / .26);
-    --glass-shadow: rgb(0 6 15 / .35); --glass-ink: #e8f8ff;
-    --glass-action: rgb(83 187 170 / .10); --glass-danger: rgb(101 43 52 / .8); --glass-danger-ink: #ffc0c5;
+    --glass-tint: color-mix(in srgb, var(--surface) 84%, transparent); --glass-border: color-mix(in srgb, var(--text-heading) 14%, transparent);
+    --glass-panel: color-mix(in srgb, var(--surface) 88%, transparent); --glass-edge: color-mix(in srgb, var(--text-heading) 18%, transparent);
+    --glass-shadow: color-mix(in srgb, var(--color-black) 40%, transparent); --glass-ink: var(--text-heading);
+    --glass-action: color-mix(in srgb, var(--action-primary) 14%, transparent); --glass-danger: color-mix(in srgb, var(--error-soft) 80%, transparent); --glass-danger-ink: var(--error);
   }
 }
 .liquid-glass-defs { position: fixed; pointer-events: none; overflow: hidden; }
-/* Every Homeji button, including portal menus and list options, shares the
-   optical material. Content cards and media keep their own rendering, along with vendor controls. */
-:is(#root, .choice-picker-layer, body) :where(button, summary, input[type='button'], input[type='submit'], input[type='reset'],
-  .btn, .liquid-action, :where(.guest-fixed-cta > span), .pay-btn, .payment-button, .hj-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button'], [role='menuitem']):not(:where(.gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, .payment-sandbox-wallets, .payment-sandbox-wallets *, .gpay-card-info-container, .gpay-card-info-container *, apple-pay-button, apple-pay-button *, [data-glass-exclude], [data-glass-exclude] *)) {
-  --glass-fill: var(--glass-tint);
-  background-color: var(--glass-fill);
-  background-image: radial-gradient(ellipse at var(--glass-x, 24%) var(--glass-y, 0%), rgb(255 255 255 / .12), transparent 43%),
-    linear-gradient(155deg, rgb(255 255 255 / .08), transparent 25% 75%, rgb(255 255 255 / .04));
-  color: var(--glass-ink);
-  text-shadow: none;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-control-shadow, inset 0 2px 2px -1px var(--glass-edge),
-    inset 2px 0 3px -2px rgb(255 255 255 / .65),
-    inset -1px 0 2px -1px rgb(255 255 255 / .4),
-    inset 0 -3px 4px -3px rgb(255 255 255 / .65),
-    0 2px 3px rgb(12 35 35 / .1), 0 6px 14px -8px rgb(12 35 35 / .24));
-  -webkit-backdrop-filter: var(--glass-idle-filter, blur(12px) saturate(1.08));
-  backdrop-filter: var(--glass-idle-filter, blur(12px) saturate(1.08));
-  background-clip: padding-box;
-}
-/* Material is universal; only ordinary action controls become capsules.
-   Preserve the geometry of tabs, calendar cells, menu rows, cards and hit areas. */
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-post-cta, [role='button']):not(:where(
-  .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, .payment-sandbox-wallets, .payment-sandbox-wallets *, .gpay-card-info-container, .gpay-card-info-container *, apple-pay-button, apple-pay-button *, [data-glass-exclude], [data-glass-exclude] *, [role='option'], [role='tab'],
-  [class*='__card'], [class*='__hit'], [class*='__photo'], [class*='__thumbnail'],
-  [class*='__image'], [class*='__person'], .food-card__main, .schedule-dt__day,
-  .hj-account__item, .hj-mega__link, .guest-poster-menu__item, .address-autocomplete__item, .gmaps-omnibox__row
-)) { border-radius: var(--glass-radius, 999px); }
-:is(#root, .choice-picker-layer, body) :is(.btn-primary, .auth-cinema__submit, .hj-post-cta,
-  .map-chatbot__send, .food-checkout__submit, [type='submit'], button[aria-pressed='true'], button[aria-selected='true'], button.is-active):not(:where(.gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, .payment-sandbox-wallets, .payment-sandbox-wallets *, .gpay-card-info-container, .gpay-card-info-container *, apple-pay-button, apple-pay-button *, [data-glass-exclude], [data-glass-exclude] *)) {
-  --glass-fill: var(--glass-action);
-  border-color: color-mix(in srgb, var(--hj-accent) 48%, var(--glass-border));
-  font-weight: 650;
-}
-:is(#root, .choice-picker-layer, body) :is(.btn-danger, [class*='--danger']) {
-  --glass-fill: var(--glass-danger); color: var(--glass-danger-ink);
-}
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .hj-post-cta, .guest-hero__bloom-cta, [role='button']):focus-visible {
-  outline: 3px solid var(--hj-accent); outline-offset: 3px;
-}
-:is(#root, .choice-picker-layer, body) :is(button, .btn):disabled,
-:is(#root, .choice-picker-layer, body) [aria-disabled='true'] {
-  opacity: .48; cursor: not-allowed; box-shadow: none;
-}
-/* Feedback belongs to the control, not to the decorative lens. */
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .payment-button, .hj-action, .hj-post-cta, [role='button'], [role='menuitem']):where(:hover):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, .payment-sandbox-wallets, .payment-sandbox-wallets *, .gpay-card-info-container, .gpay-card-info-container *, apple-pay-button, apple-pay-button *, [data-glass-exclude], [data-glass-exclude] *)) {
-  background-color: color-mix(in srgb, var(--glass-fill) 90%, var(--glass-ink) 10%);
-  border-color: color-mix(in srgb, var(--glass-border) 70%, var(--glass-ink) 30%);
-}
-:is(#root, .choice-picker-layer, body) :is(button, .btn, .liquid-action, .pay-btn, .hj-action, .hj-post-cta):where(:active):not(:where(:disabled, [aria-disabled='true'], .gm-style *, gmp-map *, .map-explore-card, .map-listing-card, .marketplace-card__main, .food-card__media, .payment-sandbox-wallets, .payment-sandbox-wallets *, .gpay-card-info-container, .gpay-card-info-container *, apple-pay-button, apple-pay-button *, [data-glass-exclude], [data-glass-exclude] *)) {
-  box-shadow: inset 0 1px 3px var(--glass-shadow), inset 0 1px 0 var(--glass-edge);
-}
-/* Dense controls keep the same glass optics with a quiet edge, rather than a
-   pile of independently elevated capsules. */
-:is(#root, .choice-picker-layer, body) :is([role='option'], [role='menuitem'], .hj-mega__link, .schedule-dt__day) {
-  --glass-control-shadow: inset 0 1px 0 rgb(255 255 255 / .08);
-  border-color: transparent;
-}
-:is(#root, .choice-picker-layer, body) :is([role='option'][data-active], [role='menuitem']:focus-visible, [role='option'][aria-selected='true']) {
-  --glass-fill: var(--glass-action);
-  border-color: color-mix(in srgb, var(--hj-accent) 35%, transparent);
-}
-:is(#root, body) :is(.tabs, .map-section-tabs) {
-  padding: 5px; gap: 5px; border: 1px solid var(--glass-border); border-radius: 22px;
-  background: color-mix(in srgb, var(--surface-input) 65%, transparent);
-}
-:is(#root, body) :is(button[role='tab'], button.tab) {
-  --glass-control-shadow: inset 0 1px 0 rgb(255 255 255 / .1);
-  border-color: transparent; border-radius: 999px; margin: 0;
-}
-:is(#root, body) :is(button[role='tab'][aria-selected='true'], button.tab.active) {
-  --glass-fill: var(--glass-action);
-  --glass-control-shadow: inset 0 1px 0 var(--glass-edge), 0 1px 4px var(--glass-shadow);
-  border-color: color-mix(in srgb, var(--hj-accent) 32%, var(--glass-border));
-  color: var(--glass-ink);
-}
-/* Content behind outdoor/photo CTAs supplies the strong lens effect. A dark
-   neutral tint keeps white labels legible when the page beneath turns bright. */
-#root :is(.guest-hero .liquid-action, .guest-fixed-cta) {
-  --glass-ink: #fff; --glass-tint: rgb(12 34 28 / .64);
-  --glass-border: rgb(255 255 255 / .55); --glass-edge: rgb(255 255 255 / .7);
-  --glass-control-shadow: inset 0 2px 2px -1px var(--glass-edge), inset 2px 0 3px -2px #fff, inset 0 -3px 4px -3px #fff, 0 2px 3px rgb(0 20 15 / .16), 0 8px 20px -8px rgb(0 20 15 / .3);
-}
-#root .guest-hero .liquid-action { --glass-tint: rgb(255 255 255 / .08); }
-#root .guest-fixed-cta .guest-fixed-cta__go { --glass-fill: rgb(12 57 36 / .76); }
-/* Keep the demo's curved rim on action controls without turning small toolbar
-   labels into glowing text. Panels remain calm so the controls carry hierarchy. */
-#root :is(.hj-action--icon, .hj-search__clear, .hj-notify__trigger) { border-radius: 50%; }
-#root .hj-actions { gap: 6px; }
-@media (max-width: 479px) { #root .hj-actions { gap: 3px; } }
-#root .hj-shell { background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);  }
-#root .hj-bar { background: transparent; }
-#root :is(.profile-page, .profile-embed) .profile-hero {
-  background: linear-gradient(115deg, color-mix(in srgb, var(--surface-elevated) 90%, var(--hj-accent) 10%), var(--surface-elevated));
-}
-.liquid-surface,
-:is(#root, body) :is(.hj-account__menu, .hj-notify__pop, .hj-mega, .gmaps-account__popover, .guest-poster-menu__panel,
-  .address-autocomplete__list, .gmaps-omnibox__dropdown, .schedule-dt__panel, .map-explore__menu) {
-  background: var(--glass-panel);
-  border-color: var(--glass-border);
-  -webkit-backdrop-filter: var(--glass-panel-filter, blur(22px) saturate(1.3));
-  backdrop-filter: var(--glass-panel-filter, blur(22px) saturate(1.3));
-  box-shadow: inset 0 1px 0 var(--glass-edge), 0 18px 52px var(--glass-shadow);
-}
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  html:root { --glass-tint: var(--surface-elevated); --glass-panel: var(--surface-elevated); --glass-action: var(--surface-elevated); }
+  :root { --glass-panel: var(--surface); --glass-tint: var(--surface); }
 }
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  html:root {
-    --glass-tint: var(--surface-elevated); --glass-panel: var(--surface-elevated); --glass-action: var(--surface-elevated);
-    --glass-border: var(--text-secondary); --glass-shadow: transparent;
-    --glass-idle-filter: none; --glass-panel-filter: none;
-  }
-}
-@media (forced-colors: active) {
-  html:root {
-    --glass-tint: ButtonFace; --glass-panel: Canvas; --glass-action: ButtonFace; --glass-danger: ButtonFace;
-    --glass-ink: ButtonText; --glass-danger-ink: ButtonText; --glass-border: ButtonText;
-    --glass-idle-filter: none; --glass-panel-filter: none; --glass-shadow: transparent;
-  }
-  .liquid-surface { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
-}
-
-/* Select controls are lenses with a compact, separate chevron face. */
-#root .choice-picker__trigger { min-height: 48px; padding-right: 8px; border-radius: 999px; }
-#root .choice-picker__trigger > svg { box-sizing: content-box; padding: 7px; border-radius: 50%; background: rgb(255 255 255 / .12); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-edge); }
-#root .choice-picker__trigger[aria-expanded='true'] { border-color: var(--hj-accent); --glass-fill: var(--glass-action); }
-

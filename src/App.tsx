@@ -18,14 +18,13 @@ import { GoogleMapsProvider } from './contexts/GoogleMapsProvider'
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext'
 import { googleOAuthClientId } from './lib/googleOAuthClient'
 import { ThemeSync } from './components/ThemeSync'
-import { AiInteractionEffects } from './components/ai/AiInteractionEffects'
 import { InteractionMotion } from './components/motion/InteractionMotion'
 import { introRequested } from './lib/introGate'
 import { MotionConfig } from 'motion/react'
 import { MapHomePostRedirect, MapHomeSectionRedirect } from './lib/mapDeepLinks'
 import {
   AdminModerationPage, CreateRentalPostPage, EditRentalPostPage, ExplorePage,
-  ForgotPasswordPage, HomePage, PaymentWaitingPage, LoginPage, PrivacyPolicyPage,
+  AuthPage, ForgotPasswordPage, HomePage, PaymentWaitingPage, LoginPage, PrivacyPolicyPage,
   TermsOfServicePage, RegisterPage, AuthCallbackPage, ResetPasswordPage,
   VerifySignupPage, ReceiptsPage, ReferralsPage,
 } from './pages/deferredPages'
@@ -45,6 +44,7 @@ function AppRoutes() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/auth" element={<AuthPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email" element={<VerifySignupPage />} />
@@ -66,7 +66,7 @@ function AppRoutes() {
         <Route path="/marketplace" element={<ProtectedRoute><MapHomeSectionRedirect section="marketplace" /></ProtectedRoute>} />
         <Route path="/wanted" element={<ProtectedRoute><MapHomeSectionRedirect section="wanted" /></ProtectedRoute>} />
         <Route path="/wanted/new" element={<Navigate to="/wanted" replace />} />
-        <Route path="/roommates" element={<Navigate to="/invitations" replace />} />
+        <Route path="/roommates" element={<ProtectedRoute><MapHomeSectionRedirect section="invitations" /></ProtectedRoute>} />
         <Route path="/activities" element={<ProtectedRoute><MapHomeSectionRedirect section="activities" /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><MapHomeSectionRedirect section="saved" /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><MapHomeSectionRedirect section="profile" /></ProtectedRoute>} />
@@ -102,9 +102,8 @@ function GoogleOAuthRoot({ children }: { children: ReactNode }) {
 function App() {
   return (
     <ErrorBoundary reloadOnRetry>
-      <MotionConfig reducedMotion="never">
+      <MotionConfig reducedMotion="user">
       <ThemeSync>
-      <AiInteractionEffects />
       <InteractionMotion />
       <NetworkStatusProvider>
         <GoogleMapsProvider>

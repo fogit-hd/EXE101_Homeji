@@ -1,4 +1,3 @@
-import { CONVERSATION_READ } from '../../lib/conversationRealtime'
 import { SellerOrderAlertsSlot } from '../marketplace/SellerOrderAlerts'
 import { navigateMenu } from '../ui/menuNavigation'
 import { ThemeSwitch } from '../theme/ThemeSwitch'
@@ -7,12 +6,12 @@ import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { NotificationsSkeleton } from '../skeletons/PageSkeletons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { getNotifications, NotificationType, UserRole, type Notification } from '../../api'
+import { UserRole } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
-import { useNotificationHub } from '../../hooks/useNotificationHub'
+import { useUnreadCounts } from '../../mobile/useUnreadCounts'
+import { isExploreNavigationActive } from '../chrome/exploreMode'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { notificationTargetHref } from '../../lib/notificationTarget'
-import type { NotificationReadChange } from '../../pages/NotificationsPage'
 import { NotificationsPage } from '../../pages/deferredPages'
 import { CategoryMegaMenu } from './CategoryMegaMenu'
 import { ContextualSearch } from './ContextualSearch'
@@ -24,7 +23,7 @@ import { AccountWalletLink } from './AccountWalletLink'
 const CLOSE_DELAY_MS = 180
 const COMPACT_AFTER = 80
 const EXPAND_BEFORE = 32
-const headerIconLabels = { heart: 'Tin đã lưu', bell: 'Thông báo', message: 'Tin nhắn' }
+const headerIconLabels = { heart: 'Phòng đã lưu', bell: 'Thông báo', message: 'Tin nhắn' }
 
 /** Logged-in home is `/` with no section and no post. Every other route stays compact. */
 function isHomeBarRoute(routeKey: string): boolean {
@@ -69,10 +68,8 @@ export function GlobalHeader() {
   const { present: accountPresent, ...accountPresence } = useMotionPresence(accountOpen)
   const [notifyOpen, setNotifyOpen] = useState(() => sectionIsNotifications(location.search))
   const { present: notifyPresent, ...notifyPresence } = useMotionPresence(notifyOpen)
-  const [unreadMessages, setUnreadMessages] = useState(0)
-  const [unreadNotifications, setUnreadNotifications] = useState(0)
-  const [refreshKey, setRefreshKey] = useState(0)
   const routeKey = `${location.pathname}${location.search}`
+  const { unreadMessages, unreadNotifications, refreshKey, applyReadChange } = useUnreadCounts(isAuthenticated, routeKey)
   const [menuRoute, setMenuRoute] = useState(routeKey)
   if (menuRoute !== routeKey) {
     setMenuRoute(routeKey)
@@ -81,6 +78,16 @@ export function GlobalHeader() {
     setAccountOpen(false)
     setNotifyOpen(sectionIsNotifications(location.search))
   }
+
+  // `?section=notifications` only opens the popup. Once it closes, drop the section so the
+  // same notification link opens it again instead of matching the current URL and doing nothing.
+  useEffect(() => {
+    if (notifyOpen || !sectionIsNotifications(location.search)) return
+    const next = new URLSearchParams(location.search)
+    next.delete('section')
+    const search = next.toString()
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true })
+  }, [notifyOpen, location.pathname, location.search, navigate])
 
   const searchHeld = useRef(false)
   const holdRef = useRef(false)
@@ -122,7 +129,7 @@ export function GlobalHeader() {
       const box = scroller()
       const yBefore = box.get()
       const heightBefore = shell.getBoundingClientRect().height
-      const reduceMotion = window.matchMedia('not all').matches
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       const field = reduceMotion ? null : shell.querySelector('.hj-search__field')
       const fieldFrom = field instanceof HTMLElement ? field.getBoundingClientRect() : null
       lock = 2
@@ -235,52 +242,6 @@ export function GlobalHeader() {
     syncBarRef.current()
   }, [menuOpen, accountOpen, notifyOpen])
 
-  const [conversationReadVersion, setConversationReadVersion] = useState(0)
-  useEffect(() => {
-    if (!isAuthenticated) return
-    const refreshCounts = () => setConversationReadVersion(version => version + 1)
-    window.addEventListener(CONVERSATION_READ, refreshCounts)
-    return () => window.removeEventListener(CONVERSATION_READ, refreshCounts)
-  }, [isAuthenticated])
-
-  useNotificationHub({
-    enabled: isAuthenticated,
-    onNotification: (notification: Notification) => {
-      setRefreshKey((key) => key + 1)
-      if (notification.isRead) return
-      const isMessage =
-        notification.type === NotificationType.NewMessage ||
-        notification.type === NotificationType.DirectMessage
-      if (isMessage) setUnreadMessages((count) => count + 1)
-      else setUnreadNotifications((count) => count + 1)
-    },
-  })
-
-  useEffect(() => {
-    if (!isAuthenticated) return
-    let cancelled = false
-    void getNotifications(true)
-      .then((list) => {
-        if (cancelled) return
-        let messages = 0
-        let other = 0
-        for (const item of list) {
-          if (item.isRead) continue
-          const isMessage =
-            item.type === NotificationType.NewMessage || item.type === NotificationType.DirectMessage
-          if (isMessage) messages += 1
-          else other += 1
-        }
-        setUnreadMessages(messages)
-        setUnreadNotifications(other)
-      })
-      .catch(() => {
-        /* keep the live counters */
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [isAuthenticated, refreshKey, location.pathname, location.search, conversationReadVersion])
 
   useEffect(() => {
     if (!notifyOpen) return
@@ -390,8 +351,9 @@ export function GlobalHeader() {
 
   const accountLinks: { id: string; label: string; href: string; icon: 'user' | 'card' | 'search' | 'activity' | 'shield' | 'bookmark' }[] = [
     { id: 'myPosts', label: 'Quản lý tin', href: mapSectionUrl('myPosts'), icon: 'activity' },
-    { id: 'saved', label: 'Tin đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark' },
+    { id: 'saved', label: 'Phòng đã lưu', href: mapSectionUrl('saved'), icon: 'bookmark' },
     { id: 'interests', label: 'Phòng mới phù hợp', href: '/?section=listings&view=list&interest=manage', icon: 'search' },
+    { id: 'help', label: 'Trợ giúp', href: mapSectionUrl('help'), icon: 'search' },
     { id: 'profile', label: 'Hồ sơ', href: mapSectionUrl('profile'), icon: 'user' as const },
     { id: 'subscription', label: 'Gói Premium', href: mapSectionUrl('payments'), icon: 'card' as const },
     { id: 'wanted', label: 'Tin tìm phòng', href: mapSectionUrl('wanted'), icon: 'search' as const },
@@ -401,12 +363,12 @@ export function GlobalHeader() {
     accountLinks.unshift({ id: 'admin', label: 'Quản trị', href: '/admin', icon: 'shield' })
   }
   const accountGroups = [
-    { label: 'Tài khoản & dịch vụ', items: accountLinks.filter(item => ['profile', 'subscription'].includes(item.id)) },
+    { label: 'Tài khoản & dịch vụ', items: accountLinks.filter(item => ['profile', 'subscription', 'help'].includes(item.id)) },
     { label: 'Hoạt động của bạn', items: accountLinks.filter(item => ['myPosts', 'saved', 'interests', 'wanted', 'activities', 'admin'].includes(item.id)) },
   ]
 
   return (
-    <header className="hj-header" data-glass-exclude>
+    <header className="hj-header">
       <div className={`hj-bar${isAdmin ? ' hj-bar--admin' : ''}`}>
         <div
           className="hj-header__menu"
@@ -443,13 +405,13 @@ export function GlobalHeader() {
             }}
           />
         </div>
-        <Link to="/" className="hj-logo" aria-label="Homeji — Trang chủ">
+        <Link to="/" className="hj-logo" aria-label="Homeji — Trang chủ" title="Homeji — Trang chủ">
           <img className="hj-logo__mark" src="/brand/homeji-logo2.png" alt="Homeji" width={48} height={48} />
           <span className="hj-logo__word">Homeji</span>
         </Link>
         <nav className="hj-primary" aria-label="Điều hướng chính">
           {pillars.map((item) => {
-            const active = pillarActive(item.id, location.search)
+            const active = pillarActive(item.id, location.pathname, location.search)
             return (
               <Link key={item.id} to={item.href} className={active ? 'is-active' : undefined} aria-current={active ? 'page' : undefined}>
                 {item.label}
@@ -466,6 +428,10 @@ export function GlobalHeader() {
               type="button"
               className={`hj-action hj-action--icon hj-notify__trigger${notifyOpen ? ' is-active' : ''}${unreadNotifications > 0 ? ' is-hot' : ''}`}
               aria-label={
+                unreadNotifications > 0
+                  ? `Thông báo, ${unreadNotifications} chưa đọc`
+                  : 'Thông báo'
+              } title={
                 unreadNotifications > 0
                   ? `Thông báo, ${unreadNotifications} chưa đọc`
                   : 'Thông báo'
@@ -493,7 +459,7 @@ export function GlobalHeader() {
               <div
                 id={notifyId}
                 {...notifyPresence}
-                className="hj-notify__pop" data-glass-exclude
+                className="hj-notify__pop"
                 role="dialog"
                 aria-modal="false"
                 aria-labelledby={`${notifyId}-title`}
@@ -510,18 +476,7 @@ export function GlobalHeader() {
                     setNotifyOpen(false)
                     navigate(href)
                   }}
-                  onReadStateChange={(change: NotificationReadChange) => {
-                    if (change.kind === 'all') {
-                      setUnreadMessages(0)
-                      setUnreadNotifications(0)
-                      return
-                    }
-                    const isMessage =
-                      change.notification.type === NotificationType.NewMessage ||
-                      change.notification.type === NotificationType.DirectMessage
-                    if (isMessage) setUnreadMessages((count) => Math.max(0, count - 1))
-                    else setUnreadNotifications((count) => Math.max(0, count - 1))
-                  }}
+                  onReadStateChange={applyReadChange}
                 />
                 </Suspense>
               </div>
@@ -537,7 +492,7 @@ export function GlobalHeader() {
             <button
               type="button"
               className={`hj-profile${accountOpen ? ' is-open' : ''}`}
-              aria-label="Menu tài khoản"
+              aria-label="Menu tài khoản" title="Menu tài khoản"
               aria-expanded={accountOpen}
               aria-controls={accountId}
               aria-haspopup="menu"
@@ -576,8 +531,15 @@ export function GlobalHeader() {
                   setAccountOpen(false)
                   accountRef.current?.querySelector<HTMLElement>('.hj-profile')?.focus()
                 })}>
-                <p className="hj-account__name">{displayName}</p>
-                <p className="hj-account__role">{isAdmin ? 'Quản trị viên' : 'Tài khoản cá nhân'}</p>
+                <div className="hj-account__head">
+                  <span className="hj-account__avatar" aria-hidden="true">
+                    <HeaderAvatar key={`menu:${profile?.id ?? 'account'}:${profile?.avatarPath ?? ''}`} src={profile?.avatarPath} initials={mark} />
+                  </span>
+                  <div>
+                    <p className="hj-account__name">{displayName}</p>
+                    <p className="hj-account__role">{isAdmin ? 'Quản trị viên' : 'Tài khoản cá nhân'}</p>
+                  </div>
+                </div>
                 <div role="group" aria-label="Ví & thanh toán" className="hj-account__group">
                   <p className="hj-account__group-label">Ví & thanh toán</p>
                   <AccountWalletLink key={`${profile?.id ?? 'account'}:${walletMenuVersion}`}
@@ -618,7 +580,6 @@ export function GlobalHeader() {
               </div>
             ) : null}
           </div>
-          <ThemeSwitch />
         </div>
       </div>
     </header>
@@ -636,10 +597,10 @@ function sectionIsNotifications(search: string): boolean {
   return new URLSearchParams(search).get('section') === 'notifications'
 }
 
-function pillarActive(id: string, search: string): boolean {
+function pillarActive(id: string, pathname: string, search: string): boolean {
   const params = new URLSearchParams(search)
   const section = params.get('section')
-  if (id === 'explore') return section === 'listings' || Boolean(params.get('post'))
+  if (id === 'explore') return isExploreNavigationActive(pathname, search)
   if (id === 'roommate') return section === 'invitations'
   if (id === 'market') {
     const marketTab = resolveMarketplaceDestination(params).tab
@@ -688,7 +649,7 @@ function HeaderLink({
     <Link
       to={href}
       className={`hj-action${label ? ' hj-action--text' : ' hj-action--icon'}${active ? ' is-active' : ''}${count > 0 ? ' is-hot' : ''}`}
-      aria-label={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel}
+      aria-label={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel} title={count > 0 ? `${accessibleLabel}, ${count} chưa đọc` : accessibleLabel}
       aria-current={active ? 'page' : undefined}
     >
       {icon ? (

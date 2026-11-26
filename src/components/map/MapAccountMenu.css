@@ -15,11 +15,11 @@
 }
 
 .gmaps-omnibox__notify {
-  --notify-pastel: #d4a89a;
-  --notify-pastel-soft: rgba(212, 168, 154, 0.22);
-  --notify-pastel-border: rgba(212, 168, 154, 0.42);
-  --notify-badge: #e8b4a8;
-  --notify-badge-text: #5c4038;
+  --notify-pastel: var(--action-primary);
+  --notify-pastel-soft: color-mix(in srgb, var(--action-primary) 22%, transparent);
+  --notify-pastel-border: var(--border);
+  --notify-badge: var(--action-primary);
+  --notify-badge-text: var(--text-primary);
   position: relative;
   display: grid;
   place-items: center;
@@ -28,12 +28,11 @@
   padding: 0;
   border: 1px solid var(--notify-pastel-border);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--surface-elevated, #fff) 88%, var(--notify-pastel));
+  background: color-mix(in srgb, var(--surface-elevated) 88%, var(--notify-pastel));
   color: var(--notify-pastel);
   cursor: pointer;
   box-shadow:
-    0 1px 2px rgba(var(--shadow-color), 0.2),
-    0 1px 3px 1px rgba(var(--shadow-color), 0.1);
+    none;
   transition:
     transform var(--map-dur-fast, 220ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1)),
     box-shadow var(--map-dur-fast, 220ms) ease,
@@ -53,8 +52,8 @@
 .gmaps-omnibox__notify.is-unread {
   color: var(--notify-pastel);
   border-color: var(--notify-pastel-border);
-  background: color-mix(in srgb, var(--surface-elevated, #fff) 82%, var(--notify-pastel));
-  animation: gmaps-notify-pulse 1.6s ease-in-out infinite;
+  background: color-mix(in srgb, var(--surface-elevated) 82%, var(--notify-pastel));
+  animation: none;
 }
 
 .gmaps-omnibox__notify:focus-visible {
@@ -72,7 +71,7 @@
 }
 
 .gmaps-omnibox__notify-motion.is-animating {
-  animation: gmaps-notify-ring 0.85s ease-in-out infinite;
+  animation: none;
 }
 
 .gmaps-omnibox__notify-bell {
@@ -92,82 +91,24 @@
 
 .gmaps-omnibox__notify-badge-bg {
   fill: var(--notify-badge);
-  stroke: color-mix(in srgb, var(--surface-elevated, #fff) 70%, var(--notify-pastel));
+  stroke: color-mix(in srgb, var(--surface-elevated) 70%, var(--notify-pastel));
   stroke-width: 1.5;
 }
 
 .gmaps-omnibox__notify-badge-text {
   fill: var(--notify-badge-text);
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 750;
   font-family: inherit;
 }
 
-@keyframes gmaps-notify-ring {
-  0%,
-  100% {
-    transform: rotate(0deg) translateY(0);
-  }
-  10% {
-    transform: rotate(18deg) translateY(-1px);
-  }
-  20% {
-    transform: rotate(-16deg) translateY(0);
-  }
-  30% {
-    transform: rotate(14deg) translateY(-1px);
-  }
-  40% {
-    transform: rotate(-12deg);
-  }
-  50% {
-    transform: rotate(9deg);
-  }
-  60% {
-    transform: rotate(-6deg);
-  }
-  70% {
-    transform: rotate(3deg);
-  }
-  80%,
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes gmaps-notify-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 1px 2px rgba(var(--shadow-color), 0.2),
-      0 0 0 0 rgba(212, 168, 154, 0.35);
-  }
-  50% {
-    box-shadow:
-      0 1px 2px rgba(var(--shadow-color), 0.2),
-      0 0 0 6px rgba(212, 168, 154, 0);
-  }
-}
-
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .gmaps-omnibox__notify.is-unread {
     animation: none;
   }
 
   .gmaps-omnibox__notify-motion.is-animating {
-    animation: gmaps-notify-soft-pulse 1.8s ease-in-out infinite;
-  }
-}
-
-@keyframes gmaps-notify-soft-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.72;
-    transform: scale(1.06);
+    animation: none;
   }
 }
 
@@ -197,16 +138,15 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--maps-blue);
-  color: #fff;
+  background: var(--grab-green);
+  color: var(--on-brand);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow:
-    0 1px 2px rgba(var(--shadow-color), 0.24),
-    0 1px 3px 1px rgba(var(--shadow-color), 0.12);
+    none;
   overflow: hidden;
   transition:
     transform var(--map-dur-fast, 220ms) var(--map-ease, cubic-bezier(0.22, 1, 0.36, 1)),
@@ -216,13 +156,12 @@
 .gmaps-account__avatar.is-open,
 .gmaps-account__avatar:hover {
   box-shadow:
-    0 1px 3px rgba(var(--shadow-color), 0.28),
-    0 4px 8px rgba(var(--shadow-color), 0.16);
+    none;
   transform: scale(1.04);
 }
 
 .gmaps-account__avatar:focus-visible {
-  outline: 2px solid var(--maps-blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -250,12 +189,11 @@
   min-width: 232px;
   max-width: min(260px, calc(100vw - 24px));
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   box-shadow:
-    0 4px 12px rgba(var(--shadow-color), 0.18),
-    0 2px 4px rgba(var(--shadow-color), 0.1);
+    var(--shadow-pop);
   opacity: 0;
   transform: translate3d(0, 12px, 0);
   pointer-events: none;
@@ -285,14 +223,14 @@
 
 .gmaps-account__name {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--text-heading);
 }
 
 .gmaps-account__email {
   margin: 2px 0 0;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -305,16 +243,16 @@
   align-items: center;
   margin-top: 6px;
   padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.68rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.25;
 }
 
 .gmaps-account__plan.is-standard {
-  border: 1px solid rgba(154, 160, 166, 0.35);
-  background: rgba(154, 160, 166, 0.12);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-input) 12%, transparent);
   color: var(--text-secondary);
 }
 
@@ -335,10 +273,10 @@
 .gmaps-account__logout {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 0;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -353,14 +291,14 @@
   grid-template-columns: 32px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  border: 1px solid color-mix(in srgb, var(--maps-blue) 24%, var(--border));
-  background: color-mix(in srgb, var(--maps-blue-soft) 66%, var(--surface-elevated));
+  border: 1px solid var(--control-border);
+  background: color-mix(in srgb, var(--brand-soft) 66%, var(--surface-elevated));
   color: var(--text-primary);
 }
 
 .gmaps-account__wallet:hover {
-  border-color: color-mix(in srgb, var(--maps-blue) 48%, var(--border));
-  background: color-mix(in srgb, var(--maps-blue-soft) 88%, var(--surface-elevated));
+  border-color: var(--control-border);
+  background: color-mix(in srgb, var(--brand-soft) 88%, var(--surface-elevated));
 }
 
 .gmaps-account__wallet-icon {
@@ -368,8 +306,8 @@
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
-  background: var(--maps-blue);
+  border-radius: var(--radius-md);
+  background: var(--grab-green);
   color: var(--surface-elevated);
 }
 
@@ -382,24 +320,23 @@
 
 .gmaps-account__wallet-label {
   color: var(--text-heading);
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   font-weight: 650;
 }
 
 .gmaps-account__wallet-balance {
   overflow: hidden;
-  color: var(--maps-blue-text);
-  font-size: 0.82rem;
+  color: var(--grab-green);
+  font-size: var(--fs-sm);
   font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .gmaps-account__wallet-chevron {
-  color: var(--maps-blue-text);
-  font-size: 1.3rem;
-  font-weight: 500;
-  line-height: 1;
+  color: var(--grab-green);
+  display: inline-flex;
+  align-items: center;
 }
 
 .gmaps-account__action {
@@ -409,9 +346,9 @@
 }
 
 .gmaps-account__action:hover {
-  border-color: color-mix(in srgb, var(--maps-blue) 42%, var(--border));
-  background: var(--maps-blue-soft);
-  color: var(--maps-blue-text);
+  border-color: var(--control-border);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .gmaps-account__logout {
@@ -453,7 +390,7 @@
   .gmaps-omnibox__top-actions .gmaps-account__avatar {
     width: 32px;
     height: 32px;
-    font-size: 0.68rem;
+    font-size: var(--fs-xs);
     box-shadow: none;
   }
 

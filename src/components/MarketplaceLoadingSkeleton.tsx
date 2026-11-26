@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { MarketplaceTab } from '../lib/marketplaceNavigation'
 import { Sk, SkCard } from './skeletons/Skeleton'
+import { useIsMobile } from '../mobile/useIsMobile'
 import './MarketplaceLoadingSkeleton.css'
 
 type Props = {
@@ -158,6 +159,7 @@ function WalletSkeleton({ view }: { view: NonNullable<Props['walletView']> }) {
 
 /** Keeps the marketplace layout stable while data for the active tab is loading. */
 export function MarketplaceLoadingSkeleton({ tab, walletView = 'topup' }: Props) {
+  const mobile = useIsMobile()
   return (
     <div
       className={`marketplace-skeleton marketplace-loading-skeleton marketplace-skeleton--${tab}`}
@@ -168,6 +170,20 @@ export function MarketplaceLoadingSkeleton({ tab, walletView = 'topup' }: Props)
       <span className="sr-only sk-sr">Đang tải nội dung Chợ Homeji…</span>
       {tab === 'wallet' ? (
         <WalletSkeleton view={walletView} />
+      ) : tab === 'browse' && mobile ? (
+        <div className="marketplace-list sk-screen">
+          {n(5).map(i => (
+            <SkCard key={i} className="m-sk-row">
+              <Sk w={104} h={104} r={10} />
+              <div className="sk-stack" style={{ gap: 8 }}>
+                <Sk w={110} h={18} />
+                <Sk w="86%" h={14} />
+                <Sk w="64%" h={11} />
+                <Sk w={104} h={28} r={999} />
+              </div>
+            </SkCard>
+          ))}
+        </div>
       ) : tab === 'browse' ? (
         <div className="marketplace-list marketplace-list--grid sk-screen">
           {n(6).map(i => (

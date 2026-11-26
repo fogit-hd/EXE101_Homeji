@@ -1,9 +1,10 @@
+import { X } from 'lucide-react'
 import { MoneyInput } from '../components/ui/MoneyInput'
 import { confirmDialog } from '../components/ui/confirmDialog'
 import './pages.css'
 import './post-form.css'
 import { VoucherPicker, type VoucherSelection } from '../components/marketplace/VoucherPicker'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   acceptMarketplaceOrder,
@@ -70,6 +71,7 @@ import {
 import { MarketplaceLoadingSkeleton } from '../components/MarketplaceLoadingSkeleton'
 import { useTabTransition } from '../components/motion/useTabTransition'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
+import { useDialogFocus } from '../hooks/useDialogFocus'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/errors'
 import { FOOD_PRESETS } from '../lib/foodPresets'
@@ -79,6 +81,7 @@ import {
   FOOD_CATEGORIES,
   formatDate,
   formatPrice,
+  marketplaceValueLabel,
   GOODS_CATEGORIES,
   MARKETPLACE_CATEGORIES,
   MARKETPLACE_CONDITIONS,
@@ -113,6 +116,9 @@ import { formatWalletAmount, parseWalletTab, readDepositReturn } from '../lib/wa
 import { groupMarketplaceOrderRefunds } from '../lib/walletTransactionDisplay'
 import { withdrawalAttempt } from '../lib/withdrawalRequest'
 import { LiquidProgressLayer } from '../components/motion/LiquidProgressLayer'
+import { useIsMobile } from '../mobile/useIsMobile'
+import { MobileRoomCard } from '../mobile/listings/MobileRoomCard'
+import { MobileDetailPage, MobileDetailSection } from '../mobile/detail/MobileDetailPage'
 import './MarketplacePage.css'
 
 const TAB_MOTION_ORDER: readonly MarketplaceTab[] = ['food', 'browse', 'purchases', 'mine', 'sell', 'sales', 'wallet']
@@ -157,12 +163,8 @@ const ORDER_STATUS_FILTERS: { id: OrderStatusFilter; label: string }[] = [
   { id: MarketplaceOrderStatus.Expired, label: marketplaceOrderStatusLabel[MarketplaceOrderStatus.Expired] ?? 'Hết hạn' },
 ]
 
-const ORDER_STEPS = [
-  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Requested] ?? 'Chờ xác nhận',
-  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Accepted] ?? 'Đã nhận',
-  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Delivered] ?? 'Đã giao',
-  marketplaceOrderStatusLabel[MarketplaceOrderStatus.Completed] ?? 'Hoàn tất',
-] as const
+// Short labels so all four steps fit side by side on a 375px phone; the full status sits in the pill above.
+const ORDER_STEPS = ["Chờ phản hồi", "Đã nhận đơn", "Đã giao", "Hoàn tất"] as const
 
 type MarketplaceOrderGroup = {
   groupKey: string
@@ -306,6 +308,7 @@ export function MarketplacePage({
 }: Props) {
   const [internalLocation, setInternalLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [internalLocating, setInternalLocating] = useState(false)
+  const [quickControlsTarget, setQuickControlsTarget] = useState<HTMLDivElement | null>(null)
   const [locationNotice, setLocationNotice] = useState<string | null>(null)
 
   const userLocation = userLocationProp ?? internalLocation
@@ -327,7 +330,7 @@ export function MarketplacePage({
       setInternalLocating(false)
     }
   }, [onRequestLocationProp])
-  const { profile, needsProfileSetup } = useAuth()
+  const { profile, needsProfileSetup, isLoading: authLoading } = useAuth()
   const withdrawalSubmitting = useRef(false)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -338,6 +341,7 @@ export function MarketplacePage({
   const myUserId = profile?.id ?? getStoredSession()?.userId ?? null
   const cartStorageKey = `homeji:marketplace-cart:v1:${myUserId ?? 'guest'}`
 
+  const isMobile = useIsMobile()
   const [tab, setTab] = useState<MarketplaceTab>(() => {
     const params = new URLSearchParams(window.location.search)
     const fromUrl = resolveMarketplaceDestination(params).tab
@@ -348,6 +352,8 @@ export function MarketplacePage({
   const [posts, setPosts] = useState<MarketplacePost[]>([])
   const [detailPostState, setDetailPost] = useState<MarketplacePost | null>(null)
   const detailPost = detailPostState?.id === requestedItemId ? detailPostState : null
+  const productDialogRef = useRef<HTMLElement>(null)
+  useDialogFocus(Boolean(detailPost), productDialogRef)
   const [purchaseConfirmation, setPurchaseConfirmation] = useState<string | null>(null)
   const confirmItemPurchase = requestedItemId !== null && purchaseConfirmation === requestedItemId
   const singlePurchaseLock = useRef(false)
@@ -420,6 +426,12 @@ export function MarketplacePage({
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([])
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({})
   const [cartItems, setCartItems] = useState<MarketplaceCartItem[]>(() => readCart(cartStorageKey))
+  const [loadedCartKey, setLoadedCartKey] = useState(cartStorageKey)
+  // Reload before committing effects for a different cart owner.
+  if (loadedCartKey !== cartStorageKey) {
+    setCartItems(readCart(cartStorageKey))
+    setLoadedCartKey(cartStorageKey)
+  }
   const [cartOpen, setCartOpen] = useState(false)
   const [cartBusy, setCartBusy] = useState(false)
   const [foodVoucher, setFoodVoucher] = useState<VoucherSelection | null>(null)
@@ -431,12 +443,6 @@ export function MarketplacePage({
     dialog.showModal()
     return () => dialog.close()
   }, [checkoutConfirmationOpen, tab])
-  useEffect(() => {
-    if (checkoutConfirmationOpen) {
-      if (!recipientName && profile?.displayName) setRecipientName(profile.displayName)
-      if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
-    }
-  }, [checkoutConfirmationOpen, profile])
   const cartTotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cartItems],
@@ -445,6 +451,12 @@ export function MarketplacePage({
   const [fulfillmentMode, setFulfillmentMode] = useState<'pickup' | 'delivery'>('pickup')
   const [recipientName, setRecipientName] = useState('')
   const [recipientPhone, setRecipientPhone] = useState('')
+  // Prefill the recipient from the profile when checkout opens, without overwriting what was typed.
+  const openCheckoutConfirmation = () => {
+    if (!recipientName && profile?.displayName) setRecipientName(profile.displayName)
+    if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
+    setCheckoutConfirmationOpen(true)
+  }
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [inventoryBusy, setInventoryBusy] = useState(false)
@@ -489,9 +501,24 @@ export function MarketplacePage({
 
   const keyword = searchParams.get('q') ?? ''
   const destination = resolveMarketplaceDestination(searchParams)
-  if (destination.tab && destination.tab !== tab) {
-    setTab(destination.tab)
+  const [previousSearch, setPreviousSearch] = useState(searchParams.toString())
+  if (previousSearch !== searchParams.toString()) {
+    setPreviousSearch(searchParams.toString())
+    setTab(destination.tab ?? 'food')
   }
+
+  useEffect(() => {
+    const id = searchParams.get('notificationOrder')
+    const order = id && orders.find(order => order.id === id)
+    if (!order || !myUserId) return
+    const seller = order.sellerId === myUserId
+    const params = new URLSearchParams(searchParams)
+    params.set('market', seller ? 'sales' : 'purchases')
+    params.delete('notificationOrder')
+    params.delete('purchase')
+    params.set(seller ? 'sale' : 'purchase', order.id)
+    setSearchParams(params, { replace: true })
+  }, [orders, myUserId, searchParams, setSearchParams])
 
   const openLeaf = useCallback((next: MarketplaceTab, options?: { replace?: boolean; purchaseId?: string }) => {
     if (next === 'food' || next === 'browse') onSelectMarketplaceId?.(null)
@@ -501,6 +528,7 @@ export function MarketplacePage({
     const nextPurchase = next === 'purchases' ? (options?.purchaseId ?? '') : ''
     params.delete('seller'); params.delete('item'); params.delete('storePage')
     const unchanged = !searchParams.has('seller') && !searchParams.has('item') && params.get('market') === next
+      && !params.has('notificationOrder')
       && !params.get('order')
       && !params.get('side')
       && !params.get('role')
@@ -510,6 +538,7 @@ export function MarketplacePage({
         : !params.get('wallet'))
     if (unchanged) return
     params.set('market', next)
+    params.delete('notificationOrder')
     params.delete('order')
     params.delete('side')
     params.delete('role')
@@ -535,10 +564,14 @@ export function MarketplacePage({
 
   useEffect(() => {
     if (tab !== 'wallet') return
-    const current = searchParams.get('wallet')
+    // Read the live URL: right after a tab click the router can still hand us the previous
+    // search params, and rewriting from them reverted the click (the Ví tab needed two taps).
+    const params = new URLSearchParams(window.location.search)
+    const market = params.get('market')
+    if (market && market !== 'wallet') return
+    const current = params.get('wallet')
     const parsed = parseWalletTab(current)
     if (parsed && current === parsed) return
-    const params = new URLSearchParams(searchParams)
     if (!params.get('section')) params.set('section', 'marketplace')
     params.set('wallet', parsed ?? 'deposit')
     setSearchParams(params, { replace: true })
@@ -588,8 +621,9 @@ export function MarketplacePage({
   }, [tab, orders, myUserId])
 
   useEffect(() => {
+    if (loadedCartKey !== cartStorageKey || (authLoading && !myUserId)) return
     localStorage.setItem(cartStorageKey, JSON.stringify(cartItems))
-  }, [cartItems, cartStorageKey])
+  }, [cartItems, cartStorageKey, loadedCartKey, authLoading, myUserId])
 
   useEffect(() => {
     if (!cartOpen) return
@@ -1172,6 +1206,35 @@ export function MarketplacePage({
   const renderPostCard = (p: MarketplacePost, mode: 'browse' | 'mine') => {
     const thumb = postThumb(p)
     const mine = mode === 'mine'
+    if (isMobile) {
+      const own = mine || p.sellerId === profile?.id
+      const facts = [marketplaceValueLabel(p.condition), p.distanceKm != null && !mine ? `cách ${formatDistanceKm(p.distanceKm)}` : p.address]
+        .filter(Boolean).join(' · ')
+      return (
+        <MobileRoomCard
+          key={p.id}
+          id={`market:${p.id}`}
+          photo={thumb}
+          cloudinary={false}
+          price={<>{formatPrice(p.price)}{p.unit ? <small> / {p.unit}</small> : null}</>}
+          title={p.title}
+          meta={facts}
+          badge={mine && marketplacePostStatusLabel[p.status] ? <span className="m-room__pill">{marketplacePostStatusLabel[p.status]}</span> : undefined}
+          to={marketplaceItemUrl(p)}
+          actions={mine && p.status === MarketplacePostStatus.Active ? <>
+            <button type="button" disabled={inventoryBusy} onClick={() => beginEdit(p)}>Chỉnh sửa</button>
+            {p.listingType !== MarketplaceListingType.Food ? (
+              <button type="button" disabled={inventoryBusy} onClick={() => void updateInventoryStatus(p.id, 'sold')}>Đã bán</button>
+            ) : null}
+            <button type="button" disabled={inventoryBusy} onClick={() => void updateInventoryStatus(p.id, 'archive')}>Ẩn tin</button>
+          </> : !own && p.status === MarketplacePostStatus.Active ? (
+            <button type="button" disabled={contactingPostId !== null} onClick={() => void contactAboutPost(p.id)}>
+              {contactingPostId === p.id ? 'Đang mở…' : 'Nhắn người bán'}
+            </button>
+          ) : undefined}
+        />
+      )
+    }
     return (
       <article
         key={p.id}
@@ -1219,8 +1282,8 @@ export function MarketplacePage({
               {formatPrice(p.price)}{p.unit ? ` / ${p.unit}` : ''}
             </p>
             <p className="marketplace-card__info">
-              {p.condition}
-              {p.category ? ` · ${p.category}` : ''}
+              {marketplaceValueLabel(p.condition)}
+              {p.category ? ` · ${marketplaceValueLabel(p.category)}` : ''}
             </p>
             {p.listingType === MarketplaceListingType.Food ? (
               <p className="marketplace-card__info">
@@ -1304,7 +1367,7 @@ export function MarketplacePage({
               ) : null}
               <button
                 type="button"
-                className="btn btn-primary btn-sm"
+                className="btn btn-secondary btn-sm"
                 disabled={orderingPostId != null}
                 onClick={() => navigate(marketplaceItemUrl(p))}
               >
@@ -1573,6 +1636,25 @@ export function MarketplacePage({
     </button>
   )
 
+  const catalogQuickControls = (<>
+      {tab === 'browse' ? (
+        <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
+          {userLocation ? (
+            <span>{catalogSort === 'nearby' ? 'Xếp từ gần đến xa' : 'Trong phạm vi 50 km quanh bạn'}</span>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={locating}
+              onClick={handleRequestLocation}
+            >
+              {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
+            </button>
+          )}
+        </div>
+      ) : null}
+  </>)
+
   const catalogToolbar = (
     <div className={`marketplace-toolbar marketplace-toolbar--panel${tab === 'mine' ? '' : ' marketplace-toolbar--inline'}`} aria-label="Bộ lọc">
       <MarketplaceFilterPanel
@@ -1592,26 +1674,20 @@ export function MarketplacePage({
           statuses: [{ value: '', label: 'Tất cả' }, ...Object.entries(marketplacePostStatusLabel).map(([value, label]) => ({ value, label }))],
         } : undefined}
       />
-      {tab === 'browse' ? (
-        <div className={`marketplace-distance-sort${userLocation ? ' is-active' : ''}`}>
-          {userLocation ? (
-            <span>{catalogSort === 'nearby' ? 'Xếp từ gần đến xa' : 'Trong phạm vi 50 km quanh bạn'}</span>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              disabled={locating}
-              onClick={handleRequestLocation}
-            >
-              {locating ? 'Đang lấy vị trí…' : 'Dùng vị trí để xếp gần nhất'}
-            </button>
-          )}
-        </div>
-      ) : null}
+
     </div>
   )
 
-  const orderToolbar = (
+  const orderToolbar = isMobile ? (
+    <div className="m-chips m-market-status" role="group" aria-label="Lọc trạng thái đơn">
+      {ORDER_STATUS_FILTERS.map((item) => (
+        <button key={item.id} type="button" className="m-chip" aria-pressed={orderStatusFilter === item.id}
+          onClick={() => setOrderStatusFilter(item.id)}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ) : (
     <div className="marketplace-toolbar" aria-label="Lọc trạng thái đơn">
       <span className="marketplace-toolbar__label">Trạng thái</span>
       <div className="marketplace-status-filter" role="group">
@@ -1650,6 +1726,69 @@ export function MarketplacePage({
 
   const openWalletDeposit = () => openLeaf('wallet')
 
+  const productQuantity = detailPost ? orderQuantities[detailPost.id] ?? 1 : 1
+  const productTotal = detailPost ? detailPost.price * productQuantity : 0
+  const productCanBuy = Boolean(detailPost) && detailPost?.sellerId !== profile?.id && detailPost?.status === MarketplacePostStatus.Active
+  const mobileProduct = detailPost && isMobile ? (
+          <MobileDetailPage
+            titleId="marketplace-detail-title"
+            title="Chi tiết sản phẩm"
+            dialogRef={productDialogRef as RefObject<HTMLDivElement | null>}
+            onClose={() => { if (!orderingPostId) closeProductDetails() }}
+            busy={Boolean(orderingPostId)}
+            toast={actionError ? <p className="is-err" role="alert">{actionError}</p> : null}
+            bar={productCanBuy ? <>
+              <button type="button" className="m-btn m-btn--secondary" disabled={contactingPostId !== null || orderingPostId !== null}
+                onClick={() => { const post = detailPost; closeProductDetails(); void contactAboutPost(post.id) }}>
+                Nhắn người bán
+              </button>
+              <button type="button" className="m-btn m-btn--primary"
+                disabled={orderingPostId !== null || detailPost.availableQuantity <= 0 || productQuantity > detailPost.availableQuantity || (confirmItemPurchase && (walletHeaderStatus !== 'ready' || !wallet || wallet.balance < productTotal))}
+                onClick={() => {
+                  if (!confirmItemPurchase) { setActionError(''); setPurchaseConfirmation(detailPost.id); void refreshPurchaseBalance(); return }
+                  const post = detailPost
+                  void handleOrder(post).then(success => { if (success) closeProductDetails() })
+                }}>
+                {orderingPostId ? 'Đang đặt mua…' : detailPost.availableQuantity <= 0 ? 'Đã hết hàng' : confirmItemPurchase ? 'Xác nhận mua' : 'Mua bằng số dư'}
+              </button>
+            </> : null}
+          >
+            {postThumb(detailPost) ? <img className="m-product__photo" src={postThumb(detailPost)!} alt={detailPost.title} /> : null}
+            <div className="m-detail__head">
+              <p className="m-detail__price">{formatPrice(detailPost.price)}{detailPost.unit ? <small> / {detailPost.unit}</small> : null}</p>
+              <h2 className="m-detail__name">{detailPost.title}</h2>
+              {detailPost.address ? <p className="m-detail__where">{detailPost.address}</p> : null}
+              <ul className="m-detail__tags">
+                {detailPost.condition ? <li>{marketplaceValueLabel(detailPost.condition)}</li> : null}
+                {detailPost.category ? <li>{marketplaceValueLabel(detailPost.category)}</li> : null}
+                <li>Còn {detailPost.availableQuantity} {detailPost.unit || 'sản phẩm'}</li>
+              </ul>
+            </div>
+            {productCanBuy ? (
+              <MobileDetailSection title="Thanh toán">
+                {detailPost.availableQuantity > 1 ? <div className="m-product__qty">
+                  <QuantityStepper value={productQuantity} max={Math.max(1, detailPost.availableQuantity)} disabled={Boolean(orderingPostId) || detailPost.availableQuantity <= 0}
+                    label={`Số lượng ${detailPost.title}`} onChange={next => { setOrderQuantities(current => ({ ...current, [detailPost.id]: next })); setPurchaseConfirmation(null) }} />
+                  <strong>{formatPrice(productTotal)}</strong>
+                </div> : null}
+                <p className="m-detail__muted">Thanh toán bằng số dư ví Homeji, hẹn nhận hàng với người bán qua tin nhắn.</p>
+                {confirmItemPurchase ? <div className="m-detail__note m-product__confirm" role="status">
+                  <strong>Xác nhận mua {productQuantity} {detailPost.unit || 'sản phẩm'} · {formatPrice(productTotal)}</strong>
+                  Số dư hiện tại: {walletHeaderStatus === 'loading' ? 'đang kiểm tra' : wallet ? formatPrice(wallet.balance) : 'chưa tải được'}.
+                  {wallet && wallet.balance < productTotal ? <Link className="m-btn m-btn--secondary m-btn--block m-product__topup" to="/?section=marketplace&market=wallet&wallet=deposit">Số dư chưa đủ · Nạp tiền</Link> : null}
+                  {walletHeaderStatus === 'error' ? <button type="button" className="m-btn m-btn--secondary m-btn--block m-product__topup" onClick={() => void refreshPurchaseBalance()}>Tải lại số dư</button> : null}
+                </div> : null}
+              </MobileDetailSection>
+            ) : null}
+            <MobileDetailSection title="Mô tả">
+              <p className="m-detail__desc">{detailPost.description || 'Người đăng chưa cung cấp mô tả.'}</p>
+            </MobileDetailSection>
+            <MobileDetailSection title="Người đăng">
+              <p>{detailPost.sellerDisplayName}</p>
+            </MobileDetailSection>
+          </MobileDetailPage>
+  ) : null
+
   const body = (
     <>
       {chromePortals}
@@ -1663,6 +1802,8 @@ export function MarketplacePage({
         onOpenSell={beginNewSale}
         onTopUp={openWalletDeposit}
         subtabsExtra={tab === 'food' || tab === 'browse' ? catalogToolbar : null}
+        quickControlsRef={setQuickControlsTarget}
+        quickControls={catalogQuickControls}
       />
 
       {purchaseReceipt ? (
@@ -1699,8 +1840,8 @@ export function MarketplacePage({
           <p>{cartItemCount} món · Tạm tính {formatPrice(cartTotal)}</p>
 
           {/* Phương thức nhận món Dual Fulfillment */}
-          <div style={{ marginBottom: '12px', background: '#f8faf9', padding: '10px 12px', borderRadius: '12px' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '8px', color: '#24382d' }}>
+          <div style={{ marginBottom: '12px', background: 'var(--surface-muted)', padding: '10px 12px', borderRadius: '12px' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '8px', color: 'var(--text-primary)' }}>
               Phương thức nhận món:
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -1724,9 +1865,9 @@ export function MarketplacePage({
           </div>
 
           {fulfillmentMode === 'delivery' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px', background: '#f4faf6', padding: '12px', borderRadius: '10px', border: '1px solid #d4ede0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px', background: 'var(--success-soft)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)' }}>
               <div>
-                <label htmlFor="checkout-recipient-name" style={{ fontSize: '0.75rem', color: '#526358', display: 'block', marginBottom: '2px' }}>Họ và tên người nhận</label>
+                <label htmlFor="checkout-recipient-name" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>Họ và tên người nhận</label>
                 <input
                   id="checkout-recipient-name"
                   className="form-input"
@@ -1737,7 +1878,7 @@ export function MarketplacePage({
                 />
               </div>
               <div>
-                <label htmlFor="checkout-recipient-phone" style={{ fontSize: '0.75rem', color: '#526358', display: 'block', marginBottom: '2px' }}>Số điện thoại</label>
+                <label htmlFor="checkout-recipient-phone" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>Số điện thoại</label>
                 <input
                   id="checkout-recipient-phone"
                   type="tel"
@@ -1749,7 +1890,7 @@ export function MarketplacePage({
                 />
               </div>
               <div>
-                <label htmlFor="checkout-delivery-address" style={{ fontSize: '0.75rem', color: '#526358', display: 'block', marginBottom: '2px' }}>Tòa nhà / Số phòng KTX</label>
+                <label htmlFor="checkout-delivery-address" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>Tòa nhà / Số phòng KTX</label>
                 <input
                   id="checkout-delivery-address"
                   className="form-input"
@@ -1759,7 +1900,7 @@ export function MarketplacePage({
                   onChange={e => setDeliveryAddress(e.target.value)}
                 />
               </div>
-              <small style={{ color: '#24543e', fontSize: '0.72rem', fontWeight: 500 }}>✓ Miễn phí giao tận phòng ký túc xá.</small>
+              <small style={{ color: 'var(--success)', fontSize: '0.72rem', fontWeight: 500 }}>✓ Miễn phí giao tận phòng ký túc xá.</small>
             </div>
           ) : (
             <p>Nhận tại {cartItems[0]?.sellerAddress || 'bếp Homeji'}. Chỉ xác nhận khi đã kiểm tra món và tổng tiền.</p>
@@ -1767,10 +1908,10 @@ export function MarketplacePage({
 
           {checkoutConfirmationOpen && <VoucherPicker key={cartTotal} purpose="food" amount={cartTotal} disabled={cartBusy} onChange={setFoodVoucher} />}
           <p>Voucher: −{formatPrice(foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0)} · Cần trả {formatPrice(cartTotal - (foodVoucher?.amount === cartTotal ? foodVoucher.discount : 0))}</p>
-          <p style={{ fontSize: '0.74rem', color: '#526358', margin: '4px 0 8px 0' }}>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '4px 0 8px 0' }}>
             🔒 Tiền thanh toán được bảo vệ bởi Homeji Escrow và chỉ giải ngân cho người bán sau 24 giờ kể từ khi nhận món.
           </p>
-          {actionError && <p className="form-error" role="alert" style={{ color: '#dc2626', fontSize: '0.82rem', margin: '6px 0' }}>{actionError}</p>}
+          {actionError && <p className="form-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.82rem', margin: '6px 0' }}>{actionError}</p>}
           <div className="food-checkout-confirmation__actions">
           <button type="button" className="btn btn-secondary" autoFocus disabled={cartBusy} onClick={() => setCheckoutConfirmationOpen(false)}>Quay lại giỏ</button>
           <button type="button" className="btn btn-primary" disabled={cartBusy || Boolean(foodVoucher?.pending) || cartItems.length === 0} onClick={() => void checkoutCart()}>{cartBusy ? 'Đang đặt…' : 'Xác nhận đặt món'}</button>
@@ -1792,11 +1933,14 @@ export function MarketplacePage({
         </header>
       ) : null}
 
+      {error ? <button type="button" className="btn btn-secondary" onClick={() => void reloadMain()}>Thử lại</button> : null}
+      {isWalletPage && walletDetailsError ? <button type="button" className="btn btn-secondary" onClick={() => void reloadWalletDetails()}>Thử lại</button> : null}
       <div ref={tabPanelRef} className="marketplace-tab-panel" id="marketplace-panel" role="tabpanel"
         aria-labelledby={`marketplace-${tab === 'purchases' || tab === 'wallet' ? 'primary' : 'subtab'}-${tab === 'purchases' || tab === 'wallet' ? primaryOf(tab) : tab}`}>
       {tab === 'food' ? (
         <>
         <FoodMarketplaceView
+          quickControlsTarget={quickControlsTarget}
           onRetry={() => void reloadMain()}
           posts={listForTab}
           sellerGroups={foodSellerGroups}
@@ -1838,7 +1982,7 @@ export function MarketplacePage({
             setCartItems((current) => current.filter((item) => item.postId !== postId))
           }}
           onClearCart={() => setCartItems([])}
-          onCheckout={() => { setFoodVoucher(null); setCheckoutConfirmationOpen(true) }}
+          onCheckout={() => { setFoodVoucher(null); openCheckoutConfirmation() }}
           onCartNoteChange={setCartNote}
           onCartOpenChange={setCartOpen}
           onSelectKitchen={(sellerId) => navigate(marketplaceStoreUrl(sellerId, true))}
@@ -1865,19 +2009,19 @@ export function MarketplacePage({
         />
       ) : (
       <div className="marketplace-workspace">
-        {tab === 'mine' ? (
+        {tab === 'mine' && !isMobile ? (
           <div className="marketplace-workspace__intro">
             <h2>Tin của tôi</h2>
             <p>Quản lý tin bạn đã đăng — đánh dấu đã bán hoặc ẩn tin.</p>
           </div>
         ) : null}
-        {tab === 'purchases' ? (
+        {tab === 'purchases' && !isMobile ? (
           <div className="marketplace-workspace__intro">
             <h2>Đơn mua</h2>
             <p>Đơn đồ ăn và đồ dùng của bạn. Mỗi đơn giữ đúng trạng thái và thao tác của loại đó.</p>
           </div>
         ) : null}
-        {tab === 'sales' ? (
+        {tab === 'sales' && !isMobile ? (
           <div className="marketplace-workspace__intro">
             <h2>Đơn bán của bạn</h2>
           </div>
@@ -1927,6 +2071,7 @@ export function MarketplacePage({
       ) : tab === 'sell' ? (
         listingType === MarketplaceListingType.Food ? (
           <MarketplaceSellFoodForm
+            key={editingPostId ?? 'create'}
             editingPostId={editingPostId}
             initialValues={{
               title,
@@ -2181,7 +2326,7 @@ export function MarketplacePage({
                       onClick={() => removeMedia(m.id)}
                       disabled={uploading}
                     >
-                      ×
+                      <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
                     </button>
                     <span className="marketplace-media-name" title={m.file.name}>
                       {m.file.name}
@@ -2305,90 +2450,7 @@ export function MarketplacePage({
                   ? resolvedPurchaseKind(group, purchaseKinds, failedPurchaseIdSet)
                   : null
                 const focused = purchaseFocusId != null && group.orders.some((order) => order.id === purchaseFocusId)
-
-                return (
-                  <section
-                    key={group.groupKey}
-                    className={`marketplace-order-group is-active-order${focused ? ' is-purchase-focus' : ''}`}
-                  >
-                    <header className="marketplace-order-group__header">
-                      <div className="marketplace-store-avatar" aria-hidden="true">
-                        {group.name.slice(0, 1).toUpperCase()}
-                      </div>
-                      <div>
-                        <span>
-                          {group.isSeller ? 'Đơn từ người mua' : 'Đơn từ người bán'}
-                          {purchaseKind ? ` · ${purchaseKindLabel(purchaseKind)}` : ''}
-                        </span>
-                        <h3>{group.name}</h3>
-                        <p>{formatDate(group.createdAt)}</p>
-                      </div>
-                      <span className="marketplace-order-status-pill">
-                        {marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'}
-                      </span>
-                    </header>
-
-                    {progressStep != null ? (
-                      <div className="marketplace-order-progress has-liquid" aria-label={happyPathComplete ? 'Tiến trình đơn hàng: hoàn tất' : `Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
-                        <LiquidProgressLayer total={ORDER_STEPS.length} current={progressStep - 1} complete={happyPathComplete} />
-                        {ORDER_STEPS.map((label, index) => {
-                          const step = index + 1
-                          const done = happyPathComplete || step < progressStep
-                          const state = done ? 'is-done' : step === progressStep ? 'is-current' : ''
-                          return (
-                            <div key={label} className={state}>
-                              <span aria-hidden="true">{done ? '✓' : step}</span>
-                              <strong>{label}</strong>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <p className="marketplace-card__info">
-                        Trạng thái ghi nhận: {marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'}.
-                      </p>
-                    )}
-
-                    <div className="marketplace-order-summary">
-                      <div>
-                        <span>Tổng thanh toán · Ví Homeji</span>
-                        <strong>{formatPrice(group.total)}</strong>
-                      </div>
-                      <div className="marketplace-order-eta">
-                        <span aria-hidden="true">◷</span>
-                        <div>
-                          <strong>{formatOrderEta(group)}</strong>
-                          <small>{formatDate(group.pickupAt)}</small>
-                        </div>
-                      </div>
-                    </div>
-
-                    <ul className="marketplace-order-items">
-                      {group.orders.map((order) => (
-                        <li key={order.id}>
-                          {order.postImageUrl ? <img src={order.postImageUrl} alt="" /> : <span aria-hidden="true" />}
-                          <div>
-                            <strong>{order.postTitle || 'Món Homeji'}</strong>
-                            <small>{order.quantity} × {formatPrice(order.unitPrice)}</small>
-                          </div>
-                          <b>{formatPrice(order.buyerPaidAmount ?? order.agreedPrice)}</b>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="marketplace-order-pickup">
-                      <span aria-hidden="true">⌖</span>
-                      <p>{firstOrder?.pickupAddress || group.address}</p>
-                    </div>
-
-                    {group.isSeller ? (
-                      <div className="marketplace-order-seller-total">
-                        <span>Thực nhận sau phí</span>
-                        <strong>{formatPrice(group.orders.reduce((sum, order) => sum + order.sellerNetAmount, 0))}</strong>
-                      </div>
-                    ) : null}
-
-                    {firstOrder ? (
+                const actions = firstOrder ? (
                       <footer className="marketplace-order-group__actions">
                         <button
                           type="button"
@@ -2489,7 +2551,133 @@ export function MarketplacePage({
                           </p>
                         ) : null}
                       </footer>
+                    ) : null
+                const statusLabel = marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'
+
+                if (isMobile) {
+                  return (
+                    <section key={group.groupKey} className={`m-order${focused ? ' is-purchase-focus' : ''}`} aria-label={`Đơn ${group.name}`}>
+                      <header className="m-order__head">
+                        <span className="m-order__avatar" aria-hidden="true">{group.name.slice(0, 1).toUpperCase()}</span>
+                        <div className="m-order__who">
+                          <h3>{group.name}</h3>
+                          <p>{purchaseKind ? `${purchaseKindLabel(purchaseKind)} · ` : group.isSeller ? 'Người mua · ' : ''}{formatDate(group.createdAt)}</p>
+                        </div>
+                        <span className={`m-order__status${happyPathComplete ? ' is-done' : progressStep == null ? ' is-off' : ''}`}>{statusLabel}</span>
+                      </header>
+                      {progressStep != null ? (
+                        <div className="m-order__progress" role="img" aria-label={happyPathComplete ? 'Tiến trình đơn hàng: hoàn tất' : `Tiến trình đơn hàng: bước ${progressStep} trên ${ORDER_STEPS.length}, ${ORDER_STEPS[progressStep - 1]}`}>
+                          {ORDER_STEPS.map((label, index) => (
+                            <span key={label} className={happyPathComplete || index + 1 < progressStep ? 'is-done' : index + 1 === progressStep ? 'is-current' : ''} />
+                          ))}
+                        </div>
+                      ) : null}
+                      <p className="m-order__eta">{formatOrderEta(group)}</p>
+                      <ul className="m-order__items">
+                        {group.orders.map((order) => (
+                          <li key={order.id}>
+                            {order.postImageUrl ? <img src={order.postImageUrl} alt="" loading="lazy" /> : <span className="m-order__noimg" aria-hidden="true" />}
+                            <div>
+                              <strong>{order.postTitle || 'Món Homeji'}</strong>
+                              <small>{order.quantity} × {formatPrice(order.unitPrice)}</small>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                      <dl className="m-order__facts">
+                        <div><dt>{group.isSeller ? 'Thực nhận sau phí' : 'Tổng thanh toán'}</dt>
+                          <dd className="m-order__total">{formatPrice(group.isSeller ? group.orders.reduce((sum, order) => sum + order.sellerNetAmount, 0) : group.total)}</dd></div>
+                        <div><dt>Địa điểm</dt><dd>{firstOrder?.pickupAddress || group.address}</dd></div>
+                      </dl>
+                      {actions}
+                    </section>
+                  )
+                }
+
+
+                return (
+                  <section
+                    key={group.groupKey}
+                    className={`marketplace-order-group is-active-order${focused ? ' is-purchase-focus' : ''}`}
+                  >
+                    <header className="marketplace-order-group__header">
+                      <div className="marketplace-store-avatar" aria-hidden="true">
+                        {group.name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div>
+                        <span>
+                          {group.isSeller ? 'Đơn từ người mua' : 'Đơn từ người bán'}
+                          {purchaseKind ? ` · ${purchaseKindLabel(purchaseKind)}` : ''}
+                        </span>
+                        <h3>{group.name}</h3>
+                        <p>{formatDate(group.createdAt)}</p>
+                      </div>
+                      <span className="marketplace-order-status-pill">
+                        {marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'}
+                      </span>
+                    </header>
+
+                    {progressStep != null ? (
+                      <div className="marketplace-order-progress has-liquid" aria-label={happyPathComplete ? 'Tiến trình đơn hàng: hoàn tất' : `Tiến trình đơn hàng: bước ${progressStep} trên 4`}>
+                        <LiquidProgressLayer total={ORDER_STEPS.length} current={progressStep - 1} complete={happyPathComplete} />
+                        {ORDER_STEPS.map((label, index) => {
+                          const step = index + 1
+                          const done = happyPathComplete || step < progressStep
+                          const state = done ? 'is-done' : step === progressStep ? 'is-current' : ''
+                          return (
+                            <div key={label} className={state}>
+                              <span aria-hidden="true">{done ? '✓' : step}</span>
+                              <strong>{label}</strong>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <p className="marketplace-card__info">
+                        Trạng thái ghi nhận: {marketplaceOrderStatusLabel[group.status] ?? 'Đơn hàng'}.
+                      </p>
+                    )}
+
+                    <div className="marketplace-order-summary">
+                      <div>
+                        <span>Tổng thanh toán · Ví Homeji</span>
+                        <strong>{formatPrice(group.total)}</strong>
+                      </div>
+                      <div className="marketplace-order-eta">
+                        <span aria-hidden="true">◷</span>
+                        <div>
+                          <strong>{formatOrderEta(group)}</strong>
+                          <small>{formatDate(group.pickupAt)}</small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <ul className="marketplace-order-items">
+                      {group.orders.map((order) => (
+                        <li key={order.id}>
+                          {order.postImageUrl ? <img loading="lazy" decoding="async" src={order.postImageUrl} alt="" /> : <span aria-hidden="true" />}
+                          <div>
+                            <strong>{order.postTitle || 'Món Homeji'}</strong>
+                            <small>{order.quantity} × {formatPrice(order.unitPrice)}</small>
+                          </div>
+                          <b>{formatPrice(order.buyerPaidAmount ?? order.agreedPrice)}</b>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="marketplace-order-pickup">
+                      <span aria-hidden="true">⌖</span>
+                      <p>{firstOrder?.pickupAddress || group.address}</p>
+                    </div>
+
+                    {group.isSeller ? (
+                      <div className="marketplace-order-seller-total">
+                        <span>Thực nhận sau phí</span>
+                        <strong>{formatPrice(group.orders.reduce((sum, order) => sum + order.sellerNetAmount, 0))}</strong>
+                      </div>
                     ) : null}
+
+                    {actions}
                   </section>
                 )
               })}
@@ -2533,7 +2721,7 @@ export function MarketplacePage({
           if (error && !disrupted) setHiddenLoadError(error)
         }}
       />
-      {detailPost ? (
+      {mobileProduct ?? (detailPost ? (
         <div
           className="marketplace-detail-backdrop"
           role="presentation"
@@ -2542,30 +2730,25 @@ export function MarketplacePage({
           }}
         >
           <section
+            ref={productDialogRef}
             className="marketplace-detail-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="marketplace-detail-title"
             onKeyDown={(event) => {
               if (event.key === 'Escape' && !orderingPostId) closeProductDetails()
-              if (event.key === 'Tab') {
-                const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), textarea:not(:disabled), [tabindex="0"]')]
-                const first = controls[0], last = controls.at(-1)
-                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
-                if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
-              }
             }}
           >
             <header className="marketplace-detail-dialog__header">
               <strong>Chi tiết sản phẩm</strong>
-              <button type="button" className="btn btn-secondary btn-sm" autoFocus disabled={Boolean(orderingPostId)} onClick={() => closeProductDetails()} aria-label="Đóng chi tiết">×</button>
+              <button type="button" className="btn btn-secondary btn-sm" disabled={Boolean(orderingPostId)} onClick={() => closeProductDetails()} aria-label="Đóng chi tiết"><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button>
             </header>
             <div className="marketplace-detail-dialog__content">
               {postThumb(detailPost) ? <img className="marketplace-detail-dialog__image" src={postThumb(detailPost)!} alt={detailPost.title} /> : null}
               <div className="marketplace-detail-dialog__summary">
                 <p className="marketplace-detail-dialog__price">{formatPrice(detailPost.price)}{detailPost.unit ? ` / ${detailPost.unit}` : ''}</p>
                 <h2 id="marketplace-detail-title">{detailPost.title}</h2>
-                <p className="marketplace-detail-dialog__meta">{detailPost.condition} · {detailPost.category}</p>
+                <p className="marketplace-detail-dialog__meta">{marketplaceValueLabel(detailPost.condition)} · {marketplaceValueLabel(detailPost.category)}</p>
                 <p className="marketplace-detail-dialog__meta">{detailPost.address}</p>
                 <p className="marketplace-detail-dialog__seller">Người đăng: {detailPost.sellerDisplayName}</p>
                 <p>Còn {detailPost.availableQuantity} {detailPost.unit || 'sản phẩm'}</p>
@@ -2599,7 +2782,7 @@ export function MarketplacePage({
             ) : null}
           </section>
         </div>
-      ) : null}
+      ) : null)}
     </>
   )
 
@@ -2612,7 +2795,7 @@ export function MarketplacePage({
   }
 
   return (
-    <PageFrame title="Chợ Homeji" actions={frameActions}>
+    <PageFrame title="Chợ Homeji" titleAs="p" actions={frameActions}>
       <div className="marketplace-page marketplace-page--food">{body}</div>
     </PageFrame>
   )

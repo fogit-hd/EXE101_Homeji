@@ -22,7 +22,7 @@ const bindings = `
   import { rentalPriceBasis, rentalPriceLabel } from '${basisUrl}';
   const aiFeatureFlags = { commute: false };
   const formatPrice = value => 'VND:' + value;
-  const formatListingRent = value => Number.isFinite(value) && value > 0 ? formatPrice(value) : 'Chưa có thông tin';
+  const formatMonthlyRent = value => Number.isFinite(value) && value > 0 ? formatPrice(value) : 'Chưa có thông tin';
   const formatListingArea = value => value > 0 ? value + ' m²' : 'Chưa có thông tin';
   const amenityLabel = String;
   const mapPostUrl = id => '/?post=' + id;

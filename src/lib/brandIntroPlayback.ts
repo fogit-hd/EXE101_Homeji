@@ -1,6 +1,6 @@
 export function isAuthIntroPage(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, '') || '/'
-  return path === '/login' || path === '/register'
+  return path === '/auth' || path === '/login' || path === '/register'
 }
 
 /** Match the pre-paint gate in index.html: home deep links are application views. */

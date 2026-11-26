@@ -29,7 +29,7 @@ export function PayPalSandboxWallets({ onBusyChange }: { onBusyChange: (busy: bo
       try {
         await payment()
       } catch (error) {
-        setNotice({ text: extractWalletErrorMessage(error, 'Không thể hoàn tất thanh toán thử. Vui lòng thử lại.'), error: true })
+        setNotice({ text: extractWalletErrorMessage(error, 'Không thể hoàn tất thanh toán. Vui lòng thử lại.'), error: true })
       } finally {
         locked.current = false
         setBusy(false)
@@ -66,7 +66,7 @@ export function PayPalSandboxWallets({ onBusyChange }: { onBusyChange: (busy: bo
         setCanRetry(false)
         setNotice({ text: 'Đơn thử không còn khả dụng. Bạn có thể tạo đơn mới.', error: true })
       } else {
-        setNotice({ text: 'Chưa nhận được kết quả từ PayPal. Hãy kiểm tra lại đơn thử này.', error: true })
+        setNotice({ text: 'Chưa nhận được kết quả từ PayPal. Hãy kiểm tra lại đơn này.', error: true })
       }
       return false
     }
@@ -81,7 +81,7 @@ export function PayPalSandboxWallets({ onBusyChange }: { onBusyChange: (busy: bo
       setCanRetry(true)
       return await capture(order.ticket)
     } catch {
-      setNotice({ text: 'Ví chưa xác thực đơn thử. Bạn có thể thử lại hoặc dùng PayPal Sandbox.', error: true })
+      setNotice({ text: 'Ví chưa xác thực đơn. Bạn có thể thử lại hoặc thanh toán qua PayPal.', error: true })
       return false
     }
   }, [capture])
@@ -129,15 +129,15 @@ export function PayPalSandboxWallets({ onBusyChange }: { onBusyChange: (busy: bo
     <div className="payment-paypal-wallets" data-glass-exclude hidden={availability === 'hidden'}>
       <div className="payment-express-box">
         <div className="payment-express-box__head">
-          <span>Ví thử nghiệm trên thiết bị</span>
+          <span>Ví trên thiết bị</span>
         </div>
         {availability === 'checking' && <p className="payment-paypal-wallets__status" role="status">Đang kiểm tra Google Pay và Apple Pay…</p>}
-        {availability === 'unavailable' && <p className="payment-paypal-wallets__note" role="status">Ví thử chưa khả dụng trên thiết bị này hoặc chưa được PayPal bật.</p>}
+        {availability === 'unavailable' && <p className="payment-paypal-wallets__note" role="status">Ví chưa khả dụng trên thiết bị này hoặc chưa được PayPal bật.</p>}
         <div className="payment-sandbox-wallets" data-glass-exclude inert={busy || canRetry} hidden={availability !== 'ready'}>
           <div ref={googleHost} data-glass-exclude />
           <div ref={appleHost} data-glass-exclude />
         </div>
-        {busy && <p className="payment-paypal-wallets__status" role="status">Đang xử lý giao dịch thử…</p>}
+        {busy && <p className="payment-paypal-wallets__status" role="status">Đang xử lý giao dịch ví…</p>}
         {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'payment-inline-error' : 'payment-paypal-wallets__status'}>{notice.text}</p>}
         {canRetry && (
           <button type="button" className="payment-button payment-button--retry" disabled={busy} onClick={() => start(async () => {

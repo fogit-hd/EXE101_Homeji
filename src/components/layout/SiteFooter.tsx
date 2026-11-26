@@ -1,3 +1,4 @@
+import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import { Link } from 'react-router-dom'
 
 export function SiteFooter({ compact = false }: { compact?: boolean }) {
@@ -9,6 +10,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         <nav aria-label="Thông tin Homeji">
           <Link to="/privacy">Quyền riêng tư</Link>
           <Link to="/terms">Điều khoản</Link>
+          <Link to={mapSectionUrl('help')}>Trợ giúp</Link>
         </nav>
         <small>© {new Date().getFullYear()} Homeji</small>
       </div>

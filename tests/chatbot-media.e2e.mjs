@@ -10,7 +10,7 @@ await writeFile(`${out}/index.html`, '<!doctype html><html lang="vi"><meta chars
 await writeFile(`${out}/scene.tsx`, `
 import React from 'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';
 import{ChatbotProvider}from'/src/contexts/ChatbotContext.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import{toggleHomejiAi}from'/src/lib/homejiAiLauncher.ts';
-import'/src/index.css';import'/src/ui-consistency.css';import'/src/ai-spectrum.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/components/theme/dark-theme.css';
+import'/src/index.css';import'/src/ui-consistency.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/components/theme/dark-theme.css';
 createRoot(document.getElementById('root')).render(<MemoryRouter><ToastProvider><ChatbotProvider><button data-homeji-ai-trigger="" onClick={event=>toggleHomejiAi(event.currentTarget,true)}>Mở chat kiểm thử</button></ChatbotProvider></ToastProvider></MemoryRouter>);`)
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.HOMEJI_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] })

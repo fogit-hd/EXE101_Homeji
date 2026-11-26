@@ -25,8 +25,9 @@ import { MapToast } from '../components/map/MapToast'
 import { RevealText } from '../components/motion/RevealText'
 import { CancelPendingPaymentButton } from '../components/payments/CancelPendingPaymentButton'
 import { PaymentDetails, PaymentStatusBadge } from '../components/payments/PaymentDetails'
-import { MomoBadge, PayOsBadge, PayPalLogo } from '../components/payments/PaymentMethodMarks'
+import { MomoBadge, PayOsBadge, PayPalLogo, PaymentMethodBadges } from '../components/payments/PaymentMethodMarks'
 import { PremiumListingPreview } from '../components/payments/PremiumListingPreview'
+import { PremiumPaymentPicker } from '../components/payments/PremiumPaymentPicker'
 import { PremiumPurchaseConfirmation, type PremiumPurchase } from '../components/payments/PremiumPurchaseConfirmation'
 import { marketplaceHref } from '../components/shell/navigation'
 import { ShellIcon } from '../components/shell/ShellIcons'
@@ -42,7 +43,8 @@ import { trackFunnelEvent } from '../lib/ga4'
 import {
   formatDate,
   formatPrice,
-  paymentMethodLabel,
+  paymentMethodShortLabel,
+  formatPaymentHistoryTime,
 } from '../lib/labels'
 import { paymentWaitingUrl } from '../lib/paymentLifecycle'
 import { paymentReturnUrl } from '../lib/paymentReturn'
@@ -50,6 +52,7 @@ import { isMomoWallet, momoWalletLabels, useMomoWallets } from '../hooks/useMomo
 import { getDailyEquivalentAmount, getPlanDisplay, sortPlansForDisplay } from '../lib/subscriptionPlanDisplay'
 import './MarketplacePage.css'
 import './PaymentPage.css'
+import { Disclosure } from '../components/ui/Disclosure'
 
 type PayTab = 'plans' | 'history'
 
@@ -93,6 +96,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
   const promotionRequest = useRef<AbortController | null>(null)
   const promotionInputId = useId()
   const [payPickerCode, setPayPickerCode] = useState<string | null>(null)
+  // Phones show three benefits per plan; the rest open on request so four plans stay scannable.
+  const [expandedPlans, setExpandedPlans] = useState<ReadonlySet<string>>(() => new Set())
   const [busyCode, setBusyCode] = useState<string | null>(null)
   const [busyMethod, setBusyMethod] = useState<PremiumPurchase['method'] | null>(null)
   const momoWallets = useMomoWallets(payPickerCode !== null)
@@ -378,12 +383,12 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
   if (showLoader) {
     return disrupted ? (
-      <HomejiLoader
+      <><button type="button" className="btn btn-secondary" onClick={() => void reload()}>Thử lại</button><HomejiLoader
         fullPage={!embedded}
         label="Đang tải gói đăng ký..."
         onIntroComplete={onIntroComplete}
         message={error}
-      />
+      /></>
     ) : (
       <div className={embedded ? 'map-embed payment-embed' : 'container page payment-page'}>
         <PaymentsSkeleton />
@@ -436,6 +441,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       <PageNotice message={error && !disrupted ? error : ''} tone="error" />
       <PageNotice message={subscriptionError} tone="error" />
+      {error || subscriptionError ? <button type="button" className="btn btn-secondary" onClick={() => void reloadMain()}>Thử lại</button> : null}
 
       <section className="pay-current" aria-label="Gói hiện tại">
         <span className="pay-current__icon" aria-hidden="true"><ShellIcon name="shield" /></span>
@@ -458,7 +464,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
         <div className="pay-current__actions" data-glass-exclude>
           <span className="pay-pill pay-current__wallet">Ví Homeji: {walletBalance === null ? (walletLoading ? 'Đang tải…' : '—') : formatPrice(walletBalance)}</span>
           <Link className="pay-btn pay-btn--primary" to={marketplaceHref('wallet')}>Nạp tiền vào ví</Link>
-          <button type="button" className="pay-btn" onClick={() => void reload()}>Làm mới</button>
+          <button type="button" className="pay-btn" onClick={() => void reload()}>Cập nhật số dư</button>
         </div>
       </section>
 
@@ -482,7 +488,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
       {tab === 'plans' ? (
         <div className="pay-plans">
-          <div className="pay-plan-grid" style={{ ['--pay-cols' as string]: String(Math.max(1, Math.min(4, displayPlans.length))) }}>
+          <h2 className="sr-only">Các gói</h2>
+          <div className={`pay-plan-grid${payPickerCode ? ' has-picker' : ''}`} style={{ ['--pay-cols' as string]: String(Math.max(1, Math.min(4, displayPlans.length))) }}>
             {displayPlans.map((plan, index) => {
               const view = getPlanDisplay(plan)
               const isPremium = plan.tier === SubscriptionTier.Premium && plan.price > 0
@@ -508,7 +515,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                 : 0
               const effectiveSavePercent = discountPercent > 0 ? discountPercent : savingsVsBaselinePercent
               const pickingPay = payPickerCode === plan.code
-              const isRecommended = isPremium && (plan.durationDays === 30 || (!displayPlans.some((p) => p.tier === SubscriptionTier.Premium && p.durationDays === 30) && index === 1))
+              const isRecommended = !isCurrent && isPremium && (plan.durationDays === 30 || (!displayPlans.some((p) => p.tier === SubscriptionTier.Premium && p.durationDays === 30) && index === 1))
 
               return (
                 <motion.article
@@ -522,6 +529,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     isRecommended ? 'is-recommended' : '',
                     selectedCode === plan.code ? 'is-selected' : '',
                     isCurrent ? 'is-current' : '',
+                    pickingPay ? 'is-paying' : '',
+                    expandedPlans.has(plan.code) ? 'is-expanded' : '',
                   ].filter(Boolean).join(' ')}
                 >
                   <div className="pay-plan__identity">
@@ -557,7 +566,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                     </p>
                     <p className={`pay-plan__price${isPremium ? ' is-daily-rate' : ''}`}>
                       {isPremium && previousDailyAmount ? <del>{formatPrice(previousDailyAmount)}</del> : null}
-                      <strong>{isPremium && dailyAmount !== null ? formatPrice(dailyAmount) : '0 ₫'}</strong>
+                      <strong>{isPremium && dailyAmount !== null ? formatPrice(dailyAmount) : formatPrice(0)}</strong>
                       <small>{isPremium ? '/ ngày' : '/ không giới hạn'}</small>
                     </p>
                     {plan.offerUsed ? <p className="pay-plan__offer-used">Ưu đãi đợt này đã dùng. Bạn vẫn có thể gia hạn với giá thường.</p> : null}
@@ -576,6 +585,11 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                   <ul className="pay-plan__benefits-list">
                     {view.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}
                   </ul>
+                  {view.benefits.length > 3 && !expandedPlans.has(plan.code) ? (
+                    <button type="button" className="pay-plan__more" onClick={() => setExpandedPlans(prev => new Set(prev).add(plan.code))}>
+                      Xem thêm {view.benefits.length - 3} quyền lợi
+                    </button>
+                  ) : null}
 
                   <div className="pay-plan__actions">
                     {!isPremium ? (
@@ -585,9 +599,26 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         <button type="button" className="pay-btn pay-btn--current" disabled>Đã khóa</button>
                         <p className="pay-plan__offer-used">Bạn còn thời hạn gói Premium cao hơn.</p>
                       </>
-                    ) : isCurrent && !pickingPay ? (
-                      <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={() => { setVipVoucher(null); resetPromotion(); setSelectedCode(plan.code); setPayPickerCode(plan.code) }}>Gia hạn gói</button>
-                    ) : pickingPay ? (
+                    ) : isCurrent ? (
+                      <button type="button" className="pay-btn pay-btn--primary" disabled={busy} onClick={() => { setVipVoucher(null); resetPromotion(); setPayPickerCode(plan.code) }}>Gia hạn</button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="pay-btn pay-btn--primary"
+                        disabled={busy}
+                        onClick={() => {
+                          setVipVoucher(null)
+                          resetPromotion()
+                          setPayPickerCode(plan.code)
+                        }}
+                      >
+                        Chọn gói
+                      </button>
+                    )}
+                    {isPremium && !purchaseLocked ? <PayPalComingSoon quick /> : null}
+                  </div>
+                  {pickingPay ? <PremiumPaymentPicker name={view.title} durationDays={plan.durationDays} amount={amountDue}
+                    busy={busy || purchaseConfirmation !== null} onClose={() => { setVipVoucher(null); resetPromotion(); setPayPickerCode(null) }}>
                       <motion.div
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -597,8 +628,17 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                         role="group"
                         aria-label="Chọn hình thức thanh toán"
                       >
-                        <div className="pay-voucher-panel">
-                          <div className="pay-voucher-panel__copy"><strong>Ưu đãi thanh toán</strong><p>Voucher giới thiệu áp dụng khi trả bằng Ví Homeji.</p></div>
+                        <div className="pay-wallet-card">
+                          <div className="pay-wallet-card__balance"><span>Ví Homeji</span><strong>{walletBalance === null ? (walletLoading ? 'Đang tải…' : 'Chưa tải được') : formatPrice(walletBalance)}</strong></div>
+                          <button type="button" className="pay-method pay-wallet-method" disabled={busy || Boolean(planVoucher?.pending) || quotingPromotion || walletLoading || walletBalance === null || walletBalance < amountDue} onClick={() => confirmPurchase(plan, 'wallet')}>
+                            Thanh toán bằng ví
+                            <small>{walletBalance !== null && walletBalance < amountDue ? `Còn thiếu ${formatPrice(amountDue - walletBalance)}` : formatPrice(amountDue)}</small>
+                          </button>
+                        </div>
+                        {walletError && <><p className="pay-wallet-note is-error" role="status">{walletError}</p><button type="button" className="btn btn-secondary" onClick={() => void reloadExtras()}>Thử lại</button></>}
+                        {walletBalance !== null && walletBalance < amountDue && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp thêm tiền vào ví</Link>}
+                        {/* Optional: the voucher only applies to wallet payments, so it stays folded under the wallet. */}
+                        <Disclosure className="pay-voucher-panel" title="Ưu đãi thanh toán" summary="Voucher giới thiệu hoặc mã giảm giá, áp dụng khi trả bằng Ví Homeji.">
                           <VoucherPicker
                             key={plan.code + ':' + plan.price}
                             purpose="vip"
@@ -624,17 +664,8 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                               </form>,
                             }}
                           />
-                        </div>
+                        </Disclosure>
                         {planVoucher && !planVoucher.pending && <p className="pay-voucher-summary" role="status">Voucher giảm {formatPrice(planVoucher.discount)} · Còn trả {formatPrice(amountDue)} bằng ví.</p>}
-                        <div className="pay-wallet-card">
-                          <div className="pay-wallet-card__balance"><span>Ví Homeji</span><strong>{walletBalance === null ? (walletLoading ? 'Đang tải…' : 'Chưa tải được') : formatPrice(walletBalance)}</strong></div>
-                          <button type="button" className="pay-method pay-wallet-method" disabled={busy || Boolean(planVoucher?.pending) || quotingPromotion || walletLoading || walletBalance === null || walletBalance < amountDue} onClick={() => confirmPurchase(plan, 'wallet')}>
-                            Thanh toán bằng ví
-                            <small>{walletBalance !== null && walletBalance < amountDue ? `Còn thiếu ${formatPrice(amountDue - walletBalance)}` : formatPrice(amountDue)}</small>
-                          </button>
-                        </div>
-                        {walletError && <p className="pay-wallet-note is-error" role="status">{walletError}</p>}
-                        {walletBalance !== null && walletBalance < amountDue && <Link className="pay-wallet-note" to={marketplaceHref('wallet')}>Nạp thêm tiền vào ví</Link>}
                         <div className="pay-plan__external-methods">
                           <button type="button" className="pay-method is-momo" disabled={gatewayDisabled} onClick={() => confirmPurchase(plan, 'momo')}>
                             {busy && busyMethod === 'momo' ? 'Đang tạo…' : <><MomoBadge compact /><span className="sr-only">MoMo</span></>}
@@ -653,23 +684,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                           Đóng lựa chọn
                         </button>
                       </motion.div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="pay-btn pay-btn--primary"
-                        disabled={busy}
-                        onClick={() => {
-                          setSelectedCode(plan.code)
-                          setVipVoucher(null)
-                          resetPromotion()
-                          setPayPickerCode(plan.code)
-                        }}
-                      >
-                        Chọn gói
-                      </button>
-                    )}
-                    {isPremium && !purchaseLocked && !pickingPay ? <PayPalComingSoon quick /> : null}
-                  </div>
+                  </PremiumPaymentPicker> : null}
                 </motion.article>
               )
             })}
@@ -681,7 +696,7 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
 
           <PremiumListingPreview maxFollowedAreas={premiumAreaLimit} maxComparedPosts={premiumComparisonLimit} />
           <section className="pay-compare" aria-labelledby="pay-compare-title">
-            <h2 id="pay-compare-title" className="sr-only">So sánh quyền lợi</h2>
+            <h2 id="pay-compare-title" className="pay-compare__title">So sánh quyền lợi</h2>
             <table>
               <thead>
                 <tr>
@@ -762,9 +777,9 @@ export function PaymentPage({ embedded = false }: { embedded?: boolean }) {
                       onClick={() => setActiveId(p.id)}
                       aria-pressed={activePayment?.id === p.id}
                     >
-                      <span className="pay-table__plan"><strong>{planName(p)}</strong><small>{p.orderCode}</small></span>
-                      <span className="pay-table__method"><i className={`pay-logo is-${p.method}`} aria-hidden="true">{p.method === 1 ? 'M' : p.method === 3 ? 'Ví' : p.method === 4 ? 'PP' : 'P'}</i>{paymentMethodLabel[p.method]}</span>
-                      <span className="pay-table__time">{formatDate(p.createdAt)}</span>
+                      <span className="pay-table__plan"><strong>{planName(p)}</strong></span>
+                      <span className="pay-table__method"><span className="sr-only">{paymentMethodShortLabel[p.method]}</span><PaymentMethodBadges method={p.method} compact /></span>
+                      <time className="pay-table__time" dateTime={p.createdAt} title={formatDate(p.createdAt)}>{formatPaymentHistoryTime(p.createdAt)}</time>
                       <span className="pay-table__amount">{formatPrice(p.amount)}</span>
                       <span className="pay-table__status"><PaymentStatusBadge status={p.status} /></span>
                     </button>

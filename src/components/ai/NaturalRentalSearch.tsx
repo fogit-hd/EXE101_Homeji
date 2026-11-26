@@ -1,6 +1,8 @@
+import { X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { HomejiAgentMark } from './HomejiAgentMark'
 import { motion } from 'motion/react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { highlightRentalPosts, type AiHighlightResponse, type AiParsedSearchCriteria } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -9,6 +11,7 @@ import { useMotionPresence } from '../motion/useMotionPresence'
 
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { getErrorMessage } from '../../lib/errors'
+import { observeElementResize } from '../../lib/observeElementResize'
 import { AiSearchReview } from './AiSearchReview'
 import './NaturalRentalSearch.css'
 import { RentalSourceBrowser } from './RentalSourceBrowser'
@@ -26,7 +29,39 @@ export function NaturalRentalSearch(props: NaturalRentalSearchProps) {
 
 function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: NaturalRentalSearchProps) {
   const [open, setOpen] = useState(false)
-  const { present, ...presence } = useMotionPresence(open)
+  const { present, ...presence } = useMotionPresence(open, 'fade')
+  useLayoutEffect(() => {
+    if (!present) return
+    const panel = presence.ref.current
+    const trigger = opener.current
+    if (!panel || !trigger) return
+    const position = () => {
+      const viewport = window.visualViewport
+      const width = viewport?.width ?? window.innerWidth
+      const height = viewport?.height ?? window.innerHeight
+      const offsetTop = viewport?.offsetTop ?? 0
+      const offsetLeft = viewport?.offsetLeft ?? 0
+      const anchor = trigger.getBoundingClientRect()
+      const field = trigger.closest('.hj-search__field')?.getBoundingClientRect() ?? anchor
+      const panelWidth = Math.min(640, width - 32)
+      panel.style.setProperty('--search-panel-left', `${Math.max(offsetLeft + 16, Math.min(anchor.right - panelWidth, offsetLeft + width - panelWidth - 16))}px`)
+      panel.style.setProperty('--search-panel-top', `${field.bottom + 8}px`)
+      panel.style.setProperty('--search-panel-max-height', `${Math.max(0, offsetTop + height - field.bottom - 24)}px`)
+      panel.style.setProperty('--search-panel-bottom', `${Math.max(0, window.innerHeight - offsetTop - height) + 16}px`)
+      panel.style.setProperty('--search-sheet-max-height', `${Math.max(0, height - 32)}px`)
+    }
+    position()
+    const stopObserving = observeElementResize([trigger, trigger.closest('.hj-search__field') ?? trigger], position)
+    window.addEventListener('scroll', position, true)
+    window.visualViewport?.addEventListener('resize', position)
+    window.visualViewport?.addEventListener('scroll', position)
+    return () => {
+      stopObserving()
+      window.removeEventListener('scroll', position, true)
+      window.visualViewport?.removeEventListener('resize', position)
+      window.visualViewport?.removeEventListener('scroll', position)
+    }
+  }, [present, presence.ref])
   const [text, setText] = useState('')
   const [asked, setAsked] = useState('')
   const [result, setResult] = useState<AiHighlightResponse | null>(null)
@@ -73,11 +108,11 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
       onChange={event => setText(event.target.value)}
       onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void submit() } }}
       placeholder={asked ? 'Thêm yêu cầu, VD: gần Làng ĐH, có máy giặt…' : 'VD: 2 người, dưới 4 triệu, có bếp, không ở ghép'} />
-    <button type="submit" className="natural-rental-search__send" aria-label={loading ? 'Đang tìm' : 'Tìm theo nhu cầu'} disabled={loading || !text.trim()}>
+    <button type="submit" className="natural-rental-search__send" aria-label={loading ? 'Đang tìm' : 'Tìm theo nhu cầu'} title={loading ? 'Đang tìm' : 'Tìm theo nhu cầu'} disabled={loading || !text.trim()}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
     </button>
   </form>
-  const trigger = <button ref={opener} type="button" data-glass-exclude className="natural-rental-search__trigger ai-spectrum-launcher" aria-haspopup="dialog" aria-expanded={open} aria-controls="natural-rental-search-panel" onClick={() => {
+  const trigger = <button ref={opener} type="button" data-glass-exclude className="natural-rental-search__trigger" aria-haspopup="dialog" aria-expanded={open} aria-controls="natural-rental-search-panel" onClick={() => {
     if (!open) {
       // A new search-bar query starts fresh; reopening a refinement keeps its criteria.
       if (query.trim() && query.trim() !== seededQuery.current) {
@@ -89,17 +124,17 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
     }
     if (open) cancelSearch()
     setOpen(value => !value)
-  }}><span className="ai-spectrum-launcher__edge" aria-hidden="true" /><HomejiAgentMark />Gợi ý AI</button>
+  }}><HomejiAgentMark /><span className="natural-rental-search__trigger-lead">Tìm bằng </span>AI</button>
   return <div className="natural-rental-search">
     {renderTrigger ? renderTrigger(trigger) : trigger}
-    {present ? <section {...presence} id="natural-rental-search-panel" className={`natural-rental-search__panel${loading ? ' is-thinking' : ''}`} role="dialog" aria-busy={loading} aria-label="Gợi ý AI tìm phòng" onKeyDown={event => {
+    {present ? createPortal(<section {...presence} id="natural-rental-search-panel" className={`natural-rental-search__panel${loading ? ' is-thinking' : ''}`} role="dialog" aria-busy={loading} aria-label="Tìm phòng bằng AI" onKeyDown={event => {
       if (event.key === 'Escape') { event.stopPropagation(); close() }
     }}>
       <header className="natural-rental-search__head">
         <span className="natural-rental-search__mark" aria-hidden="true"><HomejiAgentMark /></span>
-        <h2>Gợi ý AI tìm phòng</h2>
-        {result || asked ? <button type="button" className="natural-rental-search__reset" disabled={loading} onClick={startOver}>Làm mới</button> : null}
-        <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" onClick={close}>×</button>
+        <h2>Tìm phòng bằng AI</h2>
+        {result || asked ? <button type="button" className="natural-rental-search__reset" disabled={loading} onClick={startOver}>Hỏi lại từ đầu</button> : null}
+        <button type="button" className="natural-rental-search__close" aria-label="Đóng tìm theo nhu cầu" title="Đóng tìm theo nhu cầu" onClick={close}><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button>
       </header>
       {asked ? <motion.p className="natural-rental-search__bubble" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>{asked}</motion.p> : null}
       {!asked ? form : null}
@@ -111,7 +146,7 @@ function NaturalRentalSearchSession({ query = '', onOpen, renderTrigger }: Natur
       {result ? <AiSearchReview variant="compact" result={result} onOpenListing={() => setOpen(false)} onRefine={value => { setText(value); queryInput.current?.focus() }} onApply={update => { setOpen(false); navigate('/?section=listings', { state: { aiSearchUpdate: update } }) }} /> : null}
       {asked && !loading ? form : null}
       {aiFeatureFlags.sourceBrowser ? <RentalSourceBrowser /> : null}
-    </section> : null}
+    </section>, document.body) : null}
   </div>
 }
 

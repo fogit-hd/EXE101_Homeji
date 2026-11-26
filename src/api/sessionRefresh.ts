@@ -10,6 +10,7 @@ import {
   isSignOutPending,
   readLegacySession,
   setSignOutPending,
+  takeSessionAdoption,
 } from './authSession'
 import type { AuthSession } from './types'
 
@@ -59,10 +60,12 @@ async function retryPendingSignOut() {
 
 type Adoption = 'none' | 'adopted' | 'rejected' | 'pending'
 
-/** Moves a localStorage session into cookies; its tokens are deleted only once the API holds them. */
+/** Link credentials get one attempt; already-stored legacy credentials keep their migration retry. */
 async function adoptLegacySession(): Promise<Adoption> {
-  const legacy = readLegacySession()
+  const pending = takeSessionAdoption()
+  const legacy = pending ?? readLegacySession()
   if (!legacy) return 'none'
+  const identity = getSessionEpoch()
   let response: Response
   try {
     response = await sessionFetch(`${SESSION_PATH}/adopt`, 'POST', {
@@ -71,7 +74,16 @@ async function adoptLegacySession(): Promise<Adoption> {
       refreshToken: legacy.refreshToken,
     })
   } catch {
+    if (pending) {
+      if (getSessionEpoch() === identity) expireStoredAuth()
+      throw new SessionRefreshUnavailable()
+    }
     return 'pending'
+  }
+  if (pending && getSessionEpoch() !== identity) throw new DOMException('Session changed', 'AbortError')
+  if (pending && !response.ok) {
+    expireStoredAuth()
+    throw new SessionRefreshUnavailable()
   }
   if (response.ok) {
     clearLegacySession()

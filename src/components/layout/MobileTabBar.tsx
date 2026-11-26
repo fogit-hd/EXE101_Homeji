@@ -1,6 +1,6 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { exploreListUrl, isExploreListMode } from '../chrome/exploreMode'
+import { exploreListUrl, isExploreNavigationActive } from '../chrome/exploreMode'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
 import './MobileTabBar.css'
 
@@ -82,7 +82,7 @@ function isTabActive(tab: TabItem, pathname: string, search: string): boolean {
   const section = new URLSearchParams(search).get('section')
   const post = new URLSearchParams(search).get('post')
   if (tab.id === 'hub') return pathname === '/' && !section && !post
-  if (tab.id === 'explore') return pathname === '/explore' || isExploreListMode(pathname, search)
+  if (tab.id === 'explore') return isExploreNavigationActive(pathname, search)
   if (tab.id === 'post') return pathname.startsWith('/posts')
   if (tab.id === 'login') return pathname === '/login' || pathname === '/register'
   if (tab.matchSection) return pathname === '/' && section === tab.matchSection
@@ -99,20 +99,19 @@ export function MobileTabBar() {
   const tabs = isAuthenticated ? TABS : GUEST_TABS
 
   return (
-    <nav className="mobile-tabbar" aria-label="Điều hướng chính" data-glass-exclude>
+    <nav className="mobile-tabbar" aria-label="Điều hướng dưới">
       {tabs.map((tab) => {
         const active = isTabActive(tab, location.pathname, location.search)
         return (
-          <NavLink
+          <Link
             key={tab.id}
             to={tab.to}
-            end={tab.end}
             className={`mobile-tabbar__item${active ? ' is-active' : ''}`}
             aria-current={active ? 'page' : undefined}
           >
             <TabIcon name={tab.icon} />
-            <span>{tab.label}</span>
-          </NavLink>
+            <span className="mobile-tabbar__label">{tab.label}</span>
+          </Link>
         )
       })}
     </nav>

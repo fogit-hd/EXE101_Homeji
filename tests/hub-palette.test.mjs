@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { THEMES, mix, token, tokenContrast } from './helpers/theme-tokens.mjs'
 
 const css = readFileSync(new URL('../src/components/hub/AuthenticatedHub.css', import.meta.url), 'utf8')
 const luminance = hex => hex.match(/[\da-f]{2}/gi)
@@ -12,14 +13,16 @@ const contrast = (first, second) => {
   return (light + 0.05) / (dark + 0.05)
 }
 
-test('hub accents remain readable on cream cards and colored actions', () => {
-  const coral = css.match(/--hub-coral:\s*(#[\da-f]{6})/i)[1]
-  const leaf = css.match(/--hub-leaf:\s*(#[\da-f]{6})/i)[1]
-  for (const background of ['#f3ebdd', '#fffdf8', '#e4f0e8']) {
-    assert.ok(contrast(coral, background) >= 4.5, `coral against ${background}`)
-    assert.ok(contrast(leaf, background) >= 4.5, `leaf against ${background}`)
+test('hub accents remain readable on cards and colored actions in both themes', () => {
+  assert.match(css, /--hub-coral:\s*var\(--action-primary\)/)
+  assert.match(css, /--hub-leaf:\s*var\(--grab-green\)/)
+  for (const theme of THEMES) {
+    for (const background of ['--surface', '--surface-muted', '--surface-elevated']) {
+      assert.ok(tokenContrast('--grab-green', background, theme) >= 4.5, `leaf on ${background} (${theme})`)
+      assert.ok(tokenContrast('--action-on-soft', background, theme) >= 4.5, `coral text on ${background} (${theme})`)
+    }
+    assert.ok(tokenContrast('--action-on-primary', '--action-primary', theme) >= 4.5, `action text (${theme})`)
   }
-  assert.ok(contrast('#ffffff', coral) >= 4.5, 'white action text')
 })
 
 test('room section captions and links do not inherit the global page palette', () => {

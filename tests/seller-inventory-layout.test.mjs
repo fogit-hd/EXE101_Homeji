@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { THEMES, tokenContrast } from './helpers/theme-tokens.mjs'
 
 const css = readFileSync(new URL('../src/pages/MarketplacePage.css', import.meta.url), 'utf8')
 const lastMobile = css.slice(css.lastIndexOf('@media (max-width: 720px)'))
 
 test('seller inventory status is readable on its mint background', () => {
-  assert.ok(/\.marketplace-card--mine \.marketplace-card__status,\s*\.marketplace-card--mine \.marketplace-card__badge\s*\{[^}]*color: #24543e;/.test(css))
+  assert.ok(/\.marketplace-card--mine \.marketplace-card__badge\s*\{[^}]*background: var\(--brand-soft\);[^}]*color: var\(--text-primary\);/.test(css))
+  assert.ok(tokenContrast('--text-primary', '--brand-soft', 'light') >= 4.5)
 })
 
 test('seller inventory reserves room for text on narrow screens', () => {

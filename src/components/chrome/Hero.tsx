@@ -44,7 +44,7 @@ export function Hero({
         <div className="app-hero__media" aria-hidden={media ? undefined : true}>
           {media ?? (
             <div className="app-hero__flat">
-              <img
+              <img loading="eager" decoding="async"
                 src="/mascot/review/homie_house_icon.svg"
                 alt=""
                 width={220}

@@ -124,6 +124,7 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
             </div>
           ) : (
             <div className="notification-list">
+              <h2 className="sr-only">Danh sách tin</h2>
               {posts.map((p) => (
                 <article key={p.id} className="card notification-item rental-owner-card map-motion-fade-up">
                   <div>
@@ -133,9 +134,8 @@ export function MyPostsPage({ embedded = false }: { embedded?: boolean }) {
                     </span>
                     <h3>{p.title || 'Không tiêu đề'}</h3>
                     <p>
-                      {p.viewCount} xem · {p.saveCount} lưu · {p.contactCount} LH · {p.appointmentCount}{' '}
-                      lịch
-                      {p.boostScore > 0 ? ` · boost ${p.boostScore}` : ''}
+                      {/* boostScore is the ranking engine's internal score, not something an owner can act on. */}
+                      {p.viewCount} lượt xem · {p.saveCount} lượt lưu · {p.contactCount} liên hệ · {p.appointmentCount} lịch hẹn
                     </p>
                     <small>Cập nhật {formatDate(p.updatedAt)}</small>
                   </div>

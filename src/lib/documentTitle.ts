@@ -29,12 +29,15 @@ const SECTION_TITLES: Record<string, string> = {
   marketplace: 'Chợ Homeji',
   wanted: 'Tin tìm phòng',
   activities: 'Nhật ký hoạt động',
+  help: 'Trợ giúp',
   myPosts: 'Tin của tôi',
 }
 
 /** Each destination gets its own tab title and screen reader announcement. */
 export function documentTitleFor(pathname: string, search: string): string {
-  const name = pathname === '/'
+  const section = new URLSearchParams(search).get('section')
+  const authTitle = section === 'register' ? 'Đăng ký' : section === 'forgot-password' ? 'Quên mật khẩu' : 'Đăng nhập'
+  const name = pathname.replace(/\/+$/, '') === '/auth' ? authTitle : pathname === '/'
     ? SECTION_TITLES[new URLSearchParams(search).get('section') ?? '']
     : /^\/posts\/[^/]+\/edit$/.test(pathname) ? 'Sửa tin đăng'
       : pathname.startsWith('/admin/') ? PATH_TITLES['/admin'] : PATH_TITLES[pathname]

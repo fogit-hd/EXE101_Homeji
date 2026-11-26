@@ -1,7 +1,8 @@
+import { X } from 'lucide-react'
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { NotificationReadChange } from '../../pages/NotificationsPage'
 import {
-  ActivitiesPage,
+  ActivitiesPage, HelpPage,
   MapAppointmentsPanel,
   MarketplacePage,
   MyPostsPage,
@@ -17,6 +18,7 @@ import { WIDE_MAP_SECTIONS, type MapAppSection } from "./MapAppPanel.logic"
 import './MapMotion.css'
 
 const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> = {
+  help: { title: 'Trợ giúp', subtitle: '' },
   listings: {
     title: 'Khu vực Thủ Đức & Q.9',
     subtitle: '',
@@ -42,7 +44,7 @@ const SECTION_META: Record<MapAppSection, { title: string; subtitle: string }> =
     subtitle: '',
   },
   payments: {
-    title: 'Gói Đăng ký',
+    title: 'Gói Premium',
     subtitle: '',
   },
   profile: {
@@ -176,6 +178,7 @@ export function MapAppPanel({
   const isWide = WIDE_MAP_SECTIONS.has(displayed)
   const isListings = displayed === 'listings'
   const isWanted = displayed === 'wanted'
+  const PanelTitle = ['marketplace', 'profile', 'payments', 'appointments'].includes(displayed) ? 'p' : 'h1'
   const slideFromRight = isListings || isWanted
 
   return (
@@ -193,19 +196,19 @@ export function MapAppPanel({
       {!isMessages ? (
         <div className="home-list-header">
           <div className="home-list-header__top">
-            <h1
+            <PanelTitle
               key={`title-${displayed}-${enterNonce}`}
               className={`map-app-panel__heading map-app-panel__heading--${phase}`}
             >
               {meta.title}
-            </h1>
+            </PanelTitle>
             <button
               type="button"
               className="map-app-panel__close map-motion-press"
               aria-label="Đóng"
               onClick={onClose}
             >
-              ✕
+              <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
             </button>
           </div>
           {subtitle ? (
@@ -258,6 +261,7 @@ export function MapAppPanel({
           ) : null}
           {displayed === 'wanted' ? <WantedPostsPage embedded /> : null}
           {displayed === 'activities' ? <ActivitiesPage embedded /> : null}
+          {displayed === 'help' ? <HelpPage /> : null}
           {displayed === 'myPosts' ? <MyPostsPage embedded /> : null}
           </ProfileGate> : null}
           {displayed === 'profile' ? <ProfilePage embedded /> : null}

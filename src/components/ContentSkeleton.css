@@ -29,7 +29,7 @@
 .content-skeleton__block {
   display: block;
   max-width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--text-secondary) 13%, var(--surface-input));
 }
 
@@ -41,7 +41,7 @@
   box-sizing: border-box;
   padding: 16px;
   border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--surface-elevated);
 }
 
@@ -82,7 +82,7 @@
   width: 74px;
   height: 28px;
   flex: 0 0 74px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .content-skeleton__detail {
@@ -104,6 +104,6 @@
   }
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .content-skeleton::after { animation: none; }
 }

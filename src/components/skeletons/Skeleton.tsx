@@ -42,7 +42,7 @@ export function SkScreen({ name, label, children, className = '' }: {
 }
 
 /** Eyebrow + title + optional lead + optional right-side buttons. */
-export function SkHeader({ eyebrow = false, lead = false, actions = 0, titleWidth = 280 }: {
+export function SkHeader({ lead = false, actions = 0, titleWidth = 280 }: {
   eyebrow?: boolean
   lead?: boolean
   actions?: number
@@ -51,7 +51,7 @@ export function SkHeader({ eyebrow = false, lead = false, actions = 0, titleWidt
   return (
     <div className="sk-header">
       <div className="sk-stack">
-        {eyebrow ? <Sk w={96} h={10} /> : null}
+        
         <Sk w={titleWidth} h={28} r={10} className="sk-max" />
         {lead ? <Sk w={420} h={12} className="sk-max" /> : null}
       </div>

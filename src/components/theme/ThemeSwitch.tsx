@@ -229,7 +229,7 @@ export function ThemeSwitch({ floating = false, palette = APP_GLASS, className =
       aria-checked={dark}
       aria-disabled={!!pendingTheme || undefined}
       aria-busy={!!pendingTheme || undefined}
-      title={dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+      title="Chế độ tối"
       className={`theme-switch${floating ? ' theme-switch--floating' : ''}${className ? ` ${className}` : ''}`}
       style={{ '--theme-switch-name': transitionName } as CSSProperties}
       data-glass-exclude=""

@@ -9,14 +9,20 @@ import { ActivitiesSkeleton } from '../components/skeletons/PageSkeletons'
 import { PageNotice } from '../components/toast/PageNotice'
 import { ChoicePicker } from '../components/ui/ChoicePicker'
 import { formatActivityDisplay } from '../lib/activityDisplay'
+import { groupActivitiesByDay } from '../lib/activityGroups'
 import { formatDate, userActivityTypeLabel } from '../lib/labels'
 import './ProfilePage.css'
+import { ShowMore } from '../components/ui/Disclosure'
+
+const PAGE_SIZE = 15
 
 export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
   const [items, setItems] = useState<UserActivity[]>([])
   const [type, setType] = useState<UserActivityType | ''>('')
+  const [visible, setVisible] = useState(PAGE_SIZE)
 
   const loadFn = useCallback(async () => {
+    setVisible(PAGE_SIZE)
     setItems(
       await getMyActivities({
         type: type === '' ? undefined : type,
@@ -63,23 +69,31 @@ export function ActivitiesPage({ embedded = false }: { embedded?: boolean }) {
       ) : items.length === 0 ? (
         <div className="empty-state card">Chưa có nhật ký hoạt động.</div>
       ) : (
-        <div className="notification-list">
-          {items.map((a) => {
-            const display = formatActivityDisplay(a)
-            return (
-              <article key={a.id} className="card notification-item activity-item map-motion-fade-up">
-                <div className="activity-item__body">
-                  <div className="activity-item__header">
-                    <span className="badge badge-gray">{userActivityTypeLabel[a.type] ?? 'Chung'}</span>
-                    <small className="activity-item__time">{formatDate(a.occurredAt)}</small>
-                  </div>
-                  <h3>{display.title}</h3>
-                  {display.description ? <p>{display.description}</p> : null}
-                </div>
-              </article>
-            )
-          })}
-        </div>
+        <>
+          {groupActivitiesByDay(items.slice(0, visible)).map(group => (
+            <section key={group.key} className="activity-day" aria-labelledby={`activity-day-${group.key}`}>
+              <h2 id={`activity-day-${group.key}`} className="activity-day__title">{group.label}</h2>
+              <div className="notification-list">
+                {group.items.map((a) => {
+                  const display = formatActivityDisplay(a)
+                  return (
+                    <article key={a.id} className="card notification-item activity-item map-motion-fade-up">
+                      <div className="activity-item__body">
+                        <div className="activity-item__header">
+                          <span className="badge badge-gray">{userActivityTypeLabel[a.type] ?? 'Khác'}</span>
+                          <small className="activity-item__time">{formatDate(a.occurredAt)}</small>
+                        </div>
+                        <h3>{display.title}</h3>
+                        {display.description ? <p>{display.description}</p> : null}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+          <ShowMore shown={Math.min(visible, items.length)} total={items.length} step={PAGE_SIZE} unit="hoạt động" onMore={() => setVisible(count => count + PAGE_SIZE)} />
+        </>
       )}
     </div>
   )

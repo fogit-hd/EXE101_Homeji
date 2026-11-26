@@ -32,7 +32,7 @@ const SUPPORTED_FILTER_KEYS = [
 
 export type SupportedFilterKey = (typeof SUPPORTED_FILTER_KEYS)[number]
 
-const UI_KEYS = ['section', 'post', 'source', 'view', 'searchOnMove', 'placeId', 'placeName', 'interest'] as const
+const UI_KEYS = ['section', 'post', 'room', 'source', 'view', 'searchOnMove', 'placeId', 'placeName', 'interest'] as const
 
 const GATEWAY_KEYS = [
   'paymentId',
@@ -80,6 +80,8 @@ export type ListingViewModel = {
   id: string
   title: string
   priceLabel: string
+  /** Raw monthly rent, when known, for compact labels like "8,5 triệu/tháng". */
+  price?: number | null
   areaLabel: string
   address: string
   thumbnailUrl: string | null
@@ -116,13 +118,14 @@ export function mapBackendListingToListingViewModel(post: RentalPostSummary): Li
     id: post.id,
     title: post.title,
     priceLabel: moneyLabel(post.price),
+    price: post.price,
     areaLabel: Number.isFinite(area) && area > 0 ? `${area} m²` : '',
     address: post.address,
     thumbnailUrl: post.thumbnailPath,
     latitude: post.latitude,
     longitude: post.longitude,
     typeLabel: isApartmentListing(post.title) ? 'Căn hộ' : post.type === RentalPostType.VacantRoom ? 'Phòng trọ' : rentalPostTypeLabel[post.type] ?? 'Phòng trọ',
-    highlightTag: post.highlightTag?.trim() || null,
+    highlightTag: listingHighlight(post),
     ownerBadge: post.ownerBadge?.trim() || null,
     isPremium: post.isOwnerPremium === true,
     isOwnerVerified: post.isOwnerVerified === true,
@@ -161,6 +164,7 @@ export function mapMarketplacePostToListingViewModel(post: MarketplacePost): Lis
     id: post.id,
     title: post.title,
     priceLabel: moneyLabel(post.price),
+    price: post.price,
     areaLabel: '',
     address: post.address,
     thumbnailUrl: post.mediaUrls?.find((url) => url.trim()) ?? null,
@@ -211,6 +215,9 @@ function readNumber(params: URLSearchParams, key: SupportedFilterKey): number | 
 
 function readView(params: URLSearchParams): MapListingsView {
   const view = params.get('view')
+  // Matches isExploreMapMode: `section=explore` only gets the map shell with view=map,
+  // so any other view there must render as a list or the split panel overflows the page.
+  if (params.get('section') === 'explore') return view === 'map' ? 'map' : 'list'
   if (view === 'map' || view === 'list' || view === 'split') return view
   return 'split'
 }
@@ -440,3 +447,4 @@ export function queryHasActiveFilters(query: ListingQuery): boolean {
       (query.excludedAmenities?.length ?? 0) || query.excludeRoommateShare || query.minAvailableSlots || query.ids?.length,
   )
 }
+import { listingHighlight } from '../../../lib/listingHighlight'

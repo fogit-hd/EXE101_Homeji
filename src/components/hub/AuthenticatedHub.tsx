@@ -1,6 +1,9 @@
+import { showHubPremiumBadges } from '../../lib/hubPremiumBadges'
+import { isPendingReceivedInvitation } from '../../lib/roommateInvitations'
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
-import { Link } from 'react-router-dom'
+import { ArrowUpRight } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   getMyInvitations,
   getNotifications,
@@ -23,15 +26,21 @@ import {
 } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useConversationInbox } from '../../hooks/useConversationInbox'
+import { useRentalJourney } from '../../contexts/rental-journey'
 import { HeartIcon } from '../icons/SvgIcons'
-import { formatPrice, rentalPostTypeLabel } from '../../lib/labels'
-import { mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
+import { formatPrice, formatCompactRent, formatListingArea } from '../../lib/labels'
+import { mapMessagesUrl, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
 import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
 import { exploreListUrl } from '../chrome'
+import { shortListingAddress } from '../MapListingCard.logic'
+import { RentalConsiderationToggle } from '../ai/RentalConsiderationToggle'
 import { PremiumBadge } from '../PremiumBadge'
 import { HubBodySkeleton } from '../skeletons/PageSkeletons'
 import { PromoBanner } from './PromoBanner'
+import { useIsMobile } from '../../mobile/useIsMobile'
+import { MobileRoomCard } from '../../mobile/listings/MobileRoomCard'
+import '../../mobile/hub/mobile-hub.css'
 import './AuthenticatedHub.css'
 
 const RECENT_SEARCH_KEY = 'homeji:map-search-recent'
@@ -61,6 +70,10 @@ function greetingPrefix(hour: number): string {
 
 function clock(iso: string): string {
   return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+}
+
+function dayLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })
 }
 
 function whenLabel(iso: string): string {
@@ -121,8 +134,10 @@ function readRecentSearches(): string[] {
 }
 
 export function AuthenticatedHub() {
+  const isMobile = useIsMobile()
   const { profile } = useAuth()
   const { conversations, error: inboxError, refresh: refreshInbox } = useConversationInbox(profile?.id ?? null)
+  const navigate = useNavigate()
   const displayName = profile?.displayName?.trim() || 'bạn'
   const [now] = useState(() => new Date())
   const [recentSearches] = useState(readRecentSearches)
@@ -138,7 +153,7 @@ export function AuthenticatedHub() {
         getViewingAppointments(),
         profile?.role === UserRole.Renter ? getSavedPosts() : Promise.resolve([]),
         profile?.role === UserRole.Renter ? getMyInvitations() : Promise.resolve([]),
-        searchRentalPosts({ pageSize: 4 }),
+        searchRentalPosts({ pageSize: 6 }),
         searchMarketplacePosts({ pageSize: 4 }),
       ])
       if (cancelled) return
@@ -213,8 +228,19 @@ export function AuthenticatedHub() {
   const lead = matchingNotes.length > 0
     ? `${matchingNotes.length} tin mới khớp tìm kiếm của bạn.`
     : null
+  const journey = useRentalJourney()
+  const considering = journey?.enabled ? journey.choices.length : 0
+  const pendingInvites = (bundle?.invitations ?? []).filter(
+    (item) => isPendingReceivedInvitation(item, profile?.id),
+  ).length
+  // "Việc tiếp theo": only things that are really waiting on this member, most time-bound first.
+  const nextSteps: { key: string; text: string; action: string; to: string }[] = []
+  if (upcoming[0]) nextSteps.push({ key: 'viewing', text: `Lịch xem phòng ${clock(upcoming[0].scheduledAt)}, ${dayLabel(upcoming[0].scheduledAt)}`, action: 'Xem lịch', to: mapSectionUrl('appointments') })
+  if (unreadMessages > 0) nextSteps.push({ key: 'messages', text: `${unreadMessages} tin nhắn chưa đọc`, action: 'Mở hộp thư', to: mapSectionUrl('messages') })
+  if (considering > 0) nextSteps.push({ key: 'considering', text: `Đang cân nhắc ${considering} phòng`, action: considering >= 2 ? 'So sánh các lựa chọn' : 'Xem lựa chọn', to: '/?section=saved&view=considering' })
+  if (pendingInvites > 0) nextSteps.push({ key: 'invites', text: `${pendingInvites} lời mời ở ghép chờ phản hồi`, action: 'Xem lời mời', to: ROOMMATE_INVITATIONS_URL })
   const hasSide = Boolean(
-    bundle && (bundle.candidates.length > 0 || bundle.invitations.length > 0),
+    bundle && (bundle.candidates.length > 0 || pendingInvites > 0),
   )
 
   return (
@@ -222,15 +248,41 @@ export function AuthenticatedHub() {
       <header className="hub-welcome">
         <div>
           <h1>{greetingPrefix(now.getHours())}, {displayName}</h1>
-          {lead ? <Link className="hub-welcome__lead" to={mapSectionUrl('notifications')}>{lead} <span aria-hidden="true">↗</span></Link> : null}
+          {lead ? <Link className="hub-welcome__lead" to={mapSectionUrl('notifications')}>{lead} <ArrowUpRight aria-hidden="true" size={14} strokeWidth={2} /></Link> : null}
         </div>
       </header>
+
+      {/* The renter's first job is search: the field leads on phones (the desktop header keeps its own),
+          then the four places a member goes most, one tap each. */}
+      <form className="hub-find" role="search" aria-label="Tìm phòng" onSubmit={(event) => {
+        event.preventDefault()
+        const keyword = new FormData(event.currentTarget).get('keyword')?.toString().trim() ?? ''
+        navigate(exploreListUrl(keyword ? new URLSearchParams({ keyword }) : ''))
+      }}>
+        <input name="keyword" type="search" className="form-input" placeholder="Khu vực, trường…" aria-label="Từ khóa tìm phòng" />
+        <button type="submit" className="btn btn-primary">Tìm phòng</button>
+      </form>
+      <nav className="hub-entries" aria-label="Lối vào nhanh">
+        <Link to={exploreListUrl()}>Phòng trọ</Link>
+        <Link to={exploreListUrl(new URLSearchParams({ catalog: 'apartments' }))}>Căn hộ</Link>
+        <Link to={ROOMMATE_INVITATIONS_URL}>Ở ghép</Link>
+        <Link to={mapSectionUrl('marketplace')}>Chợ đồ</Link>
+      </nav>
 
       {recentSearches.length > 0 ? (
         <section className="hub-search" aria-label="Tìm kiếm gần đây">
           <h2>Gần đây</h2>
           <ul>{recentSearches.map((keyword) => (
-            <li key={keyword}><Link to={exploreListUrl(new URLSearchParams({ keyword }))}>{keyword} <span aria-hidden="true">↗</span></Link></li>
+            <li key={keyword}><Link to={exploreListUrl(new URLSearchParams({ keyword }))}>{keyword} <ArrowUpRight aria-hidden="true" size={14} strokeWidth={2} /></Link></li>
+          ))}</ul>
+        </section>
+      ) : null}
+
+      {nextSteps.length > 0 ? (
+        <section className="hub-next" aria-labelledby="hub-next">
+          <h2 id="hub-next">Việc tiếp theo</h2>
+          <ul>{nextSteps.map((step) => (
+            <li key={step.key}><span>{step.text}</span><Link to={step.to}>{step.action}</Link></li>
           ))}</ul>
         </section>
       ) : null}
@@ -261,7 +313,21 @@ export function AuthenticatedHub() {
               {bundle.failed.rooms ? <p className="hub-quiet">Không tải được phòng.</p> : null}
               {!bundle.failed.rooms && bundle.rooms.length === 0 ? <p className="hub-quiet">Chưa có phòng để gợi ý.</p> : null}
               <ul>
-                {bundle.rooms.map((post, index) => (
+                {isMobile ? bundle.rooms.map((post) => (
+                  <li key={post.id}>
+                    <MobileRoomCard
+                      id={post.id}
+                      photo={post.thumbnailPath}
+                      price={<>{formatCompactRent(post.price)}{Number.isFinite(post.price) && post.price > 0 ? <small>/tháng</small> : null}</>}
+                      title={post.title}
+                      meta={[Number.isFinite(post.area) && post.area > 0 ? formatListingArea(post.area) : '', shortListingAddress((post.address || '').trim())].filter(Boolean).join(' · ')}
+                      badge={post.isOwnerPremium === true && showHubPremiumBadges(bundle.rooms) ? <PremiumBadge variant="glass" />
+                        : savedIds.has(post.id) ? <span className="m-room__pill">Đã lưu</span> : undefined}
+                      to={`/?post=${encodeURIComponent(post.id)}`}
+                      actions={<RentalConsiderationToggle compact post={post} />}
+                    />
+                  </li>
+                )) : bundle.rooms.map((post, index) => (
                   <motion.li
                     key={post.id}
                     initial={{ opacity: 0, y: 8 }}
@@ -274,7 +340,7 @@ export function AuthenticatedHub() {
                     >
                       <span className="hub-room__photo">
                         {post.thumbnailPath ? (
-                          <img
+                          <img decoding="async" width={640} height={400}
                             src={post.thumbnailPath}
                             alt=""
                             loading="lazy"
@@ -284,35 +350,27 @@ export function AuthenticatedHub() {
                           />
                         ) : null}
                         <span className="hub-room__nophoto">Chưa có ảnh</span>
-                        {savedIds.has(post.id) ? (
+                        {!post.isOwnerPremium && savedIds.has(post.id) ? (
                           <em className="hub-room__saved">
                             <HeartIcon size={12} filled style={{ verticalAlign: 'middle', marginRight: 4 }} />
                             Đã lưu
                           </em>
                         ) : null}
-                        {post.isOwnerPremium === true ? <PremiumBadge variant="glass" /> : null}
+                        {post.isOwnerPremium === true && showHubPremiumBadges(bundle.rooms) ? <PremiumBadge variant="glass" /> : null}
                       </span>
                       <span className="hub-room__copy">
+                        <span className="hub-room__price"><strong>{formatCompactRent(post.price)}{Number.isFinite(post.price) && post.price > 0 ? '/tháng' : ''}</strong></span>
                         <b>{post.title}</b>
-                        <span>{post.address}</span>
-                        <small>
-                          {post.area > 0 ? `${post.area} m² · ` : ''}
-                          {rentalPostTypeLabel[post.type]}
-                        </small>
-                      </span>
-                      <span className="hub-room__price">
-                        <strong>{formatPrice(post.price)}</strong>
-                        <small>/tháng</small>
+                        <span className="hub-room__meta">{[Number.isFinite(post.area) && post.area > 0 ? formatListingArea(post.area) : '', shortListingAddress((post.address || '').trim())].filter(Boolean).join(' · ')}</span>
                       </span>
                     </Link>
+                    <footer className="hub-room__actions"><RentalConsiderationToggle compact post={post} /></footer>
                   </motion.li>
                 ))}
               </ul>
             </section>
 
             <aside className="hub-rail" aria-label="Ưu đãi và Chợ Homeji">
-              <PromoBanner variant="rail" role={profile?.role} />
-
               {bundle.failed.market || bundle.market.length > 0 ? (
                 <section className="hub-section hub-market" aria-labelledby="hub-market">
                   <header>
@@ -328,7 +386,7 @@ export function AuthenticatedHub() {
                           <Link to={item.sellerId ? marketplaceItemUrl(item) : mapSectionUrl('marketplace')}>
                             <span className="hub-market__thumb">
                               {item.mediaUrls[0] ? (
-                                <img
+                                <img decoding="async" width={44} height={44}
                                   src={item.mediaUrls[0]}
                                   alt=""
                                   loading="lazy"
@@ -366,6 +424,8 @@ export function AuthenticatedHub() {
                   )}
                 </section>
               ) : null}
+              {/* Offers support the page; they do not lead it. */}
+              <PromoBanner variant="rail" role={profile?.role} />
             </aside>
           </div>
 
@@ -415,9 +475,9 @@ export function AuthenticatedHub() {
                 <ul>
                   {chats.map((chat) => (
                     <li key={chat.id}>
-                      <Link to={mapSectionUrl('messages')}>
+                      <Link to={mapMessagesUrl(chat.id)}>
                         {chat.otherParticipantAvatarPath ? (
-                          <img src={chat.otherParticipantAvatarPath} alt="" />
+                          <img loading="lazy" decoding="async" width={36} height={36} src={chat.otherParticipantAvatarPath} alt="" />
                         ) : (
                           <b>{initials(chat.otherParticipantName)}</b>
                         )}
@@ -437,7 +497,7 @@ export function AuthenticatedHub() {
 
               {hasSide ? (
                 <div className="hub-side">
-                  {bundle.candidates.length > 0 || bundle.invitations.length > 0 ? (
+                  {bundle.candidates.length > 0 || pendingInvites > 0 ? (
                     <section className="hub-section hub-roommates" aria-labelledby="hub-roommates">
                       <header>
                         <h2 id="hub-roommates">Ở ghép</h2>
@@ -458,7 +518,7 @@ export function AuthenticatedHub() {
                         </ul>
                       ) : (
                         <div className="hub-roommates__count">
-                          <strong>{bundle.invitations.length}</strong>
+                          <strong>{pendingInvites}</strong>
                           <span>lời mời ở ghép<br />đang chờ bạn phản hồi</span>
                         </div>
                       )}

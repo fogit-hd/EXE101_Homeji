@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { useBackButtonClose } from '../../hooks/useBackButtonClose'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 import { useSearch } from '../../contexts/SearchContext'
 import { NEARBY_PLACE_CATEGORY_OPTIONS } from '../../lib/placeAutocomplete'
 import { NaturalRentalSearch } from '../ai/NaturalRentalSearch'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
+import { shouldHandleSearchShortcut } from '../../lib/searchShortcut'
 
 function useNarrowBar() {
   const [narrow, setNarrow] = useState(false)
@@ -21,18 +24,32 @@ function useNarrowBar() {
 export function ContextualSearch() {
   const narrow = useNarrowBar()
   const [overlay, setOverlay] = useState(false)
+  const closeOverlay = useCallback(() => setOverlay(false), [])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = document.activeElement
+      const editing = target instanceof HTMLElement && (
+        target.matches('input, textarea, select') || target.isContentEditable
+      )
+      const modalOpen = Array.from(document.querySelectorAll<HTMLElement>('dialog[open], [role="dialog"][aria-modal="true"]'))
+        .some(dialog => dialog.getClientRects().length > 0 && !dialog.closest('[hidden], [inert], [aria-hidden="true"]'))
+      if (!shouldHandleSearchShortcut(event, editing, modalOpen)) return
+      event.preventDefault()
+      if (narrow) setOverlay(true)
+      else document.querySelector<HTMLInputElement>('.hj-search__input')?.focus()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [narrow])
 
   if (narrow) {
     return (
       <>
-        <button type="button" className="hj-search-open" aria-label="Mở tìm kiếm" onClick={() => setOverlay(true)}>
+        <button type="button" className="hj-search-open" aria-label="Mở tìm kiếm" title="Mở tìm kiếm" aria-haspopup="dialog" aria-expanded={overlay} onClick={() => setOverlay(true)}>
           <img className="hj-glyph" src="/bar/search.svg" alt="" width={20} height={20} />
         </button>
-        {overlay ? (
-          <div className="hj-search-overlay">
-            <SearchField autoFocus onClose={() => setOverlay(false)} />
-          </div>
-        ) : null}
+        {overlay ? <MobileSearchSheet onClose={closeOverlay} /> : null}
       </>
     )
   }
@@ -40,7 +57,33 @@ export function ContextualSearch() {
   return <SearchField />
 }
 
-function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onClose?: () => void }) {
+/**
+ * Phone search is a full-screen sheet on <body>: the header has a backdrop filter, which would
+ * otherwise become the containing block and clip a fixed overlay to the bar's height.
+ */
+function MobileSearchSheet({ onClose }: { onClose: () => void }) {
+  useBackButtonClose(true, onClose)
+  useEffect(() => {
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', onKey) }
+  }, [onClose])
+  return createPortal(
+    <div className="hj-search-sheet" role="dialog" aria-modal="true" aria-label="Tìm kiếm" data-glass-exclude>
+      <div className="hj-search-sheet__bar">
+        <button type="button" className="hj-search-sheet__back" aria-label="Đóng tìm kiếm" title="Đóng tìm kiếm" onClick={onClose}>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden><path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15 5l-7 7 7 7" /></svg>
+        </button>
+        <SearchField autoFocus inline onClose={onClose} />
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function SearchField({ autoFocus = false, inline = false, onClose }: { autoFocus?: boolean; inline?: boolean; onClose?: () => void }) {
   const {
     query,
     placeholder,
@@ -66,7 +109,7 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
     inputRef.current?.blur()
     onClose?.()
   }
-  useDismissOnOutside(open || focused, [rootRef], dismiss)
+  useDismissOnOutside(!inline && (open || focused), [rootRef], dismiss)
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -81,15 +124,13 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
           Tìm kiếm
         </label>
         <div className={`hj-search__field${aiTrigger ? ' hj-search__field--ai' : ''}`}>
-          <span className="hj-search__icon" aria-hidden>
-            <img className="hj-glyph" src="/bar/search.svg" alt="" width={20} height={20} />
-          </span>
           <input
             ref={inputRef}
             id="hj-global-search"
             className="hj-search__input"
+            aria-keyshortcuts="/"
             value={query}
-            placeholder={searchPlaceholder}
+            placeholder={inline ? searchPlaceholder : 'tìm kiếm'}
             onChange={(event) => {
               setQuery(event.target.value)
               setOpen(true)
@@ -103,16 +144,19 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
             enterKeyHint="search"
           />
           {query ? (
-            <button type="button" className="hj-search__clear" aria-label="Xóa tìm kiếm" onClick={() => { clear(); setOpen(false) }}>
+            <button type="button" className="hj-search__clear" aria-label="Xóa tìm kiếm" title="Xóa tìm kiếm" onClick={() => { clear(); setOpen(false) }}>
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
                 <path fill="currentColor" d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z" />
               </svg>
             </button>
           ) : null}
           {aiTrigger}
-          <button type="submit" className="hj-search__submit">
-            <span className="hj-search__submit-full">Tìm kiếm</span>
-            <span className="hj-search__submit-short">Tìm</span>
+          {/* One search control: a round magnifier button at the end of the pill. */}
+          <button type="submit" className="hj-search__submit hj-search__submit--icon" aria-label="Tìm kiếm" title="Tìm kiếm">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
           </button>
         </div>
         {open && (locationSearch || suggestions.length > 0 || recentSearches.length > 0 || isLoading) ? (
@@ -170,8 +214,10 @@ function SearchField({ autoFocus = false, onClose }: { autoFocus?: boolean; onCl
 
   return (
     <div ref={rootRef} className="hj-search-slot">
-      {aiFeatureFlags.naturalSearch && locationSearch
-        ? <NaturalRentalSearch query={query} onOpen={() => { setOpen(false); setFocused(false) }} renderTrigger={renderSearch} />
+      {/* The AI room search sits in the header on every page so the header never changes shape;
+          only a place/housing query is handed to it as a starting point. */}
+      {aiFeatureFlags.naturalSearch
+        ? <NaturalRentalSearch query={locationSearch ? query : ''}onOpen={() => { setOpen(false); setFocused(false) }} renderTrigger={renderSearch} />
         : renderSearch(null)}
     </div>
   )

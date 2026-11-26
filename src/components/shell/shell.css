@@ -6,7 +6,7 @@
   top: 0;
   z-index: 40;
   flex: 0 0 auto;
-  background: var(--surface-elevated);
+  background: var(--surface);
   color: var(--text-heading);
   font-family: var(--font-ui);
 }
@@ -22,7 +22,7 @@
   column-gap: 10px;
   min-height: 176px;
   padding: 0 32px;
-  background: var(--surface-elevated);
+  background: var(--surface);
 }
 
 .hj-shell.is-compact {
@@ -100,18 +100,18 @@
   height: 44px;
   padding: 0 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-heading);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   cursor: pointer;
 }
 
 .hj-menu-trigger:hover,
 .hj-menu-trigger.is-open {
-  background: #eee8dd;
+  background: var(--surface-muted);
 }
 
 .hj-logo {
@@ -119,7 +119,7 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--text-heading);
   text-decoration: none;
 }
@@ -151,14 +151,14 @@
 
 .hj-logo__word {
   font-family: var(--font-ui);
-  font-size: 1.875rem;
+  font-size: var(--fs-display);
   font-weight: 600;
   line-height: 1;
   transition: font-size var(--hj-motion) var(--hj-ease);
 }
 
 .hj-shell.is-compact .hj-logo__word {
-  font-size: 1.625rem;
+  font-size: var(--fs-2xl);
 }
 
 .hj-primary {
@@ -175,7 +175,7 @@
   padding: 0 16px;
   border-bottom: 2px solid transparent;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -184,7 +184,7 @@
 .hj-primary a:hover { color: var(--text-heading); }
 
 .hj-primary a.is-active {
-  border-bottom-color: #e8603c;
+  border-bottom-color: var(--action-primary);
   color: var(--text-heading);
 }
 
@@ -203,10 +203,10 @@
   height: 44px;
   padding: 0 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-heading);
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -214,7 +214,7 @@
 
 .hj-action:hover,
 .hj-action.is-active {
-  background: #eee8dd;
+  background: var(--surface-muted);
 }
 
 .hj-action--text:hover {
@@ -226,7 +226,7 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .hj-action__icon {
@@ -239,18 +239,24 @@
 
 .hj-action__badge {
   position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   top: -8px;
   right: -10px;
   min-width: 17px;
   height: 17px;
   padding: 0 4px;
-  border-radius: 999px;
-  background: #e8603c;
-  color: #fff;
-  font-size: 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--action-primary);
+  color: var(--action-on-primary);
+  font-size: var(--fs-xs);
   font-weight: 700;
-  line-height: 1.0625rem;
+  line-height: 1;
   text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .hj-post-cta {
@@ -260,10 +266,10 @@
   height: 44px;
   margin-left: 6px;
   padding: 0 16px;
-  border-radius: 8px;
-  background: #e8603c;
-  color: #fff;
-  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+  background: var(--action-primary);
+  color: var(--action-on-primary);
+  font-size: var(--fs-md);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -272,13 +278,13 @@
 .hj-post-cta:hover,
 .hj-post-cta:focus-visible,
 .hj-post-cta:active {
-  color: #fff;
+  color: var(--action-on-primary);
   text-decoration: none;
 }
 
 .hj-post-cta:hover,
 .hj-post-cta:active {
-  background: #d4532b;
+  background: var(--action-primary);
 }
 
 .hj-post-cta:focus-visible {
@@ -289,11 +295,11 @@
 .app-shell .hj-shell .hj-actions > a.hj-admin-cta {
   display: inline-flex;
   gap: 7px;
-  background: #087f8c;
+  background: var(--hj-accent);
   font-weight: 700;
 }
 .app-shell .hj-shell .hj-actions > a.hj-admin-cta:hover,
-.app-shell .hj-shell .hj-actions > a.hj-admin-cta[aria-current="page"] { background: #065e68; }
+.app-shell .hj-shell .hj-actions > a.hj-admin-cta[aria-current="page"] { background: var(--grab-green-hover); }
 
 @media (max-width: 479px) {
   .hj-bar--admin .hj-logo__word { display: none; }
@@ -308,7 +314,7 @@
   height: 44px;
   padding: 4px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-heading);
   cursor: pointer;
@@ -316,7 +322,7 @@
 
 .hj-profile:hover,
 .hj-profile.is-open {
-  background: #eee8dd;
+  background: var(--surface-muted);
 }
 
 .hj-profile__mark {
@@ -325,9 +331,9 @@
   width: 32px;
   height: 32px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: #eee8dd;
-  font-size: 0.6875rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  font-size: var(--fs-xs);
   font-weight: 600;
 }
 
@@ -343,34 +349,34 @@
   width: min(320px, 80vw);
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-elevated);
-  box-shadow: 0 8px 24px rgba(20, 39, 31, 0.06);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(var(--shadow-color), .06);
   max-height: calc(100dvh - var(--hj-header-h, 88px) - 24px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .hj-account__group { border-top: 1px solid var(--border); padding-block: 8px; }
-.hj-account__group-label { margin: 0 10px 6px; color: var(--text-secondary); font-size: 0.75rem; font-weight: 650; }
+.hj-account__group-label { margin: 0 10px 6px; color: var(--text-secondary); font-size: var(--fs-xs); font-weight: 650; }
 @media (max-width: 479px) {
   .hj-account__menu { position: fixed; top: calc(var(--hj-header-h, 64px) + 6px); right: 12px; width: min(320px, calc(100vw - 24px)); box-sizing: border-box; }
 }
-#root .hj-account__item { min-height: 44px; border: 0; border-radius: 10px; background: transparent; box-shadow: none; backdrop-filter: none; }
+#root .hj-account__item { min-height: 44px; border: 0; border-radius: var(--radius-sm); background: transparent; box-shadow: none; backdrop-filter: none; }
 #root .hj-account__item:is(:hover,:focus-visible) { background: var(--hj-accent-soft); }
 #root .hj-account__item--danger { color: var(--glass-danger-ink); border-top: 1px solid var(--border); }
 
 .hj-account__name {
   margin: 4px 8px 0;
   font-family: var(--font-ui);
-  font-size: 1.125rem;
+  font-size: var(--fs-lead);
   font-weight: 600;
 }
 
 .hj-account__role {
   margin: 2px 8px 10px;
   color: var(--text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
 }
 
 .hj-account__item {
@@ -381,18 +387,18 @@
   min-height: 40px;
   padding: 0 10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
 }
 
 .hj-account__item:hover {
-  background: #eee8dd;
+  background: var(--surface-muted);
 }
 
 .hj-account__item--danger {
@@ -410,9 +416,9 @@
   width: min(992px, calc(100vw - 32px));
   padding: 16px 20px 12px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-elevated);
-  box-shadow: 0 8px 24px rgba(20, 39, 31, 0.06);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(var(--shadow-color), .06);
 }
 
 .hj-mega__title {
@@ -433,7 +439,7 @@
 .hj-mega__group-toggle {
   margin: 0 0 8px;
   color: var(--text-secondary);
-  font-size: 0.6875rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
 }
@@ -461,7 +467,7 @@
 .hj-mega__cluster {
   margin: 10px 8px 2px;
   color: var(--text-secondary);
-  font-size: 0.6875rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -477,9 +483,9 @@
   gap: 8px;
   min-height: 40px;
   padding: 0 8px;
-  border-radius: 10px;
-  color: #243028;
-  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-md);
   font-weight: 600;
   text-decoration: none;
 }
@@ -487,7 +493,7 @@
 .hj-mega__link:hover,
 .hj-mega__link:focus-visible,
 .hj-mega__link.is-active {
-  background: #eee8dd;
+  background: var(--surface-muted);
   color: var(--text-heading);
 }
 
@@ -545,7 +551,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 .hj-search-context__title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 1.3125rem;
+  font-size: var(--fs-xl);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -553,8 +559,8 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 .hj-search-context__scope {
   margin: 4px 0 0;
   color: var(--text-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.125rem;
+  font-size: var(--fs-sm);
+  line-height: 18px;
 }
 
 .hj-search {
@@ -578,8 +584,8 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   height: 60px;
   padding: 0 6px 0 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .hj-shell.is-compact .hj-search__field {
@@ -593,14 +599,14 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 /* Focus lives on the pill, never on the bare input (no browser rectangle). */
 .hj-search .hj-search__field:focus-within,
 .hj-search .hj-search__field.hj-search__field--ai:focus-within {
-  border-color: #00b14f;
-  background: var(--surface-elevated);
-  box-shadow: 0 0 0 3px rgba(0, 177, 79, 0.16);
+  border-color: var(--focus-ring);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--focus-ring);
   animation: none;
 }
 
 .hj-search .hj-search__input:focus,
-.hj-search .hj-search__input:focus-visible {
+html:root body .hj-search .hj-search__input:focus-visible {
   outline: none;
 }
 
@@ -618,7 +624,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   background: transparent;
   color: var(--text-heading);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
 }
 
@@ -648,11 +654,11 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   min-width: 112px;
   padding: 0 16px;
   border: 0;
-  border-radius: 6px;
-  background: #e8603c;
-  color: #fff;
+  border-radius: var(--radius-xs);
+  background: var(--action-primary);
+  color: var(--action-on-primary);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -666,12 +672,12 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 .hj-search__submit:hover,
 .hj-search__submit:focus-visible,
 .hj-search__submit:active {
-  color: #fff;
+  color: var(--action-on-primary);
 }
 
 .hj-search__submit:hover,
 .hj-search__submit:active {
-  background: #d4532b;
+  background: var(--action-primary);
 }
 
 .hj-search__submit:focus-visible {
@@ -689,9 +695,9 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   padding: 6px;
   list-style: none;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-elevated);
-  box-shadow: 0 12px 32px rgba(18, 24, 28, 0.12);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(var(--shadow-color), .12);
 }
 
 .hj-search__suggest-note {
@@ -706,7 +712,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   width: 100%;
   padding: 8px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -721,7 +727,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 .hj-search__suggest span,
 .hj-search__suggest-note {
   color: var(--text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
 }
 
 .hj-search-open {
@@ -732,25 +738,54 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   width: 44px;
   height: 44px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   color: var(--text-heading);
   cursor: pointer;
 }
 
-.hj-search-overlay {
+/* Phone search: an opaque full-screen sheet; suggestions flow under the field instead of floating. */
+.hj-search-sheet {
   position: fixed;
   inset: 0;
-  z-index: 80;
-  padding: 16px;
-  background: var(--surface-muted);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 12px;
+  background: var(--surface);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: hj-sheet-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-
-.hj-search-overlay .hj-search-slot {
-  height: auto;
-  margin: 0;
+.hj-search-sheet__bar { display: flex; align-items: flex-start; gap: 6px; }
+.hj-search-sheet__back {
+  display: grid; place-items: center; flex: none;
+  width: 44px; height: 48px; margin-left: -6px;
+  border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-heading); cursor: pointer;
+}
+.hj-search-sheet__back:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.hj-search-sheet .hj-search-slot { flex: 1; min-width: 0; height: auto; margin: 0; padding: 0; border: 0; }
+.hj-search-sheet .hj-search__field { height: 48px; padding: 0 4px 0 12px; border-radius: var(--radius-md); }
+.hj-search-sheet .hj-search__input { font-size: var(--fs-lg); }
+.hj-search-sheet .hj-search__submit { height: 38px; min-width: 56px; border-radius: var(--radius-sm); }
+.hj-search-sheet .hj-search__submit-full { display: none; }
+.hj-search-sheet .hj-search__submit-short { position: static; opacity: 1; transform: none; visibility: visible; }
+.hj-search-sheet .hj-search__suggest {
+  position: static;
+  margin: 12px 0 0 -44px;
   padding: 0;
   border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.hj-search-sheet .hj-search__suggest button { min-height: 48px; justify-content: center; padding: 10px 4px; border-radius: 0; border-bottom: 1px solid var(--border); }
+.hj-search-sheet .hj-search__suggest-note { padding: 8px 4px; }
+@keyframes hj-sheet-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hj-search-sheet { animation: none; }
 }
 
 @media (max-width: 1180px) {
@@ -814,11 +849,11 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   max-height: min(560px, calc(100dvh - var(--hj-header-h) - 16px));
   overflow: hidden;
   border: 0;
-  border-radius: 14px;
-  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   color: var(--text-heading);
-  font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  box-shadow: 0 12px 40px rgba(18, 24, 28, 0.16), 0 0 0 1px rgba(18, 24, 28, 0.06);
+  font-family: var(--font-ui);
+  box-shadow: none;
 }
 
 .hj-notify__pop:focus {
@@ -849,7 +884,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 .hj-notify__title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
   line-height: 1.3;
   color: var(--text-primary);
@@ -860,11 +895,11 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   margin: 0;
   padding: 4px 6px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: transparent;
-  color: #00b14f;
+  color: var(--hj-accent);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
   line-height: 1.3;
   cursor: pointer;
@@ -872,8 +907,8 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 }
 
 .hj-notify__mark-all:hover:not(:disabled) {
-  background: #e6f7ee;
-  color: #009241;
+  background: var(--hj-accent-soft);
+  color: var(--hj-accent);
 }
 
 .hj-notify__mark-all:disabled {
@@ -886,7 +921,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   gap: 4px;
   margin: 0;
   padding: 0 16px 10px;
-  border-bottom: 1px solid #eef0f2;
+  border-bottom: 1px solid var(--border);
 }
 
 .hj-notify__tabs button {
@@ -896,11 +931,11 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   min-height: 30px;
   padding: 0 12px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -911,17 +946,17 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 }
 
 .hj-notify__tabs button.is-active {
-  background: #e6f7ee;
-  color: #00924a;
+  background: var(--hj-accent-soft);
+  color: var(--hj-accent);
 }
 
 .hj-notify__tab-count {
   min-width: 18px;
   padding: 1px 6px;
-  border-radius: 9px;
-  background: #00b14f;
-  color: #fff;
-  font-size: 0.6875rem;
+  border-radius: var(--radius-sm);
+  background: var(--hj-accent);
+  color: var(--on-brand);
+  font-size: var(--fs-xs);
   font-weight: 700;
   line-height: 1rem;
   text-align: center;
@@ -934,7 +969,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   overflow-y: auto;
   padding: 4px 0;
   scrollbar-width: thin;
-  scrollbar-color: #d5d8dc transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 .hj-notify__scroll::-webkit-scrollbar {
@@ -943,7 +978,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 
 .hj-notify__scroll::-webkit-scrollbar-thumb {
   border-radius: 3px;
-  background: #d5d8dc;
+  background: var(--border);
 }
 
 .hj-notify__scroll .page-notice {
@@ -963,28 +998,28 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   height: 64px;
   margin: 0 auto 14px;
   border-radius: 50%;
-  background: #e6f7ee;
-  color: #00b14f;
+  background: var(--hj-accent-soft);
+  color: var(--hj-accent);
 }
 
 .hj-notify__empty strong {
   display: block;
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: var(--fs-lg);
   font-weight: 600;
 }
 
 .hj-notify__empty p {
   margin: 4px 0 0;
   color: var(--text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   line-height: 1.45;
 }
 
 .hj-nrow__read:focus-visible,
 .hj-notify__mark-all:focus-visible,
 .hj-notify__tabs button:focus-visible {
-  outline: 2px solid #00b14f;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -1000,7 +1035,7 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
   }
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .hj-bar,
   .hj-mega,
   .hj-account__menu,
@@ -1028,3 +1063,36 @@ body:has(.hj-mega) #root :is(.interest-launch, .food-cart-fab, .food-sticky-floa
 
 
 .hj-profile__image { display: block; width: 100%; height: 100%; min-width: 0; border-radius: inherit; object-fit: cover; }
+
+/* The search field animates its width when the header changes mode; never let that frame widen the page. */
+.hj-header { overflow-x: clip; }
+
+/* The compact bar (every section, and home after scrolling) keeps the three pillar links on
+   wide screens, so the header never switches navigation model between pages. */
+@media (min-width: 1181px) {
+  .hj-shell.is-compact .hj-bar {
+    grid-template-columns: auto auto auto minmax(240px, 1fr) auto;
+    grid-template-areas: "menu brand nav search utils";
+  }
+  .hj-shell.is-compact .hj-primary {
+    position: static;
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .hj-shell.is-compact .hj-primary a { padding: 0 10px; }
+  /* Room for the links: the compact bar shows the logo mark and the menu icon without their words
+     (both keep their accessible names). */
+  .hj-shell.is-compact .hj-logo__word { display: none; }
+  .hj-shell.is-compact .hj-menu-trigger { width: 44px; padding: 0; justify-content: center; }
+  .hj-shell.is-compact .hj-menu-trigger > span { display: none; }
+}
+
+/* Header actions keep white ink on an orange surface with AA text contrast,
+   including dark mode where the page-wide orange role uses dark ink. */
+:is(.hj-post-cta, .hj-search__submit, .hj-action__badge, .m-header__badge) {
+  --action-primary: #bf400c;
+  --action-primary-hover: #9a3412;
+  --action-on-primary: var(--color-white);
+}

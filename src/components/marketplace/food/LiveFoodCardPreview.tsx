@@ -51,7 +51,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
         transition: 'transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s ease',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', paddingTop: '75%', backgroundColor: 'var(--surface-muted, #f3f7fa)' }}>
+      <div style={{ position: 'relative', width: '100%', paddingTop: '75%', backgroundColor: 'var(--surface-muted)' }}>
         <img
           src={displayImage}
           alt={title || 'Xem trước món ăn'}
@@ -87,8 +87,8 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
             position: 'absolute',
             bottom: '8px',
             left: '8px',
-            backgroundColor: 'var(--surface-elevated, #ffffff)',
-            color: 'var(--grab-green, #087f8c)',
+            backgroundColor: 'var(--surface-elevated)',
+            color: 'var(--grab-green)',
             fontSize: '0.75rem',
             fontWeight: 600,
             padding: '3px 8px',
@@ -109,7 +109,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
             margin: '0 0 6px 0',
             fontSize: '1rem',
             fontWeight: 600,
-            color: 'var(--text-heading, #19323b)',
+            color: 'var(--text-heading)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -131,16 +131,16 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
               style={{
                 fontSize: '1.1rem',
                 fontWeight: 700,
-                color: 'var(--grab-green, #087f8c)',
+                color: 'var(--grab-green)',
               }}
             >
               {(price || 0).toLocaleString('vi-VN')} đ
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #5b6b76)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               /{unit || 'suất'}
             </span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #5b6b76)' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             Còn {availableQuantity || 0} suất
           </span>
         </div>
@@ -149,8 +149,8 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
           <div
             style={{
               fontSize: '0.75rem',
-              color: 'var(--text-secondary, #5b6b76)',
-              backgroundColor: 'var(--surface-muted, #f3f7fa)',
+              color: 'var(--text-secondary)',
+              backgroundColor: 'var(--surface-muted)',
               padding: '4px 8px',
               borderRadius: '6px',
               marginBottom: '8px',
@@ -164,7 +164,7 @@ export const LiveFoodCardPreview: React.FC<LiveFoodCardPreviewProps> = ({
           <div
             style={{
               fontSize: '0.75rem',
-              color: 'var(--text-secondary, #5b6b76)',
+              color: 'var(--text-secondary)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',

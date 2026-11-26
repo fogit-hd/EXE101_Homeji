@@ -26,7 +26,7 @@ import { useChangedInputs } from '../hooks/useChangedInputs'
 import { getErrorMessage } from '../lib/errors'
 import {
   formatDate,
-  formatPrice,
+  formatMonthlyRent,
   landlordVerificationLabel,
   petPreferenceLabel,
   sleepHabitLabel,
@@ -171,7 +171,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         displayName: profile?.displayName || 'Người dùng Homeji',
         phone: profile?.phone || undefined,
         school: profile?.school || undefined,
-        preferredArea: 'Thủ Đức',
+        preferredArea: profile?.preferredArea || undefined,
         contactAddress: profile?.contactAddress || undefined,
         rentalNeed: profile?.rentalNeed || undefined,
         avatarPath: url,
@@ -208,7 +208,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
         displayName: nextName,
         phone: nextPhone || undefined,
         school: school.trim() || undefined,
-        preferredArea: 'Thủ Đức',
+        preferredArea: profile?.preferredArea || undefined,
         contactAddress: contactAddress || undefined,
         rentalNeed: rentalNeed || undefined,
         avatarPath: avatarPath || undefined,
@@ -277,7 +277,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
     }
   }
 
-  if (profileLoading && profileError) return <section className="profile-setup-notice" role="alert"><p>{profileError}</p><button className="btn btn-primary" type="button" onClick={() => void refreshProfile()}>Tải lại hồ sơ</button></section>
+  if (profileLoading && profileError) return <section className="profile-setup-notice" role="alert"><p>{profileError}</p><button className="btn btn-primary" type="button" onClick={() => void refreshProfile()}>Thử lại</button></section>
 
   if (profileLoading) {
     return (
@@ -292,12 +292,12 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
     <div data-glass-exclude className={`${embedded ? 'map-embed profile-embed' : 'container page profile-page'}${lifestyleOnly ? '' : ' profile-account'}`}>
       {!lifestyleOnly && <header className="profile-account-header">
         <div className="profile-account-header__identity">
-          <button type="button" className="profile-account-avatar" onClick={() => avatarInputRef.current?.click()} disabled={avatarBusy} aria-label="Đổi ảnh đại diện">
+          <button type="button" className="profile-account-avatar" onClick={() => avatarInputRef.current?.click()} disabled={avatarBusy} aria-label="Đổi ảnh đại diện" title="Đổi ảnh đại diện">
             {avatarPath ? <img src={avatarPath} alt="" /> : <span>{initials}</span>}
             <small>{avatarBusy ? 'Đang tải…' : 'Đổi ảnh'}</small>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void handleAvatarPick(e.target.files?.[0] ?? null)} />
-          <div><span className="profile-account-header__eyebrow">Hồ sơ của bạn</span><h1>{profile?.displayName || 'Chào bạn'}</h1><p><span>{userRoleLabel[profile?.role ?? UserRole.Renter]}</span><span>{profile?.isPremium ? profile.subscriptionBadge || 'Premium' : 'Gói miễn phí'}</span></p></div>
+          <div><h1>{profile?.displayName || 'Chào bạn'}</h1><p><span>{userRoleLabel[profile?.role ?? UserRole.Renter]}</span><span>{profile?.isPremium ? profile.subscriptionBadge || 'Premium' : 'Gói miễn phí'}</span></p></div>
         </div>
         <Link className="profile-account-header__home" to="/">← Về trang chủ</Link>
       </header>}
@@ -543,7 +543,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
                 placeholder="VD: 3500000"
               />
               {maxBudget ? (
-                <small className="profile-field-hint">{formatPrice(Number(maxBudget) || 0)}</small>
+                <small className="profile-field-hint">{formatMonthlyRent(Number(maxBudget) || 0)}</small>
               ) : null}
             </div>
           </div>

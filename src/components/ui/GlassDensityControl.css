@@ -4,15 +4,13 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 16px;
-  border-radius: 20px;
-  background: var(--glass-panel, rgba(255, 255, 255, 0.72));
-  -webkit-backdrop-filter: blur(var(--glass-density-blur, 16px)) saturate(1.1);
-  backdrop-filter: blur(var(--glass-density-blur, 16px)) saturate(1.1);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.5));
+  border-radius: var(--radius-lg);
+  background: var(--surface-elevated);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 1px solid var(--glass-border, color-mix(in srgb, var(--border) 50%, transparent));
   box-shadow:
-    0 12px 32px rgba(0, 0, 0, 0.1),
-    0 2px 6px rgba(0, 0, 0, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    none;
   max-width: 380px;
   width: 100%;
   box-sizing: border-box;
@@ -22,15 +20,14 @@
     background-color 260ms ease,
     border-color 260ms ease,
     box-shadow 260ms ease;
+  background-color: var(--surface-elevated);
 }
 
 html[data-theme='dark'] .glass-density-control {
-  background: var(--glass-panel, rgba(20, 35, 45, 0.78));
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--surface-elevated);
+  border-color: var(--border);
   box-shadow:
-    0 16px 36px rgba(0, 0, 0, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    none;
 }
 
 .glass-density-control__slider-row {
@@ -43,32 +40,32 @@ html[data-theme='dark'] .glass-density-control {
 .glass-density-icon-btn {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--text-secondary, #687076);
-  border-radius: 8px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: color 180ms ease, transform 160ms ease;
   flex-shrink: 0;
 }
 
 .glass-density-icon-btn:hover {
-  color: var(--text-heading, #11181c);
+  color: var(--text-heading);
   transform: scale(1.08);
 }
 
 .glass-density-icon-btn.is-active {
-  color: var(--maps-blue, #0071e3);
+  color: var(--grab-green);
 }
 
 /* Track Rail with 3 distinct snap dots */
 .glass-density-track {
   position: relative;
   flex: 1;
-  height: 32px;
+  height: 44px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -77,9 +74,9 @@ html[data-theme='dark'] .glass-density-control {
 }
 
 .glass-density-track:focus-visible {
-  outline: 2px solid var(--maps-blue, #0071e3);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .glass-density-track__rail {
@@ -87,14 +84,14 @@ html[data-theme='dark'] .glass-density-control {
   left: 0;
   right: 0;
   height: 5px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--border, #000) 22%, transparent);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border) 22%, transparent);
+  box-shadow: inset 0 1px 2px rgba(var(--shadow-color), .15);
 }
 
 html[data-theme='dark'] .glass-density-track__rail {
-  background: rgba(255, 255, 255, 0.22);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--surface) 22%, transparent);
+  box-shadow: inset 0 1px 2px rgba(var(--shadow-color), .4);
 }
 
 /* 3 snap dots along the track */
@@ -103,7 +100,7 @@ html[data-theme='dark'] .glass-density-track__rail {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--text-secondary, #687076) 55%, transparent);
+  background: color-mix(in srgb, var(--text-secondary) 55%, transparent);
   transform: translateX(-50%);
   pointer-events: auto;
   transition: transform 160ms ease, background-color 160ms ease;
@@ -112,7 +109,7 @@ html[data-theme='dark'] .glass-density-track__rail {
 
 .glass-density-dot:hover {
   transform: translateX(-50%) scale(1.4);
-  background: var(--text-heading, #111);
+  background: var(--text-heading);
 }
 
 .glass-density-dot--middle {
@@ -125,17 +122,14 @@ html[data-theme='dark'] .glass-density-track__rail {
   top: 4px;
   width: 36px;
   height: 24px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   z-index: 2;
-  background: radial-gradient(ellipse at 40% 30%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.05) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   box-shadow:
-    inset 0 2px 2px -1px #ffffff,
-    inset 0 -2px 3px -1px rgba(255, 255, 255, 0.4),
-    0 3px 8px rgba(0, 0, 0, 0.2),
-    0 1px 3px rgba(0, 0, 0, 0.12);
-  -webkit-backdrop-filter: blur(8px) saturate(1.2);
-  backdrop-filter: blur(8px) saturate(1.2);
+    none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   pointer-events: none;
   transition: transform 120ms ease, box-shadow 160ms ease;
   will-change: left, transform;
@@ -144,27 +138,22 @@ html[data-theme='dark'] .glass-density-track__rail {
 .glass-density-track.is-dragging .glass-density-thumb {
   transform: scale(1.08);
   box-shadow:
-    inset 0 2px 2px -1px #ffffff,
-    inset 0 -2px 3px -1px rgba(255, 255, 255, 0.5),
-    0 6px 14px rgba(0, 0, 0, 0.28),
-    0 2px 4px rgba(0, 0, 0, 0.16);
+    none;
 }
 
 html[data-theme='dark'] .glass-density-thumb {
-  background: radial-gradient(ellipse at 40% 30%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.03) 100%);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--surface-elevated);
+  border-color: var(--border);
   box-shadow:
-    inset 0 2px 2px -1px rgba(255, 255, 255, 0.8),
-    inset 0 -2px 3px -1px rgba(255, 255, 255, 0.2),
-    0 3px 8px rgba(0, 0, 0, 0.4);
+    none;
 }
 
 /* Explanatory Caption */
 .glass-density-control__caption {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   line-height: 1.45;
-  color: var(--text-secondary, #687076);
+  color: var(--text-secondary);
   font-weight: 450;
   letter-spacing: -0.01em;
 }

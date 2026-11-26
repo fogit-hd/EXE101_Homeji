@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useInView } from 'motion/react'
 import {
@@ -61,7 +62,7 @@ export function SecureMessageAttachment({
     <figure ref={attachmentRef} className="map-messages__image">
       {src && attachment.mimeType === 'audio/wav' ? <audio className="chat-voice-message" controls preload="metadata" src={src} aria-label="Tin nhắn thoại" /> : src ? (
         <button type="button" onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}>
-          <img src={src} alt={attachmentContextLabel[attachment.context] ?? 'Ảnh trong tin nhắn'} />
+          <img loading="lazy" decoding="async" src={src} alt={attachmentContextLabel[attachment.context] ?? 'Ảnh trong tin nhắn'} />
         </button>
       ) : (
         <span className="map-messages__image-loading">
@@ -103,7 +104,7 @@ export function PendingImagePreview({ file }: { file: File }) {
   useEffect(() => {
     return () => URL.revokeObjectURL(src)
   }, [src])
-  return <img src={src} alt={`Ảnh chờ gửi: ${file.name}`} />
+  return <img decoding="async" src={src} alt={`Ảnh chờ gửi: ${file.name}`} />
 }
 export function MessageSearchHighlight({ text, query }: { text: string; query: string }) {
   const normalized = query.trim()
@@ -118,10 +119,14 @@ export function MessageSearchHighlight({ text, query }: { text: string; query: s
   return <>{parts.map((part, index) => index % 2 === 1 ? <mark key={index} className="map-messages__mark">{part}</mark> : part)}</>
 }
 
-export function Avatar({ name, seed, small = false, subdued = false }: { name: string; seed: string; small?: boolean; subdued?: boolean }) {
+export function Avatar({ name, seed, src, small = false, subdued = false }: { name: string; seed: string; src?: string | null; small?: boolean; subdued?: boolean }) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const image = src?.trim()
   return (
     <span className={`map-messages__avatar${small ? ' is-small' : ''}`} style={{ background: subdued ? undefined : avatarColor(seed) }} aria-hidden>
-      {initialsOf(name)}
+      {image && failedSrc !== image
+        ? <img src={image} alt="" width={small ? 32 : 44} height={small ? 32 : 44} loading={small ? 'eager' : 'lazy'} decoding="async" onError={() => setFailedSrc(image)} />
+        : initialsOf(name)}
     </span>
   )
 }
@@ -215,7 +220,7 @@ export function ContextCard({ item, onPicked }: { item: ContextItem; onPicked?: 
           <span>{item.kind}</span>
         </small>
       </span>
-      <span className="map-messages__ctx-go" aria-hidden>›</span>
+      <span className="map-messages__ctx-go" aria-hidden><ChevronRight aria-hidden="true" size={16} /></span>
     </>
   )
   if (item.onOpen) {

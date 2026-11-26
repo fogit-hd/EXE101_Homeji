@@ -41,7 +41,7 @@ export function Navbar() {
     <header className="navbar" data-glass-exclude>
       <div className="container navbar-inner">
         <Link to="/" className="navbar-brand" onClick={closeMenu}>
-          <img
+          <img loading="eager" decoding="async"
             src="/brand/homeji-logo2.png"
             alt="Homeji"
             className="navbar-brand__logo"
@@ -114,7 +114,7 @@ export function Navbar() {
         <button
           type="button"
           className={`navbar-menu-btn${menuOpen ? ' is-open' : ''}`}
-          aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+          aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'} title={menuOpen ? 'Đóng menu' : 'Mở menu'}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
         >
@@ -129,7 +129,7 @@ export function Navbar() {
           <button
             type="button"
             className="navbar-drawer-backdrop"
-            aria-label="Đóng menu"
+            aria-label="Đóng menu" title="Đóng menu"
             onClick={closeMenu}
           />
           <div className="navbar-drawer" role="dialog" aria-modal="true">

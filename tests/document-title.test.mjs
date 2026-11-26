@@ -17,3 +17,11 @@ test('home and unknown destinations fall back to the product title', () => {
   assert.equal(documentTitleFor('/', ''), 'Homeji — Tìm phòng trọ quanh Thủ Đức và Quận 9')
   assert.equal(documentTitleFor('/', '?section=unknown'), 'Homeji — Tìm phòng trọ quanh Thủ Đức và Quận 9')
 })
+
+test('all unified auth sections have a precise title without exposing query text', () => {
+  assert.equal(documentTitleFor('/auth', '?section=login'), 'Đăng nhập · Homeji')
+  assert.equal(documentTitleFor('/auth', '?section=register'), 'Đăng ký · Homeji')
+  assert.equal(documentTitleFor('/auth/', '?section=register'), 'Đăng ký · Homeji')
+  assert.equal(documentTitleFor('/auth', '?section=forgot-password'), 'Quên mật khẩu · Homeji')
+  assert.equal(documentTitleFor('/auth', '?section=constructor&email=private'), 'Đăng nhập · Homeji')
+})

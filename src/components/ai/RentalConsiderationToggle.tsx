@@ -1,3 +1,4 @@
+import { Check, Plus } from 'lucide-react'
 import { useRentalJourney } from '../../contexts/rental-journey'
 import { MAX_RENTAL_CHOICES } from '../../lib/rentalJourney'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
@@ -10,8 +11,8 @@ export function RentalConsiderationToggle({ post, compact = false }: { post: { i
   const full = journey.choices.length >= (journey.maxChoices ?? MAX_RENTAL_CHOICES)
   return <button type="button" className="btn btn-secondary btn-sm rental-journey-toggle" aria-pressed={selected}
     aria-label={`${selected ? 'Bỏ khỏi cân nhắc' : 'Thêm vào cân nhắc'} · ${post.title}`}
-    disabled={!selected && full} title={!selected && full ? 'Bỏ một lựa chọn để thêm phòng khác' : selected ? 'Nhấn để bỏ phòng này khỏi cân nhắc' : undefined}
+    disabled={!selected && full} title={`${selected ? 'Bỏ khỏi cân nhắc' : 'Thêm vào cân nhắc'} · ${post.title}`}
     onClick={() => journey.toggle({ postId: post.id, title: post.title })}>
-    {compact ? <span aria-hidden="true">{selected ? '✓' : '+'}</span> : null}{compact ? selected ? 'Đang cân nhắc' : 'Cân nhắc' : selected ? 'Bỏ khỏi cân nhắc' : 'Thêm vào cân nhắc'}
+    {compact ? <span aria-hidden="true">{selected ? <Check aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /> : <Plus aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} />}</span> : null}{compact ? selected ? 'Đang cân nhắc' : 'Cân nhắc' : selected ? 'Bỏ khỏi cân nhắc' : 'Thêm vào cân nhắc'}
   </button>
 }

@@ -24,7 +24,7 @@ export function QuantityStepper({
         type="button"
         className="food-qty__btn"
         data-glass-exclude=""
-        aria-label={`Giảm ${label}`}
+        aria-label={`Giảm ${label}`} title={`Giảm ${label}`}
         disabled={disabled || value <= min}
         onClick={() => {
           SellerOrderSound.playPop()
@@ -40,7 +40,7 @@ export function QuantityStepper({
         type="button"
         className="food-qty__btn"
         data-glass-exclude=""
-        aria-label={`Tăng ${label}`}
+        aria-label={`Tăng ${label}`} title={`Tăng ${label}`}
         disabled={disabled || value >= max}
         onClick={() => {
           SellerOrderSound.playPop()

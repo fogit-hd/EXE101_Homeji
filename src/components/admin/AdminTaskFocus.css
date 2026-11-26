@@ -1,5 +1,5 @@
 .admin-task-target:focus {
-  outline: 3px solid var(--color-primary, #087f8c);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 4px;
   scroll-margin-block: 100px;
 }

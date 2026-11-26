@@ -109,7 +109,7 @@ export function NotificationsPage({
     <button
       type="button"
       className={popup ? 'hj-notify__mark-all' : 'btn btn-secondary btn-sm'}
-      aria-label="Đánh dấu tất cả đã đọc"
+      aria-label="Đánh dấu tất cả đã đọc" title="Đánh dấu tất cả đã đọc"
       disabled={readBusy !== null}
       onClick={() => void handleMarkAll()}
     >
@@ -155,6 +155,7 @@ export function NotificationsPage({
   const list = (
     <>
       <PageNotice message={error && !disrupted ? error : ''} tone="error" />
+      {error ? <button type="button" className="btn btn-secondary" onClick={() => void reload()}>Thử lại</button> : null}
       <PageNotice message={actionError} tone="error" />
 
       {showLoader ? (

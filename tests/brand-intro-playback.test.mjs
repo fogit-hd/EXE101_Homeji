@@ -15,7 +15,7 @@ test('application reloads including authenticated home run at three times the sp
 })
 
 test('login and registration are excluded even with a trailing slash', () => {
-  for (const path of ['/login', '/login/', '/register', '/register/']) {
+  for (const path of ['/auth', '/auth/', '/login', '/login/', '/register', '/register/']) {
     assert.equal(isAuthIntroPage(path), true)
     assert.equal(brandIntroPlaybackRate(path, true), 1)
     assert.equal(brandIntroPlaybackRate(path, false), 1)

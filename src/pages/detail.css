@@ -7,9 +7,9 @@
 }
 
 .detail-price {
-  font-size: 1.5rem;
+  font-size: var(--fs-xl);
   font-weight: 700;
-  color: var(--grab-green) !important;
+  color: var(--grab-green);
 }
 
 .detail-actions {
@@ -53,7 +53,7 @@
 
 .detail-facts dt {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
 }
 
 .detail-facts dd {
@@ -87,12 +87,12 @@
 .detail-contact {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid var(--border, #e5ebe7);
+  border-top: 1px solid var(--border);
 }
 
 .detail-contact__hint {
   margin: 10px 0 0;
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   color: var(--text-secondary);
   line-height: 1.45;
 }
@@ -100,7 +100,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--overlay-scrim);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -10,3 +10,9 @@
 453/453 unit/contract tests qua; build và ESLint các file sửa qua. Luồng nhận tin tự động, kết nối lại, fallback, tab ẩn, giữ bản nháp và phản hồi muộn khi đổi hội thoại vẫn qua Playwright. Kiểm tra dùng API và sự kiện giả lập, không gửi tin tới người thật.
 
 Ảnh kiểm tra: `output/verification/conversation-order/newest-first.png`. Phiên bản production đối chiếu tại `output/verification/conversation-order/release.json`.
+
+## Cập nhật 2026-11-26
+
+Yêu cầu mới thay thế ưu tiên người nhận ở trên: mở/chọn hội thoại không đẩy lên đầu. Chỉ tin nhắn thực tế gửi/nhận mới thay đổi thứ tự; hội thoại chưa có tin nằm sau hội thoại đã có tin. Phản hồi upload về muộn không ghi đè preview và thời gian của tin mới hơn.
+
+Trạng thái gửi được tách theo hội thoại và loại thao tác. Upload ảnh không khóa công cụ, nhập/gửi chữ hoặc gửi trong hội thoại khác. Kết quả muộn chỉ cập nhật hội thoại gốc và không xóa bản nháp mới.

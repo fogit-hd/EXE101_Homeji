@@ -1,0 +1,184 @@
+/*
+ * Phone foundation. Everything here is scoped to html[data-device='mobile'] (set by useIsMobile),
+ * so desktop never sees it. Screens rebuilt for phones use these m-* primitives instead of the
+ * desktop card and button styles.
+ */
+html[data-device='mobile'] {
+  --hj-header-h: calc(56px + env(safe-area-inset-top, 0px));
+  --m-gutter: 16px;
+  --m-gap: 12px;
+  --m-radius: 14px;
+  --m-tap: 44px;
+  --m-tabbar-h: calc(var(--mobile-tabbar-height, 56px) + var(--safe-bottom));
+  scroll-padding-top: calc(var(--hj-header-h) + 12px);
+  scroll-padding-bottom: calc(var(--m-tabbar-h) + 12px);
+  -webkit-text-size-adjust: 100%;
+}
+
+.m-header-placeholder { height: calc(56px + env(safe-area-inset-top, 0px)); }
+
+/* Page rhythm: one gutter, section titles that are smaller than desktop page titles. */
+.m-page { padding: 12px var(--m-gutter) calc(var(--m-tabbar-h) + 24px); }
+.m-page__title { margin: 4px 0 12px; color: var(--text-heading); font-size: var(--fs-heading); font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; }
+.m-section { padding-top: 20px; }
+.m-section__title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 10px; color: var(--text-heading); font-size: var(--fs-md, 1rem); font-weight: 700; }
+.m-section__title a { min-height: var(--m-tap); display: inline-flex; align-items: center; color: var(--grab-green); font-size: var(--fs-sm, .875rem); font-weight: 600; text-decoration: none; }
+
+/* Compact horizontal card: thumbnail left, facts right. */
+.m-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.m-card__media { width: 96px; height: 96px; overflow: hidden; border-radius: var(--radius-sm); background: var(--surface-muted); }
+.m-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.m-card__body { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.m-card__price { color: var(--grab-green); font-size: var(--fs-md, 1rem); font-weight: 800; font-variant-numeric: tabular-nums; }
+.m-card__title { display: -webkit-box; overflow: hidden; margin: 0; color: var(--text-heading); font-size: var(--fs-sm, .875rem); font-weight: 600; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.m-card__meta { overflow: hidden; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); text-overflow: ellipsis; white-space: nowrap; }
+.m-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+/* Chips scroll sideways in one row instead of wrapping into a grid. */
+.m-chips {
+  display: flex;
+  gap: 8px;
+  margin: 0 calc(var(--m-gutter) * -1);
+  padding: 2px var(--m-gutter) 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--m-gutter);
+  scrollbar-width: none;
+}
+.m-chips::-webkit-scrollbar { display: none; }
+.m-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 600;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  cursor: pointer;
+  /* The visible chip is 36px; the hit area reaches 44px. */
+  position: relative;
+}
+.m-chip::after { position: absolute; inset: -4px 0; content: ''; }
+.m-chip[aria-pressed='true'], .m-chip[aria-selected='true'], .m-chip.is-active {
+  border-color: var(--focus-ring);
+  background: var(--grab-green);
+  color: var(--on-brand);
+}
+
+/* Buttons sized for thumbs. */
+.m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-btn--primary { background: var(--action-primary); color: var(--action-on-primary); }
+.m-btn--secondary { border-color: var(--border); background: var(--surface-elevated); color: var(--text-heading); }
+.m-btn--block { width: 100%; }
+.m-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* One primary action pinned above the tab bar. */
+.m-sticky-action {
+  position: sticky;
+  bottom: calc(var(--m-tabbar-h) + 8px);
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  margin: 16px calc(var(--m-gutter) * -1) 0;
+  padding: 10px var(--m-gutter);
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.m-sticky-action > .m-btn { flex: 1; }
+
+html[data-device='mobile'] :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+@media (forced-colors: active) {
+  .m-chip[aria-pressed='true'], .m-chip.is-active { forced-color-adjust: none; border: 2px solid Highlight; background: Highlight; color: HighlightText; }
+}
+
+/* Segmented control: two to four equal options (toggle buttons or tabs). */
+.m-seg {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  /* surface-muted matches the page ground in places; the hairline keeps the track visible. */
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.m-seg > button {
+  min-height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+.m-seg > button::after { position: absolute; inset: -3px 0; content: ''; }
+.m-seg > button:is([aria-pressed='true'], [aria-selected='true']) {
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-heading) 14%, transparent);
+}
+/* Small count badge on a chip or tab. */
+.m-chip__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--action-primary);
+  color: var(--action-on-primary);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+}
+/* Loading row shaped like the compact card: 104px photo beside the text. */
+html[data-device='mobile'] .m-sk-row { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; padding: 10px; border-radius: var(--radius-md); }
+html[data-device='mobile'] .m-sk-row > .sk-stack { min-width: 0; }
+
+/* Section pages (FeatureWorkspace): the app header already shows the page title, so the frame's
+   title and lead stay for screen readers only; its action/filter hosts keep working. */
+html[data-device='mobile'] #root .feature-workspace .page-frame__copy {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+/* With the title gone the frame's header is usually empty; drop its gap so content starts under the app header. */
+html[data-device='mobile']:root body #root .feature-workspace .page-frame:not(.page-frame--bleed) { padding-top: 12px; }
+html[data-device='mobile']:root body #root .feature-workspace .page-frame__header:not(:has(.page-frame__actions > *, .page-frame__filters > *)) { margin-bottom: -16px; }

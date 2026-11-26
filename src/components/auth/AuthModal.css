@@ -6,8 +6,9 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(12, 28, 22, 0.48);
-  backdrop-filter: blur(4px);
+  background: var(--overlay-scrim);
+  backdrop-filter: none;
+  background-color: var(--surface-elevated);
 }
 
 .auth-modal {
@@ -29,20 +30,20 @@
   border: 0;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 1.75rem;
+  font-size: var(--fs-2xl);
   line-height: 1;
   cursor: pointer;
 }
 
 .auth-modal__title {
   margin: 0 0 6px;
-  font-size: 1.5rem;
+  font-size: var(--fs-xl);
 }
 
 .auth-modal__subtitle {
   margin: 0 0 18px;
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
 }
 
 .auth-modal__submit,
@@ -54,20 +55,20 @@
   margin: 16px 0;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
 }
 
 .auth-modal__footer {
   margin: 14px 0 0;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   color: var(--text-secondary);
 }
 
 .auth-modal__footer button {
   border: 0;
   background: none;
-  color: var(--grab-green, #00b14f);
+  color: var(--grab-green);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -90,7 +91,7 @@
   }
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .auth-modal {
     animation: none;
   }

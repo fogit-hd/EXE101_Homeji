@@ -1,8 +1,9 @@
+import { ArrowUpRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { UserProfile } from '../../api/types'
 import { LandlordVerificationStatus, UserRole } from '../../api/types'
-import { formatPrice, landlordVerificationLabel, sleepHabitLabel, petPreferenceLabel, smokingPreferenceLabel } from '../../lib/labels'
+import { formatMonthlyRent, landlordVerificationLabel, sleepHabitLabel, petPreferenceLabel, smokingPreferenceLabel } from '../../lib/labels'
 import './ProfileOverview.css'
 
 type Props = {
@@ -26,7 +27,7 @@ export function ProfileOverview({ profile, verificationStatus, onEdit, contactEd
     <div className="profile-ready"><span className="profile-ready__icon"><SectionIcon kind="check" /></span><p><strong>Thông tin cơ bản đã lưu</strong></p></div>
     <div className="profile-details">
       <section className="profile-information profile-information--personal" aria-labelledby="profile-personal-heading">
-        <header className="profile-information__heading"><div className="profile-information__title"><span className="profile-section-icon"><SectionIcon kind="person" /></span><h2 id="profile-personal-heading">Thông tin cá nhân</h2></div><button type="button" className="profile-edit-button" onClick={() => onEdit('basic')}>Chỉnh sửa<span hidden aria-hidden="true">↗</span></button></header>
+        <header className="profile-information__heading"><div className="profile-information__title"><span className="profile-section-icon"><SectionIcon kind="person" /></span><h2 id="profile-personal-heading">Thông tin cá nhân</h2></div><button type="button" className="profile-edit-button" onClick={() => onEdit('basic')}>Chỉnh sửa<span hidden aria-hidden="true"><ArrowUpRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span></button></header>
         <dl className="profile-facts">
           <div><dt>Họ tên</dt><dd>{profile.displayName}</dd></div>
           <div><dt>Số điện thoại</dt><dd className={!profile.phone ? 'profile-facts__missing' : undefined}>{profile.phone || 'Chưa thêm'}</dd></div>
@@ -38,7 +39,7 @@ export function ProfileOverview({ profile, verificationStatus, onEdit, contactEd
       <section className="profile-information profile-information--roommate" aria-labelledby="profile-roommate-heading">
         <header className="profile-information__heading"><div className="profile-information__title"><span className="profile-section-icon"><SectionIcon kind="home" /></span><h2 id="profile-roommate-heading">Nhu cầu ở ghép</h2></div><span className="profile-optional">Tùy chọn</span></header>
         {profile.onboardingCompleted ? <><dl className="profile-facts profile-facts--roommate">
-          <div><dt>Ngân sách tối đa</dt><dd>{profile.maxBudget ? `${formatPrice(profile.maxBudget)}/tháng` : 'Chưa thêm'}</dd></div>
+          <div><dt>Ngân sách tối đa</dt><dd>{profile.maxBudget ? `${formatMonthlyRent(profile.maxBudget)}` : 'Chưa thêm'}</dd></div>
           <div><dt>Khu vực mong muốn</dt><dd>{profile.preferredArea || 'Chưa thêm'}</dd></div>
           <div><dt>Giờ giấc sinh hoạt</dt><dd>{sleepHabitLabel[profile.sleepHabit] || 'Chưa chọn'}</dd></div>
           <div><dt>Thói quen khác</dt><dd>{[petPreferenceLabel[profile.petPreference], smokingPreferenceLabel[profile.smokingPreference]].filter(Boolean).join(' · ') || 'Chưa chọn'}</dd></div>
@@ -48,8 +49,8 @@ export function ProfileOverview({ profile, verificationStatus, onEdit, contactEd
     </div>
     {contactEditor}
     <section className="profile-account-links" aria-label="Tiện ích tài khoản">
-      <Link to="/referrals"><span className="profile-link-icon"><SectionIcon kind="gift" /></span><span><strong>Mời bạn & voucher</strong><small>Link mời, quà đã nhận và ưu đãi của bạn</small></span><span className="profile-link-arrow" aria-hidden="true">↗</span></Link>
-      <Link to="/?section=payments"><span className="profile-link-icon"><SectionIcon kind="star" /></span><span><strong>{profile.isPremium ? 'Gói Premium của bạn' : 'Xem gói Premium'}</strong><small>{profile.isPremium ? 'Xem quyền lợi và thời hạn gói' : 'Chọn gói phù hợp với nhu cầu'}</small></span><span className="profile-link-arrow" aria-hidden="true">↗</span></Link>
+      <Link to="/referrals"><span className="profile-link-icon"><SectionIcon kind="gift" /></span><span><strong>Mời bạn & voucher</strong><small>Link mời, quà đã nhận và ưu đãi của bạn</small></span><span className="profile-link-arrow" aria-hidden="true"><ArrowUpRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span></Link>
+      <Link to="/?section=payments"><span className="profile-link-icon"><SectionIcon kind="star" /></span><span><strong>{profile.isPremium ? 'Gói Premium của bạn' : 'Xem gói Premium'}</strong><small>{profile.isPremium ? 'Xem quyền lợi và thời hạn gói' : 'Chọn gói phù hợp với nhu cầu'}</small></span><span className="profile-link-arrow" aria-hidden="true"><ArrowUpRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span></Link>
     </section>
   </div>
 }

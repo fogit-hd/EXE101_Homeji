@@ -213,7 +213,7 @@ export const ConfettiConfirmButton = forwardRef<ConfettiConfirmHandle, Props>(
         type="button"
         className={`auth-cinema__confetti-btn is-${phase}`}
         onClick={handleConfirm}
-        aria-label={label}
+        aria-label={label} title={label}
         disabled={
           phase === 'playing' ||
           phase === 'recovering' ||

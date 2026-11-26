@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { X } from 'lucide-react'
 import type { AgentPostDraft } from '../../api/chatbotAgent'
 import type { ChatbotLocation } from '../../lib/chatbotLocation'
 import { AgentPostPreview } from '../ai/AgentPostPreview'
@@ -19,7 +20,7 @@ export function AgentDraftWorkspace({ draft, sharedLocation, active, open, close
       <header>
         <div><small>KHÔNG GIAN DUYỆT BÀI</small><strong>Bản nháp của bạn</strong></div>
         <button ref={closeRef} type="button" aria-label="Về hội thoại" onClick={onReturnToChat}>
-          Về hội thoại <span aria-hidden>×</span>
+          Về hội thoại <X aria-hidden="true" size={14} />
         </button>
       </header>
       <AgentPostPreview key={draft.id} draft={draft} sharedLocation={sharedLocation} active={active} onFinished={onFinished} />

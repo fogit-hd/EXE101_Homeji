@@ -19,19 +19,18 @@ export function HomejiAiButton({ tone = 'light' }: { tone?: 'light' | 'glass' })
       ref={ref}
       type="button"
       data-glass-exclude
-      className={`hj-ai-btn ai-spectrum-launcher is-${tone}${open ? ' is-open' : ''}`}
+      className={`hj-ai-btn is-${tone}${open ? ' is-open' : ''}`}
       aria-expanded={open}
       aria-haspopup="dialog"
       aria-controls={HOMEJI_AI_PANEL_ID}
-      aria-label="Homeji AI"
+      aria-label="Trợ lý AI" title="Trợ lý AI"
       {...{ [HOMEJI_AI_TRIGGER_ATTR]: '' }}
       onPointerEnter={event => { if (event.pointerType === 'mouse') requestHomejiAiLoad() }}
       onFocus={requestHomejiAiLoad}
       onClick={() => toggleHomejiAi(ref.current)}
     >
-      <span className="ai-spectrum-launcher__edge" aria-hidden="true" />
       <HomejiAgentMark />
-      <span className="hj-ai-btn__label">Homeji AI</span>
+      <span className="hj-ai-btn__label">Trợ lý AI</span>
     </button>
   )
 }

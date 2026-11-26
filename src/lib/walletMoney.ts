@@ -1,14 +1,7 @@
 const amountFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
 
-/** Shared available-balance display for the marketplace header and Số dư summary. */
-const availableBalanceFormat = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
 export function formatAvailableBalance(value: number): string {
-  return availableBalanceFormat.format(Math.round(value))
+  return `${amountFormat.format(Math.round(value))} đ`
 }
 
 const ledgerTimeFormat = new Intl.DateTimeFormat('vi-VN', {
@@ -20,7 +13,7 @@ const ledgerTimeFormat = new Intl.DateTimeFormat('vi-VN', {
 
 /** One formatter for every Số dư surface (header, summary, forms, ledger). */
 export function formatWalletAmount(value: number): string {
-  return `${amountFormat.format(Math.abs(Math.round(value)))} ₫`
+  return `${amountFormat.format(Math.abs(Math.round(value)))} đ`
 }
 
 export function formatWalletSigned(value: number): string {

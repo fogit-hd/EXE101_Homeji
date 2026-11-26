@@ -1,6 +1,15 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { animate, type AnimationPlaybackControlsWithThen, type DOMKeyframesDefinition } from 'motion/react'
 import { DURATION, EASE } from '../../lib/motionTokens'
+
+const reducedMotionQuery = () => window.matchMedia('(prefers-reduced-motion: reduce)')
+const subscribeReducedMotion = (listener: () => void) => {
+  const query = reducedMotionQuery()
+  query.addEventListener('change', listener)
+  return () => query.removeEventListener('change', listener)
+}
+const getReducedMotion = () => reducedMotionQuery().matches
+const serverReducedMotion = () => false
 
 /**
  * Retain a closing surface briefly; it becomes inert immediately, before its exit finishes.
@@ -9,7 +18,7 @@ import { DURATION, EASE } from '../../lib/motionTokens'
 export function useMotionPresence(open: boolean, kind: 'popup' | 'collapse' | 'fade' = 'popup') {
   const [retained, setRetained] = useState(open)
   const ref = useRef<HTMLDivElement>(null)
-  const reduced = false // always animate, regardless of OS reduced-motion
+  const reduced = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, serverReducedMotion)
   if (open && !retained) setRetained(true)
   const present = open || retained
 

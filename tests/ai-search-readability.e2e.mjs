@@ -21,7 +21,7 @@ const result = { criteria: { budgetBasis: 'rent', unknown: [], criteria: [], req
 await writeFile(`${out}/index.html`, '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI search readability fixture</title><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
 await writeFile(`${out}/scene.tsx`, `
 import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter,useLocation,useNavigate}from'react-router-dom';import{ChatbotProvider}from'/src/contexts/ChatbotContext.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import{AiSearchReview}from'/src/components/ai/AiSearchReview.tsx';import{AiSearchDialog}from'/src/components/ai/AiSearchDialog.tsx';import{NaturalRentalSearch}from'/src/components/ai/NaturalRentalSearch.tsx';import{RoomDetailModal}from'/src/components/map/listings/RoomDetailModal.tsx';import{toggleHomejiAi}from'/src/lib/homejiAiLauncher.ts';
-import'/src/index.css';import'/src/ui-consistency.css';import'/src/ai-spectrum.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';import'/src/components/theme/dark-theme.css';import'/src/components/ai/RentalAssistant.css';
+import'/src/index.css';import'/src/ui-consistency.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';import'/src/components/theme/dark-theme.css';import'/src/components/ai/RentalAssistant.css';
 const result=${JSON.stringify(result)};
 function Scene(){const route=useLocation();const navigate=useNavigate();const[reviewOpen,setReviewOpen]=useState(true);const postId=new URLSearchParams(route.search).get('post');const mode=new URLSearchParams(location.search).get('scene');return <main style={{padding:16,maxWidth:900,margin:'auto',paddingBottom:100}}><p>Kiểm thử local · dữ liệu giả</p>{postId?<RoomDetailModal listingId={postId} onClose={()=>navigate('/')} onOpenMessages={()=>{}}/>:mode==='chat'?<button data-homeji-ai-trigger="" onClick={event=>toggleHomejiAi(event.currentTarget,true)}>Mở trợ lý kiểm thử</button>:mode==='compact'?<NaturalRentalSearch/>:mode==='review-dialog'?(reviewOpen?<AiSearchDialog result={{...result,criteria:{...result.criteria,budgetBasis:'total',unknown:['feeUnits']}}} busy={false} onClose={()=>setReviewOpen(false)} onApply={()=>{}} onCorrection={()=>{}}/>:null):<AiSearchReview result={result} onApply={()=>{}} onRefine={()=>{}}/>}</main>}
 createRoot(document.getElementById('root')).render(<MemoryRouter><ToastProvider><ChatbotProvider><Scene/></ChatbotProvider></ToastProvider></MemoryRouter>);`)
@@ -89,7 +89,7 @@ try {
       await composer.fill('Bản nháp tiếp theo chưa gửi')
       assert.equal(await page.locator('.map-chatbot__body').evaluate(body => body.scrollTop), initial.scroll, 'Typing must not reset reading position')
     } else if (scene === 'compact') {
-      await page.getByRole('button', { name: 'Gợi ý AI', exact: true }).click()
+      await page.getByRole('button', { name: 'Tìm bằng AI', exact: true }).click()
       await page.getByRole('textbox', { name: 'Mô tả nhu cầu của bạn', exact: true }).fill('Tìm phòng ở Quận 9')
       await page.getByRole('button', { name: 'Tìm theo nhu cầu', exact: true }).click()
       await page.locator('.ai-suggest-review__card').first().waitFor()
@@ -143,7 +143,7 @@ try {
     } else if (scene === 'compact') {
       await page.locator('.ai-suggest-review__card').first().click()
       await page.getByRole('dialog', { name: 'Chi tiết căn hộ', exact: true }).waitFor()
-      assert.equal(await page.getByRole('dialog', { name: 'Gợi ý AI tìm phòng', exact: true }).count(), 0)
+      assert.equal(await page.getByRole('dialog', { name: 'Tìm phòng bằng AI', exact: true }).count(), 0)
     }
     assert.equal(writes.length, 0)
     assert.deepEqual(errors, [])

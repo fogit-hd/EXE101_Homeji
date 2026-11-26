@@ -3,11 +3,11 @@
   grid-column: 1 / span 9;
   order: 1;
   min-width: 0;
-  min-height: 244px;
-  border: 1px solid #dfe8e0;
-  border-radius: 18px;
+  min-height: 300px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
   font-family: 'Be Vietnam Pro', var(--font-ui);
   isolation: isolate;
 }
@@ -17,7 +17,7 @@
   inset: 0;
   display: flex;
   align-items: center;
-  padding: 26px 40px 40px;
+  padding: 26px 40px 64px;
 }
 
 .hub-promo__art {
@@ -36,18 +36,10 @@
   max-width: min(520px, 56%);
 }
 
-.hub-promo__eyebrow {
-  margin: 0 0 8px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .hub-promo__title {
   margin: 0;
-  color: #354d2b;
-  font-size: 2.125rem;
+  color: var(--text-heading);
+  font-size: var(--fs-display);
   font-weight: 700;
   line-height: 2.5rem;
 }
@@ -57,23 +49,25 @@
 .hub-promo__sub {
   margin: 8px 0 18px;
   max-width: 440px;
-  color: #5d6b60;
-  font-size: 0.875rem;
-  line-height: 1.3125rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
+  line-height: 21px;
 }
 
 .hub-promo__cta {
+  min-height: 44px;
+  align-items: center;
   /* Banner illustrations keep a light canvas in both application themes. */
-  --glass-ink: #183b46;
+  --glass-ink: var(--text-heading);
   --control-glass-fill: color-mix(in srgb,var(--promo-accent) 12%,transparent);
   display: inline-flex;
   padding: 10px 18px;
   border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb,var(--promo-accent) 14%,#fff);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb,var(--promo-accent) 14%,var(--surface));
   color: var(--glass-ink);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -89,38 +83,55 @@
 .hub-promo__dots {
   position: absolute;
   left: 40px;
-  bottom: 14px;
+  bottom: 4px;
   z-index: 2;
   display: flex;
-  gap: 6px;
+  gap: 0;
   align-items: center;
 }
 
 .hub-promo__dots button {
   position: relative;
-  width: 7px;
-  height: 7px;
+  flex: 0 0 44px;
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 9px;
-  background: #354d2b33;
+  border-radius: var(--radius-sm);
+  background: transparent;
   cursor: pointer;
-  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+
 }
 
-.hub-promo__dots button.is-on { width: 22px; }
+.hub-promo__dots button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-sm);
+  background: var(--border);
+}
+.hub-promo__dots button.is-on::before { width: 22px; background: var(--text-heading); }
 
 .hub-promo__dots span {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 7px;
+  transform: translate(-50%, -50%);
   border-radius: inherit;
-  background: #354d2b;
+  background: var(--text-heading);
 }
 
 .hub-promo__arrows {
   position: absolute;
   right: 14px;
-  bottom: 10px;
+  bottom: 4px;
   z-index: 2;
   display: flex;
   gap: 6px;
@@ -129,23 +140,23 @@
 .hub-promo__arrows button {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0 0 2px;
-  border: 1px solid #dfe8e0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
   border-radius: 50%;
-  background: #fff;
-  color: #354d2b;
-  font-size: 1.125rem;
+  background: var(--surface);
+  color: var(--text-heading);
+  font-size: var(--fs-lead);
   line-height: 1;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 
-.hub-promo__arrows button:hover { border-color: #00b14f; color: #00b14f; }
+.hub-promo__arrows button:hover { border-color: var(--grab-green); color: var(--grab-green); }
 
 .hub-promo button:focus-visible,
-.hub-promo a:focus-visible { outline: 2px solid #00b14f; outline-offset: 2px; }
+.hub-promo a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 .hub-promo--rail {
   grid-column: auto;
@@ -170,30 +181,27 @@
   max-width: 100%;
   z-index: 1;
 }
-.hub-promo--rail .hub-promo__eyebrow {
-  margin-bottom: 6px;
-}
 .hub-promo--rail .hub-promo__title {
-  font-size: 1.3125rem;
-  line-height: 1.6875rem;
+  font-size: var(--fs-xl);
+  line-height: 27px;
 }
 .hub-promo--rail .hub-promo__sub {
   margin: 6px 0 14px;
   max-width: 64%;
-  font-size: 0.8125rem;
-  line-height: 1.1875rem;
+  font-size: var(--fs-sm);
+  line-height: 19px;
 }
 .hub-promo--rail .hub-promo__cta {
   padding: 8px 14px;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
 }
 .hub-promo--rail .hub-promo__dots {
   left: 20px;
-  bottom: 14px;
+  bottom: 4px;
 }
 .hub-promo--rail .hub-promo__arrows {
   right: 12px;
-  bottom: 10px;
+  bottom: 4px;
 }
 
 @media (max-width: 1024px) {
@@ -209,10 +217,30 @@
   .hub-promo__slide { align-items: flex-start; padding: 22px 20px 52px; }
   .hub-promo--rail .hub-promo__slide { padding: 20px 20px 52px; }
   .hub-promo__copy { max-width: 100%; }
-  .hub-promo__title { font-size: 1.5rem; line-height: 1.875rem; }
-  .hub-promo--rail .hub-promo__title { font-size: 1.3125rem; line-height: 1.6875rem; }
-  .hub-promo__sub { margin-bottom: 14px; font-size: 0.8125rem; line-height: 1.1875rem; max-width: 62%; }
+  .hub-promo__title { font-size: var(--fs-heading); line-height: 30px; }
+  .hub-promo--rail .hub-promo__title { font-size: var(--fs-xl); line-height: 27px; }
+  .hub-promo__sub { margin-bottom: 14px; font-size: var(--fs-sm); line-height: 19px; max-width: 62%; }
   .hub-promo__art { top: auto; bottom: 0; margin: 0; width: 240px; height: 139px; right: -24px; opacity: 0.95; }
   .hub-promo--rail .hub-promo__art { bottom: 20px; right: -14px; width: 172px; height: 100px; }
   .hub-promo__dots { left: 20px; }
+}
+
+/* Dark theme: the slides' painted light backgrounds come from inline styles and left the
+   light-on-light title unreadable; use a dark surface with a warm tint and the brand accent. */
+html[data-theme='dark'] .hub-promo__slide {
+  background-image: radial-gradient(color-mix(in srgb, var(--text-secondary) 22%, transparent) 1.2px, transparent 1.3px),
+    linear-gradient(100deg, var(--surface-elevated) 55%, color-mix(in srgb, var(--action-primary) 16%, var(--surface-elevated)));
+}
+html[data-theme='dark'] .hub-promo__title em { color: var(--action-primary); }
+
+/* A narrow rail keeps pagination and arrows on separate rows. */
+.hub-promo--rail { min-height: 348px; }
+.hub-promo--rail .hub-promo__slide { bottom: 48px; }
+.hub-promo--rail .hub-promo__dots { left: 12px; bottom: 52px; }
+@media (max-width: 480px) {
+  .hub-promo { min-height: 348px; }
+  .hub-promo__slide { bottom: 48px; }
+  .hub-promo__dots { left: 12px; bottom: 52px; }
+  .hub-promo--rail .hub-promo__dots { left: 12px; bottom: 52px; }
+  .hub-promo--rail { min-height: 348px; }
 }

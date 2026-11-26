@@ -97,7 +97,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
     <div className={`admin-analytics${loading ? ' is-loading' : ''}`} aria-busy={loading}>
       <div className="admin-analytics__toolbar">
         <div>
-          <span className="admin-analytics__eyebrow">Tổng quan sản phẩm</span>
+          
           <h2>Hoạt động & thị trường</h2>
           <p>Dữ liệu từ hệ thống Homeji, không phải dự báo do AI tự sinh. Có thể bao gồm tin mẫu và hoạt động kiểm thử; cần đối soát trước quyết định kinh doanh.</p>
         </div>
@@ -133,7 +133,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
         <section className="admin-analytics__panel admin-analytics__map-panel">
           <div className="admin-analytics__panel-heading">
             <div>
-              <span className="admin-analytics__eyebrow">Ưu tiên bản đồ</span>
+              
               <h3>Thị trường theo phường</h3>
             </div>
             <span className="admin-analytics__legend">Kích thước = số tin · màu = tín hiệu giá</span>
@@ -155,7 +155,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
         <section className="admin-analytics__panel admin-analytics__trend-panel">
           <div className="admin-analytics__panel-heading">
             <div>
-              <span className="admin-analytics__eyebrow">Xu hướng</span>
+              
               <h3>Biểu đồ hoạt động theo ngày</h3>
             </div>
           </div>
@@ -188,7 +188,7 @@ export function AdminAnalyticsDashboard({ data, days, loading, onDaysChange }: P
       <section className="admin-analytics__panel">
         <div className="admin-analytics__panel-heading">
           <div>
-            <span className="admin-analytics__eyebrow">Hành động đề xuất</span>
+            
             <h3>Khu vực cần quyết định</h3>
           </div>
           <span className="admin-analytics__legend">Tín hiệu dùng quy tắc minh bạch, không tự thay đổi giá</span>

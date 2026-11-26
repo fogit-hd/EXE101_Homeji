@@ -234,7 +234,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 }
 
 .explore-search__list [role='option'] span {
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   color: var(--nb-muted);
 }
 
@@ -319,7 +319,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-scene__select select option {
   font-family: var(--nb-print);
-  font-size: 0.9375rem;
+  font-size: var(--fs-lg);
   color: #16213f;
 }
 
@@ -406,12 +406,7 @@ html[data-theme='dark'] .hl .explore-search__input {
     linear-gradient(var(--nb-cell-strong), var(--nb-cell-strong)) 50px 26px / 112px 72px no-repeat,
     linear-gradient(var(--nb-cell), var(--nb-cell)) 178px 30px / 120px 14px no-repeat,
     linear-gradient(var(--nb-cell), var(--nb-cell)) 178px 56px / 220px 12px no-repeat;
-  animation: explore-ink-pulse 1.4s ease-in-out infinite alternate;
-}
-
-@keyframes explore-ink-pulse {
-  from { opacity: 0.55; }
-  to { opacity: 1; }
+  animation: none;
 }
 
 .explore-card__open {
@@ -501,7 +496,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-card__price {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: var(--fs-xl);
   line-height: 1.15;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
@@ -510,12 +505,12 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-card__price small {
   font-weight: 400;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   color: var(--nb-muted);
 }
 
 .explore-card__title {
-  font-size: 0.9375rem;
+  font-size: var(--fs-lg);
   font-weight: 500;
   line-height: 1.35;
   color: var(--nb-text);
@@ -605,7 +600,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 }
 
 .explore-scene__state .explore-scene__hint {
-  font-size: 1.125rem;
+  font-size: var(--fs-lead);
 }
 
 .explore-scene__state-actions {
@@ -722,12 +717,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   top: 10px;
   height: 3px;
   background: linear-gradient(90deg, transparent, var(--nb-hl-solid), transparent) 0 0 / 40% 100% no-repeat;
-  animation: explore-scan 1.1s ease-in-out infinite;
-}
-
-@keyframes explore-scan {
-  from { background-position: -40% 0; }
-  to { background-position: 140% 0; }
+  animation: none;
 }
 
 .explore-scene__map-actions {
@@ -756,7 +746,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   padding: 0 7px;
   box-sizing: border-box;
   border: 2.5px solid var(--nb-ink);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--nb-paper);
   color: var(--nb-ink);
   font: 1.125rem/1 var(--nb-hand);
@@ -768,7 +758,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
 .explore-scene .explore-pin small {
   margin-left: 1px;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   color: var(--nb-ink-soft);
 }
 
@@ -852,8 +842,8 @@ html[data-theme='dark'] .hl .explore-search__input {
 @media (max-width: 1023px) {
   .explore-scene {
     --nb-margin-x: 22px;
-    height: calc(100svh - var(--mobile-tabbar-height, 56px) - env(safe-area-inset-bottom, 0px));
-    max-height: calc(100svh - var(--mobile-tabbar-height, 56px) - env(safe-area-inset-bottom, 0px));
+    height: calc(100svh - var(--mobile-tabbar-height, 56px) - var(--safe-bottom));
+    max-height: calc(100svh - var(--mobile-tabbar-height, 56px) - var(--safe-bottom));
     padding: 14px 14px 8px calc(var(--nb-margin-x) + 14px);
   }
 
@@ -875,7 +865,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
   .explore-search__input {
     min-height: 44px;
-    font-size: 1.375rem;
+    font-size: var(--fs-heading);
   }
 
   .explore-scene__radius {
@@ -886,7 +876,7 @@ html[data-theme='dark'] .hl .explore-search__input {
 
   .explore-scene__radius button {
     min-height: 40px;
-    font-size: 1.375rem;
+    font-size: var(--fs-heading);
   }
 
   .explore-scene__filters--desktop { display: none; }
@@ -973,7 +963,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   }
 
   .explore-scene__list-head h3 {
-    font-size: 1.25rem;
+    font-size: var(--fs-xl);
     margin: 0;
   }
 
@@ -1019,7 +1009,7 @@ html[data-theme='dark'] .hl .explore-search__input {
   .explore-card__num {
     width: 26px;
     height: 26px;
-    font-size: 1rem;
+    font-size: var(--fs-lg);
   }
 
   .explore-card__photo {
@@ -1027,12 +1017,12 @@ html[data-theme='dark'] .hl .explore-search__input {
     height: 72px;
   }
 
-  .explore-card__price { font-size: 1.0625rem; }
+  .explore-card__price { font-size: var(--fs-lead); }
   /* Monthly rent is implied on the narrow index cards. */
   .explore-card__price small { display: none; }
-  .explore-card__title { font-size: 0.875rem; }
-  .explore-card__meta { font-size: 1.0625rem; }
-  .explore-card__verified { font-size: 0.9375rem; }
+  .explore-card__title { font-size: var(--fs-md); }
+  .explore-card__meta { font-size: var(--fs-lead); }
+  .explore-card__verified { font-size: var(--fs-lg); }
 
   .explore-card__save {
     top: 6px;
@@ -1061,5 +1051,5 @@ html[data-theme='dark'] .hl .explore-search__input {
   }
 
   .explore-scene__continue { margin-top: 6px; }
-  .explore-scene__continue-link { font-size: 1.25rem; min-height: 36px; }
+  .explore-scene__continue-link { font-size: var(--fs-xl); min-height: 36px; }
 }

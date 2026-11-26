@@ -1,34 +1,34 @@
 /* Dense workspaces use quiet surfaces; optical controls must not frame their content. */
 html:root :is(#root, body) .choice-picker__panel {
   background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border);
-  border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px #0002; backdrop-filter: none;
+  border-radius: var(--radius-md); padding: 6px; box-shadow: var(--shadow-pop); backdrop-filter: none;
 }
 html:root body .choice-picker__heading { padding: 8px 10px; }
-html:root body .choice-picker__heading strong { font-size: 0.875rem; }
+html:root body .choice-picker__heading strong { font-size: var(--fs-md); }
 html:root body .choice-picker__foot, html:root body .choice-picker__radio { display: none; }
 html:root body .choice-picker__options { outline: none; padding: 0; }
-html:root body .choice-picker__option { border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--text-primary); }
+html:root body .choice-picker__option { border: 0; border-radius: var(--radius-sm); background: transparent; box-shadow: none; color: var(--text-primary); }
 html:root body .choice-picker__option::before, html:root body .choice-picker__option::after { display: none; }
 html:root body .choice-picker__option:is([aria-selected='true'],[data-active]) { background: var(--surface-muted); color: var(--text-heading); }
 html:root body .choice-picker__option[data-active] { outline: 1px solid var(--text-secondary); outline-offset: -2px; }
-html:root #root .food-preset-grid button { border-radius: 10px; border: 1px solid var(--border); padding: 8px; background: var(--surface-elevated); color: var(--text-heading); box-shadow: none; }
+html:root #root .food-preset-grid button { border-radius: var(--radius-md); border: 1px solid var(--border); padding: 8px; background: var(--surface-elevated); color: var(--text-heading); box-shadow: none; }
 html:root #root .food-preset-grid button::before, html:root #root .food-preset-grid button::after { display: none; }
-html:root #root .food-preset-grid button strong { color: var(--hj-accent); }
-html:root #root .food-preset-grid img { border-radius: 6px; }
-html:root #root .wallet-input { background: var(--surface-input); border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
-html:root #root .wallet-input:focus-within { border-color: var(--text-primary); outline: none; box-shadow: none; }
-html:root #root .wallet-input input { background: transparent !important; color: var(--text-primary); border: 0 !important; border-radius: 0; box-shadow: none !important; outline: none !important; min-width: 0; }
+html:root #root .food-preset-grid button strong { color: var(--grab-green); }
+html:root #root .food-preset-grid img { border-radius: var(--radius-sm); }
+html:root #root .wallet-input { background: var(--surface-input); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: none; }
+html:root #root .wallet-input:focus-within { border-color: var(--focus-ring); outline: 2px solid var(--focus-ring); outline-offset: 2px; box-shadow: none; }
+html:root #root .wallet-input input { background: transparent; color: var(--text-primary); border: 0; border-radius: 0; box-shadow: none; outline: none; min-width: 0; }
 html:root #root .wallet-input input::before, html:root #root .wallet-input input::after { display: none; }
 html:root #root .wallet-deposit__amount { height: 70px; padding: 10px 16px; }
-html:root #root .wallet-deposit__amount input { font-size: clamp(1.5rem,4vw,2.125rem); font-weight: 650; font-variant-numeric: tabular-nums; }
-html:root #root .wallet-deposit__card { max-width: 720px; border-radius: 12px; }
-html:root #root .wallet-deposit__card h2 { font-size: 1.625rem; }
-html:root #root .wallet-methods button { border-radius: 10px; background: var(--surface-elevated); box-shadow: none; }
+html:root #root .wallet-deposit__amount input { font-size: clamp(24px,4vw,34px); font-weight: 650; font-variant-numeric: tabular-nums; }
+html:root #root .wallet-deposit__card { max-width: 720px; border-radius: var(--radius-md); }
+html:root #root .wallet-deposit__card h2 { font-size: var(--fs-2xl); }
+html:root #root .wallet-methods button { border-radius: var(--radius-md); background: var(--surface-elevated); box-shadow: none; }
 html:root #root .wallet-methods button::before, html:root #root .wallet-methods button::after { display: none; }
-html:root #root .wallet-methods button.is-active { border: 2px solid var(--hj-accent); }
+html:root #root .wallet-methods button.is-active { border: 2px solid var(--focus-ring); }
 html:root #root .wallet-table { min-width: 800px; table-layout: auto; }
 html:root #root .wallet-table th, html:root #root .wallet-table td { border-color: var(--border); text-align: left; line-height: 1.5; }
-html:root #root .wallet-table td:nth-child(3) { max-width: 170px; overflow-wrap: anywhere; font-family: ui-monospace,monospace; font-size: 0.6875rem; }
+html:root #root .wallet-table td:nth-child(3) { max-width: 170px; overflow-wrap: anywhere; font-family: ui-monospace,monospace; font-size: var(--fs-xs); }
 html:root #root .wallet-table td:nth-last-child(-n+2) { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
 html:root #root .wallet-table th:nth-last-child(-n+2) { text-align: right; }
 html:root #root .wallet-table td:nth-child(2), html:root #root .wallet-pill { white-space: nowrap; }
@@ -43,98 +43,98 @@ html:root #root .wallet-cards .wallet-pill { grid-column: 1 / -1; justify-self: 
   html:root #root .wallet-cards { display: block; }
 }
 html:root #root .pay-table__row { grid-template-columns: minmax(180px,1.5fr) minmax(130px,1fr) minmax(135px,1fr) 120px 110px; gap: 16px; border-radius: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text-primary); box-shadow: none; }
-html:root #root .pay-table__row.is-active { background: var(--hj-accent-soft); }
-html:root #root .pay-table__row small { overflow-wrap: anywhere; font-size: 0.6875rem; }
+html:root #root .pay-table__row.is-active { background: var(--brand-soft); }
+html:root #root .pay-table__row small { overflow-wrap: anywhere; font-size: var(--fs-xs); }
 html:root #root .pay-table__amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
 html:root #root .pay-table__row::before, html:root #root .pay-table__row::after { display: none; }
 @media(max-width:1250px) { html:root #root .pay-table__head { display: none; } html:root #root .pay-table__row { grid-template-columns: minmax(0,1fr) auto; } html:root #root .pay-table__plan { grid-column: 1 / -1; } html:root #root .pay-table__time { grid-column: 1; } html:root #root .pay-table__amount { grid-column: 2; grid-row: 2; } }
 html:root #root .roommate-workspace { gap: 24px; }
 html:root #root .roommate-workspace__lifestyle { order: 3; background: transparent; border-radius: 0; border: 0; border-top: 1px solid var(--border); padding: 20px 0; }
-html:root #root .roommate-workspace__lifestyle h2 { font-size: 1.0625rem; }
-html:root #root .roommate-workspace__lifestyle-toggle.btn { min-height: 40px; border-radius: 8px; padding: 8px 14px; box-shadow: none; }
+html:root #root .roommate-workspace__lifestyle h2 { font-size: var(--fs-lg); }
+html:root #root .roommate-workspace__lifestyle-toggle.btn { min-height: 44px; border-radius: var(--radius-sm); padding: 8px 14px; box-shadow: none; }
 html:root #root .roommate-inbox__heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-html:root #root .roommate-inbox__heading h2 { margin: 0 0 6px; font-size: 1.625rem; }
+html:root #root .roommate-inbox__heading h2 { margin: 0 0 6px; font-size: var(--fs-2xl); }
 html:root #root .roommate-inbox__heading p { margin: 0; color: var(--text-secondary); }
-html:root #root .roommate-inbox__total { white-space: nowrap; color: var(--text-secondary); font-size: 0.8125rem; }
+html:root #root .roommate-inbox__total { white-space: nowrap; color: var(--text-secondary); font-size: var(--fs-sm); }
 html:root #root .roommate-inbox__filters { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-html:root #root .roommate-inbox__filters button { padding: 9px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font: inherit; font-size: 0.875rem; }
-html:root #root .roommate-inbox__filters button[aria-pressed='true'] { background: var(--hj-accent-soft); color: var(--text-heading); font-weight: 700; }
+html:root #root .roommate-inbox__filters button { padding: 9px 12px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); cursor: pointer; font: inherit; font-size: var(--fs-md); }
+html:root #root .roommate-inbox__filters button[aria-pressed='true'] { background: var(--brand-soft); color: var(--text-heading); font-weight: 700; }
 html:root #root .roommate-grid { display: flex; flex-direction: column; gap: 0; }
 html:root #root .roommate-card { grid-template-columns: 44px minmax(0,1fr); border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 22px 8px; background: transparent; box-shadow: none; transform: none; }
-html:root #root .roommate-card__avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--hj-accent-soft); color: var(--hj-accent); font-style: normal; font-size: 1.125rem; }
+html:root #root .roommate-card__avatar { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--brand-soft); color: var(--grab-green); font-style: normal; font-size: var(--fs-lg); }
 html:root #root .roommate-card__body { gap: 7px; }
-html:root #root .roommate-card__name { font-size: 1.0625rem; color: var(--text-heading); }
-html:root #root .roommate-card__post { white-space: normal; color: var(--text-primary); font-size: 0.875rem; }
+html:root #root .roommate-card__name { font-size: var(--fs-lg); color: var(--text-heading); }
+html:root #root .roommate-card__post { white-space: normal; color: var(--text-primary); font-size: var(--fs-md); }
 html:root #root :is(.roommate-card__role,.roommate-card__date,.roommate-empty__copy) { color: var(--text-secondary); }
-html:root #root .roommate-card__status { background: var(--surface-muted); color: var(--text-secondary); padding: 4px 8px; border-radius: 5px; }
-html:root #root .roommate-card__status.is-pending { background: var(--hj-accent-soft); color: var(--hj-accent); }
-html:root #root .roommate-empty { border: 0; background: var(--surface-muted); border-radius: 12px; padding: 60px 20px; }
+html:root #root .roommate-card__status { background: var(--surface-muted); color: var(--text-secondary); padding: 4px 8px; border-radius: var(--radius-sm); }
+html:root #root .roommate-card__status.is-pending { background: var(--brand-soft); color: var(--grab-green); }
+html:root #root .roommate-empty { border: 0; background: var(--surface-muted); border-radius: var(--radius-md); padding: 60px 20px; }
 html:root #root .roommate-empty__title { color: var(--text-heading); }
-html:root #root .roommate-card__actions .btn { border-radius: 7px; box-shadow: none; min-height: 40px; padding: 8px 16px; }
-html:root #root .map-listings__card { border-radius: 16px; border: 1px solid color-mix(in srgb,var(--hj-accent) 18%,var(--border)); padding: 0; background: var(--surface-elevated); box-shadow: 0 4px 16px rgb(19 55 64 / .08); transition: border-color 180ms ease, box-shadow 180ms ease; }
-html:root #root .map-listings__card:is(:hover,:focus-within,.is-hot) { border-color: color-mix(in srgb,var(--hj-accent) 55%,var(--border)); box-shadow: 0 8px 24px rgb(19 55 64 / .14); }
-html:root #root .map-listings__card.is-selected { border: 2px solid var(--hj-accent); background: color-mix(in srgb,var(--hj-accent) 5%,var(--surface-elevated)); box-shadow: 0 0 0 3px var(--hj-accent-soft); }
+html:root #root .roommate-card__actions .btn { border-radius: var(--radius-sm); box-shadow: none; min-height: 40px; padding: 8px 16px; }
+html:root #root .map-listings__card { border-radius: var(--radius-lg); border: 1px solid color-mix(in srgb,var(--grab-green) 18%,var(--border)); padding: 0; background: var(--surface-elevated); box-shadow: none; transition: border-color 180ms ease, box-shadow 180ms ease; }
+html:root #root .map-listings__card:is(:hover,:focus-within,.is-hot) { border-color: color-mix(in srgb,var(--focus-ring) 55%,var(--border)); box-shadow: 0 8px 24px rgba(var(--shadow-color), .14); }
+html:root #root .map-listings__card.is-selected { border: 2px solid var(--focus-ring); background: color-mix(in srgb,var(--grab-green) 5%,var(--surface-elevated)); box-shadow: none; }
 /* Map-side rows keep compact images; list cards use a full-width cover. */
 html:root #root .map-listings:not(.map-listings--list) .map-listings__card-hit { gap: 12px; padding: 14px 48px 8px 14px; grid-template-columns: 96px minmax(0,1fr); }
-html:root #root .map-listings:not(.map-listings--list) .map-listings__card-photo { width: 96px; height: 116px; border-radius: 8px; }
-html:root #root .map-listings--list .map-listings__card-hit { padding: 0; gap: 0; border-radius: 15px 15px 0 0; overflow: hidden; }
-html:root #root .map-listings--list .map-listings__card-photo { display: block; width: 100%; height: auto; max-height: none; aspect-ratio: 16 / 10; border-radius: 15px 15px 0 0; background: var(--surface-input); }
+html:root #root .map-listings:not(.map-listings--list) .map-listings__card-photo { width: 96px; height: 116px; border-radius: var(--radius-sm); }
+html:root #root .map-listings--list .map-listings__card-hit { padding: 0; gap: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
+html:root #root .map-listings--list .map-listings__card-photo { display: block; width: 100%; height: auto; max-height: none; aspect-ratio: 16 / 10; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--surface-input); }
 html:root #root .map-listings--list .map-listings__card-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 html:root #root .map-listings--list .map-listings__card-copy { padding: 18px 20px 16px; gap: 10px; }
-html:root #root .map-listings--list .map-listings__price { font-size: 1.375rem; color: var(--hj-accent); font-weight: 700; }
-html:root #root .map-listings--list .map-listings__name { color: var(--text-heading); font-size: 1rem; }
+html:root #root .map-listings--list .map-listings__price { font-size: var(--fs-xl); color: var(--grab-green); font-weight: 700; }
+html:root #root .map-listings--list .map-listings__name { color: var(--text-heading); font-size: var(--fs-lg); }
 html:root #root .map-listings--list .map-listings__address { min-height: 0; }
-html:root #root .map-listings__price { font-size: 1.1875rem; white-space: nowrap; }
-html:root #root .map-listings__price small { font-size: 0.6875rem; font-weight: 400; }
-html:root #root .map-listings__name { font-size: 0.9375rem; line-height: 1.45; }
-html:root #root .map-listings__address { font-size: 0.8125rem; line-height: 1.45; }
-html:root #root .map-listings__save { display: grid; place-items: center; box-sizing: border-box; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; line-height: 1; border-radius: 12px; background: var(--surface-elevated); color: var(--action-primary); border: 1px solid var(--border); box-shadow: 0 2px 8px rgb(19 55 64 / .12); top: 12px; right: 12px; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; }
+html:root #root .map-listings__price { font-size: var(--fs-xl); white-space: nowrap; }
+html:root #root .map-listings__price small { font-size: var(--fs-xs); font-weight: 400; }
+html:root #root .map-listings__name { font-size: var(--fs-md); line-height: 1.45; }
+html:root #root .map-listings__address { font-size: var(--fs-sm); line-height: 1.45; }
+html:root #root .map-listings__save { display: grid; place-items: center; box-sizing: border-box; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; line-height: 1; border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--action-primary); border: 1px solid var(--border); box-shadow: none; top: 12px; right: 12px; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; }
 html:root #root .map-listings__save svg { display: block; width: 20px; height: 20px; margin: 0; }
 html:root #root .map-listings__save.is-on { background: var(--action-primary); color: var(--action-on-primary); border-color: var(--action-primary); }
 html:root #root .map-listings__save:not(.is-on):hover:not(:disabled) { background: var(--action-soft); color: var(--action-on-soft); border-color: var(--action-primary); }
 html:root #root .map-listings__save.is-on:hover:not(:disabled) { background: var(--action-primary-hover); color: var(--action-on-primary); border-color: var(--action-primary-hover); }
 html:root #root .map-listings__save:focus-visible { outline: 3px solid var(--action-primary); outline-offset: 3px; }
 html:root #root .map-listings__save:disabled { opacity: .55; cursor: wait; }
-html:root #root .map-listings:not(.map-listings--list) .map-listings__card-open { padding: 8px 0 0 108px; min-height: 36px; font-size: 0.8125rem; }
-html:root #root .map-listings--list .map-listings__card-open { width: auto; min-height: 44px; margin: 0 20px 18px; padding: 10px 14px; border: 1px solid color-mix(in srgb,var(--hj-accent) 18%,var(--border)); border-radius: 9px; background: var(--action-soft); color: var(--action-on-soft); font-size: 0.8125rem; }
+html:root #root .map-listings:not(.map-listings--list) .map-listings__card-open { padding: 8px 0 0 108px; min-height: 36px; font-size: var(--fs-sm); }
+html:root #root .map-listings--list .map-listings__card-open { width: auto; min-height: 44px; margin: 0 20px 18px; padding: 10px 14px; border: 1px solid color-mix(in srgb,var(--grab-green) 18%,var(--border)); border-radius: var(--radius-sm); background: var(--action-soft); color: var(--action-on-soft); font-size: var(--fs-sm); }
 html:root #root .map-listings--list .map-listings__card-open:hover { background: var(--action-primary); border-color: var(--action-primary); color: var(--action-on-primary); }
 @media (prefers-reduced-motion: reduce) {
   html:root #root .map-listings__card { transition: none; }
 }
-html:root body .room-photo-viewer button { color: #fff !important; background: #25343b !important; border: 1px solid #87979e; box-shadow: none; }
+html:root body .room-photo-viewer button { color: var(--surface); background: var(--text-heading); border: 1px solid var(--control-border); box-shadow: none; }
 html:root body .room-photo-viewer button:disabled { opacity: .5; }
-html:root[data-theme='dark'] #root :is(.map-messages.is-workspace,.map-messages__split,.map-messages__inbox,.map-messages__thread,.map-messages__thread-empty,.map-messages__thread-head,.map-messages__composer-wrap,.map-messages__search-bar) { background: var(--surface) !important; color: var(--text-primary); border-color: var(--border); }
+html:root[data-theme='dark'] #root :is(.map-messages.is-workspace,.map-messages__split,.map-messages__inbox,.map-messages__thread,.map-messages__thread-empty,.map-messages__thread-head,.map-messages__composer-wrap,.map-messages__search-bar) { background: var(--surface); color: var(--text-primary); border-color: var(--border); }
 html:root[data-theme='dark'] #root .map-messages__row { background: transparent; color: var(--text-primary); border-color: var(--border); }
-html:root[data-theme='dark'] #root .map-messages__row.is-active { background: var(--hj-accent-soft); }
+html:root[data-theme='dark'] #root .map-messages__row.is-active { background: var(--brand-soft); }
 html:root[data-theme='dark'] #root :is(.map-messages__empty,.map-messages__meta small,.map-messages__peer-sub) { color: var(--text-secondary); }
 html:root[data-theme='dark'] #root :is(.map-messages__inbox-search,.map-messages__ctx-card,.map-messages__composer) { background: var(--surface-input); color: var(--text-primary); }
 html:root[data-theme='dark'] #root :is(.map-messages__search-bar input,.map-messages__inbox-search input,.map-messages__composer input) { color: var(--text-primary); }
 html:root[data-theme='dark'] #root .rental-map__btn img { filter: brightness(0) invert(1); }
 html:root[data-theme='dark'] #root .interest-launch { color: var(--text-heading); background: var(--surface-elevated); }
 html:root[data-theme='dark'] #root input[type='number'] { color-scheme: dark; }
-html:root #root .profile-badge.is-premium { background: var(--hj-accent-soft); color: var(--hj-accent); border: 1px solid var(--hj-accent); font-weight: 700; }
+html:root #root .profile-badge.is-premium { background: var(--brand-soft); color: var(--grab-green); border: 1px solid var(--grab-green); font-weight: 700; }
 html:root #root .profile-badge.is-premium::before { content: '✓ '; }
 
-html:root #root .profile-hero.is-premium .profile-hero__avatar { border: 2px solid var(--hj-accent); box-shadow: 0 0 0 4px var(--hj-accent-soft); }
-html:root #root .profile-hero.is-premium .profile-hero__name::after { content: '✓ Premium'; display: inline-block; margin-left: 10px; padding: 4px 8px; border-radius: 6px; background: var(--hj-accent-soft); color: var(--hj-accent); font-size: 0.75rem; vertical-align: middle; }
+html:root #root .profile-hero.is-premium .profile-hero__avatar { border: 2px solid var(--grab-green); box-shadow: none; }
+html:root #root .profile-hero.is-premium .profile-hero__name::after { content: '✓ Premium'; display: inline-block; margin-left: 10px; padding: 4px 8px; border-radius: var(--radius-sm); background: var(--brand-soft); color: var(--grab-green); font-size: var(--fs-xs); vertical-align: middle; }
 
-html:root #root :is(.roommate-workspace,.wallet-workspace,.map-messages) [role='tab'] { color: var(--text-secondary) !important; }
-html:root #root :is(.roommate-workspace,.wallet-workspace,.map-messages) [role='tab'][aria-selected='true'] { color: var(--text-heading) !important; }
-html:root #root .roommate-card__actions .btn-primary { background: #087f8c; color: #fff; }
-html:root #root .wallet-methods button { border-radius: 10px !important; background: var(--surface-input) !important; box-shadow: none !important; }
-html:root #root .wallet-amounts button { border-radius: 6px !important; box-shadow: none !important; background: var(--surface-input); color: var(--text-heading); }
-html:root[data-theme='dark'] #root .map-messages { --mm-text: #e0eaf0; --mm-muted: #b2c4ce; --mm-faint: #b2c4ce; --mm-line: #405966; --mm-bg: #0e1922; --mm-mint: #193f47; --mm-ink: #e0eaf0; --mm-green-ink: #80d9db; }
-html:root[data-theme='dark'] #root .map-messages__bubbles { background: var(--surface-muted) !important; }
-html:root[data-theme='dark'] #root :is(.map-messages__row.is-active,.map-messages__ctx-card,.map-messages__ctx-pop,.map-messages__attach-menu,.map-messages__day,.map-messages__bubble-body) { background: var(--surface-elevated) !important; color: var(--text-primary); }
-html:root[data-theme='dark'] #root :is(.map-messages__inbox-title,.map-messages__peer-name,.map-messages__meta strong,.map-messages__ctx-copy strong,.map-messages__loc-title) { color: var(--text-heading) !important; }
-html:root[data-theme='dark'] #root :is(.map-messages__ctx-copy b,.map-messages__loc-coords,.map-messages__loc-address,.map-messages__inbox-filters button) { color: var(--text-secondary) !important; }
-html:root[data-theme='dark'] #root .map-messages__loc-btn { background: var(--hj-accent-soft) !important; color: var(--hj-accent) !important; }
-html:root[data-theme='dark'] #root .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body { background: #136263 !important; color: #fff; }
+html:root #root :is(.roommate-workspace,.wallet-workspace,.map-messages) [role='tab'] { color: var(--text-secondary); }
+html:root #root :is(.roommate-workspace,.wallet-workspace,.map-messages) [role='tab'][aria-selected='true'] { color: var(--text-heading); }
+html:root #root .roommate-card__actions .btn-primary { background: var(--grab-green); color: var(--on-brand); }
+html:root #root .wallet-methods button { border-radius: var(--radius-md); background: var(--surface-input); box-shadow: none; }
+html:root #root .wallet-amounts button { border-radius: var(--radius-sm); box-shadow: none; background: var(--surface-input); color: var(--text-heading); }
+html:root[data-theme='dark'] #root .map-messages { --mm-text: var(--text-primary); --mm-muted: var(--text-secondary); --mm-faint: var(--text-secondary); --mm-line: var(--border); --mm-bg: var(--surface-muted); --mm-mint: var(--brand-soft); --mm-ink: var(--text-primary); --mm-green-ink: var(--grab-green); }
+html:root[data-theme='dark'] #root .map-messages__bubbles { background: var(--surface-muted); }
+html:root[data-theme='dark'] #root :is(.map-messages__row.is-active,.map-messages__ctx-card,.map-messages__ctx-pop,.map-messages__attach-menu,.map-messages__day,.map-messages__bubble-body) { background: var(--surface-elevated); color: var(--text-primary); }
+html:root[data-theme='dark'] #root :is(.map-messages__inbox-title,.map-messages__peer-name,.map-messages__meta strong,.map-messages__ctx-copy strong,.map-messages__loc-title) { color: var(--text-heading); }
+html:root[data-theme='dark'] #root :is(.map-messages__ctx-copy b,.map-messages__loc-coords,.map-messages__loc-address,.map-messages__inbox-filters button) { color: var(--text-secondary); }
+html:root[data-theme='dark'] #root .map-messages__loc-btn { background: var(--brand-soft); color: var(--grab-green); }
+html:root[data-theme='dark'] #root .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body { background: var(--brand-soft); color: var(--text-primary); }
 
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row.is-active,.map-messages__ctx-card) { background: var(--surface-elevated) !important; color: var(--text-heading) !important; }
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row.is-active strong,.map-messages__ctx-copy strong,.map-messages__ctx-copy b) { color: var(--text-heading) !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button { color: var(--text-primary) !important; }
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__new-icon,.map-messages__thread-actions button,.map-messages__attach-btn) { color: var(--text-primary) !important; background: var(--surface-input) !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row.is-active,.map-messages__ctx-card) { background: var(--surface-elevated); color: var(--text-heading); }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row.is-active strong,.map-messages__ctx-copy strong,.map-messages__ctx-copy b) { color: var(--text-heading); }
+html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button { color: var(--text-primary); }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__new-icon,.map-messages__thread-actions button,.map-messages__attach-btn) { color: var(--text-primary); background: var(--surface-input); }
 
 html:root #root .roommate-people__profile { order: 5; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 24px 0; background: transparent; }
 html:root #root .roommate-people__grid, html:root #root .roommate-posts__grid { display: flex; flex-direction: column; gap: 0; }
@@ -142,48 +142,48 @@ html:root #root .roommate-people__person, html:root #root .roommate-posts__card 
 html:root #root .roommate-people__person { display: grid; grid-template-columns: minmax(0,1fr) minmax(200px,1fr); gap: 14px 30px; }
 html:root #root .roommate-people__person-header { grid-column: 1 / -1; }
 html:root #root .roommate-people__person dl { grid-column: 2; grid-row: 2 / span 2; }
-html:root #root .roommate-people__person button { justify-self: start; border-radius: 7px; }
-html:root #root .roommate-people__person .btn-primary { background: #087f8c; color: #fff; box-shadow: none; }
-html:root #root .roommate-people__intents label { border-radius: 8px; background: var(--surface-elevated); }
+html:root #root .roommate-people__person button { justify-self: start; border-radius: var(--radius-sm); }
+html:root #root .roommate-people__person .btn-primary { background: var(--grab-green); color: var(--on-brand); box-shadow: none; }
+html:root #root .roommate-people__intents label { border-radius: var(--radius-sm); background: var(--surface-elevated); }
 html:root #root .roommate-posts__cost { border: 0; }
-html:root #root .roommate-posts__card h3 { font-size: 1.3125rem; }
-html:root #root .roommate-workspace__filters input { border-radius: 7px; box-shadow: none; }
+html:root #root .roommate-posts__card h3 { font-size: var(--fs-xl); }
+html:root #root .roommate-workspace__filters input { border-radius: var(--radius-sm); box-shadow: none; }
 @media(max-width:640px) { html:root #root .roommate-people__person { grid-template-columns: minmax(0,1fr); } html:root #root .roommate-people__person dl { grid-column: auto; grid-row: auto; } }
 
-html:root #root .seller-location-lock { background: transparent; border: 0; border-left: 2px solid var(--border); padding: 8px 12px; }
+html:root #root .seller-location-lock { background: transparent; border: 1px solid var(--border); padding: 8px 12px; }
 
 /* One readable contract for primary actions, including glass-rendered controls. */
-html:root :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: #087f8c !important; color: #fff !important; --glass-ink: #fff; }
-html:root[data-theme='dark'] :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: #80d9db !important; color: #103039 !important; --glass-ink: #103039; }
+html:root :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: var(--action-primary); color: var(--action-on-primary); --glass-ink: var(--action-on-primary); }
+html:root[data-theme='dark'] :is(#root,body) :is(.btn-primary,.pay-btn--primary) { background-color: var(--action-primary); color: var(--action-on-primary); --glass-ink: var(--action-on-primary); }
 
-html:root[data-theme='dark'] #root .map-listings__meta > span { background: var(--surface-input) !important; color: var(--text-primary) !important; }
-html:root[data-theme='dark'] #root .map-listings__move { background: var(--surface-elevated) !important; color: var(--text-primary) !important; }
+html:root[data-theme='dark'] #root .map-listings__meta > span { background: var(--surface-input); color: var(--text-primary); }
+html:root[data-theme='dark'] #root .map-listings__move { background: var(--surface-elevated); color: var(--text-primary); }
 
 /* Ledger rows keep the amount beside the description at every width. */
 html:root #root .wallet-table-wrap { display: none; }
 html:root #root .wallet-cards { display: block; }
 html:root #root .wallet-cards .wallet-tx { min-width: 0; }
-html:root #root .wallet-cards .wallet-tx strong { font-size: 0.9375rem; }
+html:root #root .wallet-cards .wallet-tx strong { font-size: var(--fs-md); }
 html:root #root .wallet-cards .wallet-tx small { display: block; line-height: 1.6; }
 
 /* Messaging workspace: opaque surfaces and explicit foregrounds keep incoming and sent messages distinct. */
 html:root[data-theme='dark'] #root .map-messages {
-  --mm-green: #8fd9b9;
-  --mm-green-ink: #a6e5ca;
-  --mm-ink: #e0eaf0;
-  --mm-mint: #1d3a3d;
-  --mm-line: #405966;
-  --mm-bg: #0e1922;
-  --mm-text: #e0eaf0;
-  --mm-muted: #b8c8d1;
-  --mm-faint: #a7bac5;
+  --mm-green: var(--grab-green);
+  --mm-green-ink: var(--grab-green);
+  --mm-ink: var(--text-primary);
+  --mm-mint: var(--brand-soft);
+  --mm-line: var(--border);
+  --mm-bg: var(--surface-muted);
+  --mm-text: var(--text-primary);
+  --mm-muted: var(--text-secondary);
+  --mm-faint: var(--hj-soft);
   color: var(--text-primary);
   background: var(--surface-muted);
 }
-html:root[data-theme='dark'] #root .map-messages.is-workspace { background: var(--surface-muted) !important; }
+html:root[data-theme='dark'] #root .map-messages.is-workspace { background: var(--surface-muted); }
 html:root[data-theme='dark'] #root .map-messages.map-messages.is-workspace :is(.map-messages__inbox,.map-messages__thread) {
-  background: var(--surface) !important;
-  border-color: var(--border) !important;
+  background: var(--surface);
+  border-color: var(--border);
   color: var(--text-primary);
 }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox,.map-messages__thread,.map-messages__bubbles,.map-messages__thread-head,.map-messages__composer-wrap,.map-messages__search-bar) {
@@ -191,45 +191,45 @@ html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox,.map-m
   border-color: var(--border);
 }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-title,.map-messages__peer-name,.map-messages__meta-top strong,.map-messages__ctx-copy strong,.map-messages__loc-title,.map-messages__bubble p) {
-  color: var(--text-heading) !important;
+  color: var(--text-heading);
 }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__empty,.map-messages__meta small,.map-messages__peer-sub,.map-messages__time,.map-messages__preview,.map-messages__bubble time,.map-messages__image figcaption,.map-messages__loc-address,.map-messages__loc-coords,.map-messages__ctx-copy small) {
-  color: var(--text-secondary) !important;
+  color: var(--text-secondary);
 }
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row:hover,.map-messages__row.is-active) { background: #1d3a3d !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__row.is-active :is(strong,small,time) { color: var(--text-heading) !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button { color: var(--text-secondary) !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button.is-active { background: #d0e5e6 !important; color: #16353c !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__row:hover,.map-messages__row.is-active) { background: var(--brand-soft); }
+html:root[data-theme='dark'] #root .map-messages .map-messages__row.is-active :is(strong,small,time) { color: var(--text-heading); }
+html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button { color: var(--text-secondary); }
+html:root[data-theme='dark'] #root .map-messages .map-messages__inbox-filters button.is-active { background: var(--brand-soft); color: var(--text-heading); }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search input,.map-messages__search-input,.map-messages__composer textarea,.map-messages__address-input,.map-messages__image-review select) {
-  background-color: var(--surface-input) !important;
-  border-color: #516a77 !important;
-  color: var(--text-primary) !important;
-  caret-color: #91dfe0;
+  background-color: var(--surface-input);
+  border-color: var(--control-border);
+  color: var(--text-primary);
+  caret-color: var(--grab-green);
 }
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search input,.map-messages__search-input,.map-messages__composer textarea)::placeholder { color: #b1c2cc !important; opacity: 1; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__composer { background: var(--surface) !important; border-color: #506975 !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__bubble:not(.is-mine) .map-messages__bubble-body { background: #223944 !important; color: #e0eaf0 !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__inbox-search input,.map-messages__search-input,.map-messages__composer textarea)::placeholder { color: var(--text-secondary); opacity: 1; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__composer { background: var(--surface); border-color: var(--control-border); }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble:not(.is-mine) .map-messages__bubble-body { background: var(--surface-input); color: var(--text-primary); }
 html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body {
-  background: #235861 !important;
-  color: #f2ffff !important;
+  background: var(--brand-soft);
+  color: var(--text-primary);
 }
-html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body p { color: #f2ffff !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body p { color: var(--text-primary); }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__day,.map-messages__ctx-card,.map-messages__ctx-pop,.map-messages__attach-menu,.map-messages__image-review,.map-messages__address-form) {
-  background: var(--surface-elevated) !important;
+  background: var(--surface-elevated);
   color: var(--text-primary);
   border-color: var(--border);
 }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__attach-menu button,.map-messages__address-form button,.map-messages__image-review button,.map-messages__thread-actions button,.map-messages__attach-btn,.map-messages__new-icon,.map-messages__icon-btn) {
-  background: var(--surface-input) !important;
-  color: var(--text-primary) !important;
-  border-color: #516a77;
+  background: var(--surface-input);
+  color: var(--text-primary);
+  border-color: var(--control-border);
 }
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn,.map-messages__send) { background: #80d9db !important; color: #103039 !important; }
-html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn.is-ghost,.map-messages__icon-btn.is-active) { background: #1d3a3d !important; color: #b4eded !important; }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn,.map-messages__send) { background: var(--grab-green); color: var(--action-on-primary); }
+html:root[data-theme='dark'] #root .map-messages :is(.map-messages__loc-btn.is-ghost,.map-messages__icon-btn.is-active) { background: var(--brand-soft); color: var(--grab-green); }
 html:root[data-theme='dark'] #root .map-messages :is(.map-messages__block-notice,.map-messages__error,.map-messages__address-hint) { color: #f0c8a1; }
 html:root[data-theme='dark'] #root .map-messages .map-messages__mark { background: #665624; color: #fff2bd; }
 
 /* Theme the rounded body, leaving the avatar/time layout transparent. */
-html:root[data-theme='dark'] #root .map-messages .map-messages__bubble { background: transparent !important; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine .map-messages__bubble-body { background: #235861 !important; color: #f0ffff; border-color: #437e87; }
-html:root[data-theme='dark'] #root .map-messages .map-messages__bubble .map-messages__bubble-body p { color: inherit !important; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble { background: transparent; }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble.is-mine .map-messages__bubble-body { background: var(--brand-soft); color: var(--text-primary); border-color: var(--control-border); }
+html:root[data-theme='dark'] #root .map-messages .map-messages__bubble .map-messages__bubble-body p { color: inherit; }

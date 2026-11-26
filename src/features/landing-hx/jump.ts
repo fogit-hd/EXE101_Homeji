@@ -10,11 +10,13 @@ export function jumpToSection(target: HTMLElement, hash?: string) {
   if (!reduce) veil()
   // 'instant' overrides any scroll-behavior: smooth set in CSS.
   target.scrollIntoView({ behavior: 'instant', block: 'start' })
-  const heading = target.querySelector<HTMLElement>('h2')
-  if (heading) {
-    heading.setAttribute('tabindex', '-1')
-    heading.focus({ preventScroll: true })
-  }
+  // A story anchor names its scene's heading; that heading shows once the scrub catches up.
+  const named = target.dataset.focus ? document.getElementById(target.dataset.focus) : null
+  const heading = named ?? target.querySelector<HTMLElement>('h2')
+  if (!heading) return
+  heading.setAttribute('tabindex', '-1')
+  if (named) window.setTimeout(() => heading.focus({ preventScroll: true }), reduce ? 50 : 750)
+  else heading.focus({ preventScroll: true })
 }
 
 /** A sheet of the page's ground over everything, fading out as the new place shows. */

@@ -35,6 +35,7 @@ export function MapErrorPanel({
     <div className={`map-placeholder-msg map-error-panel ${className}`.trim()}>
       <p className="map-error-panel__title">{diagnosis.userTitle}</p>
       <p className="map-placeholder-hint">{diagnosis.userMessage}</p>
+      <button type="button" className="btn btn-secondary" onClick={() => window.location.reload()}>Thử lại</button>
 
       {import.meta.env.DEV ? <details className="map-error-panel__dev">
         <summary>Chi tiết kỹ thuật (dành cho quản trị viên)</summary>

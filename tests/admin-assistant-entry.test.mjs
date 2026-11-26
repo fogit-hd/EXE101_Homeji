@@ -6,13 +6,14 @@ import test from 'node:test'
 import ts from 'typescript'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { lucideBindings } from './helpers/lucide-module.mjs'
 
 const require = createRequire(import.meta.url)
 const readSource = async path => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 const stripImports = source => ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.React },
 }).outputText.replace(/^import .*?from ['"].*?['"];?$/gm, '').replace(/^import ['"].*?['"];?$/gm, '')
-const bindings = `
+const bindings = lucideBindings + `
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from '${pathToFileURL(require.resolve('react')).href}';
 const useAuth = () => ({ profile: { role: 3, displayName: 'Quản trị Homeji' } });
 const aiFeatureFlags = { adminSummary: true };

@@ -1,6 +1,5 @@
-import { AuthPage } from './AuthPage'
+import { AuthRouteRedirect } from './AuthRouteRedirect'
 
-/** Route `/register` — Sign Up kèm chuỗi intro GSAP. */
 export function RegisterPage() {
-  return <AuthPage initialMode="signup" />
+  return <AuthRouteRedirect section="register" />
 }

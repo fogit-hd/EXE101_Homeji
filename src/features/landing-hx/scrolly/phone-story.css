@@ -1,0 +1,190 @@
+/* ── Phone story: five chapters, one screen, tap or wait to move on ─────────────
+   Lives inside .hx-sc, so it takes the story's light/dark tokens. Every chapter's resting state is
+   its CSS default; the keyframes only play it in when the chapter comes up (.is-on). */
+.hx-ms {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - var(--hx-nav-h));
+  padding: 14px 16px 8px;
+  scroll-margin-top: var(--hx-nav-h);
+  background: var(--sc-ground);
+  color: var(--sc-text);
+}
+.hx-ms__anchor { position: absolute; }
+
+/* top: a bar per chapter, where we are, pause */
+.hx-ms__top { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; }
+.hx-ms__bars { grid-column: 1 / -1; display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.hx-ms__bars li { flex: 1; height: 3px; border-radius: 3px; overflow: hidden; background: var(--sc-line); }
+.hx-ms__bars li.is-done, .hx-ms__bars li.is-on:not(:has(i)) { background: var(--sc-hi); }
+.hx-ms__bars i { display: block; height: 100%; background: var(--sc-hi); transform-origin: left; animation: hx-ms-fill var(--dur) linear forwards; }
+@keyframes hx-ms-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.hx-ms__where { margin: 0; font-size: 0.8rem; font-weight: 750; color: var(--sc-text-muted); font-variant-numeric: tabular-nums; }
+.hx-ms__pause {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sc-text);
+  cursor: pointer;
+}
+.hx-ms__pause svg { width: 18px; height: 18px; }
+
+/* stage: the chapters share one cell; tap zones lie under them */
+.hx-ms__stage { position: relative; flex: 1; display: grid; margin-top: 6px; }
+.hx-ms__tap { position: absolute; top: 0; bottom: 0; z-index: 0; border: 0; padding: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hx-ms__tap--back { left: 0; width: 34%; }
+.hx-ms__tap--next { right: 0; width: 66%; }
+.hx-ms__tap:disabled { cursor: default; }
+.hx-ms__tap:focus-visible { outline: 2px solid var(--sc-hi); outline-offset: -4px; border-radius: 16px; }
+.hx-ms__slide {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 280ms var(--hx-ease-out), visibility 0s 280ms;
+}
+.hx-ms__slide.is-on { visibility: visible; opacity: 1; transition: opacity 280ms var(--hx-ease-out); }
+.hx-ms__slide :is(a, button, select, input) { pointer-events: auto; }
+
+/* copy */
+.hx-ms__kicker { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 0.82rem; font-weight: 750; color: var(--sc-text-muted); }
+.hx-ms__kicker span { display: inline-grid; place-items: center; min-width: 30px; height: 22px; padding: 0 7px; border-radius: var(--hx-radius-pill); background: var(--sc-orange); color: var(--sc-ink); }
+.hx-ms__h2 { margin: 0; padding-top: 0.1em; font-size: clamp(1.8rem, 8.4vw, 2.3rem); font-weight: 830; line-height: 1.14; letter-spacing: -0.03em; text-wrap: balance; }
+.hx-ms__h2:focus { outline: none; }
+.hx-ms__line { margin: 8px 0 0; font-size: 0.95rem; line-height: 1.45; color: var(--sc-text-muted); }
+.hx-ms__act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: auto; }
+.hx-ms__act--stack { flex-direction: column; align-items: stretch; text-align: center; }
+.hx-ms__act--stack .hx-sc-link { justify-content: center; min-height: 44px; }
+.hx-ms figcaption { margin-top: 8px; font-size: 0.7rem; font-weight: 650; }
+
+/* shared paper card */
+.hx-ms__find, .hx-ms__receipt {
+  margin: 0;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--sc-paper-line);
+  background: var(--sc-paper);
+  color: var(--sc-ink);
+  box-shadow: var(--sc-shadow);
+}
+
+/* 01 · a search types itself, results rise */
+.hx-ms__query { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 10px 14px; border-radius: var(--hx-radius-pill); background: rgb(27 20 16 / 0.05); font-size: 1.15rem; font-weight: 800; }
+.hx-ms__query svg { flex: none; width: 18px; height: 18px; color: #c2410c; }
+.hx-ms__query span { white-space: nowrap; }
+.hx-ms__find ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hx-ms__find li { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--sc-paper-line); }
+.hx-ms__find li > span { display: grid; font-size: 0.78rem; color: var(--sc-ink-muted); }
+.hx-ms__find strong { font-size: 0.92rem; color: var(--sc-ink); }
+.hx-ms__find b { color: #c2410c; font-size: 0.95rem; }
+.hx-ms__find em { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-style: normal; font-size: 0.74rem; font-weight: 700; color: var(--sc-ink-muted); }
+.hx-ms__find em i { flex: 1; height: 4px; border-radius: 4px; background: var(--sc-orange); transform-origin: left; }
+
+/* 02 · a receipt prints */
+.hx-ms__receipt { position: relative; padding-bottom: 58px; }
+.hx-ms__receipt figcaption { margin: 0 0 6px; }
+.hx-ms__receipt dl { margin: 0; }
+.hx-ms__receipt dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 8px; border-bottom: 1.5px dashed rgb(27 20 16 / 0.18); border-radius: 8px; }
+.hx-ms__receipt dt { font-weight: 650; color: var(--sc-ink-muted); }
+.hx-ms__receipt dd { margin: 0; font-size: 1.05rem; font-weight: 820; font-variant-numeric: tabular-nums; }
+.hx-ms__receipt small { margin-left: 2px; font-size: 0.75rem; font-weight: 650; color: var(--sc-ink-muted); }
+.hx-ms__receipt .is-hot { background: rgb(249 128 34 / 0.16); box-shadow: inset 0 0 0 1.5px #c2410c; }
+.hx-ms__receipt .is-hot dt { color: var(--sc-ink); }
+.hx-ms__stamp { position: absolute; right: 14px; bottom: 12px; margin: 0; padding: 5px 11px; border: 2.5px solid var(--sc-moss); border-radius: 8px; color: var(--sc-moss); font-weight: 850; font-size: 0.85rem; rotate: -7deg; }
+
+/* 03 · a checklist ticks down a line */
+.hx-ms__checks { position: relative; display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.hx-ms__checks::before { content: ''; position: absolute; left: 21px; top: 22px; bottom: 22px; border-left: 2px dashed var(--sc-orange); transform-origin: top; }
+.hx-ms__checks li { position: relative; display: grid; grid-template-columns: 44px 1fr 24px; align-items: center; gap: 12px; padding: 12px 12px 12px 0; }
+.hx-ms__checks li > span:nth-child(2) { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--sc-paper); color: var(--sc-ink-muted); border: 1px solid var(--sc-paper-line); box-shadow: var(--sc-shadow); font-size: 0.82rem; }
+.hx-ms__checks strong { font-size: 0.98rem; color: var(--sc-ink); }
+.hx-ms__check-icon { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--sc-orange); color: var(--sc-ink); }
+.hx-ms__check-icon svg { width: 20px; height: 20px; }
+.hx-ms__checks li > svg { width: 24px; height: 24px; fill: none; stroke: var(--sc-moss); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.hx-ms__checks path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.hx-ms__note { display: flex; gap: 8px; margin: 0; font-size: 0.85rem; font-weight: 650; color: var(--sc-text-muted); }
+.hx-ms__note svg { flex: none; width: 18px; height: 18px; color: var(--sc-hi); }
+
+/* 05 · a window lights up in the dark */
+.hx-ms__slide--dark { justify-content: center; margin: -6px -16px 0; padding: 24px 16px 16px; background: var(--sc-ground); color: var(--sc-text); text-align: center; }
+.hx-ms__slide--dark .hx-ms__kicker { justify-content: center; }
+.hx-ms__window { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 132px; aspect-ratio: 4 / 5; margin: 0 auto 8px; padding: 6px; border-radius: 10px; background: #2a2018; box-shadow: 0 0 80px 20px rgb(255 190 110 / 0.35); }
+.hx-ms__window i { border-radius: 4px; background: #ffd9a0; }
+
+/* ── motion: each chapter plays in its own way when it comes up ─────────────── */
+@keyframes hx-ms-up { from { opacity: 0; transform: translateY(18px); } }
+@keyframes hx-ms-type { from { clip-path: inset(0 100% 0 0); } }
+@keyframes hx-ms-grow-x { from { transform: scaleX(0); } }
+@keyframes hx-ms-print { from { clip-path: inset(0 0 100% 0); } }
+@keyframes hx-ms-thump { from { opacity: 0; scale: 1.8; rotate: -24deg; } }
+@keyframes hx-ms-grow-y { from { transform: scaleY(0); } }
+@keyframes hx-ms-in-right { from { opacity: 0; transform: translateX(28px); } }
+@keyframes hx-ms-draw { from { stroke-dashoffset: 1; } }
+@keyframes hx-ms-pop { from { opacity: 0; scale: 0.6; } }
+@keyframes hx-ms-hand { from { top: 0%; opacity: 1; } 92% { opacity: 1; } to { top: 100%; opacity: 0; } }
+@keyframes hx-ms-light { from { box-shadow: 0 0 0 0 rgb(255 190 110 / 0); } }
+@keyframes hx-ms-pane { from { background: #3a2c22; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .is-on .hx-ms__head > * { animation: hx-ms-up 520ms var(--hx-ease-out) both; }
+  .is-on .hx-ms__head > :nth-child(2) { animation-delay: 80ms; }
+  .is-on .hx-ms__head > :nth-child(3) { animation-delay: 160ms; }
+  .is-on .hx-ms__act { animation: hx-ms-up 480ms var(--hx-ease-out) 300ms both; }
+
+  .hx-ms__slide--1.is-on .hx-ms__find { animation: hx-ms-up 480ms var(--hx-ease-out) 200ms both; }
+  .hx-ms__slide--1.is-on .hx-ms__query span { animation: hx-ms-type 900ms steps(11) 500ms both; }
+  .hx-ms__slide--1.is-on .hx-ms__find li { animation: hx-ms-up 460ms var(--hx-ease-out) both; }
+  .hx-ms__slide--1.is-on .hx-ms__find li:nth-child(1) { animation-delay: 1.4s; }
+  .hx-ms__slide--1.is-on .hx-ms__find li:nth-child(2) { animation-delay: 1.6s; }
+  .hx-ms__slide--1.is-on .hx-ms__find li:nth-child(3) { animation-delay: 1.8s; }
+  .hx-ms__slide--1.is-on .hx-ms__find em i { animation: hx-ms-grow-x 700ms ease-in-out 2.1s both; }
+
+  .hx-ms__slide--2.is-on .hx-ms__receipt { animation: hx-ms-print 1.6s linear 250ms both; }
+  .hx-ms__slide--2.is-on .is-hot { animation: hx-ms-pop 360ms var(--hx-ease-out) 2s both; }
+  .hx-ms__slide--2.is-on .hx-ms__stamp { animation: hx-ms-thump 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 2.5s both; }
+
+  .hx-ms__slide--3.is-on .hx-ms__checks::before { animation: hx-ms-grow-y 1.8s linear 300ms both; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li { animation: hx-ms-in-right 480ms var(--hx-ease-out) both; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li:nth-child(1) { animation-delay: 300ms; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li:nth-child(2) { animation-delay: 900ms; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li:nth-child(3) { animation-delay: 1.5s; }
+  .hx-ms__slide--3.is-on .hx-ms__checks path { animation: hx-ms-draw 360ms linear both; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li:nth-child(1) path { animation-delay: 700ms; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li:nth-child(2) path { animation-delay: 1.3s; }
+  .hx-ms__slide--3.is-on .hx-ms__checks li:nth-child(3) path { animation-delay: 1.9s; }
+  .hx-ms__slide--3.is-on .hx-ms__note { animation: hx-ms-up 420ms var(--hx-ease-out) 2.3s both; }
+
+  /* 04: the dial plays its day (timings come from DayDial's --d / --t) */
+  .hx-ms__slide--4.is-on .hx-dd__hand { transform-box: view-box; transform-origin: 160px 160px; animation: hx-dd-hand 3s linear 300ms both; }
+  .hx-ms__slide--4.is-on .hx-dd__arc { animation: hx-dd-draw var(--t) linear var(--d) both; }
+  .hx-ms__slide--4.is-on :is(.hx-dd__shared, .hx-dd__list li) { animation: hx-ms-up 360ms var(--hx-ease-out) var(--d) both; }
+  .hx-ms__slide--4.is-on .hx-dd__match { animation: hx-ms-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 3.4s both; }
+
+  .hx-ms__slide--5.is-on .hx-ms__window { animation: hx-ms-light 1.6s ease-out 300ms both; }
+  .hx-ms__slide--5.is-on .hx-ms__window i { animation: hx-ms-pane 500ms ease-out both; }
+  .hx-ms__slide--5.is-on .hx-ms__window i:nth-child(1) { animation-delay: 300ms; }
+  .hx-ms__slide--5.is-on .hx-ms__window i:nth-child(2) { animation-delay: 500ms; }
+  .hx-ms__slide--5.is-on .hx-ms__window i:nth-child(3) { animation-delay: 700ms; }
+  .hx-ms__slide--5.is-on .hx-ms__window i:nth-child(4) { animation-delay: 900ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hx-ms__slide, .hx-ms__slide.is-on { transition: none; }
+}
+
+/* skip */
+.hx-ms__skip { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin-top: 8px; font-size: 0.88rem; font-weight: 700; color: var(--sc-text-muted); text-decoration: none; }
+.hx-ms__skip svg { width: 16px; height: 16px; }
+
+/* text on the paper cards is always ink, in both themes (page-wide dark rules recolour bare p / figcaption) */
+.hx-ms :is(.hx-ms__find, .hx-ms__receipt, .hx-dd) :is(p, figcaption) { color: var(--sc-ink); }
+.hx-ms :is(.hx-ms__find, .hx-ms__receipt, .hx-dd) figcaption { color: var(--sc-ink-muted); }

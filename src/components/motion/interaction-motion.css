@@ -15,12 +15,12 @@
 .interaction-pulse {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid var(--hj-accent);
-  background: radial-gradient(circle, transparent 28%, color-mix(in srgb, var(--hj-accent) 18%, transparent) 60%, transparent 72%);
+  border: 1px solid var(--grab-green);
+  background: none;
   pointer-events: none;
 }
 
-@media all {
+@media (prefers-reduced-motion: no-preference) {
   :is(.btn, .auth-cinema__submit, .marketplace-header button, .roommate-people button, [role="tab"]) {
     transition: scale 300ms var(--glass-spring,var(--motion-ease)), transform 180ms var(--motion-ease), background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   }
@@ -36,12 +36,12 @@
   }
   :is(.guest-hero__nav-link, .site-footer a):hover { text-underline-offset: 8px; }
   .roommate-people__intents > label { transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease; }
-  .roommate-people__intents > label:has(input:checked) { box-shadow: 0 0 0 2px var(--hj-accent-soft); }
+  .roommate-people__intents > label:has(input:checked) { box-shadow: none; }
   .map-chatbot__privacy summary { list-style: none; }
   .map-chatbot__privacy summary::-webkit-details-marker { display: none; }
   .map-chatbot__privacy summary::before {
     content: '›'; display: inline-block; margin-right: 8px;
-    transition: rotate 180ms var(--motion-ease); font-size: 1rem;
+    transition: rotate 180ms var(--motion-ease); font-size: var(--fs-lg);
   }
   .map-chatbot__privacy[open] summary::before { rotate: 90deg; }
   .map-chatbot__privacy[open] > :not(summary) { animation: interaction-content-enter 180ms var(--motion-ease); }
@@ -53,12 +53,12 @@
   @keyframes interaction-content-enter { from { opacity: .3; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
   @keyframes interaction-dialog-enter { from { opacity: .25; translate: 0 8px; scale: .98; } to { opacity: 1; translate: 0 0; scale: 1; } }
 }
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .interaction-feedback { display: none; }
 }
 
 /* Surface motion uses individual translate/scale so centered/fixed layouts keep their transforms. */
-@media all {
+@media (prefers-reduced-motion: no-preference) {
   :where(button, [role="button"], summary):not(:disabled):not([aria-disabled="true"]):active { scale: .965; }
   :where(button, [role="button"], summary) { transition: scale 140ms var(--motion-ease); }
   :is(.hj-account__menu, .hj-notify__pop, .schedule-dt__panel) { transform-origin: top right; }
@@ -80,7 +80,7 @@
   }
 }
 
-@media all {
+@media (prefers-reduced-motion: no-preference) {
   :is(.auth-modal-overlay, .room-detail__backdrop)[inert] > :is(.auth-modal, .room-detail) {
     animation: interaction-dialog-exit 180ms ease-in both;
   }
@@ -94,7 +94,7 @@
 @media (hover: hover) {
   :is(.post-card, .map-listing-card, .guest-audience__card, .hub-card, .hub-room-card, .roommate-posts__card, .marketplace-card--browse, .food-card):not(.gm-style *):hover {
     translate: 0 -4px;
-    box-shadow: 0 14px 34px rgba(20, 60, 35, 0.14);
+    box-shadow: 0 14px 34px rgba(var(--shadow-color), .14);
   }
   :is(.post-card-image, .map-listing-card-image) img { transition: scale 420ms var(--motion-ease); }
   :is(.post-card, .map-listing-card):hover :is(.post-card-image, .map-listing-card-image) img { scale: 1.05; }

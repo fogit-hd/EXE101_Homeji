@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { MarketplaceOrderStatus, type MarketplaceOrder } from '../../../api/types'
 import { SellerOrderSound } from '../../../lib/sellerOrderSound'
+import { useIsMobile } from '../../../mobile/useIsMobile'
+
+// Empty lanes: a centred block on desktop, one short line on phones so three empty lanes fit a screen.
+const EMPTY = { textAlign: 'center', padding: '24px 12px', color: 'var(--text-secondary)', fontSize: '0.85rem' } as const
+const EMPTY_MOBILE = { padding: '0', color: 'var(--text-secondary)', fontSize: '0.85rem' } as const
 
 export interface KitchenOrderBoardProps {
   orders: MarketplaceOrder[]
@@ -19,12 +24,13 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
   onDeliverOrder,
   onContactCustomer,
 }) => {
+  const mobile = useIsMobile()
   const [isOpenNow, setIsOpenNow] = useState<boolean>(() => {
     const saved = localStorage.getItem('homeji_kitchen_is_open')
     return saved !== null ? saved === 'true' : true
   })
   const [isDormSilent, setIsDormSilent] = useState<boolean>(() => SellerOrderSound.isDormSilent)
-  const [now, setNow] = useState<number>(Date.now())
+  const [now, setNow] = useState<number>(() => Date.now())
   const soundRef = useRef<SellerOrderSound | null>(null)
 
   useEffect(() => {
@@ -102,11 +108,11 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
     <div
       className="kitchen-order-board"
       style={{
-        marginBottom: '28px',
-        backgroundColor: 'var(--surface-elevated, #ffffff)',
+        marginBottom: mobile ? '16px' : '28px',
+        backgroundColor: 'var(--surface-elevated)',
         borderRadius: '16px',
-        padding: '16px 20px',
-        border: '1px solid var(--border, #dce5eb)',
+        padding: mobile ? '14px' : '16px 20px',
+        border: '1px solid var(--border)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
       }}
     >
@@ -120,16 +126,16 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
           gap: '12px',
           paddingBottom: '16px',
           marginBottom: '20px',
-          borderBottom: '1px solid var(--border, #dce5eb)',
+          borderBottom: '1px solid var(--border)',
         }}
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Bảng Điều Khiển Bếp Sinh Viên</h3>
           </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary, #5b6b76)' }}>
+          {mobile ? null : <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             Quản lý nhận đơn, thời gian nấu và bàn giao món theo thời gian thực.
-          </p>
+          </p>}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -142,10 +148,11 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
               alignItems: 'center',
               gap: '6px',
               padding: '8px 14px',
+              minHeight: '44px',
               borderRadius: '100px',
-              border: isDormSilent ? '1px solid #fecaca' : '1px solid var(--border, #dce5eb)',
-              backgroundColor: isDormSilent ? '#fef2f2' : 'var(--surface-muted, #f3f7fa)',
-              color: isDormSilent ? '#dc2626' : 'var(--text-primary, #243742)',
+              border: isDormSilent ? '1px solid var(--error)' : '1px solid var(--border)',
+              backgroundColor: isDormSilent ? 'var(--error-soft)' : 'var(--surface-muted)',
+              color: isDormSilent ? 'var(--error)' : 'var(--text-primary)',
               fontWeight: 600,
               fontSize: '0.85rem',
               cursor: 'pointer',
@@ -153,7 +160,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
               transition: 'all 0.15s ease',
             }}
             aria-label={isDormSilent ? 'Chế độ yên lặng KTX đang bật: Bấm để bật chuông' : 'Chế độ yên lặng KTX đang tắt: Bấm để tắt chuông'}
-            title="Chế độ yên lặng KTX: Tắt chuông báo để không làm phiền bạn cùng phòng"
+            title={isDormSilent ? 'Chế độ yên lặng KTX đang bật: Bấm để bật chuông' : 'Chế độ yên lặng KTX đang tắt: Bấm để tắt chuông'}
           >
             <span>{isDormSilent ? '🔕 Yên Lặng KTX (Tắt chuông)' : '🔔 Chuông Báo Bếp (Bật)'}</span>
           </button>
@@ -165,13 +172,14 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
               alignItems: 'center',
               gap: '8px',
               padding: '8px 16px',
+              minHeight: '44px',
               borderRadius: '100px',
               border: 'none',
               cursor: 'pointer',
               fontWeight: 600,
               fontSize: '0.875rem',
-              backgroundColor: isOpenNow ? '#dcfce7' : '#fee2e2',
-              color: isOpenNow ? '#15803d' : '#b91c1c',
+              backgroundColor: isOpenNow ? 'var(--success-soft)' : 'var(--error-soft)',
+              color: isOpenNow ? 'var(--success)' : 'var(--error)',
               boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
               transition: 'all 0.2s ease',
             }}
@@ -181,7 +189,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: isOpenNow ? '#22c55e' : '#ef4444',
+                backgroundColor: isOpenNow ? 'var(--success)' : 'var(--error)',
                 display: 'inline-block',
               }}
             />
@@ -201,10 +209,10 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
         {/* Column 1: Đơn Mới Đến */}
         <div
           style={{
-            backgroundColor: 'var(--surface-muted, #f3f7fa)',
+            backgroundColor: 'var(--surface-muted)',
             borderRadius: '12px',
             padding: '14px',
-            border: '1px solid var(--border, #dce5eb)',
+            border: '1px solid var(--border)',
           }}
         >
           <div
@@ -215,16 +223,16 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
               marginBottom: '12px',
             }}
           >
-            <strong style={{ fontSize: '0.9rem', color: '#b45309' }}>
+            <strong style={{ fontSize: '0.9rem', color: 'var(--warning)' }}>
               ĐƠN MỚI ĐẾN ({requestedOrders.length})
             </strong>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #5b6b76)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               Đếm ngược 30p
             </span>
           </div>
 
           {requestedOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.85rem' }}>
+            <div style={mobile ? EMPTY_MOBILE : EMPTY}>
               Không có đơn mới cần xử lý
             </div>
           ) : (
@@ -246,16 +254,16 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                   <div
                     key={order.id}
                     style={{
-                      backgroundColor: 'var(--surface-elevated, #ffffff)',
+                      backgroundColor: 'var(--surface-elevated)',
                       borderRadius: '10px',
                       padding: '12px',
-                      border: '1px solid #fde68a',
+                      border: '1px solid var(--warning-border)',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <strong style={{ fontSize: '0.9rem' }}>{order.postTitle || 'Món ăn'}</strong>
-                      <span style={{ color: 'var(--grab-green, #087f8c)', fontWeight: 700, fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--grab-green)', fontWeight: 700, fontSize: '0.9rem' }}>
                         {(order.agreedPrice || 0).toLocaleString('vi-VN')} đ
                       </span>
                     </div>
@@ -267,18 +275,18 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           fontWeight: 600,
                           padding: '2px 8px',
                           borderRadius: '100px',
-                          backgroundColor: isExpired ? '#fee2e2' : '#fef3c7',
-                          color: isExpired ? '#dc2626' : '#b45309',
+                          backgroundColor: isExpired ? 'var(--error-soft)' : 'var(--warning-soft)',
+                          color: isExpired ? 'var(--error)' : 'var(--warning)',
                         }}
                       >
                         {countdownLabel}
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #5b6b76)', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                       <div>Số lượng: {order.quantity || 1} suất</div>
                       {order.pickupAddress && <div>Địa chỉ: {order.pickupAddress}</div>}
-                      {order.note && <div style={{ color: '#b45309' }}>Ghi chú: "{order.note}"</div>}
+                      {order.note && <div style={{ color: 'var(--warning)' }}>Ghi chú: "{order.note}"</div>}
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
@@ -292,8 +300,8 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                         }}
                         style={{
                           flex: 1,
-                          backgroundColor: '#16a34a',
-                          color: '#fff',
+                          backgroundColor: 'var(--grab-green)',
+                          color: 'var(--on-brand)',
                           border: 'none',
                           borderRadius: '6px',
                           padding: '6px 10px',
@@ -310,9 +318,9 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                         disabled={isBusy}
                         onClick={() => void onRejectOrder(order.id)}
                         style={{
-                          backgroundColor: '#fee2e2',
-                          color: '#dc2626',
-                          border: '1px solid #fecaca',
+                          backgroundColor: 'var(--error-soft)',
+                          color: 'var(--error)',
+                          border: '1px solid var(--error)',
                           borderRadius: '6px',
                           padding: '6px 10px',
                           fontSize: '0.8rem',
@@ -328,8 +336,8 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           className="btn btn-sm"
                           onClick={() => onContactCustomer(order.marketplacePostId, order.id)}
                           style={{
-                            backgroundColor: 'var(--surface-muted, #f3f7fa)',
-                            border: '1px solid var(--border, #dce5eb)',
+                            backgroundColor: 'var(--surface-muted)',
+                            border: '1px solid var(--border)',
                             borderRadius: '6px',
                             padding: '6px 8px',
                             fontSize: '0.8rem',
@@ -351,10 +359,10 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
         {/* Column 2: Đang Nấu */}
         <div
           style={{
-            backgroundColor: 'var(--surface-muted, #f3f7fa)',
+            backgroundColor: 'var(--surface-muted)',
             borderRadius: '12px',
             padding: '14px',
-            border: '1px solid var(--border, #dce5eb)',
+            border: '1px solid var(--border)',
           }}
         >
           <div
@@ -365,16 +373,16 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
               marginBottom: '12px',
             }}
           >
-            <strong style={{ fontSize: '0.9rem', color: '#0369a1' }}>
+            <strong style={{ fontSize: '0.9rem', color: 'var(--info-text)' }}>
               ĐANG NẤU ({preparingOrders.length})
             </strong>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #5b6b76)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               Theo ca bếp
             </span>
           </div>
 
           {preparingOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.85rem' }}>
+            <div style={mobile ? EMPTY_MOBILE : EMPTY}>
               Chưa có món nào đang nấu
             </div>
           ) : (
@@ -385,21 +393,21 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                   <div
                     key={order.id}
                     style={{
-                      backgroundColor: 'var(--surface-elevated, #ffffff)',
+                      backgroundColor: 'var(--surface-elevated)',
                       borderRadius: '10px',
                       padding: '12px',
-                      border: '1px solid #bae6fd',
+                      border: '1px solid var(--info-border)',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <strong style={{ fontSize: '0.9rem' }}>{order.postTitle || 'Món ăn'}</strong>
-                      <span style={{ color: 'var(--grab-green, #087f8c)', fontWeight: 700, fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--grab-green)', fontWeight: 700, fontSize: '0.9rem' }}>
                         {(order.agreedPrice || 0).toLocaleString('vi-VN')} đ
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #5b6b76)', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                       <div>Số lượng: {order.quantity || 1} suất</div>
                       {order.pickupAddress && <div>Địa chỉ: {order.pickupAddress}</div>}
                     </div>
@@ -415,8 +423,8 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                         }}
                         style={{
                           flex: 1,
-                          backgroundColor: 'var(--grab-green, #087f8c)',
-                          color: '#fff',
+                          backgroundColor: 'var(--grab-green)',
+                          color: 'var(--on-brand)',
                           border: 'none',
                           borderRadius: '6px',
                           padding: '6px 10px',
@@ -433,8 +441,8 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                           className="btn btn-sm"
                           onClick={() => onContactCustomer(order.marketplacePostId, order.id)}
                           style={{
-                            backgroundColor: 'var(--surface-muted, #f3f7fa)',
-                            border: '1px solid var(--border, #dce5eb)',
+                            backgroundColor: 'var(--surface-muted)',
+                            border: '1px solid var(--border)',
                             borderRadius: '6px',
                             padding: '6px 8px',
                             fontSize: '0.8rem',
@@ -456,10 +464,10 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
         {/* Column 3: Đã Giao & Chờ Escrow Hold */}
         <div
           style={{
-            backgroundColor: 'var(--surface-muted, #f3f7fa)',
+            backgroundColor: 'var(--surface-muted)',
             borderRadius: '12px',
             padding: '14px',
-            border: '1px solid var(--border, #dce5eb)',
+            border: '1px solid var(--border)',
           }}
         >
           <div
@@ -470,16 +478,16 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
               marginBottom: '12px',
             }}
           >
-            <strong style={{ fontSize: '0.9rem', color: '#15803d' }}>
+            <strong style={{ fontSize: '0.9rem', color: 'var(--success)' }}>
               SẴN SÀNG & ĐÃ GIAO ({readyOrDeliveredOrders.length})
             </strong>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #5b6b76)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               Escrow Hold 24h
             </span>
           </div>
 
           {readyOrDeliveredOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.85rem' }}>
+            <div style={mobile ? EMPTY_MOBILE : EMPTY}>
               Chưa có đơn đã bàn giao gần đây
             </div>
           ) : (
@@ -490,23 +498,23 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
                   <div
                     key={order.id}
                     style={{
-                      backgroundColor: 'var(--surface-elevated, #ffffff)',
+                      backgroundColor: 'var(--surface-elevated)',
                       borderRadius: '10px',
                       padding: '12px',
-                      border: '1px solid #bbf7d0',
+                      border: '1px solid var(--success-soft)',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <strong style={{ fontSize: '0.9rem' }}>{order.postTitle || 'Món ăn'}</strong>
-                      <span style={{ color: '#15803d', fontWeight: 700, fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--success)', fontWeight: 700, fontSize: '0.9rem' }}>
                         +{(order.sellerNetAmount || order.agreedPrice || 0).toLocaleString('vi-VN')} đ
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #5b6b76)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       <div>{isCompleted ? 'Khách đã bấm nhận món' : 'Đã bàn giao món'}</div>
-                      <div style={{ color: '#0369a1', marginTop: '4px' }}>
+                      <div style={{ color: 'var(--info-text)', marginTop: '4px' }}>
                         Tiền về ví sau 24h Escrow bảo vệ an toàn thực phẩm.
                       </div>
                     </div>

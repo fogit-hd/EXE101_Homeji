@@ -3,7 +3,7 @@ html:root #root .hj-header :is(.hj-menu-trigger,.hj-action,.hj-profile,.seller-w
   background: transparent;
   background-image: none;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   box-shadow: none;
   backdrop-filter: none;
 }
@@ -12,7 +12,7 @@ html:root #root .hj-header :is(.hj-menu-trigger,.hj-action,.hj-profile,.hj-searc
 }
 html:root #root .hj-header .hj-post-cta {
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--action-primary);
   color: var(--action-on-primary);
   box-shadow: none;
@@ -20,25 +20,25 @@ html:root #root .hj-header .hj-post-cta {
 html:root #root .hj-header .hj-search__field {
   height: 48px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   box-shadow: none;
   backdrop-filter: none;
 }
 html:root #root .hj-header .hj-search__field:focus-within {
-  border-color: var(--action-primary);
-  box-shadow: 0 0 0 3px var(--action-soft);
+  border-color: var(--focus-ring);
+  box-shadow: none;
 }
 html:root #root .hj-header .hj-search__submit {
   height: 36px;
   min-width: 90px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--action-primary);
   color: var(--action-on-primary);
   box-shadow: none;
 }
-html:root #root .hj-logo__word { font-size: 1.625rem; letter-spacing: -.04em; }
+html:root #root .hj-logo__word { font-size: var(--fs-2xl); letter-spacing: -.04em; }
 html:root #root .hj-logo__mark { width: 38px; height: 38px; }
 html:root #root .hj-actions { gap: 6px; }
 
@@ -60,7 +60,7 @@ html:root #root .hub-welcome__lead {
   align-items: center;
   gap: 10px;
   margin-top: 6px;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   text-decoration: none;
   color: var(--action-primary);
 }
@@ -90,15 +90,19 @@ html:root #root .hub-search {
   background: transparent;
 }
 html:root #root .hub-search::-webkit-scrollbar { display: none; }
-html:root #root .hub-search h2 { font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); }
+html:root #root .hub-search h2 { font-size: var(--fs-xs); font-weight: 500; color: var(--text-secondary); }
 html:root #root .hub-search ul { flex-wrap: nowrap; }
 html:root #root .hub-search a {
   gap: 10px;
   min-height: 34px;
+}
+/* Phones: full 44px touch height for the recent-search chips. */
+html[data-device='mobile']:root #root .hub-search a { min-height: 44px; }
+html:root #root .hub-search a {
   padding: 0 12px;
   border: 1px solid var(--border);
   background: var(--surface-elevated);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 html:root #root .hub-home .hub-section {
@@ -112,13 +116,13 @@ html:root #root .hub-home .hub-section {
 html:root #root .hub-home .hub-rail .hub-market {
   padding: 18px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--surface-elevated);
 }
 html:root #root .hub-section header { align-items: center; margin-bottom: 18px; gap: 12px; }
-html:root #root .hub-section h2 { font-size: 1.375rem; line-height: 1.4; font-weight: 600; letter-spacing: -.035em; }
-html:root #root .hub-rail .hub-section h2 { font-size: 1.125rem; line-height: 1.4; }
-html:root #root .hub-section header a { display: inline-flex; align-items: center; min-height: 36px; font-size: 0.8125rem; white-space: nowrap; }
+html:root #root .hub-section h2 { font-size: var(--fs-xl); line-height: 1.4; font-weight: 600; letter-spacing: -.035em; }
+html:root #root .hub-rail .hub-section h2 { font-size: var(--fs-lg); line-height: 1.4; }
+html:root #root .hub-section header a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-sm); white-space: nowrap; }
 html:root #root .hub-viewings { grid-column: 1 / -1; order: 0; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
 html:root #root .hub-update {
   order: 0;
@@ -129,7 +133,7 @@ html:root #root .hub-update {
 html:root #root .hub-update:hover { background: var(--surface-input); }
 html:root #root .hub-update strong { color: var(--text-heading); }
 html:root #root .hub-update__body { color: var(--text-secondary); }
-html:root #root .hub-update em { color: var(--hj-accent); }
+html:root #root .hub-update em { color: var(--grab-green); }
 html:root #root .hub-viewings em {
   background: var(--surface-input);
   color: var(--text-heading);
@@ -139,7 +143,7 @@ html:root #root .hub-roommates li > b {
   background: var(--surface-input);
   color: var(--text-heading);
 }
-html:root #root .hub-roommates li em { color: var(--hj-accent); }
+html:root #root .hub-roommates li em { color: var(--grab-green); }
 html:root #root .hub-rooms { grid-column: 1 / -1; order: 0; padding-top: 0; }
 html:root #root .hub-main .hub-rooms { grid-column: auto; }
 html:root #root .hub-rooms > ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
@@ -154,20 +158,20 @@ html:root #root .hub-rooms li a {
   margin: 0;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface-elevated);
   transition: background-color .2s ease, border-color .2s ease;
 }
 html:root #root .hub-rooms li a.premium-listing {
-  border-color: var(--premium-edge-color, #dfaa42);
+  border-color: var(--premium-edge-color);
 }
 html:root #root .hub-rooms li a:hover { background: var(--surface-muted); }
-html:root #root .hub-room__photo { aspect-ratio: 1.5; border-radius: 12px; }
+html:root #root .hub-room__photo { aspect-ratio: 1.5; border-radius: var(--radius-md); }
 html:root #root .hub-room__copy { gap: 6px; padding-inline: 2px; }
-html:root #root .hub-room__copy b { font-size: 0.9375rem; font-weight: 600; line-height: 1.5; min-height: 3em; }
-html:root #root .hub-room__copy span { font-size: 0.8125rem; line-height: 1.55; }
+html:root #root .hub-room__copy b { font-size: var(--fs-md); font-weight: 600; line-height: 1.5; min-height: 3em; }
+html:root #root .hub-room__copy span { font-size: var(--fs-sm); line-height: 1.55; }
 html:root #root .hub-room__price { flex-direction: row; align-items: baseline; gap: 6px; margin: auto 0 0; padding: 0 2px 4px; text-align: left; }
-html:root #root .hub-room__price strong { font-size: 1.125rem; font-weight: 600; letter-spacing: -.025em; color: var(--action-primary); }
+html:root #root .hub-room__price strong { font-size: var(--fs-lg); font-weight: 600; letter-spacing: -.025em; color: var(--action-primary); }
 html:root #root .hub-community {
   grid-column: 1 / -1;
   display: grid;
@@ -230,19 +234,58 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   html:root #root .hub-home { padding: 20px 16px 32px; gap: 18px; }
   html:root #root .hub-rail { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
   html:root #root .hub-section header { margin-bottom: 16px; }
-  html:root #root .hub-section h2 { font-size: 1.25rem; }
+  html:root #root .hub-section h2 { font-size: var(--fs-xl); }
   html:root #root .hub-community { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-top: 28px; }
   html:root #root .hub-community .hub-side { padding-top: 28px; border-top: 1px solid var(--border); }
   html:root #root .hub-rooms > ul { grid-template-columns: 1fr; gap: 12px; }
   html:root #root .hub-rooms li a { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px 14px; padding: 12px; }
   html:root #root .hub-room__photo { grid-row: span 2; width: 100%; height: 112px; min-height: 0; aspect-ratio: auto; }
-  html:root #root .hub-room__photo > .premium-badge { top: auto; bottom: 6px; right: auto; left: 6px; padding: 2px 6px; font-size: 0.625rem; }
+  html:root #root .hub-room__photo > .premium-badge { top: auto; bottom: 6px; right: auto; left: 6px; padding: 2px 6px; font-size: var(--fs-xs); }
   html:root #root .hub-room__copy { gap: 5px; padding-inline: 0; }
-  html:root #root .hub-room__copy b { min-height: 0; font-size: 0.875rem; line-height: 1.5; }
-  html:root #root .hub-room__copy span { font-size: 0.75rem; }
+  html:root #root .hub-room__copy b { min-height: 0; font-size: var(--fs-md); line-height: 1.5; }
+  html:root #root .hub-room__copy span { font-size: var(--fs-xs); }
   html:root #root .hub-room__price { padding: 0; }
-  html:root #root .hub-room__price strong { font-size: 1rem; }
+  html:root #root .hub-room__price strong { font-size: var(--fs-lg); }
   html:root #root .hub-room__price { grid-column: 2; flex-wrap: wrap; }
   html:root #root .hj-search-overlay .hj-search-slot { height: auto; margin: 0; padding: 12px; }
   html:root #root .hj-header .hj-search__submit { min-width: 48px; }
+}
+
+/* "Việc tiếp theo": one quiet strip of real tasks under the greeting, each with its one action. */
+html:root #root .hub-next { grid-column: 1 / -1; display: grid; gap: 10px; padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); }
+html:root #root .hub-next h2 { margin: 0; color: var(--text-heading); font-size: var(--fs-md); font-weight: 650; line-height: 1.4; }
+html:root #root .hub-next ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 24px; margin: 0; padding: 0; list-style: none; }
+html:root #root .hub-next li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; min-width: 0; padding: 4px 0; }
+/* Rows inside the card, not cards inside the card: a hairline between them is enough. */
+html:root #root .hub-next li + li { border-top: 1px solid var(--border); }
+html:root #root .hub-next li span { min-width: 0; color: var(--text-primary); font-size: var(--fs-sm); line-height: 1.45; }
+html:root #root .hub-next li a { flex: none; display: inline-flex; align-items: center; min-height: 44px; color: var(--action-on-soft); font-size: var(--fs-sm); font-weight: 600; text-decoration: none; }
+html:root #root .hub-next li a:hover { text-decoration: underline; }
+html:root #root .hub-next li a:focus-visible { outline: 2px solid var(--action-primary); outline-offset: 2px; border-radius: var(--radius-xs); }
+
+/* Desktop: 6 suggested rooms in 3 columns; the rail stays in view while the rooms scroll. */
+@media (min-width: 1025px) {
+  html:root #root .hub-rooms > ul { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  html:root #root .hub-rooms li a { padding: 8px 8px 10px; }
+  html:root #root .hub-room__copy b { font-size: var(--fs-sm); }
+  html:root #root .hub-rail { position: sticky; top: calc(var(--hj-header-h, 72px) + 16px); align-self: start; }
+}
+/* The last two blocks get equal columns so neither looks stranded. */
+html:root #root .hub-community:not(.hub-community--single) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+@media (max-width: 767px) { html:root #root .hub-community:not(.hub-community--single) { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+
+/* Room summaries keep price, title and one address line together at every width. */
+html:root body #root .hub-rooms li a { display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; }
+html:root body #root .hub-room__photo { display: grid; place-items: center; flex: none; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 10; border-radius: 0; }
+html:root body #root .hub-room__photo > :is(.premium-badge, .hub-room__saved) { position: absolute; top: 8px; left: 8px; right: auto; bottom: auto; }
+html:root body #root .hub-room__copy { display: flex; flex-direction: column; gap: 4px; padding: 16px; }
+html:root body #root .hub-room__price { display: block; margin: 0; padding: 0; text-align: left; }
+html:root body #root .hub-room__price strong { color: var(--action-primary); font-size: var(--fs-lg); font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; white-space: normal; }
+html:root body #root .hub-room__copy b { min-height: 0; font-size: var(--fs-md); line-height: 1.5; color: var(--text-heading); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+html:root body #root .hub-room__meta { display: block; color: var(--text-secondary); font-size: var(--fs-sm); line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 767px) {
+  html:root body #root .hub-rooms li a { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; padding: 12px; }
+  html:root body #root .hub-room__photo { grid-row: auto; align-self: start; aspect-ratio: 1; border-radius: var(--radius-sm); }
+  html:root body #root .hub-room__photo > :is(.premium-badge, .hub-room__saved) { font-size: var(--fs-xs); padding: 4px; }
+  html:root body #root .hub-room__copy { padding: 0; }
 }

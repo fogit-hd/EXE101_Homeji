@@ -49,7 +49,7 @@ test('LiquidSwitch thumb and track classification in glass control scope', () =>
   const track = dom.window.document.querySelector('.liquid-switch')
   const thumb = dom.window.document.querySelector('.liquid-switch__thumb')
 
-  assert.equal(glassControlKind(track), 'control', 'Switch button track is classified as control')
+  assert.equal(glassControlKind(track), 'skip', 'Switch track stays solid')
   assert.equal(glassControlKind(thumb), 'lens', 'Switch droplet thumb is classified as lens')
 })
 

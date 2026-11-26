@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { PremiumBadge } from '../../PremiumBadge'
 import { memo } from 'react'
 import type { RentalPostSummary } from '../../../api/types'
@@ -35,15 +36,15 @@ export const MapExplorePinPreview = memo(function MapExplorePinPreview({
       >
         <div className="map-explore-preview__thumb">
           {post.thumbnailPath ? (
-            <img src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
+            <img width={96} height={96} src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
           ) : (
             <div className="map-explore-preview__thumb-empty" aria-hidden />
           )}
         </div>
         <div className="map-explore-preview__info">
           {post.isOwnerPremium === true && <PremiumBadge />}
-          {post.highlightTag ? (
-            <span className="map-explore-preview__tag">{post.highlightTag}</span>
+          {listingHighlight(post) ? (
+            <span className="map-explore-preview__tag">{listingHighlight(post)}</span>
           ) : null}
           <p className="map-explore-preview__price">
             {formatMillionPriceLabel(post.price)}/tháng
@@ -59,11 +60,12 @@ export const MapExplorePinPreview = memo(function MapExplorePinPreview({
           type="button"
           className="map-explore-preview__close"
           onClick={onClose}
-          aria-label="Đóng xem trước"
+          aria-label="Đóng xem trước" title="Đóng xem trước"
         >
-          ×
+          <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
         </button>
       ) : null}
     </div>
   )
 })
+import { listingHighlight } from '../../../lib/listingHighlight'

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import postcss from 'postcss'
 
-const roots=['src/liquid-glass.css','src/components/ui/LiquidTabList.css','src/components/motion/interaction-motion.css','src/ai-spectrum.css','src/components/theme/theme.css'].map(file=>postcss.parse(fs.readFileSync(file,'utf8')))
-for(const selector of ['.liquid-glass-defs','.interaction-feedback','.interaction-pulse','.ai-interaction-waves','html[data-theme-transition]::view-transition','#root .liquid-tabs > .liquid-tabs__lens']) {
+const roots=['src/liquid-glass.css','src/components/ui/LiquidTabList.css','src/components/motion/interaction-motion.css','src/components/theme/theme.css'].map(file=>postcss.parse(fs.readFileSync(file,'utf8')))
+for(const selector of ['.liquid-glass-defs','.interaction-feedback','.interaction-pulse','html[data-theme-transition]::view-transition','#root .liquid-tabs > .liquid-tabs__lens']) {
   test(`${selector} never captures pointer input`,()=>{
     const declarations=[]
     for(const root of roots)root.walkRules(rule=>{
@@ -19,14 +19,17 @@ test('unsupported backdrop filters keep opaque semantic surfaces',()=>{
   let fallback=false
   css.walkAtRules('supports',rule=>{
     if(rule.params.startsWith('not') && rule.params.includes('backdrop-filter'))
-      rule.walkDecls('--glass-panel',declaration=>{fallback=declaration.value==='var(--surface-elevated)'})
+      rule.walkDecls('--glass-panel',declaration=>{fallback=['var(--surface)','var(--surface-elevated)'].includes(declaration.value)})
   })
   assert.ok(fallback)
 })
 
-test('optical faces stay separate from the base material and content exclusions stay explicit',()=>{
-  roots[0].walkRules(rule=>assert.ok(!rule.selector.includes('data-glass-face')))
+test("glass registration is an explicit floating-layer allowlist", async () => {
   const scope=fs.readFileSync('src/components/ui/glassControlScope.ts','utf8')
-  assert.match(scope,/export const GLASS_CONTENT_CONTROLS = /)
-  assert.ok(scope.includes('element.matches(GLASS_CONTENT_CONTROLS)'))
+  const candidates=scope.split('export const GLASS_CANDIDATES =')[1].split('\n')[0]
+  assert.ok(!/button|input|textarea|select|actions/.test(candidates))
+  assert.ok(scope.includes("return parentSurface ? 'skip' : 'lens'"))
+  const entry=fs.readFileSync('src/main.tsx','utf8')
+  assert.ok(!entry.includes('WebglButtonGlassEffects'))
+  assert.ok(!entry.includes('ai-spectrum.css'))
 })

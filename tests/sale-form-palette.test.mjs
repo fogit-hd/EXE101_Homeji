@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { THEMES, contrast, mix, token, tokenContrast } from './helpers/theme-tokens.mjs'
 
 const css = readFileSync(new URL('../src/pages/MarketplacePage.css', import.meta.url), 'utf8')
 
@@ -24,11 +25,12 @@ test('sale caption palettes meet small-text contrast on their rendered backgroun
 })
 
 test('sale type selection and food preset prices use readable text colors', () => {
-  assert.match(css, /\.marketplace-type-choice button\.is-active\s*\{[^}]*color: #a43c22;/)
-  assert.match(css, /\.food-preset-grid strong\s*\{[^}]*color: #24543e;/)
+  assert.match(css, /\.marketplace-type-choice button\.is-active\s*\{[^}]*color: var\(--action-on-soft\);/)
+  assert.match(css, /\.food-preset-grid strong\s*\{[^}]*color: var\(--text-primary\);/)
 })
 
 test('fixed seller location uses readable captions and wraps long addresses', () => {
   assert.match(css, /\.seller-location-lock\s*\{[^}]*min-width: 0;[^}]*overflow-wrap: anywhere;/)
-  assert.match(css, /\.seller-location-lock span\s*\{[^}]*color: #526358;/)
+  assert.match(css, /\.seller-location-lock span\s*\{[^}]*color: var\(--text-secondary\);/)
+  for (const theme of THEMES) assert.ok(tokenContrast('--text-secondary', '--surface-muted', theme) >= 4.5, `caption (${theme})`)
 })

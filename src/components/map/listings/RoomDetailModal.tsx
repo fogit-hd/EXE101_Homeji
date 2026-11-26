@@ -1,3 +1,5 @@
+import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
+import { useDismissDetailsOnOutside } from '../../../hooks/useDismissDetailsOnOutside'
 import { PhotoGallery } from './RoomPhotoGallery'
 import { ReportListingButton } from './ReportListingButton'
 import { RoomDetailHeader, RoomEssentials, RoomOwnerProfile, RoomOwnerPhone } from './RoomDetailPresentation'
@@ -22,7 +24,7 @@ import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
 import { getErrorMessage, isProfileRequiredError } from '../../../lib/errors'
 import { ProfileSetupNotice } from '../../auth/ProfileSetupNotice'
 import { useLocation } from 'react-router-dom'
-import { amenityLabel, rentalPostTypeLabel } from '../../../lib/labels'
+import { amenityLabel, rentalPostTypeLabel, formatMonthlyRent } from '../../../lib/labels'
 import { ScheduleDateTimePicker } from '../../ScheduleDateTimePicker'
 import { rentalPriceBasis, rentalPriceLabel } from '../../ai/rentalPriceBasis'
 import { listingReference } from '../../../lib/listingReference'
@@ -40,14 +42,16 @@ import {
   WaterDropIcon,
   MotorbikeIcon,
   LightbulbIcon,
-  FloodFreeIcon,
-  SecurityCameraIcon,
   MessageCircleIcon,
 } from '../../icons/SvgIcons'
 import mapPinUrl from '../../../assets/room-detail/map-pin.svg'
 import messageCircleUrl from '../../../assets/room-detail/message-circle.svg'
 import circleAlertUrl from '../../../assets/room-detail/circle-alert.svg'
 import './RoomDetailModal.css'
+import { useIsMobile } from '../../../mobile/useIsMobile'
+import { MobileDetailPage, MobileDetailSection, MobileShareIcon } from '../../../mobile/detail/MobileDetailPage'
+import { MobileSheet } from '../../../mobile/MobileSheet'
+import { HeartIcon } from '../../icons/SvgIcons'
 
 type Props = {
   listingId: string | null
@@ -114,6 +118,9 @@ export function RoomDetailModal({
   const profileRequired = isAuthenticated && needsProfileSetup
   const isRenter = profile?.role === UserRole.Renter
   const { present, ...presence } = useMotionPresence(Boolean(listingId), 'fade')
+  const isMobile = useIsMobile()
+  const [descOpen, setDescOpen] = useState(false)
+  useDismissDetailsOnOutside('.room-detail__other-contacts')
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const listingIdRef = useRef<string | null>(null)
@@ -133,6 +140,8 @@ export function RoomDetailModal({
   } | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
   const [notice, setNotice] = useState<{ id: string; message: string; tone: 'ok' | 'err' } | null>(null)
+  /** Listing whose viewing request just went through: offer the natural next step, messaging the landlord. */
+  const [bookedId, setBookedId] = useState<string | null>(null)
   const [scheduleListingId, setScheduleListingId] = useState<string | null>(null)
   const [scheduleAt, setScheduleAt] = useState('')
   const [scheduleNote, setScheduleNote] = useState('')
@@ -150,6 +159,13 @@ export function RoomDetailModal({
   const priceBasis = post ? rentalPriceBasis(post) : 'unknown'
   const actionMessage = notice && notice.id === listingId ? notice.message : null
   const actionTone = notice?.tone ?? 'ok'
+  // Confirm a save/unsave once the parent reports the new state; unsave offers an undo.
+  const pendingSave = useRef<boolean | null>(null)
+  useEffect(() => {
+    if (pendingSave.current === null || !listingId || saveBusy) return
+    if (saved === pendingSave.current) setNotice({ id: listingId, message: saved ? 'Đã lưu phòng' : 'Đã bỏ lưu', tone: 'ok' })
+    pendingSave.current = null
+  }, [saved, saveBusy, listingId])
   const scheduleOpen = scheduleListingId != null && scheduleListingId === listingId
   if (useChangedInputs([listingId, viewerId])) setActionBusy(false)
   if (useChangedInputs([listingId])) { setRevealPhoneForPost(null); setReportAfterLoginFor(null) }
@@ -205,7 +221,7 @@ export function RoomDetailModal({
 
     const focusable = () =>
       [...(root?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        'summary, button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       ) ?? [])].filter(node => node.getClientRects().length > 0)
 
     const onKey = (event: KeyboardEvent) => {
@@ -213,6 +229,15 @@ export function RoomDetailModal({
       if (event.target instanceof Element && event.target.closest('[data-homeji-ai-panel="open"]')) return
       // The image viewer owns keyboard navigation while its native dialog is open.
       if (root?.querySelector('dialog[open]')) return
+      if (event.key === 'Escape' && root?.querySelector('.room-detail__booking-anchor > .room-detail__schedule')) {
+        if (root.querySelector('.schedule-dt.is-open')) return
+        event.preventDefault()
+        event.stopPropagation()
+        event.stopImmediatePropagation()
+        setScheduleListingId(null)
+        root.querySelector<HTMLElement>('.room-detail__book')?.focus({ preventScroll: true })
+        return
+      }
       if (event.key === 'Escape') {
         event.preventDefault()
         event.stopPropagation()
@@ -256,6 +281,7 @@ export function RoomDetailModal({
   const handleSave = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
     if (!listingId || !onToggleSave || saveBusy) return
+    pendingSave.current = !saved
     onToggleSave(listingId)
   }
 
@@ -336,7 +362,7 @@ export function RoomDetailModal({
       setScheduleListingId(null)
       setScheduleNote('')
       notify('Đã gửi yêu cầu xem phòng.')
-      onOpenAppointments?.()
+      setBookedId(post.id)
     } catch (error) {
       notify(getErrorMessage(error, 'Chưa đặt được lịch. Vui lòng thử lại.'), 'err')
     } finally {
@@ -344,7 +370,7 @@ export function RoomDetailModal({
     }
   }
 
-  const rentLabel = post ? formatRent(post.price) : null
+  const rentLabel = post && Number.isFinite(post.price) && post.price > 0 ? formatMonthlyRent(post.price) : null
   const depositLabel = post ? formatRent(post.deposit) : null
   const otherFee = post ? formatRent(post.internetPrice) : null
   const utilities = post ? utilityText(post) : 'Chưa cung cấp'
@@ -355,7 +381,7 @@ export function RoomDetailModal({
   const facts = post
     ? [
         isApartmentListing(post.title) ? 'Căn hộ' : rentalPostTypeLabel[post.type] || null,
-        post.highlightTag?.trim() || null,
+        listingHighlight(post),
         !isImportedRentalPost(post) && post.maxOccupants && post.maxOccupants > 0 ? `Tối đa ${post.maxOccupants} người` : null,
       ].filter((item): item is string => Boolean(item))
     : []
@@ -366,6 +392,138 @@ export function RoomDetailModal({
 
   const onBackdrop = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onClose()
+  }
+
+  const toast = saveError || actionMessage ? <>
+    {saveError ? <p className="is-err" role="alert">{saveError}</p> : null}
+    {actionMessage ? <p className={`is-${actionTone}`} role="status">
+      {actionMessage}
+      {actionMessage === 'Đã bỏ lưu' && !saved && onToggleSave && listingId ? <button type="button"
+        disabled={saveBusy} onClick={() => { pendingSave.current = true; onToggleSave(listingId) }}>Hoàn tác</button> : null}
+      {bookedId && bookedId === post?.id && actionTone === 'ok' ? <>
+        <button type="button" disabled={actionBusy} onClick={() => { setBookedId(null); void handleMessage() }}>Nhắn chủ trọ</button>
+        {onOpenAppointments ? <button type="button" onClick={() => { setBookedId(null); onOpenAppointments() }}>Xem lịch</button> : null}
+      </> : null}
+    </p> : null}
+  </> : null
+
+  if (isMobile) {
+    const ownPost = Boolean(profile && post && post.ownerId === profile.id)
+    const longDescription = description.length > 280
+    return <MobileDetailPage dialogRef={dialogRef} titleId={titleId} onClose={onClose} busy={loadState === 'loading'}
+      title={post && isApartmentListing(post.title) ? 'Chi tiết căn hộ' : 'Chi tiết phòng trọ'}
+      actions={loadState === 'ready' && post ? <>
+        <button type="button" className="m-detail__icon" aria-label="Chia sẻ phòng" title="Chia sẻ phòng" onClick={() => void handleShare()}><MobileShareIcon /></button>
+        {onToggleSave ? <button type="button" className="m-detail__icon" aria-pressed={saved} aria-label={saved ? 'Bỏ lưu phòng' : 'Lưu phòng'}
+          title={saved ? 'Bỏ lưu phòng' : 'Lưu phòng'} disabled={saveBusy} onClick={handleSave}><HeartIcon size={22} filled={saved} /></button> : null}
+      </> : null}
+      toast={toast}
+      bar={loadState === 'ready' && post && !ownPost ? <>
+        <button type="button" className="m-btn m-btn--secondary" disabled={actionBusy} aria-haspopup="dialog" aria-expanded={scheduleOpen}
+          onClick={() => { setScheduleAt(''); setScheduleNote(''); setScheduleListingId(listingId) }}>Đặt lịch xem</button>
+        <button type="button" className="m-btn m-btn--primary" disabled={actionBusy} onClick={() => void handleMessage()}>
+          <MessageCircleIcon size={18} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin'}
+        </button>
+      </> : null}>
+      {loadState === 'loading' ? <div role="status"><div className="m-detail__skel" /><p className="m-detail__status">Đang tải thông tin phòng…</p></div> : null}
+      {loadState === 'profile-required' ? <ProfileSetupNotice action="xem thông tin phòng" onNavigate={onClose} returnTo={(() => {
+        const params = new URLSearchParams(location.search)
+        if (listingId) params.set('post', listingId)
+        return `${location.pathname}?${params}${location.hash}`
+      })()} /> : null}
+      {loadState === 'error' ? <div className="m-detail__status" role="alert">
+        <h3>Không tải được chi tiết</h3>
+        <p>{matched?.message ?? 'Chưa tải được thông tin phòng. Vui lòng thử lại.'}</p>
+        <button type="button" className="m-btn m-btn--secondary" onClick={() => setAttempt((value) => value + 1)}>Thử lại</button>
+      </div> : null}
+      {loadState === 'missing' ? <div className="m-detail__status" role="status">
+        <h3>Tin không còn</h3>
+        <p>Tin đăng này không còn trên Homeji hoặc đã được gỡ.</p>
+        <button type="button" className="m-btn m-btn--secondary" onClick={onClose}>Quay lại tìm phòng</button>
+      </div> : null}
+      {loadState === 'ready' && post ? <>
+        <PhotoGallery urls={listingPhotos(post)} />
+        <div className="m-detail__head">
+          <p className="m-detail__price">{rentLabel ?? 'Giá cần trao đổi'}</p>
+          {priceBasis === 'unknown' || isStudentShare ? <p className="m-detail__muted">{priceBasis === 'unknown' ? 'Hỏi người đăng giá theo người hay cả phòng.' : 'Dự kiến mỗi người; trao đổi để chia các khoản phí.'}</p> : null}
+          <h3 className="m-detail__name">{post.title?.trim() || 'Tin đăng'}</h3>
+          {isStudentShare ? <p className="m-detail__where">
+            {post.ownerDisplayName || 'Người đăng'}{post.ownerSchool ? ` · ${post.ownerSchool}` : ''}
+            {post.availableSlots ? ` · Cần thêm ${post.availableSlots} người ghép` : ''}
+          </p> : null}
+          <p className="m-detail__where">{pinIcon}<span>{address || 'Chưa cung cấp địa chỉ'}</span></p>
+          {facts.length > 0 ? <ul className="m-detail__tags">{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul> : null}
+          {/* The assistant block carries its own Cân nhắc toggle; show one only when it is off. */}
+          {!aiFeatureFlags.decisionTools ? <div className="m-detail__row"><RentalConsiderationToggle post={post} /></div> : null}
+        </div>
+        <div className="m-detail__facts" aria-label="Thông tin thuê chính">
+          <div><span>Diện tích</span><strong>{post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa rõ'}</strong></div>
+          <div><span>Tiền cọc</span><strong>{depositLabel ?? 'Chưa rõ'}</strong></div>
+          <div><span>Ở tối đa</span><strong>{!isImportedRentalPost(post) && post.maxOccupants && post.maxOccupants > 0 ? `${post.maxOccupants} người` : 'Chưa rõ'}</strong></div>
+        </div>
+        <MobileDetailSection title="Chi phí thuê & tiền cọc">
+          <CostRow label={priceBasis === 'unknown' ? 'Tiền thuê theo tin' : isStudentShare ? 'Dự kiến mỗi người' : 'Tiền thuê'} value={rentLabel ?? 'Chưa cung cấp'} muted={!rentLabel} />
+          <CostRow label="Tiền cọc" value={depositLabel ?? 'Chưa cung cấp'} muted={!depositLabel} />
+          <CostRow label="Điện, nước" value={utilities} muted={utilities === 'Chưa cung cấp'} />
+          <CostRow label="Phí khác" value={otherFee ?? 'Chưa cung cấp'} muted={!otherFee} />
+          {costsIncomplete ? <p className="m-detail__muted">Chưa đủ thông tin để tính tổng. Hãy xác nhận các khoản phí với người đăng.</p> : null}
+          <RoomCostCalculatorWidget rent={post.price} isStudentShare={isStudentShare} electricityPriceHint={post.electricityPrice}
+            waterPriceHint={post.waterPrice} internetPriceHint={post.internetPrice} maxOccupantsHint={post.maxOccupants} availableSlotsHint={post.availableSlots} />
+        </MobileDetailSection>
+        {description ? <MobileDetailSection title={isStudentShare ? 'Lời nhắn tìm người ở ghép' : 'Mô tả căn phòng'}>
+          <p className={`m-detail__desc${longDescription && !descOpen ? ' is-clamped' : ''}`}>{description}</p>
+          {longDescription ? <button type="button" className="m-detail__more" aria-expanded={descOpen} onClick={() => setDescOpen((value) => !value)}>{descOpen ? 'Thu gọn' : 'Xem thêm'}</button> : null}
+        </MobileDetailSection> : null}
+        <MobileDetailSection title="Tiện ích trong phòng">
+          {amenities.length > 0 ? <ul className="m-detail__tags">{amenities.map((label) => <li key={label}>{label}</li>)}</ul>
+            : <p className="m-detail__muted">Chưa cung cấp</p>}
+        </MobileDetailSection>
+        <MobileDetailSection title={isStudentShare ? 'Người đăng' : 'Chủ trọ'}>
+          <RoomOwnerProfile heading={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'} name={post.ownerDisplayName?.trim() || 'Chưa cập nhật'} avatarUrl={post.ownerAvatarPath} verified={post.isOwnerVerified}>{null}</RoomOwnerProfile>
+          {areaMissing ? <p className="m-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
+          <div className="m-detail__contacts">
+            <OwnerContacts key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone}
+              revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
+            {hasOwnerPhone ? <PhoneAction className="room-detail__call" phone={phone} hasPhone={hasOwnerPhone} onAuthenticated={() => setRevealPhoneForPost(post.id)}
+              guestLabel={<>{phoneIcon}Gọi điện</>} guestAriaLabel="Gọi điện, đăng nhập để xem số điện thoại">{phoneIcon}Gọi điện</PhoneAction> : null}
+            {hasOwnerPhone && phone ? (isAuthenticated
+              ? <a href={`https://zalo.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo với người đăng">Zalo</a>
+              : <button type="button" aria-label="Chat Zalo, đăng nhập để liên hệ" onClick={() => openAuthModal({ intent: 'contact', onSuccess: () => setRevealPhoneForPost(post.id) })}>Zalo</button>) : null}
+          </div>
+          {!ownPost ? <div className="m-detail__chips" role="group" aria-label="Mẫu tin nhắn nhanh">
+            {['Phòng này hiện còn trống không ạ?', 'Mình muốn hẹn lịch qua xem phòng được không?', 'Chi phí điện nước và dịch vụ tính thế nào ạ?'].map((template) => (
+              <button key={template} type="button" disabled={actionBusy} onClick={() => void handleMessage(`Chào bạn, ${template.charAt(0).toLowerCase() + template.slice(1)}`)}>
+                <MessageCircleIcon size={13} /><span>{template}</span>
+              </button>
+            ))}
+          </div> : null}
+        </MobileDetailSection>
+        {aiFeatureFlags.decisionTools ? <MobileDetailSection>
+          <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post} showFacts={false}
+            canMessage={Boolean(isAuthenticated && isRenter && !ownPost && onOpenMessages && !actionBusy)}
+            onPrepareMessage={draft => { void handleMessage(draft) }} />
+          {openRentalAssistant ? <button type="button" className="m-btn m-btn--secondary m-btn--block" onClick={openRentalAssistant}>Hỏi trợ lý về phòng đang xem</button> : null}
+        </MobileDetailSection> : null}
+        <div className="m-detail__note">
+          <strong>Xem phòng trước khi quyết định</strong>
+          {isStudentShare ? 'Thống nhất chi phí và quy tắc ở chung trước khi quyết định.' : 'Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.'}
+        </div>
+        <div className="m-detail__foot">
+          <ReportListingButton key={post.id} postId={post.id} ownerId={post.ownerId}
+            openRequested={reportAfterLoginFor === post.id} onAuthRequired={() => setReportAfterLoginFor(post.id)}
+            onOpenRequestHandled={clearReportAfterLogin} />
+          {listingReference(post.id) ? <p className="m-detail__muted">Mã tin: {listingReference(post.id)}</p> : null}
+        </div>
+        <MobileSheet open={scheduleOpen} onClose={() => setScheduleListingId(null)} title="Đặt lịch xem phòng"
+          footer={<button type="button" className="m-btn m-btn--primary m-btn--block" disabled={!scheduleAt || actionBusy} onClick={() => void handleBookViewing()}>
+            {actionBusy ? 'Đang gửi…' : 'Gửi yêu cầu'}</button>}>
+          <div className="m-schedule">
+            <ScheduleDateTimePicker viewportBound label="Thời gian xem" value={scheduleAt} onChange={setScheduleAt} />
+            <label>Ghi chú<input value={scheduleNote} onChange={(event) => setScheduleNote(event.target.value)} placeholder="Ví dụ: mình đến sau 18h" /></label>
+          </div>
+        </MobileSheet>
+      </> : null}
+    </MobileDetailPage>
   }
 
   return createPortal(
@@ -385,6 +543,7 @@ export function RoomDetailModal({
                 type="button"
                 className="room-detail__share"
                 aria-label="Chia sẻ phòng"
+                title="Chia sẻ phòng"
                 onClick={() => void handleShare()}
               >
                 <ShareIcon />
@@ -395,6 +554,7 @@ export function RoomDetailModal({
               <button
                 type="button"
                 className={`room-detail__save${saved ? ' is-on' : ''}`}
+                title={saved ? '♥  Đã lưu' : '♡  Lưu tin'}
                 aria-pressed={saved}
                 disabled={saveBusy}
                 onClick={handleSave}
@@ -422,7 +582,7 @@ export function RoomDetailModal({
         {loadState === 'error' ? (
           <div className="room-detail__status" role="alert">
             <div className="room-detail__status-icon">
-              <img src={circleAlertUrl} alt="" width={24} height={24} />
+              <img loading="lazy" decoding="async" src={circleAlertUrl} alt="" width={24} height={24} />
             </div>
             <h3>Không tải được chi tiết</h3>
             <p>{matched?.message ?? 'Chưa tải được thông tin phòng. Vui lòng thử lại.'}</p>
@@ -435,7 +595,7 @@ export function RoomDetailModal({
         {loadState === 'missing' ? (
           <div className="room-detail__status" role="status">
             <div className="room-detail__status-icon">
-              <img src={circleAlertUrl} alt="" width={24} height={24} />
+              <img loading="lazy" decoding="async" src={circleAlertUrl} alt="" width={24} height={24} />
             </div>
             <h3>Tin không còn</h3>
             <p>Tin đăng này không còn trên Homeji hoặc đã được gỡ. Bạn có thể đóng popup để tiếp tục tìm phòng.</p>
@@ -449,21 +609,20 @@ export function RoomDetailModal({
                 <div className="room-detail__mobile-facts"><RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} rent={rentLabel ?? 'Trao đổi'} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Chưa cung cấp'} /></div>
                 <PhotoGallery urls={listingPhotos(post)} />
                 <div className="room-detail__summary">
-                  <p className="room-detail__eyebrow">{isStudentShare ? 'TÌM BẠN Ở GHÉP' : isApartmentListing(post.title) ? 'CĂN HỘ CHO THUÊ' : 'PHÒNG TRỌ CHO THUÊ'}</p>
+
                   <h3>{post.title?.trim() || 'Tin đăng'}</h3>
-                  {listingReference(post.id) ? <p className="room-detail__muted">Mã tin: {listingReference(post.id)}</p> : null}
                   {isStudentShare ? <p className="room-detail__muted">
                     {post.ownerDisplayName || 'Người đăng'}{post.ownerSchool ? ` · ${post.ownerSchool}` : ''}
                     {post.availableSlots ? ` · Cần thêm ${post.availableSlots} người ghép` : ''}
                   </p> : null}
                   {address ? (
                     <p className="room-detail__address">
-                      <img src={mapPinUrl} alt="" width={18} height={18} />
+                      <img loading="lazy" decoding="async" src={mapPinUrl} alt="" width={18} height={18} />
                       <span>{address}</span>
                     </p>
                   ) : (
                     <p className="room-detail__address">
-                      <img src={mapPinUrl} alt="" width={18} height={18} />
+                      <img loading="lazy" decoding="async" src={mapPinUrl} alt="" width={18} height={18} />
                       <span>Chưa cung cấp</span>
                     </p>
                   )}
@@ -516,42 +675,25 @@ export function RoomDetailModal({
                     <p className="room-detail__muted">Các tiện ích khác: chưa cung cấp</p>
                   )}
                 </section>
-                <div className="room-detail__environment-section" data-glass-exclude>
-                  <h4 className="room-detail__environment-title">Thông tin an ninh & môi trường khu vực</h4>
-                  <div className="room-detail__environment-grid">
-                    <div className="room-detail__env-item">
-                      <span className="room-detail__env-icon" aria-hidden="true"><FloodFreeIcon size={16} /></span>
-                      <div className="room-detail__env-text">
-                        <strong>Tuyến đường không ngập</strong>
-                        <small>Khu vực cao ráo, lưu thông thuận tiện mùa mưa lớn</small>
-                      </div>
-                    </div>
-                    <div className="room-detail__env-item">
-                      <span className="room-detail__env-icon" aria-hidden="true"><SecurityCameraIcon size={16} /></span>
-                      <div className="room-detail__env-text">
-                        <strong>An ninh camera 24/7</strong>
-                        <small>Khu nhà trọ có camera giám sát và khóa cổng an toàn</small>
-                      </div>
-                    </div>
-                  </div>
-                </div>
                 {aiFeatureFlags.decisionTools ? <RentalDetailAssistant key={`${profile?.id ?? 'guest'}:${post.id}`} post={post} showFacts={false}
                   canMessage={Boolean(isAuthenticated && isRenter && profile?.id !== post.ownerId && onOpenMessages && !actionBusy)}
                   onPrepareMessage={draft => { void handleMessage(draft) }} /> : null}
                 {aiFeatureFlags.decisionTools && openRentalAssistant ? <button type="button" className="btn btn-secondary btn-sm"
                   onClick={openRentalAssistant}>Hỏi trợ lý về phòng đang xem</button> : null}
+                {/* The listing code is for support and reports, so it closes the details instead of leading them. */}
+                {listingReference(post.id) ? <p className="room-detail__muted room-detail__reference">Mã tin: {listingReference(post.id)}</p> : null}
               </div>
               <aside className="room-detail__aside" aria-label="Giá thuê và liên hệ" tabIndex={0}>
                 <div className="room-detail__price">
-                  <p className="room-detail__kicker">{rentalPriceLabel(priceBasis)}</p>
+
                   <p className="room-detail__amount">{rentLabel ?? 'Chưa cung cấp'}</p>
+                  {rentLabel ? <p className="room-detail__exact-price">{formatRent(post.price)}/tháng</p> : null}
                   <p className="room-detail__muted">{priceBasis === 'unknown' ? 'Hỏi người đăng giá theo người hay cả phòng trước khi so chi phí.' : isStudentShare ? 'Trao đổi để xác nhận cách chia các khoản phí.' : 'Giá thuê theo tin đăng'}</p>
                 </div>
                 <RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Chưa cung cấp'} />
                 <hr />
                 <div className="room-detail__contact" data-glass-exclude>
-                  <OwnerProfile key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone} isStudentShare={isStudentShare}
-                    revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
+                  <RoomOwnerProfile heading={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'} name={post.ownerDisplayName?.trim() || 'Chưa cập nhật'} avatarUrl={post.ownerAvatarPath} verified={post.isOwnerVerified}>{null}</RoomOwnerProfile>
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
                   {(!profile || post.ownerId !== profile.id) && (
                     <div className="room-detail__greeting-chips" role="group" aria-label="Mẫu tin nhắn nhanh">
@@ -585,46 +727,61 @@ export function RoomDetailModal({
             </div>
             <footer className="room-detail__footer" data-scheduling={scheduleOpen || undefined}>
               <div className="room-detail__footer-copy">
-                {scheduleOpen ? (
-                  <div className="room-detail__schedule">
-                    <ScheduleDateTimePicker
-                      label="Thời gian xem"
-                      value={scheduleAt}
-                      onChange={setScheduleAt}
-                    />
-                    <label>
-                      Ghi chú
-                      <input
-                        value={scheduleNote}
-                        onChange={(event) => setScheduleNote(event.target.value)}
-                        placeholder="Ví dụ: mình đến sau 18h"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      disabled={!scheduleAt || actionBusy}
-                      onClick={() => void handleBookViewing()}
-                    >
-                      Gửi yêu cầu
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <strong className="room-detail__footer-price">{rentLabel ?? 'Giá cần trao đổi'}{rentLabel ? <small>{priceBasis === 'unknown' ? ' · cần hỏi đơn vị' : priceBasis === 'person' ? ' / người/tháng' : ' / tháng'}</small> : null}</strong>
-                    <p>{post.ownerDisplayName?.trim() || 'Liên hệ người đăng phòng'}</p>
-                  </>
-                )}
+                <strong className="room-detail__footer-price">{rentLabel ?? 'Giá cần trao đổi'}</strong>
+                <p>{post.ownerDisplayName?.trim() || 'Liên hệ người đăng phòng'}</p>
                 {saveError ? <p className="room-detail__toast is-err" role="alert">{saveError}</p> : null}
                 {actionMessage ? (
                   <p className={`room-detail__toast is-${actionTone}`} role="status">
                     {actionMessage}
+                    {actionMessage === 'Đã bỏ lưu' && !saved && onToggleSave && listingId ? <button type="button" className="room-detail__undo"
+                      disabled={saveBusy} onClick={() => { pendingSave.current = true; onToggleSave(listingId) }}>Hoàn tác</button> : null}
+                    {bookedId && bookedId === post?.id && actionTone === 'ok' ? <span className="room-detail__next">
+                      <button type="button" disabled={actionBusy} onClick={() => { setBookedId(null); void handleMessage() }}>Nhắn chủ trọ</button>
+                      {onOpenAppointments ? <button type="button" onClick={() => { setBookedId(null); onOpenAppointments() }}>Xem lịch</button> : null}
+                    </span> : null}
                   </p>
                 ) : null}
               </div>
               <div className="room-detail__footer-actions">
                 <button type="button" className="room-detail__message" disabled={actionBusy} onClick={() => void handleMessage()}>
-                  <img src={messageCircleUrl} alt="" width={19} height={19} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin ngay'}
+                  <img loading="lazy" decoding="async" src={messageCircleUrl} alt="" width={19} height={19} />{actionBusy ? 'Đang xử lý…' : 'Nhắn tin'}
                 </button>
+                <div className="room-detail__booking-anchor">
+                  <button
+                    type="button"
+                    className="room-detail__book"
+                    data-glass-exclude
+                    disabled={actionBusy}
+                    aria-expanded={scheduleOpen}
+                    title={scheduleOpen ? 'Đóng lựa chọn đặt lịch' : 'Đặt lịch xem phòng'}
+                    aria-controls={scheduleOpen ? `${titleId}-booking` : undefined}
+                    onClick={() => {
+                      setScheduleAt('')
+                      setScheduleNote('')
+                      setScheduleListingId((current) => (current === listingId ? null : listingId))
+                    }}
+                  >
+                    Đặt lịch xem phòng
+                  </button>
+                  {scheduleOpen ? (
+                    <div className="room-detail__schedule" id={`${titleId}-booking`} role="group" aria-label="Đặt lịch xem phòng">
+                      <ScheduleDateTimePicker viewportBound label="Thời gian xem" value={scheduleAt} onChange={setScheduleAt} />
+                      <label>
+                        Ghi chú
+                        <input value={scheduleNote} onChange={(event) => setScheduleNote(event.target.value)} placeholder="Ví dụ: mình đến sau 18h" />
+                      </label>
+                      <button type="button" disabled={!scheduleAt || actionBusy} onClick={() => void handleBookViewing()}>
+                        Gửi yêu cầu
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <RentalConsiderationToggle post={post} />
+                <details className="room-detail__other-contacts">
+                  <summary>Liên hệ khác</summary>
+                  <div className="room-detail__other-actions">
+                    <OwnerContacts key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone}
+                      revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
                 {hasOwnerPhone ? <PhoneAction className="room-detail__call" phone={phone} hasPhone={hasOwnerPhone} onAuthenticated={() => setRevealPhoneForPost(post.id)}
                   guestLabel={<>{phoneIcon}Gọi điện</>} guestAriaLabel="Gọi điện, đăng nhập để xem số điện thoại">
                   {phoneIcon}Gọi điện
@@ -653,20 +810,8 @@ export function RoomDetailModal({
                     </button>
                   )
                 ) : null}
-                <button
-                  type="button"
-                  className="room-detail__book"
-                  data-glass-exclude
-                  disabled={actionBusy}
-                  aria-expanded={scheduleOpen}
-                  onClick={() => {
-                    setScheduleAt('')
-                    setScheduleNote('')
-                    setScheduleListingId((current) => (current === listingId ? null : listingId))
-                  }}
-                >
-                  {scheduleOpen ? 'Hủy đặt lịch' : 'Đặt lịch xem phòng'}
-                </button>
+                  </div>
+                </details>
               </div>
             </footer>
           </>
@@ -677,20 +822,21 @@ export function RoomDetailModal({
   )
 }
 
+const pinIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.4" /></svg>
+
 const phoneIcon = <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>
 
-function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, onAuthenticatedContact }: { post: RentalPost; phone: string; hasPhone: boolean; isStudentShare: boolean; revealRequested: boolean; onAuthenticatedContact: () => void }) {
+function OwnerContacts({ post, phone, hasPhone, revealRequested, onAuthenticatedContact }: { post: RentalPost; phone: string; hasPhone: boolean; revealRequested: boolean; onAuthenticatedContact: () => void }) {
   const [revealed, setRevealed] = useState(false)
   const { isAuthenticated } = useAuth()
   const { openAuthModal } = useAuthModal()
   const phoneId = useId()
   const phoneVisible = isAuthenticated && (revealed || revealRequested)
-  const name = post.ownerDisplayName?.trim() || 'Chưa cập nhật'
   const digits = phone.replace(/\D/g, '')
   const maskedPhone = digits ? `${phone.startsWith('+') ? '+' : ''}${digits.slice(0, 3)}${'•'.repeat(Math.max(0, digits.length - 3))}` : '••• ••• ••••'
 
   return (
-    <RoomOwnerProfile heading={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'} name={name} avatarUrl={post.ownerAvatarPath} verified={post.isOwnerVerified}>
+    <>
       <OwnerSocialContacts key={post.ownerId} userId={post.ownerId} />
       <RoomOwnerPhone id={phoneId} revealed={phoneVisible}
         value={!hasPhone ? 'Chưa cập nhật' : phoneVisible && phone
@@ -702,7 +848,7 @@ function OwnerProfile({ post, phone, hasPhone, isStudentShare, revealRequested, 
             setRevealed(value => !value)
           } : undefined}
         hint={hasPhone ? phoneVisible ? 'Nhấn số điện thoại để gọi người đăng' : isAuthenticated ? 'Xem số để liên hệ trực tiếp' : 'Đăng nhập để xem số và liên hệ' : 'Liên hệ qua tin nhắn trên Homeji.'} />
-    </RoomOwnerProfile>
+    </>
   )
 }
 
@@ -781,7 +927,7 @@ function RoomCostCalculatorWidget({
       </div>
 
       <div className="room-cost-calculator__breakdown-chips">
-        <span><HouseIcon size={13} /> Phòng: {formatPrice(rentAmount)}</span>
+        <span><HouseIcon size={13} /> Phòng: {formatMonthlyRent(rentAmount)}</span>
         <span><ElectricBoltIcon size={13} /> Điện (~{kwhPerPerson * occupants} kWh): {formatPrice(electricityTotal)}</span>
         <span><WaterDropIcon size={13} /> Nước: {formatPrice(waterTotal)}</span>
         <span><MotorbikeIcon size={13} /> Dịch vụ & xe: {formatPrice(serviceFee)}</span>
@@ -886,3 +1032,4 @@ function ShareIcon() {
     </svg>
   )
 }
+import { listingHighlight } from '../../../lib/listingHighlight'

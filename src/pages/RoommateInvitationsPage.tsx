@@ -1,3 +1,4 @@
+import { isPendingReceivedInvitation } from '../lib/roommateInvitations'
 import './pages.css'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -19,6 +20,7 @@ import { formatDate, invitationStatusLabel } from '../lib/labels'
 import { mapPostUrl } from '../lib/mapDeepLinks'
 import './ProfilePage.css'
 import './RoommateInvitationsPage.css'
+import { useIsMobile } from '../mobile/useIsMobile'
 
 type Props = {
   embedded?: boolean
@@ -28,6 +30,7 @@ type Props = {
 export function RoommateInvitationsPage({ embedded = false, onOpenConversation }: Props) {
   const { profile } = useAuth()
   const [invitations, setInvitations] = useState<RoommateInvitation[]>([])
+  const isMobile = useIsMobile()
   const [actionError, setActionError] = useState('')
   const [filter, setFilter] = useState<'all' | 'received' | 'sent' | 'accepted'>('all')
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -52,7 +55,7 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
     setInvitations(profile?.role === UserRole.Renter ? await getMyInvitations() : [])
   }, [profile?.role])
 
-  const { showLoader, onIntroComplete, error, disrupted } = usePersistentLoad(loadFn)
+  const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(loadFn)
 
   const updateItem = (updated: RoommateInvitation) => {
     setInvitations((prev) => prev.map((i) => (i.id === updated.id ? {
@@ -62,7 +65,7 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
     } : i)))
   }
 
-  const received = invitations.filter(inv => inv.receiverId === profile?.id && inv.status === RoommateInvitationStatus.Pending)
+  const received = invitations.filter(inv => isPendingReceivedInvitation(inv, profile?.id))
   const visible = invitations.filter(inv => filter === 'all' || (filter === 'received' && received.includes(inv)) || (filter === 'sent' && inv.senderId === profile?.id) || (filter === 'accepted' && inv.status === RoommateInvitationStatus.Accepted))
     .sort((a, b) => Number(received.includes(b)) - Number(received.includes(a)) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
@@ -70,19 +73,20 @@ export function RoommateInvitationsPage({ embedded = false, onOpenConversation }
     <div className={embedded ? 'map-embed roommate-embed' : 'roommate-page'}>
       {!embedded ? (
         <header className="roommate-page__header">
-          <span className="roommate-page__eyebrow">Ở GHÉP</span>
+          
           <h1 className="roommate-page__title">Tìm người ở ghép hợp ý</h1>
           <p className="roommate-page__lead">Quản lý lời mời gửi và nhận — kết nối người ở ghép phù hợp.</p>
         </header>
       ) : null}
       <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      {error ? <button type="button" className="btn btn-secondary" onClick={() => void reload()}>Thử lại</button> : null}
       {!embedded && <Link to="/?section=profile&profileTab=lifestyle" className="btn btn-secondary">
         Cập nhật lối sống của tôi
       </Link>}
 
       <header className="roommate-inbox__heading"><div><h2>Kết nối của bạn</h2><p>{showLoader ? 'Đang tải lời mời…' : received.length ? `${received.length} lời mời đang chờ bạn phản hồi` : 'Lời mời và những người bạn đã kết nối'}</p></div><span className="roommate-inbox__total">{invitations.length} lời mời</span></header>
-      <div className="roommate-inbox__filters" role="group" aria-label="Lọc lời mời" data-glass-exclude>
-        {([['all', 'Tất cả'], ['received', 'Cần phản hồi'], ['sent', 'Đã gửi'], ['accepted', 'Đã kết nối']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
+      <div className={isMobile ? "roommate-inbox__filters m-chips" : "roommate-inbox__filters"} role="group" aria-label="Lọc lời mời" data-glass-exclude>
+        {([['all', 'Tất cả'], ['received', 'Cần phản hồi'], ['sent', 'Đã gửi'], ['accepted', 'Đã kết nối']] as const).map(([value, label]) => <button key={value} type="button" className={isMobile ? "m-chip" : undefined} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
       </div>
       {showLoader ? (
         disrupted

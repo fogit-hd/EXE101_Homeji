@@ -33,7 +33,7 @@ export function CategoryCard({
     <Link
       to={to}
       className={`category-card category-card--${tone} ${className}`.trim()}
-      aria-label={ariaLabel ?? title}
+      aria-label={ariaLabel ?? title} title={ariaLabel ?? title}
     >
       <span className="category-card__icon" aria-hidden>
         {icon ?? (

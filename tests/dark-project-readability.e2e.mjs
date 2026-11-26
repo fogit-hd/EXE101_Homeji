@@ -82,7 +82,7 @@ try {
  role=3;for(const width of[1440,390])await visit('admin','/admin',width);role=1;
  for(const width of[1440,390]){
   await visit('search','/?section=listings&view=list',width);
-  const ai=page.getByRole('button',{name:'Gợi ý AI',exact:true});if(await ai.count()){await ai.click();await page.getByRole('dialog',{name:'Gợi ý AI tìm phòng',exact:true}).waitFor();await scan('ai-search-popup-'+width)}
+  const ai=page.getByRole('button',{name:'Tìm bằng AI',exact:true});if(await ai.count()){await ai.click();await page.getByRole('dialog',{name:'Tìm phòng bằng AI',exact:true}).waitFor();await scan('ai-search-popup-'+width)}
   await page.goto(base+'/?section=profile');await ready();await page.getByRole('button',{name:'Menu tài khoản',exact:true}).click();await scan('account-menu-'+width);
  }
  auth=false;await page.evaluate(()=>{localStorage.removeItem('homeji_access_token');localStorage.removeItem('homeji_user_id');sessionStorage.setItem('qa-guest','1')});

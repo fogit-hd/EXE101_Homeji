@@ -120,7 +120,8 @@ function assistantViewport() {
 
 function navPanelLayout(expanded: boolean, sheet: boolean, viewport: ReturnType<typeof assistantViewport>): PanelLayout {
   const { width: vw, height: vh, offsetTop } = viewport
-  const margin = sheet ? expanded ? 0 : 8 : expanded ? 12 : VIEW_MARGIN
+  // Phone: a true bottom sheet, edge to edge, so it reads as one layer over the page rather than a floating card.
+  const margin = sheet ? 0 : expanded ? 12 : VIEW_MARGIN
   const width = sheet ? vw - margin * 2 : Math.min(expanded ? 1480 : 480, vw - margin * 2)
   const height = Math.max(0, Math.min(sheet ? expanded ? vh : vh * 0.92 : expanded ? vh : 780, vh - margin * 2))
   const top = offsetTop + (sheet ? vh - height - margin : expanded ? (vh - height) / 2 : Math.min(80, Math.max(margin, vh - height - margin)))
@@ -891,7 +892,7 @@ export function MapChatbot({
   return (
     <div className="map-chatbot homeji-assistant is-nav" data-expanded={expanded} data-glass-exclude>
       {panelVisible && modal ? <button type="button" className="homeji-assistant__backdrop" tabIndex={-1}
-        aria-label="Đóng không gian trợ lý" onClick={closeChat} /> : null}
+        aria-label="Đóng không gian trợ lý" title="Đóng không gian trợ lý" onClick={closeChat} /> : null}
       <div ref={panelRef} id={HOMEJI_AI_PANEL_ID}
         className={`map-chatbot__panel homeji-assistant__window${panelVisible ? ' is-visible' : ''}${sheetMode ? ' is-sheet' : ''}${expanded ? ' is-expanded' : ''}${busy ? ' is-thinking' : ''}`}
         style={{ left: panel.left, top: panel.top, width: panel.width, height: panel.maxHeight, maxHeight: panel.maxHeight }}
@@ -904,7 +905,7 @@ export function MapChatbot({
               <HomejiAvatar />
               <div className="map-chatbot__brand-titles">
                 <strong>Homeji</strong>
-                <span className="homeji-assistant__eyebrow">AI</span>
+                
               </div>
             </div>
             <button
@@ -960,7 +961,7 @@ export function MapChatbot({
         </header>
         <div className={`homeji-assistant__workspace${showTools ? ' has-tools' : ''}${workspaceDraft && agentFlow.workspaceOpen ? ' has-draft-workspace' : ''}`}>
           {showTools ? <aside className="homeji-assistant__tools" aria-label="Công cụ Homeji" id={`${reactId}-tools`}>
-            <div className="homeji-assistant__tools-heading"><span>LỐI TẮT CỦA BẠN</span><button type="button" className="homeji-assistant__icon-button" onClick={() => { setToolsOpen(false); toolsButtonRef.current?.focus() }} aria-label="Đóng công cụ"><AssistantIcon name="close" /></button></div>
+            <div className="homeji-assistant__tools-heading"><span>LỐI TẮT CỦA BẠN</span><button type="button" className="homeji-assistant__icon-button" onClick={() => { setToolsOpen(false); toolsButtonRef.current?.focus() }} aria-label="Đóng công cụ" title="Đóng công cụ"><AssistantIcon name="close" /></button></div>
             <p>Đi thẳng đến việc bạn cần.</p>
             <nav aria-label="Đi tới Homeji">{shortcuts.map(item => <button type="button" key={item.section}
               onClick={() => handleNavigationAction({ id: `shortcut-${item.section}`, kind: ChatbotNavigationActionKind.OpenSection, label: item.label, target: item.section, description: '' })}>

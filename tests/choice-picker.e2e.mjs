@@ -138,10 +138,9 @@ try {
 
   await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).scrollIntoViewIfNeeded()
   await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).hover()
-  await page.waitForFunction(() => !!document.querySelector('button[type="submit"]').style.getPropertyValue('--glass-x'))
   const optical = await page.getByRole('button', { name: 'Lưu lựa chọn', exact: true }).evaluate(e => getComputedStyle(e).backdropFilter)
-  assert.match(optical, /homeji-liquid-lens/)
-  check('Hovered action uses the local SVG optical filter and pointer highlight')
+  assert.equal(optical, 'none')
+  check('Content action stays solid on hover')
 
   for (const [width, height, theme] of [[1440,1000,'light'], [320,740,'light'], [390,844,'dark'], [768,560,'light']]) {
     await page.setViewportSize({ width, height })

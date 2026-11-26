@@ -5,6 +5,7 @@ import { parseFiltersFromURL } from './listings/listingAdapters'
 import { filterRentalSources } from '../../lib/rentalSourceFilters'
 import { apiRequest } from '../../api/client'
 import { getRentalSourceCatalog, sourceRoomHref } from '../../api/rentalSources'
+import { formatCompactRent } from '../../lib/labels'
 import type { CatalogClusterMarker } from './clusterListings'
 import { readSourceCatalogPins, type SourceCatalogPin } from '../../lib/sourceCatalog'
 import { createMarketplacePinContent, createPricePillPinContent, createRentalPinContent } from './mapLocationPins'
@@ -27,7 +28,7 @@ function disposeCatalogMarker(handle: OwnedCatalogMarker) {
   handle.dispose()
 }
 
-export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void, onSelectRental?: (pin: SourceCatalogPin) => void, rentalPins?: SourceCatalogPin[]) {
+export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, libraryRef: RefObject<google.maps.MarkerLibrary | null>, ready: boolean, enabled: boolean, layers: MapPinLayers, markerVariant: 'pin' | 'price-pill', onMarkersChange: (markers: CatalogClusterMarker[]) => void, onSelectRental?: (pin: SourceCatalogPin) => void, rentalPins?: SourceCatalogPin[], selectedId?: string | null, hoveredId?: string | null) {
   const navigate = useNavigate()
   const [params] = useListingSearchParams()
   // UI selection and panel URLs do not change which source pins match the search.
@@ -94,7 +95,9 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       popup.open({ map, anchor: marker, shouldFocus })
     }
     for (const pin of pins) {
-      const styleKey = JSON.stringify([pin.kind, pin.title, pin.price, markerVariant])
+      const selected = pin.id === selectedId
+      const hot = pin.id === hoveredId
+      const styleKey = JSON.stringify([pin.kind, pin.title, pin.price, markerVariant, selected, hot])
       const previous = owned.get(pin.id)
       if (previous) {
         if (previous.pin.lat !== pin.lat || previous.pin.lng !== pin.lng) previous.marker.position = { lat: pin.lat, lng: pin.lng }
@@ -105,16 +108,18 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       const content = pin.kind === 'food'
         ? createMarketplacePinContent({ title: pin.title })
         : markerVariant === 'price-pill' && pin.price !== null
-          ? createPricePillPinContent({ title: pin.title, label: formatCompactPriceTr(pin.price) })
-          : createRentalPinContent({ title: pin.title, kind: 'vacant' })
+          ? createPricePillPinContent({ title: pin.title, label: formatCompactPriceTr(pin.price), selected, hot })
+          : createRentalPinContent({ title: pin.title, kind: 'vacant', selected, hot })
       if (previous) {
+        previous.marker.zIndex = selected ? 1000 : hot ? 500 : 35
+        previous.marker.anchorTop = markerVariant === 'price-pill' && pin.price !== null && pin.kind !== 'food' ? '-50%' : '-100%'
         previous.marker.content = content.element
         previous.marker.title = pin.title
         previous.dispose = content.dispose
         previous.styleKey = styleKey
         continue
       }
-      const marker = new library.AdvancedMarkerElement({ position: { lat: pin.lat, lng: pin.lng }, title: pin.title, content: content.element, gmpClickable: true, zIndex: 35 })
+      const marker = new library.AdvancedMarkerElement({ position: { lat: pin.lat, lng: pin.lng }, title: pin.title, content: content.element, ...(markerVariant === 'price-pill' && pin.price !== null && pin.kind !== 'food' ? { anchorTop: '-50%' } : {}), gmpClickable: true, zIndex: 35 })
       const entry = { pin, marker, styleKey, dispose: content.dispose, removeClick: () => {} }
       const onClick = () => open(entry.pin, marker, false)
       marker.addEventListener('gmp-click', onClick)
@@ -126,12 +131,12 @@ export function useSourceCatalogMap(mapRef: RefObject<google.maps.Map | null>, l
       return { marker: handle.marker, listing: {
         id: pin.id, kind: pin.kind === 'rental' ? 'vacant' as const : 'marketplace' as const,
         title: pin.title, address: pin.address, imageUrl: pin.imageUrl,
-        priceLabel: pin.price ? `${pin.price.toLocaleString('vi-VN')} đ / tháng` : '',
+        priceLabel: pin.price ? `${formatCompactRent(pin.price)}/tháng` : '',
         premium: false,
         open: () => open(handle.pin, handle.marker, true),
       } }
     }))
     setCount(owned.size)
-  }, [mapRef, libraryRef, showMarkers, markerVariant, pins, onMarkersChange])
+  }, [mapRef, libraryRef, showMarkers, markerVariant, pins, selectedId, hoveredId, onMarkersChange])
   return showMarkers ? count : 0
 }

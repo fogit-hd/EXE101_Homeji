@@ -1,0 +1,73 @@
+/* Level 1: collapsible section. Level 2: "Xem thêm". See Disclosure.tsx. */
+.hj-disclosure {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.hj-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  color: var(--text-heading);
+  list-style: none;
+  cursor: pointer;
+}
+.hj-disclosure > summary::-webkit-details-marker { display: none; }
+.hj-disclosure > summary::marker { content: ''; }
+.hj-disclosure > summary:hover { background: var(--surface-muted); }
+.hj-disclosure > summary:focus-visible { outline: 2px solid var(--action-primary); outline-offset: 3px; }
+.hj-disclosure[open] > summary { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.hj-disclosure__label { display: grid; gap: 2px; min-width: 0; }
+.hj-disclosure__label strong { font-size: var(--fs-md); font-weight: 650; line-height: 1.4; }
+.hj-disclosure__label small { color: var(--text-secondary); font-size: var(--fs-sm); line-height: 1.4; }
+.hj-disclosure__chevron {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px 4px 0;
+  border-right: 1.75px solid currentColor;
+  border-bottom: 1.75px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+  opacity: .7;
+}
+.hj-disclosure[open] .hj-disclosure__chevron { transform: rotate(225deg); margin: 4px 4px 0 0; }
+.hj-disclosure__body { padding: 16px 18px 18px; border-top: 1px solid var(--border); }
+.hj-disclosure__body > :first-child { margin-top: 0; }
+.hj-disclosure__body > :last-child { margin-bottom: 0; }
+
+.hj-show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  min-height: 44px;
+  margin: 20px auto 0;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  font: 600 var(--fs-md)/1.4 var(--font-ui);
+  cursor: pointer;
+}
+.hj-show-more small { color: var(--text-secondary); font-weight: 500; font-size: var(--fs-sm); }
+.hj-show-more:hover { background: var(--surface-muted); }
+.hj-show-more:focus-visible { outline: 2px solid var(--action-primary); outline-offset: 3px; }
+
+@media (max-width: 480px) {
+  .hj-disclosure > summary { padding: 12px 14px; }
+  .hj-disclosure__body { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hj-disclosure__chevron { transition: none; }
+}

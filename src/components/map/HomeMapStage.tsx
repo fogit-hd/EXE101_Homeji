@@ -1,5 +1,9 @@
+import { useNavigate } from 'react-router-dom'
+import { RentalMapPreview } from './listings/RentalMapPreview'
+import { mapBackendListingToListingViewModel, mapMarketplacePostToListingViewModel } from './listings/listingAdapters'
+import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
 import { memo } from 'react'
-import type { RentalPostSummary } from '../../api/types'
+import type { MarketplacePost, RentalPostSummary } from '../../api/types'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { RentalMap, type MarketplaceMapPin } from './RentalMap'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
@@ -9,6 +13,9 @@ const HOME_SELECTION_PAD = { top: 110, bottom: 100 }
 export type HomeMapFocus = { lat: number; lng: number; zoom?: number }
 
 type HomeMapStageProps = {
+  onSourceSelectionChange?: (id: string | null) => void
+  listingPreview?: { post?: RentalPostSummary; marketPost?: MarketplacePost; saved: boolean; saveBusy: boolean;
+    onClose: () => void; onToggleSave?: () => void; onOpenRoom: () => void; onOpenNearby?: () => void }
   posts: RentalPostSummary[]
   selectedPostId: string | null
   hoveredPostId: string | null
@@ -68,6 +75,8 @@ type HomeMapStageProps = {
  * must not remount or re-reconcile the imperative map unless these props change.
  */
 export const HomeMapStage = memo(function HomeMapStage({
+  onSourceSelectionChange,
+  listingPreview,
   posts,
   selectedPostId,
   hoveredPostId,
@@ -93,8 +102,17 @@ export const HomeMapStage = memo(function HomeMapStage({
   hideViewSwitcher = false,
   onViewportIdle,
 }: HomeMapStageProps) {
+  const navigate = useNavigate()
+  const previewView = listingPreview?.post ? mapBackendListingToListingViewModel(listingPreview.post)
+    : listingPreview?.marketPost ? mapMarketplacePostToListingViewModel(listingPreview.marketPost) : null
+  const selectedPreview = listingPreview && previewView ? <RentalMapPreview compact view={previewView}
+    monthly={Boolean(listingPreview.post)} saved={listingPreview.saved} saveBusy={listingPreview.saveBusy}
+    onClose={listingPreview.onClose} onToggleSave={listingPreview.onToggleSave} onOpenNearby={listingPreview.onOpenNearby}
+    onOpen={() => { if (listingPreview.marketPost) navigate(marketplaceItemUrl(listingPreview.marketPost)); else listingPreview.onOpenRoom() }} /> : undefined
   return (
     <RentalMap
+      onSourceSelectionChange={onSourceSelectionChange}
+      selectedPreview={selectedPreview}
       showSourceCatalog
       posts={posts}
       selectedPostId={selectedPostId}

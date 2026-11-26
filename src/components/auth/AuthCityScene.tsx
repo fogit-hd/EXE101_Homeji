@@ -9,7 +9,7 @@ export function AuthCityScene({ mode }: { mode: 'signin' | 'signup' }) {
         <p>Tìm căn phòng phù hợp và những người bạn cùng chia sẻ nhịp sống thành phố.</p>
       </div>
       <figure className="auth-city__panorama">
-        <img src="/images/auth/saigon-vietnam-panorama.webp" width="1536" height="1024" fetchPriority="high"
+        <img loading="eager" decoding="async" src="/images/auth/saigon-vietnam-panorama.webp" width="1536" height="1024" fetchPriority="high"
           alt="Minh họa TP. Hồ Chí Minh với Landmark 81, Bitexco, cờ Việt Nam và dòng sông hướng ra biển, đồng bằng xanh và núi phía xa." />
         <figcaption>TP. Hồ Chí Minh · Phong cảnh Việt Nam được tái hiện bằng AI.</figcaption>
       </figure>

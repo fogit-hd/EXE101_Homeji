@@ -73,7 +73,7 @@ export function AdminExportsPanel() {
   }
   return <section className="admin-exports" aria-label="Xuất báo cáo quản trị">
     <div className="admin-export-create">
-      <div><span className="admin-section-kicker">Báo cáo quản trị</span><h3>Xuất dữ liệu tài khoản và thành viên</h3>
+      <div><h3>Xuất dữ liệu tài khoản và thành viên</h3>
         <p>Mỗi lần tạo sẽ lưu một file Excel và gửi bản đính kèm đến <strong>duongduy12314@gmail.com</strong>.</p>
         <p className="admin-report-note">Gồm tổng quan, tài khoản đăng ký, lịch sử gói Premium, hoạt động và khu vực. Danh sách tài khoản và gói gồm toàn bộ dữ liệu hiện có; số liệu hoạt động theo khoảng ngày chọn.</p></div>
       <div className="admin-export-create__action"><label>Khoảng hoạt động<select className="form-select" value={days} disabled={creating} onChange={event => setDays(Number(event.target.value))}>{[7, 30, 90].map(value => <option key={value} value={value}>{value} ngày gần nhất</option>)}</select></label>

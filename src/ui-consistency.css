@@ -1,73 +1,73 @@
 /* Semantic surface corrections: do not blanket recolor badges, icons or imagery. */
-.btn-primary { background: var(--hj-accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { background: #066875; color: #fff; }
-.badge-green { background: var(--hj-accent); color: #fff; }
+.btn-primary { background: var(--action-primary); color: var(--action-on-primary); }
+.btn-primary:hover:not(:disabled) { background: var(--action-primary-hover); color: var(--action-on-primary); }
+.badge-green { background: var(--grab-green); color: var(--on-brand); }
 .badge-gray { color: var(--text-secondary); }
-.badge-blue { color: #0e52a3; }
-.page-frame__eyebrow { color: var(--hj-brand-coral); }
+.badge-blue { color: var(--grab-green-hover); }
 .btn-map-cta { color: var(--grab-green-hover); }
-.btn-map-cta:hover:not(:disabled) { color: #066875; }
-.wallet-summary__balance { color: #fff; line-height: 1.25; }
-.wallet-summary__available { background: var(--hj-accent); }
-.payment-current { background: var(--hj-accent); }
-.payment-current__benefit p { color: #eef8f0; }
-.payment-current__badge { color: #fff; }
+.btn-map-cta:hover:not(:disabled) { color: var(--grab-green-hover); }
+.wallet-summary__balance { color: var(--on-brand); line-height: 1.25; }
+.wallet-summary__available { background: var(--grab-green); }
+.payment-current { background: var(--grab-green); }
+.payment-current__benefit p { color: var(--text-primary); }
+.payment-current__badge { color: var(--on-brand); }
 .payment-page, .payment-embed, .payment-wait-page { font-family: var(--font-ui); }
 :is(.payment-page, .payment-embed, .payment-wait-page) :is(h1, h2, h3, strong, .payment-plan-card__price, .payment-plan-card__price-value) { font-family: var(--font-ui); line-height: 1.45; }
 .map-listings__popover input:not([type='checkbox']) { background: var(--surface-elevated); color: var(--text-heading); }
-.map-messages.is-workspace .map-messages__bubble.is-mine .map-messages__bubble-body { background: var(--hj-accent); color: #fff; }
+/* Location and media bubbles keep their surface card (MapMessagesPanel.css); only text bubbles turn green. */
+.map-messages.is-workspace .map-messages__bubble.is-mine:not(.is-location):not(.is-media) .map-messages__bubble-body { background: var(--grab-green); color: var(--on-brand); }
 .map-messages.is-workspace .map-messages__bubble.is-mine .map-messages__bubble-body p { color: inherit; }
 .map-messages__composer :is(input, textarea) { color: var(--text-heading); background: var(--surface-elevated); }
-.marketplace-header__ghost { color: #a43c22; background: #fff3ec; }
+.marketplace-header__ghost { color: var(--action-on-soft); background: var(--action-soft); }
 .marketplace-card__badge, .marketplace-card__badge.is-mine { color: var(--grab-green-hover); }
-.marketplace-card__price { color: var(--hj-accent); }
+.marketplace-card__price { color: var(--grab-green); }
 .rental-edit-form .amenity-chip.active { color: var(--grab-green-hover); }
 .marketplace-header__utilities { flex-wrap: wrap; }
 .marketplace-header__subtabs-group { flex-wrap: wrap; min-width: 0; }
-.hub-market { background: var(--hj-accent-soft); color: var(--text-heading); }
+.hub-market { background: var(--brand-soft); color: var(--text-heading); }
 .hub-market :is(h2, li) { color: var(--text-heading); }
-.hub-safety { background: var(--hj-accent-soft); color: var(--text-heading); }
-.hub-banner { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 28px; border: 1px solid var(--border); border-radius: 22px; background: radial-gradient(circle at 90% 10%, #bfe8ed, transparent 38%), linear-gradient(110deg, #e4f4f5, #f3f7fa); color: var(--text-heading); }
-.hub-banner h2 { margin: 6px 0; font: 700 clamp(1.375rem, 3vw, 2rem)/1.5 var(--font-ui); color: var(--text-heading); }
-.hub-banner p { max-width: 620px; margin: 0; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.7; }
-.hub-banner > div > span { font-size: 0.75rem; font-weight: 700; color: var(--hj-brand-coral); }
-.hub-banner > a { flex-shrink: 0; padding: 12px 20px; border-radius: 12px; background: var(--hj-accent); color: #fff; font-weight: 600; text-decoration: none; }
-.marketplace-sell-form { max-width: 960px; margin-inline: auto; padding: clamp(16px, 3vw, 32px); border-radius: 22px; }
+.hub-safety { background: var(--brand-soft); color: var(--text-heading); }
+.hub-banner { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 28px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: linear-gradient(110deg, var(--brand-soft), var(--surface-muted)); color: var(--text-heading); }
+.hub-banner h2 { margin: 6px 0; font: 700 clamp(22px, 3vw, 32px)/1.5 var(--font-ui); color: var(--text-heading); }
+.hub-banner p { max-width: 620px; margin: 0; color: var(--text-secondary); font-size: var(--fs-md); line-height: 1.7; }
+.hub-banner > div > span { font-size: var(--fs-xs); font-weight: 700; color: var(--hj-brand-coral); }
+.hub-banner > a { flex-shrink: 0; padding: 12px 20px; border-radius: var(--radius-md); background: var(--grab-green); color: var(--on-brand); font-weight: 600; text-decoration: none; }
+.marketplace-sell-form { max-width: 960px; margin-inline: auto; padding: clamp(16px, 3vw, 32px); border-radius: var(--radius-lg); }
 .marketplace-sell-form .form-group { min-width: 0; }
-.wanted-post-form { max-width: 880px; margin-inline: auto; padding: clamp(18px, 3vw, 30px); border-radius: 20px; }
-.wanted-post-form :is(input, textarea) { min-height: 46px; border-radius: 10px; background: var(--surface-elevated); color: var(--text-heading); }
+.wanted-post-form { max-width: 880px; margin-inline: auto; padding: clamp(18px, 3vw, 30px); border-radius: var(--radius-lg); }
+.wanted-post-form :is(input, textarea) { min-height: 46px; border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-heading); }
 .wanted-post-form__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
-.marketplace-sell-form :is(input, select, textarea) { min-height: 46px; border-radius: 10px; background: var(--surface-elevated); color: var(--text-heading); }
+.marketplace-sell-form :is(input, select, textarea) { min-height: 46px; border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-heading); }
 .marketplace-toolbar { flex-wrap: wrap; gap: 12px; }
 .marketplace-toolbar__field { min-width: 140px; flex: 1 1 140px; }
 .marketplace-toolbar :is(select, button) { min-height: 42px; }
 .marketplace-toolbar__field select { width: 100%; min-width: 0; max-width: 100%; }
 .marketplace-list--grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 14px; }
 .marketplace-card--browse .marketplace-card__thumb, .marketplace-card--browse .marketplace-card__thumb--empty { height: 125px; }
-.marketplace-card--browse .marketplace-card__title { font-size: 0.9375rem; line-height: 1.5; }
+.marketplace-card--browse .marketplace-card__title { font-size: var(--fs-md); line-height: 1.5; }
 .marketplace-card--browse .marketplace-card__desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .food-preset-grid { grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); }
 .food-card-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 165px), 1fr)); gap: 14px; }
 .food-card__media { height: 125px; }
 .food-card__body { padding: 12px; gap: 8px; }
-.food-card__title { font-size: 0.9375rem; line-height: 1.5; }
-.profile-section { padding: clamp(18px, 3vw, 30px); border-radius: 20px; background: var(--surface-elevated); }
-.profile-hero { padding: 24px; border-radius: 20px; background: linear-gradient(110deg, #e4f4f5, #f3f7fa); }
+.food-card__title { font-size: var(--fs-md); line-height: 1.5; }
+.profile-section { padding: clamp(18px, 3vw, 30px); border-radius: var(--radius-lg); background: var(--surface-elevated); }
+.profile-hero { padding: 24px; border-radius: var(--radius-lg); background: linear-gradient(110deg, var(--hj-accent-soft), var(--surface-muted)); }
 .profile-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
 .profile-section__head { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.profile-section__head h3 { font-size: 1.3125rem; }
+.profile-section__head h3 { font-size: var(--fs-xl); }
 .profile-grid { gap: 22px; }
 .profile-grid .form-group { min-width: 0; margin-bottom: 0; }
-.profile-grid :is(input, select, textarea) { background: var(--surface-elevated); border-radius: 10px; min-height: 46px; color: var(--text-heading); }
+.profile-grid :is(input, select, textarea) { background: var(--surface-elevated); border-radius: var(--radius-md); min-height: 46px; color: var(--text-heading); }
 .profile-section__actions { display: flex; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--border); }
 .sell-form-heading { margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
-.sell-form-heading > span { color: var(--hj-brand-coral); font-size: 0.75rem; font-weight: 700; }
-.sell-form-heading h2 { margin: 8px 0; font-size: 1.5rem; line-height: 1.5; }
-.sell-form-heading p { margin: 0; font-size: 0.8125rem; }
-.rental-edit-form { max-width: 1000px; padding: clamp(18px, 3vw, 32px); border-radius: 20px; }
+.sell-form-heading > span { color: var(--hj-brand-coral); font-size: var(--fs-xs); font-weight: 700; }
+.sell-form-heading h2 { margin: 8px 0; font-size: var(--fs-xl); line-height: 1.5; }
+.sell-form-heading p { margin: 0; font-size: var(--fs-sm); }
+.rental-edit-form { max-width: 1000px; padding: clamp(18px, 3vw, 32px); border-radius: var(--radius-lg); }
 .rental-edit-form .form-row { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 20px; }
-.rental-edit-form :is(input, select, textarea) { min-height: 46px; background: var(--surface-elevated); color: var(--text-heading); border-radius: 10px; }
-.rental-media-card { max-width: 1000px; margin: 24px auto 0; padding: clamp(18px, 3vw, 32px); border-radius: 20px; }
+.rental-edit-form :is(input, select, textarea) { min-height: 46px; background: var(--surface-elevated); color: var(--text-heading); border-radius: var(--radius-md); }
+.rental-media-card { max-width: 1000px; margin: 24px auto 0; padding: clamp(18px, 3vw, 32px); border-radius: var(--radius-lg); }
 .rental-media-upload { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .rental-media-upload input { min-width: 0; max-width: 100%; }
 .rental-form-actions { display: flex; flex-wrap: wrap; gap: 12px; max-width: 1000px; margin: 24px auto 0; }
@@ -76,8 +76,8 @@
   .rental-media-upload button { justify-self: start; }
 }
 .post-steps { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 20px; }
-.post-steps > * { padding: 8px 12px; background: var(--hj-accent-soft); color: var(--hj-accent); border-radius: 10px; font-size: 0.8125rem; }
-.google-signin { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 1px solid #deded8; border-radius: 14px; background: var(--surface-elevated); width: 100%; box-sizing: border-box; overflow: hidden; }
+.post-steps > * { padding: 8px 12px; background: var(--brand-soft); color: var(--grab-green); border-radius: var(--radius-md); font-size: var(--fs-sm); }
+.google-signin { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 1px solid #deded8; border-radius: var(--radius-lg); background: var(--surface-elevated); width: 100%; box-sizing: border-box; overflow: hidden; }
 
 /* Secondary destinations remain available in the main menu on small screens. */
 @media (max-width: 767px) {
@@ -95,7 +95,7 @@
   .hj-menu-trigger > span { display: none; }
   .hj-logo { min-width: 0; gap: 5px; }
   .hj-logo__mark { width: 28px; height: 28px; }
-  .hj-logo__word { font-size: 1.375rem; }
+  .hj-logo__word { font-size: var(--fs-xl); }
   .hj-actions { gap: 2px; }
   .hj-actions > a { display: none; }
   .hj-profile { width: 40px; padding: 4px; }
@@ -105,7 +105,7 @@
 @media (max-width: 359px) {
   .hj-logo__word { display: none; }
 }
-.google-signin small { color: var(--text-secondary); font: 400 0.6875rem/1.6 var(--font-ui); text-align: center; }
+.google-signin small { color: var(--text-secondary); font: 400 var(--fs-xs)/1.6 var(--font-ui); text-align: center; }
 @media (max-width: 600px) {
   .hub-banner { padding: 20px; }
   .profile-grid { grid-template-columns: 1fr; }
@@ -117,20 +117,20 @@
 .auth-cinema__video-wrap { display: none; }
 .auth-city { position: relative; width: min(620px, 50vw); margin-right: 440px; align-self: center; color: var(--text-heading); }
 .auth-city__copy { position: relative; z-index: 1; padding: 0 32px; }
-.auth-city__copy > span { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; color: var(--hj-brand-coral); }
-.auth-city h2 { font: 700 clamp(1.625rem, 3.5vw, 2.875rem)/1.4 var(--font-ui); color: var(--text-heading); margin: 14px 0; }
+.auth-city__copy > span { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.13em; color: var(--hj-brand-coral); }
+.auth-city h2 { font: 700 clamp(26px, 3.5vw, 46px)/1.4 var(--font-ui); color: var(--text-heading); margin: 14px 0; }
 .auth-city p { max-width: 410px; color: var(--text-secondary); line-height: 1.7; }
 .auth-city__canvas { position: relative; height: 390px; width: 100%; }
 .auth-city__canvas canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.auth-city__static { display: grid; place-content: center; text-align: center; height: 100%; font-size: 8.125rem; color: #649070; border-radius: 50%; background: radial-gradient(ellipse, #cfdbc4, transparent 70%); }
-.auth-city__static span { font-size: 0.875rem; }
+.auth-city__static { display: grid; place-content: center; text-align: center; height: 100%; font-size: var(--fs-display); color: var(--text-secondary); border-radius: 50%; background: var(--surface-elevated); }
+.auth-city__static span { font-size: var(--fs-md); }
 .auth-city.is-ready .auth-city__static { visibility: hidden; }
-.auth-city__caption { display: block; text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
+.auth-city__caption { display: block; text-align: center; font-size: var(--fs-xs); color: var(--text-secondary); }
 .auth-cinema__stage { position: absolute; right: max(32px, calc((100vw - 1160px) / 2)); width: min(400px, calc(100% - 32px)); min-height: 0; grid-template-columns: minmax(0, 1fr); }
 .auth-cinema__form-wrap { min-width: 0; }
-.auth-cinema__card { box-sizing: border-box; background: var(--surface-elevated); color: var(--text-heading); border: 1px solid var(--border); box-shadow: 0 20px 70px #42513b1c; backdrop-filter: none; }
+.auth-cinema__card { box-sizing: border-box; background: var(--surface-elevated); color: var(--text-heading); border: 1px solid var(--border); box-shadow: none; backdrop-filter: none; }
 .auth-cinema__title { color: var(--text-heading); }
-.auth-cinema__submit { color: #fff; background: var(--hj-accent); }
+.auth-cinema__submit { color: var(--on-brand); background: var(--grab-green); }
 .auth-cinema__subtitle, .auth-cinema__footer, .auth-cinema__divider { color: var(--text-secondary); }
 .auth-cinema__field label { color: var(--text-heading); }
 .auth-cinema__field input { color: var(--text-heading); background: var(--surface-input); border-color: var(--border); }
@@ -144,12 +144,12 @@
   body:has(.auth-cinema) .map-chatbot__welcome { display: none; }
   .auth-city { width: 100%; margin: 0; max-width: 560px; }
   .auth-city__copy { padding: 0; text-align: center; }
-  .auth-city p { margin-inline: auto; font-size: 0.8125rem; }
+  .auth-city p { margin-inline: auto; font-size: var(--fs-sm); }
   .auth-city__canvas { height: 220px; }
   .auth-city__caption { display: none; }
   .auth-cinema__stage { position: relative; right: auto; width: min(400px, 100%); }
 }
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .auth-cinema *, .hub-banner * { animation: none !important; transition: none !important; }
 }
 
@@ -158,7 +158,7 @@
   transition: border-color var(--dur-fast) ease, box-shadow var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 :is(.post-card, .marketplace-card--browse, .food-card, .roommate-people__person):focus-within {
-  border-color: var(--hj-accent);
+  border-color: var(--focus-ring);
 }
 :is(.post-card-body h3, .marketplace-card__title, .food-card__title) {
   font-family: var(--font-ui);
@@ -169,14 +169,14 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
 }
-@media (hover: hover) and (pointer: fine)  {
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   :is(.post-card, .marketplace-card--browse, .food-card, .roommate-people__person):hover {
     transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--hj-accent) 35%, var(--border));
+    border-color: var(--control-border);
     box-shadow: var(--shadow-sm);
   }
 }
-@media all {
+@media (prefers-reduced-motion: no-preference) {
   .marketplace-workspace {
     animation: hj-content-enter 220ms var(--ease-out) both;
   }
@@ -185,3 +185,194 @@
     to { opacity: 1; }
   }
 }
+
+/* N4: one page-title style. 26px on phones, 32px from tablet up. Hero headlines (hub greeting,
+   referrals) and in-pane titles (messages inbox, profile name) keep their own type. */
+html:root #root :is(.page-frame__title, .map-appointments__page-title, .pay-head__title, .page-title, .marketplace-header__title) {
+  font-family: var(--font-ui);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+}
+@media (min-width: 768px) {
+  html:root #root :is(.page-frame__title, .map-appointments__page-title, .pay-head__title, .page-title, .marketplace-header__title) {
+    font-size: var(--fs-display);
+  }
+}
+
+/* N5: text buttons share one shape. 44px tall on phones (touch target), 40px on desktop. */
+html:root #root :is(.btn, .pay-btn) { border-radius: var(--radius-md); min-height: 40px; }
+@media (max-width: 767px) {
+  html:root #root :is(.btn, .pay-btn) { min-height: 44px; }
+  html:root #root .pay-btn--primary { height: 44px; }
+}
+
+/* The marketplace tab panel slides in from the side; clip it so the page never scrolls sideways mid-transition. */
+html:root #root .marketplace-page { overflow-x: clip; }
+
+/* N6: one filter chip. Pill, 36px visual height with a 44px hit area, outlined at rest,
+   brand fill when selected. Used by the food meal filter and the room quick filters. */
+html:root #root :is(.hj-chip, .map-listings__quick-chip) {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font: 500 var(--fs-sm)/1 var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+html:root #root :is(.hj-chip, .map-listings__quick-chip)::before { content: ''; position: absolute; inset: -4px 0; }
+html:root #root :is(.hj-chip, .map-listings__quick-chip):hover { border-color: var(--grab-green); background: var(--surface-elevated); }
+html:root #root :is(.hj-chip, .map-listings__quick-chip):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+html:root #root :is(.hj-chip, .map-listings__quick-chip).is-active {
+  border-color: var(--focus-ring);
+  background: var(--grab-green);
+  color: var(--on-brand);
+  font-weight: 600;
+}
+/* The food chip's fill is a shared-layout element that slides between chips. */
+html:root #root .hj-chip.is-active { background: transparent; }
+html:root #root .hj-chip__fill { position: absolute; inset: -1px; z-index: -1; border-radius: inherit; background: var(--grab-green); }
+
+.food-meal-filter-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 16px; }
+.food-meal-chips { position: relative; display: flex; flex-wrap: wrap; gap: 8px; }
+.food-distance { display: inline-flex; align-items: center; gap: 8px; font: 500 var(--fs-sm)/1 var(--font-ui); color: var(--text-secondary); }
+.food-distance select { min-height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-primary); font: 500 var(--fs-sm)/1 var(--font-ui); cursor: pointer; }
+
+/* N6: the appointments Timeline / Danh sách switch uses the shared segmented look. */
+html:root #root .map-appointments__view-toggle {
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--text-heading) 6%, var(--surface));
+  box-shadow: none;
+}
+html:root #root .map-appointments__view-toggle button { min-height: 38px; padding-inline: 16px; border: 1px solid transparent; border-radius: var(--radius-pill); color: var(--text-secondary); font: 550 var(--fs-sm)/1 var(--font-ui); }
+html:root #root .map-appointments__view-toggle button.is-active { border-color: var(--border); background: var(--surface-elevated); color: var(--text-heading); box-shadow: var(--shadow-sm); }
+
+/* Popup system on phones.
+   Small decisions (confirm, checkout, alerts, saved searches) rise as bottom sheets;
+   large reading surfaces (room detail) take the full screen. Desktop keeps centred modals. */
+@media (max-width: 600px) {
+  dialog:is(.confirm-dialog, .food-checkout-confirmation, .seller-watch__dialog, .interest-dialog)[open] {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90dvh;
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: calc(16px + var(--safe-bottom));
+    box-shadow: var(--shadow-sheet);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: hj-sheet-up 220ms var(--ease-out) both;
+  }
+  dialog:is(.confirm-dialog, .food-checkout-confirmation, .seller-watch__dialog, .interest-dialog)::backdrop { background: var(--overlay-scrim); }
+}
+@media (max-width: 800px) {
+  html body .room-detail__backdrop { padding: 0; align-items: stretch; }
+  html body .room-detail { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; border: 0; }
+}
+@keyframes hj-sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  dialog:is(.confirm-dialog, .food-checkout-confirmation, .seller-watch__dialog, .interest-dialog)[open] { animation: none; }
+}
+
+/* One page column on desktop: every member page lines up with the header logo
+   (the app-container: 1160px wide, 24px side padding). Map mode stays full-bleed. */
+@media (min-width: 1024px) {
+  html:root body #root :is(.hub-home, .referrals-page) { width: 100%; max-width: var(--app-container-max); margin-inline: auto; padding-inline: var(--app-container-pad); box-sizing: border-box; }
+  html body #root :is(.receipts-page, .pay-v2) { max-width: calc(var(--app-container-max) - 2 * var(--app-container-pad)); margin-inline: auto; box-sizing: border-box; }
+}
+
+/* Header content sits in the same 1160px column as the pages, so the logo lines up with
+   every page title; the bar's background still runs edge to edge. */
+@media (min-width: 1180px) {
+  html:root body #root .hj-header .hj-bar,
+  html:root body #root .hj-shell.is-compact .hj-header .hj-bar { padding-inline: calc((100% - var(--app-container-max)) / 2 + var(--app-container-pad)); box-sizing: border-box; }
+}
+@media (min-width: 1181px) {
+  html:root body #root .hj-shell:not(.is-compact) .hj-bar { padding-inline: calc((100% - var(--app-container-max)) / 2 + var(--app-container-pad)); }
+  html:root body #root .hj-shell:not(.is-compact) .hj-search-slot { margin-inline: 0; padding-inline: 0; }
+}
+/* Hồ sơ and Chợ join the same page column (content 164px from the left at 1440px). */
+@media (min-width: 1024px) {
+  html:root body #root .profile-account.map-embed { max-width: calc(var(--app-container-max) - 2 * var(--app-container-pad)); padding-inline: 0; margin-inline: auto; box-sizing: border-box; }
+  html:root body #root .feature-workspace.is-marketplace .marketplace-page { max-width: calc(var(--app-container-max) - 2 * var(--app-container-pad)); margin-inline: auto; box-sizing: border-box; }
+}
+
+/* Header search: focus shows on the pill only (no square box around the bare input, which the
+   dark-theme focus rule drew with #root weight), and the submit is a round icon button
+   centred inside the pill's right end. */
+html:root body #root .hj-search .hj-search__input:is(:focus, :focus-visible),
+html:root body .hj-search-sheet .hj-search__input:is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; }
+html:root body .hj-search .hj-search__field { padding-left: 18px; padding-right: 4px; align-items: center; }
+html:root body #root .hj-header .hj-search__submit--icon,
+html:root body .hj-search-sheet .hj-search__submit--icon,
+html:root body .hj-search__submit--icon {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 40px; min-width: 40px; height: 40px; padding: 0; margin: 0;
+  border: 0; border-radius: var(--radius-pill);
+  background: var(--action-primary); color: var(--action-on-primary); box-shadow: none;
+}
+html:root body #root .hj-shell.is-compact .hj-header .hj-search__submit--icon { width: 34px; min-width: 34px; height: 34px; }
+html:root body .hj-search__submit--icon:hover { filter: brightness(1.06); }
+html:root body .hj-search__submit--icon:focus-visible { outline: 2px solid var(--text-heading) !important; outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root body .hj-search__submit--icon { transition: filter .15s ease, transform .1s ease; }
+  html:root body .hj-search__submit--icon:active { transform: scale(.94); }
+}
+
+/* Member keyboard focus stays visible even when a component removes the native outline. */
+html:root body #root .app-shell--product :is(button, a, input, select, textarea, summary, [tabindex]):not(:where(.natural-rental-search__form textarea, .map-chatbot__form textarea, .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input, [data-glass-search] > input, .explore-search__input, .m-composer__field textarea, .auth-unified .auth-cinema__field input)):focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px;
+}
+html:root body #root :is(.map-messages, .roommate-workspace, .roommate-inbox__filters) :is(button, select, input:not([type='checkbox']):not([type='radio']), a.btn) { min-height: 44px; min-width: 44px; }
+html:root body #root .map-messages__new-icon { width: 44px; height: 44px; min-width: 44px; }
+html:root body #root :is(.hj-search__clear, .hj-notify__mark-all, .hj-notify__tabs button, .profile-edit-button, .roommate-workspace__lifestyle-toggle, .map-listings__mobile-view) { min-width: 44px; min-height: 44px; }
+html:root body #root .hj-search__clear { width: 44px; height: 44px; flex-shrink: 0; }
+html:root body #root .roommate-workspace label:has(> input:is([type='checkbox'], [type='radio'])) { display: flex; align-items: center; min-height: 44px; gap: 8px; cursor: pointer; }
+html:root body #root .wanted-card__title {
+  max-width: 100%; margin: 0; color: var(--text-heading); font-size: var(--fs-md); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
+html:root body #root .feature-workspace:has(.wanted-list, .wanted-filters) .btn { min-height: 44px; }
+
+/* Audit pass: 44px touch targets for remaining member controls */
+html:root body #root .site-footer nav a { display: inline-flex; align-items: center; min-height: 44px; }
+html:root body #root .marketplace-header__tab,
+html:root body #root .feature-workspace:has(.wanted-filters) .tabs .tab { min-height: 44px; }
+html:root body #root .profile-account-header__home { display: inline-flex; align-items: center; min-height: 44px; }
+html:root body #root .premium-contact-editor .btn,
+html:root body #root .profile-setup-notice .btn { min-height: 44px; }
+html:root body #root .map-listings__pager button { min-height: 44px; }
+html:root body #root .food-rail__locate { display: inline-flex; align-items: center; min-height: 44px; }
+html:root body #root .food-distance select { min-height: 44px; }
+
+/* Deep-flow audit: 44px targets in owner posts and wallet deposit */
+html:root body #root .notification-item__actions .btn { min-height: 44px; }
+html:root body #root .wallet-amounts button { min-height: 44px; }
+html:root body #root .wallet-support { min-height: 44px; }
+html:root body #root .btn.btn-sm,
+html:root body #root .seller-catalog__open { min-height: 44px; }
+html:root body #root .marketplace-status-filter button,
+html:root body #root .marketplace-type-choice button,
+html:root body #root .marketplace-sell-food-studio button { min-height: 44px; }
+html:root body #root .wallet-history-summary > summary,
+html:root body #root .wallet-disclosure > summary { min-height: 44px; display: flex; align-items: center; }
+html:root body #root .wallet-input input { min-height: 44px; }
+html:root body #root .marketplace-workspace .form-control { min-height: 44px; }

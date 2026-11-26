@@ -12,7 +12,7 @@ await writeFile(`${out}/scene.tsx`, `
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter,useLocation}from'react-router-dom';
 import{RoomDetailModal}from'/src/components/map/listings/RoomDetailModal.tsx';import{MapMessagesPanel}from'/src/components/map/MapMessagesPanel.tsx';
 import{toggleHomejiAi}from'/src/lib/homejiAiLauncher.ts';import{MapPlaceDetailPanel}from'/src/components/map/MapPlaceDetailPanel.tsx';import{ChatbotProvider}from'/src/contexts/ChatbotContext.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';
-import'/src/index.css';import'/src/ui-consistency.css';import'/src/ai-spectrum.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';
+import'/src/index.css';import'/src/ui-consistency.css';import'/src/product-ui.css';import'/src/glass-controls.css';import'/src/content-surfaces.css';import'/src/workspace-readability.css';
 function Scene(){const route=useLocation();const[room,setRoom]=useState('room-a');const[conversation,setConversation]=useState(null);const[identity,setIdentity]=useState('renter');const[post,setPost]=useState(null);
 useEffect(()=>{const listener=e=>{window.localStorage.setItem('homeji_user_id',e.detail);window.__fixtureUser=e.detail;setIdentity(e.detail)};window.addEventListener('fixture-account',listener);return()=>window.removeEventListener('fixture-account',listener)},[]);
 const map=new URLSearchParams(location.search).get('scene')==='map';useEffect(()=>{if(map)fetch('/api/rental-posts/room-a').then(r=>r.json()).then(setPost)},[map]);

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -98,11 +99,11 @@ export function PremiumLaunchOffer() {
   }
   if (!visible) return null
   if (maintenance) return createPortal(<dialog ref={dialog} data-glass-exclude className="premium-launch-offer maintenance-banner" aria-labelledby="maintenance-banner-title" aria-describedby="maintenance-banner-description" onCancel={event => { event.preventDefault(); dismiss() }}>
-    <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo bảo trì" autoFocus onClick={dismiss}>×</button>
+    <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo bảo trì" title="Đóng thông báo bảo trì" autoFocus onClick={dismiss}><X aria-hidden="true" size={20} style={{ verticalAlign: 'middle' }} /></button>
     <header className="premium-launch-offer__banner">
-      <img className="premium-launch-offer__art" src="/images/maintenance-notice-art.svg" alt="" aria-hidden="true" />
+      <img loading="lazy" decoding="async" width={640} height={400} className="premium-launch-offer__art" src="/images/maintenance-notice-art.svg" alt="" aria-hidden="true" />
       <div className="premium-launch-offer__banner-copy">
-      <span className="premium-launch-offer__eyebrow">Thông báo từ Homeji</span>
+      
       <h2 id="maintenance-banner-title">{maintenance.title}</h2>
       </div>
     </header>
@@ -123,12 +124,12 @@ export function PremiumLaunchOffer() {
   const percent = previousPrice > 0 ? Math.round(Math.abs(saving) / previousPrice * 100) : 0
   const reduced = saving > 0
   return createPortal(<dialog ref={dialog} data-glass-exclude className={`premium-launch-offer ${reduced ? 'is-reduction' : 'is-increase'}`} aria-labelledby="premium-offer-title" aria-describedby="premium-offer-description" onCancel={event => { event.preventDefault(); dismiss() }}>
-    <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo Premium" autoFocus onClick={dismiss}>×</button>
+    <button className="premium-launch-offer__close" type="button" aria-label="Đóng thông báo Premium" title="Đóng thông báo Premium" autoFocus onClick={dismiss}><X aria-hidden="true" size={20} style={{ verticalAlign: 'middle' }} /></button>
     <header className="premium-launch-offer__banner">
-      <img className="premium-launch-offer__art" src="/images/premium-offer-art.svg" alt="" aria-hidden="true" />
+      <img loading="lazy" decoding="async" width={640} height={400} className="premium-launch-offer__art" src="/images/premium-offer-art.svg" alt="" aria-hidden="true" />
       <div className="premium-launch-offer__banner-copy">
         <div className="premium-launch-offer__banner-top">
-          <span className="premium-launch-offer__eyebrow">{announcement ? 'Homeji Premium · Cập nhật giá' : 'Homeji Premium · Ưu đãi'}</span>
+          
           <span className="premium-launch-offer__discount">{reduced ? `GIẢM ${percent}%` : `ĐIỀU CHỈNH TĂNG ${percent}%`}</span>
         </div>
         <h2 id="premium-offer-title">{announcement ? `Giá mới cho ${announcement.packageName}` : <>Bạn gửi ảnh.<br />Homeji lo bản nháp.</>}</h2>

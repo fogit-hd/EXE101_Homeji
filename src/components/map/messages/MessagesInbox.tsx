@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import type { PostConversation } from '../../../api'
 import { ConversationListSkeleton } from '../../skeletons/PageSkeletons'
 import { LiquidTabList } from '../../ui/LiquidTabList'
+import { MobileTabs } from '../../../mobile/MobileTabs'
 import { PremiumBadge } from '../ChatExtras'
 import { Avatar } from './MessagePrimitives'
 import { conversationPreview, relativeTime, subjectTag, type InboxFilter } from './MessageFormatting'
@@ -24,13 +25,20 @@ type Props = {
   activeId: string | null
   currentUserId?: string | null
   onOpenThread: (conversationId: string) => void
+  mobile?: boolean
 }
+
+const INBOX_FILTERS = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'unread', label: 'Chưa đọc' },
+  { id: 'rental', label: 'Phòng thuê' },
+] as const satisfies readonly { id: InboxFilter; label: string }[]
 
 export function MessagesInbox({
   isFloatingThread, isWorkspace, isFloatingInbox, threadVisible, inboxSearchRef,
   inboxQuery, onInboxQueryChange, onInboxFocus, inboxFilter, onFilterChange,
   unreadTotal, loading, filteredConversations, conversations, activeId, currentUserId,
-  onOpenThread,
+  onOpenThread, mobile = false,
 }: Props) {
   return (
     <>
@@ -58,11 +66,21 @@ export function MessagesInbox({
                 onFocus={() => onInboxFocus()}
               />
             </label>
+            {mobile ? (
+              <MobileTabs items={INBOX_FILTERS} value={inboxFilter} onChange={onFilterChange} label="Lọc hộp thư"
+                idPrefix="inbox-filter" panelId="inbox-results" className="m-seg m-inbox-filters"
+                renderLabel={(id, label) => id === 'unread' && unreadTotal > 0
+                  ? <>{label}<span className="m-chip__count" aria-label={`${unreadTotal} tin chưa đọc`}>{unreadTotal > 99 ? '99+' : unreadTotal}</span></>
+                  : label} />
+            ) : (
             <LiquidTabList className="map-messages__inbox-filters" role="tablist" aria-label="Lọc hộp thư">
               <button
                 type="button"
                 role="tab"
                 aria-selected={inboxFilter === 'all'}
+                id="inbox-filter-all"
+                aria-controls="inbox-results"
+                tabIndex={inboxFilter === 'all' ? 0 : -1}
                 className={inboxFilter === 'all' ? 'is-active' : ''}
                 onClick={() => onFilterChange('all')}
               >
@@ -72,6 +90,9 @@ export function MessagesInbox({
                 type="button"
                 role="tab"
                 aria-selected={inboxFilter === 'unread'}
+                id="inbox-filter-unread"
+                aria-controls="inbox-results"
+                tabIndex={inboxFilter === 'unread' ? 0 : -1}
                 className={inboxFilter === 'unread' ? 'is-active' : ''}
                 onClick={() => onFilterChange('unread')}
               >
@@ -81,14 +102,20 @@ export function MessagesInbox({
                 type="button"
                 role="tab"
                 aria-selected={inboxFilter === 'rental'}
+                id="inbox-filter-rental"
+                aria-controls="inbox-results"
+                tabIndex={inboxFilter === 'rental' ? 0 : -1}
                 className={inboxFilter === 'rental' ? 'is-active' : ''}
                 onClick={() => onFilterChange('rental')}
               >
                 Phòng thuê
               </button>
             </LiquidTabList>
+            )}
           </>
         ) : null}
+        <div className="map-messages__inbox-results" id={isWorkspace ? 'inbox-results' : undefined} role={isWorkspace ? 'tabpanel' : undefined}
+          aria-labelledby={isWorkspace ? `inbox-filter-${inboxFilter}` : undefined} tabIndex={isWorkspace ? 0 : undefined}>
         {loading ? <ConversationListSkeleton /> : null}
         {!loading && filteredConversations.length === 0 ? (
           <p className="map-messages__empty">
@@ -109,7 +136,7 @@ export function MessagesInbox({
                 }`}
                 onClick={() => onOpenThread(c.id)}
               >
-                <Avatar name={c.otherParticipantName || '?'} seed={c.otherParticipantId || c.id} subdued />
+                <Avatar name={c.otherParticipantName || '?'} seed={c.otherParticipantId || c.id} src={c.otherParticipantAvatarPath} subdued />
                 <span className="map-messages__meta">
                   <span className="map-messages__meta-top">
                     <strong title={c.otherParticipantName || 'Người dùng'}>{c.otherParticipantName || 'Người dùng'}</strong>
@@ -137,6 +164,7 @@ export function MessagesInbox({
             </li>
           ))}
         </ul>
+        </div>
       </div>
       ) : null}
     </>

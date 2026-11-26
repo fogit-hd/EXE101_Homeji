@@ -56,7 +56,7 @@ export function AgentPostPreview({ draft, active, sharedLocation, onFinished }: 
   return <section className="agent-post-preview" aria-label="Xác nhận bài đăng AI">
     <header><span>HOMEJI AGENT · PREMIUM · {labels[kind]}</span><strong>Xem lại bài đăng trước khi gửi</strong><small>{expired ? 'Bản nháp đã hết hạn' : !active ? 'Bản nháp cũ · xem bản mới nhất bên dưới' : 'Chưa đăng · chỉ đăng khi bạn xác nhận'}</small></header>
     <div className={`agent-post-preview__editor${draft.images.length ? '' : ' has-no-images'}`}>
-    <div className="agent-post-preview__images">{draft.images.map((src, i) => <img key={i} src={src} alt={`Ảnh bài đăng ${i + 1}`} />)}</div>
+    <div className="agent-post-preview__images">{draft.images.map((src, i) => <img loading="lazy" decoding="async" width={280} height={190} key={i} src={src} alt={`Ảnh bài đăng ${i + 1}`} />)}</div>
     <fieldset disabled={disabled}>
       <label>Tiêu đề<input value={details.title} maxLength={200} onChange={e => setDetails({ ...details, title: e.target.value })} /></label>
       <label>{room ? 'Tiền thuê / tháng (đ)' : wanted ? 'Ngân sách tối đa / tháng (đ)' : food ? 'Giá mỗi đơn vị (đ)' : 'Giá bán (đ)'}<MoneyInput value={String(details.price || '')} onValueChange={value => setDetails({ ...details, price: Number(value) })} /></label>

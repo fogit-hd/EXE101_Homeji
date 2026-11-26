@@ -1,40 +1,19 @@
-import { useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect } from 'react'
 import { animate, type AnimationPlaybackControlsWithThen as AnimationPlaybackControls } from 'motion/react'
-import { DURATION, EASE, SCROLL_REVEAL } from '../../lib/motionTokens'
+import { EASE, SCROLL_REVEAL } from '../../lib/motionTokens'
 import './interaction-motion.css'
 
-const ACTIONS = 'button, [role="button"], summary, .btn, .auth-cinema__submit, .guest-hero__bloom-cta, .guest-hero__top-consult-btn, .roommate-people button, .marketplace-header button, [role="tab"], .hj-mega__link'
-const AI_ACTIONS = '.ai-spectrum-button, .natural-rental-search__trigger, .map-chatbot__fab, .map-chatbot__chip, .map-chatbot__action, .map-chatbot__send'
 const REVEALS = '.guest-mission__copy, .guest-mission__stat, .guest-steps li, .guest-audience__card, .guest-trust__points li, .hub-card, .hub-room-card, .roommate-people__person, .roommate-posts__card, .marketplace-card--browse, .food-card, .profile-section, [data-motion-reveal]'
 
-/** Decorative feedback only: never intercept input, scrolling, focus, or API actions. */
+/** Content reveals respect motion preferences and never intercept input. */
 export function InteractionMotion() {
-  const overlay = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
-    const reduced = window.matchMedia('not all') // always animate, regardless of OS reduced-motion
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     const animations = new Map<AnimationPlaybackControls, HTMLElement>()
     const seen = new WeakSet<Element>()
-    const glassReduced = window.matchMedia('(prefers-reduced-motion: reduce)')
-    let lightFrame = 0
-    let litSurface: HTMLElement | null = null
-    const resetSurfaceHighlight = () => {
-      cancelAnimationFrame(lightFrame)
-      lightFrame = 0
-      litSurface?.style.removeProperty('--glass-x')
-      litSurface?.style.removeProperty('--glass-y')
-      litSurface = null
-    }
-    const onGlassPreference = () => { if (glassReduced.matches) resetSurfaceHighlight() }
-    glassReduced.addEventListener('change', onGlassPreference)
-    const onGlassVisibility = () => { if (document.hidden) resetSurfaceHighlight() }
-    document.addEventListener('visibilitychange', onGlassVisibility)
     const finish = (animation: AnimationPlaybackControls) => {
       const node = animations.get(animation)
-      if (node?.classList.contains('interaction-pulse')) node.remove()
-      // Hand transform/opacity back to the stylesheet so hover lifts keep working.
-      else if (node) { node.style.removeProperty('transform'); node.style.removeProperty('opacity') }
+      if (node) { node.style.removeProperty('transform'); node.style.removeProperty('opacity') }
       animations.delete(animation)
     }
     const track = (animation: AnimationPlaybackControls, node: HTMLElement) => {
@@ -47,49 +26,6 @@ export function InteractionMotion() {
     const onPreference = () => { if (reduced.matches) cancel() }
     reduced.addEventListener('change', onPreference)
 
-    const pulse = (event: MouseEvent) => {
-      if (reduced.matches || !(event.target instanceof Element) || !overlay.current) return
-      const target = event.target.closest(ACTIONS)
-      if (!(target instanceof HTMLElement) || target.matches(':disabled, [aria-disabled="true"]')
-        || target.closest('.gm-style') || target.closest('.hx') || target.matches(AI_ACTIONS)) return
-      const bounds = target.getBoundingClientRect()
-      if (!bounds.width || !bounds.height) return
-      const node = document.createElement('span')
-      node.className = 'interaction-pulse'
-      const size = Math.min(84, Math.max(36, bounds.height * 1.4))
-      const x = event.detail ? Math.max(bounds.left, Math.min(event.clientX, bounds.right)) : bounds.left + bounds.width / 2
-      const y = event.detail ? Math.max(bounds.top, Math.min(event.clientY, bounds.bottom)) : bounds.top + bounds.height / 2
-      Object.assign(node.style, { left: `${x - size / 2}px`, top: `${y - size / 2}px`, width: `${size}px`, height: `${size}px` })
-      // Bound rapid clicks without queueing feedback behind the user's next action.
-      if (overlay.current.childElementCount >= 3) {
-        const oldest = overlay.current.firstElementChild
-        animations.forEach((element, animation) => { if (element === oldest) animation.stop() })
-        oldest?.remove()
-      }
-      overlay.current.append(node)
-      track(animate(node, { opacity: [.38, 0], scale: [.35, 1] },
-        { duration: DURATION.reveal, ease: EASE.out }), node)
-    }
-    document.addEventListener('click', pulse)
-    const trackSurfaceHighlight = (event: PointerEvent) => {
-      if (glassReduced.matches || event.pointerType !== 'mouse' || !(event.target instanceof Element)) return
-      const surface = event.target.closest('.btn, .choice-picker__trigger, button[type="submit"]')
-      if (!(surface instanceof HTMLElement) || surface.closest('.gm-style') || surface.closest('.hx') || surface.matches(':disabled')) {
-        resetSurfaceHighlight()
-        return
-      }
-      if (litSurface !== surface) { resetSurfaceHighlight(); litSurface = surface }
-      cancelAnimationFrame(lightFrame)
-      lightFrame = requestAnimationFrame(() => {
-        const bounds = surface.getBoundingClientRect()
-        if (!bounds.width || !bounds.height) return
-        // Move only the neutral sheen on the control surface; labels remain untouched.
-        surface.style.setProperty('--glass-x', `${Math.max(0, Math.min(100, (event.clientX - bounds.left) / bounds.width * 100))}%`)
-        surface.style.setProperty('--glass-y', `${Math.max(0, Math.min(100, (event.clientY - bounds.top) / bounds.height * 100))}%`)
-        lightFrame = 0
-      })
-    }
-    document.addEventListener('pointermove', trackSurfaceHighlight, { passive: true })
     const intersection = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(entries => {
       let stagger = 0
       entries.forEach(entry => {
@@ -125,11 +61,6 @@ export function InteractionMotion() {
     })))
     mutations.observe(document.getElementById('root') ?? document.body, { childList: true, subtree: true })
     return () => {
-      document.removeEventListener('click', pulse)
-      document.removeEventListener('pointermove', trackSurfaceHighlight)
-      glassReduced.removeEventListener('change', onGlassPreference)
-      document.removeEventListener('visibilitychange', onGlassVisibility)
-      resetSurfaceHighlight()
       reduced.removeEventListener('change', onPreference)
       intersection?.disconnect()
       document.querySelectorAll('.hj-pre-reveal').forEach(n => n.classList.remove('hj-pre-reveal'))
@@ -138,5 +69,5 @@ export function InteractionMotion() {
     }
   }, [])
 
-  return createPortal(<div ref={overlay} className="interaction-feedback" aria-hidden="true" />, document.body)
+  return null
 }

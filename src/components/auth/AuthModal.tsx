@@ -1,10 +1,13 @@
+import { X } from 'lucide-react'
 import type { CredentialResponse } from '@react-oauth/google'
-import { useEffect, useId, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { googleLoginWithIdToken } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthModalIntent, AuthModalMode } from "../../contexts/AuthModalContext.logic"
 import { useChangedInputs } from '../../hooks/useChangedInputs'
+import { useDialogFocus } from '../../hooks/useDialogFocus'
+import { persistAuthDestination } from '../../lib/authDestination'
 import { useMotionPresence } from '../motion/useMotionPresence'
 import { useTabTransition } from '../motion/useTabTransition'
 import { GoogleSignInButton } from './GoogleSignInButton'
@@ -55,6 +58,7 @@ function intentCopy(intent: AuthModalIntent | null): string | null {
 
 export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, register, setSessionFromAuth } = useAuth()
   const { present, ...presence } = useMotionPresence(open, 'fade')
   const formRef = useTabTransition(mode, AUTH_MODES)
@@ -65,6 +69,13 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // Each submit gets an attempt id; closing the modal or switching mode supersedes it, so a
+  // late response can neither close a dialog the user moved on from nor overlap a new request.
+  const attemptRef = useRef(0)
+  const beginAttempt = () => ++attemptRef.current
+  const isCurrent = (attempt: number) => attempt === attemptRef.current
+  const close = () => { attemptRef.current += 1; onClose() }
+  const switchMode = (next: AuthModalMode) => { if (!submitting) onModeChange(next) }
 
   if (useChangedInputs([open, mode]) && open) {
     setError('')
@@ -75,11 +86,14 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') { attemptRef.current += 1; onClose() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
+
+  // First field gets focus; Tab stays inside the dialog; the opener gets focus back on close.
+  useDialogFocus(open && present, formRef, 'input:not([type="hidden"])')
 
   if (!present) return null
 
@@ -87,15 +101,17 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitting) return
+    const attempt = beginAttempt()
     setError('')
     setSubmitting(true)
     try {
       await login(email, password)
-      onSuccess()
+      if (isCurrent(attempt)) onSuccess()
     } catch (err) {
-      setError(getErrorMessage(err, 'Chưa đăng nhập được. Kiểm tra email và mật khẩu rồi thử lại.'))
+      if (isCurrent(attempt)) setError(getErrorMessage(err, 'Chưa đăng nhập được. Kiểm tra email và mật khẩu rồi thử lại.'))
     } finally {
-      setSubmitting(false)
+      if (isCurrent(attempt)) setSubmitting(false)
     }
   }
 
@@ -110,19 +126,28 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
       setError(validationError)
       return
     }
+    if (submitting) return
+    const attempt = beginAttempt()
     setSubmitting(true)
     try {
       const session = await register(nextEmail, password, nextName)
+      if (!isCurrent(attempt)) return
       if (session.emailConfirmationRequired) {
-        if (session.confirmationMethod === 'otp') { onClose(); navigate('/verify-email'); return }
+        if (session.confirmationMethod === 'otp') {
+          // Verification returns to the page the modal was opened on.
+          close()
+          navigate('/verify-email', { state: { from: `${location.pathname}${location.search}` } })
+          return
+        }
+        persistAuthDestination(`${location.pathname}${location.search}${location.hash}`)
         setMessage(session.message || 'Vui lòng xác nhận email trước khi đăng nhập.')
       } else {
         onSuccess()
       }
     } catch (err) {
-      setError(getErrorMessage(err, 'Chưa đăng ký được. Vui lòng thử lại.'))
+      if (isCurrent(attempt)) setError(getErrorMessage(err, 'Chưa đăng ký được. Vui lòng thử lại.'))
     } finally {
-      setSubmitting(false)
+      if (isCurrent(attempt)) setSubmitting(false)
     }
   }
 
@@ -131,6 +156,8 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
       setError(mode === 'register' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.')
       return
     }
+    if (submitting) return
+    const attempt = beginAttempt()
     setError('')
     setSubmitting(true)
     try {
@@ -138,17 +165,18 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
         { idToken: credentialResponse.credential },
         mode === 'register' ? 'sign_up' : 'login',
       )
+      if (!isCurrent(attempt)) return
       await setSessionFromAuth(session)
       onSuccess()
     } catch (err) {
-      setError(getErrorMessage(err, mode === 'register' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.'))
+      if (isCurrent(attempt)) setError(getErrorMessage(err, mode === 'register' ? 'Chưa đăng ký được bằng Google. Vui lòng thử lại.' : 'Chưa đăng nhập được bằng Google. Vui lòng thử lại.'))
     } finally {
-      setSubmitting(false)
+      if (isCurrent(attempt)) setSubmitting(false)
     }
   }
 
   return (
-    <div {...presence} className="auth-modal-overlay" role="presentation" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
+    <div {...presence} className="auth-modal-overlay" role="presentation" onClick={event => { if (event.target === event.currentTarget) close() }}>
       <div
         ref={formRef}
         className="auth-modal card"
@@ -157,8 +185,8 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" className="auth-modal__close" onClick={onClose} aria-label="Đóng">
-          ×
+        <button type="button" className="auth-modal__close" onClick={close} aria-label="Đóng" title="Đóng">
+          <X aria-hidden="true" size={24} style={{ verticalAlign: 'middle' }} />
         </button>
 
         {mode === 'login' ? (
@@ -216,12 +244,12 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
             ) : null}
             <p className="auth-modal__footer">
               Chưa có tài khoản?{' '}
-              <button type="button" onClick={() => onModeChange('register')}>
+              <button type="button" onClick={() => switchMode('register')} disabled={submitting}>
                 Đăng ký
               </button>
             </p>
             <p className="auth-modal__footer">
-              <Link to="/forgot-password" onClick={onClose}>
+              <Link to="/forgot-password" onClick={close}>
                 Quên mật khẩu?
               </Link>
             </p>
@@ -300,7 +328,7 @@ export function AuthModal({ open, mode, intent, onModeChange, onClose, onSuccess
             </form>
             <p className="auth-modal__footer">
               Đã có tài khoản?{' '}
-              <button type="button" onClick={() => onModeChange('login')}>
+              <button type="button" onClick={() => switchMode('login')} disabled={submitting}>
                 Đăng nhập
               </button>
             </p>

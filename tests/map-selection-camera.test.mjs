@@ -12,7 +12,7 @@ const cancelBody = home.match(/const cancelLocationFocus = useCallback\(\(\) => 
 const cameraStart = map.indexOf('    if (focus) {', map.indexOf('const scheduleLayerFit'))
 assert.ok(cameraStart >= 0)
 const cameraBody = compile(map.slice(cameraStart, map.indexOf('    // One overview fit', cameraStart)))
-const runCamera = new Function('focus', 'focusToken', 'focusAppliedRef', 'camera', 'MAP_FOCUS_ZOOM', 'navigationRequest', 'selectedPlacePin', 'isValidCoord', 'selectAppliedRef', 'selectedPost', cameraBody)
+const runCamera = new Function('focus', 'focusToken', 'focusAppliedRef', 'camera', 'MAP_FOCUS_ZOOM', 'navigationRequest', 'selectedPlacePin', 'isValidCoord', 'selectAppliedRef', 'selectedPost', 'mapRef', cameraBody)
 
 function selectionHarness(body) {
   const focusRef = { current: { lat: 10.8, lng: 106.7, zoom: 16 } }
@@ -28,12 +28,13 @@ function selectionHarness(body) {
   return { focus: focusRef.current, token, selectedId, locationRequest: locationRequest.current, locating }
 }
 
-test('rental selection centers the chosen pin instead of replaying device-location focus', () => {
+test('off-screen rental selection pans without zooming or replaying device-location focus', () => {
   const state = selectionHarness(selectBody)
   let movement
   runCamera(state.focus, state.token, { current: 'focus:10.8,106.7,16:4' }, { schedule: (key, target) => { movement = { key, ...target } } },
-    16, null, null, () => true, { current: '' }, { id: state.selectedId, latitude: 10.9, longitude: 106.8 })
-  assert.deepEqual(movement.center, { lat: 10.9, lng: 106.8 })
+    16, null, null, () => true, { current: '' }, { id: state.selectedId, latitude: 10.9, longitude: 106.8 },
+    { current: { getBounds: () => ({ contains: () => false }), panTo: center => { movement = { center } } } })
+  assert.deepEqual(movement, { center: { lat: 10.9, lng: 106.8 } })
   assert.equal(state.locationRequest, 8, 'a pending geolocation response must no longer own the camera')
   assert.equal(state.locating, false)
 })
@@ -53,4 +54,11 @@ test('an explicit location button focus is still honored', () => {
   runCamera({ lat: 10.8, lng: 106.7, zoom: 16 }, 9, { current: '' }, { schedule: (_, target) => { movement = target } },
     16, null, null, () => true, { current: '' }, null)
   assert.deepEqual(movement.center, { lat: 10.8, lng: 106.7 })
+})
+
+test('visible rental selection leaves the camera untouched', () => {
+  const unexpectedMovement = () => assert.fail('visible selections must not move the camera')
+  runCamera(null, 0, { current: '' }, { schedule: unexpectedMovement }, 16, null, null, () => true,
+    { current: '' }, { id: 'room', latitude: 10.9, longitude: 106.8 },
+    { current: { getBounds: () => ({ contains: () => true }), panTo: unexpectedMovement } })
 })

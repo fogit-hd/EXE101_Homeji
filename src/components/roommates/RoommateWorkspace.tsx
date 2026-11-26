@@ -9,7 +9,10 @@ import { RoommateRooms } from './RoommateRooms'
 import { RoommatePeople } from './RoommatePeople'
 import { MotionTabs } from '../motion/MotionTabs'
 import { useTabTransition } from '../motion/useTabTransition'
+import { useIsMobile } from '../../mobile/useIsMobile'
+import { MobileTabs } from '../../mobile/MobileTabs'
 import './RoommateWorkspace.css'
+import '../../mobile/roommates/mobile-roommates.css'
 
 type Tab = 'people' | 'rooms' | 'invitations'
 const TABS: { id: Tab; label: string }[] = [
@@ -27,6 +30,7 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
   const [editingLifestyle, setEditingLifestyle] = useState(false)
   const { present: lifestylePresent, ...lifestylePresence } = useMotionPresence(editingLifestyle, 'collapse')
   const isRenter = profile?.role === UserRole.Renter
+  const isMobile = useIsMobile()
   const selectTab = (next: Tab) => setParams(previous => { const result = new URLSearchParams(previous); result.set('roommateTab', next); return result })
 
   return <div className="roommate-workspace">
@@ -42,8 +46,10 @@ export function RoommateWorkspace({ onOpenConversation }: { onOpenConversation?:
       </button>
       {lifestylePresent ? <div {...lifestylePresence} id="roommate-lifestyle"><ProfilePage embedded lifestyleOnly /></div> : null}
     </section> : <p>Hồ sơ người thuê dùng lối sống để tìm người cùng ở và gửi lời mời. Bạn vẫn có thể xem phòng.</p>}
-    <MotionTabs items={TABS} value={tab} onChange={selectTab} label="Mục ở ghép"
-      className="roommate-workspace__tabs" idPrefix="roommate-tab" panelId="roommate-panel" />
+    {isMobile ? <MobileTabs items={TABS} value={tab} onChange={selectTab} label="Mục ở ghép"
+      className="m-seg m-roommate-tabs" idPrefix="roommate-tab" panelId="roommate-panel" />
+      : <MotionTabs items={TABS} value={tab} onChange={selectTab} label="Mục ở ghép"
+      className="roommate-workspace__tabs" idPrefix="roommate-tab" panelId="roommate-panel" />}
     <div ref={panelRef} className="roommate-workspace__panel" role="tabpanel" id="roommate-panel" aria-labelledby={`roommate-tab-${tab}`}>
       {tab === 'rooms' ? <RoommateRooms initialKeyword={params.get('roommateQuery')?.slice(0, 200) ?? ''}
         onOpenConversation={onOpenConversation}

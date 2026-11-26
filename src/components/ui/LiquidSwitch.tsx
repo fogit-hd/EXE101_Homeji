@@ -56,7 +56,7 @@ export function LiquidSwitch({
       aria-disabled={disabled || undefined}
       disabled={disabled}
       aria-label={ariaLabel}
-      title={title}
+      title={title ?? ariaLabel}
       className={`liquid-switch${checked ? ' liquid-switch--checked' : ''}${
         disabled ? ' liquid-switch--disabled' : ''
       }${className ? ` ${className}` : ''}`}

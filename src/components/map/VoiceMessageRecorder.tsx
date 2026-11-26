@@ -107,7 +107,8 @@ export function VoiceMessageRecorder({ conversationId, disabled, onSent, onError
         if (current === version.current) clear()
       } else {
         const message = await sendConversationVoice(conversationId!, recording)
-        if (current === version.current) { clear(); onSent?.(message) }
+        onSent?.(message)
+        if (current === version.current) clear()
       }
     } catch (e) { if (current === version.current) { setPhase('preview'); onError(getErrorMessage(e, 'Chưa gửi được bản ghi. Bạn có thể thử lại.')) } }
     finally { uploading.current = false }

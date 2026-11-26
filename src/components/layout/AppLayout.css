@@ -1,7 +1,7 @@
 /* Map destination shares product main flow with FeatureWorkspace (nav above).
    Split list|map height is owned by AuthenticatedHomeMapShell / home-map-page--dest. */
 .app-shell--product.app-shell--map-peer {
-  background-color: var(--hj-paper, #f3ebdd);
+  background-color: var(--surface-muted);
   /* Lock shell to the viewport — do not let map/list content grow the page. */
   height: 100vh;
   height: 100dvh;
@@ -40,7 +40,7 @@
   overflow: hidden;
 }
 
-/* Messages only. Saved, home, and view=list keep document scroll. */
+/* Messages only. Saved and home keep document scroll. */
 .app-shell--product.app-shell--messages {
   height: 100vh;
   height: 100dvh;
@@ -82,7 +82,44 @@
   .app-shell--map-peer > .site-footer { display: none; }
   #root .home-map-page .glass-density-control--docked { display: none; }
   .app-shell:not(.app-shell--map-peer):not(.app-shell--messages):not(.app-shell--auth-cinema):not(.app-shell--guest-landing) .main-content {
-    padding-bottom: calc(var(--mobile-tabbar-height, 56px) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--mobile-tabbar-height, 56px) + var(--safe-bottom));
   }
 }
-@media(max-width:767px) { #root .app-shell--map-peer .app-main { padding-bottom: 0; } }
+@media(max-width:767px) {
+  #root .app-shell--map-peer .app-main { padding-bottom: 0; }
+  html:root body #root .app-shell--listings.app-shell--map-peer .app-main { padding-bottom: calc(var(--mobile-tabbar-height,56px) + var(--safe-bottom)); }
+}
+
+/* First keyboard stop in the member shell. */
+html:root body #root .skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 2147483647;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  border-radius: var(--radius-sm);
+  transform: translateY(calc(-100% - 16px));
+}
+html:root body #root .skip-link:focus {
+  transform: none;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Desktop search is one workspace: mode changes only rearrange the results stage. */
+@media (min-width: 768px) {
+  html:root body #root .app-shell--product.app-shell--listings {
+    height: 100dvh; max-height: 100dvh; min-height: 0; overflow: hidden;
+  }
+  html:root body #root .app-shell--product.app-shell--listings :is(.app-main, .route-outlet, .home-map-page--dest) {
+    display: flex; flex-direction: column; flex: 1 1 auto;
+    height: 100%; max-height: 100%; min-height: 0; overflow: hidden;
+  }
+  html:root body #root .app-shell--product.app-shell--listings .app-main { padding: 0; }
+  html:root body #root .app-shell--product.app-shell--listings > .site-footer { display: none; }
+}

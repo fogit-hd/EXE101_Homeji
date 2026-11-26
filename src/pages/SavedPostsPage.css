@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: var(--hj-paper, #f3ebdd);
+  background: var(--surface-muted);
   padding: 24px 20px 40px;
 }
 
@@ -24,14 +24,7 @@
   flex-direction: column;
   gap: 6px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--hj-border, #d8cdbb);
-}
-
-.saved-posts-page__eyebrow {
-  font: 700 0.72rem/1 var(--font-ui);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--hj-accent, #e65c3a);
+  border-bottom: 1px solid var(--border);
 }
 
 .saved-posts-page__title {
@@ -39,14 +32,14 @@
   font-family: var(--font-ui);
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   font-weight: 400;
-  color: var(--hj-ink, #18231d);
+  color: var(--text-heading);
   line-height: 1.25;
 }
 
 .saved-posts-page__lead {
   margin: 0;
-  font: 400 0.88rem/1.5 var(--font-ui);
-  color: var(--hj-muted, #756f64);
+  font: 400 var(--fs-md)/1.5 var(--font-ui);
+  color: var(--text-secondary);
 }
 
 /* Cream card grid for saved posts */
@@ -58,15 +51,15 @@
 }
 
 .saved-posts-page .grid-posts > div {
-  background: var(--hj-cream, #fff9ef);
-  border: 1px solid var(--hj-border, #d8cdbb);
-  border-radius: var(--hj-radius-lg, 22px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .saved-posts-page .grid-posts > div:hover {
-  box-shadow: 0 4px 16px rgba(24, 35, 29, 0.1);
+  box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
 
@@ -76,13 +69,13 @@
 }
 
 .feature-workspace.is-saved .page-frame__title {
-  font-size: 1.75rem;
-  line-height: 2.125rem;
+  font-size: var(--fs-2xl);
+  line-height: 34px;
 }
 
 .feature-workspace.is-saved .page-frame__lead {
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
+  font-size: var(--fs-sm);
+  line-height: 20px;
 }
 
 .saved-posts-embed .grid-posts,
@@ -94,21 +87,21 @@
 .saved-posts-embed .post-card.card,
 .saved-posts-page .post-card.card {
   padding: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .saved-posts-embed .grid-posts .btn,
 .saved-posts-page .grid-posts .btn {
   min-height: 32px;
   padding: 0 10px;
-  font-size: 0.8125rem;
-  border-radius: 8px;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-sm);
 }
 
 .saved-posts-page .page-frame-empty {
   padding: 48px 24px;
-  background: var(--hj-cream, #fff9ef);
-  border: 1px dashed var(--hj-border, #d8cdbb);
-  border-radius: var(--hj-radius-xl, 30px);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
   text-align: center;
 }

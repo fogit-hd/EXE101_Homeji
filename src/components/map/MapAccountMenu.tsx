@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyWallet, type Wallet } from '../../api'
@@ -101,13 +102,13 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
         ref={triggerRef}
         type="button"
         className={`gmaps-account__avatar map-motion-press${open ? ' is-open' : ''}`}
-        aria-label="Tài khoản"
+        aria-label="Tài khoản" title="Tài khoản"
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={handleToggleMenu}
       >
         {profile?.avatarPath ? (
-          <img src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
+          <img loading="lazy" decoding="async" width={48} height={48} src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
         ) : (
           <span aria-hidden>{initials}</span>
         )}
@@ -123,7 +124,7 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
         <div className="gmaps-account__head">
           <span className="gmaps-account__avatar gmaps-account__avatar--lg" aria-hidden>
             {profile?.avatarPath ? (
-              <img src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
+              <img loading="lazy" decoding="async" width={48} height={48} src={profile.avatarPath} alt="" className="gmaps-account__avatar-img" />
             ) : (
               initials
             )}
@@ -159,7 +160,7 @@ export function MapAccountMenu({ onOpenProfile }: Props) {
                     : formatPrice(wallet?.balance ?? 0)}
               </span>
             </span>
-            <span className="gmaps-account__wallet-chevron" aria-hidden>›</span>
+            <span className="gmaps-account__wallet-chevron" aria-hidden><ChevronRight aria-hidden="true" size={16} /></span>
           </button>
           {onOpenProfile ? (
             <button

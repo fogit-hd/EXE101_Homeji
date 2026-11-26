@@ -18,8 +18,120 @@
   }
 }
 
-.hj-account__mobile-theme { display: none; }
+/* Light/dark lives in the account menu on every size, so the header keeps one filled action (Đăng tin). */
+#root .hj-account__mobile-theme { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; color: var(--text-heading); font-size: var(--fs-sm); }
 @media (max-width: 767px) {
-  #root .hj-actions > .theme-switch, #root .hj-actions > .hj-post-cta { display: none; }
-  #root .hj-account__mobile-theme { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; color: var(--text-heading); font-size: 0.8125rem; }
+  #root .hj-actions > .hj-post-cta { display: none; }
+}
+
+/* Desktop keeps the compact dropdown; the avatar only appears in the phone account screen. */
+.hj-account__avatar { display: none; }
+
+/* Phones get a screen, not a dropdown: account and notifications fill the space between the bar
+   and the tab bar, on the page ground, with grouped inset lists like a native settings screen.
+   !important here undoes the floating-glass material, which glass-controls.css applies with !important. */
+@media (max-width: 767px) {
+  html:root body .hj-account__menu,
+  html:root body .hj-notify__pop {
+    position: fixed;
+    top: var(--hj-header-h, 64px);
+    left: 0;
+    right: 0;
+    bottom: calc(var(--mobile-tabbar-height, 56px) + var(--safe-bottom));
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    height: auto !important;
+    margin: 0;
+    box-sizing: border-box;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--surface-muted) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: hj-screen-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  html:root body .hj-account__menu { padding: 16px 16px 24px; }
+
+  #root .hj-account__head { display: flex; align-items: center; gap: 14px; padding: 4px 4px 20px; }
+  #root .hj-account__avatar {
+    display: grid; place-items: center; flex: none; overflow: hidden;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--grab-green); color: var(--on-brand); font: 700 20px/1 var(--font-ui);
+  }
+  #root .hj-account__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  #root .hj-account__head .hj-account__name { margin: 0; font-size: var(--fs-xl); line-height: 26px; }
+  #root .hj-account__head .hj-account__role { margin: 2px 0 0; }
+
+  /* Each group is one rounded card; rows are separated by hairlines, not boxes. */
+  #root .hj-account__menu .hj-account__group {
+    margin: 0 0 20px; padding: 0; border: 0;
+  }
+  #root .hj-account__menu .hj-account__group-label {
+    margin: 0 4px 8px; font-size: var(--fs-xs); letter-spacing: .02em; text-transform: uppercase; color: var(--text-secondary);
+  }
+  #root .hj-account__menu .hj-account__group > :not(.hj-account__group-label) {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-width: 0;
+  }
+  #root .hj-account__menu .hj-account__group > .hj-account__group-label + * { border-radius: 14px 14px 0 0; }
+  #root .hj-account__menu .hj-account__group > :last-child { border-bottom-width: 1px; border-radius: 0 0 14px 14px; }
+  #root .hj-account__menu .hj-account__group > .hj-account__group-label + :last-child { border-radius: var(--radius-md); }
+  #root .hj-account__menu .hj-account__item {
+    position: relative; min-height: 52px; padding: 0 40px 0 14px; border-radius: 0; gap: 12px;
+  }
+  #root .hj-account__menu .hj-account__group .hj-account__item::after {
+    content: ''; position: absolute; right: 16px; top: 50%;
+    width: 7px; height: 7px; margin-top: -4px;
+    border: solid var(--text-secondary); border-width: 1.6px 1.6px 0 0; transform: rotate(45deg);
+  }
+  #root .hj-account__menu .hj-account__mobile-theme {
+    min-height: 52px; margin: 0 0 12px; padding: 0 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: var(--fs-md);
+  }
+  #root .hj-account__menu > .hj-account__item--danger {
+    width: 100%; justify-content: center; min-height: 52px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  }
+}
+@keyframes hj-screen-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root body :is(.hj-account__menu, .hj-notify__pop) { animation: none; }
+}
+/* Floating shortcuts never sit on top of an open header panel. */
+body:has(:is(.hj-account__menu, .hj-notify__pop, .hj-search-sheet)) #root :is(.interest-launch, .food-cart-fab) { visibility: hidden; }
+/* The phone bar is one 64px row in every scroll state; panels below it measure from this. */
+@media (max-width: 767px) {
+  html:root #root .hj-shell, html:root #root .hj-shell.is-compact { --hj-header-h: 64px; }
+}
+
+/* Keep compact visuals while exposing a centered 44px touch target. */
+html:root body #root .hj-header :is(.hj-search__submit--icon, .hj-action--icon, .seller-watch__trigger),
+html:root body .hj-search-sheet .hj-search__submit--icon { position: relative; }
+html:root body #root .hj-header :is(.hj-search__submit--icon, .hj-action--icon, .seller-watch__trigger)::after,
+html:root body .hj-search-sheet .hj-search__submit--icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+@media (min-width: 1181px) {
+  html:root body #root .hj-shell.is-compact .hj-header .hj-bar {
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+    padding-inline: max(24px, calc((100% - 1440px) / 2));
+  }
+  html:root body #root .hj-shell.is-compact .hj-search-slot { width: 100%; }
+  html:root body #root .hj-shell.is-compact .hj-header .hj-search__submit--icon {
+    width: 40px; min-width: 40px; height: 40px;
+  }
 }

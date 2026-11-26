@@ -1,28 +1,29 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getRentalSourceCatalog, rentalSourcePublisher, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
+import { getRentalSourceCatalog, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
 import { getErrorMessage } from '../../../lib/errors'
-import { formatPrice } from '../../../lib/labels'
-import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
+import { formatCompactRent, formatListingArea } from '../../../lib/labels'
+import { shortListingAddress } from '../../MapListingCard.logic'
 import { filterRentalSourcesForList, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
-import { HouseIcon, SparkleIcon, NoteEditIcon, UsersIcon, ArrowUpRightIcon } from '../../icons/SvgIcons'
+import { HouseIcon, SparkleIcon, NoteEditIcon, UsersIcon } from '../../icons/SvgIcons'
 import { Sk, SkCard } from '../../skeletons/Skeleton'
+import { ShowMore, SHOW_MORE_STEP } from '../../ui/Disclosure'
 import type { ListingQuery } from './listingAdapters'
 import './RentalSourceResults.css'
 import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
+import { MobileRoomCard } from '../../../mobile/listings/MobileRoomCard'
+import { sortListings, type ListingSort, type SortFacts } from './listingSort'
 
 type Counts = { total: number; mapped: number }
-// What students scan for first; shown highlighted on every card.
-const STUDENT_KEY_AMENITIES = new Set(['Máy lạnh', 'Máy nước nóng', 'Bếp', 'Giờ tự do', 'Không chung chủ'])
-function formatSourceDate(value: string | null | undefined): string | null {
-  if (!value) return null
-  const timestamp = Date.parse(value)
-  return Number.isFinite(timestamp)
-    ? new Intl.DateTimeFormat('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }).format(timestamp)
-    : null
-}
-
-export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, nativeCards = [], nativeIds = [] }: {
+export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, nativeCards = [], nativeIds = [], nativeFacts = [], sort = 'default', selectedId, onHover, onLeave, mobile = false }: {
+  /** Price and area of each native card, in nativeCards order, so a sort can merge both inventories. */
+  nativeFacts?: SortFacts[]
+  sort?: ListingSort
+  /** Phone layout: compact horizontal cards. */
+  mobile?: boolean
+  selectedId?: string | null
+  onHover?: (id: string) => void
+  onLeave?: () => void
   nativeIds?: string[]
   nativeCards?: ReactNode[]
   query: ListingQuery
@@ -50,13 +51,21 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
   const counts = useMemo(() => ({ total: filtered.length, mapped: filtered.filter(sourceHasLocation).length }), [filtered])
   useEffect(() => { onCount(counts) }, [onCount, counts])
   const unsupported = sourceHasUnsupportedFilters(query)
-  // Mix both inventories in one paged list, so imported rooms are not hidden
-  // behind every native card. Source identity and trust flags stay separate.
-  const combined: Array<{ key: string; native?: ReactNode; row?: RentalSourceListing }> = []
-  for (let index = 0; index < Math.max(nativeCards.length, filtered.length); index++) {
-    if (index < nativeCards.length) combined.push({ key: `native-${index}`, native: nativeCards[index] })
-    if (index < filtered.length) combined.push({ key: filtered[index].id, row: filtered[index] })
-  }
+  // Homeji posts come first; rooms gathered from other sites follow in their own
+  // group, so the two card types (and their different actions) never alternate.
+  // A chosen sort orders each group on its own.
+  type Item = { key: string; native?: ReactNode; row?: RentalSourceListing; facts?: SortFacts }
+  const nativeItems: Item[] = nativeCards.map((native, index) => ({ key: `native-${index}`, native, facts: nativeFacts[index] }))
+  const sourceItems: Item[] = filtered.map(row => ({ key: row.id, row }))
+  const combined: Item[] = [
+    ...sortListings(nativeItems, sort, item => item.facts ?? {}),
+    ...sortListings(sourceItems, sort, item => item.row ?? {}),
+  ]
+  const selectedIndex = combined.findIndex(item => item.row ? `rental:${item.row.id}` === selectedId : nativeIds[Number(item.key.slice(7))] === selectedId)
+  const visibleCount = Math.max(visible, selectedIndex + 1)
+  const shown = combined.slice(0, visibleCount)
+  const shownNative = shown.filter(item => !item.row)
+  const shownSource = shown.filter(item => item.row)
   return <section className="source-results" aria-label="Danh sách phòng">
     {!loaded && !error ? (
       <>
@@ -66,7 +75,7 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
             {Array.from({ length: 6 }, (_, index) => (
               <li key={index}>
                 <SkCard className="sk-listing-card sk-source-card" style={{ width: '100%' }}>
-                  <Sk w={104} h={84} r={10} className="sk-listing-card__thumb" />
+                  <Sk w={104} h={mobile ? 104 : 84} r={10} className="sk-listing-card__thumb" />
                   <div className="sk-stack">
                     <Sk w="44%" h={14} />
                     <Sk w="86%" h={14} />
@@ -112,32 +121,37 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
         </div>
       </div>
     ) : null}
-    <ul className="map-listings__cards">{combined.slice(0, visible).map(item => {
-      if (!item.row) return <li key={item.key}>{item.native}</li>
-      const row = item.row
+    {shownNative.length > 0 ? <ul className="map-listings__cards">{shownNative.map(item => <li key={item.key}>{item.native}</li>)}</ul> : null}
+    {shownSource.length > 0 ? <h3 className="source-results__group-title">Tin từ nguồn khác <span>{filtered.length}</span></h3> : null}
+    {shownSource.length > 0 ? <ul className="map-listings__cards">{shownSource.map(item => {
+      const row = item.row!
       const photo = row.imageUrls.map(rentalSourceImageHref).find(Boolean)
-      const updatedAt = formatSourceDate(row.sourceUpdatedAt)
-      return <li key={row.id}><article className="map-listings__card source-results__card">
+      if (mobile) return <li key={row.id}><MobileRoomCard id={`rental:${row.id}`} photo={photo} cloudinary={false} referrerPolicy="no-referrer"
+        to={sourceRoomHref(row.id)} selected={selectedId === `rental:${row.id}`} title={row.title}
+        meta={[Number.isFinite(row.area) && row.area > 0 ? formatListingArea(row.area) : '', shortListingAddress((row.address || '').trim())].filter(Boolean).join(' · ')}
+        price={<>{formatCompactRent(row.price)}{Number.isFinite(row.price) && row.price > 0 ? '/tháng' : ''}</>}
+        actions={onFocus && sourceHasLocation(row) ? <button type="button" onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.4" /></svg>
+          Xem trên bản đồ
+        </button> : undefined} /></li>
+      return <li key={row.id}><article data-listing-id={`rental:${row.id}`} className={`map-listings__card source-results__card${selectedId === `rental:${row.id}` ? ' is-selected' : ''}`} onMouseEnter={() => onHover?.(`rental:${row.id}`)} onMouseLeave={onLeave} onFocus={() => onHover?.(`rental:${row.id}`)} onBlur={onLeave}>
         <Link className="source-results__photo" to={sourceRoomHref(row.id)} aria-label={`Xem phòng: ${row.title}`}>
           <span className="source-results__empty-photo">Chưa có ảnh</span>
-          {photo ? <img src={photo} alt="" loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
-          {photo ? <span className="source-results__photo-count">{row.imageUrls.length} ảnh</span> : null}
+          {photo ? <img decoding="async" width={640} height={400} src={photo} alt="" loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
         </Link>
         <div className="source-results__copy">
-          <strong className="map-listings__price source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong>
-          <h3 className="map-listings__name"><Link to={sourceRoomHref(row.id)}>{row.title}</Link></h3>
-          <p className="map-listings__address">{row.address}</p>
-          <div className="map-listings__meta">{row.area > 0 ? <span>{row.area} m²</span> : null}<span>{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span></div>
-          {row.amenityHighlights?.length ? <ul className="source-results__amenities" aria-label="Tiện ích nổi bật">{row.amenityHighlights.slice(0, 6).map(value => <li key={value} className={STUDENT_KEY_AMENITIES.has(value) ? 'is-key' : undefined}>{value}</li>)}</ul> : null}
-          <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
-          <p className="source-results__publisher">{rentalSourcePublisher(row.publisherName)}</p>
+          <strong className="map-listings__price source-results__price">{formatCompactRent(row.price)}{Number.isFinite(row.price) && row.price > 0 ? '/tháng' : ''}</strong>
+          <h3 className="map-listings__name"><Link className="source-results__stretch" to={sourceRoomHref(row.id)}>{row.title}</Link></h3>
+          <p className="source-results__meta">{[Number.isFinite(row.area) && row.area > 0 ? formatListingArea(row.area) : '', shortListingAddress((row.address || '').trim())].filter(Boolean).join(' · ')}</p>
         </div>
-        <div className="source-results__actions">
-          {onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí trên bản đồ</button> : null}
-          <Link className="map-listings__card-open" data-glass-exclude to={sourceRoomHref(row.id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></Link>
-        </div>
+        {onFocus && sourceHasLocation(row) ? <div className="source-results__actions">
+          <button type="button" className="source-results__locate" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.4" /></svg>
+            Xem trên bản đồ
+          </button>
+        </div> : null}
       </article></li>
-    })}</ul>
-    {combined.length > visible ? <button className="source-results__more" type="button" onClick={() => setVisible(value => value + 20)}>Xem thêm {Math.min(20, combined.length - visible)} tin ({visible}/{combined.length})</button> : null}
+    })}</ul> : null}
+    <ShowMore className="source-results__more" shown={Math.min(visibleCount, combined.length)} total={combined.length} unit="tin" onMore={() => setVisible(visibleCount + SHOW_MORE_STEP)} />
   </section>
 }

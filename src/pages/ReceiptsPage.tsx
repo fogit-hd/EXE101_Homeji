@@ -1,3 +1,4 @@
+import { ArrowUpRight } from 'lucide-react'
 import { WALLET_HISTORY_PATH } from '../lib/marketplaceNavigation'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -5,13 +6,15 @@ import { getMyReceipts, type TransactionReceipt } from '../api/receipts'
 import { getErrorMessage } from '../lib/errors'
 import { marketplaceHref } from '../components/shell/navigation'
 import './receipts.css'
+import { useAuth } from '../contexts/AuthContext'
+import { humanReference } from '../lib/humanReference'
 
 const titles: Record<TransactionReceipt['event'], string> = {
   1: 'Nạp tiền thành công', 2: 'Thanh toán thành công', 3: 'Yêu cầu rút tiền',
   4: 'Rút tiền hoàn tất', 5: 'Rút tiền bị từ chối · đã hoàn vào ví',
   6: 'Thanh toán mua hàng', 7: 'Hoàn tiền mua hàng vào ví',
 }
-const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 2 })
+const money = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 })
 const time = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'Asia/Ho_Chi_Minh' })
 function emailStatus(receipt: TransactionReceipt) {
   if (!receipt.emailScheduled) return 'Biên nhận lịch sử · không gửi email'
@@ -24,7 +27,13 @@ function issuedAt(value: string) {
   return Number.isNaN(date.getTime()) ? 'Chưa có thời gian' : time.format(date)
 }
 
+/** Keyed by account: a different account signed in from another tab starts with fresh state, never the last one's receipts. */
 export function ReceiptsPage() {
+  const { profile } = useAuth()
+  return <OwnedReceiptsPage key={profile?.id ?? 'none'} />
+}
+
+function OwnedReceiptsPage() {
   const [page, setPage] = useState(1)
   const [items, setItems] = useState<TransactionReceipt[]>([])
   const [hasMore, setHasMore] = useState(false)
@@ -62,19 +71,19 @@ export function ReceiptsPage() {
     setSelected(null)
   }
   return <div className="container page receipts-page" data-glass-exclude>
-    <header className="receipts-page__header"><div><p className="receipts-eyebrow">VÍ HOMEJI / BIÊN NHẬN</p>
+    <header className="receipts-page__header"><div>
       <h1 className="page-title">Giao dịch của bạn</h1><p>Xem lại biên nhận và trạng thái gửi email tại một nơi.</p></div>
       <div className="receipts-actions"><Link className="btn" to={WALLET_HISTORY_PATH}>Xem lịch sử giao dịch</Link><Link className="btn" to={marketplaceHref('wallet')}>Về ví Homeji →</Link></div></header>
     <div className="receipts-toolbar"><p>Thời gian Việt Nam (UTC+7) · Không phải hóa đơn thuế/VAT.</p>
-      <button type="button" className="btn" disabled={loading} onClick={() => load(page)}>Làm mới</button></div>
+      <button type="button" className="btn" disabled={loading} onClick={() => load(page)}>Tải lại danh sách</button></div>
     {error && <p role="alert" className="receipts-error">{error}</p>}
     {loading ? <p role="status">Đang tải biên nhận…</p> : !error && items.length === 0 ? <p className="receipts-empty">Chưa có biên nhận giao dịch.</p> : null}
     <ul className="receipts-list" aria-label="Danh sách biên nhận">
       {items.map(receipt => <li key={receipt.id} className={`receipts-list__item${selected?.id === receipt.id ? ' is-selected' : ''}`}>
-        <span className="receipts-list__icon" aria-hidden="true">↗</span>
+        <span className="receipts-list__icon" aria-hidden="true"><ArrowUpRight aria-hidden="true" size={20} style={{ verticalAlign: 'middle' }} /></span>
         <div><h2>{titles[receipt.event]}</h2><time dateTime={receipt.issuedAt}>{issuedAt(receipt.issuedAt)}</time>
-          <p className="receipts-reference">{receipt.referenceCode}</p><p className="receipts-email">{emailStatus(receipt)}</p></div>
-        <div className="receipts-list__action"><strong>{money.format(receipt.amount)}</strong>
+          {receipt.emailScheduled && !receipt.emailSentAt ? <p className="receipts-email">{emailStatus(receipt)}</p> : null}</div>
+        <div className="receipts-list__action"><strong>{money.format(receipt.amount)} đ</strong>
           <button type="button" className="btn" disabled={loading} aria-expanded={selected?.id === receipt.id}
             onClick={event => { opener.current = event.currentTarget; setSelected(receipt) }}>Xem biên nhận</button></div>
       </li>)}
@@ -84,12 +93,12 @@ export function ReceiptsPage() {
       <span>Trang {page}</span><button className="btn" disabled={loading || !hasMore} onClick={() => load(page + 1)}>Trang sau</button>
     </nav>
     {selected && <section className="receipts-preview" aria-label="Chi tiết biên nhận">
-      <header><div><p className="receipts-eyebrow">BIÊN NHẬN GIAO DỊCH</p><h2 ref={previewHeading} tabIndex={-1}>{titles[selected.event]}</h2></div>
+      <header><div><h2 ref={previewHeading} tabIndex={-1}>{titles[selected.event]}</h2></div>
         <button className="btn" onClick={() => { setSelected(null); opener.current?.focus() }}>Đóng chi tiết</button></header>
-      <p className="receipts-preview__amount">{money.format(selected.amount)}</p>
+      <p className="receipts-preview__amount">{money.format(selected.amount)} đ</p>
       <dl><div><dt>Thời gian</dt><dd>{issuedAt(selected.issuedAt)}</dd></div>
-        <div><dt>Mã giao dịch</dt><dd>{selected.referenceCode}</dd></div>
-        <div><dt>Mã biên nhận</dt><dd>HJ-{selected.id.replaceAll('-', '')}</dd></div>
+        <div><dt>Mã giao dịch</dt><dd>{humanReference(selected.referenceCode)}</dd></div>
+        <div><dt>Mã biên nhận</dt><dd>{humanReference(selected.id)}</dd></div>
         <div><dt>Nội dung</dt><dd>{selected.description}</dd></div>
         <div><dt>Email</dt><dd>{emailStatus(selected)}</dd></div></dl>
       <p className="receipts-preview__note">{selected.event === 3 ? 'Yêu cầu rút tiền chưa xác nhận tiền đã tới tài khoản ngân hàng. ' : ''}Biên nhận giao dịch Homeji không phải hóa đơn thuế/VAT.</p>

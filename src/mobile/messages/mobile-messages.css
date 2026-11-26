@@ -1,0 +1,323 @@
+/*
+ * Tin nhắn on phones. The inbox keeps the app chrome; an open conversation takes the whole screen
+ * (html[data-m-chat='thread'], set by useMobileChatViewport) and follows the visual viewport, so the
+ * composer always sits on the keyboard. Everything is scoped to html[data-device='mobile'].
+ */
+
+/* ── Inbox ─────────────────────────────────────────────────────────────── */
+/* The app header already says "Tin nhắn"; the page heading stays for screen readers. */
+html[data-device='mobile']:root body #root .map-messages__inbox-head {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+html[data-device='mobile']:root body #root .m-inbox-filters { margin: 10px 0 6px; }
+html[data-device='mobile']:root body #root .m-inbox-filters > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* ── Full-screen thread ────────────────────────────────────────────────── */
+html[data-m-chat='thread'] body { overflow: hidden; }
+html[data-m-chat='thread'] .m-header,
+html[data-m-chat='thread'] .mobile-tabbar { visibility: hidden; }
+
+html[data-m-chat='thread']:root body #root .map-messages__thread.is-visible {
+  position: fixed;
+  top: var(--m-vv-top, 0px);
+  right: 0;
+  left: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  height: var(--m-vv-h, 100dvh);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--app-messages-paper, var(--surface));
+  box-shadow: none;
+}
+
+/* Header: back · peer · call · more. */
+.m-chat-head {
+  display: grid;
+  flex: none;
+  grid-template-columns: 44px minmax(0, 1fr) 44px 44px;
+  align-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: env(safe-area-inset-top, 0px) 4px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+.m-chat-head__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--grab-green);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-chat-head__icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.m-chat-head__icon:last-child svg { fill: currentColor; stroke: none; }
+.m-chat-head__icon:disabled { color: var(--text-secondary); opacity: .5; }
+.m-chat-head__icon:active:not(:disabled) { background: var(--surface-muted); }
+.m-chat-head__peer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.m-chat-head__titles { display: grid; min-width: 0; }
+.m-chat-head__titles strong {
+  overflow: hidden;
+  color: var(--text-heading);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-chat-head__titles small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs, .75rem);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+/* What the chat is about, as one slim row under the header. */
+.m-chat-ctx {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+html[data-device='mobile']:root body #root .m-chat-ctx .map-messages__ctx-card,
+.m-chat-ctx-list .map-messages__ctx-card {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  max-width: none;
+  margin: 0;
+  padding: 4px 8px 4px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+}
+.m-chat-ctx__more {
+  flex: none;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 700;
+}
+.m-chat-ctx-list { display: grid; gap: 4px; margin: 0; padding: 0 0 8px; list-style: none; }
+
+/* More sheet: plain rows. */
+.m-chat-menu { margin: 0; padding: 0 0 8px; list-style: none; }
+.m-chat-menu button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-heading);
+  font: inherit;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  text-align: left;
+}
+.m-chat-menu li + li button { border-top: 1px solid var(--border); }
+.m-chat-menu svg { flex: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.m-chat-menu .is-danger { color: var(--error); }
+
+/* Search row under the header. */
+html[data-m-chat='thread']:root body #root .map-messages__search-bar { flex: none; margin: 0; padding: 6px 8px; border-bottom: 1px solid var(--border); border-radius: 0; background: var(--surface-elevated); }
+
+/* Messages scroll between header and composer. */
+html[data-m-chat='thread']:root body #root .map-messages__thread.is-visible .map-messages__bubbles {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 12px 12px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* ── Composer ──────────────────────────────────────────────────────────── */
+html[data-m-chat='thread']:root body #root .map-messages__composer-wrap {
+  position: relative;
+  flex: none;
+  margin: 0;
+  padding: 6px 6px calc(6px + var(--safe-bottom));
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-elevated);
+  box-shadow: none;
+}
+html[data-m-keyboard][data-m-chat='thread']:root body #root .map-messages__composer-wrap { padding-bottom: 6px; }
+
+.m-composer { display: flex; align-items: flex-end; gap: 2px; }
+.m-composer__tools { display: flex; flex: none; align-items: flex-end; }
+.m-composer__file { display: none; }
+.m-composer__btn,
+html[data-device='mobile']:root body #root .m-composer .chat-recorder__mic {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  box-shadow: none;
+  color: var(--grab-green);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-composer__btn svg,
+html[data-device='mobile']:root body #root .m-composer .chat-recorder__mic svg {
+  width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+}
+.m-composer__btn:disabled,
+html[data-device='mobile']:root body #root .m-composer .chat-recorder__mic:disabled { color: var(--text-secondary); opacity: .45; cursor: default; }
+.m-composer__btn.is-open svg { transform: rotate(45deg); }
+.m-composer__send, .m-composer__like { width: 44px; }
+.m-composer__like span { font-size: var(--fs-heading); line-height: 1; }
+html[data-device='mobile']:root body #root .m-composer .chat-recorder { position: static; display: flex; }
+
+.m-composer__field {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  min-width: 0;
+  min-height: 40px;
+  margin: 2px 2px 2px 4px;
+  padding-left: 14px;
+  border-radius: var(--radius-2xl);
+  background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.m-composer__field:has(textarea:focus) { box-shadow: inset 0 0 0 1.5px var(--focus-ring); }
+html[data-device='mobile']:root body #root .m-composer__field textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  max-height: 120px;
+  margin: 0;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-lg); /* below 16px iOS zooms the page on focus */
+  line-height: 22px;
+  resize: none;
+}
+html[data-device='mobile']:root body #root .m-composer__field textarea::placeholder { color: var(--text-secondary); }
+
+/* Emoji / GIF: one smiley inside the field; the picker opens above the composer. */
+html[data-device='mobile']:root body #root .m-composer .chat-media { position: static; display: flex; gap: 0; }
+html[data-device='mobile']:root body #root .m-composer .chat-media__smiley {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--grab-green);
+}
+.m-composer .chat-media__smiley svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+html[data-device='mobile']:root body #root .m-composer .chat-media__picker,
+html[data-device='mobile']:root body #root .m-composer .chat-recorder__panel,
+html[data-m-chat='thread']:root body #root .map-messages__attach-menu {
+  position: absolute;
+  right: 8px;
+  bottom: calc(100% + 6px);
+  left: 8px;
+  z-index: 5;
+  width: auto;
+  max-height: min(360px, 55vh);
+  overflow: auto;
+  border-radius: var(--radius-lg);
+}
+.chat-media__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 3px; border-radius: var(--radius-sm); background: var(--surface-muted); }
+.chat-media__tabs button {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 600;
+}
+.chat-media__tabs button[aria-pressed='true'] { background: var(--surface-elevated); color: var(--text-heading); }
+.chat-media__picker header:has(.chat-media__tabs) { gap: 8px; }
+.chat-media__picker header:has(.chat-media__tabs) .chat-media__tabs { flex: 1; }
+
+/* Attach menu rows sized for thumbs. */
+html[data-m-chat='thread']:root body #root .map-messages__attach-menu button { min-height: 48px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .m-composer__btn.is-open svg { transform: none; }
+}
+
+/* Place, listing and area sharing need a map selection, which this page never has: hide them rather than show dead rows. */
+html[data-m-chat='thread']:root body #root .map-messages__attach-menu button:disabled { display: none; }
+html[data-m-chat='thread']:root body #root .map-messages__search-bar { display: flex; align-items: center; gap: 2px; }
+html[data-m-chat='thread']:root body #root .map-messages__search-input { flex: 1; min-width: 0; width: auto; font-size: var(--fs-lg); }
+
+/* Five controls share the row with the field; 40px columns (44px tall) leave the field room on a 375px phone.
+   Beats the 44px min-width every .map-messages button gets in ui-consistency.css. */
+html[data-device='mobile']:root body #root .map-messages .m-composer button.m-composer__btn,
+html[data-device='mobile']:root body #root .map-messages .m-composer button.chat-recorder__mic { width: 40px; min-width: 0; }
+html[data-device='mobile']:root body #root .map-messages .m-composer button.chat-media__smiley { width: 36px; min-width: 0; min-height: 40px; }
+/* Dark keeps the recessed message ground the desktop thread uses. */
+html[data-theme='dark'][data-m-chat='thread']:root body #root .map-messages__thread.is-visible .map-messages__bubbles { background: var(--surface-muted); }
+
+/* 44px-tall hit areas for the composer buttons and the location card actions, without moving them. */
+html[data-device='mobile'] #root .m-composer :is(button, label) { position: relative; }
+html[data-device='mobile'] #root .m-composer :is(button, label)::before { content: ''; position: absolute; inset: -4px 0; }
+html[data-device='mobile'] #root .map-messages .map-messages__loc-btn { position: relative; }
+html[data-device='mobile'] #root .map-messages .map-messages__loc-btn::after { content: ''; position: absolute; inset: -7px 0; }

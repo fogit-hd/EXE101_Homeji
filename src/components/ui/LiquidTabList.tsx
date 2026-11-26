@@ -10,7 +10,9 @@ const tabsOf = (root: HTMLElement) => [...root.querySelectorAll<HTMLButtonElemen
 type Props = HTMLAttributes<HTMLDivElement> & { containerRef?: RefObject<HTMLDivElement | null>; webglGlass?: boolean }
 
 /** Presentation and keyboard navigation only; callers keep selection and API state. */
-export function LiquidTabList({ children, className = '', containerRef, webglGlass = true, onKeyDown, onKeyUp, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onClick, onClickCapture, ...props }: Props) {
+export function LiquidTabList({ children, className = '', containerRef, onKeyDown, onKeyUp, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onClick, onClickCapture, webglGlass: _webglGlass, ...props }: Props) {
+  // The legacy prop stays accepted; SVG is now the only optical enhancement.
+  void _webglGlass
   const localRef = useRef<HTMLDivElement>(null)
   const rootRef = containerRef ?? localRef
   const lensRef = useRef<HTMLSpanElement>(null)
@@ -19,15 +21,6 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
   const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const suppressClickUntil = useRef(0)
   const restore = useRef<() => void>(() => {})
-  useEffect(() => {
-    if (!webglGlass) return
-    let cancelled = false
-    let dispose: (() => void) | undefined
-    void import('./webglTabGlass').then(({ attachWebglTabGlass }) => {
-      if (!cancelled && rootRef.current && lensRef.current) dispose = attachWebglTabGlass(rootRef.current, lensRef.current)
-    }).catch(() => { /* Plain HTML tabs remain available when WebGL cannot load. */ })
-    return () => { cancelled = true; dispose?.() }
-  }, [webglGlass, rootRef])
   const engage = () => {
     clearTimeout(settleTimer.current)
     if (rootRef.current) rootRef.current.dataset.lensEngaged = 'true'
@@ -87,7 +80,7 @@ export function LiquidTabList({ children, className = '', containerRef, webglGla
     void document.fonts?.ready.then(measure)
     return () => { disposed = true; cancelAnimationFrame(frame); stopObserving() }
   }, [children, rootRef])
-  return <div {...props} ref={rootRef} data-glass-webgl={webglGlass ? '' : undefined} className={`liquid-tabs ${className}`} role="tablist"
+  return <div {...props} ref={rootRef} className={`liquid-tabs ${className}`} role="tablist"
     onPointerDown={event => {
       onPointerDown?.(event)
       if (event.defaultPrevented || !event.isPrimary || event.button !== 0 || drag.current) return

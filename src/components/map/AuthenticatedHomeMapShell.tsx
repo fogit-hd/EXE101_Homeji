@@ -1,6 +1,7 @@
 import { CONVERSATION_READ } from '../../lib/conversationRealtime'
 import { useListingSearchParams } from '../../hooks/useListingSearchParams'
-import { useBackButtonClose } from '../../hooks/useBackButtonClose'
+import { useSearchParams } from 'react-router-dom'
+import { roomDetailParams } from '../../lib/roomDetailParams'
 import { AnimatePresence, motion } from 'motion/react'
 import { cloneElement, isValidElement, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -22,7 +23,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useChatbotSurface } from '../../contexts/chatbot-surface'
 import { useSearch } from '../../contexts/SearchContext'
 import { useNotificationHub } from '../../hooks/useNotificationHub'
-import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM, isValidCoord } from '../../lib/googleMaps'
+import { DEFAULT_MAP_CENTER, MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
 import type { MapPinLayers } from '../../lib/mapPinLayers'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
 import { buildSyntheticMapPlace, fetchMapPlaceDetails } from '../../lib/mapPlace'
@@ -45,7 +46,6 @@ import {
   serializeFiltersToQuery,
 } from './listings/listingAdapters'
 import { MapListingsWorkspace } from './listings/MapListingsWorkspace'
-import { RoomDetailModal } from './listings/RoomDetailModal'
 import { MapAppPanel } from "./MapAppPanel"
 import { isWideMapSection, type MapAppSection } from "./MapAppPanel.logic"
 import { MapEdgeToggle } from './MapEdgeToggle'
@@ -160,8 +160,12 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [listingSnapshot, setListingSnapshot] = useState<{ viewer: string; postId: string; post: RentalPost } | null>(null)
   const listingDetail = listingSnapshot?.viewer === listingViewer && listingSnapshot.postId === selectedPostId ? listingSnapshot.post : null
   const [listingLoading, setListingLoading] = useState(false)
+  /** Id of the listing whose detail request failed; the panel offers a retry instead of an empty card. */
+  const [listingErrorId, setListingErrorId] = useState<string | null>(null)
+  const [listingRetry, setListingRetry] = useState(0)
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set())
-  const [roomDetailId, setRoomDetailId] = useState<string | null>(null)
+  const [roomParams, setRoomParams] = useSearchParams()
+  const roomDetailId = roomParams.get('room') || null
   const listingSaved = Boolean(selectedPostId && savedIds.has(selectedPostId))
   const [saveBusy, setSaveBusy] = useState(false)
   const [nearbyFocus, setNearbyFocus] = useState<HomeMapFocus | null>(null)
@@ -200,6 +204,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [unreadBadge, setUnreadBadge] = useState(0)
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
+  const [saveNotice, setSaveNotice] = useState<{ message: string; tone: 'success' | 'error'; action?: { label: string; onClick: () => void } } | null>(null)
+  const saveLock = useRef(false)
   const [marketplacePins, setMarketplacePins] = useState<MarketplaceMapPin[]>([])
   const [selectedMarketplaceId, setSelectedMarketplaceId] = useState<string | null>(null)
   const [uiCollapsed, setUiCollapsed] = useState(false)
@@ -220,7 +226,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   ), [selectedPostId, selectedPost, listingDetail, selectedPlace])
   const nearbyVisible = !!nearbyAnchor && nearbyAnchor.contextKey === nearbyContextKey
     && nearbyDismissedKey !== nearbyContextKey && detailOpen && !uiCollapsed
-    && (!isMobileSheetViewport('(max-width: 767px)') || nearbyRequestedKey === nearbyContextKey)
+    && nearbyRequestedKey === nearbyContextKey
     && (!destinationMode || isMapMode) && !marketMode
   useEffect(() => {
     setNearbyAnchor(!marketMode && isMapMode ? nearbyAnchor : null)
@@ -333,6 +339,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       next.set('section', 'messages')
+      next.delete('room')
       next.delete('post')
       next.delete('view')
       if (conversationId) next.set('conversation', conversationId)
@@ -355,12 +362,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     if (!error) return
     setToast(error)
   }, [error])
-
-  useEffect(() => {
-    if (!toast) return
-    const t = window.setTimeout(() => setToast(null), 4200)
-    return () => window.clearTimeout(t)
-  }, [toast])
 
   useEffect(() => {
     if (!locationError) return
@@ -526,6 +527,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     const seq = ++listingFetchSeq.current
     const controller = new AbortController()
     setListingLoading(true)
+    setListingErrorId(null)
     void getRentalPost(selectedPostId, { auth: isAuthenticated, signal: controller.signal })
       .then((post) => {
         if (seq !== listingFetchSeq.current || controller.signal.aborted) return
@@ -536,25 +538,28 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         if (seq !== listingFetchSeq.current || controller.signal.aborted) return
         setListingSnapshot(null)
         setListingLoading(false)
+        setListingErrorId(selectedPostId)
       })
     return () => controller.abort()
-  }, [selectedPostId, isAuthenticated, listingViewer, marketMode, needsProfileSetup])
+  }, [selectedPostId, isAuthenticated, listingViewer, marketMode, needsProfileSetup, listingRetry])
 
   useEffect(() => {
     if (!isAuthenticated || needsProfileSetup || profile?.role !== UserRole.Renter) {
       setSavedIds(new Set())
       return
     }
-    const seq = ++savedFetchSeq.current
     let cancelled = false
-    void getSavedPosts()
-      .then((saved) => {
-        if (cancelled || seq !== savedFetchSeq.current) return
-        setSavedIds(new Set(saved.map((item) => item.id)))
-      })
-      .catch(() => undefined)
+    const refresh = () => {
+      const seq = ++savedFetchSeq.current
+      void getSavedPosts().then(saved => {
+        if (!cancelled && seq === savedFetchSeq.current) setSavedIds(new Set(saved.map(item => item.id)))
+      }).catch(() => undefined)
+    }
+    refresh()
+    window.addEventListener('homeji:saved-posts-changed', refresh)
     return () => {
       cancelled = true
+      window.removeEventListener('homeji:saved-posts-changed', refresh)
     }
   }, [isAuthenticated, needsProfileSetup, profile?.id, profile?.role])
 
@@ -693,15 +698,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       // Map explore (Figma): one click selects marker + card + preview + URL.
       if (destinationMode && isMapMode) {
         onSelectPost(postId)
-        const post = posts.find((p) => p.id === postId) ?? marketPosts.find((p) => p.id === postId)
-        if (post && isValidCoord(post.latitude, post.longitude)) {
-          setNearbyFocus({
-            lat: post.latitude,
-            lng: post.longitude,
-            zoom: MAP_FOCUS_ZOOM,
-          })
-          setNearbyToken((t) => t + 1)
-        }
         requestAnimationFrame(() => {
           const el = listRef.current?.querySelector(`[data-post-id="${postId}"]`)
           el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -719,8 +715,6 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       panelSection,
       destinationMode,
       isMapMode,
-      posts,
-      marketPosts,
     ],
   )
 
@@ -795,26 +789,40 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const toggleSavedPost = useCallback(
     async (postId: string) => {
-      if (!isAuthenticated || saveBusy) return
-      savedFetchSeq.current += 1
+      if (!isAuthenticated || saveLock.current) return
       const currentlySaved = savedIds.has(postId)
-      setSaveBusy(true)
-      try {
-        if (currentlySaved) await unsavePost(postId)
-        else await savePost(postId)
-        setSavedIds((prev) => {
-          const next = new Set(prev)
-          if (currentlySaved) next.delete(postId)
-          else next.add(postId)
-          return next
-        })
-      } catch {
-        /* keep prior save state */
-      } finally {
-        setSaveBusy(false)
+      const updateSaved = (saved: boolean) => setSavedIds(previous => {
+        const next = new Set(previous)
+        if (saved) next.add(postId)
+        else next.delete(postId)
+        return next
+      })
+      const changeSaved = async (saved: boolean) => {
+        if (saveLock.current) return
+        saveLock.current = true
+        savedFetchSeq.current += 1
+        setSaveBusy(true)
+        setSaveNotice(null)
+        updateSaved(saved)
+        try {
+          if (saved) await savePost(postId)
+          else await unsavePost(postId)
+          setSaveNotice({
+            message: saved ? 'Đã lưu phòng' : 'Đã bỏ lưu',
+            tone: 'success',
+            action: saved ? undefined : { label: 'Hoàn tác', onClick: () => { void changeSaved(true) } },
+          })
+        } catch {
+          updateSaved(!saved)
+          setSaveNotice({ message: 'Không lưu được phòng. Thử lại sau.', tone: 'error' })
+        } finally {
+          saveLock.current = false
+          setSaveBusy(false)
+        }
       }
+      await changeSaved(!currentlySaved)
     },
-    [isAuthenticated, saveBusy, savedIds],
+    [isAuthenticated, savedIds],
   )
 
   const handleSaveListing = useCallback(async () => {
@@ -823,13 +831,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [selectedPostId, toggleSavedPost])
 
   const openRoomDetail = useCallback((id: string) => {
-    setRoomDetailId(id)
-  }, [])
-
-  const closeRoomDetail = useCallback(() => {
-    setRoomDetailId(null)
-  }, [])
-  useBackButtonClose(Boolean(roomDetailId), closeRoomDetail)
+    setRoomParams(previous => roomDetailParams(previous, id), { state: { roomOverlay: true } })
+  }, [setRoomParams])
 
   const handleCardHover = useCallback((postId: string) => {
     if (!window.matchMedia('(hover: hover)').matches) return
@@ -931,7 +934,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       : omnibox
 
   // Moving the camera to an amenity must not replace the source area's listings.
-  const viewportPaused = detailOpen || Boolean(searchParams.get('source')) || Boolean(sharedLocationPin) || Boolean(navigationRequest)
+  const viewportPaused = detailOpen || Boolean(roomDetailId) || Boolean(searchParams.get('source')) || Boolean(sharedLocationPin) || Boolean(navigationRequest)
   const handleViewportIdle = useCallback(
     (bounds: {
       minLatitude: number
@@ -961,8 +964,20 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
     [destinationMode, isMapMode, viewportPaused, searchParams, setSearchParams],
   )
 
+  const [focusedSourceId, setFocusedSourceId] = useState<string | null>(null)
+  const previewRental = posts.find(post => post.id === focusedPostId)
+  const previewMarket = marketPosts.find(post => post.id === focusedPostId)
   const mapStage = (
     <HomeMapStage
+      onSourceSelectionChange={setFocusedSourceId}
+      listingPreview={destinationMode && focusedPostId ? {
+        post: !marketMode ? previewRental : undefined, marketPost: marketMode ? previewMarket : undefined,
+        saved: savedIds.has(focusedPostId), saveBusy,
+        onClose: handleClearMapSelection,
+        onToggleSave: !marketMode && isAuthenticated ? () => { void toggleSavedPost(focusedPostId) } : undefined,
+        onOpenRoom: () => openRoomDetail(focusedPostId),
+        onOpenNearby: nearbyAnchor ? () => { setNearbyRequestedKey(nearbyContextKey); setNearbyDismissedKey(null) } : undefined,
+      } : undefined}
       posts={destinationMode && marketMode ? [] : posts}
       selectedPostId={focusedPostId}
       hoveredPostId={hoveredPostId}
@@ -1012,6 +1027,8 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       listingSummary={selectedPost ?? listingDetail}
       listingLoading={!!selectedPostId && listingLoading}
       listingId={selectedPostId}
+      listingError={!!selectedPostId && listingErrorId === selectedPostId && !listingLoading}
+      onRetryListing={() => setListingRetry((n) => n + 1)}
       onProfileSetup={handleClearMapSelection}
       userLocation={userLocation}
       onNearby={handleNearby}
@@ -1057,25 +1074,14 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const chatAndOverlays = (
     <>
-      <RoomDetailModal
-        listingId={roomDetailId}
-        saved={roomDetailId ? savedIds.has(roomDetailId) : false}
-        saveBusy={saveBusy}
-        onClose={closeRoomDetail}
-        onToggleSave={isAuthenticated ? (id) => void toggleSavedPost(id) : undefined}
-        onOpenMessages={(conversationId) => {
-          if (conversationId) openMessagesThread(conversationId)
-        }}
-        onOpenAppointments={() => openAppSectionMobileSafe('appointments')}
-      />
-
-
       <MapToast
-        message={locationError || toast}
-        tone={locationError || error ? 'error' : 'info'}
+        message={locationError || saveNotice?.message || toast}
+        tone={locationError ? 'error' : saveNotice?.tone ?? (error ? 'error' : 'info')}
+        action={!locationError ? saveNotice?.action : undefined}
+        durationMs={saveNotice?.action ? 6500 : 4200}
         onDismiss={() => {
           if (locationError) onClearLocationError?.()
-          else setToast(null)
+          else { setSaveNotice(null); setToast(null) }
         }}
       />
     </>
@@ -1101,7 +1107,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
         <MapListingsWorkspace
           posts={posts}
           marketPosts={marketPosts}
-          selectedListingId={focusedPostId}
+          selectedListingId={focusedSourceId ?? focusedPostId}
           hoveredListingId={hoveredPostId}
           loading={showPostsLoader || loading}
           error={error}

@@ -1,15 +1,18 @@
-import type { PointerEvent, ReactNode } from 'react'
+import type { PointerEvent, ReactNode, RefCallback } from 'react'
 import { primaryOf, type MarketplacePrimary, type MarketplaceTab } from '../../lib/marketplaceNavigation'
 import { formatAvailableBalance } from '../../lib/walletMoney'
 import { SegmentedTabs } from '../motion/SegmentedTabs'
 import { MotionTabs } from '../motion/MotionTabs'
 import { GameLauncher } from '../games/GameLauncher'
+import { useIsMobile } from '../../mobile/useIsMobile'
+import { MobileTabs } from '../../mobile/MobileTabs'
+import '../../mobile/market/mobile-market.css'
 import './MarketplaceHeader.css'
 
 const HEADLINES: Record<MarketplaceTab, { eyebrow: string; title: string }> = {
   food: {
     eyebrow: 'Chợ Homeji',
-    title: 'Đồ ăn quanh bạn',
+    title: 'Chợ Homeji',
   },
   browse: {
     eyebrow: 'Chợ Homeji',
@@ -44,7 +47,9 @@ const PRIMARY_TABS: { id: MarketplacePrimary; label: string }[] = [
   { id: 'wallet', label: 'Ví Homeji' },
 ]
 
-const SHOPPING_TABS: { id: MarketplaceTab; label: string }[] = [
+const MOBILE_PRIMARY_TABS = PRIMARY_TABS.map(item => item.id === 'wallet' ? { ...item, label: 'Ví' } : item)
+
+const SHOPPING_TABS:{ id: MarketplaceTab; label: string }[] = [
   { id: 'food', label: 'Đồ ăn' },
   { id: 'browse', label: 'Đồ cũ' },
 ]
@@ -65,8 +70,10 @@ type Props = {
   onTabChange: (tab: MarketplaceTab) => void
   onOpenSell: () => void
   onTopUp: () => void
-  /** Rendered beside the shopping segmented switch (filter button + chips). */
+  /** Trailing filter control, outside the scroller so its panel remains unclipped. */
   subtabsExtra?: ReactNode
+  quickControls?: ReactNode
+  quickControlsRef?: RefCallback<HTMLDivElement>
 }
 
 function reflectUtilityAction(event: PointerEvent<HTMLButtonElement>) {
@@ -84,7 +91,10 @@ export function MarketplaceHeader({
   onOpenSell,
   onTopUp,
   subtabsExtra,
+  quickControlsRef,
+  quickControls,
 }: Props) {
+  const mobile = useIsMobile()
   const headline = HEADLINES[tab]
   const primary = primaryOf(tab)
   const subTabs = primary === 'shopping' ? SHOPPING_TABS : primary === 'shop' ? SHOP_TABS : null
@@ -98,23 +108,45 @@ export function MarketplaceHeader({
     } else onTabChange('wallet')
   }
 
+  if (mobile) {
+    // The app header already names the page and the account sheet shows the balance, so phones get
+    // only the tabs: one row of sections, then the sub-section row.
+    return (
+      <header className="m-market-head">
+        <MobileTabs items={MOBILE_PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
+          idPrefix="marketplace-primary" panelId="marketplace-panel" />
+        {primary === 'shopping' ? (
+          <>
+            <div className="m-market-head__row">
+              <MobileTabs items={SHOPPING_TABS} value={tab} onChange={onTabChange} label="Mua sắm"
+                idPrefix="marketplace-subtab" panelId="marketplace-panel" className="m-seg m-seg--compact" />
+              {subtabsExtra}
+            </div>
+            <div ref={quickControlsRef} className="m-market-head__quick">{quickControls}</div>
+          </>
+        ) : primary === 'shop' ? (
+          <MobileTabs items={SHOP_TABS} value={tab} onChange={onTabChange} label="Cửa hàng"
+            idPrefix="marketplace-subtab" panelId="marketplace-panel" className="m-chips m-market-head__subtabs" buttonClassName="m-chip"
+            renderLabel={(id, label) => <>
+              {label}
+              {id === 'sales' && sellerActionCount > 0 ? <span className="m-chip__count" aria-label={`${sellerActionCount} đơn cần xử lý`}>{sellerActionCount}</span> : null}
+            </>} />
+        ) : null}
+      </header>
+    )
+  }
+
   return (
-    <header className={`marketplace-header liquid-surface${tab === 'wallet' ? ' marketplace-header--wallet' : ''}`}>
+    <header className={`marketplace-header${tab === 'wallet' ? ' marketplace-header--wallet' : ''}`}>
       <div className="marketplace-header__summary">
         <div className="marketplace-header__title-group">
-          <p className="marketplace-header__eyebrow">{headline.eyebrow}</p>
           <h1 className="marketplace-header__title">{headline.title}</h1>
         </div>
         <div className="marketplace-header__utilities">
-          <PersistentWalletBalance availableBalance={availableBalance} status={walletStatus} />
+          <PersistentWalletBalance availableBalance={availableBalance} status={walletStatus}
+            onOpen={tab === 'wallet' || walletStatus === 'loading' ? undefined : onTopUp} />
           <div className="marketplace-header__utility-actions">
             <GameLauncher className="marketplace-header__utility-action marketplace-header__game" />
-            {walletStatus !== 'loading' ? (
-              <button type="button" className="marketplace-header__topup marketplace-header__utility-action"
-                onPointerMove={reflectUtilityAction} onClick={onTopUp}>
-                Nạp tiền
-              </button>
-            ) : null}
             {tab !== 'wallet' ? (
               <button type="button" className="marketplace-header__primary marketplace-header__utility-action"
                 onPointerMove={reflectUtilityAction} onClick={onOpenSell}>
@@ -126,16 +158,21 @@ export function MarketplaceHeader({
       </div>
 
       <MotionTabs items={PRIMARY_TABS} value={primary} onChange={openPrimary} label="Chợ Homeji"
-        className="marketplace-header__tabs" buttonClassName="marketplace-header__tab"
+        webglGlass={false} className="marketplace-header__tabs" buttonClassName="marketplace-header__tab"
         idPrefix="marketplace-primary" panelId="marketplace-panel" />
 
       {subTabs ? (
         <div className="marketplace-header__subtabs">
           {primary === 'shopping' ? (
             <div className="marketplace-header__subtabs-lead">
-              <SegmentedTabs items={SHOPPING_TABS} value={tab} onChange={onTabChange} label="Mua sắm"
-              className="marketplace-header__subtabs-group" idPrefix="marketplace-subtab" panelId="marketplace-panel" />
-              {subtabsExtra}
+              <div className="marketplace-header__shopping-scroll">
+                <SegmentedTabs items={SHOPPING_TABS} value={tab} onChange={onTabChange} label="Mua sắm"
+                  className="marketplace-header__subtabs-group" idPrefix="marketplace-subtab" panelId="marketplace-panel" />
+              </div>
+              <div className="marketplace-header__shopping-filters">
+                <div ref={quickControlsRef} className="marketplace-header__quick-controls">{quickControls}</div>
+                {subtabsExtra}
+              </div>
             </div>
           ) : (
           <MotionTabs items={subTabs} value={tab} onChange={onTabChange}
@@ -155,13 +192,17 @@ export function MarketplaceHeader({
 function PersistentWalletBalance({
   availableBalance,
   status,
+  onOpen,
 }: {
   availableBalance: number | null
   status: WalletHeaderStatus
+  onOpen?: () => void
 }) {
   const showAmount = status === 'ready' && availableBalance != null
+  const Tag = onOpen ? 'button' : 'div'
   return (
-    <div className="marketplace-header__wallet" aria-live="polite">
+    <Tag className={`marketplace-header__wallet${onOpen ? ' is-link' : ''}`} aria-live="polite"
+      {...(onOpen ? { type: 'button' as const, onClick: onOpen, title: 'Nạp tiền vào ví' } : {})}>
       {status === 'loading' ? (
         <span className="marketplace-header__wallet-skeleton" aria-label="Đang tải số dư" />
       ) : (
@@ -176,6 +217,6 @@ function PersistentWalletBalance({
           )}
         </>
       )}
-    </div>
+    </Tag>
   )
 }

@@ -1,3 +1,4 @@
+import { Crown, X } from 'lucide-react'
 import { SocialContactLinks } from '../profile/SocialContactLinks'
 import type { PublicContactProfile } from '../../api/profileContacts'
 import { PremiumStars } from '../PremiumStars'
@@ -12,7 +13,7 @@ import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 
 export function PremiumBadge({ compact = false }: { compact?: boolean }) {
   return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium">
-    <span className="chat-premium__crown" aria-hidden>♛</span><span>{compact ? 'PRO' : 'Premium'}</span>
+    <span className="chat-premium__crown" aria-hidden><Crown aria-hidden="true" size={12} style={{ verticalAlign: 'middle' }} /></span><span>{compact ? 'PRO' : 'Premium'}</span>
     <PremiumStars />
   </span>
 }
@@ -31,9 +32,9 @@ export function PublicProfile({ userId, onClose }: { userId: string; onClose: ()
     return () => { current = false; element?.close() }
   }, [userId])
   return <dialog ref={dialog} className={`chat-profile ${profile?.isPremium ? 'is-premium' : ''}`} onCancel={onClose} onClick={e => { if (e.target === e.currentTarget) onClose() }} aria-label="Hồ sơ người dùng">
-    <button type="button" className="chat-profile__close" onClick={onClose} aria-label="Đóng hồ sơ" autoFocus>✕</button>
+    <button type="button" className="chat-profile__close" onClick={onClose} aria-label="Đóng hồ sơ" autoFocus><X aria-hidden="true" size={18} /></button>
     {error ? <p role="alert">{error}</p> : profile ? <>
-      <div className="chat-profile__avatar">{profile.avatarPath && /^https:\/\//.test(profile.avatarPath) ? <img src={profile.avatarPath} alt="" /> : profile.displayName.slice(0, 2).toUpperCase()}</div>
+      <div className="chat-profile__avatar">{profile.avatarPath && /^https:\/\//.test(profile.avatarPath) ? <img loading="lazy" decoding="async" width={80} height={80} src={profile.avatarPath} alt="" /> : profile.displayName.slice(0, 2).toUpperCase()}</div>
       {profile.isPremium && <PremiumBadge />}
       <h2>{profile.displayName}</h2>
       <SocialContactLinks {...profile} />
@@ -51,11 +52,13 @@ export function ChatGifMessage({ id }: { id: string }) {
     })
     return () => controller.abort()
   }, [id])
-  return <div>{gif ? <img className="chat-gif" src={gif.url} alt={gif.title || 'GIF'} loading="lazy" referrerPolicy="no-referrer" /> : <span role="status">{error || 'Đang tải GIF…'}</span>}
+  return <div>{gif ? <img decoding="async" width={220} height={165} className="chat-gif" src={gif.url} alt={gif.title || 'GIF'} loading="lazy" referrerPolicy="no-referrer" /> : <span role="status">{error || 'Đang tải GIF…'}</span>}
   </div>
 }
 
-export function ChatMediaPicker({ conversationId, disabled, onEmoji, onSent, onError }: {
+export function ChatMediaPicker({ conversationId, disabled, onEmoji, onSent, onError, compact = false }: {
+  /** Phones: one smiley button; the picker switches Emoji / GIF with tabs. */
+  compact?: boolean
   conversationId: string; disabled: boolean; onEmoji: (emoji: string) => void; onSent: (message: PostMessage) => void; onError: (error: string) => void
 }) {
   const [emojiGroup, setEmojiGroup] = useState(0)
@@ -89,18 +92,20 @@ export function ChatMediaPicker({ conversationId, disabled, onEmoji, onSent, onE
     const id = conversationId
     try {
       const message = await apiRequest<PostMessage>(`/api/chat/conversations/${encodeURIComponent(id)}/gifs/${encodeURIComponent(gif.id)}`, { method: 'POST' })
-      if (currentId.current === id) { onSent(message); setMode(null) }
+      onSent(message)
+      if (currentId.current === id) setMode(current => current === 'gif' ? null : current)
     } catch (e) { if (currentId.current === id) onError(getErrorMessage(e, 'Không gửi được GIF')) }
     finally { gate.current = false; setSending(false) }
   }
   return <div className="chat-media" ref={root} onKeyDown={e => { if (e.key === 'Escape') setMode(null) }}>
+    {compact ? <button type="button" className="chat-media__smiley" disabled={disabled} aria-label="Chọn emoji hoặc GIF" aria-expanded={mode !== null} onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setMode(mode ? null : 'emoji') }}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" /><path d="M9 9.5h.01M15 9.5h.01" /></svg></button> : <>
     <button type="button" disabled={disabled} aria-label="Chọn emoji" aria-expanded={mode === 'emoji'} onClick={() => setMode(mode === 'emoji' ? null : 'emoji')}>☺</button>
-    <button type="button" disabled={disabled} aria-label="Chọn GIF" aria-expanded={mode === 'gif'} onClick={() => setMode(mode === 'gif' ? null : 'gif')}>GIF</button>
+    <button type="button" disabled={disabled} aria-label="Chọn GIF" aria-expanded={mode === 'gif'} onClick={() => setMode(mode === 'gif' ? null : 'gif')}>GIF</button></>}
     {mode && <section className="chat-media__picker" role="dialog" aria-label={mode === 'emoji' ? 'Emoji' : 'GIF'}>
-      <header><strong>{mode === 'emoji' ? 'Thêm cảm xúc' : 'Tìm GIF'}</strong><button type="button" onClick={() => setMode(null)} aria-label="Đóng bộ chọn">✕</button></header>
-      {mode === 'emoji' ? <><nav className="chat-media__categories" aria-label="Nhóm emoji">{chatEmojiGroups.map((group, index) => <button type="button" key={group.name} aria-label={group.name} aria-pressed={index === emojiGroup} onClick={() => setEmojiGroup(index)}>{group.icon}</button>)}</nav><p className="chat-media__group-name">{chatEmojiGroups[emojiGroup].name} · {chatEmojiGroups[emojiGroup].emojis.length} emoji</p><div className="chat-media__emojis">{chatEmojiGroups[emojiGroup].emojis.map(emoji => <button type="button" key={emoji} aria-label={emoji} onClick={() => onEmoji(emoji)}>{emoji}</button>)}</div></> : <>
+      <header>{compact ? <div className="chat-media__tabs" role="group" aria-label="Loại"><button type="button" aria-pressed={mode === 'emoji'} onClick={() => setMode('emoji')}>Emoji</button><button type="button" aria-pressed={mode === 'gif'} onClick={() => setMode('gif')}>GIF</button></div> : <strong>{mode === 'emoji' ? 'Thêm cảm xúc' : 'Tìm GIF'}</strong>}<button type="button" onClick={() => setMode(null)} aria-label="Đóng bộ chọn"><X aria-hidden="true" size={18} /></button></header>
+      {mode === 'emoji' ? <><nav className="chat-media__categories" aria-label="Nhóm emoji">{chatEmojiGroups.map((group, index) => <button type="button" key={group.name} aria-label={group.name} title={group.name} aria-pressed={index === emojiGroup} onClick={() => setEmojiGroup(index)}>{group.icon}</button>)}</nav><p className="chat-media__group-name">{chatEmojiGroups[emojiGroup].name} · {chatEmojiGroups[emojiGroup].emojis.length} emoji</p><div className="chat-media__emojis">{chatEmojiGroups[emojiGroup].emojis.map(emoji => <button type="button" key={emoji} aria-label={emoji} title={emoji} onClick={() => onEmoji(emoji)}>{emoji}</button>)}</div></> : <>
         <input autoFocus value={query} onChange={e => setQuery(e.target.value)} maxLength={50} aria-label="Tìm GIF" placeholder="Tìm cảm xúc, lời chào…" />
-        {loading ? <p role="status">Đang tìm GIF…</p> : error ? <p role="alert">{error}</p> : <div className="chat-media__gifs">{gifs.map(gif => <button type="button" key={gif.id} disabled={sending} onClick={() => void send(gif)} aria-label={`Gửi GIF: ${gif.title}`}><img src={gif.url} alt={gif.title} loading="lazy" referrerPolicy="no-referrer" /></button>)}{!gifs.length && <p>Chưa có GIF phù hợp.</p>}</div>}
+        {loading ? <p role="status">Đang tìm GIF…</p> : error ? <p role="alert">{error}</p> : <div className="chat-media__gifs">{gifs.map(gif => <button type="button" key={gif.id} disabled={sending} onClick={() => void send(gif)} aria-label={`Gửi GIF: ${gif.title}`} title={`Gửi GIF: ${gif.title}`}><img decoding="async" width={220} height={165} src={gif.url} alt={gif.title} loading="lazy" referrerPolicy="no-referrer" /></button>)}{!gifs.length && <p>Chưa có GIF phù hợp.</p>}</div>}
       </>}
     </section>}
   </div>

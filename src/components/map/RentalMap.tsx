@@ -1,9 +1,11 @@
+import { MapPinPreview } from './listings/MapPinPreview'
+import type { ReactNode } from 'react'
 import { useSourceCatalogMap } from './useSourceCatalogMap'
 import { useNavigate } from 'react-router-dom'
 import { ImportedRentalPreview } from './listings/ImportedRentalPreview'
 import { sourceRoomHref } from '../../lib/sourceRoomLink'
 import type { SourceCatalogPin } from '../../lib/sourceCatalog'
-import { createClusterListings, type ClusterListing, type CatalogClusterMarker } from './clusterListings'
+import { configureClusterScroll, createClusterListings, type ClusterListing, type CatalogClusterMarker } from './clusterListings'
 import { ListingClusterAlgorithm } from './listingClusterAlgorithm'
 import {
   MarkerClusterer,
@@ -20,6 +22,7 @@ import type { RentalPostSummary } from '../../api/types'
 import { RentalPostType } from '../../api/types'
 import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
 import { observeElementResize } from '../../lib/observeElementResize'
+import { formatCompactRent } from '../../lib/labels'
 
 import { useGoogleMapsDiagnostics } from '../../hooks/useGoogleMapsDiagnostics'
 import {
@@ -84,6 +87,8 @@ type BaseMapMode = 'roadmap' | 'satellite'
 type MapDisplayMode = BaseMapMode | 'streetview-select' | 'streetview'
 
 type RentalMapProps = {
+  selectedPreview?: ReactNode
+  onSourceSelectionChange?: (id: string | null) => void
   showSourceCatalog?: boolean
   sourceRentalPins?: SourceCatalogPin[]
   posts: RentalPostSummary[]
@@ -201,6 +206,8 @@ function styleFor(
  * Location selection uses Location Lottie via AdvancedMarker content.
  */
 function RentalMapComponent({
+  selectedPreview,
+  onSourceSelectionChange,
   showSourceCatalog = false,
   sourceRentalPins,
   posts,
@@ -288,6 +295,7 @@ function RentalMapComponent({
   const onSelectPostRef = useRef(onSelectPost)
   const navigate = useNavigate()
   const [selectedSource, setSelectedSource] = useState<SourceCatalogPin | null>(null)
+  useEffect(() => { onSourceSelectionChange?.(selectedSource?.id ?? null) }, [selectedSource, onSourceSelectionChange])
   if (selectedSource && sourceRentalPins && !sourceRentalPins.some(pin => pin.id === selectedSource.id)) {
     setSelectedSource(null)
   }
@@ -300,7 +308,9 @@ function RentalMapComponent({
   useLayoutEffect(() => { onPlaceLoadingRef.current = onPlaceLoading }, [onPlaceLoading])
   const placeFetchSeqRef = useRef(0)
 
-  const [mapReady, setMapReady] = useState(false)
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null)
+  const mapReady = mapInstance !== null
+  const [mapIdle, setMapIdle] = useState(false)
   const [displayMode, setDisplayMode] = useState<MapDisplayMode>('roadmap')
   const [streetViewBusy, setStreetViewBusy] = useState(false)
   const [streetViewError, setStreetViewError] = useState<string | null>(null)
@@ -367,7 +377,7 @@ function RentalMapComponent({
     onClearSelection?.()
     setSelectedSource(pin)
   }, [onClearSelection])
-  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange, selectSourceRental, sourceRentalPins)
+  useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange, selectSourceRental, sourceRentalPins, selectedSource?.id, hoveredPostId)
 
   const syncMarkers = useCallback(() => {
     const map = mapRef.current
@@ -419,6 +429,7 @@ function RentalMapComponent({
         const marker = new AdvancedMarkerElement({
           position: pos,
           content: content.element,
+          ...(markerVariant === 'price-pill' ? { anchorTop: '-50%' } : {}),
           title: post.title || 'Tin đăng Homeji',
           zIndex: s.z,
           gmpClickable: true,
@@ -439,6 +450,7 @@ function RentalMapComponent({
         })
         markerKindsRef.current.set(marker, s.kind)
       } else {
+        entry.marker.anchorTop = markerVariant === 'price-pill' ? '-50%' : '-100%'
         const cur = entry.marker.position as google.maps.LatLngLiteral | null
         if (
           !cur ||
@@ -461,7 +473,7 @@ function RentalMapComponent({
       markerKindsRef.current.set(marker, s.kind)
       clusterListingsRef.current.set(marker, {
         id: post.id, kind: s.kind, title: post.title, address: post.address,
-        priceLabel: `${post.price.toLocaleString('vi-VN')} đ / tháng`, imageUrl: post.thumbnailPath,
+        priceLabel: `${formatCompactRent(post.price)}/tháng`, imageUrl: post.thumbnailPath,
         premium: post.isOwnerPremium === true,
         open: () => { clusterPopupRef.current?.close(); onSelectPostRef.current(post.id) },
       })
@@ -610,6 +622,8 @@ function RentalMapComponent({
         mapDiv,
         createMapOptions(mapId, {
           gestureHandling,
+          clickableIcons: false,
+          ...(!mapId ? { styles: [{ featureType: 'poi.business', stylers: [{ visibility: 'off' }] }] } : {}),
           ...(colorScheme != null ? { colorScheme } : {}),
         }),
       )
@@ -635,7 +649,7 @@ function RentalMapComponent({
       camera.attach(map)
       cameraRef.current = camera
       ;(window as Window & { __HOMEJI_MAP?: google.maps.Map }).__HOMEJI_MAP = map
-      setMapReady(true)
+      setMapInstance(map)
 
       listeners.push(
         panorama.addListener('visible_changed', () => {
@@ -645,6 +659,7 @@ function RentalMapComponent({
 
       // Click-guard only — never fetch listing data on drag / bounds_changed.
       // Only intentional map gestures report search bounds; camera focus and initial fits do not.
+      listeners.push(google.maps.event.addListenerOnce(map, 'idle', () => setMapIdle(true)))
       listeners.push(
         map.addListener('idle', () => {
           if (!viewportGestureRef.current) return
@@ -724,7 +739,12 @@ function RentalMapComponent({
       const lib = await loadMarkerLibrary()
       if (cancelled) return
       libRef.current = lib
-      clusterPopupRef.current = new google.maps.InfoWindow()
+      const clusterPopup = new google.maps.InfoWindow()
+      clusterPopupRef.current = clusterPopup
+      listeners.push(clusterPopup.addListener('domready', () => {
+        const content = clusterPopup.getContent()
+        if (content instanceof HTMLElement) configureClusterScroll(content)
+      }))
       const clusterRenderer: Renderer = {
         render: (cluster) => {
           const kindCounts: Record<MapClusterKind, number> = {
@@ -741,13 +761,22 @@ function RentalMapComponent({
             if (clusterListingsRef.current.get(marker as google.maps.marker.AdvancedMarkerElement)?.premium === true) premiumCount += 1
           }
           const content = createMapClusterContent({ count: cluster.count, kindCounts, premiumCount })
-          return new lib.AdvancedMarkerElement({
+          const marker = new lib.AdvancedMarkerElement({
             position: cluster.position,
             content,
             title: content.title,
             zIndex: 3000 + cluster.count,
             gmpClickable: true,
           })
+          // MarkerClusterer 2.x still registers gmp-click through the deprecated Maps API.
+          const addMapsListener = marker.addListener.bind(marker)
+          marker.addListener = (name, handler) => {
+            if (name !== 'gmp-click') return addMapsListener(name, handler)
+            const listener: EventListener = event => handler(event)
+            marker.addEventListener('gmp-click', listener)
+            return { remove: () => marker.removeEventListener('gmp-click', listener) }
+          }
+          return marker
         },
       }
       const clusterAlgorithm = new ListingClusterAlgorithm({ radius: 96, maxZoom: 22 })
@@ -783,6 +812,8 @@ function RentalMapComponent({
           })
           const zoom = () => { clusterPopupRef.current?.close(); if (cluster.bounds) clusterMap.fitBounds(cluster.bounds, 72) }
           if (!entries.length) { zoom(); return }
+          // One overlay at a time: the cluster list replaces any open pin preview.
+          onClearSelectionRef.current?.()
           clusterSelectionIdsRef.current = entries.map(entry => entry.id)
           const popup = clusterPopupRef.current
           popup?.setContent(createClusterListings(entries, zoom))
@@ -865,7 +896,8 @@ function RentalMapComponent({
         mapDiv.remove()
       }
       host.replaceChildren()
-      setMapReady(false)
+      setMapIdle(false)
+      setMapInstance(null)
       setDisplayMode('roadmap')
       setStreetViewBusy(false)
       setStreetViewError(null)
@@ -1128,7 +1160,7 @@ function RentalMapComponent({
    * Single coalesced camera controller.
    * Priority: listingsFit (filter) > focus > place pin > selected listing > initial overview.
    * Pin-layer chips (Phòng trọ / Ở ghép / Chợ đồ) only show/hide markers — no re-zoom.
-   * Filter/overview fits use the same maxZoom for every layer mix.
+   * Filter/overview fits use the same maxZoom for every layer mix; listing selection only pans off-screen pins.
    */
   useEffect(() => {
     if (!mapReady) return
@@ -1214,13 +1246,8 @@ function RentalMapComponent({
       const key = `post:${selectedPost.id}:${focusToken}`
       if (key === selectAppliedRef.current) return
       selectAppliedRef.current = key
-      camera.schedule(key, {
-        center: {
-          lat: selectedPost.latitude,
-          lng: selectedPost.longitude,
-        },
-        zoom: MAP_FOCUS_ZOOM,
-      })
+      const position = { lat: selectedPost.latitude, lng: selectedPost.longitude }
+      if (!mapRef.current?.getBounds()?.contains(position)) mapRef.current?.panTo(position)
       return
     }
 
@@ -1395,11 +1422,16 @@ function RentalMapComponent({
     )
   }
 
+  const previewPost = posts.find(post => post.id === selectedPostId)
+  const previewMarket = marketplacePins.find(pin => pin.id === selectedMarketplaceId)
+  const previewPoint = selectedSource ?? (previewPost ? { lat: previewPost.latitude, lng: previewPost.longitude } : previewMarket)
   return (
     <div className="rental-map">
+      {previewPoint && (selectedSource || selectedPreview) ? <MapPinPreview map={mapInstance} lat={previewPoint.lat} lng={previewPoint.lng} onClose={() => { setSelectedSource(null); onClearSelection?.() }}>
       {selectedSource ? <ImportedRentalPreview key={selectedSource.id} pin={selectedSource} onClose={() => setSelectedSource(null)}
         onOpen={() => navigate(sourceRoomHref(selectedSource.id.slice('rental:'.length)))}
-        /> : null}
+        /> : selectedPreview}
+      </MapPinPreview> : null}
       <div ref={hostRef} className="rental-map__host"
         onWheelCapture={event => {
           if (isMapOverlayInteraction(event.target)) return
@@ -1418,17 +1450,9 @@ function RentalMapComponent({
           }
         }} />
 
-      {!mapReady ? (
-        <div className="rental-map__loader" role="status" aria-live="polite">
-          <div className="rental-map__stage-card rental-map__stage-card--loading">
-            <span className="rental-map__stage-pulse" aria-hidden />
-            <p className="rental-map__stage-title">Đang mở bản đồ khu vực</p>
-            <p className="rental-map__stage-copy">
-              Homeji đang tải Thủ Đức &amp; Q.9 — danh sách phòng bên phải vẫn dùng được ngay.
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <div className={`rental-map__loader${mapIdle ? ' is-ready' : ''}`} role="status" aria-live="polite" aria-hidden={mapIdle}>
+        <p className="rental-map__loading-copy">Đang tải bản đồ…</p>
+      </div>
 
       {mapReady && !hideViewSwitcher ? (
         <div className="rental-map__view-switcher-wrap">
@@ -1486,7 +1510,7 @@ function RentalMapComponent({
             aria-label="Lớp bản đồ"
             aria-pressed={displayMode === 'satellite'}
           >
-            <img src="/figma/map/layers.svg" alt="" width={17} height={17} />
+            <img loading="lazy" decoding="async" src="/figma/map/layers.svg" alt="" width={17} height={17} />
           </button>
           {onLocate ? (
             <button
@@ -1497,7 +1521,7 @@ function RentalMapComponent({
               title="Vị trí của tôi"
               aria-label="Vị trí của tôi"
             >
-              <img src="/figma/map/locate.svg" alt="" width={17} height={17} />
+              <img loading="lazy" decoding="async" src="/figma/map/locate.svg" alt="" width={17} height={17} />
             </button>
           ) : null}
           <div className="rental-map__zoom" role="group" aria-label="Thu phóng">
@@ -1506,16 +1530,18 @@ function RentalMapComponent({
               className="rental-map__btn rental-map__btn--zoom"
               onClick={() => zoomBy(1)}
               aria-label="Phóng to"
+              title="Phóng to"
             >
-              <img src="/figma/map/plus.svg" alt="" width={17} height={17} />
+              <img loading="lazy" decoding="async" src="/figma/map/plus.svg" alt="" width={17} height={17} />
             </button>
             <button
               type="button"
               className="rental-map__btn rental-map__btn--zoom"
               onClick={() => zoomBy(-1)}
               aria-label="Thu nhỏ"
+              title="Thu nhỏ"
             >
-              <img src="/figma/map/minus.svg" alt="" width={17} height={17} />
+              <img loading="lazy" decoding="async" src="/figma/map/minus.svg" alt="" width={17} height={17} />
             </button>
           </div>
         </div>
@@ -1552,6 +1578,8 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.hoveredPostId === next.hoveredPostId &&
     prev.onSelectPost === next.onSelectPost &&
     prev.onClearSelection === next.onClearSelection &&
+    prev.selectedPreview === next.selectedPreview &&
+    prev.onSourceSelectionChange === next.onSourceSelectionChange &&
     prev.onSelectPlace === next.onSelectPlace &&
     prev.onPlaceLoading === next.onPlaceLoading &&
     prev.selectedPlacePin?.lat === next.selectedPlacePin?.lat &&

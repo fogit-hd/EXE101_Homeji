@@ -1,6 +1,6 @@
 /* Decorative liquid behind a step row. Columns mirror the parent's step items. */
 .liquid-progress {
-  --liquid-color: var(--grab-green, #00b14f);
+  --liquid-color: var(--grab-green);
   --liquid-size: 34px;
   --liquid-column: 7.75rem;
   position: absolute;
@@ -26,21 +26,20 @@
   width: var(--liquid-size);
   height: var(--liquid-size);
   border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #ffffffc4 0 14%, #ffffff00 38%), radial-gradient(circle at 70% 80%, color-mix(in srgb, var(--c) 70%, #000) 0, #0000 60%), var(--c);
+  background: var(--c);
   translate: -50% -50%;
-  animation: liquid-blob-in 520ms cubic-bezier(.34, 1.56, .64, 1) calc(var(--liquid-index) * 220ms) both;
+  animation: liquid-blob-in 520ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--liquid-index) * 220ms) both;
 }
 .liquid-progress__cell[data-state='current'] .liquid-progress__blob {
   animation:
-    liquid-blob-in 520ms cubic-bezier(.34, 1.56, .64, 1) calc(var(--liquid-index) * 220ms) both,
-    liquid-breathe 2.4s ease-in-out calc(var(--liquid-index) * 220ms + 520ms) infinite;
+    none;
 }
 .liquid-progress__bridge {
   top: 50%;
   left: 50%;
   width: 100%;
   height: 11px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--c), var(--c-next));
   translate: 0 -50%;
   transform-origin: left center;
@@ -51,11 +50,11 @@
   position: absolute;
   inset: 2px 0 auto;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(90deg, #fff0, #ffffffd9 50%, #fff0);
   background-size: 40% 100%;
   background-repeat: no-repeat;
-  animation: liquid-flow 2.8s linear calc(var(--liquid-index) * 220ms + 900ms) infinite;
+  animation: none;
 }
 .liquid-progress__bridge[data-bridge='filled'] {
   animation: liquid-fill 760ms cubic-bezier(.65, 0, .35, 1) calc(var(--liquid-index) * 220ms + 160ms) both;
@@ -66,17 +65,9 @@
   height: 16px;
   border-radius: 50%;
   translate: -50% -50%;
-  animation: liquid-reach 2.6s cubic-bezier(.45, 0, .55, 1) calc(var(--liquid-index) * 220ms + 520ms) infinite both;
+  animation: none;
 }
-@keyframes liquid-blob-in { from { scale: .2; } to { scale: 1; } }
-@keyframes liquid-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }
-@keyframes liquid-flow { from { background-position: -60% 0; } to { background-position: 160% 0; } }
 @keyframes liquid-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes liquid-reach {
-  0%, 100% { transform: translateX(6px) scale(.7); }
-  50% { transform: translateX(30px) scale(1); }
-  62% { transform: translateX(28px) scale(.92, 1.06); }
-}
 @media (prefers-reduced-motion: reduce) {
   .liquid-progress__blob,
   .liquid-progress__bridge[data-bridge='filled'],

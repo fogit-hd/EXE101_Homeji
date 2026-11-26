@@ -5,13 +5,14 @@ import './PageFrame.css'
 
 type Props = {
   title: string
+  titleAs?: 'h1' | 'p'
   eyebrow?: string
   lead?: string
   actions?: ReactNode
   filters?: ReactNode
   children: ReactNode
   className?: string
-  /** Skip outer AppContainer (e.g. messages full-bleed). */
+  /** Skip outer AppContainer; these sections supply their own h1 unless titleAs is set. */
   bleed?: boolean
   /**
    * When true, expose empty header hosts so embedded children can portal
@@ -22,7 +23,7 @@ type Props = {
 
 export function PageFrame({
   title,
-  eyebrow,
+  titleAs,
   lead,
   actions,
   filters,
@@ -31,6 +32,7 @@ export function PageFrame({
   bleed = false,
   chromeSlots = false,
 }: Props) {
+  const Title = titleAs ?? (bleed ? 'p' : 'h1')
   const [actionsEl, setActionsEl] = useState<HTMLElement | null>(null)
   const [filtersEl, setFiltersEl] = useState<HTMLElement | null>(null)
 
@@ -42,8 +44,8 @@ export function PageFrame({
       <header className="page-frame__header">
         <div className="page-frame__title-row">
           <div className="page-frame__copy">
-            {eyebrow ? <p className="page-frame__eyebrow">{eyebrow}</p> : null}
-            <h1 className="page-frame__title">{title}</h1>
+
+            <Title className="page-frame__title">{title}</Title>
             {lead ? <p className="page-frame__lead">{lead}</p> : null}
           </div>
           {showActionsHost ? (

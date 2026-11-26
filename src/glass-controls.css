@@ -1,262 +1,138 @@
-/* Registered controls include body portals; vendor/content exclusions are
-   enforced by LiquidGlassEffects before an element receives these markers. */
-/* Clear convex material: the scene bends behind the surface; ink stays above it. */
-:root { --control-glass-fill: var(--glass-clear-fill); --control-glass-edge: var(--glass-clear-edge); }
-/* Clear glass transmits its scene in either theme. Ink follows known CSS paint,
-   rather than making every dark-mode face an opaque black backing. */
-:is(html:root #root,html:root body) [data-glass-scene='light'] {
-  --glass-ink: #18343e; --text-heading: #18343e; --text-secondary: #485d65;
-  --tabs-ink: #14352e; --tabs-muted-ink: #385953;
+/* Floating layers share one material; content controls retain their solid styles.
+   The three material blocks below keep !important on purpose: LiquidGlassEffects applies the
+   glass by attribute to arbitrary components, and it must win over each component's own
+   background, border and shadow whatever their specificity.
+   Relative colour changes alpha only, so the next palette pass can retint tokens. */
+html:root body .hj-shell:has(> .hj-header[data-glass-surface]),
+html:root body .hj-header[data-glass-surface] > .hj-bar {
+  background: transparent;
 }
-:is(html:root #root,html:root body) [data-glass-scene='dark'] {
-  --glass-ink: #f0f7fa; --text-heading: #f0f7fa; --text-secondary: #d8e5eb;
-  --tabs-ink: #f0fdf9; --tabs-muted-ink: #d1e7df;
-}
-/* Excluding a surface from glass must not erase the authored backgrounds of
-   buttons inside it (for example, the Premium offer and maintenance dialogs). */
-:is(html:root #root,html:root body) :is([data-glass-content], [data-glass-exclude], .food-rail__checkout, .food-rail__locate, .food-qty__btn, .food-rail__clear, .food-rail__remove) {
-  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; filter: none;
-  background-image: none; box-shadow: none;
-}
-:is(html:root #root,html:root body) .food-rail__checkout {
-  background: var(--action-primary, #087a3c) !important;
-  color: #ffffff !important;
-  border: 1px solid var(--action-primary, #087a3c) !important;
-}
-:is(html:root #root,html:root body) .food-rail__locate {
-  background: transparent !important;
-  color: var(--food-accent, #e05822) !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-:is(html:root #root,html:root body) .food-qty__btn {
-  background: var(--surface-elevated, #ffffff) !important;
-  color: var(--text-heading, #1b382b) !important;
-  border: 1px solid var(--control-border, #d2ded7) !important;
-  box-shadow: none !important;
-}
-:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {
+html:root body :is([data-glass-surface],[data-glass-registered-lens]) {
   color: var(--glass-ink);
-  border-radius: var(--control-glass-radius,999px);
-  background-color: var(--control-glass-fill);
-  background-image: var(--glass-clear-sheen);
-  border: 1px solid color-mix(in srgb,var(--control-glass-edge) 65%,var(--glass-border));
-  box-shadow: var(--glass-clear-shadow);
-  -webkit-backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(var(--glass-scene-blur)) saturate(var(--glass-scene-saturation));
-  backdrop-filter: var(--glass-lens-filter,saturate(1)) blur(var(--glass-scene-blur)) saturate(var(--glass-scene-saturation));
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 8px 24px var(--glass-shadow) !important;
+  text-shadow: none;
 }
-/* A reflection may cross the surface, but no optical overlay samples the label. */
-:is(html:root #root,html:root body) [data-glass-position='relative'] { position: relative; }
-:is(html:root #root,html:root body) [data-glass-control][data-glass-face] {
-  isolation: isolate;
+/* The header paints its fill and blur on ::before (further down), so its own box stays clear. */
+html:root body :is([data-glass-surface],[data-glass-registered-lens]):not(.hj-header) {
+  background: var(--surface) !important;
+  background: var(--glass-panel) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+  backdrop-filter: blur(18px) saturate(1.4) !important;
 }
-:is(html:root #root,html:root body) [data-glass-control][data-glass-face]::after {
-  content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit;
-  pointer-events: none; background: transparent; border: 0;
+/* :not(.hj-header) only matches the specificity of the fill rule above, so the lens tint wins. */
+html:root body [data-glass-registered-lens]:not(.hj-header) {
+  background: var(--surface) !important;
+  background: var(--glass-tint) !important;
+  pointer-events: none;
+  -webkit-backdrop-filter: var(--glass-lens-filter, blur(0px)) blur(18px) saturate(1.4) !important;
+  backdrop-filter: var(--glass-lens-filter, blur(0px)) blur(18px) saturate(1.4) !important;
+}
+html:root body :is(.liquid-tabs__lens,.theme-switch__thumb,.liquid-switch__thumb,[data-glass-lens])::before,
+html:root body :is(.liquid-tabs__lens,.theme-switch__thumb,.liquid-switch__thumb,[data-glass-lens])::after {
+  content: none;
+}
+/* A lens inside floating chrome is a solid selection indicator, not another lens. */
+html:root body :is(.liquid-tabs__lens,.theme-switch__thumb,.liquid-switch__thumb,[data-glass-lens]):not([data-glass-registered-lens]) {
+  background: var(--surface) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+html:root body [data-glass-surface] :is(button,[role='button'],[role='menuitem'],input,select,textarea):not([data-glass-surface]):not(:where(.gm-style *,gmp-map *)) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-}
-:is(html:root #root,html:root body) [data-glass-control][data-glass-face]:disabled::after { display: none; }
-/* A moving switch bead is a clear raised lip. The dark side rim and local
-   shading reveal its thickness without a milky white coat over the state. */
-:is(html:root #root,html:root body) [data-glass-profile='bead']:not([data-glass-exclude]) {
-  background: radial-gradient(ellipse at 100% 50%,rgb(25 35 30 / .08),transparent 70%),var(--glass-clear-fill);
-  border: 1px solid rgb(25 45 35 / .22);
-  border-top-color: var(--glass-clear-edge); border-bottom-color: var(--glass-clear-edge);
-  box-shadow: inset .5px 0 0 rgb(15 45 25 / .12),inset -1px 0 1px rgb(255 255 255 / .65),
-    0 2px 4px -1px rgb(20 35 25 / .18);
-}
-html[data-theme='dark'] :is(#root,body) [data-glass-profile='bead']:not([data-glass-exclude]) {
-  background-color: var(--glass-clear-fill); border-inline-color: rgb(220 255 240 / .35);
-}
-@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
-  :is(html:root #root,html:root body) [data-glass-profile='bead']:not([data-glass-exclude]) {
-    background: var(--surface-elevated); border-color: var(--text-primary);
-    box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
-  }
-}
-@media (forced-colors:active) {
-  :is(html:root #root,html:root body) [data-glass-profile='bead']:not([data-glass-exclude]) {
-    background: Highlight; border-color: ButtonText;
-  }
-}
-:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):disabled { box-shadow: none; }
-:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):is(.btn-primary,.hj-post-cta,[type='submit'],.wallet-submit button,.wallet-submit__primary) {
-  background-color: color-mix(in srgb,var(--hj-accent) 18%,var(--control-glass-fill));
-}
-:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):is(.btn-danger,[class*='--danger']) { background-color: var(--glass-danger); }
-:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]):active:not(:disabled) {
-  box-shadow: inset 0 1px 3px var(--glass-shadow),inset 0 1px 0 var(--control-glass-edge),0 1px 2px var(--glass-shadow);
-}
-/* AI keeps its existing spectrum edge; glass sits inside that edge. */
-:is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]).ai-spectrum-button {
-  --ai-spectrum-surface: var(--control-glass-fill);
-  background: var(--ai-spectrum-fill);
-  border-color: transparent;
-}
-/* Native options and dense popover rows need solid, readable text surfaces. */
-:is(html:root #root,html:root body) select[data-glass-control]:not([data-glass-exclude]) option { background: var(--surface-elevated); color: var(--text-primary); }
-/* Search uses one optical shell, with editable ink/icons on an unfiltered plane. */
-:is(html:root #root,html:root body) [data-glass-search][data-glass-control] {
-  --glass-ink: var(--text-heading);
-  position: relative;
-}
-:is(html:root #root,html:root body) [data-glass-search] > input {
-  min-width: 0; background: transparent; border: 0; border-radius: 0;
-  color: var(--text-heading); box-shadow: none; filter: none;
-  -webkit-backdrop-filter: none; backdrop-filter: none;
-}
-:is(html:root #root,html:root body) [data-glass-search] > input::placeholder { color: var(--text-secondary); opacity: 1; }
-:is(html:root #root,html:root body) [data-glass-search] > input:is(:focus,:focus-visible) { outline: none; box-shadow: none; }
-:is(html:root #root,html:root body) [data-glass-search]:focus-within { outline: 2px solid var(--hj-accent); outline-offset: 2px; }
-/* The closed map card must not paint an opaque backing over the map. Its open
-   suggestion panel keeps its existing readable surface and mobile geometry. */
-html:root #root .gmaps-omnibox__card:not(.is-open):has(> [data-glass-search]) {
-  background: transparent; box-shadow: none;
-}
-/* Editing surfaces have a quieter tint than action buttons. Values, selection,
-   password masking and validation remain native browser behavior. */
-:is(html:root #root,html:root body) [data-glass-field][data-glass-control] {
-  box-sizing: border-box;
-  min-height: 44px;
-  padding: 10px 14px;
-  line-height: 1.5;
-  --control-glass-radius: var(--glass-field-radius,14px);
-  --control-glass-fill: color-mix(in srgb,var(--surface-elevated) 88%,transparent);
-  --glass-ink: var(--text-primary);
-}
-:is(html:root #root,html:root body) [data-glass-field]:focus-visible {
-  outline: 2px solid var(--hj-accent); outline-offset: 2px;
-}
-:is(html:root #root,html:root body) [data-glass-field]:is([aria-invalid='true'],:user-invalid) {
-  border-color: #c84436; outline-color: #c84436;
-}
-:is(html:root #root,html:root body) [data-glass-surface][data-glass-control] {
-  --control-glass-radius: var(--glass-surface-radius,20px);
-  --control-glass-fill: color-mix(in srgb,var(--surface-elevated) 90%,transparent);
-  --glass-ink: var(--text-primary);
-  box-shadow: inset 0 1px 1px var(--control-glass-edge),0 12px 28px -12px rgb(12 35 35 / .2);
-}
-/* Only the small native input receives glass, never the surrounding consent or
-   information row. Checked, required, disabled and radio grouping stay native. */
-:root {
-  --glass-check-ink: #fff;
-  --glass-check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-html[data-theme='dark'] {
-  --glass-check-ink: #14343b;
-  --glass-check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='%2314343b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-:is(html:root #root,html:root body) input[data-glass-toggle][data-glass-control] {
-  appearance: none; -webkit-appearance: none; box-sizing: border-box;
-  width: 18px; height: 18px; min-width: 18px; min-height: 18px; padding: 0;
-  --control-glass-radius: 5px; vertical-align: middle; cursor: pointer;
-  border-color: var(--text-secondary);
-}
-:is(html:root #root,html:root body) input[data-glass-toggle][type='radio'] { --control-glass-radius: 50%; }
-:is(html:root #root,html:root body) input[data-glass-toggle][data-glass-control]:checked {
-  --glass-ink: var(--glass-check-ink);
-  background-color: var(--hj-accent); border-color: var(--hj-accent);
-  background-image: var(--glass-check-mark); background-size: 14px 14px;
-  background-position: center; background-repeat: no-repeat;
-}
-:is(html:root #root,html:root body) input[data-glass-toggle][type='radio']:checked {
-  background-image: radial-gradient(circle,var(--glass-check-ink) 0 3px,transparent 3.5px);
-  background-size: auto;
-}
-:is(html:root #root,html:root body) input[data-glass-toggle]:focus-visible { outline: 2px solid var(--hj-accent); outline-offset: 3px; }
-:is(html:root #root,html:root body) input[data-glass-toggle]:disabled { cursor: not-allowed; }
-@media (forced-colors:active) {
-  :is(html:root #root,html:root body) input[data-glass-toggle][data-glass-control] {
-    appearance: auto; -webkit-appearance: auto; background: none; box-shadow: none;
-    accent-color: auto; border: revert;
-  }
-}
-@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
-  :is(html:root #root,html:root body) [data-glass-face]::after { display: none; }
-  :is(html:root #root,html:root body) [data-glass-control]:not([data-glass-exclude]) {
-    background: var(--surface-elevated); -webkit-backdrop-filter: none; backdrop-filter: none;
-    box-shadow: none; border-color: var(--text-secondary);
-  }
-}
-
-/* Dense report filters use an ordinary surface so labels stay undistorted. */
-html:root #root .choice-picker__trigger[data-glass-exclude] {
-  background: var(--surface-elevated);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background-image: none;
   box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  filter: none;
 }
-
-/* The category opener is a clear raised capsule, including its open state. */
-html:root #root .hj-menu-trigger[data-glass-control] {
+html:root body [data-glass-surface] :is(button,[role='menuitem']):hover:not(:disabled):not(:where(.gm-style *,gmp-map *)) {
+  background-color: var(--surface-muted);
+}
+html:root body [data-glass-surface] :is(button,[role='menuitem']):active:not(:disabled):not(:where(.gm-style *,gmp-map *)) {
+  background-color: var(--surface-input);
+}
+html:root body [data-glass-surface] :is(button,a,[role='button'],[role='menuitem']):not(:where(.gm-style *,gmp-map *)) {
+  min-height: 44px;
+}
+html:root body :is([data-glass-surface],button,a,input,select,textarea,[role='slider']):not(:where(.gm-style *,gmp-map *, .natural-rental-search__form textarea, .map-chatbot__form textarea, .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input, [data-glass-search] > input, .explore-search__input, .m-composer__field textarea)):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  html:root body :is([data-glass-surface],[data-glass-registered-lens]) {
+    background: var(--surface) !important;
+    color: var(--text-primary);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html:root body :is([data-glass-surface],[data-glass-registered-lens]) {
+    background: var(--surface) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root body :is([data-glass-surface],[data-glass-registered-lens]) { transition: none; animation: none; }
+}
+@media (forced-colors: active) {
+  html:root body :is([data-glass-surface],[data-glass-registered-lens]) {
+    background: Canvas !important;
+    color: CanvasText;
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+}
+/* A backdrop-filter makes its element the containing block for every position:fixed descendant,
+   which clipped the phone drawer and search to the bar. The header paints its glass on a
+   pseudo-element instead, so fixed layers inside it measure against the viewport again. */
+html:root body .hj-header[data-glass-surface] {
   position: relative;
-  background-color: var(--control-glass-fill);
-  border-color: rgb(210 233 231 / .7);
-  box-shadow: var(--glass-clear-shadow);
-  transition: scale 420ms cubic-bezier(.2,1.5,.35,1), box-shadow 200ms ease;
-}
-html:root #root .hj-menu-trigger[data-glass-control]:is(:hover,.is-open) {
-  background-color: var(--control-glass-fill);
-}
-html:root #root .hj-menu-trigger[data-glass-control]:active {
-  scale: 1.035 1.06;
-}
-@media (prefers-reduced-motion:reduce) {
-  html:root #root .hj-menu-trigger[data-glass-control] { transition: none; }
-  html:root #root .hj-menu-trigger[data-glass-control]:active { scale: 1; }
-}
-@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
-  html:root #root .hj-menu-trigger[data-glass-control] {
-    --control-glass-fill: var(--surface-elevated);
-    box-shadow: none;
-  }
-}
-
-/* Input deepens background refraction; the light stays neutral like clear glass. */
-:is(html:root #root,html:root body) [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(var(--glass-scene-blur)) saturate(var(--glass-scene-saturation));
-  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(var(--glass-scene-blur)) saturate(var(--glass-scene-saturation));
-}
-:is(html:root #root,html:root body) [data-glass-control][data-glass-face][data-glass-interacting] {
-  -webkit-backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(var(--glass-scene-blur)) saturate(var(--glass-scene-saturation));
-  backdrop-filter: var(--glass-lens-active-filter,saturate(1)) blur(var(--glass-scene-blur)) saturate(var(--glass-scene-saturation));
-}
-:is(html:root #root,html:root body) [data-glass-control][data-glass-face][data-glass-interacting]::after {
+  isolation: isolate;
+  background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  background: radial-gradient(ellipse at 24% -15%,rgb(255 255 255 / .06),transparent 60%);
 }
-/* Transaction actions need a stable contrast pair even when the common glass
-   material loads after wallet styles. Their labels never pass through a lens. */
-html:root #root .wallet-workspace .wallet-submit button[data-glass-control]:not([data-glass-exclude]) {
-  --glass-ink: #fff;
-  --control-glass-fill: #175c57;
-  --glass-border: #175c57;
-  background-color: #175c57;
-  color: #fff;
+html:root body .hj-header[data-glass-surface]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface);
+  background: var(--glass-panel);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  pointer-events: none;
 }
-html:root #root .wallet-workspace .wallet-submit button[data-glass-control]:hover:not(:disabled) { background-color: #104741; }
-html:root #root .wallet-workspace .wallet-submit button[data-glass-face]::after {
-  -webkit-backdrop-filter: none; backdrop-filter: none; background: none;
+/* The phone drawer fills the screen: a full-screen sheet reads better solid than frosted. */
+html:root body .hj-mega--drawer[data-glass-surface] {
+  background: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  box-shadow: none;
+  padding-bottom: calc(var(--mobile-tabbar-height, 56px) + var(--safe-bottom) + 16px);
 }
-html:root #root .wallet-workspace .wallet-submit button[data-glass-control] img { filter: brightness(0) invert(1); }
-html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control]:not([data-glass-exclude]) {
-  --glass-ink: #102a30; --control-glass-fill: #80d9db; --glass-border: #80d9db;
-  background-color: #80d9db; color: #102a30;
+
+/* A grouped field owns focus; bare editors never draw a second frame. */
+html:root body :is(#root, .hj-search-sheet, .natural-rental-search__panel, .choice-picker-layer, .map-listings__filter-sheet) :is(.natural-rental-search__form textarea, .map-chatbot__form textarea, .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input, [data-glass-search] > input, .explore-search__input, .m-composer__field textarea):is(:focus, :focus-visible) {
+  outline: none; box-shadow: none;
 }
-html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control]:hover:not(:disabled) { background-color: #a5e7e8; }
-html[data-theme='dark']:root #root .wallet-workspace .wallet-submit button[data-glass-control] img { filter: brightness(0); }
-@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active) {
-  :is(html:root #root,html:root body) [data-glass-control][data-glass-interacting]:not([data-glass-exclude]) {
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-  }
+html:root body :is(#root, .hj-search-sheet, .natural-rental-search__panel, .choice-picker-layer, .map-listings__filter-sheet) :is(
+  .hj-search__field, .natural-rental-search__form, .map-chatbot__form,
+  .map-listings__range-inputs label > div, .choice-picker__search-wrap,
+  .food-search, .wallet-input, .wallet-deposit__amount, .bank-name__control,
+  [data-glass-search], .explore-search, .m-composer__field
+):focus-within {
+  outline: 2px solid var(--focus-ring); outline-offset: 2px; box-shadow: none;
 }
-@media (forced-colors:active) {
-  html:root #root .wallet-workspace .wallet-submit button[data-glass-control]:not([data-glass-exclude]) {
-    background: ButtonFace; color: ButtonText; border-color: ButtonText;
-  }
+html:root body :is(input, textarea, select):not(:where(.natural-rental-search__form textarea, .map-chatbot__form textarea, .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input, [data-glass-search] > input, .explore-search__input, .m-composer__field textarea)):is(:focus, :focus-visible) {
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  html:root body :is(#root, .hj-search-sheet, .natural-rental-search__panel, .choice-picker-layer, .map-listings__filter-sheet) :focus-within { outline-color: Highlight; }
 }

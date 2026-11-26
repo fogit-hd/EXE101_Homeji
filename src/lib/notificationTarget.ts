@@ -1,12 +1,12 @@
 import { NotificationType, type Notification } from '../api'
-import { mapPostUrl, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from './mapDeepLinks'
+import { mapMessagesUrl, mapPostUrl, mapSectionDeepLink, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from './mapDeepLinks'
 
 /** Where “Mở” goes. Matches the notifications page: no target means no button. */
 export function notificationTargetHref(n: Notification): string | null {
   switch (n.type) {
     case NotificationType.NewMessage:
     case NotificationType.DirectMessage:
-      return mapSectionUrl('messages')
+      return mapMessagesUrl(n.relatedEntityId)
     case NotificationType.ViewingAppointmentRequested:
     case NotificationType.ViewingAppointmentUpdated:
       return mapSectionUrl('appointments')
@@ -14,7 +14,10 @@ export function notificationTargetHref(n: Notification): string | null {
     case NotificationType.RoommateInvitationAccepted:
       return ROOMMATE_INVITATIONS_URL
     case NotificationType.MarketplaceOrderUpdated:
-      return mapSectionUrl('marketplace')
+      return mapSectionDeepLink('marketplace', new URLSearchParams({
+        market: 'purchases',
+        ...(n.relatedEntityId ? { purchase: n.relatedEntityId, notificationOrder: n.relatedEntityId } : {}),
+      }))
     case NotificationType.LandlordVerificationUpdated:
       return mapSectionUrl('profile')
     case NotificationType.PostApproved:

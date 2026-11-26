@@ -13,12 +13,18 @@
 }
 
 .type-card.selected {
-  border-color: var(--action-primary, var(--grab-blue));
-  background: var(--action-soft, #f3f6fb);
+  border-color: var(--action-primary);
+  background: var(--action-soft, var(--surface));
 }
 
-.type-card h3 {
+.type-card h3,
+.type-card__title {
+  display: block;
   margin-bottom: 8px;
+  font-family: var(--font-ui);
+  font-size: 1.17em;
+  font-weight: 700;
+  color: var(--text-heading);
 }
 
 .form-row {
@@ -35,7 +41,7 @@
 }
 
 .form-hint {
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   color: var(--text-secondary);
   margin: 0 0 8px;
 }
@@ -76,7 +82,7 @@
 }
 
 .map-coord-hint {
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   color: var(--text-secondary);
   align-self: center;
 }
@@ -84,9 +90,9 @@
 .room-transfer-form {
   margin-bottom: 24px;
   padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--grab-blue, #1a73e8) 28%, var(--border));
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--grab-blue, #1a73e8) 6%, var(--surface-elevated, #fff));
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-lg);
+  background: var(--brand-soft);
 }
 
 .room-transfer-form__notice p {
@@ -111,26 +117,26 @@
 .room-transfer-form__warning {
   margin: 14px 0 0;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, #f9ab00 15%, var(--surface-elevated, #fff));
-  color: var(--text-heading);
-  font-size: 0.86rem;
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--fs-md);
 }
 
 .type-card__state {
   display: block;
   margin-bottom: 12px;
   color: var(--text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
-.type-card.selected .type-card__state { color: var(--action-on-soft, var(--grab-blue)); }
+.type-card.selected .type-card__state { color: var(--action-on-soft); }
 .type-card:disabled { cursor: wait; }
 
 .rental-edit-form .amenity-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.rental-edit-form .amenity-chip { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--text-primary); text-align: left; font: inherit; font-size: 0.875rem; cursor: pointer; }
-.rental-edit-form .amenity-chip.active { border-color: var(--text-accent, #12858b); background: color-mix(in srgb, #12858b 12%, var(--surface-elevated)); color: var(--text-heading); font-weight: 600; }
-.amenity-chip__check { display: grid; place-content: center; width: 20px; height: 20px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 5px; font-size: 1rem; }
-.amenity-chip.active .amenity-chip__check { background: var(--text-accent, #12858b); color: var(--surface-elevated); border-color: transparent; }
-.rental-edit-form .amenity-chip:focus-visible { outline: 3px solid var(--text-accent, #12858b); outline-offset: 3px; }
+.rental-edit-form .amenity-chip { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-elevated); color: var(--text-primary); text-align: left; font: inherit; font-size: var(--fs-md); cursor: pointer; }
+.rental-edit-form .amenity-chip.active { border-color: var(--text-accent, var(--grab-green)); background: var(--brand-soft); color: var(--text-heading); font-weight: 600; }
+.amenity-chip__check { display: grid; place-content: center; width: 20px; height: 20px; flex-shrink: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--fs-lg); }
+.amenity-chip.active .amenity-chip__check { background: var(--text-accent, var(--grab-green)); color: var(--surface-elevated); border-color: transparent; }
+.rental-edit-form .amenity-chip:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 @media (max-width: 420px) { .rental-edit-form .amenity-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

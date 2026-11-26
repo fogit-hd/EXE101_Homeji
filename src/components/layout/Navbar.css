@@ -4,16 +4,17 @@
   z-index: 100;
   height: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
-  background: var(--surface-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(var(--shadow-color), 0.04);
+  box-shadow: var(--shadow-pop);
+  background-color: var(--surface-elevated);
 }
 
 .app-shell--map .navbar {
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 8px 24px rgba(var(--shadow-color), 0.06);
+  box-shadow: var(--shadow-pop);
 }
 
 .navbar-inner {
@@ -27,7 +28,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.375rem;
+  font-size: var(--fs-xl);
   font-weight: 800;
   color: var(--text-heading);
   text-decoration: none;
@@ -49,7 +50,7 @@
   height: 36px;
   border-radius: var(--radius-sm);
   background: var(--grab-green);
-  color: #fff;
+  color: var(--on-brand);
   font-weight: 800;
 }
 
@@ -63,14 +64,14 @@
 
 .navbar-links a {
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   font-weight: 400;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .navbar-links a:hover {
-  color: var(--grab-blue);
+  color: var(--grab-green);
   text-decoration: none;
 }
 
@@ -87,7 +88,7 @@
 }
 
 .navbar-profile {
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text-heading);
   text-decoration: none;
@@ -100,7 +101,7 @@
   margin-left: auto;
   padding: 10px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: transparent;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -112,7 +113,7 @@
   height: 2px;
   margin: 5px 0;
   background: var(--text-heading);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   transition: transform 0.2s, opacity 0.2s;
 }
 
@@ -154,7 +155,7 @@
     inset: 0;
     top: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
     z-index: 99;
-    background: rgba(36, 42, 46, 0.28);
+    background: var(--overlay-scrim);
     animation: drawer-backdrop-in var(--dur-med) var(--ease-out);
   }
 
@@ -185,16 +186,16 @@
   .navbar-drawer__nav a {
     display: block;
     padding: 14px 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     color: var(--text-heading);
-    font-size: 1rem;
+    font-size: var(--fs-lg);
     font-weight: 500;
     text-decoration: none;
     transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
   }
 
   .navbar-drawer__nav a.active {
-    background: rgba(0, 177, 79, 0.1);
+    background: var(--brand-soft);
     color: var(--grab-green);
   }
 
@@ -228,37 +229,37 @@
 .navbar { background: var(--surface-elevated); box-shadow: none; }
 .navbar-inner { max-width: 1320px; width: 100%; padding-inline: 32px; gap: 28px; }
 .navbar-brand__logo { width: 33px; height: 36px; }
-.navbar-brand__word { font-size: 1.375rem; letter-spacing: -.8px; line-height: 1.1; }
-.navbar-brand__word > span { display: block; margin-top: 5px; font-size: 0.75rem; font-weight: 500; letter-spacing: .25px; color: var(--text-secondary); }
+.navbar-brand__word { font-size: var(--fs-xl); letter-spacing: -.8px; line-height: 1.1; }
+.navbar-brand__word > span { display: block; margin-top: 5px; font-size: var(--fs-xs); font-weight: 500; letter-spacing: .25px; color: var(--text-secondary); }
 .navbar-links { align-self: stretch; gap: 5px; overflow: visible; }
-.navbar-links a { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; font-size: 0.8125rem; font-weight: 550; color: var(--text-secondary); }
+.navbar-links a { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; font-size: var(--fs-sm); font-weight: 550; color: var(--text-secondary); }
 .navbar-links a:hover { color: var(--text-heading); background: color-mix(in srgb, var(--text-primary) 3%, transparent); }
 .navbar-links a.active { color: var(--text-heading); text-decoration: none; }
-.navbar-links a.active::after { content: ''; position: absolute; bottom: 0; left: 11px; right: 11px; height: 3px; border-radius: 3px 3px 0 0; background: #138b8b; }
+.navbar-links a.active::after { content: ''; position: absolute; bottom: 0; left: 11px; right: 11px; height: 3px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: var(--grab-green); }
 .navbar-account { position: relative; }
-.navbar-profile { display: flex; align-items: center; gap: 9px; font-size: 0.75rem; cursor: pointer; list-style: none; }
+.navbar-profile { display: flex; align-items: center; gap: 9px; font-size: var(--fs-xs); cursor: pointer; list-style: none; }
 .navbar-profile::-webkit-details-marker { display: none; }
-.navbar-avatar { display: grid; place-content: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: color-mix(in srgb, #178c8b 12%, var(--surface)); color: var(--text-heading); font-size: 0.875rem; text-transform: uppercase; }
+.navbar-avatar { display: grid; place-content: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--brand-soft); color: var(--text-heading); font-size: var(--fs-md); text-transform: uppercase; }
 .navbar-account__name { max-width: 135px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.navbar-account__panel { position: absolute; top: calc(100% + 18px); right: 0; width: 210px; padding: 8px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); box-shadow: 0 12px 36px #0b323b18; }
-.navbar-account__panel > a, .navbar-account__panel > button { display: block; width: 100%; padding: 11px 12px; border: 0; border-radius: 8px; background: transparent; text-align: left; font: inherit; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; text-decoration: none; }
+.navbar-account__panel { position: absolute; top: calc(100% + 18px); right: 0; width: 210px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); box-shadow: var(--shadow-pop); }
+.navbar-account__panel > a, .navbar-account__panel > button { display: block; width: 100%; padding: 11px 12px; border: 0; border-radius: var(--radius-sm); background: transparent; text-align: left; font: inherit; font-size: var(--fs-sm); color: var(--text-primary); cursor: pointer; text-decoration: none; }
 .navbar-account__panel > :hover { background: var(--surface); }
 .navbar-account__panel > a { display: flex; align-items: center; gap: 8px; }
 .navbar-account__panel > a > svg { flex-shrink: 0; }
-.navbar-account__panel > a.active { background: var(--hj-accent-soft); color: var(--text-heading); }
-.navbar-account__panel > button { color: var(--danger, #bc4444); border-top: 1px solid var(--border); border-radius: 0; }
-.navbar :is(a, button, summary):focus-visible { outline: 3px solid #46b6bd; outline-offset: 3px; }
+.navbar-account__panel > a.active { background: var(--brand-soft); color: var(--text-heading); }
+.navbar-account__panel > button { color: var(--error); border-top: 1px solid var(--border); border-radius: 0; }
+.navbar :is(a, button, summary):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 @media (min-width: 769px) and (max-width: 1150px) {
   .navbar-inner { gap: 15px; padding-inline: 20px; }
   .navbar-links { gap: 0; }
-  .navbar-links a { padding-inline: 7px; font-size: 0.75rem; }
+  .navbar-links a { padding-inline: 7px; font-size: var(--fs-xs); }
   .navbar-account__name { display: none; }
-  .navbar-brand__word { font-size: 1.1875rem; }
+  .navbar-brand__word { font-size: var(--fs-xl); }
 }
 @media (max-width: 900px) and (min-width: 769px) { .navbar-brand__word { display: none; } }
 @media (max-width: 768px) {
   .navbar-inner { padding-inline: 20px; }
-  .navbar-brand__word { font-size: 1.25rem; }
+  .navbar-brand__word { font-size: var(--fs-xl); }
 }
 /* Auth pages hide the navbar, so its switch cannot replace the floating one there. */
 body:has(.navbar):not(:has(.app-shell--auth-cinema, .sk-auth--login, .sk-auth--register)) #root .theme-switch--floating { display: none; }

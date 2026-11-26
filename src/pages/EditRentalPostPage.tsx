@@ -111,7 +111,7 @@ export function EditRentalPostPage() {
             if (backup.address && !data.address) setAddress(backup.address)
           }
         }
-      } catch {}
+      } catch { /* storage can be blocked; the draft backup is best effort */ }
     }
   }, [postId])
 
@@ -125,7 +125,7 @@ export function EditRentalPostPage() {
           title, description, price, deposit, area, address, latitude, longitude,
           maxOccupants, availableSlots, amenities, passFee, transferReason, ownerConsentContact,
         }))
-      } catch {}
+      } catch { /* storage can be blocked; the draft backup is best effort */ }
     }, 1200)
     return () => clearTimeout(timer)
   }, [postId, post, title, description, price, deposit, area, address, latitude, longitude, maxOccupants, availableSlots, amenities, passFee, transferReason, ownerConsentContact])
@@ -195,7 +195,7 @@ export function EditRentalPostPage() {
     setSaving(true)
     try {
       await persistDraft()
-      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch {} }
+      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch { /* storage can be blocked; the draft backup is best effort */ } }
       setMessage('Đã lưu tin đăng.')
     } catch (err) {
       setError(getErrorMessage(err, 'Chưa lưu được tin. Vui lòng thử lại.'))
@@ -275,7 +275,7 @@ export function EditRentalPostPage() {
       const saved = await persistDraft()
       if (saved.media.length < 3) throw new Error('Thêm ít nhất 3 ảnh thật trước khi gửi duyệt.')
       await submitRentalPost(postId)
-      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch {} }
+      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch { /* storage can be blocked; the draft backup is best effort */ } }
       setMessage('Tin đăng đã gửi duyệt.')
       navigate(mapSectionUrl('myPosts'))
     } catch (err) {
@@ -375,6 +375,7 @@ export function EditRentalPostPage() {
   return (
     <PageFrame
       title="Chỉnh sửa tin đăng"
+      className="rental-post-page"
       actions={
         <>
           <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void handleSubmit()}>
@@ -615,7 +616,7 @@ export function EditRentalPostPage() {
         </div>
         {post?.media.map((m) => (
           <div key={m.id} className="media-item">
-            <img src={m.path} alt="" width={120} height={80} style={{ objectFit: 'cover', borderRadius: 8 }} />
+            <img loading="lazy" decoding="async" src={m.path} alt="" width={120} height={80} style={{ objectFit: 'cover', borderRadius: 8 }} />
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => void handleDeleteMedia(m.id)}>Xóa</button>
           </div>
         ))}

@@ -20,7 +20,7 @@ export class SellerOrderSound {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') return
     try {
       localStorage.setItem(SellerOrderSound.SILENT_KEY, silent ? 'true' : 'false')
-    } catch {}
+    } catch { /* storage can be blocked; the preference is best effort */ }
   }
 
   static getShared(): SellerOrderSound {
@@ -82,7 +82,7 @@ export class SellerOrderSound {
         oscillator.stop(at + .18)
       }
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate([100, 50, 100]) } catch {}
+        try { navigator.vibrate([100, 50, 100]) } catch { /* vibration is optional and may be refused */ }
       }
       return true
     } catch { this.enabled = false; return false }
@@ -106,7 +106,7 @@ export class SellerOrderSound {
       oscillator.start(start)
       oscillator.stop(start + .06)
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate(30) } catch {}
+        try { navigator.vibrate(30) } catch { /* vibration is optional and may be refused */ }
       }
       return true
     } catch { return false }

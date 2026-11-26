@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { CallTone } from '../lib/callTone'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { VoiceCalls } from './voice-call'
@@ -229,6 +230,6 @@ export function VoiceCallProvider({ children }: { children: ReactNode }) {
         <button type="button" className="voice-call__end" onClick={() => end()}>{call.incoming && call.phase === 'ringing' ? 'Từ chối' : 'Kết thúc'}</button>
       </div>
       {audioBlocked && <button type="button" onClick={() => { void audio.current?.play().then(() => setAudioBlocked(false)).catch(() => setNotice('Trình duyệt chưa cho phép phát âm thanh.')) }}>Bật âm thanh cuộc gọi</button>}
-    </section> : notice ? <div className="voice-call-notice" role="status">{notice}<button type="button" onClick={() => { if (busy) end(); setNotice('') }} aria-label="Đóng thông báo cuộc gọi">✕</button></div> : null}
+    </section> : notice ? <div className="voice-call-notice" role="status">{notice}<button type="button" onClick={() => { if (busy) end(); setNotice('') }} aria-label="Đóng thông báo cuộc gọi"><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button></div> : null}
   </VoiceCalls.Provider>
 }

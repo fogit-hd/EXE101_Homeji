@@ -16,12 +16,12 @@
   gap: 5px;
   min-height: 26px;
   padding: 3px 9px;
-  border: 1px solid var(--border, #dce5eb);
-  border-radius: 999px;
-  background: var(--surface-elevated, #ffffff);
-  color: var(--text-heading, #19323b);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
   font-family: var(--font-ui);
-  font-size: 0.71875rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -31,94 +31,98 @@
 .pay-brand-pill.is-compact {
   min-height: 22px;
   padding: 2px 7px;
-  font-size: 0.6875rem;
+  font-size: var(--fs-xs);
   gap: 4px;
 }
 
+/* brand colour: PayPal */
 .pay-brand-pill.is-paypal {
-  border-color: #cbdcf5;
-  background: #f4f8ff;
+  border-color: var(--info-border);
+  background: var(--info-soft);
   color: #003087;
 }
 
 .pay-brand-pill.is-gpay {
-  border-color: #d7dee6;
-  background: #ffffff;
-  color: #1f2937;
+  border-color: var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
 }
 
 .pay-brand-pill.is-apple {
-  border-color: #181f24;
-  background: #14171a;
-  color: #ffffff;
+  border-color: var(--color-black);
+  background: var(--color-black);
+  color: var(--color-white);
 }
 
+/* brand colour: MoMo */
 .pay-brand-pill.is-momo {
-  border-color: #f1c6e0;
-  background: #fdf2f8;
+  border-color: var(--border);
+  background: var(--surface);
   color: #9e005f;
 }
 
+/* brand colour: MoMo */
 .pay-brand-pill.is-momo b {
   display: grid;
   place-items: center;
   width: 15px;
   height: 15px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: #a50064;
-  color: #ffffff;
-  font-size: 0.625rem;
+  color: var(--color-white);
+  font-size: var(--fs-xs);
   font-weight: 800;
 }
 
 .pay-brand-pill.is-payos {
-  border-color: #c7ddfa;
-  background: #f0f6ff;
-  color: #105bb5;
+  border-color: var(--info-border);
+  background: var(--info-soft);
+  color: var(--info-text);
 }
 
 .pay-brand-pill.is-wallet {
-  border-color: #bfe4dc;
-  background: #edf9f5;
-  color: #0c635c;
+  border-color: var(--border);
+  background: var(--brand-soft);
+  color: var(--grab-green-hover);
 }
 
 html[data-theme='dark'] .pay-brand-pill.is-paypal {
-  border-color: #324f7c;
-  background: #182742;
-  color: #9ec5ff;
+  border-color: var(--info-border);
+  background: var(--info-soft);
+  color: var(--info-text);
 }
 
+/* brand colour: PayPal */
 html[data-theme='dark'] .pay-brand-pill__paypal-accent {
   fill: #4eb2ff;
 }
 
 html[data-theme='dark'] .pay-brand-pill.is-gpay {
-  border-color: #414b56;
-  background: #232a31;
-  color: #f3f6f8;
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-heading);
 }
 
 html[data-theme='dark'] .pay-brand-pill.is-apple {
-  border-color: #e5eaee;
-  background: #f3f6f8;
-  color: #12171b;
+  border-color: var(--color-white);
+  background: var(--text-heading);
+  color: var(--color-black);
 }
 
 html[data-theme='dark'] .pay-brand-pill.is-momo {
-  border-color: #6b2650;
-  background: #35182a;
-  color: #f8a8d8;
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-heading);
 }
 
 html[data-theme='dark'] .pay-brand-pill.is-payos {
-  border-color: #2f5484;
-  background: #182b44;
-  color: #97c4ff;
+  border-color: var(--info-border);
+  background: var(--info-soft);
+  color: var(--info-text);
 }
 
 html[data-theme='dark'] .pay-brand-pill.is-wallet {
-  border-color: #245b52;
-  background: #163631;
-  color: #85e1cf;
+  border-color: var(--border);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }

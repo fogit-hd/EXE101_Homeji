@@ -23,7 +23,7 @@ export function OwnerSocialContacts({ userId }: { userId: string }) {
   if (isLoading) return <p className="social-contact-links__tenure" role="status">Đang kiểm tra đăng nhập…</p>
   if (!isAuthenticated) return <div className="social-contact-links social-contact-links__login-prompt">
     <div className="social-contact-links__actions">
-      {(['facebook', 'zalo'] as const).map(brand => <button key={brand} type="button" className={`social-contact-links__${brand}`} aria-label={`Đăng nhập để xem liên hệ ${brand === 'facebook' ? 'Facebook' : 'Zalo'}`} onClick={() => openAuthModal({ intent: 'contact' })}><ContactBrandIcon brand={brand} />{brand === 'facebook' ? 'Facebook' : 'Zalo'}</button>)}
+      {(['facebook', 'zalo'] as const).map(brand => <button key={brand} type="button" className={`social-contact-links__${brand}`} aria-label={`Đăng nhập để xem liên hệ ${brand === 'facebook' ? 'Facebook' : 'Zalo'}`} title={`Đăng nhập để xem liên hệ ${brand === 'facebook' ? 'Facebook' : 'Zalo'}`} onClick={() => openAuthModal({ intent: 'contact' })}><ContactBrandIcon brand={brand} />{brand === 'facebook' ? 'Facebook' : 'Zalo'}</button>)}
     </div>
   </div>
   return error ? <p className="social-contact-links__tenure" role="status">{error} <button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></p>

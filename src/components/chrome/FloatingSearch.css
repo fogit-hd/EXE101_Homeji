@@ -11,7 +11,7 @@
   padding: var(--space-4);
   border-radius: var(--radius-xl);
   background: var(--surface-elevated);
-  box-shadow: 0 10px 28px rgba(var(--shadow-color), 0.1);
+  box-shadow: none;
   box-sizing: border-box;
 }
 
@@ -36,7 +36,7 @@
   background: var(--grab-green);
   color: var(--surface-elevated);
   font: inherit;
-  font-size: var(--type-body);
+  font-size: var(--fs-md);
   font-weight: 650;
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out);
@@ -47,7 +47,7 @@
 }
 
 .floating-search__submit:focus-visible {
-  outline: 2px solid var(--maps-blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

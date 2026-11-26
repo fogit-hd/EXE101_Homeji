@@ -84,7 +84,7 @@ export function AdminHome({ ws }: { ws: AdminWorkspace }) {
   return <div className="admin-home">
     <header className="admin-home__hero">
       <div>
-        <span className="admin-section-kicker">{new Date(now).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+        
         <h2>Chào {profile?.displayName || 'bạn'}</h2>
         <p role="status">{!queuesReady ? 'Đang tổng hợp việc cần xử lý…' : waitingTotal ? `Có ${waitingTotal.toLocaleString('vi-VN')} việc đang chờ bạn quyết định${aiWaiting ? `, gồm ${aiWaiting.toLocaleString('vi-VN')} tin AI cần người xem lại` : ''}.` : 'Không còn việc nào đang chờ. Hàng chờ đã được xử lý hết.'}</p>
       </div>

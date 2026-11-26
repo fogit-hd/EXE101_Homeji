@@ -137,17 +137,14 @@ export function ChatbotComposer({
                     ) : null}
                   </div>
                 </details>
-                <span className="homeji-assistant__footer-sep" aria-hidden="true">·</span>
                 <p className="homeji-assistant__disclaimer">
-                  Bot AI có thể chưa hoàn toàn chính xác · Liên hệ{' '}
-                  <a href="mailto:duongduy12314@gmail.com">duongduy12314@gmail.com</a>
+                  <span>Bot AI có thể chưa hoàn toàn chính xác.</span>
                   {config?.recaptchaSiteKey ? (
-                    <>
-                      {' · '}reCAPTCHA:{' '}
+                    <span>
                       <a href="https://policies.google.com/privacy?hl=vi" target="_blank" rel="noreferrer">Quyền riêng tư</a>
-                      {' · '}
-                      <a href="https://policies.google.com/terms?hl=vi" target="_blank" rel="noreferrer">Điều khoản</a>
-                    </>
+                      {' và '}
+                      <a href="https://policies.google.com/terms?hl=vi" target="_blank" rel="noreferrer">Điều khoản sử dụng</a>
+                    </span>
                   ) : null}
                 </p>
               </div>

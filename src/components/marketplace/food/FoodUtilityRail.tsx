@@ -25,7 +25,6 @@ export type NearbyKitchen = {
 }
 
 type Props = {
-  kitchens: NearbyKitchen[]
   cartItems: FoodCartLine[]
   cartItemCount: number
   cartTotal: number
@@ -43,19 +42,11 @@ type Props = {
   onRemoveCartItem: (postId: string) => void
   onClearCart: () => void
   onCheckout: () => void
-  onSelectKitchen?: (sellerId: string) => void
   compact?: boolean
   loading?: boolean
 }
 
-function formatKitchenDistance(distanceKm: number | null): string {
-  if (distanceKm == null) return '—'
-  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m`
-  return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(distanceKm)} km`
-}
-
 export function FoodUtilityRail({
-  kitchens,
   cartItems,
   cartItemCount,
   cartTotal,
@@ -73,12 +64,10 @@ export function FoodUtilityRail({
   onRemoveCartItem,
   onClearCart,
   onCheckout,
-  onSelectKitchen,
   compact = false,
   loading = false,
 }: Props) {
   const locationTitleId = useId()
-  const kitchensTitleId = useId()
   const cartTitleId = useId()
   const canCheckout =
     !cartBusy && cartItems.length > 0 && cartTotal >= minimumCartTotal
@@ -121,51 +110,6 @@ export function FoodUtilityRail({
         </div>
       </section>
 
-      <section className="food-rail__kitchens liquid-surface" aria-labelledby={kitchensTitleId}>
-        <div className="food-rail__kitchens-head">
-          <h3 id={kitchensTitleId}>Quán trong danh sách</h3>
-          <span>{loading ? <Sk w={44} h={10} /> : `${kitchens.length} bếp`}</span>
-        </div>
-        <ul className="food-rail__kitchen-list" aria-busy={loading || undefined}>
-          {loading && kitchens.length === 0 ? Array.from({ length: 3 }, (_, i) => (
-            <li key={`sk-${i}`} className="food-rail__kitchen-row food-rail__kitchen-row--skeleton" aria-hidden="true">
-              <Sk w={32} h={32} r={999} />
-              <span className="food-rail__kitchen-info"><Sk w="70%" h={12} /><Sk w="50%" h={9} /></span>
-              <Sk w={34} h={10} />
-            </li>
-          )) : null}
-          {kitchens.slice(0, 4).map((kitchen) => (
-            <li key={kitchen.sellerId}>
-              <button
-                type="button"
-                className="food-rail__kitchen-row"
-                data-glass-exclude=""
-                onClick={() => onSelectKitchen?.(kitchen.sellerId)}
-              >
-                <span className="food-rail__kitchen-avatar" aria-hidden="true">
-                  {kitchen.sellerName.slice(0, 1).toUpperCase()}
-                </span>
-                <span className="food-rail__kitchen-info">
-                  <strong>{kitchen.sellerName}</strong>
-                  <small>
-                    {kitchen.categoryHint || 'Cơm nhà'}
-                    {kitchen.preparationMinutes
-                      ? ` · từ ${kitchen.preparationMinutes} phút`
-                      : ''}
-                  </small>
-                </span>
-                <span className="food-rail__kitchen-dist">
-                  {formatKitchenDistance(kitchen.distanceKm)}
-                </span>
-              </button>
-            </li>
-          ))}
-          {!loading && kitchens.length === 0 ? (
-            <li className="food-rail__empty-kitchens">Chưa có bếp gần bạn.</li>
-          ) : null}
-        </ul>
-      </section>
-
       <section className="food-rail__cart liquid-surface" aria-labelledby={cartTitleId}>
         <header className="food-rail__cart-head">
           <div className="food-rail__cart-title">
@@ -206,7 +150,7 @@ export function FoodUtilityRail({
             {cartItems.map((item) => (
               <li key={item.postId} className="food-rail__cart-item">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt="" className="food-rail__cart-thumb" />
+                  <img loading="lazy" decoding="async" src={item.imageUrl} alt="" className="food-rail__cart-thumb" />
                 ) : (
                   <span className="food-rail__cart-thumb food-rail__cart-thumb--empty" aria-hidden="true">
                     H
@@ -222,7 +166,7 @@ export function FoodUtilityRail({
                       type="button"
                       className="food-rail__remove"
                       data-glass-exclude=""
-                      aria-label={`Xóa ${item.title}`}
+                      aria-label={`Xóa ${item.title}`} title={`Xóa ${item.title}`}
                       disabled={cartBusy}
                       onClick={() => onRemoveCartItem(item.postId)}
                     >
