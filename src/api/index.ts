@@ -5,6 +5,7 @@ import type { ChatbotAttachment } from '../lib/chatbotMedia'
 import { chatbotRecaptchaHeaders, requestChatbotCaptcha, type ChatbotAction } from '../lib/chatbotRecaptcha'
 import { trackFunnelEvent, trackVerifiedMarketplacePurchase, trackVerifiedPremiumPurchase } from '../lib/ga4'
 import { AI_REQUEST_TIMEOUT_MS, ApiRequestError, apiDownload, apiRequest, apiUpload, mayHaveSession } from './client'
+import { NotificationType } from './types'
 import type {
   AccountMessage,
   AdminActiveUser,
@@ -483,13 +484,54 @@ export const createPremiumPayOsPayment = (packageCode: string, expectedAmount?: 
   })
 
 // Notifications
-export const getNotifications = async (unreadOnly = false) => {
+export const getNotifications = async (unreadOnly = false, signal?: AbortSignal) => {
   const serverNotifications = await apiRequest<Notification[]>('/api/notifications', {
-    params: { unreadOnly },
+    params: { unreadOnly }, signal,
   })
   return [...serverNotifications].sort(
     (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
   )
+}
+
+type NotificationCursor = { createdAt: string; id: string }
+type NotificationUnreadCounts = { messages: number; other: number }
+type NotificationPage = {
+  items: Notification[]
+  nextCursor: NotificationCursor | null
+  unreadCounts: NotificationUnreadCounts
+}
+
+function countUnreadNotifications(items: Notification[]): NotificationUnreadCounts {
+  const counts = { messages: 0, other: 0 }
+  for (const item of items) {
+    if (item.isRead) continue
+    if (item.type === NotificationType.NewMessage || item.type === NotificationType.DirectMessage) counts.messages += 1
+    else counts.other += 1
+  }
+  return counts
+}
+
+export async function getNotificationPage(unreadOnly: boolean, before?: NotificationCursor, signal?: AbortSignal) {
+  try {
+    return await apiRequest<NotificationPage>('/api/notifications/page', {
+      params: { unreadOnly, beforeCreatedAt: before?.createdAt, beforeId: before?.id }, signal,
+    })
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || error.status !== 404 || before) throw error
+    // A Web rollback or rolling API deploy may briefly expose the earlier list contract.
+    const items = await getNotifications(unreadOnly, signal)
+    const unread = unreadOnly ? items : await getNotifications(true, signal)
+    return { items, nextCursor: null, unreadCounts: countUnreadNotifications(unread) }
+  }
+}
+
+export async function getNotificationUnreadCounts(signal?: AbortSignal) {
+  try {
+    return await apiRequest<NotificationUnreadCounts>('/api/notifications/unread-counts', { signal })
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || error.status !== 404) throw error
+    return countUnreadNotifications(await getNotifications(true, signal))
+  }
 }
 
 export const markNotificationRead = (notificationId: string) => {

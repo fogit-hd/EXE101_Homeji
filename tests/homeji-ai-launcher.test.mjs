@@ -5,8 +5,8 @@ import { toggleHomejiAi, onHomejiAiToggle, publishHomejiAiOpen } from '../src/li
 
 test('first click survives lazy chat loading and is delivered once', () => {
   const dom = new JSDOM('<button>AI</button>')
-  const previous = { window: globalThis.window, CustomEvent: globalThis.CustomEvent }
-  globalThis.window = dom.window; globalThis.CustomEvent = dom.window.CustomEvent
+  const previous = { window: globalThis.window, CustomEvent: globalThis.CustomEvent, Event: globalThis.Event }
+  Object.assign(globalThis, { window: dom.window, CustomEvent: dom.window.CustomEvent, Event: dom.window.Event })
   try {
     publishHomejiAiOpen(false)
     toggleHomejiAi(dom.window.document.querySelector('button'), true)
@@ -23,8 +23,8 @@ test('first click survives lazy chat loading and is delivered once', () => {
 
 test('rapid pre-load toggles retain the latest open/close intent', () => {
   const dom = new JSDOM('')
-  const previous = { window: globalThis.window, CustomEvent: globalThis.CustomEvent }
-  globalThis.window = dom.window; globalThis.CustomEvent = dom.window.CustomEvent
+  const previous = { window: globalThis.window, CustomEvent: globalThis.CustomEvent, Event: globalThis.Event }
+  Object.assign(globalThis, { window: dom.window, CustomEvent: dom.window.CustomEvent, Event: dom.window.Event })
   try {
     publishHomejiAiOpen(false)
     toggleHomejiAi(null); toggleHomejiAi(null)

@@ -147,6 +147,9 @@ test('AuthenticatedHub fetches 6 rooms + 4 market items, renders 2-column main b
       '../../contexts/AuthContext': authOverride,
       // The shortlist toggle reads Vite env flags; its own behaviour is tested elsewhere.
       '../ai/RentalConsiderationToggle': 'data:text/javascript;base64,' + Buffer.from('export const RentalConsiderationToggle = () => null').toString('base64'),
+      '../../hooks/useConversationInbox': 'data:text/javascript,' + encodeURIComponent(
+        'export const useConversationInbox = () => ({ conversations: [], error: null, refresh: () => {} })',
+      ),
     })
   )
 

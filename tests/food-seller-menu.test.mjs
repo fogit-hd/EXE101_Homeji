@@ -10,13 +10,15 @@ const { FoodMarketplaceView } = await import(reactDomModule('src/components/mark
   './FoodUtilityRail': emptyComponent,
 }))
 
-// Motion checks DOM classes on globalThis; JSDOM only puts them on its window.
 const DOM_CLASSES = ['Element', 'HTMLElement', 'SVGElement', 'Node', 'MutationObserver']
 
 test('seller menus contain separate dishes and retain each dish purchase and map actions', async () => {
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost' })
-  const previous = new Map(['window', 'document', 'IS_REACT_ACT_ENVIRONMENT', ...DOM_CLASSES].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
-  Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true }, Object.fromEntries(DOM_CLASSES.map(key => [key, dom.window[key]])))
+  const domKeys = ['Element', 'HTMLElement', 'SVGElement', 'Node', 'MutationObserver']
+  const previous = new Map(['window', 'document', 'IS_REACT_ACT_ENVIRONMENT', ...domKeys]
+    .map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
+  Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true })
+  for (const key of domKeys) globalThis[key] = dom.window[key]
   const { createRoot } = await import('react-dom/client')
   const root = createRoot(document.getElementById('root'))
   const posts = [

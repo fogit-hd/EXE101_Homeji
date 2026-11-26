@@ -1,7 +1,7 @@
 import './pages.css'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  getNotifications,
+  getNotificationPage,
   markAllNotificationsRead,
   markNotificationRead,
   type Notification,
@@ -43,17 +43,81 @@ export function NotificationsPage({
 }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadOnly, setUnreadOnly] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [cursor, setCursor] = useState<Awaited<ReturnType<typeof getNotificationPage>>['nextCursor']>(null)
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false)
+  const firstRequest = useRef<AbortController | null>(null)
+  const olderRequest = useRef<AbortController | null>(null)
   const [readBusy, setReadBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
   const readLock = useRef(false)
   // Read state is monotonic: an older list response cannot resurrect a read item.
   const readIds = useRef(new Set<string>())
 
+  const reconcileRead = useCallback((item: Notification) =>
+    readIds.current.has(item.id) ? { ...item, isRead: true } : item, [])
+
+  const cancelOlder = useCallback(() => {
+    olderRequest.current?.abort()
+    olderRequest.current = null
+    setIsLoadingOlder(false)
+  }, [])
+
+  useEffect(() => () => {
+    firstRequest.current?.abort()
+    olderRequest.current?.abort()
+  }, [])
+
   const loadFn = useCallback(async () => {
-    const loaded = await getNotifications(unreadOnly)
-    setNotifications(loaded.map(notification => readIds.current.has(notification.id)
-      ? { ...notification, isRead: true } : notification))
-  }, [unreadOnly])
+    firstRequest.current?.abort()
+    cancelOlder()
+    const controller = new AbortController()
+    firstRequest.current = controller
+    try {
+      const loaded = await getNotificationPage(unreadOnly, undefined, controller.signal)
+      if (controller.signal.aborted) return
+      setNotifications(loaded.items.map(reconcileRead))
+      setUnreadCount(loaded.unreadCounts.messages + loaded.unreadCounts.other)
+      setCursor(loaded.nextCursor)
+    } catch (error) {
+      if (!controller.signal.aborted) throw error
+    }
+  }, [cancelOlder, reconcileRead, unreadOnly])
+
+  const changeFilter = (nextUnreadOnly: boolean) => {
+    if (nextUnreadOnly === unreadOnly) return
+    firstRequest.current?.abort()
+    cancelOlder()
+    setCursor(null)
+    setActionError('')
+    setUnreadOnly(nextUnreadOnly)
+  }
+
+  const loadOlder = async () => {
+    if (!cursor || olderRequest.current) return
+    const controller = new AbortController()
+    olderRequest.current = controller
+    setIsLoadingOlder(true)
+    setActionError('')
+    try {
+      const loaded = await getNotificationPage(unreadOnly, cursor, controller.signal)
+      if (controller.signal.aborted) return
+      setNotifications(current => {
+        const loadedIds = new Set(current.map(item => item.id))
+        return current.concat(loaded.items.filter(item => !loadedIds.has(item.id)).map(reconcileRead))
+      })
+      setCursor(loaded.nextCursor)
+    } catch (reason) {
+      if (!controller.signal.aborted) {
+        setActionError(getErrorMessage(reason, 'Không tải được thông báo cũ hơn. Vui lòng thử lại.'))
+      }
+    } finally {
+      if (olderRequest.current === controller) {
+        olderRequest.current = null
+        setIsLoadingOlder(false)
+      }
+    }
+  }
 
   const { showLoader, onIntroComplete, error, disrupted, reload } = usePersistentLoad(
     loadFn,
@@ -71,6 +135,7 @@ export function NotificationsPage({
       const updated = await markNotificationRead(id)
       readIds.current.add(id)
       setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)))
+      setUnreadCount(count => Math.max(0, count - 1))
       onReadStateChange?.({ kind: 'one', notification: before })
     } catch (reason) {
       setActionError(getErrorMessage(reason, 'Không đánh dấu được thông báo. Vui lòng thử lại.'))
@@ -87,6 +152,9 @@ export function NotificationsPage({
     setActionError('')
     try {
       await markAllNotificationsRead()
+      firstRequest.current?.abort()
+      cancelOlder()
+      setUnreadCount(0)
       notifications.forEach(notification => readIds.current.add(notification.id))
       setNotifications(prev => prev.map(notification => readIds.current.has(notification.id)
         ? { ...notification, isRead: true } : notification))
@@ -102,8 +170,6 @@ export function NotificationsPage({
 
   const popup = surface === 'popup'
   const visibleNotifications = unreadOnly ? notifications.filter(notification => !notification.isRead) : notifications
-
-  const unreadCount = notifications.filter(notification => !notification.isRead).length
 
   const markAllAction = (
     <button
@@ -129,7 +195,7 @@ export function NotificationsPage({
         role="tab"
         aria-selected={!unreadOnly}
         className={popup ? (!unreadOnly ? 'is-active' : '') : `tab ${!unreadOnly ? 'active' : ''}`}
-        onClick={() => setUnreadOnly(false)}
+        onClick={() => changeFilter(false)}
       >
         Tất cả
       </button>
@@ -138,7 +204,7 @@ export function NotificationsPage({
         role="tab"
         aria-selected={unreadOnly}
         className={popup ? (unreadOnly ? 'is-active' : '') : `tab ${unreadOnly ? 'active' : ''}`}
-        onClick={() => setUnreadOnly(true)}
+        onClick={() => changeFilter(true)}
       >
         Chưa đọc
         {popup && unreadCount > 0 ? <span className="hj-notify__tab-count">{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
@@ -221,6 +287,12 @@ export function NotificationsPage({
           })}
         </div>
       )}
+      {!showLoader && cursor ? (
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => void loadOlder()}
+          disabled={isLoadingOlder || readBusy === 'all'}>
+          {isLoadingOlder ? 'Đang tải…' : 'Xem thông báo cũ hơn'}
+        </button>
+      ) : null}
     </>
   )
 

@@ -32,7 +32,7 @@ import { formatPrice, formatCompactRent, formatListingArea } from '../../lib/lab
 import { mapMessagesUrl, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
 import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
 import { isUsefulSearchQuery } from '../../lib/searchQuery'
-import { exploreListUrl } from '../chrome'
+import { exploreListUrl } from '../chrome/exploreMode'
 import { shortListingAddress } from '../MapListingCard.logic'
 import { RentalConsiderationToggle } from '../ai/RentalConsiderationToggle'
 import { PremiumBadge } from '../PremiumBadge'

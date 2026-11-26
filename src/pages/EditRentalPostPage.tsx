@@ -111,7 +111,7 @@ export function EditRentalPostPage() {
             if (backup.address && !data.address) setAddress(backup.address)
           }
         }
-      } catch { /* storage can be blocked; the draft backup is best effort */ }
+      } catch { /* Local draft backup is optional. */ }
     }
   }, [postId])
 
@@ -125,7 +125,7 @@ export function EditRentalPostPage() {
           title, description, price, deposit, area, address, latitude, longitude,
           maxOccupants, availableSlots, amenities, passFee, transferReason, ownerConsentContact,
         }))
-      } catch { /* storage can be blocked; the draft backup is best effort */ }
+      } catch { /* Local draft backup is optional. */ }
     }, 1200)
     return () => clearTimeout(timer)
   }, [postId, post, title, description, price, deposit, area, address, latitude, longitude, maxOccupants, availableSlots, amenities, passFee, transferReason, ownerConsentContact])
@@ -195,7 +195,7 @@ export function EditRentalPostPage() {
     setSaving(true)
     try {
       await persistDraft()
-      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch { /* storage can be blocked; the draft backup is best effort */ } }
+      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch { /* Local draft backup is optional. */ } }
       setMessage('Đã lưu tin đăng.')
     } catch (err) {
       setError(getErrorMessage(err, 'Chưa lưu được tin. Vui lòng thử lại.'))
@@ -275,7 +275,7 @@ export function EditRentalPostPage() {
       const saved = await persistDraft()
       if (saved.media.length < 3) throw new Error('Thêm ít nhất 3 ảnh thật trước khi gửi duyệt.')
       await submitRentalPost(postId)
-      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch { /* storage can be blocked; the draft backup is best effort */ } }
+      if (typeof localStorage !== 'undefined') { try { localStorage.removeItem(`homeji_draft_backup_${postId}`) } catch { /* Local draft backup is optional. */ } }
       setMessage('Tin đăng đã gửi duyệt.')
       navigate(mapSectionUrl('myPosts'))
     } catch (err) {

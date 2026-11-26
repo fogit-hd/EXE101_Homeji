@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 import {
   NotificationType,
   UserRole,
-  getNotifications,
+  getNotificationUnreadCounts,
   getRentalPost,
   getSavedPosts,
   savePost,
@@ -264,28 +264,17 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
       setUnreadNotificationCount(0)
       return
     }
-    let cancelled = false
-    void getNotifications(true)
-      .then((list) => {
-        if (cancelled) return
-        let messageUnread = 0
-        let otherUnread = 0
-        for (const n of list) {
-          if (n.isRead) continue
-          const isMessage =
-            n.type === NotificationType.NewMessage || n.type === NotificationType.DirectMessage
-          if (isMessage) messageUnread += 1
-          else otherUnread += 1
-        }
-        setUnreadBadge(messageUnread)
-        setUnreadNotificationCount(messageUnread + otherUnread)
+    const controller = new AbortController()
+    void getNotificationUnreadCounts(controller.signal)
+      .then(({ messages, other }) => {
+        if (controller.signal.aborted) return
+        setUnreadBadge(messages)
+        setUnreadNotificationCount(messages + other)
       })
       .catch(() => {
-        /* keep realtime counter */
+        /* Keep the live counters if the network is unavailable. */
       })
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
   }, [isAuthenticated, notificationRefreshKey, conversationReadVersion])
 
   const dismissHomie = useCallback(() => {

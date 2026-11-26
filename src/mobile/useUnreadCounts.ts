@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getNotifications, NotificationType, type Notification } from '../api'
+import { getNotificationUnreadCounts, NotificationType, type Notification } from '../api'
 import { useNotificationHub } from '../hooks/useNotificationHub'
 import { CONVERSATION_READ } from '../lib/conversationRealtime'
 import type { NotificationReadChange } from '../pages/NotificationsPage'
@@ -38,22 +38,15 @@ export function useUnreadCounts(enabled: boolean, routeKey: string) {
 
   useEffect(() => {
     if (!enabled) return
-    let cancelled = false
-    void getNotifications(true)
-      .then((list) => {
-        if (cancelled) return
-        let messages = 0
-        let other = 0
-        for (const item of list) {
-          if (item.isRead) continue
-          if (isMessage(item)) messages += 1
-          else other += 1
-        }
+    const controller = new AbortController()
+    void getNotificationUnreadCounts(controller.signal)
+      .then(({ messages, other }) => {
+        if (controller.signal.aborted) return
         setUnreadMessages(messages)
         setUnreadNotifications(other)
       })
-      .catch(() => { /* keep the live counters */ })
-    return () => { cancelled = true }
+      .catch(() => { /* Keep the live counters if the network is unavailable. */ })
+    return () => controller.abort()
   }, [enabled, refreshKey, routeKey, conversationReadVersion])
 
   const applyReadChange = useCallback((change: NotificationReadChange) => {

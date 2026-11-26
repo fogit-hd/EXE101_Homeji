@@ -14,7 +14,7 @@ export const useListingSearchParams = () => [f().params, f().noop];
 export const useChatbotSurface = () => {};
 export const useNotificationHub = () => {};
 export const getRentalPost = (id, options) => new Promise(resolve => f().requests.push({ id, options, resolve }));
-export const getNotifications = async () => [];
+export const getNotificationUnreadCounts = async () => ({ messages: 0, other: 0 });
 export const getSavedPosts = async () => [];
 export const searchMarketplacePosts = async () => [];
 export const savePost = async () => {};

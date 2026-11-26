@@ -451,12 +451,6 @@ export function MarketplacePage({
   const [fulfillmentMode, setFulfillmentMode] = useState<'pickup' | 'delivery'>('pickup')
   const [recipientName, setRecipientName] = useState('')
   const [recipientPhone, setRecipientPhone] = useState('')
-  // Prefill the recipient from the profile when checkout opens, without overwriting what was typed.
-  const openCheckoutConfirmation = () => {
-    if (!recipientName && profile?.displayName) setRecipientName(profile.displayName)
-    if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
-    setCheckoutConfirmationOpen(true)
-  }
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [orderGroupBusy, setOrderGroupBusy] = useState('')
   const [inventoryBusy, setInventoryBusy] = useState(false)
@@ -1982,7 +1976,12 @@ export function MarketplacePage({
             setCartItems((current) => current.filter((item) => item.postId !== postId))
           }}
           onClearCart={() => setCartItems([])}
-          onCheckout={() => { setFoodVoucher(null); openCheckoutConfirmation() }}
+          onCheckout={() => {
+            setFoodVoucher(null)
+            setRecipientName(current => current || profile?.displayName || '')
+            setRecipientPhone(current => current || profile?.phone || '')
+            setCheckoutConfirmationOpen(true)
+          }}
           onCartNoteChange={setCartNote}
           onCartOpenChange={setCartOpen}
           onSelectKitchen={(sellerId) => navigate(marketplaceStoreUrl(sellerId, true))}
@@ -2071,14 +2070,14 @@ export function MarketplacePage({
       ) : tab === 'sell' ? (
         listingType === MarketplaceListingType.Food ? (
           <MarketplaceSellFoodForm
-            key={editingPostId ?? 'create'}
+            key={editingPostId ?? 'new-food'}
             editingPostId={editingPostId}
             initialValues={{
               title,
               description,
               price: Number(price) || undefined,
               category: sellCategory,
-              availableQuantity: Number(availableQuantity) || undefined,
+              availableQuantity: availableQuantity === '' ? undefined : Number(availableQuantity),
               unit,
               preparationMinutes: Number(preparationMinutes) || undefined,
               estimatedCost: foodEstimatedCost,

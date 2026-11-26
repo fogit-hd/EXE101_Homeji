@@ -63,22 +63,23 @@ export const MarketplaceSellFoodForm: React.FC<MarketplaceSellFoodFormProps> = (
   actionError,
   onSubmit,
 }) => {
-  const [title, setTitle] = useState(initialValues?.title ?? '')
-  const [description, setDescription] = useState(initialValues?.description ?? '')
-  const [price, setPrice] = useState<number>(initialValues?.price ?? 30000)
+  const [title, setTitle] = useState(initialValues?.title || '')
+  const [description, setDescription] = useState(initialValues?.description || '')
+  const [price, setPrice] = useState<number>(initialValues?.price || 30000)
   const [estimatedCost, setEstimatedCost] = useState<number>(initialValues?.estimatedCost ?? 15000)
-  const [category, setCategory] = useState(initialValues?.category ?? 'Cơm nhà')
-  const [unit, setUnit] = useState(initialValues?.unit ?? 'suất')
-  const [preparationMinutes, setPreparationMinutes] = useState<number>(initialValues?.preparationMinutes ?? 20)
-  const [dailyQuota, setDailyQuota] = useState<number>(initialValues?.dailyQuota ?? 20)
+  const [category, setCategory] = useState(initialValues?.category || 'Cơm nhà')
+  const [unit, setUnit] = useState(initialValues?.unit || 'suất')
+  const [preparationMinutes, setPreparationMinutes] = useState<number>(initialValues?.preparationMinutes || 20)
+  const [dailyQuota, setDailyQuota] = useState<number>(initialValues?.dailyQuota || 20)
   const [availableQuantity, setAvailableQuantity] = useState<number>(initialValues?.availableQuantity ?? 20)
-  const [freshnessBadge, setFreshnessBadge] = useState(initialValues?.freshnessBadge ?? 'CookToOrder')
-  const [allergenAlerts, setAllergenAlerts] = useState(initialValues?.allergenAlerts ?? 'Không cay')
+  const [freshnessBadge, setFreshnessBadge] = useState(initialValues?.freshnessBadge || 'CookToOrder')
+  const [allergenAlerts, setAllergenAlerts] = useState(initialValues?.allergenAlerts || 'Không cay')
   const [isSamplePhoto, setIsSamplePhoto] = useState<boolean>(initialValues?.isSamplePhoto ?? false)
   const [mediaUrls, setMediaUrls] = useState<string[]>(initialValues?.mediaUrls || [])
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const [previewUrl, setPreviewUrl] = useState<string>(initialValues?.mediaUrls?.[0] || '')
   const [formError, setFormError] = useState('')
+
 
   const applyPreset = (preset: FoodPreset) => {
     setTitle(preset.title)
