@@ -24,7 +24,7 @@ export const KitchenOrderBoard: React.FC<KitchenOrderBoardProps> = ({
     return saved !== null ? saved === 'true' : true
   })
   const [isDormSilent, setIsDormSilent] = useState<boolean>(() => SellerOrderSound.isDormSilent)
-  const [now, setNow] = useState<number>(Date.now())
+  const [now, setNow] = useState<number>(() => Date.now())
   const soundRef = useRef<SellerOrderSound | null>(null)
 
   useEffect(() => {

@@ -431,12 +431,6 @@ export function MarketplacePage({
     dialog.showModal()
     return () => dialog.close()
   }, [checkoutConfirmationOpen, tab])
-  useEffect(() => {
-    if (checkoutConfirmationOpen) {
-      if (!recipientName && profile?.displayName) setRecipientName(profile.displayName)
-      if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
-    }
-  }, [checkoutConfirmationOpen, profile])
   const cartTotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cartItems],
@@ -1838,7 +1832,12 @@ export function MarketplacePage({
             setCartItems((current) => current.filter((item) => item.postId !== postId))
           }}
           onClearCart={() => setCartItems([])}
-          onCheckout={() => { setFoodVoucher(null); setCheckoutConfirmationOpen(true) }}
+          onCheckout={() => {
+            setFoodVoucher(null)
+            setRecipientName(current => current || profile?.displayName || '')
+            setRecipientPhone(current => current || profile?.phone || '')
+            setCheckoutConfirmationOpen(true)
+          }}
           onCartNoteChange={setCartNote}
           onCartOpenChange={setCartOpen}
           onSelectKitchen={(sellerId) => navigate(marketplaceStoreUrl(sellerId, true))}
@@ -1927,13 +1926,14 @@ export function MarketplacePage({
       ) : tab === 'sell' ? (
         listingType === MarketplaceListingType.Food ? (
           <MarketplaceSellFoodForm
+            key={editingPostId ?? 'new-food'}
             editingPostId={editingPostId}
             initialValues={{
               title,
               description,
               price: Number(price) || undefined,
               category: sellCategory,
-              availableQuantity: Number(availableQuantity) || undefined,
+              availableQuantity: availableQuantity === '' ? undefined : Number(availableQuantity),
               unit,
               preparationMinutes: Number(preparationMinutes) || undefined,
               estimatedCost: foodEstimatedCost,

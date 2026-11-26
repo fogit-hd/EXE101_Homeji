@@ -115,13 +115,6 @@ export function FoodMarketplaceView({
   onCartOpenChange,
   onSelectKitchen,
 }: Props) {
-  if (typeof window !== 'undefined') {
-    const g = globalThis as unknown as Record<string, unknown>
-    const w = window as unknown as Record<string, unknown>
-    for (const k of ['Element', 'HTMLElement', 'SVGElement', 'Node', 'MutationObserver']) {
-      if (typeof g[k] === 'undefined' && w[k]) g[k] = w[k]
-    }
-  }
   const cartDialogRef = useRef<HTMLDialogElement>(null)
   // Dot cards: the hovered card lights the dots under the pointer.
   const dotSpotRef = useCallback((node: HTMLDivElement | null) => node ? attachPointerSpot(node, '.food-card') : undefined, [])

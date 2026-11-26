@@ -7,7 +7,7 @@ import { useMotionPresence } from '../motion/useMotionPresence'
 import { Suspense, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { NotificationsSkeleton } from '../skeletons/PageSkeletons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { getNotifications, NotificationType, UserRole, type Notification } from '../../api'
+import { getNotificationUnreadCounts, NotificationType, UserRole, type Notification } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotificationHub } from '../../hooks/useNotificationHub'
 import { mapSectionUrl } from '../../lib/mapDeepLinks'
@@ -258,28 +258,17 @@ export function GlobalHeader() {
 
   useEffect(() => {
     if (!isAuthenticated) return
-    let cancelled = false
-    void getNotifications(true)
-      .then((list) => {
-        if (cancelled) return
-        let messages = 0
-        let other = 0
-        for (const item of list) {
-          if (item.isRead) continue
-          const isMessage =
-            item.type === NotificationType.NewMessage || item.type === NotificationType.DirectMessage
-          if (isMessage) messages += 1
-          else other += 1
-        }
+    const controller = new AbortController()
+    void getNotificationUnreadCounts(controller.signal)
+      .then(({ messages, other }) => {
+        if (controller.signal.aborted) return
         setUnreadMessages(messages)
         setUnreadNotifications(other)
       })
       .catch(() => {
-        /* keep the live counters */
+        /* Keep the live counters if the network is unavailable. */
       })
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
   }, [isAuthenticated, refreshKey, location.pathname, location.search, conversationReadVersion])
 
   useEffect(() => {
