@@ -1,9 +1,7 @@
-import { useMemo, useRef, type Ref } from 'react'
+import { useMemo, type Ref } from 'react'
 import { SearchX, X } from 'lucide-react'
 import { DISTRICT_OPTIONS, LISTINGS, PRICE_OPTIONS, type Listing } from '../../../lib/mock/homeji'
 import { filterListings } from './filterListings'
-import { RevealGroup, RevealItem } from '../motion/Reveal'
-import { useDistortionWave } from '../motion/useDistortionWave'
 import { Button, ButtonLink } from '../ui/Button'
 import { Container, SectionHeading } from '../ui/primitives'
 import { SegmentedControl } from '../ui/SegmentedControl'
@@ -32,8 +30,6 @@ export function FeaturedListings({
   /** Card the hero just pointed at; outlined briefly. */
   highlightId?: string | null
 }) {
-  const panelRef = useRef<HTMLDivElement>(null)
-  const { wave, warmup } = useDistortionWave()
   const results = useMemo(() => filterListings(listings, query), [listings, query])
   const districtLabel = DISTRICT_OPTIONS.find(option => option.value === query.district)?.label
   const priceLabel = PRICE_OPTIONS.find(option => option.value === query.price)?.label
@@ -53,14 +49,9 @@ export function FeaturedListings({
               label="Lọc theo loại tin"
               options={TABS}
               value={query.kind}
-              onWarmup={warmup}
-              onChange={(kind, event) => {
+              onChange={kind => {
                 if (kind === query.kind) return
-                const focus = event && 'clientX' in event ? event.nativeEvent : null
-                void wave(panelRef.current, () => onQueryChange({ ...query, kind }), {
-                  source: event?.currentTarget,
-                  focus,
-                })
+                onQueryChange({ ...query, kind })
               }}
               tabId={value => `hx-tab-${value}`}
               panelId={() => PANEL_ID}
@@ -78,7 +69,6 @@ export function FeaturedListings({
         ) : null}
 
         <div
-          ref={panelRef}
           id={PANEL_ID}
           role="tabpanel"
           aria-labelledby={`hx-tab-${query.kind}`}
@@ -86,13 +76,13 @@ export function FeaturedListings({
           className="hx-listings__panel"
         >
           {results.length > 0 ? (
-            <RevealGroup key={`${query.kind}-${query.district}-${query.price}`} as="ul" className="hx-listings__grid">
+            <ul className="hx-listings__grid">
               {results.map(listing => (
-                <RevealItem as="li" key={listing.id}>
+                <li key={listing.id}>
                   <ListingCard listing={listing} highlighted={listing.id === highlightId} />
-                </RevealItem>
+                </li>
               ))}
-            </RevealGroup>
+            </ul>
           ) : (
             <div className="hx-listings__empty">
               <SearchX aria-hidden="true" />

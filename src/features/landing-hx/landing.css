@@ -49,6 +49,11 @@ html:has(.hx) {
   border-block: 1px solid var(--hx-border);
 }
 
+.hx-listings .hx-seg__thumb,
+.hx-listings .hx-seg__option {
+  transition: none;
+}
+
 .hx-listings__filters {
   display: flex;
   flex-wrap: wrap;
