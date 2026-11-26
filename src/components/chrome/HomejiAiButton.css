@@ -3,25 +3,51 @@
   align-items: center;
   gap: 6px;
   flex: none;
-  height: 34px;
+  height: 36px;
   padding: 0 12px 0 10px;
-  border: 1px solid #cdeedb;
-  border-radius: 999px;
-  background: #effaf3;
-  color: #087a3c;
-  font: 600 0.8125rem/1 var(--font-ui);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-heading);
+  font: 600 var(--fs-sm)/1 var(--font-ui);
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+  transition: background-color 160ms ease, border-color 160ms ease;
 }
 .hj-ai-btn svg { width: 16px; height: 16px; fill: currentColor; }
-.hj-ai-btn:hover { background: #e2f6ea; border-color: #9fd8b6; }
-.hj-ai-btn:active { transform: scale(0.97); }
-.hj-ai-btn:focus-visible { outline: 2px solid #00b14f; outline-offset: 2px; }
-.hj-ai-btn.is-open { background: #00b14f; border-color: #00b14f; color: #fff; box-shadow: 0 6px 16px rgba(0, 177, 79, 0.28); }
-.hj-ai-btn.is-glass { background: rgba(255, 255, 255, 0.78); border-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); }
-.hj-ai-btn.is-glass.is-open { background: #00b14f; color: #fff; }
+/* A quiet utility: it sits beside the one filled action (Đăng tin) and never competes with it. */
+.hj-ai-btn:hover { background: var(--surface-muted); border-color: var(--control-border); }
+.hj-ai-btn:active { background: var(--surface-input); }
+.hj-ai-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.hj-ai-btn.is-open { background: var(--surface-input); border-color: var(--focus-ring); color: var(--grab-green); }
+.hj-ai-btn.is-glass { background: var(--surface); }
+.hj-ai-btn.is-glass.is-open { background: var(--surface-input); color: var(--grab-green); }
 @media (max-width: 760px) {
-  .hj-ai-btn { width: 34px; padding: 0; justify-content: center; }
+  .hj-ai-btn { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .hj-ai-btn__label { display: none; }
 }
+
+/* AI spectrum: a multicolour ring that keeps orbiting the assistant button. Drawn on ::before
+   with a mask, so header and phone variants (which reset border and background) all get it. */
+@property --hj-ai-orbit { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.hj-ai-btn { position: relative; isolation: isolate; border-color: transparent; }
+.hj-ai-btn::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  padding: 2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--hj-ai-orbit), #ff6262, #ffac59, #f4d85d, #69d391, #65cfe7, #818af5, #d983e6, #ff6262);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: hj-ai-orbit 4s linear infinite;
+  pointer-events: none;
+}
+.hj-ai-btn:hover, .hj-ai-btn.is-open { border-color: transparent; }
+/* Phone header: the button is a bare 44px icon, so the ring hugs the icon instead of the hit area. */
+.m-header .hj-ai-btn::before { inset: 5px; }
+@keyframes hj-ai-orbit { to { --hj-ai-orbit: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .hj-ai-btn::before { animation: none; } }
+@media (forced-colors: active) { .hj-ai-btn::before { display: none; } .hj-ai-btn { border-color: ButtonText; } }

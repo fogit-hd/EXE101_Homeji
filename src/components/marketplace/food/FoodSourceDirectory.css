@@ -1,9 +1,9 @@
-.food-source-directory { margin: 0; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-elevated); color: var(--text-primary); }
-.food-source-directory h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.food-source-directory { margin: 0; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); color: var(--text-primary); }
+.food-source-directory h2 { margin: 0 0 8px; font-size: var(--fs-xl); }
 .food-source-directory > p { color: var(--text-secondary); line-height: 1.6; }
 .food-source-directory__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; margin-top: 16px; }
-.food-source-directory article { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
-.food-source-directory h3 { margin: 0; font-size: 1rem; }
+.food-source-directory article { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.food-source-directory h3 { margin: 0; font-size: var(--fs-lg); }
 .food-source-directory article p { line-height: 1.5; }
 .food-source-directory small { display: block; color: var(--text-secondary); line-height: 1.5; }
 .food-source-directory article div { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }

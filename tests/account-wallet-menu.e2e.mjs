@@ -76,8 +76,8 @@ try{
   assert.equal(await value.innerText(),'Chưa tải được')
   failure=false;balance=0
   await page.getByRole('menuitem',{name:'Thử tải lại số dư',exact:true}).click()
-  await page.getByRole('menuitem',{name:/Ví tiền.*0\s*₫$/}).waitFor()
-  assert.match(await value.innerText(),/^0\s*₫$/)
+  await page.getByRole('menuitem',{name:/Ví tiền.*0\s*đ$/}).waitFor()
+  assert.match(await value.innerText(),/^0\s*đ$/)
   results.checks.push('error remains unknown instead of zero; retry can display a genuine zero balance')
   await close();wrongOwner=true;balance=999999999
   await open()

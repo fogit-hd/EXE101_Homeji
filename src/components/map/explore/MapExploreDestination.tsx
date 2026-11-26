@@ -149,7 +149,7 @@ export const MapExploreDestination = memo(function MapExploreDestination({
     >
       <header className="map-explore__header">
         <div className="map-explore__titles">
-          <p className="map-explore__eyebrow">Tìm theo khu vực</p>
+          
           <h1 className="map-explore__title">Phòng quanh nhịp sống của bạn</h1>
         </div>
         <p className="map-explore__count">{countLabel}</p>
@@ -157,13 +157,13 @@ export const MapExploreDestination = memo(function MapExploreDestination({
 
       <div className="map-explore__filters" role="toolbar" aria-label="Bộ lọc bản đồ">
         <div className="map-explore__filter-wrap">
-          <ChoicePicker aria-label="Khoảng giá" className={`map-explore__filter${priceBand !== 'any' ? ' is-active' : ''}`}
+          <ChoicePicker aria-label="Khoảng giá" title="Khoảng giá" className={`map-explore__filter${priceBand !== 'any' ? ' is-active' : ''}`}
             value={priceBand} onChange={event => onPriceBandChange(event.target.value as MapExplorePriceBand)}>
             {PRICE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </ChoicePicker>
         </div>
         <div className="map-explore__filter-wrap">
-          <ChoicePicker aria-label="Loại phòng" className={`map-explore__filter${roomKind !== 'any' ? ' is-active' : ''}`}
+          <ChoicePicker aria-label="Loại phòng" title="Loại phòng" className={`map-explore__filter${roomKind !== 'any' ? ' is-active' : ''}`}
             value={roomKind} onChange={event => onRoomKindChange(event.target.value as MapExploreRoomKind)}>
             {KIND_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </ChoicePicker>
@@ -177,7 +177,7 @@ export const MapExploreDestination = memo(function MapExploreDestination({
           aria-pressed={searchOnMove}
           onClick={onToggleSearchOnMove}
         >
-          <img src={scanUrl} alt="" width={16} height={16} />
+          <img loading="lazy" decoding="async" src={scanUrl} alt="" width={16} height={16} />
           <span>Tìm khi di chuyển bản đồ</span>
         </button>
       </div>
@@ -223,7 +223,7 @@ export const MapExploreDestination = memo(function MapExploreDestination({
               <h2 className="map-explore__panel-title">Gần tâm bản đồ</h2>
               <p className="map-explore__panel-sub">Sắp xếp theo độ phù hợp</p>
             </div>
-            <img src={slidersUrl} alt="" width={17} height={17} />
+            <img loading="lazy" decoding="async" src={slidersUrl} alt="" width={17} height={17} />
           </div>
 
           <div ref={listRef} className="map-explore__list">

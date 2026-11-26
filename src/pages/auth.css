@@ -14,10 +14,9 @@
   height: min(420px, 55vh);
   pointer-events: none;
   background:
-    radial-gradient(ellipse 70% 60% at 20% 30%, rgba(0, 177, 79, 0.12), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 85% 20%, rgba(19, 111, 216, 0.1), transparent 55%),
-    linear-gradient(180deg, #eef6f1 0%, transparent 100%);
+    none;
   z-index: 0;
+  display: none;
 }
 
 .auth-shell {
@@ -60,21 +59,21 @@
 }
 
 .auth-card--error {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--error) 35%, transparent), 0 12px 32px rgba(234, 67, 53, 0.12);
+  box-shadow: none;
   animation: auth-card-shake 420ms var(--ease-out);
 }
 
 .auth-card--busy {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--grab-blue) 30%, transparent), 0 12px 28px rgba(19, 111, 216, 0.1);
+  box-shadow: none;
 }
 
 .auth-card--ok {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--grab-green) 35%, transparent), 0 12px 28px rgba(0, 177, 79, 0.12);
+  box-shadow: none;
 }
 
 .auth-page .form-group.is-focused .form-input {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--grab-blue) 22%, transparent);
-  border-color: var(--grab-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent);
+  border-color: var(--focus-ring);
 }
 
 .auth-strength {
@@ -86,13 +85,13 @@
 .auth-strength span {
   flex: 1;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--border);
   transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .auth-strength span.is-on:nth-child(1) {
-  background: #ea4335;
+  background: var(--error);
 }
 
 .auth-strength span.is-on:nth-child(2) {
@@ -132,16 +131,16 @@
   text-align: center;
   color: var(--text-secondary);
   margin: 20px 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
 }
 
 .auth-footer {
   text-align: center;
   margin-top: 24px;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .auth-card {
     animation: none;
   }

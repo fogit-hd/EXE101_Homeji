@@ -6,11 +6,11 @@ html:root #root .verified-owner-badge {
   max-width: 100%;
   padding: 3px 8px 3px 5px;
   margin-block: 5px;
-  border: 1px solid #9ccfbe;
-  border-radius: 6px;
-  background: #e8f6ef;
-  color: #176348;
-  font: 700 0.75rem/1.4 var(--font-ui);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-sm);
+  background: var(--success-soft);
+  color: var(--success);
+  font: 700 var(--fs-xs)/1.4 var(--font-ui);
   white-space: normal;
 }
 .verified-owner-badge svg { flex-shrink: 0; }
@@ -26,5 +26,5 @@ html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:nth-ch
 @keyframes verified-owner-ring-three { 0% { opacity: 0; } 50% { opacity: 1; } 75%, 100% { opacity: 0; } }
 @keyframes verified-owner-ring-four { 0% { opacity: 0; } 75% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { html:root #root .verified-owner-badge__icon > .verified-owner-badge__ring:nth-child(n) { animation: none; } }
-html[data-theme='dark']:root #root .verified-owner-badge { background: #173c32; color: #a5ebcd; border-color: #477f6b; --verified-check: #173c32; }
+html[data-theme='dark']:root #root .verified-owner-badge { background: var(--success-soft); color: var(--success); border-color: var(--success); --verified-check: var(--success); }
 @media (forced-colors: active) { html:root #root .verified-owner-badge { border-color: CanvasText; color: CanvasText; background: Canvas; --verified-check: Canvas; } html:root #root .verified-owner-badge__ring { display: none; } }

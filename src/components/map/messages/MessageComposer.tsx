@@ -9,6 +9,7 @@ import { AddressAutocomplete, type PlaceResult } from '../AddressAutocomplete'
 import { ChatMediaPicker } from '../ChatExtras'
 import { RentalMessageDraftNotice } from '../RentalMessageDraftNotice'
 import { VoiceMessageRecorder } from '../VoiceMessageRecorder'
+import { MobileComposerRow } from '../../../mobile/messages/MobileComposerRow'
 import { PendingImagePreview } from './MessagePrimitives'
 import { attachmentContextLabel, type AttachMode, type ChatShareTarget } from './MessageFormatting'
 
@@ -21,6 +22,7 @@ type Props = {
   draft: string
   setDraft: Dispatch<SetStateAction<string>>
   sending: boolean
+  uploading: boolean
   cannotSend: boolean
   blocked: boolean
   attachMode: AttachMode
@@ -49,15 +51,18 @@ type Props = {
   onSendImages: () => void
   onSentMessage: (message: PostMessage) => void
   voiceBusy: boolean
+  /** Phones get the one-row composer. */
+  mobile?: boolean
+  onSendText?: (text: string) => void
 }
 
 export function MessageComposer({
-  active, activeId, peerName, currentUserId, currentProfileId, draft, setDraft, sending,
+  active, activeId, currentUserId, currentProfileId, draft, setDraft, sending, uploading,
   cannotSend, blocked, attachMode, setAttachMode, attachRef, imageInputRef, composerRef,
   imageFiles, setImageFiles, imageContext, setImageContext, addressDraft, setAddressDraft,
   addressPlace, setAddressPlace, selectedPlace, selectedListing, mapArea, onError,
   onImageSelection, onSendGps, onSendAddress, onSendTarget, onResetAddressDraft,
-  onSend, onSendImages, onSentMessage, voiceBusy,
+  onSend, onSendImages, onSentMessage, voiceBusy, mobile = false, onSendText,
 }: Props) {
   return (
         <div className="map-messages__composer-wrap" ref={attachRef}>
@@ -66,18 +71,18 @@ export function MessageComposer({
               <button
                 type="button"
                 role="menuitem"
-                disabled={sending}
+                disabled={cannotSend}
                 onClick={() => imageInputRef.current?.click()}
               >
                 <svg viewBox="0 0 24 24" aria-hidden><rect x="3" y="5" width="18" height="14" rx="3" /><circle cx="9" cy="11" r="2" /><path d="m21 16-5-5-8 8" /></svg>Gửi ảnh phòng…
               </button>
-              <button type="button" role="menuitem" disabled={sending} onClick={() => void onSendGps()}>
+              <button type="button" role="menuitem" disabled={cannotSend} onClick={() => void onSendGps()}>
                 <svg viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg>Gửi vị trí hiện tại
               </button>
               <button
                 type="button"
                 role="menuitem"
-                disabled={sending}
+                disabled={cannotSend}
                 onClick={() => {
                   onResetAddressDraft()
                   setAttachMode('address')
@@ -88,7 +93,7 @@ export function MessageComposer({
               <button
                 type="button"
                 role="menuitem"
-                disabled={sending || !selectedPlace}
+                disabled={cannotSend || !selectedPlace}
                 title={selectedPlace ? undefined : 'Chọn địa điểm trên bản đồ trước'}
                 onClick={() =>
                   selectedPlace &&
@@ -100,7 +105,7 @@ export function MessageComposer({
               <button
                 type="button"
                 role="menuitem"
-                disabled={sending || !selectedListing}
+                disabled={cannotSend || !selectedListing}
                 title={selectedListing ? undefined : 'Mở tin đăng trên bản đồ trước'}
                 onClick={() =>
                   selectedListing &&
@@ -112,7 +117,7 @@ export function MessageComposer({
               <button
                 type="button"
                 role="menuitem"
-                disabled={sending || !mapArea}
+                disabled={cannotSend || !mapArea}
                 onClick={() =>
                   mapArea && void onSendTarget('area', mapArea, 'Khu vực')
                 }
@@ -128,16 +133,19 @@ export function MessageComposer({
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
+            tabIndex={-1}
+            aria-hidden="true"
             onChange={(event) => onImageSelection(event.target.files)}
           />
 
+          {uploading ? <p className="map-messages__upload-status" role="status">Đang gửi ảnh…</p> : null}
           {imageFiles.length > 0 ? (
             <section className="map-messages__image-review" aria-label="Xem lại ảnh trước khi gửi">
               <div className="map-messages__image-review-head">
                 <strong>{imageFiles.length} ảnh chờ gửi</strong>
                 <button
                   type="button"
-                  disabled={sending}
+                  disabled={cannotSend}
                   onClick={() => {
                     setImageFiles([])
                     if (imageInputRef.current) imageInputRef.current.value = ''
@@ -155,7 +163,7 @@ export function MessageComposer({
                 Nội dung ảnh
                 <ChoicePicker
                   value={imageContext}
-                  disabled={sending}
+                  disabled={cannotSend}
                   onChange={(event) => setImageContext(Number(event.target.value) as MessageAttachmentContext)}
                 >
                   {Object.entries(attachmentContextLabel).map(([value, label]) => (
@@ -202,7 +210,7 @@ export function MessageComposer({
                   </p>
                 )}
               </div>
-              <button type="submit" disabled={!addressPlace || sending}>
+              <button type="submit" disabled={!addressPlace || cannotSend}>
                 Gửi địa chỉ
               </button>
               <button
@@ -223,6 +231,13 @@ export function MessageComposer({
             : 'Hiện không thể gửi tin nhắn hoặc gọi thoại trong cuộc trò chuyện này.'}</p> : null}
           <RentalMessageDraftNotice userId={currentUserId && currentUserId === currentProfileId ? currentUserId : undefined} conversation={blocked ? null : active} existingDraft={draft}
             onUse={body => { setDraft(body) }} />
+          {mobile ? (
+            <MobileComposerRow activeId={activeId} blocked={blocked} draft={draft} setDraft={setDraft} sending={sending} uploading={uploading}
+              cannotSend={cannotSend} attachMode={attachMode} setAttachMode={setAttachMode} imageInputRef={imageInputRef}
+              composerRef={composerRef} imageCount={imageFiles.length} voiceBusy={voiceBusy} onImageSelection={onImageSelection}
+              onSubmit={() => { if (imageFiles.length > 0 ? !uploading : !sending) void (imageFiles.length > 0 ? onSendImages() : onSend()) }}
+              onSendText={(text) => onSendText?.(text)} onSentMessage={onSentMessage} onError={onError} />
+          ) : (
           <form
             className="map-messages__composer"
             onSubmit={(e) => {
@@ -233,14 +248,14 @@ export function MessageComposer({
             <button
               type="button"
               className={`map-messages__attach-btn map-motion-press${attachMode ? ' is-open' : ''}`}
-              aria-label="Đính kèm vị trí hoặc địa chỉ"
+              aria-label="Đính kèm vị trí hoặc địa chỉ" title="Đính kèm vị trí hoặc địa chỉ"
               aria-expanded={attachMode != null}
-              disabled={cannotSend || sending}
+              disabled={cannotSend}
               onClick={() => setAttachMode((m) => (m ? null : 'menu'))}
             >
               <svg viewBox="0 0 24 24" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
-            {activeId && <ChatMediaPicker key={`${activeId}-${blocked}`} conversationId={activeId} disabled={cannotSend || sending || imageFiles.length > 0}
+            {activeId && <ChatMediaPicker key={`${activeId}-${blocked}`} conversationId={activeId} disabled={cannotSend}
               onEmoji={emoji => {
                 const input = composerRef.current
                 const start = input?.selectionStart ?? draft.length, end = input?.selectionEnd ?? draft.length
@@ -250,7 +265,7 @@ export function MessageComposer({
                 requestAnimationFrame(() => { input?.focus(); input?.setSelectionRange(start + emoji.length, start + emoji.length) })
               }}
               onSent={message => { onSentMessage(message) }} onError={onError} />}
-            {activeId && <VoiceMessageRecorder key={`voice-${activeId}-${voiceBusy}-${blocked}`} conversationId={activeId} disabled={cannotSend || sending || imageFiles.length > 0}
+            {activeId && <VoiceMessageRecorder key={`voice-${activeId}-${voiceBusy}-${blocked}`} conversationId={activeId} disabled={cannotSend}
               onSent={message => { onSentMessage(message) }} onError={onError} />}
             <textarea
               ref={composerRef}
@@ -261,10 +276,10 @@ export function MessageComposer({
               onKeyDown={event => {
                 if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                   event.preventDefault()
-                  if (!sending && (imageFiles.length > 0 || draft.trim())) event.currentTarget.form?.requestSubmit()
+                  if (!(imageFiles.length > 0 ? uploading : sending) && (imageFiles.length > 0 || draft.trim())) event.currentTarget.form?.requestSubmit()
                 }
               }}
-              placeholder={activeId ? `Nhắn cho ${peerName}…` : 'Nhập tin nhắn…'}
+              placeholder="Nhắn tin"
               aria-label="Nội dung tin nhắn"
               disabled={cannotSend}
             />
@@ -273,11 +288,12 @@ export function MessageComposer({
               className="map-messages__send map-motion-press"
               aria-label="Gửi"
               title="Gửi"
-              disabled={cannotSend || (imageFiles.length === 0 && !draft.trim()) || sending}
+              disabled={cannotSend || (imageFiles.length === 0 && !draft.trim()) || (imageFiles.length > 0 ? uploading : sending)}
             >
               <svg viewBox="0 0 24 24" aria-hidden><path d="M5 12h13M13 6l6 6-6 6" /></svg>
             </button>
           </form>
+          )}
         </div>
 
   )

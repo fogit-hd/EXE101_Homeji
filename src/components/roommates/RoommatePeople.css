@@ -1,21 +1,21 @@
 .roommate-people { display: grid; gap: 16px; }
 .roommate-people header p { color: var(--text-secondary); margin-block: 8px; }
-.roommate-people__profile { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-elevated); }
+.roommate-people__profile { padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); }
 .roommate-people fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .roommate-people legend { font-weight: 600; margin-bottom: 12px; }
 .roommate-people__intents { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-.roommate-people__intents label { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
-.roommate-people__intents label:has(input:checked) { border-color: var(--hj-accent); background: var(--hj-accent-soft); }
+.roommate-people__intents label { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.roommate-people__intents label:has(input:checked) { border-color: var(--focus-ring); background: var(--hj-accent-soft); }
 .roommate-people input[type=radio], .roommate-people input[type=checkbox] { accent-color: var(--hj-accent); width: 18px; height: 18px; flex-shrink: 0; margin-block: 3px; }
 .roommate-people__intents small { display: block; color: var(--text-secondary); line-height: 1.6; margin-top: 4px; }
 .roommate-people__introduction { display: grid; gap: 8px; margin-block: 16px; }
-.roommate-people textarea { width: 100%; resize: vertical; min-height: 90px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-input); color: var(--text-primary); font: inherit; }
+.roommate-people textarea { width: 100%; resize: vertical; min-height: 90px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-input); color: var(--text-primary); font: inherit; }
 .roommate-people__consent { display: flex; align-items: flex-start; gap: 10px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
 .roommate-people__grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); gap: 16px; }
-.roommate-people__person { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-elevated); display: flex; flex-direction: column; gap: 14px; min-width: 0; overflow-wrap: anywhere; }
+.roommate-people__person { padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); display: flex; flex-direction: column; gap: 14px; min-width: 0; overflow-wrap: anywhere; }
 .roommate-people__person-header { display: flex; align-items: center; gap: 12px; }
-.roommate-people__person-header h3 { margin: 0 0 5px; font-size: 1.125rem; }
-.roommate-people__person-header span:not(.roommate-people__avatar) { font-size: 0.8125rem; color: var(--text-secondary); }
+.roommate-people__person-header h3 { margin: 0 0 5px; font-size: var(--fs-lead); }
+.roommate-people__person-header span:not(.roommate-people__avatar) { font-size: var(--fs-sm); color: var(--text-secondary); }
 .roommate-people__avatar { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--hj-accent-soft); color: var(--hj-accent); font-weight: 600; }
 .roommate-people__bio { margin: 0; white-space: pre-wrap; }
 .roommate-people dl { display: grid; gap: 8px; margin: 0; }
@@ -23,8 +23,8 @@
 .roommate-people dt { color: var(--text-secondary); }
 .roommate-people dd { text-align: right; margin: 0; }
 .roommate-people__habits { display: flex; gap: 6px; flex-wrap: wrap; padding: 0; margin: 0; list-style: none; }
-.roommate-people__habits li { border-radius: 8px; padding: 5px 8px; background: var(--surface-muted); font-size: 0.8125rem; }
-.roommate-people__score { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
+.roommate-people__habits li { border-radius: var(--radius-sm); padding: 5px 8px; background: var(--surface-muted); font-size: var(--fs-sm); }
+.roommate-people__score { font-size: var(--fs-sm); color: var(--text-secondary); margin: 0; }
 .roommate-people__person > button { margin-top: auto; }
 .roommate-people__notice { color: var(--hj-accent); }
 @media (max-width: 540px) { .roommate-people__intents { grid-template-columns: 1fr; } .roommate-people__profile, .roommate-people__person { padding: 16px; } }
@@ -35,17 +35,17 @@
   align-items: center;
   gap: 5px;
   padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 0.71875rem;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-xs);
   font-weight: 600;
   margin-left: auto;
   white-space: nowrap;
 }
 
 .roommate-compat-badge.is-high {
-  background: #e8f5ec;
-  color: #1b5e20;
-  border: 1px solid #c8e6c9;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, var(--border));
 }
 
 .roommate-compat-badge.is-medium {
@@ -61,7 +61,7 @@
 }
 
 .roommate-compat-tier {
-  font-size: 0.65625rem;
+  font-size: var(--fs-xs);
   font-weight: 500;
   opacity: 0.9;
 }
@@ -76,18 +76,35 @@
 }
 
 .roommate-compat-reasons li {
-  font-size: 0.71875rem;
-  color: var(--text-secondary, #3b5745);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
 .roommate-compat-check {
-  color: #1b5e20;
+  color: var(--success);
   flex-shrink: 0;
 }
 
 [data-theme='dark'] .roommate-compat-check {
-  color: #4ade80;
+  color: var(--success);
 }
+
+/* Results come first: search and the people found lead, and "my profile" settings sit after them.
+   The header link "Hồ sơ tìm bạn của tôi" still jumps to the form. */
+#root .roommate-people { display: flex; flex-direction: column; }
+
+
+/* S3: saved needs as one summary row; the form opens beneath it. */
+.roommate-people__profile-sheet { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); }
+.roommate-people__profile-sheet > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 10px 16px; cursor: pointer; list-style: none; border-radius: inherit; }
+.roommate-people__profile-sheet > summary::-webkit-details-marker { display: none; }
+.roommate-people__profile-sheet > summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.roommate-people__profile-sheet > summary > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.roommate-people__profile-sheet > summary strong { font: 650 var(--fs-md)/1.3 var(--font-ui); color: var(--text-heading); }
+.roommate-people__profile-sheet > summary small { font: 400 var(--fs-sm)/1.4 var(--font-ui); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roommate-people__profile-edit { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid var(--control-border, var(--border)); border-radius: var(--radius-md); font: 600 var(--fs-sm)/1 var(--font-ui); color: var(--text-heading); }
+.roommate-people__profile-sheet > .roommate-people__profile { border: 0; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: transparent; }
+.roommate-people__profile-sheet > .roommate-people__profile legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

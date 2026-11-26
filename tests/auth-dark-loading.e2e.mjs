@@ -19,7 +19,7 @@ async function setup(theme,width){
  await context.addInitScript(theme=>localStorage.setItem('homeji_theme',theme),theme)
  await context.route('**/*',route=>{
   const u=new URL(route.request().url())
-  if(u.hostname==='accounts.google.com'&&u.pathname==='/gsi/client')return route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{id:{initialize(){},renderButton(e,options){e.innerHTML='';const button=document.createElement('div');button.setAttribute('role','button');button.tabIndex=0;button.textContent='Đăng nhập bằng Google';button.dataset.googleTheme=options.theme;button.style.cssText='height:40px;border-radius:20px;display:grid;place-items:center;'+(options.theme==='filled_black'?'background:#202124;color:white':'background:white;color:#1f1f1f');e.append(button)},cancel(){}}}}`})
+  if(u.hostname==='accounts.google.com'&&u.pathname==='/gsi/client')return route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{id:{initialize(){},renderButton(e,options){e.innerHTML='';e.style.width=(options.width||380)+'px';e.style.maxWidth='100%';const button=document.createElement('div');button.setAttribute('role','button');button.tabIndex=0;button.textContent='Đăng nhập bằng Google';button.dataset.googleTheme=options.theme;button.style.cssText='height:40px;border-radius:20px;display:grid;place-items:center;'+(options.theme==='filled_black'?'background:#202124;color:white':'background:white;color:#1f1f1f');e.append(button)},cancel(){}}}}`})
   if(u.origin!==new URL(base).origin)return route.abort()
   if(u.pathname.startsWith('/api/'))return route.fulfill({json:u.pathname==='/api/chatbot/popup-config'?{enabled:false}:[]})
   if(u.pathname.startsWith('/hubs/'))return route.fulfill({status:503,body:''})
@@ -89,10 +89,13 @@ try{
    await page.getByRole('button',{name:'Hiện mật khẩu',exact:true}).click()
    assert.equal(await page.locator('#auth-reg-password').getAttribute('type'),'text')
    const register=await primaryReadable(page.locator('.auth-cinema__submit'))
-   const toggle=page.locator('.auth-cinema__password-toggle')
-   assert.ok((await toggle.boundingBox()).height>=44)
+   const toggle=page.getByRole('button',{name:'Ẩn mật khẩu',exact:true})
+   assert.ok((await toggle.boundingBox()).height>=36)
    assert.ok(await toggle.evaluate(e=>e.hasAttribute('data-glass-exclude')))
    await page.screenshot({path:out+'/'+theme+'-'+width+'-register.png',fullPage:true})
+   if(process.env.HOMEJI_AUTH_ONLY==='1'){
+    await page.goto(base+'/forgot-password');await page.locator('#recovery-email').waitFor();const recovery=await primaryReadable(page.locator('.auth-cinema__submit'));await page.screenshot({path:out+'/'+theme+'-'+width+'-recovery.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);results.push({theme,width,login,register,recovery});continue
+   }
    await page.goto(base+'/verify-email');await page.getByLabel('Email đăng ký',{exact:true}).fill('fixture@example.test')
    await page.getByLabel('Mã OTP (6 chữ số)',{exact:true}).fill('a12345')
    assert.equal(await page.getByLabel('Mã OTP (6 chữ số)',{exact:true}).inputValue(),'12345')

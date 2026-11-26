@@ -117,7 +117,7 @@ export function GlassVoiceControl({ recording, starting, seconds, disabled, getA
       <span className="glass-voice__mark" aria-hidden="true"><Microphone /></span>
       {expanded && <span className="glass-voice__clock" role="timer" aria-live="off">{clock}</span>}
       <button type="button" className="glass-voice__hit" data-glass-exclude="" aria-pressed={recording}
-        aria-label={expanded ? 'Dừng ghi' : 'Ghi âm tin nhắn'} title={expanded ? 'Dừng ghi' : 'Ghi âm'}
+        aria-label={expanded ? 'Dừng ghi' : 'Ghi âm tin nhắn'} title={expanded ? 'Dừng ghi' : 'Ghi âm tin nhắn'}
         disabled={starting || (!recording && disabled)} onClick={recording ? onStop : onStart}>
         {expanded && <span className="glass-voice__stop" aria-hidden="true" />}
       </button>

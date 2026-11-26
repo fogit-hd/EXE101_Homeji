@@ -1,3 +1,5 @@
+import { Check, ChevronLeft, ChevronRight, Star, X } from 'lucide-react'
+import { formatMonthlyRent } from '../../lib/labels'
 import { PremiumBadge } from '../PremiumBadge'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { PhoneAction } from '../ui/PhoneAction'
@@ -46,8 +48,6 @@ import {
   StarIcon,
   UserIcon,
   PhoneIcon,
-  FloodFreeIcon,
-  SecurityCameraIcon,
 } from '../icons/SvgIcons'
 import { VerifiedOwnerBadge } from '../VerifiedOwnerBadge'
 import { MapDetailActionIcon } from './MapDetailActionIcon'
@@ -87,6 +87,9 @@ type MapPlaceDetailPanelProps = {
     highlightTag?: string | null
   } | null
   listingLoading?: boolean
+  /** The listing's detail request failed and nothing is cached to show. */
+  listingError?: boolean
+  onRetryListing?: () => void
   userLocation?: { lat: number; lng: number } | null
   onNearby?: (loc: { lat: number; lng: number }) => void
   /** Draw driving route on Homeji map (Routes API). */
@@ -208,6 +211,9 @@ function MapPlaceDetailPanelContent({
   listing = null,
   listingSummary = null,
   listingLoading = false,
+  listingId = null,
+  listingError = false,
+  onRetryListing,
   userLocation = null,
   onNearby,
   onDirections,
@@ -221,7 +227,8 @@ function MapPlaceDetailPanelContent({
   onOpenAppointments,
 }: MapPlaceDetailPanelProps) {
   const { profile, isAuthenticated } = useAuth()
-  const isListing = !!(listing || listingSummary)
+  // A requested listing id decides the mode, so a listing never falls back to the Google place layout while it loads or fails.
+  const isListing = !!(listingId || listing || listingSummary)
   const post = listing ?? listingSummary
   useRentalAssistantSelection(open && post ? { postId: post.id, title: post.title } : null)
   const openRentalAssistant = useRentalAssistantOpener()
@@ -619,10 +626,10 @@ function MapPlaceDetailPanelContent({
   }
 
   const loading = isListing ? listingLoading && !post : placeLoading && !place
-  const highlight =
-    listingSummary?.highlightTag ||
-    (listing as RentalPost | null)?.highlightTag ||
-    null
+  const highlight = listingHighlight({
+    highlightTag: listingSummary?.highlightTag || (listing as RentalPost | null)?.highlightTag,
+    isOwnerPremium: (listing ? listing.isOwnerPremium : listingSummary?.isOwnerPremium) === true,
+  })
   const ownerBadge =
     listing?.ownerBadge || listingSummary?.ownerBadge || null
   const isPremium =
@@ -655,14 +662,24 @@ function MapPlaceDetailPanelContent({
     </LiquidTabList>
   )
 
+  if (isListing && !post && listingError) {
+    return (
+      <aside ref={panelRef} className={`map-detail-panel is-listing${open ? ' is-visible' : ''}`}
+        aria-hidden={!open} aria-label="Chi tiết phòng">
+        <div className="map-detail-panel__error" role="alert">
+          <p>Không tải được tin phòng này. Tin có thể đã bị gỡ hoặc kết nối đang gián đoạn.</p>
+          {onRetryListing ? <button type="button" className="btn btn-secondary" onClick={onRetryListing}>Thử lại</button> : null}
+        </div>
+      </aside>
+    )
+  }
+
   return (
     <aside
       ref={panelRef}
       className={`map-detail-panel${open ? ' is-visible' : ''}${collapsed ? ' is-collapsed' : ''}${isListing ? ' is-listing' : ' is-place'}${
         photoBrowserOpen ? ' is-photo-browser' : ''
       }`}
-      role="dialog"
-      aria-modal="true"
       aria-hidden={!open || (collapsed && !photoBrowserOpen)}
       aria-label={title}
       onWheelCapture={handlePanelWheelCapture}
@@ -677,7 +694,7 @@ function MapPlaceDetailPanelContent({
       <div className="map-detail-panel__intro">
         <div className="map-detail-panel__hero">
           {resolvedHeroUrl ? (
-            <img
+            <img loading="eager" decoding="async" width={1200} height={900}
               src={resolvedHeroUrl}
               alt=""
               className="map-detail-panel__hero-img"
@@ -705,7 +722,7 @@ function MapPlaceDetailPanelContent({
 
           {isListing && post ? (
             <p className="map-detail-panel__price">
-              {formatPrice(post.price)}
+              {formatMonthlyRent(post.price)}
               <span>/tháng</span>
             </p>
           ) : place?.rating != null ? (
@@ -739,7 +756,7 @@ function MapPlaceDetailPanelContent({
           </button>
           {isListing ? (
             <button type="button" className="map-detail-action" disabled={!onSaveListing || saveBusy} onClick={onSaveListing}>
-              <span className="map-detail-action__icon" aria-hidden>{listingSaved ? '★' : '☆'}</span>
+              <span className="map-detail-action__icon" aria-hidden><Star aria-hidden="true" size={20} fill={listingSaved ? 'currentColor' : 'none'} style={{ verticalAlign: 'middle' }} /></span>
               <span className="map-detail-action__label">{listingSaved ? 'Đã lưu' : 'Lưu'}</span>
             </button>
           ) : null}
@@ -769,7 +786,7 @@ function MapPlaceDetailPanelContent({
               disabled={actionBusy}
               onClick={() => void handleMarkRented()}
             >
-              <span className="map-detail-action__icon" aria-hidden>✓</span>
+              <span className="map-detail-action__icon" aria-hidden><Check aria-hidden="true" size={20} style={{ verticalAlign: 'middle' }} /></span>
               <span className="map-detail-action__label">Đã thuê</span>
             </button>
           ) : null}
@@ -895,7 +912,7 @@ function MapPlaceDetailPanelContent({
                     }`}
                     onClick={() => setPhotoIndex(idx)}
                   >
-                    <img src={src} alt={`${title} - ảnh ${idx + 1}`} loading="lazy" />
+                    <img decoding="async" width={1200} height={900} src={src} alt={`${title} - ảnh ${idx + 1}`} loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -908,9 +925,9 @@ function MapPlaceDetailPanelContent({
                 type="button"
                 className="map-detail-photo-browser__close map-motion-press"
                 onClick={() => setPhotoBrowserOpen(false)}
-                aria-label="Đóng chế độ xem ảnh"
+                aria-label="Đóng chế độ xem ảnh" title="Đóng chế độ xem ảnh"
               >
-                ×
+                <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
               </button>
             ) : null}
             {selectedPhotoUrl ? (
@@ -928,22 +945,22 @@ function MapPlaceDetailPanelContent({
                       className="map-detail-photo-browser__nav map-detail-photo-browser__nav--prev"
                       onClick={handlePrevPhoto}
                       disabled={!canGoPrevPhoto}
-                      aria-label="Ảnh trước"
+                      aria-label="Ảnh trước" title="Ảnh trước"
                     >
-                      ‹
+                      <ChevronLeft aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
                     </button>
                     <button
                       type="button"
                       className="map-detail-photo-browser__nav map-detail-photo-browser__nav--next"
                       onClick={handleNextPhoto}
                       disabled={!canGoNextPhoto}
-                      aria-label="Ảnh tiếp theo"
+                      aria-label="Ảnh tiếp theo" title="Ảnh tiếp theo"
                     >
-                      ›
+                      <ChevronRight aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
                     </button>
                   </>
                 ) : null}
-                <img src={selectedPhotoUrl} alt={`${title} - ảnh đang xem`} />
+                <img loading="lazy" decoding="async" width={1200} height={900} src={selectedPhotoUrl} alt={`${title} - ảnh đang xem`} />
               </>
             ) : (
               <p className="map-detail-panel__empty">Chưa có ảnh hiển thị.</p>
@@ -958,7 +975,7 @@ function MapPlaceDetailPanelContent({
             <div className="map-detail-panel__section">
               {streetViewUrl && resolvedHeroUrl !== streetViewUrl ? (
                 <div className="map-detail-panel__street">
-                  <img
+                  <img decoding="async" width={800} height={350}
                     src={streetViewUrl}
                     alt={`Góc phố gần ${title}`}
                     loading="lazy"
@@ -970,18 +987,10 @@ function MapPlaceDetailPanelContent({
               <InfoRow icon={<AreaRulerIcon size={16} />}><p>Diện tích <strong>{post.area} m²</strong></p></InfoRow>
               <InfoRow icon={<MoneyIcon size={16} />}>
                 <p>
-                  Giá thuê <strong>{formatPrice(post.price)}/tháng</strong>
+                  Giá thuê <strong>{formatMonthlyRent(post.price)}</strong>
                   {listing && listing.deposit > 0 ? <> · Cọc {formatPrice(listing.deposit)}</> : null}
                 </p>
               </InfoRow>
-              <div className="map-detail__env-tags" style={{ display: 'flex', gap: '8px', padding: '10px 18px', flexWrap: 'wrap' }}>
-                <span className="map-listings__fact-tag is-flood-free" title="Tuyến đường cao ráo không ngập mùa mưa">
-                  <FloodFreeIcon size={12} /> Tuyến đường không ngập
-                </span>
-                <span className="map-listings__fact-tag is-security" title="Khu vực an ninh tốt, có camera quan sát 24/7">
-                  <SecurityCameraIcon size={12} /> An ninh camera 24/7
-                </span>
-              </div>
               {listing ? (
                 <>
                   {listing.type === RentalPostType.RoomTransfer ? (
@@ -1078,7 +1087,7 @@ function MapPlaceDetailPanelContent({
             <div className="map-detail-panel__section">
               {streetViewUrl && resolvedHeroUrl !== streetViewUrl ? (
                 <div className="map-detail-panel__street">
-                  <img
+                  <img decoding="async" width={800} height={350}
                     src={streetViewUrl}
                     alt={`Góc phố gần ${title}`}
                     loading="lazy"
@@ -1108,7 +1117,7 @@ function MapPlaceDetailPanelContent({
                       className="map-detail-menu__photo-btn map-motion-press"
                       onClick={() => openPhotoBrowser(idx)}
                     >
-                      <img
+                      <img decoding="async" width={1200} height={900}
                         src={src}
                         alt={`${title} - ảnh ${idx + 1}`}
                         loading="lazy"
@@ -1273,7 +1282,7 @@ function MapPlaceDetailPanelContent({
               ) : (
                 <ul className="map-detail-amenities">
                   {listing.amenities.map((a) => (
-                    <li key={a}><span aria-hidden>✓</span> {amenityLabel(a)}</li>
+                    <li key={a}><span aria-hidden><Check aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span> {amenityLabel(a)}</li>
                   ))}
                 </ul>
               )}
@@ -1310,3 +1319,4 @@ function MapPlaceDetailPanelContent({
     </aside>
   )
 }
+import { listingHighlight } from '../../lib/listingHighlight'

@@ -1,0 +1,124 @@
+/* Phone header (MobileHeader.tsx): 56px bar, logo + title + four 44px actions. */
+.m-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: calc(56px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 4px 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
+.m-header__logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  border-radius: var(--radius-md);
+}
+.m-header__logo img { width: 32px; height: 32px; object-fit: contain; }
+
+.m-header__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-heading);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-header__logo + .m-header__title { margin-left: 2px; }
+.m-header__title--brand { font-size: var(--fs-lg, 1.125rem); letter-spacing: -0.01em; }
+
+.m-header__actions { display: flex; flex: none; align-items: center; gap: 0; }
+
+/* One quiet icon-button style for every action, whichever component draws it. */
+.m-header .m-header__icon,
+.m-header .hj-search-open,
+.m-header .hj-ai-btn,
+#root .m-header .seller-watch__trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-header .hj-ai-btn__label,
+#root .m-header .seller-watch__trigger > span:not([class*='badge']) { display: none; }
+.m-header .hj-ai-btn svg { width: 22px; height: 22px; }
+.m-header .m-header__icon:active,
+.m-header .hj-search-open:active,
+.m-header .hj-ai-btn:active,
+#root .m-header .seller-watch__trigger:active { background: var(--surface-muted); }
+.m-header .hj-ai-btn.is-open { color: var(--grab-green); background: var(--surface-muted); }
+
+.m-header__badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  top: 6px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 2px solid var(--surface-elevated);
+  border-radius: var(--radius-pill);
+  background: var(--action-primary);
+  color: var(--action-on-primary);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.m-header__avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.m-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--grab-green);
+  color: var(--on-brand);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+@media (forced-colors: active) {
+  .m-header { border-bottom: 1px solid CanvasText; }
+  .m-header__badge { border-color: Canvas; }
+}

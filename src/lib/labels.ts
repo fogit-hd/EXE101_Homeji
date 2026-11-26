@@ -36,6 +36,9 @@ export const formatCompactRent = (value: number) => {
   return formatPrice(value)
 }
 
+export const formatMonthlyRent = (value: number) =>
+  `${formatCompactRent(value)}${Number.isFinite(value) && value > 0 ? '/tháng' : ''}`
+
 // Listing measurements have no explicit-free marker; zero/malformed values stay unknown.
 export const formatListingRent = (value: number) =>
   Number.isFinite(value) && value > 0 ? formatPrice(value) : 'Chưa có thông tin'
@@ -112,7 +115,7 @@ export const notificationTypeLabel: Record<number, string> = {
   [NotificationType.ViewingAppointmentUpdated]: 'Lịch xem phòng cập nhật',
   [NotificationType.LandlordVerificationUpdated]: 'Xác minh chủ nhà',
   [NotificationType.DirectMessage]: 'Tin nhắn trực tiếp',
-  [NotificationType.SavedPostChanged]: 'Tin đã lưu thay đổi',
+  [NotificationType.SavedPostChanged]: 'Phòng đã lưu thay đổi',
   [NotificationType.NewMatchingRentalPost]: 'Tin phù hợp mới',
   [NotificationType.MarketplaceOrderUpdated]: 'Đơn chợ đồ cập nhật',
   [NotificationType.MaintenanceAnnouncement]: 'Bảo trì hệ thống',
@@ -150,6 +153,24 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
   [PaymentMethod.PayOs]: 'PayOS',
   [PaymentMethod.Wallet]: 'Số dư ví Homeji',
   [PaymentMethod.PayPal]: 'PayPal · Thẻ quốc tế',
+}
+
+/** Compact provider names for the transaction overview; full labels stay in details. */
+export const paymentMethodShortLabel: Record<PaymentMethod, string> = {
+  [PaymentMethod.Momo]: 'MoMo',
+  [PaymentMethod.PayOs]: 'PayOS',
+  [PaymentMethod.Wallet]: 'Ví Homeji',
+  [PaymentMethod.PayPal]: 'PayPal',
+}
+
+export const formatPaymentHistoryTime = (value?: string | null) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+  }).format(date)
 }
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {
@@ -194,7 +215,7 @@ export const wantedPostStatusLabel: Record<number, string> = {
 }
 
 export const userActivityTypeLabel: Record<number, string> = {
-  [UserActivityType.General]: 'Chung',
+  [UserActivityType.General]: 'Khác',
   [UserActivityType.ViewedRentalPost]: 'Xem tin',
   [UserActivityType.RentalSearch]: 'Tìm kiếm',
   [UserActivityType.SentMessage]: 'Tin nhắn',
@@ -375,3 +396,14 @@ export const GOODS_CATEGORIES = [
   'Khác',
 ] as const
 export const MARKETPLACE_CATEGORIES = [...FOOD_CATEGORIES, ...GOODS_CATEGORIES] as const
+
+/** Some marketplace posts (AI-drafted ones) carry raw English codes for condition or category. */
+const MARKETPLACE_RAW_LABELS: Record<string, string> = {
+  new: 'Mới',
+  likeNew: 'Như mới',
+  used: 'Đã qua sử dụng',
+  secondHand: 'Đồ cũ',
+  food: 'Đồ ăn',
+}
+export const marketplaceValueLabel = (value: string | null | undefined) =>
+  value ? MARKETPLACE_RAW_LABELS[value] ?? value : ''

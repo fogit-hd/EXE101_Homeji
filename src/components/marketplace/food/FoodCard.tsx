@@ -40,17 +40,7 @@ export function FoodCard({
         {thumb ? <img src={thumb} alt="" loading="lazy" /> : <span className="food-card__empty">Chưa có ảnh</span>}
         {post.isSamplePhoto && (
           <span
-            className="food-card__badge"
-            style={{
-              top: 6,
-              left: 6,
-              padding: '2px 6px',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              backgroundColor: 'rgba(0, 0, 0, 0.65)',
-              color: '#ffffff',
-              borderRadius: '4px',
-            }}
+            className="food-card__badge food-card__badge--sample"
           >
             [Ảnh mẫu]
           </span>
@@ -58,46 +48,39 @@ export function FoodCard({
       </button>
       <div className="food-card__body">
         <h4 className="food-card__title">{post.title}</h4>
-        <div className="food-card__meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+        <div className="food-card__meta">
           {freshnessText && (
-            <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                color: 'var(--food-leaf-deep, #24543e)',
-                backgroundColor: 'var(--food-leaf, #e1f4e8)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-              }}
-            >
+            <span className="food-card__fresh">
               {freshnessText}
             </span>
           )}
           {post.preparationMinutes != null && post.preparationMinutes > 0 && (
-            <span className="food-card__eta" style={{ fontSize: '0.72rem', color: 'var(--food-muted, #64748b)' }}>
+            <span className="food-card__eta">
               {post.preparationMinutes}p
             </span>
           )}
         </div>
         {post.allergenAlerts && (
-          <p style={{ margin: 0, fontSize: '0.72rem', color: '#b45309', lineHeight: 1.3 }}>
+          <p className="food-card__allergen">
             Lưu ý: {post.allergenAlerts}
           </p>
         )}
         <p className="food-card__price">{formatPrice(post.price)}</p>
         <p className="food-card__seller">{post.availableQuantity > 0 ? `Còn ${post.availableQuantity} phần` : 'Hết phần'}</p>
         <div className="food-card__purchase">
-          <QuantityStepper
-            value={quantity}
-            max={Math.max(1, post.availableQuantity)}
-            disabled={post.availableQuantity <= 0}
-            label={`Số lượng ${post.title}`}
-            onChange={onQuantityChange}
-          />
+          {quantity > 0 && (
+            <QuantityStepper
+              value={quantity}
+              max={Math.max(1, post.availableQuantity)}
+              disabled={post.availableQuantity <= 0}
+              label={`Số lượng ${post.title}`}
+              onChange={onQuantityChange}
+            />
+          )}
           <button
             type="button"
             className={`food-card__cart-btn${inCart ? ' is-added' : ''}`}
-            aria-label={`${inCart ? 'Bỏ khỏi giỏ' : 'Thêm vào giỏ'}: ${post.title}`}
+            aria-label={`${inCart ? 'Bỏ khỏi giỏ' : 'Thêm vào giỏ'}: ${post.title}`} title={`${inCart ? 'Bỏ khỏi giỏ' : 'Thêm vào giỏ'}: ${post.title}`}
             aria-pressed={inCart}
             disabled={!inCart && post.availableQuantity <= 0}
             onClick={onAddToCart}

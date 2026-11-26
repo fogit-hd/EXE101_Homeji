@@ -171,7 +171,7 @@ export function MarketplaceFilterPanel({ value, onApply, categoriesFor, countFor
               initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1, transition: SPRING.snappy }}
               exit={{ opacity: 0, scale: 0.85, transition: transitions.exit }}>
               {chip.label}
-              <button type="button" className="mfp-chip__x" aria-label={`Bỏ lọc ${chip.label}`} onClick={() => removeChip(chip.key)}>{CLOSE}</button>
+              <button type="button" className="mfp-chip__x" aria-label={`Bỏ lọc ${chip.label}`} title={`Bỏ lọc ${chip.label}`} onClick={() => removeChip(chip.key)}>{CLOSE}</button>
             </motion.span>
           ))}
         </AnimatePresence>
@@ -202,7 +202,7 @@ export function MarketplaceFilterPanel({ value, onApply, categoriesFor, countFor
             {mobile ? <div className="mfp-handle" aria-hidden="true" /> : null}
             <div className="mfp-head">
               <h2 id={titleId}>Bộ lọc</h2>
-              {mobile ? <button type="button" className="mfp-close" aria-label="Đóng bộ lọc" onClick={() => close()}>{CLOSE}</button> : null}
+              {mobile ? <button type="button" className="mfp-close" aria-label="Đóng bộ lọc" title="Đóng bộ lọc" onClick={() => close()}>{CLOSE}</button> : null}
             </div>
             <div className="mfp-body">
               {mineOptions ? (

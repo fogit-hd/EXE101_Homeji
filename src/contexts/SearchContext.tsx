@@ -41,7 +41,7 @@ const PLACEHOLDER: Record<SearchContextName, string> = {
   food: 'Tìm món, nguyên liệu hoặc tên bếp…',
   marketplace: 'Tìm sản phẩm…',
   myListings: 'Tìm trong tin của tôi…',
-  roommate: 'Tìm tin sinh viên tìm người ghép theo đường hoặc tiêu đề…',
+  roommate: 'Tìm tin ở ghép theo đường, tiêu đề…',
 }
 
 const CONTEXT_COPY: Record<SearchContextName, { title: string; scope: string }> = {

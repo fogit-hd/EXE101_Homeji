@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { Children, Fragment, isValidElement, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import './ChoicePicker.css'
@@ -253,7 +254,7 @@ export function ChoicePicker({ children, className = '', id: suppliedId, value, 
         onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close() } }}>
         <div className="choice-picker__handle" aria-hidden="true" />
         <header className="choice-picker__heading"><div><strong>{title}</strong></div>
-          <button className="choice-picker__close" type="button" aria-label="Đóng bảng chọn" onClick={() => close()}>×</button>
+          <button className="choice-picker__close" type="button" aria-label="Đóng bảng chọn" title="Đóng bảng chọn" onClick={() => close()}><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button>
         </header>
         {searchable && <div className="choice-picker__search-wrap"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.6" /><path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.6" /></svg>
           <input ref={search} type="search" role="combobox" aria-label={`Tìm trong ${title}`} placeholder="Gõ để tìm lựa chọn…"

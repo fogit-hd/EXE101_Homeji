@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import type { AiHighlightResponse } from '../../api'
-import { formatPrice, formatListingRent } from '../../lib/labels'
+import { formatPrice, formatMonthlyRent } from '../../lib/labels'
 import './AiSearchReview.css'
 import { AiRentalResultCard } from './AiRentalResultCard'
 import { ShortlistCommutePlanner, type CommuteConfirmation } from './ShortlistCommutePlanner'
@@ -84,9 +84,9 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
       {cards.length ? <div className="ai-suggest-review__cards">{cards.map((item, index) => <motion.div key={item.post.id}
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}>
         <Link className="ai-suggest-review__card" to={`/?section=listings&post=${encodeURIComponent(item.post.id)}`} onClick={onOpenListing}>
-          <span className="ai-suggest-review__thumb">{item.post.thumbnailPath ? <img src={item.post.thumbnailPath} alt="" loading="lazy" /> : <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>}</span>
+          <span className="ai-suggest-review__thumb">{item.post.thumbnailPath ? <img decoding="async" width={70} height={70} src={item.post.thumbnailPath} alt="" loading="lazy" /> : <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>}</span>
           <span className="ai-suggest-review__card-title">{item.post.title}</span>
-          <span className="ai-suggest-review__card-price">{formatListingRent(item.post.price)}</span>
+          <span className="ai-suggest-review__card-price">{formatMonthlyRent(item.post.price)}</span>
           <span className="ai-suggest-review__card-unit">{rentalPriceLabel(rentalPriceBasis(item.post))}</span>
         </Link>
       </motion.div>)}</div> : null}
@@ -130,6 +130,6 @@ function AiSearchReviewSession({ result, onApply, onRefine, onOpenListing, varia
       destinationHint={c.destination} modeHint={c.travelMode} ceilingHint={c.maxCommuteMinutes} onConfirm={setCommute} onInvalidate={() => setCommute(null)} /> : null}
     {unresolved && routedPosts.length ? <strong>Các tin dưới đây chưa đủ thông tin về phí hoặc đường đi để xác nhận phù hợp với yêu cầu của bạn.</strong> : null}
     {shownPosts.slice(0, 5).map(renderListing)}
-    {!unresolved && !onlyOtherRooms ? applied ? <p role="status">Đã áp dụng bộ lọc lên bản đồ. Bạn có thể tiếp tục xem phòng và sửa yêu cầu ngay trong chat.</p> : <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply ai-spectrum-button" onClick={apply}>Áp dụng lên bản đồ</button></div> : null}
+    {!unresolved && !onlyOtherRooms ? applied ? <p role="status">Đã áp dụng bộ lọc lên bản đồ. Bạn có thể tiếp tục xem phòng và sửa yêu cầu ngay trong chat.</p> : <div className="ai-search-review__map-action"><button type="button" className="ai-search-review__apply" onClick={apply}>Áp dụng lên bản đồ</button></div> : null}
   </section>
 }

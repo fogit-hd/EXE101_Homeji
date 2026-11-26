@@ -4,8 +4,8 @@
    ══════════════════════════════════════════════════════════════ */
 
 .map-appointments {
-  --hj-muted: #526358;
-  --hj-accent: #a43c22;
+  --hj-muted: var(--text-secondary);
+  --hj-accent: var(--grab-green);
   width: 100%;
   max-width: none;
   min-width: 0;
@@ -13,7 +13,7 @@
   flex-direction: column;
   gap: 20px;
   padding: 4px 0 28px;
-  color: var(--hj-ink, #18231d);
+  color: var(--text-heading);
 }
 
 .map-appointments.is-embedded {
@@ -36,26 +36,19 @@
   min-width: 0;
 }
 
-.map-appointments__eyebrow {
-  font: 700 0.625rem/1.2 var(--font-ui);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--hj-accent);
-}
-
 .map-appointments__page-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 2.25rem;
+  font-size: var(--fs-display);
   font-weight: 600;
-  line-height: 2.75rem;
-  color: var(--hj-ink, #18231d);
+  line-height: 44px;
+  color: var(--text-heading);
 }
 
 .map-appointments__page-lead {
   margin: 0;
-  font: 400 0.9rem/1.45 var(--font-ui);
-  color: var(--hj-muted, #756f64);
+  font: 400 var(--fs-md)/1.45 var(--font-ui);
+  color: var(--text-secondary);
 }
 
 .map-appointments__page-tools {
@@ -70,16 +63,16 @@
   align-items: center;
   height: 40px;
   padding: 0 16px;
-  border-radius: 999px;
-  background: var(--hj-accent, #e65c3a);
-  color: #fff;
-  font: 600 0.84rem/1 var(--font-ui);
+  border-radius: var(--radius-pill);
+  background: var(--grab-green);
+  color: var(--on-brand);
+  font: 600 var(--fs-sm)/1 var(--font-ui);
   text-decoration: none;
   white-space: nowrap;
 }
 
 .map-appointments__add-btn:hover {
-  color: #fff;
+  color: var(--on-brand);
   filter: brightness(1.05);
   text-decoration: none;
 }
@@ -87,31 +80,31 @@
 .map-appointments__view-toggle {
   display: inline-flex;
   padding: 3px;
-  border-radius: 999px;
-  background: var(--hj-cream, #fff9ef);
-  border: 1px solid var(--hj-border, #d8cdbb);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .map-appointments__view-toggle button {
   height: 34px;
   padding: 0 14px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--hj-muted, #756f64);
-  font: 600 0.8rem/1 var(--font-ui);
+  color: var(--text-secondary);
+  font: 600 var(--fs-sm)/1 var(--font-ui);
   cursor: pointer;
 }
 
 .map-appointments__view-toggle button.is-active {
-  background: var(--appointment-solid, #18231d);
-  color: #fff;
+  background: var(--appointment-solid, var(--text-heading));
+  color: var(--surface);
 }
 
 /* ── Two-column layout ── */
 .map-appointments__layout {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  grid-template-columns: minmax(340px, 360px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -133,10 +126,10 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px 16px;
-  border-radius: var(--hj-radius-lg, 22px);
-  background: var(--appointment-solid, #18231d);
-  color: #fff;
+  padding: 16px 8px;
+  border-radius: var(--radius-lg);
+  background: var(--appointment-solid, var(--text-heading));
+  color: var(--surface);
 }
 
 .map-appointments__cal-nav {
@@ -147,7 +140,7 @@
 }
 
 .map-appointments__cal-nav strong {
-  font: 600 0.92rem/1.2 var(--font-ui);
+  font: 600 var(--fs-md)/1.2 var(--font-ui);
   text-transform: capitalize;
 }
 
@@ -155,58 +148,58 @@
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  font-size: 1.1rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface) 8%, transparent);
+  color: var(--text-primary);
+  font-size: var(--fs-lg);
   line-height: 1;
   cursor: pointer;
 }
 
 .map-appointments__cal-nav button:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--surface) 14%, transparent);
 }
 
 .map-appointments__cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 0;
   text-align: center;
-  font: 500 0.68rem/1 var(--font-ui);
-  color: #8a958e;
+  font: 500 var(--fs-xs)/1 var(--font-ui);
+  color: var(--text-secondary);
 }
 
 .map-appointments__cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px 4px;
+  grid-template-columns: repeat(7, minmax(44px, 1fr));
+  gap: 4px 0;
 }
 
 .map-appointments__cal-day {
   position: relative;
   width: 100%;
-  min-width: 0;
+  min-width: 44px;
   aspect-ratio: 1;
-  min-height: 34px;
+  min-height: 44px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: #fff;
-  font: 500 0.72rem/1 var(--font-ui);
+  color: var(--surface);
+  font: 500 var(--fs-xs)/1 var(--font-ui);
   cursor: pointer;
 }
 
 .map-appointments__cal-day.is-out {
-  color: #aeb9b2;
+  color: var(--text-secondary);
 }
 
 .map-appointments__cal-day.is-selected {
-  background: var(--hj-accent, #e65c3a);
-  color: #fff;
+  background: var(--grab-green);
+  color: var(--on-brand);
 }
 
 .map-appointments__cal-day.is-today:not(.is-selected) {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 0 1px var(--control-border);
 }
 
 .map-appointments__cal-day.has-appt::after {
@@ -216,13 +209,13 @@
   bottom: 3px;
   width: 4px;
   height: 4px;
-  border-radius: 999px;
-  background: var(--hj-accent, #e65c3a);
+  border-radius: var(--radius-pill);
+  background: var(--grab-green);
   transform: translateX(-50%);
 }
 
 .map-appointments__cal-day.is-selected.has-appt::after {
-  background: #fff;
+  background: var(--surface);
 }
 
 .map-appointments__month-sum {
@@ -230,8 +223,8 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border-radius: var(--hj-radius-lg, 22px);
-  background: #26332c;
+  border-radius: var(--radius-lg);
+  background: var(--grab-green);
 }
 
 .map-appointments__month-sum-head {
@@ -242,17 +235,17 @@
 }
 
 .map-appointments__month-sum-head span {
-  font: 500 0.65rem/1 var(--font-ui);
+  font: 500 var(--fs-xs)/1 var(--font-ui);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #aeb9b2;
+  color: var(--text-secondary);
 }
 
 .map-appointments__month-sum-head em {
   font-family: var(--font-ui);
   font-style: normal;
-  font-size: 1.35rem;
-  color: #fff;
+  font-size: var(--fs-xl);
+  color: var(--surface);
 }
 
 .map-appointments__month-chips {
@@ -263,23 +256,23 @@
 
 .map-appointments__month-chips span {
   padding: 5px 10px;
-  border-radius: 999px;
-  font: 500 0.7rem/1.2 var(--font-ui);
+  border-radius: var(--radius-pill);
+  font: 500 var(--fs-xs)/1.2 var(--font-ui);
 }
 
 .map-appointments__month-chips .is-ok {
-  background: #ddebde;
-  color: #2f6c4f;
+  background: var(--success-soft);
+  color: var(--text-primary);
 }
 
 .map-appointments__month-chips .is-wait {
-  background: var(--hj-accent-soft, #fce8df);
-  color: var(--hj-accent, #e65c3a);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .map-appointments__month-chips .is-done {
-  background: #18231d;
-  color: #fff;
+  background: var(--text-heading);
+  color: var(--surface);
 }
 
 /* ── Prep checklist ── */
@@ -288,17 +281,17 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--hj-radius-lg, 22px);
-  background: var(--appointment-solid, #18231d);
-  border: 1px solid #3b4941;
-  color: #fff;
+  border-radius: var(--radius-lg);
+  background: var(--appointment-solid, var(--text-heading));
+  border: 1px solid var(--border);
+  color: var(--surface);
 }
 
 .map-appointments__prep-head h2 {
   margin: 0;
-  color: #fff;
+  color: var(--surface);
   font-family: var(--font-ui);
-  font-size: 1.15rem;
+  font-size: var(--fs-xl);
   font-weight: 400;
 }
 
@@ -315,15 +308,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font: 400 0.78rem/1.3 var(--font-ui);
-  color: #b8c2bc;
+  font: 400 var(--fs-sm)/1.3 var(--font-ui);
+  color: var(--surface);
   cursor: pointer;
 }
 
 .map-appointments__prep-list input {
   width: 15px;
   height: 15px;
-  accent-color: var(--hj-accent, #e65c3a);
+  accent-color: var(--grab-green);
   flex-shrink: 0;
 }
 
@@ -344,14 +337,14 @@
 
 .map-appointments__day-head h2 {
   margin: 0;
-  font: 600 1rem/1.3 var(--font-ui);
+  font: 600 var(--fs-lg)/1.3 var(--font-ui);
   text-transform: capitalize;
-  color: var(--hj-ink, #18231d);
+  color: var(--text-heading);
 }
 
 .map-appointments__day-head span {
-  font: 400 0.85rem/1.3 var(--font-ui);
-  color: var(--hj-muted, #756f64);
+  font: 400 var(--fs-md)/1.3 var(--font-ui);
+  color: var(--text-secondary);
 }
 
 .map-appointments__timeline {
@@ -361,7 +354,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  border-left: 2px solid var(--hj-border, #d8cdbb);
+  border-left: 2px solid var(--border);
 }
 
 .map-appointments__timeline.is-list {
@@ -383,8 +376,8 @@
 }
 
 .map-appointments__tl-time {
-  font: 700 0.85rem/1.2 var(--font-ui);
-  color: var(--hj-ink, #18231d);
+  font: 700 var(--fs-md)/1.2 var(--font-ui);
+  color: var(--text-heading);
   padding-top: 18px;
   text-align: right;
 }
@@ -393,24 +386,24 @@
   display: flex;
   gap: 14px;
   padding: 14px;
-  border-radius: var(--hj-radius-lg, 22px);
-  background: var(--hj-cream, #fff9ef);
-  border: 1px solid var(--hj-border, #d8cdbb);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
   min-width: 0;
 }
 
 .map-appointments__tl-item.is-confirmed .map-appointments__tl-card {
-  background: #fff4ef;
-  border-color: #f0cfc2;
+  background: var(--hj-brand-coral-soft);
+  border-color: var(--border);
 }
 
 .map-appointments__tl-thumb {
   width: 88px;
   height: 88px;
   object-fit: cover;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   flex-shrink: 0;
-  background: var(--hj-border, #d8cdbb);
+  background: var(--border);
 }
 
 .map-appointments__tl-card.no-thumb .map-appointments__tl-thumb {
@@ -435,42 +428,42 @@
 .map-appointments__pill {
   display: inline-flex;
   padding: 3px 9px;
-  border-radius: 999px;
-  font: 700 0.65rem/1.2 var(--font-ui);
+  border-radius: var(--radius-pill);
+  font: 700 var(--fs-xs)/1.2 var(--font-ui);
   letter-spacing: 0.04em;
 }
 
 .map-appointments__pill--confirmed {
-  background: #ddebde;
-  color: #2f6c4f;
+  background: var(--success-soft);
+  color: var(--text-primary);
 }
 
 .map-appointments__pill--pending {
-  background: var(--hj-accent-soft, #fce8df);
-  color: var(--hj-accent, #e65c3a);
+  background: var(--brand-soft);
+  color: var(--grab-green);
 }
 
 .map-appointments__pill--done,
 .map-appointments__pill--muted {
-  background: #ece7dc;
-  color: #5c564c;
+  background: var(--surface-muted);
+  color: var(--text-secondary);
 }
 
 .map-appointments__tl-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 1.15rem;
+  font-size: var(--fs-xl);
   font-weight: 400;
   line-height: 1.25;
-  color: var(--hj-ink, #18231d);
+  color: var(--text-heading);
 }
 
 .map-appointments__tl-note,
 .map-appointments__tl-meta {
   margin: 0;
   overflow-wrap: anywhere;
-  font: 400 0.8rem/1.4 var(--font-ui);
-  color: var(--hj-muted, #756f64);
+  font: 400 var(--fs-sm)/1.4 var(--font-ui);
+  color: var(--text-secondary);
 }
 
 .map-appointments__tl-links {
@@ -481,8 +474,8 @@
 }
 
 .map-appointments__tl-links a {
-  font: 600 0.8rem/1.3 var(--font-ui);
-  color: var(--hj-accent, #e65c3a);
+  font: 600 var(--fs-sm)/1.3 var(--font-ui);
+  color: var(--grab-green);
   text-decoration: none;
 }
 
@@ -502,18 +495,18 @@
   min-height: 36px;
   height: auto;
   padding: 7px 12px;
-  border: 1px solid var(--hj-border, #d8cdbb);
-  border-radius: var(--hj-radius-sm, 8px);
-  background: #fff;
-  font: 600 0.8rem/1 var(--font-ui);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: 600 var(--fs-sm)/1 var(--font-ui);
   cursor: pointer;
-  color: var(--hj-ink, #18231d);
+  color: var(--text-heading);
 }
 
 .map-appointments__actions button.is-primary {
   border-color: transparent;
-  background: var(--appointment-solid, #18231d);
-  color: #fff;
+  background: var(--appointment-solid, var(--text-heading));
+  color: var(--surface);
 }
 
 .map-appointments__actions button:disabled {
@@ -524,28 +517,28 @@
 .map-appointments__empty-state {
   padding: 28px 20px;
   text-align: center;
-  background: var(--hj-cream, #fff9ef);
-  border: 1px dashed var(--hj-border, #d8cdbb);
-  border-radius: var(--hj-radius-lg, 22px);
-  font: 400 0.88rem/1.5 var(--font-ui);
-  color: var(--hj-muted, #756f64);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  font: 400 var(--fs-md)/1.5 var(--font-ui);
+  color: var(--text-secondary);
 }
 
 .map-appointments__error {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--error-soft);
   color: var(--error);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
 }
 
 .map-appointments__reschedule {
   margin-top: 8px;
   padding: 12px;
-  border: 1px solid var(--hj-border, #d8cdbb);
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   display: grid;
   gap: 10px;
 }
@@ -564,21 +557,21 @@
 .map-appointments__reschedule-btn {
   min-height: 36px;
   padding: 7px 14px;
-  border-radius: 8px;
-  font: 650 0.8rem/1 var(--font-ui);
+  border-radius: var(--radius-sm);
+  font: 650 var(--fs-sm)/1 var(--font-ui);
   cursor: pointer;
 }
 
 .map-appointments__reschedule-btn--save {
   border: 0;
-  background: var(--appointment-solid, #18231d);
-  color: #fff;
+  background: var(--appointment-solid, var(--text-heading));
+  color: var(--surface);
 }
 
 .map-appointments__reschedule-btn--cancel {
-  border: 1px solid var(--hj-border, #d8cdbb);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--hj-muted, #756f64);
+  color: var(--text-secondary);
 }
 
 .map-appointments__reschedule-btn:disabled {
@@ -603,19 +596,39 @@
 
 /* Calendar ink follows the local dark card, even when the page is light. */
 html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button) {
-  background: transparent; background-image: none; color: #f4faf7; box-shadow: none; filter: none;
+  background: transparent; background-image: none; color: var(--text-primary); box-shadow: none; filter: none;
   -webkit-backdrop-filter: none; backdrop-filter: none;
 }
-html:root #root .map-appointments__cal .map-appointments__cal-day.is-out { color: #b5c5bc; }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-out { color: var(--text-secondary); }
 html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected {
   background: var(--action-primary); color: var(--action-on-primary); font-weight: 700;
 }
-html:root #root .map-appointments__cal .map-appointments__cal-day.is-today:not(.is-selected) { box-shadow: inset 0 0 0 1px #b5c5bc; }
-html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button):hover { background: #ffffff1a; }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-today:not(.is-selected) { box-shadow: inset 0 0 0 1px var(--control-border); }
+html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button):hover { background: color-mix(in srgb, var(--surface) 10.2%, transparent); }
 html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected:hover { background: var(--action-primary-hover); }
-html:root #root .map-appointments__cal-weekdays { color: #b5c5bc; }
+html:root #root .map-appointments__cal-weekdays { color: var(--text-secondary); }
 @media(forced-colors:active) {
   html:root #root .map-appointments__cal { background: Canvas; color: CanvasText; }
   html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button,.map-appointments__cal-weekdays) { color: ButtonText; }
   html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected { background: Highlight; color: HighlightText; }
 }
+@media (max-width: 767px) { html:root #root .map-appointments__page-title { font-size: var(--fs-2xl); line-height: 32px; letter-spacing: 0; } }
+
+/* The calendar is a regular content card on the page ground, not a black slab. */
+html:root #root .map-appointments__cal { background: var(--surface); color: var(--text-heading); border: 1px solid var(--border); }
+html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button) { color: var(--text-heading); }
+html:root #root .map-appointments__cal .map-appointments__cal-nav button { border: 1px solid var(--border); }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-out { color: var(--text-secondary); opacity: .6; }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-today:not(.is-selected) { box-shadow: inset 0 0 0 1px var(--control-border); }
+html:root #root .map-appointments__cal :is(.map-appointments__cal-day,.map-appointments__cal-nav button):hover { background: var(--surface-muted); }
+html:root #root .map-appointments__cal .map-appointments__cal-day.is-selected:hover { background: var(--action-primary-hover); }
+html:root #root .map-appointments__cal-weekdays { color: var(--text-secondary); }
+html:root #root .map-appointments__month-sum { background: var(--surface-muted); border: 1px solid var(--border); }
+html:root #root .map-appointments__month-sum-head span { color: var(--text-secondary); }
+html:root #root .map-appointments__month-sum-head em { color: var(--text-heading); }
+html:root #root .map-appointments__month-chips .is-done { background: var(--surface); color: var(--text-heading); border: 1px solid var(--border); }
+
+html:root body #root .map-appointments :is(button, select, input:not([type='checkbox']), .map-appointments__add-btn) { min-height: 44px; min-width: 44px; }
+html:root body #root .map-appointments__cal-nav button { width: 44px; height: 44px; }
+html:root body #root .map-appointments__prep-list label { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+html:root body #root .map-appointments :is(button, a, input, select):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }

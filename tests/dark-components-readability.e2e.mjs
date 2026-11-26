@@ -24,7 +24,7 @@ try{
   await page.setViewportSize({width,height:1000})
   for(const scene of['search','tools','appointments','privacy','terms','toast']){
    await page.goto(base+'/'+out+'/index.html?scene='+scene)
-   if(scene==='search'){await page.getByRole('button',{name:'Gợi ý AI',exact:true}).click();await page.getByRole('dialog').waitFor();await check('ai-examples-'+width);const first=page.locator('.natural-rental-search__examples button').first();await first.click();assert.match(await page.getByRole('textbox',{name:'Mô tả nhu cầu của bạn'}).inputValue(),/Dưới 3 triệu/);await check('ai-entered-'+width)}
+   if(scene==='search'){await page.getByRole('button',{name:'Tìm bằng AI',exact:true}).click();await page.getByRole('dialog').waitFor();await check('ai-examples-'+width);const first=page.locator('.natural-rental-search__examples button').first();await first.click();assert.match(await page.getByRole('textbox',{name:'Mô tả nhu cầu của bạn'}).inputValue(),/Dưới 3 triệu/);await check('ai-entered-'+width)}
    else if(scene==='toast'){for(const tone of['error','warning','success','info']){await page.getByRole('button',{name:tone,exact:true}).click();await check('toast-'+tone+'-'+width);await page.locator('.app-toast__close').click()}}
    else {if(scene==='tools'){await page.locator('details.rental-cost > summary').first().click()}await check(scene+'-'+width);if(scene==='appointments'){await page.getByRole('button',{name:'Đổi lịch',exact:true}).first().click();await check('reschedule-'+width);assert.ok(await page.locator('.map-appointments__reschedule').isVisible())}}
   }

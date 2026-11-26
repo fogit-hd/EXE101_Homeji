@@ -1,0 +1,242 @@
+/* Phone detail page (MobileDetailPage.tsx): room detail now, reused by later detail screens. */
+.m-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text-primary);
+  animation: m-detail-in 220ms cubic-bezier(.2, .8, .2, 1);
+}
+@keyframes m-detail-in { from { transform: translateX(24px); opacity: 0; } }
+
+.m-detail__bar {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  min-height: calc(56px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 6px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+.m-detail__title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-heading);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-detail__actions { display: flex; align-items: center; }
+.m-detail__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-heading);
+  cursor: pointer;
+}
+.m-detail__icon[aria-pressed='true'] { color: var(--error); }
+.m-detail__icon:disabled { opacity: .5; }
+
+.m-detail__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Gallery: full-bleed main photo, swipe to change; the thumbnails stay in the full-screen viewer. */
+.m-detail .room-detail__gallery { margin: 0; }
+.m-detail .room-detail__photos { display: block; height: auto; }
+.m-detail .room-detail__thumbs { display: none; }
+.m-detail .room-detail__photo-main { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: 0; }
+.m-detail .room-detail__photo-main span {
+  position: absolute;
+  inset: auto 12px 12px auto;
+  width: auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgb(0 0 0 / .6);
+  color: #fff;
+  font-size: var(--fs-xs, .75rem);
+  font-weight: 600;
+}
+.m-detail .room-detail__photo-fallback { margin: 0; padding: 32px var(--m-gutter, 16px); border-radius: 0; }
+
+/* Headline block. */
+.m-detail__head { display: grid; gap: 6px; padding: 16px var(--m-gutter, 16px) 4px; }
+.m-detail__price { margin: 0; color: var(--grab-green); font-size: var(--fs-heading); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.m-detail__price small { color: var(--text-secondary); font-size: var(--fs-sm, .875rem); font-weight: 600; }
+.m-detail__name { margin: 0; color: var(--text-heading); font-size: var(--fs-lead); font-weight: 700; line-height: 1.35; }
+.m-detail__where { display: flex; gap: 6px; margin: 0; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.45; }
+.m-detail__where svg { flex: none; margin-top: 2px; }
+.m-detail__tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; }
+.m-detail__tags li {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-size: var(--fs-xs, .75rem);
+  font-weight: 600;
+}
+.m-detail__row { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+
+/* Three key facts side by side. */
+.m-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 12px var(--m-gutter, 16px) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+.m-detail__facts > div { display: grid; gap: 2px; min-width: 0; padding: 10px 12px; }
+.m-detail__facts > div + div { border-left: 1px solid var(--border); }
+.m-detail__facts span { color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+.m-detail__facts strong { overflow: hidden; color: var(--text-heading); font-size: var(--fs-sm, .875rem); text-overflow: ellipsis; white-space: nowrap; }
+
+/* Sections: separated by a rule, not boxed in cards. */
+.m-detail__section { margin: 0 var(--m-gutter, 16px); padding: 20px 0; border-bottom: 1px solid var(--border); }
+.m-detail__section:last-child { border-bottom: 0; }
+.m-detail__h { margin: 0 0 10px; color: var(--text-heading); font-size: var(--fs-md, 1rem); font-weight: 700; }
+.m-detail__section > p { margin: 0; color: var(--text-primary); font-size: var(--fs-sm, .875rem); line-height: 1.6; }
+.m-detail__muted { margin: 8px 0 0; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); line-height: 1.5; }
+.m-detail__desc { white-space: pre-line; }
+.m-detail__desc.is-clamped { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 6; line-clamp: 6; }
+.m-detail__more {
+  min-height: 44px;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--grab-green);
+  font: inherit;
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 700;
+  cursor: pointer;
+}
+.m-detail .room-detail__cost { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 8px 0; font-size: var(--fs-sm, .875rem); }
+.m-detail .room-detail__cost span:last-child { text-align: right; font-weight: 700; }
+.m-detail .room-cost-calculator { margin: 16px 0 0; }
+
+/* Owner and contacts. */
+.m-detail .room-detail__owner-profile { margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+.m-detail .room-detail__owner-profile > h4 { display: none; }
+.m-detail__contacts { display: grid; gap: 10px; margin-top: 12px; }
+.m-detail__contacts > :is(a, button):not(.room-detail__flashlight) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  font: inherit;
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.m-detail__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.m-detail__chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-xs, .75rem);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.m-detail__note { margin: 20px var(--m-gutter, 16px) 0; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-muted); font-size: var(--fs-sm, .875rem); line-height: 1.5; }
+.m-detail__note strong { display: block; color: var(--text-heading); }
+.m-detail__foot { display: grid; gap: 8px; justify-items: start; margin: 16px var(--m-gutter, 16px) 0; }
+
+/* Status (loading, error, missing). */
+.m-detail__status { display: grid; gap: 12px; justify-items: center; padding: 48px var(--m-gutter, 16px); color: var(--text-secondary); text-align: center; }
+.m-detail__status h3 { margin: 0; color: var(--text-heading); font-size: var(--fs-lead); }
+.m-detail__skel { width: 100%; aspect-ratio: 4 / 3; background: var(--surface-muted); }
+
+/* Toast and the sticky action bar. */
+.m-detail__toast { padding: 10px var(--m-gutter, 16px); border-top: 1px solid var(--border); background: var(--surface-elevated); font-size: var(--fs-sm, .875rem); }
+.m-detail__toast .is-err { color: var(--error); }
+.m-detail__toast p { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
+.m-detail__toast button { min-height: 36px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface); color: var(--text-heading); font: inherit; font-weight: 700; cursor: pointer; }
+.m-detail__cta {
+  display: flex;
+  gap: 10px;
+  padding: 10px var(--m-gutter, 16px) calc(10px + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+.m-detail__cta > * { flex: 1; }
+.m-detail__cta .m-btn { min-width: 0; padding: 0 12px; }
+
+/* Schedule sheet. */
+.m-schedule { display: grid; gap: 14px; }
+.m-schedule label { display: grid; gap: 6px; color: var(--text-heading); font-size: var(--fs-sm, .875rem); font-weight: 600; }
+.m-schedule input { min-height: 48px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text-heading); font: inherit; font-size: var(--fs-lg); }
+
+/* The app header and tab bar stay underneath; keep the page from scrolling behind. */
+html:has(.m-detail) body { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) { .m-detail { animation: none; } }
+
+/* Owner block pieces reused from the desktop detail, resized for phones. */
+.m-detail .room-detail__person { display: flex; align-items: center; gap: 12px; }
+.m-detail .room-detail__avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--text-heading);
+  font-weight: 800;
+}
+.m-detail .room-detail__owner-label { display: none; }
+.m-detail .room-detail__person strong { font-size: var(--fs-md, 1rem); }
+.m-detail .room-detail__owner-phone { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.m-detail .room-detail__owner-phone .room-detail__owner-label { display: block; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+.m-detail .room-detail__phone-value { font-size: var(--fs-md, 1rem); font-weight: 700; letter-spacing: .02em; }
+html:root body .m-detail .room-detail__phone-hint { margin: -4px 0 0; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+/* Call and Zalo share a row; the phone line and social links span it. */
+.m-detail__contacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.m-detail__contacts > :not(a, button) { grid-column: 1 / -1; }
+/* Inside a sheet the calendar opens in place instead of floating (a fixed panel would be
+   positioned against the sheet's transform and land off screen). */
+html[data-device='mobile'] .m-schedule .schedule-dt__panel {
+  position: static;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  margin-top: 8px;
+  transform: none;
+  box-shadow: none;
+  animation: none;
+}
+/* The page is portaled outside #root, where global link colours still reach it. */
+html body .m-detail a.m-btn { text-decoration: none; }
+html body .m-detail a.m-btn--primary { color: var(--action-on-primary); }
+.m-detail__contacts > .source-room-detail__copy { grid-column: 1 / -1; }

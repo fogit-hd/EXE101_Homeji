@@ -72,3 +72,14 @@ export function createClusterListings(listings: ClusterListing[], onZoom: () => 
   toolbar.append(zoom); root.append(heading, toolbar, list)
   return root
 }
+
+/** Maps sizes its own viewport; use that one scroller instead of clipping a nested list. */
+export function configureClusterScroll(content: HTMLElement): void {
+  const viewport = content.closest<HTMLElement>('.gm-style-iw-d')
+  if (!viewport) return
+  viewport.style.overflowY = 'auto'
+  viewport.style.overflowX = 'hidden'
+  viewport.style.overscrollBehavior = 'contain'
+  viewport.style.scrollbarGutter = 'stable'
+  viewport.scrollTop = 0
+}

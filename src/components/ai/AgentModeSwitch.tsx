@@ -1,3 +1,4 @@
+import { agentAccessSnapshot } from '../../lib/agentAccessSnapshot'
 import { HomejiAgentMark } from './HomejiAgentMark'
 import { memo, useEffect, useState } from 'react'
 import { getMySubscription } from '../../api'
@@ -64,16 +65,7 @@ export const AgentModeSwitch = memo(function AgentModeSwitch({
 
   useEffect(() => {
     if (!serverAccess || !authenticated) return
-    setAccess(prev => ({
-      kind: 'ready',
-      canUse: serverAccess.canUse,
-      isPremium: serverAccess.isPremium,
-      premiumExpiresAt: prev?.kind === 'ready' ? prev.premiumExpiresAt : null,
-      freeWeeklyLimit: serverAccess.freeWeeklyLimit,
-      freeWeeklyRemaining: serverAccess.freeWeeklyRemaining,
-      hasActiveFreeSession: serverAccess.hasActiveFreeSession,
-      nextFreeResetAt: serverAccess.nextFreeResetAt ?? null,
-    }))
+    setAccess(agentAccessSnapshot(serverAccess))
   }, [serverAccess, authenticated])
 
   useEffect(() => {
@@ -91,16 +83,7 @@ export const AgentModeSwitch = memo(function AgentModeSwitch({
         const serverAccess = subscription.agentAccess
         if (alive) {
           if (serverAccess) {
-            setAccess({
-              kind: 'ready',
-              canUse: serverAccess.canUse,
-              isPremium: serverAccess.isPremium,
-              premiumExpiresAt: Number.isFinite(expiresAt) ? expiresAt : null,
-              freeWeeklyLimit: serverAccess.freeWeeklyLimit,
-              freeWeeklyRemaining: serverAccess.freeWeeklyRemaining,
-              hasActiveFreeSession: serverAccess.hasActiveFreeSession,
-              nextFreeResetAt: serverAccess.nextFreeResetAt ?? null,
-            })
+            setAccess(agentAccessSnapshot(serverAccess))
           } else {
             const legacyPremium = Boolean(hasValidPremium && (!Number.isFinite(expiresAt) || expiresAt > Date.now()))
             setAccess({

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useId, useReducer, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { isVisibleFocusTarget } from '../../lib/isVisibleFocusTarget'
@@ -41,12 +42,12 @@ export default function MemoryGame({ open, onClose, waiting = false }: { open: b
   return createPortal(<dialog ref={dialog} className="homeji-memory" role="dialog" aria-modal="true" aria-labelledby={titleId} data-glass-exclude
     onCancel={event => { event.preventDefault(); onClose() }} onClose={onClose}>
     <header className="homeji-memory__header">
-      <div><span className="homeji-memory__eyebrow">CHƠI MỘT CHÚT</span><h2 id={titleId}>Lật thẻ Góc nhà</h2></div>
-      <button type="button" className="homeji-memory__close" aria-label="Đóng trò chơi" onClick={onClose}>×</button>
+      <div><h2 id={titleId}>Lật thẻ Góc nhà</h2></div>
+      <button type="button" className="homeji-memory__close" aria-label="Đóng trò chơi" title="Đóng trò chơi" onClick={onClose}><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button>
     </header>
     {ready ? <div className="homeji-memory__ready" role="status"><span>Homeji đã phản hồi.</span><button type="button" onClick={onClose}>Quay lại chat</button></div> : null}
     <p className="homeji-memory__intro">Tìm 4 cặp đồ vật, gom một góc nhà xinh.</p>
-    <div className="homeji-memory__scenery" aria-hidden="true"><img src="/games/nso-garden.png" width="1026" height="256" alt="" decoding="async" /></div>
+    <div className="homeji-memory__scenery" aria-hidden="true"><img loading="eager" src="/games/nso-garden.png" width="1026" height="256" alt="" decoding="async" /></div>
     <div className="homeji-memory__score">
       <span><strong>{game.matched.length / 2}<small>/4</small></strong>Cặp đã tìm</span>
       <span><strong>{game.moves}</strong>Lượt lật</span>

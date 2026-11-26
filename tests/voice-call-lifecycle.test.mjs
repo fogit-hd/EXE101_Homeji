@@ -7,6 +7,7 @@ import ts from 'typescript'
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { JSDOM } from 'jsdom'
+import { withLucide } from './helpers/lucide-module.mjs'
 
 const require = createRequire(import.meta.url)
 const url = code => `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
@@ -24,7 +25,7 @@ export const LogLevel={None:0};export const HubConnectionState={Connected:'Conne
 export class HubConnectionBuilder{withUrl(){return this}withAutomaticReconnect(){return this}configureLogging(){return this}build(){return globalThis.__voiceTest.hub}}
 `)
 let source = await readFile(new URL('../src/contexts/VoiceCallContext.tsx', import.meta.url), 'utf8')
-source = source.replace("import './VoiceCallContext.css'", '')
+source = withLucide(source.replace("import './VoiceCallContext.css'", ''))
 for (const name of ['@microsoft/signalr', '../api/client', '../api/sessionRefresh', './AuthContext', '../lib/errors']) source = source.replaceAll(`'${name}'`, JSON.stringify(mocksUrl))
 source = source.replace("'./voice-call'", JSON.stringify(contextUrl))
 const toneSource = await readFile(new URL('../src/lib/callTone.ts', import.meta.url), 'utf8')

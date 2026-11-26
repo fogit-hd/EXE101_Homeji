@@ -1,0 +1,83 @@
+/* ── Chapter 04's dial: one 24-hour face, two rings (An outside, Bình inside) ──────
+   Lives inside .hx-sc, so it takes the story tokens. Resting state = the finished day. */
+.hx-dd {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  align-items: center;
+  gap: 18px 28px;
+  margin: 0;
+  padding: 22px 24px;
+  border-radius: 24px;
+  border: 1px solid var(--sc-paper-line);
+  background: var(--sc-paper);
+  color: var(--sc-ink);
+  box-shadow: var(--sc-shadow);
+}
+.hx-dd__face { position: relative; width: 100%; aspect-ratio: 1; }
+.hx-dd svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.hx-dd__track { fill: none; stroke: rgb(27 20 16 / 0.05); stroke-width: 14; }
+.hx-dd__arc { fill: none; stroke-width: 14; stroke-linecap: butt; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.hx-dd__arc--sleep { stroke: #3d3560; }
+.hx-dd__arc--study { stroke: #e2d3bf; }
+.hx-dd__arc--cook { stroke: var(--sc-orange); }
+.hx-dd__arc--quiet { stroke: var(--sc-moss); }
+.hx-dd text { font: inherit; text-anchor: middle; dominant-baseline: central; }
+.hx-dd__tick { stroke: rgb(27 20 16 / 0.18); stroke-width: 1.5; stroke-linecap: round; }
+.hx-dd__tick--major { stroke: rgb(27 20 16 / 0.45); stroke-width: 2; }
+.hx-dd__hour { font-size: 11px; font-weight: 700; fill: var(--sc-ink-muted); }
+.hx-dd__shared path { fill: rgb(4 120 87 / 0.12); }
+.hx-dd__shared circle { fill: var(--sc-moss); }
+.hx-dd__shared text { fill: #fff; font-size: 12px; font-weight: 800; }
+.hx-dd__hand { opacity: 0; } /* the finished day has no hand */
+.hx-dd__hand line { stroke: #c2410c; stroke-width: 3; stroke-linecap: round; }
+
+.hx-dd__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.hx-dd__time { font-size: clamp(1.6rem, 1.1rem + 1.2vw, 2.2rem); font-weight: 850; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.hx-dd__match { display: flex; align-items: baseline; gap: 5px; color: var(--sc-moss); font-weight: 800; white-space: nowrap; }
+.hx-dd__match small { font-size: 0.8rem; }
+.hx-dd__match b { font-size: 1.05rem; }
+
+.hx-dd__side { display: grid; gap: 14px; align-content: center; }
+.hx-dd__title { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--sc-ink); }
+.hx-dd__chip { display: inline-grid; place-items: center; width: 22px; height: 22px; margin: 0 5px 0 6px; border-radius: 50%; color: #fff; font-size: 0.72rem; font-weight: 800; vertical-align: 1px; }
+.hx-dd__chip--out, .hx-dd__avatar--out circle { background: #c2410c; fill: #c2410c; }
+.hx-dd__chip--in, .hx-dd__avatar--in circle { background: #1f6f8b; fill: #1f6f8b; }
+.hx-dd__avatar circle { stroke: var(--sc-paper); stroke-width: 3; }
+.hx-dd__avatar text { fill: #fff; font-size: 12px; font-weight: 800; }
+.hx-dd__list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.hx-dd__list li { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 700; color: var(--sc-ink); }
+.hx-dd__list time { min-width: 3.2em; font-weight: 800; color: #c2410c; font-variant-numeric: tabular-nums; }
+.hx-dd__n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--sc-moss); color: #fff; font-size: 0.78rem; font-weight: 800; }
+.hx-dd__n svg { width: 14px; height: 14px; }
+.hx-dd__legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; }
+.hx-dd__legend li { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: var(--sc-ink-muted); }
+.hx-dd__legend span { width: 14px; height: 10px; border-radius: 3px; }
+.hx-dd figcaption { margin: 0; font-size: 0.72rem; font-weight: 650; color: var(--sc-ink-muted); }
+
+/* phones: the dial on top, the shared stretches under it; no running clock (CSS can't count) */
+@media (max-width: 767px) {
+  .hx-dd { grid-template-columns: 1fr; gap: 10px; padding: 12px 14px; border-radius: 20px; }
+  .hx-dd__face { width: min(100%, 286px); justify-self: center; }
+  .hx-dd__time { display: none; }
+  .hx-dd__side { gap: 8px; }
+  .hx-dd__title { text-align: center; font-size: 0.85rem; }
+  .hx-dd__match { flex-direction: column; align-items: center; gap: 0; line-height: 1; }
+  .hx-dd__match b { font-size: 1.5rem; }
+  .hx-dd__list { grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  .hx-dd__list li { gap: 6px; font-size: 0.74rem; line-height: 1.25; }
+  .hx-dd__list time { display: none; }
+  .hx-dd__n { width: 20px; height: 20px; font-size: 0.7rem; }
+  .hx-dd__legend li { font-size: 0.7rem; }
+  .hx-dd figcaption { display: none; }
+}
+
+@keyframes hx-dd-draw { from { stroke-dashoffset: 1; } }
+@keyframes hx-dd-hand { from { transform: rotate(-90deg); opacity: 1; } 94% { opacity: 1; } to { transform: rotate(172.5deg); opacity: 0; } }

@@ -77,6 +77,9 @@ function fromNativePost(post: RentalPostSummary): Listing | null {
       role: kind === 'roommate' ? 'Người tìm ở ghép' : 'Chủ trọ',
     },
     href: `/posts/${encodeURIComponent(post.id)}`,
+    coords: Number.isFinite(post.latitude) && Number.isFinite(post.longitude) && post.latitude !== 0 && post.longitude !== 0
+      ? { lat: post.latitude, lng: post.longitude }
+      : undefined,
   }
 }
 

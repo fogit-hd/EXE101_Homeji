@@ -1,0 +1,223 @@
+/* Step 6: the remaining section pages on phones (Đã lưu, Lịch xem phòng, Tin của tôi, Premium, …).
+   Loaded once from FeatureWorkspace; every rule is scoped to the mobile tree. */
+
+/* Đã lưu ----------------------------------------------------------------- */
+html[data-device='mobile']:root body #root .rental-journey-workspace {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  box-shadow: none;
+}
+html[data-device='mobile']:root body #root .rental-journey-workspace > h2 { margin: 0 0 4px; font-size: var(--fs-lg); line-height: 1.35; }
+html[data-device='mobile']:root body #root .rental-journey-workspace > p { margin: 0; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.5; }
+html[data-device='mobile']:root body #root .saved-posts-embed .grid-posts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+html[data-device='mobile']:root body #root .saved-posts-embed .grid-posts > div { padding: 0; border: 0; background: none; box-shadow: none; transform: none; }
+
+/* Lịch xem phòng -------------------------------------------------------- */
+/* The app header names the page; the count and the add button share one row, the view switch spans the width. */
+html[data-device='mobile']:root body #root .map-appointments { padding: 0; }
+html[data-device='mobile']:root body #root .map-appointments__page-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; margin: 0 0 12px; padding: 0; }
+html[data-device='mobile']:root body #root .map-appointments__page-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-device='mobile']:root body #root .map-appointments__page-lead { margin: 0; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.45; }
+html[data-device='mobile']:root body #root .map-appointments__page-tools { display: contents; }
+html[data-device='mobile']:root body #root .map-appointments__add-btn { grid-column: 2; grid-row: 1; min-height: 44px; margin: 0; padding: 0 16px; font-size: var(--fs-sm, .875rem); white-space: nowrap; }
+html[data-device='mobile']:root body #root .map-appointments__view-toggle {
+  display: grid; grid-column: 1 / -1; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; width: 100%; margin: 0; padding: 3px;
+  border-radius: var(--radius-md); background: var(--surface-muted); box-shadow: inset 0 0 0 1px var(--border);
+}
+html[data-device='mobile']:root body #root .map-appointments__view-toggle button { min-height: 38px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); font-weight: 600; box-shadow: none; }
+html[data-device='mobile']:root body #root .map-appointments__view-toggle button[aria-pressed='true'] { background: var(--surface-elevated); color: var(--text-heading); box-shadow: 0 1px 2px color-mix(in srgb, var(--text-heading) 14%, transparent); }
+
+/* Calendar, then the chosen day's viewings, then the checklist: the rail stops being a column. */
+html[data-device='mobile']:root body #root .map-appointments__layout { display: flex; flex-direction: column; gap: 16px; }
+html[data-device='mobile']:root body #root .map-appointments__rail { display: contents; }
+html[data-device='mobile']:root body #root .map-appointments__cal { order: 1; padding: 12px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .map-appointments__main { order: 2; }
+html[data-device='mobile']:root body #root .map-appointments__prep { order: 3; align-self: stretch; width: auto; max-width: none; }
+html[data-device='mobile']:root body #root .map-appointments__cal-nav { margin-bottom: 6px; }
+html[data-device='mobile']:root body #root .map-appointments__cal-nav button { width: 44px; height: 44px; }
+html[data-device='mobile']:root body #root .map-appointments__cal-grid button { min-height: 40px; height: 40px; }
+html[data-device='mobile']:root body #root .map-appointments__month-sum { margin-top: 10px; padding: 10px 12px; }
+html[data-device='mobile']:root body #root .map-appointments__day-head { margin: 0 0 8px; }
+html[data-device='mobile']:root body #root .map-appointments__day-head h2 { font-size: var(--fs-lg); }
+html[data-device='mobile']:root body #root .map-appointments__empty-state { padding: 16px; }
+/* The checklist reads as a plain card on phones instead of a dark slab between sections. */
+html[data-device='mobile']:root body #root .map-appointments__prep { padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-primary); }
+html[data-device='mobile']:root body #root .map-appointments__prep h2 { margin: 0 0 4px; color: var(--text-heading); font-size: var(--fs-lg); }
+html[data-device='mobile']:root body #root .map-appointments__prep-list label { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--text-primary); }
+
+/* Header actions portalled by section pages (Tin của tôi, Tin tìm phòng…): one scrolling row, never a wrapped stack. */
+html[data-device='mobile']:root body #root .feature-workspace .page-frame__actions:has(> *) {
+  display: flex; flex-wrap: nowrap; gap: 8px; width: auto;
+  margin: 0 calc(var(--m-gutter, 16px) * -1); padding: 0 var(--m-gutter, 16px) 2px;
+  overflow-x: auto; scrollbar-width: none;
+}
+html[data-device='mobile']:root body #root .feature-workspace .page-frame__actions > :is(a, button) { flex: none; min-height: 40px; margin: 0; padding: 0 14px; font-size: var(--fs-sm, .875rem); white-space: nowrap; }
+html[data-device='mobile']:root body #root .feature-workspace .page-frame__header:has(.page-frame__actions > *) { margin-bottom: 0; }
+
+/* Tin của tôi ----------------------------------------------------------- */
+html[data-device='mobile']:root body #root .rental-owner-card { display: block; padding: 12px 14px; border-radius: var(--radius-md); }
+html[data-device='mobile']:root body #root .rental-owner-card h3 { margin: 6px 0 2px; font-size: var(--fs-lg); line-height: 1.35; }
+html[data-device='mobile']:root body #root .rental-owner-card p { margin: 0; font-size: var(--fs-xs, .75rem); color: var(--text-secondary); }
+html[data-device='mobile']:root body #root .rental-owner-card small { color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+html[data-device='mobile']:root body #root .rental-owner-card .notification-item__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; }
+html[data-device='mobile']:root body #root .rental-owner-card .notification-item__actions .btn { min-height: 40px; margin: 0; }
+html[data-device='mobile']:root body #root .rental-owner-card .notification-item__actions .btn-ghost { margin-right: auto; padding-inline: 0; }
+html[data-device='mobile']:root body #root .feature-page > .card:has(> p > strong) { padding: 10px 14px; border-radius: var(--radius-md); font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile']:root body #root .notification-list { gap: 10px; }
+
+/* Any page frame: the app header already shows the page name, so the frame's h1 is for screen readers. */
+html[data-device='mobile']:root body #root .page-frame__title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Đăng tin / Sửa tin ------------------------------------------------------ */
+html[data-device='mobile']:root body #root .rental-post-page { padding-top: 12px; }
+/* The same two actions sit at the end of the form; on phones they live only there, pinned above the tab bar. */
+html[data-device='mobile']:root body #root .rental-post-page .page-frame__actions { display: none; }
+html[data-device='mobile']:root body #root .rental-post-page .page-subtitle { margin: 0 0 8px; font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile']:root body #root .post-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 0 0 14px; }
+html[data-device='mobile']:root body #root .post-steps > * { padding: 6px 4px; border-radius: var(--radius-sm); font-size: var(--fs-xs, .75rem); line-height: 1.3; text-align: center; }
+html[data-device='mobile']:root body #root .post-steps > strong { background: var(--grab-green); color: var(--on-brand); }
+html[data-device='mobile']:root body #root .rental-post-page :is(.rental-edit-form, .rental-media-card) { padding: 16px 14px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .rental-post-page :is(.rental-edit-form, .rental-media-card) h2 { font-size: var(--fs-lead); line-height: 1.3; }
+html[data-device='mobile']:root body #root .rental-post-page .form-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+html[data-device='mobile']:root body #root .rental-form-actions {
+  position: sticky; bottom: var(--m-tabbar-h, 56px); z-index: 5;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px;
+  margin: 16px calc(var(--m-gutter, 16px) * -1) 0; padding: 10px var(--m-gutter, 16px);
+  border-top: 1px solid var(--border); background: var(--surface-elevated);
+}
+html[data-device='mobile']:root body #root .rental-form-actions > .btn { min-height: 48px; margin: 0; }
+html[data-device='mobile']:root body #root .rental-post-page :is(.rental-edit-form, .rental-media-card) > :is(p, section > p, div > p):not(.form-hint) { font-size: var(--fs-sm, .875rem); line-height: 1.5; }
+
+/* Gói Premium ----------------------------------------------------------- */
+html[data-device='mobile']:root body #root .pay-v2 .pay-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* A tap leaves :hover on, freezing the sheen half way across the card; phones get no sheen. */
+html[data-device='mobile']:root body #root .pay-v2 .pay-plan::after { display: none; }
+html[data-device='mobile']:root body #root .pay-v2 .pay-plan { translate: none; }
+html[data-device='mobile']:root body #root .pay-current { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 12px; margin: 0 0 14px; padding: 14px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .pay-current__icon { width: 40px; height: 40px; }
+html[data-device='mobile']:root body #root .pay-current__actions { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+html[data-device='mobile']:root body #root .pay-current__wallet { grid-column: 1 / -1; justify-self: start; }
+html[data-device='mobile']:root body #root .pay-current__actions .pay-btn { min-height: 44px; width: 100%; margin: 0; padding-inline: 8px; font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile']:root body #root .pay-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; margin: 0 0 14px; box-shadow: inset 0 0 0 1px var(--border); }
+html[data-device='mobile']:root body #root .pay-plan-grid { gap: 10px; }
+html[data-device='mobile']:root body #root .pay-v2 .pay-plan { padding: 14px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .pay-plan__price-box { padding: 12px 14px; }
+html[data-device='mobile']:root body #root .pay-compare { overflow-x: auto; }
+
+/* Shared section-page pieces: liquid tab pairs span the width; list cards stay compact. */
+html[data-device='mobile']:root body #root .feature-page > .liquid-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; margin: 0 0 12px; box-shadow: inset 0 0 0 1px var(--border); }
+html[data-device='mobile']:root body #root .feature-page .notification-list > .notification-item { display: block; padding: 12px 14px; border-radius: var(--radius-md); }
+html[data-device='mobile']:root body #root .feature-page .notification-list > .notification-item h3 { margin: 6px 0 4px; font-size: var(--fs-lg); line-height: 1.35; }
+html[data-device='mobile']:root body #root .feature-page .notification-list > .notification-item p { margin: 2px 0 0; font-size: var(--fs-sm, .875rem); line-height: 1.45; }
+html[data-device='mobile']:root body #root .feature-page .notification-list > .notification-item .notification-item__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* Tin tìm phòng: area and budget side by side under the actions. */
+html[data-device='mobile']:root body #root .wanted-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin: 10px 0 0; }
+html[data-device='mobile']:root body #root .wanted-filters .form-input { min-height: 44px; margin: 0; font-size: var(--fs-sm, .875rem); }
+
+/* Nhật ký hoạt động: one grouped list per day with hairlines, not a card per log line. */
+html[data-device='mobile']:root body #root .activity-day { margin: 0 0 16px; }
+html[data-device='mobile']:root body #root .activity-day__title { margin: 0 0 6px; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); font-weight: 700; }
+html[data-device='mobile']:root body #root .activity-day .notification-list { gap: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-elevated); }
+html[data-device='mobile']:root body #root .activity-day .notification-list > .activity-item { margin: 0; padding: 10px 14px; border: 0; border-radius: 0; box-shadow: none; background: none; }
+html[data-device='mobile']:root body #root .activity-day .notification-list > .activity-item + .activity-item { border-top: 1px solid var(--border); }
+html[data-device='mobile']:root body #root .activity-item__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+html[data-device='mobile']:root body #root .activity-item__header .badge { padding: 2px 8px; font-size: var(--fs-xs); }
+html[data-device='mobile']:root body #root .activity-item__time { color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+html[data-device='mobile']:root body #root .activity-item h3, html[data-device='mobile']:root body #root .activity-item__body > :is(p, strong) { margin: 4px 0 0; font-size: var(--fs-sm, .875rem); }
+
+/* Trợ giúp: each group is one card of tappable rows with a chevron, like a settings list. */
+html[data-device='mobile']:root body #root .help-page section { margin: 18px 0 0; }
+html[data-device='mobile']:root body #root .help-page h2 { margin: 0 0 8px; font-size: var(--fs-lead); line-height: 1.3; }
+html[data-device='mobile']:root body #root .help-page section { overflow: hidden; }
+html[data-device='mobile']:root body #root .help-page details { margin: 0; border: 1px solid var(--border); border-bottom-width: 0; background: var(--surface-elevated); }
+html[data-device='mobile']:root body #root .help-page details:first-of-type { border-radius: 14px 14px 0 0; }
+html[data-device='mobile']:root body #root .help-page details:last-of-type { border-bottom-width: 1px; border-radius: 0 0 14px 14px; }
+html[data-device='mobile']:root body #root .help-page details:only-of-type { border-radius: var(--radius-md); }
+html[data-device='mobile']:root body #root .help-page summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 10px 14px;
+  font-size: var(--fs-sm, .875rem); font-weight: 600; line-height: 1.4; list-style: none; cursor: pointer;
+}
+html[data-device='mobile']:root body #root .help-page summary::-webkit-details-marker { display: none; }
+html[data-device='mobile']:root body #root .help-page summary::after {
+  flex: none; width: 8px; height: 8px; border-right: 2px solid var(--text-secondary); border-bottom: 2px solid var(--text-secondary);
+  content: ''; transform: rotate(45deg) translateY(-2px); transition: transform .18s var(--ease-out, ease-out);
+}
+html[data-device='mobile']:root body #root .help-page details[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
+html[data-device='mobile']:root body #root .help-page__answer { padding: 0 14px 12px; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.55; }
+html[data-device='mobile']:root body #root .help-page__answer p { margin: 0 0 6px; }
+@media (prefers-reduced-motion: reduce) { html[data-device='mobile']:root body #root .help-page summary::after { transition: none; } }
+
+/* Hồ sơ ------------------------------------------------------------------ */
+html[data-device='mobile']:root body #root .profile-account { padding: 0; }
+/* Identity as one row: avatar left, name and badges right. The "back home" link duplicates the tab bar. */
+html[data-device='mobile']:root body #root .profile-account-header { display: block; margin: 0 0 12px; padding: 14px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .profile-account-header__identity { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 14px; text-align: left; }
+html[data-device='mobile']:root body #root .profile-account-avatar { width: 64px; height: 64px; margin: 0; }
+html[data-device='mobile']:root body #root .profile-account-avatar img { width: 64px; height: 64px; }
+html[data-device='mobile']:root body #root .profile-account-avatar small { font-size: var(--fs-xs); }
+html[data-device='mobile']:root body #root .profile-account-header__identity h1 { margin: 0 0 4px; font-size: var(--fs-lead); line-height: 1.3; text-align: left; }
+html[data-device='mobile']:root body #root .profile-account-header__identity p { justify-content: flex-start; margin: 0; }
+html[data-device='mobile']:root body #root .profile-account-header__home { display: none; }
+html[data-device='mobile']:root body #root .profile-overview { gap: 12px; }
+html[data-device='mobile']:root body #root .profile-information { padding: 14px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .profile-information__heading h2, html[data-device='mobile']:root body #root .premium-contact-editor h2 { font-size: var(--fs-lead); line-height: 1.3; }
+html[data-device='mobile']:root body #root .premium-contact-editor > header p { font-size: var(--fs-sm, .875rem); line-height: 1.5; }
+html[data-device='mobile']:root body #root .profile-account-links > a { min-height: 64px; padding: 12px 14px; }
+/* Profile editor: the page heading names the step; the form card's own heading would repeat it. */
+html[data-device='mobile']:root body #root .profile-editor-heading { margin: 0 0 12px; }
+html[data-device='mobile']:root body #root .profile-editor-heading h2 { margin: 6px 0 2px; font-size: var(--fs-lead); line-height: 1.3; }
+html[data-device='mobile']:root body #root .profile-editor-heading p { margin: 0; font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile']:root body #root .profile-section { padding: 14px; border-radius: var(--radius-lg); }
+html[data-device='mobile']:root body #root .profile-section__head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-device='mobile']:root body #root .profile-grid { grid-template-columns: minmax(0, 1fr); }
+html[data-device='mobile']:root body #root .profile-section__actions {
+  position: sticky; bottom: var(--m-tabbar-h, 56px); z-index: 5;
+  display: flex; gap: 8px; margin: 16px -14px -14px; padding: 10px 14px; border-top: 1px solid var(--border);
+  border-radius: 0 0 16px 16px; background: var(--surface-elevated);
+}
+html[data-device='mobile']:root body #root .profile-section__actions .btn { flex: 1; min-height: 48px; margin: 0; }
+
+/* Quyền riêng tư / Điều khoản: plain reading column on the page ground; the tab bar replaces "Về Homeji". */
+html[data-device='mobile']:root body #root .legal-page { padding: 16px var(--m-gutter, 16px) 32px; }
+html[data-device='mobile']:root body #root .legal-page__card { max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+html[data-device='mobile']:root body #root .legal-page__back { display: none; }
+html[data-device='mobile']:root body #root .legal-page__card h1 { margin: 0 0 6px; font-size: var(--fs-heading); line-height: 1.25; }
+html[data-device='mobile']:root body #root .legal-page__content h2 { font-size: var(--fs-lead); line-height: 1.35; }
+html[data-device='mobile']:root body #root .legal-page__content :is(p, li) { font-size: var(--fs-lg); line-height: 1.65; }
+
+/* Thông báo sheet: the sheet body owns the gutter; the feed's own desktop padding doubled it. */
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify__head,
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 10px; }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify__title { margin: 0; font-size: var(--fs-lead); }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify__mark-all { min-height: 44px; }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify__tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; margin: 0 0 8px; padding: 3px; border-radius: var(--radius-md); background: var(--surface-muted); box-shadow: inset 0 0 0 1px var(--border); }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify-feed { padding: 0 0 12px; }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-notify-feed__day { margin: 8px 0 2px; font-size: var(--fs-xs, .75rem); }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-nrow__main { gap: 12px; padding: 10px 0; }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-nrow__msg { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--fs-sm, .875rem); }
+/* A footer holding only the read status repeats what the row's weight already shows. */
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-nrow__footer:not(:has(button, a)) { display: none; }
+html[data-device='mobile']:root body #root .m-notify-sheet .hj-nrow__footer { padding: 0 0 10px 44px; }
+/* Giao dịch: the paid total spans the top, the two counts share a row beneath it. */
+html[data-device='mobile']:root body #root .pay-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+html[data-device='mobile']:root body #root .pay-stats > div { padding: 12px 14px; }
+html[data-device='mobile']:root body #root .pay-stats > div:first-child { grid-column: 1 / -1; border-bottom: 1px solid var(--border); }
+html[data-device='mobile']:root body #root .pay-stats > div + div + div { border-left: 1px solid var(--border); }
+html[data-device='mobile']:root body #root .pay-stats > div:not(:first-child) { border-top: 0; }
+html[data-device='mobile']:root body #root .pay-stats strong { font-size: var(--fs-xl); }
+html[data-device='mobile']:root body #root .pay-stats > div:first-child strong { font-size: var(--fs-heading); }
+/* History rows: plan + amount on top, method + status below; the order code stays on one line. */
+html[data-device='mobile']:root body #root .pay-table__row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'plan amount' 'method status';
+  align-items: center; gap: 6px 12px; padding: 12px 14px;
+}
+html[data-device='mobile']:root body #root .pay-table__plan { grid-area: plan; min-width: 0; }
+html[data-device='mobile']:root body #root .pay-table__plan small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-device='mobile']:root body #root .pay-table__amount { display: block; grid-area: amount; justify-self: end; font-weight: 700; white-space: nowrap; }
+html[data-device='mobile']:root body #root .pay-table__method { grid-area: method; min-width: 0; }
+html[data-device='mobile']:root body #root .pay-table__status { grid-area: status; justify-self: end; width: auto; white-space: nowrap; }
+html[data-device='mobile']:root body #root .pay-table__time { display: none; }

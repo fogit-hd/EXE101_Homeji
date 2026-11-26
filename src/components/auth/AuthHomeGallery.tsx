@@ -25,7 +25,7 @@ export function AuthHomeGallery() {
         <div className="auth-home-gallery__track">
           {[0, 1].map(copy => <div className="auth-home-gallery__set" key={copy}>
             {column.map((photo, order) => <div className="auth-home-gallery__photo" key={photo}>
-              <img src={photos[photo].src} alt="" width="400" height="540" draggable={false}
+              <img loading={index === 0 && copy === 0 && order === 0 ? 'eager' : 'lazy'} src={photos[photo].src} alt="" width="400" height="540" draggable={false}
                 decoding="async" fetchPriority={index === 0 && copy === 0 && order === 0 ? 'high' : 'low'}
                 style={{ objectPosition: photos[photo].position }} />
             </div>)}

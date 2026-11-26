@@ -13,6 +13,7 @@ import {
   ProfileSkeleton, SavedSkeleton, WantedSkeleton,
 } from './PageSkeletons'
 import { authSkeletonMode } from './authSkeletonMode'
+import { Sk, SkCard, SkHeader, SkScreen } from './Skeleton'
 
 /** Sections whose page draws its own header (FeatureWorkspace hides the frame title). */
 const OWN_HEADER = new Set<MapAppSection>(['messages', 'appointments', 'payments', 'profile', 'marketplace'])
@@ -36,6 +37,11 @@ export function SectionSkeleton({ section, withFrameHeader = false }: { section:
     }
     case 'wanted': return <WantedSkeleton withHeader={head} />
     case 'activities': return <ActivitiesSkeleton withHeader={head} />
+    case 'help': return <SkScreen name="help" label="Đang tải trợ giúp…">
+      {head && <SkHeader titleWidth={180} />}
+      <Sk h={48} />
+      {[0, 1, 2].map(group => <SkCard key={group}><Sk w="40%" h={24} /><Sk h={48} /><Sk h={48} /></SkCard>)}
+    </SkScreen>
     case 'myPosts': return <MyPostsSkeleton withHeader={head} />
     default: return <HubSkeleton />
   }
@@ -46,19 +52,19 @@ const REDIRECT_SECTIONS: Record<string, MapAppSection> = {
   '/saved': 'saved', '/profile': 'profile', '/notifications': 'notifications', '/invitations': 'invitations',
   '/payments': 'payments',
 }
-const SECTIONS = new Set<string>(['listings', 'saved', 'invitations', 'messages', 'appointments', 'payments', 'profile', 'marketplace', 'wanted', 'activities', 'myPosts'])
+const SECTIONS = new Set<string>(['listings', 'saved', 'invitations', 'messages', 'appointments', 'payments', 'profile', 'marketplace', 'wanted', 'activities', 'myPosts', 'help'])
 
 /** Skeleton for whatever page the URL points at — used while the app/page chunk boots on reload. */
 export function RouteSkeleton() {
   const { pathname, search } = useLocation()
   const { isAuthenticated } = useAuth()
   const params = new URLSearchParams(search)
-  const authMode = authSkeletonMode(pathname)
+  const authMode = authSkeletonMode(pathname, search)
 
   let body
   let variant = ''
   if (authMode) {
-    body = <AuthSkeleton mode={authMode} />
+    body = <AuthSkeleton mode={authMode} unified={['/auth', '/login', '/register', '/forgot-password'].includes(pathname)} />
     variant = ' sk-route--auth'
   } else if (pathname === '/privacy' || pathname === '/terms') {
     body = <LegalSkeleton />

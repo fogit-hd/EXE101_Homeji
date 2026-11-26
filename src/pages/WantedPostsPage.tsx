@@ -27,10 +27,19 @@ import { getErrorMessage } from '../lib/errors'
 import {
   AMENITY_OPTIONS,
   amenityLabel,
-  formatPrice,
+  formatMonthlyRent,
   wantedPostStatusLabel,
 } from '../lib/labels'
 import { mapMessagesUrl } from '../lib/mapDeepLinks'
+import { memberWantedDescription } from '../lib/wantedPostCopy'
+
+function moveInDayMonth(value?: string | null) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const parts = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).formatToParts(date)
+  return `${parts.find(part => part.type === 'day')?.value}/${parts.find(part => part.type === 'month')?.value}`
+}
 
 export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()
@@ -167,7 +176,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
 
   const filters =
     tab === 'browse' ? (
-      <>
+      <div className="wanted-filters">
         <input
           className="form-input"
           placeholder="Khu vực…"
@@ -183,7 +192,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
           onValueChange={value => setMaxBudgetFilter(value)}
           aria-label="Lọc ngân sách"
         />
-      </>
+      </div>
     ) : null
 
   const frameActions = tab === 'browse' ? actions : undefined
@@ -223,6 +232,7 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
       ) : null}
 
       <PageNotice message={actionError || (error && !disrupted ? error : '')} tone="error" />
+      {error ? <button type="button" className="btn btn-secondary" onClick={() => void reload()}>Thử lại</button> : null}
       <PageNotice message={actionMsg} tone="success" />
 
       {showLoader ? (
@@ -340,9 +350,11 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
           <p>Thử đổi bộ lọc hoặc đăng nhu cầu mới nếu bạn là người thuê.</p>
         </div>
       ) : (
-        <div className="notification-list">
+        <div className="notification-list wanted-list">
           {posts.map((p) => {
             const mine = Boolean(myId && p.requesterId === myId)
+            const moveIn = moveInDayMonth(p.desiredMoveInDate)
+            const memberDescription = memberWantedDescription(p.description)
             return (
               <article key={p.id} className="card notification-item map-motion-fade-up">
                 <div>
@@ -350,18 +362,18 @@ export function WantedPostsPage({ embedded = false }: { embedded?: boolean }) {
                     {wantedPostStatusLabel[p.status] ?? 'Tin'}
                     {mine ? ' · Của bạn' : ''}
                   </span>
-                  <h3>{p.title}</h3>
-                  {p.description ? <p>{p.description}</p> : null}
-                  <p>
-                    {p.preferredArea} · tối đa {formatPrice(p.maxBudget)} · {p.occupantCount} người
+                  <h2 className="wanted-card__title">{p.title}</h2>
+                  {memberDescription ? <p className="wanted-description">{memberDescription}</p> : null}
+                  <p className="wanted-meta">
+                    {p.preferredArea} · tối đa {formatMonthlyRent(p.maxBudget)} · {p.occupantCount} người
                   </p>
                   {p.amenityCodes?.length ? (
-                    <p style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-                      {p.amenityCodes.map((c) => amenityLabel(c)).join(' · ')}
+                    <p className="wanted-amenities">
+                      {p.amenityCodes.slice(0, 3).map(amenityLabel).join(' · ')}{p.amenityCodes.length > 3 ? ` +${p.amenityCodes.length - 3}` : ''}
                     </p>
                   ) : null}
                   <small>
-                    {p.requesterDisplayName} · vào khoảng {p.desiredMoveInDate}
+                    {p.requesterDisplayName}{moveIn ? ` · từ ${moveIn}` : ''}
                   </small>
                 </div>
                 <div className="notification-item__actions">

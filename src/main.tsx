@@ -3,17 +3,15 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import './ui-consistency.css'
-import './ai-spectrum.css'
 import './liquid-glass.css'
 import './components/theme/dark-theme.css'
 import './product-ui.css'
-import './glass-controls.css'
 import './auth-appearance.css'
 import './content-surfaces.css'
 import './workspace-readability.css'
 import './home-refinement.css'
+import './glass-controls.css'
 import { LiquidGlassEffects } from './components/ui/LiquidGlassEffects'
-import { WebglButtonGlassEffects } from './components/ui/WebglButtonGlassEffects'
 import { installStaleBuildReload } from './lib/staleBuildReload'
 
 installStaleBuildReload(window)
@@ -30,4 +28,4 @@ if ('serviceWorker' in navigator && !import.meta.env.DEV) {
  * That exhausts WebGL contexts and Google falls back to Raster ("Attempted to load a
  * Vector Map, but failed"), which is why maps.google.com stays smooth but this app lags.
  */
-createRoot(document.getElementById('root')!).render(<><WebglButtonGlassEffects /><LiquidGlassEffects /><App /></>)
+createRoot(document.getElementById('root')!).render(<><LiquidGlassEffects /><App /></>)

@@ -1,6 +1,5 @@
-import { AuthPage } from './AuthPage'
+import { AuthRouteRedirect } from './AuthRouteRedirect'
 
-/** Route `/login` — Sign In tĩnh (không intro). */
 export function LoginPage() {
-  return <AuthPage initialMode="signin" />
+  return <AuthRouteRedirect section="login" />
 }

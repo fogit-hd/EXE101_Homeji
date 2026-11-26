@@ -1,0 +1,154 @@
+/* Phone room card (MobileRoomCard.tsx). */
+.m-room {
+  position: relative;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+.m-room.is-selected { border-color: var(--focus-ring); box-shadow: 0 0 0 1px var(--focus-ring); }
+.m-room:active { background: var(--surface-muted); }
+
+.m-room__media {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+.m-room__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.m-room__noimg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs, .75rem);
+  text-align: center;
+}
+.m-room__badge {
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  left: 16px;
+  max-width: 92px;
+  pointer-events: none;
+  line-height: 1;
+}
+.m-room__badge > * { transform: scale(.86); transform-origin: top left; }
+
+.m-room__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.m-room__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-height: 24px; }
+.m-room__price {
+  padding-top: 1px;
+  color: var(--grab-green);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.m-room__title { margin: 0; font-size: var(--fs-sm, .875rem); font-weight: 600; line-height: 1.35; }
+.m-room__hit {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-heading);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+/* The title's hit area covers the card; the corner and action controls sit above it. */
+.m-room__hit::after { position: absolute; inset: 0; z-index: 0; border-radius: var(--radius-md); content: ''; }
+.m-room__hit:focus-visible { outline: none; }
+.m-room__hit:focus-visible::after { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.m-room__title-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.m-room__meta {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs, .75rem);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-room__top > :not(.m-room__price),
+.m-room__actions { position: relative; z-index: 1; }
+.m-room__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; }
+
+/* Small, quiet secondary actions inside the card (32px visible, 44px hit). The #root chain outranks
+   the global "#root .btn.btn-sm { min-height: 44px }" until the !important cleanup lowers it. */
+html[data-device] #root .m-room .m-room__body .m-room__actions :is(button, a) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-xs, .75rem);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  box-shadow: none;
+  cursor: pointer;
+}
+.m-room__actions :is(button, a)::before { position: absolute; inset: -6px -2px; content: ''; }
+html[data-device] #root .m-room .m-room__body .m-room__actions :is(button, a)[aria-pressed='true'] { border-color: var(--focus-ring); color: var(--grab-green); background: var(--maps-blue-soft, var(--surface-muted)); }
+.m-room__actions svg { width: 15px; height: 15px; }
+
+.m-room__save {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px -8px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.m-room__save.is-on { color: var(--error); }
+.m-room__save:disabled { opacity: .5; }
+/* Plain text label over the photo (post status in Tin của tôi). */
+.m-room__pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .18);
+}
+
+/* Page-level link rules (saved list, hub, workspace prose) tint and underline anchors; the card's
+   title is a heading-coloured hit area wherever the card lands. */
+html[data-device='mobile']:root body #root .m-room a.m-room__hit { margin: 0; padding: 0; border: 0; background: none; color: var(--text-heading); text-decoration: none; }

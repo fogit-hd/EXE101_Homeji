@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import './MapEdgeToggle.css'
 
 type MapEdgeToggleProps = {
@@ -9,9 +10,9 @@ type MapEdgeToggleProps = {
   side?: 'left' | 'right'
 }
 
-function iconFor(side: 'left' | 'right', expanded: boolean): string {
-  if (side === 'left') return expanded ? '‹' : '›'
-  return expanded ? '›' : '‹'
+function iconFor(side: 'left' | 'right', expanded: boolean) {
+  if (side === 'left') return expanded ? <ChevronLeft aria-hidden="true" size={16} /> : <ChevronRight aria-hidden="true" size={16} />
+  return expanded ? <ChevronRight aria-hidden="true" size={16} /> : <ChevronLeft aria-hidden="true" size={16} />
 }
 
 export function MapEdgeToggle({

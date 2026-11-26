@@ -616,13 +616,120 @@ a.hx-footer__social-link:hover { background: var(--hx-surface); color: var(--hx-
   position: sticky;
   top: 0;
   z-index: var(--hx-z-nav);
-  background: var(--hx-bg);
+  /* frosted paper: the chapters scrolling under it show through faintly */
+  background: color-mix(in srgb, var(--hx-bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
   border-bottom: 1px solid var(--hx-border);
-  transition: transform 320ms var(--hx-ease-out);
+  transition:
+    transform 320ms var(--hx-ease-out),
+    background-color 240ms var(--hx-ease-out),
+    border-color 240ms var(--hx-ease-out);
 }
 
 .hx .hx-nav[data-tucked] {
   transform: translateY(-100%);
+}
+
+/* On the hero photograph: no ground, the night palette, and no small "Tìm phòng" (the hero has the big one). */
+.hx .hx-nav[data-over] {
+  --hx-text: #faf3e9;
+  --hx-text-muted: rgb(250 243 233 / 0.82);
+  --hx-text-subtle: rgb(250 243 233 / 0.7);
+  --hx-logo-ink: #c9e0b8;
+  --hx-accent-text: #ffb27a;
+  --hx-border: rgb(250 243 233 / 0.24);
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
+.hx .hx-nav[data-hero] .hx-nav__cta:not(.hx-nav__cta--lg) {
+  display: none;
+}
+
+/* Story bar. Inside the five chapters a progress line runs along the bar's bottom edge; while the bar
+   is tucked away the line stays on screen as a thin strip at the top. */
+.hx .hx-nav[data-story][data-tucked] {
+  transform: translateY(calc(-100% + 3px));
+}
+
+.hx .hx-nav__progress {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 3px;
+  background: var(--hx-border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms var(--hx-ease-out);
+}
+
+.hx .hx-nav__progress::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--hx-accent-brand);
+  transform: scaleX(var(--story, 0));
+  transform-origin: left;
+}
+
+.hx .hx-nav[data-story] .hx-nav__progress {
+  opacity: 1;
+}
+
+/* The chapter being read, beside the logo: "03 Xác minh". */
+.hx .hx-nav__chapter {
+  display: none;
+  align-items: center;
+  height: 24px;
+  margin-left: 20px;
+  padding-left: 20px;
+  border-left: 1px solid var(--hx-border);
+  color: var(--hx-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hx .hx-nav__chapter > span {
+  display: none;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hx .hx-nav__chapter b {
+  color: var(--hx-accent-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hx .hx-nav:is([data-step='1'], :not([data-step])) .hx-nav__chapter > [data-n='1'],
+.hx .hx-nav[data-step='2'] .hx-nav__chapter > [data-n='2'],
+.hx .hx-nav[data-step='3'] .hx-nav__chapter > [data-n='3'],
+.hx .hx-nav[data-step='4'] .hx-nav__chapter > [data-n='4'],
+.hx .hx-nav[data-step='5'] .hx-nav__chapter > [data-n='5'] {
+  display: inline-flex;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hx .hx-nav__chapter > span {
+    animation: hx-chapter-in 280ms var(--hx-ease-out);
+  }
+}
+
+@keyframes hx-chapter-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (min-width: 1366px) {
+  .hx .hx-nav[data-story] .hx-nav__chapter {
+    display: inline-flex;
+  }
 }
 
 .hx .hx-nav__bar {
@@ -679,8 +786,18 @@ a.hx-footer__social-link:hover { background: var(--hx-surface); color: var(--hx-
   transition: transform 280ms var(--hx-ease-out);
 }
 
-.hx .hx-nav__word:hover::after {
+.hx .hx-nav__word:hover::after,
+.hx .hx-nav__word[aria-current]::after {
   transform: scaleX(1);
+}
+
+.hx .hx-nav__word[aria-current] {
+  color: var(--hx-text);
+}
+
+.hx .hx-nav__word[aria-current]::after {
+  height: 2px;
+  background: var(--hx-accent-brand);
 }
 
 .hx .hx-nav__has-panel .hx-nav__word {
@@ -757,7 +874,7 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
   color: var(--hx-accent-text);
 }
 
-/* The one action: a tonal button, rust ink on a rust tint; steps up on hover, presses on click. */
+/* The one action: a solid orange button, the same as the hero's "Tìm phòng ngay"; presses on click. */
 .hx .hx-nav__cta {
   display: inline-flex;
   align-items: center;
@@ -766,8 +883,9 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
   min-height: 44px;
   padding-inline: 18px 16px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--hx-accent) 13%, var(--hx-bg));
-  color: var(--hx-accent-text);
+  background: var(--hx-accent);
+  color: var(--hx-accent-on);
+  box-shadow: var(--hx-shadow-accent);
   font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
@@ -783,8 +901,8 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
 }
 
 .hx .hx-nav__cta:hover {
-  background: color-mix(in srgb, var(--hx-accent) 21%, var(--hx-bg));
-  color: var(--hx-accent-text);
+  background: var(--hx-accent-hover);
+  color: var(--hx-accent-on);
 }
 
 .hx .hx-nav__cta:hover svg {
@@ -798,14 +916,6 @@ html[data-theme-transition='crossfade'] .hx *:not(.theme-switch, .theme-switch *
 .hx .hx-nav__cta--lg {
   min-height: 56px;
   font-size: 1rem;
-}
-
-html[data-theme="dark"] .hx .hx-nav__cta {
-  background: color-mix(in srgb, var(--hx-accent) 18%, var(--hx-bg));
-}
-
-html[data-theme="dark"] .hx .hx-nav__cta:hover {
-  background: color-mix(in srgb, var(--hx-accent) 28%, var(--hx-bg));
 }
 
 @media (max-width: 380px) {

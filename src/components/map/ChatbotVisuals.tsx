@@ -24,7 +24,7 @@ export function AssistantIcon({ name }: { name: AssistantIconName }) {
 export function HomejiAvatar({ inline = false }: { inline?: boolean }) {
   return (
     <span className={`map-chatbot__avatar${inline ? ' map-chatbot__avatar--inline' : ''}`} aria-hidden>
-      <img src="/brand/homeji-logo2.png" alt="" draggable={false} />
+      <img loading="eager" decoding="async" width={32} height={32} src="/brand/homeji-logo2.png" alt="" draggable={false} />
     </span>
   )
 }

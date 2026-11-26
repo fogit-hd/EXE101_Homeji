@@ -87,7 +87,7 @@ import { AiRentalResultCard } from '${cardUrl}';
 const aiFeatureFlags = { commute: false };
 const amenityLabel = value => value;
 const formatPrice = value => String(value);
-const formatListingRent = value => Number.isFinite(value) && value > 0 ? String(value) : 'Chưa có thông tin';
+const formatMonthlyRent = value => Number.isFinite(value) && value > 0 ? String(value) : 'Chưa có thông tin';
 const formatListingArea = value => Number.isFinite(value) && value > 0 ? value + ' m²' : 'Chưa có thông tin';
 const ShortlistCommutePlanner = () => null;
 const RentalConsiderationToggle = () => null;

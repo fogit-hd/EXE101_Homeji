@@ -19,10 +19,12 @@ test('new providers coexist with traffic and legal routes', () => {
   assert.match(app, /path="\/terms"/)
 })
 
-test('new listings and room modal coexist with automatic Google nearby discovery', () => {
-  for (const component of ['MapListingsWorkspace', 'RoomDetailModal', 'MapNearbyPanel']) {
+test('new listings and room modal coexist with automatic Google nearby discovery', async () => {
+  for (const component of ['MapListingsWorkspace', 'MapNearbyPanel']) {
     assert.ok(shell.includes(`<${component}`))
   }
+  // The room detail is hosted once in AppLayout and driven by ?room=<id>.
+  assert.match(await read('src/components/map/listings/SourceRoomDetailsHost.tsx'), /<RoomDetailModal/)
   assert.match(shell, /onSelectPlace=\{handleSelectPlace\}/)
   assert.match(shell, /nearbyDismissedKey !== nearbyContextKey/)
   assert.match(shell, /nearbyAnchor\.contextKey === nearbyContextKey/)

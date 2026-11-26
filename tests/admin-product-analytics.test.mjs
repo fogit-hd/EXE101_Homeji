@@ -32,7 +32,7 @@ test('admin opens on the operations home, links product analytics and retains cu
 test('dashboard prioritizes map, daily line trend, price evidence and confidence', () => {
   assert.match(dashboardSource, /AdminDemandMap/)
   assert.match(dashboardSource, /AdminTrendChart/)
-  assert.match(dashboardSource, /Ưu tiên bản đồ/)
+  assert.ok(!dashboardSource.includes('admin-analytics__eyebrow'))
   assert.match(dashboardSource, /Chỉ số cầu/)
   assert.match(dashboardSource, /confidenceLabels/)
   assert.match(dashboardSource, /không tự thay đổi giá/)

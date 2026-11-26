@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import houseUrl from '../../../assets/room-detail/house.svg'
 import { ContactFlashlightIcon } from '../../profile/ContactFlashlightIcon'
@@ -7,8 +8,8 @@ import './RoomDetailModal.css'
 
 export function RoomDetailHeader({ titleId, title, onClose, actions, autoFocusClose = false }: { titleId: string; title: string; onClose: () => void; actions?: ReactNode; autoFocusClose?: boolean }) {
   return <header className="room-detail__header">
-    <div className="room-detail__heading"><img src={houseUrl} alt="" width={20} height={20} /><h2 id={titleId}>{title}</h2></div>
-    <div className="room-detail__header-actions">{actions}<button type="button" className="room-detail__close" data-room-detail-close aria-label="Đóng" autoFocus={autoFocusClose} onClick={onClose}>×</button></div>
+    <div className="room-detail__heading"><img loading="lazy" decoding="async" src={houseUrl} alt="" width={20} height={20} /><h2 id={titleId}>{title}</h2></div>
+    <div className="room-detail__header-actions">{actions}<button type="button" className="room-detail__close" data-room-detail-close aria-label="Đóng" title="Đóng" autoFocus={autoFocusClose} onClick={onClose}><X aria-hidden="true" size={24} style={{ verticalAlign: 'middle' }} /></button></div>
   </header>
 }
 
@@ -29,7 +30,7 @@ export function RoomOwnerProfile({ heading, name, avatarUrl, verified = false, c
   return <section className="room-detail__owner-profile" aria-label={heading}>
     <h4>{heading}</h4>
     <div className="room-detail__person">
-      <span className="room-detail__avatar" aria-hidden="true">{avatarUrl && failedAvatar !== avatarUrl ? <img src={avatarUrl} alt="" onError={() => setFailedAvatar(avatarUrl)} /> : name.slice(0, 1).toUpperCase()}</span>
+      <span className="room-detail__avatar" aria-hidden="true">{avatarUrl && failedAvatar !== avatarUrl ? <img loading="lazy" decoding="async" width={48} height={48} src={avatarUrl} alt="" onError={() => setFailedAvatar(avatarUrl)} /> : name.slice(0, 1).toUpperCase()}</span>
       <div><span className="room-detail__owner-label">Họ và tên</span><strong>{name}</strong>
         {verified ? (
           <button
@@ -68,7 +69,7 @@ export function RoomOwnerPhone({ id, value, revealed, revealLabel, onReveal, dis
       <div><span className="room-detail__owner-label">Số điện thoại</span>
         <span id={id} className="room-detail__phone-value" aria-live="polite" aria-atomic="true">{value}</span>
       </div>
-      {onReveal ? <button type="button" className={`room-detail__flashlight${revealed ? ' is-lit' : ''}`} aria-label={revealLabel} aria-pressed={revealed} aria-controls={id} disabled={disabled} onClick={onReveal}><ContactFlashlightIcon /></button> : null}
+      {onReveal ? <button type="button" className={`room-detail__flashlight${revealed ? ' is-lit' : ''}`} aria-label={revealLabel} title={revealLabel} aria-pressed={revealed} aria-controls={id} disabled={disabled} onClick={onReveal}><ContactFlashlightIcon /></button> : null}
     </div>
     {hint ? <p className="room-detail__phone-hint">{hint}</p> : null}
   </>

@@ -12,8 +12,8 @@
   padding: 40px clamp(16px, 4vw, 64px);
   box-sizing: border-box;
   overflow: visible;
-  background: var(--surface-muted, #f4f6f1);
-  color: var(--text-heading, #24382d);
+  background: var(--surface-muted);
+  color: var(--text-heading);
 }
 
 .auth-cinema--form .auth-city {
@@ -45,31 +45,31 @@
   width: 100%;
   box-sizing: border-box;
   padding: clamp(20px, 3vw, 32px);
-  background: var(--surface-elevated, #fff);
-  color: var(--text-heading, #24382d);
-  border: 1px solid var(--border, #dce3d9);
-  box-shadow: 0 20px 70px #42513b1c;
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  border: 1px solid var(--border);
+  box-shadow: none;
   backdrop-filter: none;
 }
 
 .auth-cinema--form .auth-cinema__title,
-.auth-cinema--form .auth-cinema__field label { color: var(--text-heading, #24382d); }
+.auth-cinema--form .auth-cinema__field label { color: var(--text-heading); }
 
 .auth-cinema--form .auth-cinema__subtitle,
 .auth-cinema--form .auth-cinema__divider,
-.auth-cinema--form .auth-cinema__footer { color: var(--text-secondary, #59685f); }
+.auth-cinema--form .auth-cinema__footer { color: var(--text-secondary); }
 
 .auth-cinema--form .auth-cinema__field input {
-  background: var(--surface-input, #f8faf7);
-  color: var(--text-heading, #24382d);
-  border-color: var(--border, #dce3d9);
+  background: var(--surface-input);
+  color: var(--text-heading);
+  border-color: var(--border);
 }
-.auth-cinema--form .auth-cinema__field input::placeholder { color: var(--text-secondary, #59685f); }
-.auth-cinema--form .auth-cinema__submit { background: var(--hj-accent, #278b64); color: #fff; }
+.auth-cinema--form .auth-cinema__field input::placeholder { color: var(--text-secondary); }
+.auth-cinema--form .auth-cinema__submit { background: var(--grab-green); color: var(--on-brand); }
 .auth-cinema--form .auth-cinema__footer :is(a, button),
-.auth-cinema--form .auth-cinema__forgot { color: var(--hj-accent, #278b64); }
-.auth-cinema--form .auth-cinema__alert--error { color: #a62929; background: #fff0f0; }
-.auth-cinema--form .auth-cinema__alert--ok { color: #17623e; background: #eaf8ef; }
+.auth-cinema--form .auth-cinema__forgot { color: var(--text-accent); }
+.auth-cinema--form .auth-cinema__alert--error { color: var(--error); background: var(--error-soft); }
+.auth-cinema--form .auth-cinema__alert--ok { color: var(--text-primary); background: var(--success-soft); }
 .auth-cinema--form .auth-cinema__eye-btn { filter: none; }
 
 @media (max-width: 900px) {

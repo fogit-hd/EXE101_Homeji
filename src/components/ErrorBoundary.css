@@ -6,8 +6,8 @@
   justify-content: center;
   padding: 24px;
   padding-top: calc(24px + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  background: var(--surface-muted, #f6f8fa);
+  padding-bottom: calc(24px + var(--safe-bottom));
+  background: var(--surface-muted);
 }
 
 .app-error__card {
@@ -17,18 +17,18 @@
   align-items: center;
   gap: 16px;
   text-align: center;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #d5d8dc);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 28px 24px;
   box-shadow: var(--shadow-sm, rgba(0, 0, 0, 0.12) 0 4px 12px);
 }
 
 .app-error__message {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   line-height: 1.5;
-  color: var(--text-heading, #363a45);
+  color: var(--text-heading);
 }
 
 .app-error__card .btn {

@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ListingsSkeleton } from '../components/skeletons/PageSkeletons'
+import { exploreListUrl } from '../components/chrome/exploreMode'
 
 /**
  * Map explore is now embedded on the guest landing (`/#map`).
@@ -19,7 +20,7 @@ export function ExplorePage() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={{ pathname: '/', search: location.search, hash: location.hash }} replace />
+    return <Navigate to={exploreListUrl(location.search)} replace />
   }
 
   return <Navigate to={{ pathname: '/', search: location.search, hash: '#map' }} replace />

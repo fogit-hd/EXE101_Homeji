@@ -6,7 +6,7 @@ if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Loca
 const out='output/verification/premium-purchase-confirm';await mkdir(out,{recursive:true})
 await writeFile(out+'/index.html','<html><meta charset="utf-8"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
 await writeFile(out+'/scene.tsx',`import React from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import{PaymentPage}from'/src/pages/PaymentPage.tsx';import{ToastProvider}from'/src/components/toast/ToastProvider.tsx';import'/src/index.css';createRoot(document.getElementById('root')).render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><ToastProvider><PaymentPage embedded/></ToastProvider></MemoryRouter></QueryClientProvider>);`)
-const browser=await chromium.launch({headless:true,channel:'msedge'})
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'})
 try{
  const page=await browser.newPage({viewport:{width:1100,height:900}});const calls=[],errors=[]
  let packageCode='PREMIUM_MONTHLY'
@@ -53,7 +53,7 @@ try{
  assert.equal(await dialog.getByRole('button',{name:'Quay lại',exact:true}).evaluate(button=>button===document.activeElement),true)
  await page.keyboard.press('Enter');await dialog.waitFor({state:'hidden'});assert.equal(calls.length,0,'Default Enter must cancel instead of purchasing')
  await wallet.click();await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});assert.equal(calls.length,0)
- await page.locator('.voucher-picker select').selectOption('voucher-1');await page.getByText(/Voucher giảm.*20.000/).waitFor();await wallet.click();await dialog.waitFor();assert.match(await dialog.locator('.premium-purchase-confirm__total').innerText(),/80.000/)
+ await page.locator('.pay-voucher-panel > summary').click();await page.locator('.voucher-picker select').selectOption('voucher-1');await page.getByText(/Voucher giảm.*20.000/).waitFor();await wallet.click();await dialog.waitFor();assert.match(await dialog.locator('.premium-purchase-confirm__total').innerText(),/80.000/)
  await page.setViewportSize({width:390,height:844});assert.equal(await dialog.evaluate(element=>element.scrollWidth<=element.clientWidth),true);await page.screenshot({path:out+'/wallet-discount-mobile.png'})
  await dialog.getByRole('button',{name:/^Xác nhận thanh toán/}).evaluate(button=>{button.click();button.click()});await page.keyboard.press('Escape');assert.equal(await dialog.isVisible(),true,'Busy confirmation stays open while request is pending')
  await dialog.waitFor({state:'hidden'});assert.equal(calls.length,1);assert.equal(calls[0].body.expectedAmount,80000);assert.equal(calls[0].body.voucherId,'voucher-1');assert.ok(calls[0].body.requestId)
@@ -85,7 +85,7 @@ try{
  await picker.selectOption({label:'Nhập mã giảm giá'})
  assert.equal(await promotion.inputValue(),'')
  packageCode='PREMIUM_6MONTHS'
- await page.reload();await page.getByRole('button',{name:'Chọn gói',exact:true}).click()
+ await page.reload();await page.getByRole('button',{name:'Chọn gói',exact:true}).click();await page.locator('.pay-voucher-panel > summary').click()
  await picker.selectOption({label:'Nhập mã giảm giá'})
  await promotion.fill('sinhvien30');await promotion.press('Enter')
  await page.getByRole('status').filter({hasText:/Mã giảm.*135.000.*315.000/}).waitFor()

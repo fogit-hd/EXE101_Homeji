@@ -1,49 +1,88 @@
 /* Font Be Vietnam Pro được nạp qua <link> trong index.html để preload scanner
    thấy ngay, thay vì @import chặn render sau khi CSS bundle tải xong. */
 :root {
+  /* The moss logo PNG (#354d2b) sinks on dark surfaces; dark themes lift it to a light moss. */
+  --logo-filter: none;
+  /* Member accents; photo overlays intentionally use fixed dark surfaces. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --premium-edge-color: #dfaa42;
+  --premium-soft: #fff7db;
+  --premium-fill: #feeab3;
+  --premium-highlight: #fedd8a;
+  --premium-text: #5e4002;
+  --info-text: #0369a1;
+  --info-soft: #f0f9ff;
+  --info-border: #bae6fd;
+  --violet-text: #6947a3;
+  --violet-soft: #efe7fa;
+  --wheel-accent: #0e8385;
+  --wheel-on-accent: #ffffff;
+  --map-location-blue: #4285f4;
+  --media-surface: #12161c;
+  --media-control: #28382e;
+  --media-border: #69756d;
+  --media-text: #ffffff;
+  --media-muted: #c7c9cf;
+  --map-pin-chat-label: #8ec5ff;
+  --map-pin-market-label: #fdba74;
+  --map-pin-rental-label: #bef264;
+  --map-pin-roommate-label: #a5b4fc;
+  --map-pin-chat: #1a73e8;
+  --map-pin-market: #ea580c;
+  --map-pin-rental: #84cc16;
+  --map-pin-roommate: #6366f1;
+  --referral-gold: #ffd166;
+  --referral-on-gold: #3d2a00;
+  --danger-solid: #b42318;
+
   --font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-  /* ── Homeji product tokens (logged-in, desktop #19323b sidebar) ── */
+  /* ── Homeji product tokens (logged-in warm cream and walnut) ── */
   --hj-paper: var(--surface-muted);
   --hj-ink: var(--text-heading);
-  --hj-accent: #087f8c;
+  --hj-accent: #047857;
   --hj-cream: var(--surface);
   --hj-border: var(--border);
   --hj-muted: var(--text-secondary);
-  --hj-soft: #82929c;
-  --hj-nav-idle: #dce5eb;
-  --hj-nav-line: #334854;
-  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
+  --hj-soft: #6f5d4e;
+  --hj-nav-idle: #221a14;
+  --hj-nav-line: #e3d8c7;
+  --hj-accent-soft: #ecfdf5;
   --hj-radius-sm: 8px;
   --hj-radius-md: 14px;
   --hj-radius-lg: 22px;
   --hj-radius-xl: 30px;
   --hj-sidebar: 228px;
-  --hj-grab-green: #087f8c;
+  --hj-grab-green: #047857;
   /* ──────────────────────────────────────────────────────────────── */
-  --grab-green: #087f8c;
-  --grab-green-hover: #066875;
-  --grab-blue: #136fd8;
-  --grab-blue-hover: #0e52a3;
-  --text-primary: #243742;
-  --text-secondary: #5b6b76;
-  --text-heading: #19323b;
-  --border: #dce5eb;
-  --surface: #ffffff;
-  --surface-muted: #f3f7fa;
-  --surface-input: #edf3f7;
-  --surface-elevated: #ffffff;
-  --surface-glass: rgba(255, 255, 255, 0.94);
-  --overlay-scrim: rgba(28, 36, 31, 0.4);
-  --shadow-color: 28, 42, 34;
-  --maps-blue: #1a73e8;
-  --maps-blue-hover: #1557b0;
-  --maps-blue-soft: #e8f0fe;
-  --maps-blue-text: #1967d2;
-  --maps-hover: rgba(60, 64, 67, 0.08);
-  --error: #ea4335;
-  --success: #39b54a;
-  --error-soft: rgba(234, 67, 53, 0.1);
-  --success-soft: rgba(57, 181, 74, 0.12);
+  --grab-green: #047857;
+  --grab-green-hover: #065f46;
+  --grab-blue: #047857;
+  --grab-blue-hover: #065f46;
+  --text-primary: #2f251d;
+  --text-secondary: #5a4a3d;
+  --text-heading: #221a14;
+  --border: #d9cebd;
+  --surface: #fffdf8;
+  --surface-muted: #f5eee3;
+  --surface-input: #f9f4ec;
+  --surface-elevated: #fffffc;
+  --surface-glass: rgb(255 251 244 / .8);
+  --overlay-scrim: rgb(34 26 20 / .45);
+  --shadow-color: 34, 26, 20;
+  --maps-blue: #047857;
+  --maps-blue-hover: #065f46;
+  --maps-blue-soft: #ecfdf5;
+  --maps-blue-text: #047857;
+  --maps-hover: #efe6d7;
+  --error: #b42318;
+  --success: #047857;
+  --error-soft: rgb(180 35 24 / .1);
+  --warning: #8a5300;
+  --warning-soft: #fdf1d8;
+  --warning-border: #d9a441;
+  --success-soft: rgb(4 120 87 / .1);
   /* Bảng Màu Ẩm Thực Sinh Viên (Grainient Culinary Palette) */
   --food-warm-amber: #ff9f43;
   --food-warm-terracotta: #ee5253;
@@ -51,15 +90,28 @@
   --food-warm-surface: #fff9f4;
   --food-warm-border: #fce7d8;
   /* One elevation tier (Airbnb-style): hairline + soft lift — no glow stack */
-  --shadow-sm: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
-    rgba(28, 42, 34, 0.08) 0 4px 10px;
-  --shadow-md: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.05) 0 4px 10px,
-    rgba(28, 42, 34, 0.1) 0 8px 18px;
+  --shadow-sm: 0 1px 2px rgb(34 26 20 / .06), 0 2px 6px -2px rgb(34 26 20 / .06);
+  --shadow-md: 0 2px 4px -1px rgb(34 26 20 / .06), 0 10px 20px -6px rgb(34 26 20 / .1);
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-xl: 16px;
   --radius-pill: 999px;
+  --radius-xs: 4px;
+  --radius-2xl: 20px;
+  /* Type scale (member app). Nine steps; --fs-display only for money and page heroes. */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-lead: 18px;
+  --fs-xl: 20px;
+  --fs-heading: 24px;
+  --fs-2xl: 26px;
+  --fs-display: 32px;
+  /* Depth: content never floats; menus pop; sheets and dialogs sit highest. */
+  --shadow-pop: 0 8px 24px -6px rgba(var(--shadow-color), .18), 0 2px 6px rgba(var(--shadow-color), .08);
+  --shadow-sheet: 0 -2px 8px rgba(var(--shadow-color), .06), 0 24px 48px -12px rgba(var(--shadow-color), .28);
   --container: 1200px;
   --nav-height: 69px;
   --mobile-tabbar-height: 64px;
@@ -101,14 +153,14 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-fast: 150ms;
-  --hj-brand-coral: #c24933;
-  --hj-brand-coral-soft: #fff0eb;
+  --hj-brand-coral: #bf400c;
+  --hj-brand-coral-soft: #fff7ed;
   --dur-med: 280ms;
   --dur-slow: 420ms;
   /* Map chrome fill — never brand green (prevents GPU clear flash). */
-  --map-canvas-bg: #e7eef3;
+  --map-canvas-bg: #efe6d7;
   color-scheme: light;
   font-family: var(--font-ui);
   /* Keep rem tied to the browser's preferred font size. */
@@ -117,68 +169,127 @@
   font-synthesis: none;
   color: var(--text-primary);
   background: var(--surface-muted);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  --text-accent: #047857;
+  --action-primary: #bf400c;
+  --action-primary-hover: #9a3412;
+  --action-on-primary: #ffffff;
+  --action-soft: #fff7ed;
+  --action-on-soft: #9a3412;
+  --on-brand: #ffffff;
+  --brand-soft: #ecfdf5;
+  --control-border: #9a8670;
 }
 
-/* Match system appearance with the same slate and teal semantic roles. */
+/* Match system appearance with the same warm semantic roles. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --grab-green: #62cbd2;
-    --grab-green-hover: #8edce0;
-    --grab-blue: #4b9fff;
-    --grab-blue-hover: #2f86f0;
-    --text-primary: #e6edf2;
-    --text-secondary: #a8b9c4;
-    --text-heading: #f2f7fa;
-    --border: #354955;
-    --surface: #182b36;
-    --surface-muted: #10212b;
-    --surface-input: #223945;
-    --surface-elevated: #1d333f;
-    --surface-glass: rgba(24, 43, 54, 0.94);
-    --overlay-scrim: rgba(0, 0, 0, 0.5);
+    --logo-filter: brightness(2.6) saturate(0.9);
+  --premium-edge-color: #c99a38;
+  --premium-soft: #3e2e12;
+  --premium-fill: #523c16;
+  --premium-highlight: #523c16;
+  --premium-text: #ffe79a;
+  --info-text: #7dd3fc;
+  --info-soft: #082f49;
+  --info-border: #0369a1;
+  --violet-text: #a5b4fc;
+  --violet-soft: #2d2542;
+  --wheel-accent: #3fbfc1;
+  --wheel-on-accent: #062224;
+
+    --grab-green: #34d399;
+    --grab-green-hover: #6ee7b7;
+    --grab-blue: #34d399;
+    --grab-blue-hover: #6ee7b7;
+    --text-primary: #eadfce;
+    --text-secondary: #c9b9a5;
+    --text-heading: #f4ebde;
+    --border: #443a31;
+    --surface: #1d1813;
+    --surface-muted: #110d0a;
+    --surface-input: #241d18;
+    --surface-elevated: #2a231e;
+    --surface-glass: rgb(31 25 20 / .84);
+    --overlay-scrim: rgb(0 0 0 / .5);
     --shadow-color: 0, 0, 0;
-    --maps-blue: #8ab4f8;
-    --maps-blue-hover: #aecbfa;
-    --maps-blue-soft: rgba(138, 180, 248, 0.16);
-    --maps-blue-text: #8ab4f8;
-    --maps-hover: rgba(255, 255, 255, 0.08);
-    --shadow-sm: rgba(0, 0, 0, 0.3) 0px 6px 18px 0px;
-    --shadow-md: rgba(0, 0, 0, 0.36) 0px 12px 28px 0px;
+    --maps-blue: #34d399;
+    --maps-blue-hover: #6ee7b7;
+    --maps-blue-soft: rgb(16 185 129 / .12);
+    --maps-blue-text: #34d399;
+    --maps-hover: #2a231e;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / .3), 0 2px 6px -2px rgb(0 0 0 / .3);
+    --shadow-md: 0 2px 4px -1px rgb(0 0 0 / .3), 0 10px 20px -6px rgb(0 0 0 / .3);
     --error: #f28b82;
-    --success: #81c995;
+    --success: #34d399;
     --error-soft: rgba(242, 139, 130, 0.14);
-    --success-soft: rgba(129, 201, 149, 0.14);
-    --map-canvas-bg: #1b303b;
+    --warning: #f2c46d;
+    --warning-soft: #3a2d18;
+    --warning-border: #7a5c26;
+    --success-soft: rgb(16 185 129 / .12);
+    --map-canvas-bg: #110d0a;
+    --hj-accent: #34d399;
+    --hj-grab-green: #34d399;
+    --hj-soft: #ad9b86;
+    --hj-accent-soft: rgb(16 185 129 / .12);
+    --hj-nav-idle: #f4ebde;
+    --hj-nav-line: #3a2f26;
+    --text-accent: #34d399;
+    --action-primary: #f97316;
+    --action-primary-hover: #fb923c;
+    --action-on-primary: #431407;
+    --action-soft: rgb(249 115 22 / .12);
+    --action-on-soft: #fdba74;
+    --on-brand: #052e22;
+    --brand-soft: rgb(52 211 153 / .14);
+    --control-border: #8a7662;
+    --hj-brand-coral: #f97316;
+    --hj-brand-coral-soft: rgb(249 115 22 / .12);
   }
 }
 
 html[data-theme='dark'] {
+  --logo-filter: brightness(2.6) saturate(0.9);
+  --premium-edge-color: #c99a38;
+  --premium-soft: #3e2e12;
+  --premium-fill: #523c16;
+  --premium-highlight: #523c16;
+  --premium-text: #ffe79a;
+  --info-text: #7dd3fc;
+  --info-soft: #082f49;
+  --info-border: #0369a1;
+  --violet-text: #a5b4fc;
+  --violet-soft: #2d2542;
+  --wheel-accent: #3fbfc1;
+  --wheel-on-accent: #062224;
+
   color-scheme: dark;
-  --grab-green: #62cbd2;
-  --grab-green-hover: #8edce0;
-  --grab-blue: #4b9fff;
-  --grab-blue-hover: #2f86f0;
-  --text-primary: #e6edf2;
-  --text-secondary: #a8b9c4;
-  --text-heading: #f2f7fa;
-  --border: #354955;
-  --surface: #182b36;
-  --surface-muted: #10212b;
-  --surface-input: #223945;
-  --surface-elevated: #1d333f;
-  --surface-glass: rgba(24, 43, 54, 0.94);
-  --overlay-scrim: rgba(0, 0, 0, 0.5);
+  --grab-green: #34d399;
+  --grab-green-hover: #6ee7b7;
+  --grab-blue: #34d399;
+  --grab-blue-hover: #6ee7b7;
+  --text-primary: #eadfce;
+  --text-secondary: #c9b9a5;
+  --text-heading: #f4ebde;
+  --border: #443a31;
+  --surface: #1d1813;
+  --surface-muted: #110d0a;
+  --surface-input: #241d18;
+  --surface-elevated: #2a231e;
+  --surface-glass: rgb(31 25 20 / .84);
+  --overlay-scrim: rgb(0 0 0 / .5);
   --shadow-color: 0, 0, 0;
-  --maps-blue: #8ab4f8;
-  --maps-blue-hover: #aecbfa;
-  --maps-blue-soft: rgba(138, 180, 248, 0.16);
-  --maps-blue-text: #8ab4f8;
-  --maps-hover: rgba(255, 255, 255, 0.08);
-  --shadow-sm: rgba(0, 0, 0, 0.3) 0px 6px 18px 0px;
-  --shadow-md: rgba(0, 0, 0, 0.36) 0px 12px 28px 0px;
+  --maps-blue: #34d399;
+  --maps-blue-hover: #6ee7b7;
+  --maps-blue-soft: rgb(16 185 129 / .12);
+  --maps-blue-text: #34d399;
+  --maps-hover: #2a231e;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / .3), 0 2px 6px -2px rgb(0 0 0 / .3);
+  --shadow-md: 0 2px 4px -1px rgb(0 0 0 / .3), 0 10px 20px -6px rgb(0 0 0 / .3);
   --error: #f28b82;
-  --success: #81c995;
+  --success: #34d399;
   /* Bảng Màu Ẩm Thực Sinh Viên (Grainient Dark Overrides) */
   --food-warm-amber: #ffaa5b;
   --food-warm-terracotta: #f06a6b;
@@ -186,47 +297,119 @@ html[data-theme='dark'] {
   --food-warm-surface: #1e2621;
   --food-warm-border: #314237;
   --error-soft: rgba(242, 139, 130, 0.14);
-  --success-soft: rgba(129, 201, 149, 0.14);
-  --map-canvas-bg: #1b303b;
+  --warning: #f2c46d;
+  --warning-soft: #3a2d18;
+  --warning-border: #7a5c26;
+  --success-soft: rgb(16 185 129 / .12);
+  --map-canvas-bg: #110d0a;
+  --hj-accent: #34d399;
+  --hj-grab-green: #34d399;
+  --hj-soft: #ad9b86;
+  --hj-accent-soft: rgb(16 185 129 / .12);
+  --hj-nav-idle: #f4ebde;
+  --hj-nav-line: #3a2f26;
+  --text-accent: #34d399;
+  --action-primary: #f97316;
+  --action-primary-hover: #fb923c;
+  --action-on-primary: #431407;
+  --action-soft: rgb(249 115 22 / .12);
+  --action-on-soft: #fdba74;
+  --on-brand: #052e22;
+  --brand-soft: rgb(52 211 153 / .14);
+  --control-border: #8a7662;
+  --hj-brand-coral: #f97316;
+  --hj-brand-coral-soft: rgb(249 115 22 / .12);
 }
 
 html[data-theme='light'] {
+  --logo-filter: none;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --premium-edge-color: #dfaa42;
+  --premium-soft: #fff7db;
+  --premium-fill: #feeab3;
+  --premium-highlight: #fedd8a;
+  --premium-text: #5e4002;
+  --info-text: #0369a1;
+  --info-soft: #f0f9ff;
+  --info-border: #bae6fd;
+  --violet-text: #6947a3;
+  --violet-soft: #efe7fa;
+  --wheel-accent: #0e8385;
+  --wheel-on-accent: #ffffff;
+  --map-location-blue: #4285f4;
+  --media-surface: #12161c;
+  --media-control: #28382e;
+  --media-border: #69756d;
+  --media-text: #ffffff;
+  --media-muted: #c7c9cf;
+  --map-pin-chat-label: #8ec5ff;
+  --map-pin-market-label: #fdba74;
+  --map-pin-rental-label: #bef264;
+  --map-pin-roommate-label: #a5b4fc;
+  --map-pin-chat: #1a73e8;
+  --map-pin-market: #ea580c;
+  --map-pin-rental: #84cc16;
+  --map-pin-roommate: #6366f1;
+  --referral-gold: #ffd166;
+  --referral-on-gold: #3d2a00;
+  --danger-solid: #b42318;
+
   color-scheme: light;
-  --grab-green: #087f8c;
-  --grab-green-hover: #066875;
-  --grab-blue: #136fd8;
-  --grab-blue-hover: #0e52a3;
-  --text-primary: #243742;
-  --text-secondary: #5b6b76;
-  --text-heading: #19323b;
-  --border: #dce5eb;
-  --surface: #ffffff;
-  --surface-muted: #f3f7fa;
-  --surface-input: #edf3f7;
-  --surface-elevated: #ffffff;
-  --surface-glass: rgba(255, 255, 255, 0.94);
-  --overlay-scrim: rgba(28, 36, 31, 0.4);
-  --shadow-color: 28, 42, 34;
-  --maps-blue: #1a73e8;
-  --maps-blue-hover: #1557b0;
-  --maps-blue-soft: #e8f0fe;
-  --maps-blue-text: #1967d2;
-  --maps-hover: rgba(60, 64, 67, 0.08);
-  --shadow-sm: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
-    rgba(28, 42, 34, 0.08) 0 4px 10px;
-  --shadow-md: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.05) 0 4px 10px,
-    rgba(28, 42, 34, 0.1) 0 8px 18px;
-  --error: #ea4335;
-  --success: #39b54a;
-  --error-soft: rgba(234, 67, 53, 0.1);
-  --success-soft: rgba(57, 181, 74, 0.12);
-  --map-canvas-bg: #e7eef3;
+  --grab-green: #047857;
+  --grab-green-hover: #065f46;
+  --grab-blue: #047857;
+  --grab-blue-hover: #065f46;
+  --text-primary: #2f251d;
+  --text-secondary: #5a4a3d;
+  --text-heading: #221a14;
+  --border: #d9cebd;
+  --surface: #fffdf8;
+  --surface-muted: #f5eee3;
+  --surface-input: #f9f4ec;
+  --surface-elevated: #fffffc;
+  --surface-glass: rgb(255 251 244 / .8);
+  --overlay-scrim: rgb(34 26 20 / .45);
+  --shadow-color: 34, 26, 20;
+  --maps-blue: #047857;
+  --maps-blue-hover: #065f46;
+  --maps-blue-soft: #ecfdf5;
+  --maps-blue-text: #047857;
+  --maps-hover: #efe6d7;
+  --shadow-sm: 0 1px 2px rgb(34 26 20 / .06), 0 2px 6px -2px rgb(34 26 20 / .06);
+  --shadow-md: 0 2px 4px -1px rgb(34 26 20 / .06), 0 10px 20px -6px rgb(34 26 20 / .1);
+  --error: #b42318;
+  --success: #047857;
+  --error-soft: rgb(180 35 24 / .1);
+  --warning: #8a5300;
+  --warning-soft: #fdf1d8;
+  --warning-border: #d9a441;
+  --success-soft: rgb(4 120 87 / .1);
+  --map-canvas-bg: #efe6d7;
   --app-chrome-tint: var(--surface);
   --app-hub-paper: var(--surface);
   --app-explore-paper: var(--surface);
   --app-market-paper: var(--surface);
   --app-invite-paper: var(--surface);
   --app-messages-paper: var(--surface);
+  --hj-accent: #047857;
+  --hj-grab-green: #047857;
+  --hj-soft: #6f5d4e;
+  --hj-accent-soft: #ecfdf5;
+  --hj-nav-idle: #221a14;
+  --hj-nav-line: #e3d8c7;
+  --text-accent: #047857;
+  --action-primary: #bf400c;
+  --action-primary-hover: #9a3412;
+  --action-on-primary: #ffffff;
+  --action-soft: #fff7ed;
+  --action-on-soft: #9a3412;
+  --on-brand: #ffffff;
+  --brand-soft: #ecfdf5;
+  --control-border: #9a8670;
+  --hj-brand-coral: #bf400c;
+  --hj-brand-coral-soft: #fff7ed;
 }
 
 *,
@@ -282,7 +465,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--maps-blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -321,7 +504,7 @@ body {
   --hj-cream: var(--surface);
   --hj-border: var(--border);
   --hj-muted: var(--text-secondary);
-  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
+  --hj-accent-soft: var(--maps-blue-soft);
   --app-chrome-tint: var(--surface);
   --app-hub-paper: var(--surface);
   --app-explore-paper: var(--surface);
@@ -333,7 +516,7 @@ body {
 }
 
 .app-shell--product:not(.app-shell--map) .app-main {
-  background: var(--hj-paper, #f3f7fa);
+  background: var(--hj-paper, var(--surface-muted));
 }
 
 .app-shell--product .app-main {
@@ -487,13 +670,13 @@ p {
 }
 
 .btn-primary {
-  background: var(--grab-green);
-  color: #fff;
+  background: var(--action-primary);
+  color: var(--action-on-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--grab-green-hover);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--grab-green) 28%, transparent);
+  background: var(--action-primary-hover);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--action-primary) 28%, transparent);
 }
 
 .btn-secondary {
@@ -533,7 +716,7 @@ p {
 .btn-sm {
   min-height: 36px;
   padding: 8px 16px;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
 }
 
 .card {
@@ -558,7 +741,7 @@ p {
 
 .form-label {
   display: block;
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-heading);
   margin-bottom: 8px;
@@ -586,9 +769,9 @@ p {
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: var(--grab-blue);
+  border-color: var(--focus-ring);
   background: var(--surface-elevated);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--grab-blue) 22%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent);
 }
 
 .form-input::placeholder,
@@ -599,7 +782,7 @@ p {
 
 .form-error {
   color: var(--error);
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   margin-top: 6px;
 }
 
@@ -607,7 +790,7 @@ p {
   padding: 12px 16px;
   border-radius: var(--radius-md);
   margin-bottom: 16px;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
 }
 
 .alert-error {
@@ -631,8 +814,8 @@ p {
 .badge {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
   font-weight: 600;
 }
 
@@ -715,7 +898,7 @@ p {
   animation-duration: var(--dur-med);
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
@@ -779,7 +962,7 @@ p {
   }
 
   .page-title {
-    font-size: 1.625rem;
+    font-size: var(--fs-2xl);
     line-height: 1.15;
   }
 
@@ -809,7 +992,7 @@ p {
   .form-input,
   .form-select,
   .form-textarea {
-    font-size: 1rem; /* tránh zoom tự động trên iOS */
+    font-size: var(--fs-lg); /* tránh zoom tự động trên iOS */
     border-radius: 14px;
   }
 
@@ -854,7 +1037,7 @@ p {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  border: 1px solid transparent; border-radius: 999px;
+  border: 1px solid transparent; border-radius: var(--radius-pill);
   background: var(--hj-scroll-thumb); background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover { border-width: 0; background: var(--hj-scroll-thumb-hover); }
@@ -869,9 +1052,10 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):not(
   .natural-rental-search__form textarea, .map-chatbot__form textarea,
   .map-listings__range-inputs input, .hj-search__field input, .choice-picker__search-wrap input,
   .guest-preview__search > div input, .food-search input, .wallet-input input, .wallet-deposit__amount input, .bank-name__control input,
-  [data-glass-search] > input, .explore-search__input,
+  [data-glass-search] > input, .explore-search__input, .m-composer__field textarea,
+  .auth-unified .auth-cinema__field input,
   .hx *
-):focus-visible { outline: 2px solid var(--action-on-soft, #0f6b63) !important; outline-offset: 2px; }
+):focus-visible { outline: 2px solid var(--focus-ring) !important; outline-offset: 2px; }
 
 /* Mobile touch-press micro-interaction */
 @media (hover: none) and (pointer: coarse) {
@@ -882,4 +1066,22 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):not(
     transform: scale(0.975);
     transition: transform 60ms ease;
   }
+}
+
+/* No visible scrollbars anywhere: areas still scroll by touch, wheel and keyboard. */
+:root, :root * { scrollbar-width: none !important; }
+:root ::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+/* Brand logo images follow the theme (see --logo-filter). */
+:is(.hj-logo__mark, .m-header__logo img, .navbar img[src*="homeji-logo"]) { filter: var(--logo-filter); }
+
+/* Phones: keep at least 12px between the app's bottom bar (and anything stacked on it) and
+   the phone's own bottom bar / home indicator, even where the browser reports no inset. */
+html[data-device='mobile'] { --safe-bottom: max(env(safe-area-inset-bottom, 0px), 12px); }
+
+/* Interaction focus has its own neutral role; brand and success colors stay green. */
+:root { --focus-ring: #8a6247; }
+html[data-theme='dark'] { --focus-ring: #d9b899; }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) { --focus-ring: #d9b899; }
 }

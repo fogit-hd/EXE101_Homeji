@@ -23,6 +23,8 @@ export type Listing = {
   owner: { name: string; role: 'Chủ trọ' | 'Người tìm ở ghép' }
   /** Optional link to the live listing detail view. */
   href?: string
+  /** Where it is, for the landing map (live listings only). */
+  coords?: { lat: number; lng: number }
 }
 
 export type StoryChapter = {

@@ -1,0 +1,73 @@
+/* Keep this cost form consistent without restyling the other assistant tools. */
+#root .rental-decision { container-type: inline-size; }
+#root .rental-decision .rental-assistant__fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+#root .rental-decision .rental-assistant__fields > label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font: 400 var(--fs-sm)/1.5 var(--font-ui);
+  color: var(--text-secondary);
+}
+#root .rental-decision .rental-assistant__fields > label > span:first-child {
+  min-height: 3em;
+  display: flex;
+  align-items: flex-end;
+}
+#root .rental-decision :is(.rental-assistant__fields, details) :is(input:not([type="checkbox"]), .choice-picker__trigger) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  min-height: 48px;
+  padding: 10px 12px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font: 400 1rem/1.5 var(--font-ui);
+  box-shadow: none;
+}
+#root .rental-decision :is(input:not([type="checkbox"]), .choice-picker__trigger):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+#root .rental-decision .rental-decision__confirmations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 4px 16px;
+  margin: 12px 0 20px;
+}
+#root .rental-decision .rental-decision__confirmations > label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  width: fit-content;
+  max-width: 100%;
+  font: 400 var(--fs-sm)/1.5 var(--font-ui);
+  cursor: pointer;
+}
+#root .rental-decision .rental-decision__confirmations input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--grab-green);
+}
+
+@container (min-width: 1100px) {
+  #root .rental-decision .rental-assistant__fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@container (max-width: 559px) {
+  #root .rental-decision .rental-assistant__fields { grid-template-columns: minmax(0, 1fr); }
+  #root .rental-decision .rental-assistant__fields > label > span:first-child { min-height: 0; }
+}

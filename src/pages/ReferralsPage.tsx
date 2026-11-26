@@ -21,7 +21,13 @@ const RULES = [
   'Đơn đồ ăn bị hủy sẽ được trả lại voucher, giữ nguyên hạn dùng ban đầu.',
 ]
 
+/** Keyed by account: a different account signed in from another tab starts with fresh state, never the last one's code and vouchers. */
 export function ReferralsPage() {
+  const { profile } = useAuth()
+  return <OwnedReferralsPage key={profile?.id ?? 'guest'} />
+}
+
+function OwnedReferralsPage() {
   const { isAuthenticated, needsProfileSetup, isLoading } = useAuth()
   const [params] = useSearchParams()
   const [now] = useState(() => Date.now())
@@ -155,7 +161,7 @@ export function ReferralsPage() {
           <button type="button" className="referrals-share__item" aria-expanded={showQr} onClick={() => setShowQr(value => !value)}>{showQr ? 'Ẩn mã QR' : 'Hiện mã QR'}</button>
         </div>
         {showQr ? <div className="referrals-qr">
-          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(inviteUrl)}&margin=6`} alt="Mã QR của link mời" width="180" height="180" loading="lazy" />
+          <img decoding="async" src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(inviteUrl)}&margin=6`} alt="Mã QR của link mời" width="180" height="180" loading="lazy" />
           <p>Quét bằng camera điện thoại hoặc Zalo để mở link.</p>
         </div> : null}
         <div className="referrals-code">
@@ -171,7 +177,7 @@ export function ReferralsPage() {
     <main className="referrals-page" data-glass-exclude>
       <section className="referrals-hero" aria-labelledby="referrals-title">
         <div className="referrals-hero__copy">
-          <p className="referrals-hero__eyebrow">Quà mời bạn · Đợt 1</p>
+          
           <h1 id="referrals-title">Có bạn, có nhà.<br /><span>Có cả quà nữa.</span></h1>
           <p className="referrals-hero__lead">Mời một người bạn đến Homeji. Cả hai cùng nhận 4 voucher, giảm tổng cộng đến <strong>{GIFT_TOTAL}</strong>.</p>
           {isAuthenticated

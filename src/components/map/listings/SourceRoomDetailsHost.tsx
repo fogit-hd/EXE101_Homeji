@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { SourceRoomDetail } from './SourceRoomDetail'
@@ -10,12 +10,18 @@ const RoomDetailModal = lazy(() => import('./RoomDetailModal').then(module => ({
 
 export function SourceRoomDetailsHost() {
   const [params, setParams] = useSearchParams()
-  const id = params.get('source')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const roomId = params.get('room')
+  const id = roomId || params.get('source')
   if (!id || !/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(id)) return null
-  const close = () => { const next = new URLSearchParams(params); next.delete('source'); setParams(next, { replace: true }) }
-  const nativeId = sourcePublisherLink(id)?.nativePostId
+  const close = () => {
+    // Opened in-app pushed one entry: step back so Back/close share one history entry.
+    if (roomId && (location.state as { roomOverlay?: boolean } | null)?.roomOverlay) { navigate(-1); return }
+    const next = new URLSearchParams(params); next.delete(roomId ? 'room' : 'source'); setParams(next, { replace: true }) }
+  const nativeId = roomId || sourcePublisherLink(id)?.nativePostId
   return nativeId ? <LinkedNativeDetail key={nativeId} id={nativeId} onClose={close}
-    onOpenSection={(section, conversation) => { const next = new URLSearchParams(params); next.delete('source'); next.delete('post'); next.set('section', section); if (conversation) next.set('conversation', conversation); setParams(next) }} />
+    onOpenSection={(section, conversation) => { const next = new URLSearchParams(params); next.delete('source'); next.delete('room'); next.delete('post'); next.set('section', section); if (conversation) next.set('conversation', conversation); setParams(next) }} />
     : <SourceRoomDetail key={id} id={id} onClose={close} />
 }
 

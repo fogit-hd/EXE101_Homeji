@@ -23,7 +23,7 @@ function LegalLayout({
           ← Về Homeji
         </Link>
         <header>
-          <p className="legal-page__eyebrow">HOMEJI</p>
+          
           <RevealText as="h1" text={title} />
           <p className="legal-page__updated">Cập nhật lần cuối: {updatedAt}</p>
           <p className="legal-page__intro">{intro}</p>

@@ -1,0 +1,250 @@
+/* Chợ Homeji on phones: section tabs (MarketplaceHeader), orders, product page, food cart, wallet. */
+
+/* ── Section tabs ── */
+.m-market-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px var(--m-gutter, 16px) 4px;
+  background: var(--surface);
+}
+.m-market-head__row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.m-market-head__row > .m-seg { flex: 1; }
+.m-market-head__row > .marketplace-toolbar { flex: none; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+.m-market-head__quick:empty { display: none; }
+.m-market-head__subtabs { padding-bottom: 4px; }
+.m-market-head__subtabs .m-chip:is([aria-selected='true']) .m-chip__count { background: var(--on-brand); color: var(--grab-green); }
+
+/* Food meal chips and the radius select, portalled into the quick-controls slot. */
+html[data-device='mobile'] .m-market-head__quick .food-meal-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin: 0 calc(var(--m-gutter, 16px) * -1);
+  padding: 0 var(--m-gutter, 16px) 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+html[data-device='mobile'] .m-market-head__quick .food-meal-filter-bar::-webkit-scrollbar { display: none; }
+html[data-device='mobile'] .m-market-head__quick .food-meal-chips { display: flex; flex: none; flex-wrap: nowrap; gap: 8px; }
+html[data-device='mobile'] .m-market-head__quick .hj-chip { flex: none; min-height: 36px; white-space: nowrap; }
+html[data-device='mobile'] .m-market-head__quick .food-distance { display: inline-flex; flex: none; align-items: center; gap: 6px; font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile'] .m-market-head__quick .food-distance span { display: none; }
+html[data-device='mobile'] .m-market-head__quick .food-distance select { min-height: 36px; padding: 0 28px 0 12px; border-radius: var(--radius-pill); font-size: var(--fs-lg); }
+html[data-device='mobile'] .m-market-head__quick .marketplace-distance-sort { color: var(--text-secondary); font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile'] .m-market-head__quick .marketplace-distance-sort .btn { min-height: 40px; }
+
+/* Catalog heading: smaller than a page title; the tabs above already name the screen. */
+html[data-device='mobile'] .food-nearby-head h2 { font-size: var(--fs-lead); }
+
+/* ── Orders (Đơn mua, Đơn bán) ── */
+.m-market-status { margin-top: 4px; }
+html[data-device='mobile'] .marketplace-purchase-source > h3 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 4px 0 10px;
+  color: var(--text-heading);
+  font-size: var(--fs-md, 1rem);
+}
+html[data-device='mobile'] .marketplace-purchase-source > h3 span { color: var(--text-secondary); font-size: var(--fs-sm, .875rem); font-weight: 600; }
+html[data-device='mobile'] .marketplace-order-groups { display: grid; gap: 12px; }
+
+.m-order {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius, 14px);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+.m-order.is-purchase-focus { border-color: var(--grab-green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--grab-green) 30%, transparent); }
+.m-order__head { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.m-order__avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--grab-green);
+  color: var(--on-brand);
+  font-weight: 800;
+}
+.m-order__who { min-width: 0; }
+.m-order__who h3 { overflow: hidden; margin: 0; color: var(--text-heading); font-size: var(--fs-md, 1rem); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.m-order__who p { margin: 2px 0 0; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+.m-order__status {
+  max-width: 128px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft, var(--surface-muted));
+  color: var(--text-accent, var(--grab-green));
+  font-size: var(--fs-xs, .75rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+.m-order__status.is-done { background: var(--surface-muted); color: var(--text-heading); }
+.m-order__status.is-off { background: var(--surface-muted); color: var(--text-secondary); }
+
+/* Four-step progress as one segmented bar; the step name is in the status pill and the label. */
+.m-order__progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.m-order__progress span { height: 4px; border-radius: var(--radius-pill); background: var(--surface-muted); }
+.m-order__progress .is-done, .m-order__progress .is-current { background: var(--grab-green); }
+.m-order__progress .is-current { opacity: .55; }
+.m-order__eta { margin: -4px 0 0; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.45; }
+
+.m-order__items { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.m-order__items li { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 10px; }
+.m-order__items img, .m-order__noimg { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--surface-muted); object-fit: cover; }
+.m-order__items strong { display: block; overflow: hidden; color: var(--text-heading); font-size: var(--fs-sm, .875rem); text-overflow: ellipsis; white-space: nowrap; }
+.m-order__items small { color: var(--text-secondary); font-size: var(--fs-xs, .75rem); font-variant-numeric: tabular-nums; }
+
+.m-order__facts { display: grid; gap: 6px; margin: 0; padding-top: 10px; border-top: 1px solid var(--border); }
+.m-order__facts > div { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-sm, .875rem); }
+.m-order__facts dt { flex: none; color: var(--text-secondary); }
+.m-order__facts dd { min-width: 0; margin: 0; color: var(--text-heading); text-align: right; }
+.m-order__total { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* The shared action footer: buttons share one row, notes take the full width. */
+html[data-device='mobile'] .m-order .marketplace-order-group__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+html[data-device='mobile'] #root .m-order .marketplace-order-group__actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+}
+html[data-device='mobile'] .m-order .marketplace-order-group__actions .marketplace-card__info {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs, .75rem);
+  line-height: 1.5;
+}
+
+/* ── Product page ── */
+.m-product__photo { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--surface-muted); }
+.m-product__qty { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.m-product__qty strong { color: var(--text-heading); font-size: var(--fs-md, 1rem); font-variant-numeric: tabular-nums; }
+.m-product__topup { margin-top: 10px; }
+
+/* ── Food cart: the sticky bar is the only cart entry; it opens the sheet. ── */
+html[data-device='mobile'] .food-cart-fab { display: none; }
+html[data-device='mobile']:root body #root .food-market-body .food-catalog { padding-bottom: calc(var(--m-tabbar-h) + 24px); }
+html[data-device='mobile']:root body #root .food-market-body:has(.food-sticky-floating-cart) .food-catalog { padding-bottom: calc(var(--m-tabbar-h) + 96px); }
+html[data-device='mobile'] .food-sticky-floating-cart {
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--m-tabbar-h) + 8px);
+  padding: 8px 8px 8px 16px;
+  border-radius: var(--radius-lg);
+}
+html[data-device='mobile'] .food-sticky-floating-cart__cta { min-height: 44px; padding: 0 16px; border-radius: var(--radius-md); }
+/* The cart sheet is for checking out; the location picker stays on the catalog. */
+html[data-device='mobile'] .food-cart-sheet__panel .food-rail__location { display: none; }
+
+/* ── Đồ cũ and Tin của tôi: seller groups sit flat on the page, cards in a single column. ── */
+html[data-device='mobile'] .marketplace-workspace { padding: 12px var(--m-gutter, 16px) 0; }
+html[data-device='mobile'] .seller-catalog { display: grid; gap: 20px; }
+html[data-device='mobile'] .seller-catalog__shop { display: grid; gap: 10px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+html[data-device='mobile'] .seller-catalog__head { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 0; border: 0; }
+html[data-device='mobile'] .seller-catalog__avatar { width: 36px; height: 36px; border-radius: var(--radius-sm); font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile'] .seller-catalog__identity h2,
+html[data-device='mobile'] .seller-catalog__identity h3 { overflow: hidden; margin: 0; font-size: var(--fs-md, 1rem); text-overflow: ellipsis; white-space: nowrap; }
+html[data-device='mobile'] .seller-catalog__identity p { margin: 0; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+html[data-device='mobile']:root body #root .seller-catalog .seller-catalog__open {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--grab-green);
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 700;
+  text-decoration: none;
+}
+html[data-device='mobile'] .seller-catalog__items,
+html[data-device='mobile'] .marketplace-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
+html[data-device='mobile'] .seller-catalog__more { margin: 0; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+.m-detail .m-product__confirm { margin: 12px 0 0; }
+
+/* One seller's store: a back link and the name; the catalog's own seller row would repeat it. */
+html[data-device='mobile'] .seller-store-header { display: grid; gap: 4px; margin: 0; padding: 8px var(--m-gutter, 16px) 0; border: 0; background: none; box-shadow: none; }
+html[data-device='mobile'] .seller-store-header > div { display: grid; gap: 2px; justify-items: start; }
+html[data-device='mobile']:root body #root .seller-store-header .btn {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--grab-green);
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 700;
+}
+html[data-device='mobile'] .seller-store-header h2 { margin: 0; color: var(--text-heading); font-size: var(--fs-xl); }
+html[data-device='mobile'] .seller-store-header > div > p { display: none; }
+html[data-device='mobile'] .seller-store-header > p { margin: 0; color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+html[data-device='mobile'] .marketplace-page:has(.seller-store-header) .seller-catalog__head { display: none; }
+
+/* ── Đăng bán ── */
+html[data-device='mobile'] .marketplace-type-choice { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; background: none; }
+html[data-device='mobile'] .marketplace-type-choice > p { margin: 0; color: var(--text-heading); font-weight: 700; }
+html[data-device='mobile'] .marketplace-type-choice [role='group'] {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+html[data-device='mobile']:root body #root .marketplace-type-choice [role='group'] button {
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+html[data-device='mobile']:root body #root .marketplace-type-choice [role='group'] button.is-active {
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-heading) 14%, transparent);
+}
+/* Radios and the photo picker sized for thumbs. */
+html[data-device='mobile'] .marketplace-page label:has(> input[type='radio']) { min-height: 44px; }
+html[data-device='mobile'] .marketplace-page input[type='radio'] { width: 20px; height: 20px; flex: none; accent-color: var(--grab-green); }
+html[data-device='mobile'] .marketplace-page input[type='file'] { width: 100%; font-size: var(--fs-sm, .875rem); }
+html[data-device='mobile'] .marketplace-page input[type='file']::file-selector-button {
+  min-height: 44px;
+  margin-right: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  font: inherit;
+  font-weight: 700;
+}
+
+/* ── Ví ── */
+html[data-device='mobile']:root body #root .wallet-workspace .wallet-tabs { width: 100%; max-width: none; }
+html[data-device='mobile']:root body #root .wallet-workspace .wallet-tabs > button { flex: 1 1 0; justify-content: center; }
+html[data-device='mobile']:root body #root .wallet-card__head h2 { font-size: var(--fs-xl); line-height: 1.3; }
+/* 44px hit area for the 36px quick chips (same pattern as .m-chip). */
+html[data-device='mobile'] .m-market-head__quick .hj-chip { position: relative; }
+html[data-device='mobile'] .m-market-head__quick .hj-chip::after { position: absolute; inset: -4px 0; content: ''; }

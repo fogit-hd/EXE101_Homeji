@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useStreetSearchPlaceholder } from '../../hooks/useStreetSearchPlaceholder'
 import { MoneyInput } from '../ui/MoneyInput'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -8,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useGoogleMaps } from "../../contexts/GoogleMapsProvider.logic"
 
 import { MAP_FOCUS_ZOOM } from '../../lib/googleMaps'
-import { amenityLabel, formatPrice, rentalPostTypeLabel } from '../../lib/labels'
+import { amenityLabel, formatMonthlyRent, rentalPostTypeLabel } from '../../lib/labels'
 import {
   MAP_PIN_LAYER_OPTIONS,
   type MapPinLayer,
@@ -236,7 +237,7 @@ function postToSuggestion(post: RentalPostSummary): MapOmniboxSuggestion {
     kind: 'post',
     title: post.title || 'Tin đăng',
     subtitle: post.address,
-    meta: `${formatPrice(post.price)}/tháng · ${post.area} m² · ${rentalPostTypeLabel[post.type]}`,
+    meta: `${formatMonthlyRent(post.price)} · ${post.area} m² · ${rentalPostTypeLabel[post.type]}`,
     badge: rentalPostTypeLabel[post.type],
     keyword: post.address || post.title,
     focus: { lat: post.latitude, lng: post.longitude, zoom: MAP_FOCUS_ZOOM },
@@ -578,7 +579,7 @@ export function MapOmnibox({
         <button
           type="button"
           className="gmaps-nav-rail__btn gmaps-nav-rail__btn--menu map-motion-press"
-          aria-label="Mở menu"
+          aria-label="Mở menu" title="Mở menu"
           aria-expanded={navOpen}
           onClick={() => {
             setOpen(false)
@@ -681,7 +682,7 @@ export function MapOmnibox({
         <button
           type="button"
           className={`gmaps-omnibox__search-scrim${open && isMobile ? ' is-visible' : ''}`}
-          aria-label="Đóng tìm kiếm"
+          aria-label="Đóng tìm kiếm" title="Đóng tìm kiếm"
           aria-hidden={!(open && isMobile)}
           tabIndex={open && isMobile ? 0 : -1}
           onClick={closeSearch}
@@ -699,7 +700,7 @@ export function MapOmnibox({
               <button
                 type="button"
                 className="gmaps-omnibox__icon-btn gmaps-omnibox__back-btn map-motion-press"
-                aria-label="Quay lại bản đồ"
+                aria-label="Quay lại bản đồ" title="Quay lại bản đồ"
                 onClick={closeSearch}
               >
                 <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
@@ -713,7 +714,7 @@ export function MapOmnibox({
               <button
                 type="button"
                 className="gmaps-omnibox__icon-btn gmaps-omnibox__menu-btn map-motion-press"
-                aria-label="Mở menu"
+                aria-label="Mở menu" title="Mở menu"
                 aria-expanded={navOpen}
                 onClick={() => {
                   setOpen(false)
@@ -780,21 +781,21 @@ export function MapOmnibox({
               <button
                 type="button"
                 className="gmaps-omnibox__icon-btn map-motion-press"
-                aria-label="Xóa tìm kiếm"
+                aria-label="Xóa tìm kiếm" title="Xóa tìm kiếm"
                 onClick={() => {
                   onQueryChange('')
                   inputRef.current?.focus()
                   setOpen(true)
                 }}
               >
-                ×
+                <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
               </button>
             ) : null}
 
             <button
               type="submit"
               className="gmaps-omnibox__icon-btn gmaps-omnibox__search map-motion-press"
-              aria-label="Tìm kiếm"
+              aria-label="Tìm kiếm" title="Tìm kiếm"
             >
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
                 <path
@@ -819,7 +820,7 @@ export function MapOmnibox({
                   })
                 }}
               >
-                ×
+                <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
               </button>
             ) : null}
           </form>
@@ -1030,7 +1031,11 @@ export function MapOmnibox({
                 : 'Thông báo'
             }
             aria-pressed={activeSection === 'notifications'}
-            title="Thông báo"
+            title={
+              unreadNotificationCount > 0
+                ? `Thông báo, ${unreadNotificationCount} chưa đọc`
+                : 'Thông báo'
+            }
             onClick={() => openSection('notifications')}
           >
             <span
@@ -1082,7 +1087,7 @@ export function MapOmnibox({
       <button
         type="button"
         className={`gmaps-nav-backdrop${navOpen ? ' is-visible' : ''}`}
-        aria-label="Đóng menu"
+        aria-label="Đóng menu" title="Đóng menu"
         aria-hidden={!navOpen}
         tabIndex={navOpen ? 0 : -1}
         onClick={closeNav}
@@ -1098,7 +1103,7 @@ export function MapOmnibox({
       >
             <div className="gmaps-nav-drawer__head">
               <Link to="/" className="gmaps-nav-drawer__brand" onClick={closeNav}>
-                <img src="/brand/homeji-logo2.png" alt="Homeji" width={120} height={34} />
+                <img loading="eager" decoding="async" src="/brand/homeji-logo2.png" alt="Homeji" width={120} height={34} />
               </Link>
             </div>
 
@@ -1208,7 +1213,7 @@ export function MapOmnibox({
 
       {!hideAppNav && tourVisible && !navOpen && !tourSection ? (
         <aside className="gmaps-tour gmaps-tour--menu" aria-label="Hướng dẫn bắt đầu">
-          <span className="gmaps-tour__eyebrow">Bắt đầu với Homeji</span>
+          
           <strong>Mở menu ba gạch ở góc trái</strong>
           <p>Chọn Tìm phòng, Chợ Homeji, Ở ghép… rồi Homeji mới giải thích chi tiết mục đó.</p>
           <div className="gmaps-tour__actions">
@@ -1229,7 +1234,7 @@ export function MapOmnibox({
 
       {!hideAppNav && tourVisible && tourSection && SECTION_GUIDE[tourSection] ? (
         <aside className="gmaps-tour gmaps-tour--section" role="dialog" aria-modal="false" aria-label={`Hướng dẫn ${SECTION_GUIDE[tourSection]!.title}`}>
-          <span className="gmaps-tour__eyebrow">Bạn vừa mở</span>
+          
           <strong>{SECTION_GUIDE[tourSection]!.title}</strong>
           <p>{SECTION_GUIDE[tourSection]!.body}</p>
           <small>{SECTION_GUIDE[tourSection]!.tip}</small>

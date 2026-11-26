@@ -44,10 +44,10 @@
   max-width: 220px;
   min-width: 120px;
   padding: 6px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: rgba(18, 22, 28, 0.94);
-  border: 1px solid rgba(110, 168, 254, 0.55);
-  color: #f4f7fb;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
   text-align: center;
   line-height: 1.25;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -56,19 +56,19 @@
 
 .map-shared-location-pin__kind {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #8ec5ff;
+  color: var(--grab-green);
   margin-bottom: 2px;
 }
 
 .map-shared-location-pin__title {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
-  color: #fff;
+  color: var(--on-brand);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

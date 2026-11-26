@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useListingSearchParams } from '../hooks/useListingSearchParams'
 import { searchRentalMapInventory } from '../lib/rentalMapInventory'
 import { useChangedInputs } from '../hooks/useChangedInputs'
@@ -27,6 +28,7 @@ import type { MapAppSection } from "../components/map/MapAppPanel.logic"
 import { MapOmnibox, type MapOmniboxSuggestion } from '../components/map/MapOmnibox'
 
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../components/toast/useToast'
 import { useGoogleMapsStatus } from "../contexts/GoogleMapsProvider.logic"
 
 import { useOnReconnect } from "../contexts/NetworkStatusContext.logic"
@@ -84,6 +86,7 @@ const HOME_SECTIONS: MapAppSection[] = [
   'wanted',
   'activities',
   'myPosts',
+  'help',
 ]
 
 /**
@@ -100,6 +103,7 @@ function HomePageComponent() {
   const location = useLocation()
   const [pendingAiReview, setPendingAiReview] = useState<AiHighlightResponse | null>(null)
   const [searchParams, setSearchParams] = useListingSearchParams()
+  const { push: pushToast } = useToast()
   const urlSectionRaw = searchParams.get('section')
   const urlPostId = searchParams.get('post')
   // Notifications open from the header bell. Old `section=notifications` links
@@ -119,6 +123,8 @@ function HomePageComponent() {
     isAuthenticated && Boolean(activeSection && activeSection !== 'listings')
 
   const [posts, setPosts] = useState<RentalPostSummary[]>([])
+  /** The listing a `?post=` link asked for, kept apart from the filtered inventory. */
+  const [linkedPost, setLinkedPost] = useState<RentalPostSummary | null>(null)
   const [marketPosts, setMarketPosts] = useState<MarketplacePost[]>([])
   const [loading, setLoading] = useState(() => isExploreView)
   const [error, setError] = useState('')
@@ -132,6 +138,10 @@ function HomePageComponent() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
+  const [exploreReload, setExploreReload] = useState(0)
+  const postsRequestRef = useRef(0)
+  // Only the latest posts request may commit: each new load bumps the id and aborts the previous one.
+  const postsAbortRef = useRef<AbortController | null>(null)
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
   const [listingsPanelOpen, setListingsPanelOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState(GUEST_DISTRICTS[0].label)
@@ -182,11 +192,12 @@ function HomePageComponent() {
   }
   useEffect(() => {
     if (!isAuthenticated || isLoading || needsProfileSetup || !urlPostId) return
+    // Its own lifecycle: an inventory request starting meanwhile must not drop the linked listing.
     let cancelled = false
     void getRentalPost(urlPostId, { auth: true })
       .then((post) => {
         if (cancelled) return
-        setPosts((prev) => (prev.some((p) => p.id === post.id) ? prev : [post, ...prev]))
+        setLinkedPost(post)
         setMapFocus({
           lat: post.latitude,
           lng: post.longitude,
@@ -194,11 +205,21 @@ function HomePageComponent() {
         })
         setMapFocusToken((n) => n + 1)
       })
-      .catch(() => {
-        /* keep selection; detail panel will show load error state */
+      .catch((err: unknown) => {
+        if (cancelled || (err instanceof DOMException && err.name === 'AbortError')) return
+        // A dead link must not leave an invisible selection behind: say so and drop it.
+        pushToast('Không mở được tin phòng này. Tin có thể đã bị gỡ hoặc tạm thời không tải được.', 'error')
+        setSelectedPostId((prev) => (prev === urlPostId ? null : prev))
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          if (next.get('post') !== urlPostId) return prev
+          next.delete('post')
+          if (!next.get('section')) next.set('section', 'listings')
+          return next
+        }, { replace: true })
       })
     return () => { cancelled = true }
-  }, [isAuthenticated, isLoading, urlPostId, needsProfileSetup])
+  }, [isAuthenticated, isLoading, urlPostId, needsProfileSetup, pushToast, setSearchParams])
 
   if (useChangedInputs([isHubView]) && isHubView) {
     setSelectedPostId(null)
@@ -307,6 +328,10 @@ function HomePageComponent() {
   }, [loading, disrupted, onPostsIntroComplete])
 
   const loadPosts = useCallback(async () => {
+    const requestId = ++postsRequestRef.current
+    postsAbortRef.current?.abort()
+    const controller = new AbortController()
+    postsAbortRef.current = controller
     if (!disruptedRef.current) setLoading(true)
     setError('')
     const {
@@ -324,17 +349,19 @@ function HomePageComponent() {
         maxPrice: maxP ? Number(maxP) : undefined,
         amenities: am.length ? am : undefined,
         ...(bbox ?? {}),
-      })
+      }, { signal: controller.signal })
+      if (requestId !== postsRequestRef.current || controller.signal.aborted) return
       setPosts(data)
       setSelectedPostId((prev) => (prev && data.some((p) => p.id === prev) ? prev : null))
       setDisrupted(false)
       // Keep intentional place focus; otherwise fit to filtered pins.
       if (!bbox) pinFilterResults()
     } catch (err) {
+      if (requestId !== postsRequestRef.current || controller.signal.aborted) return
       setError(getErrorMessage(err, 'Không thể tải danh sách phòng'))
       setDisrupted(isServiceDisruption(err))
     } finally {
-      setLoading(false)
+      if (requestId === postsRequestRef.current && !controller.signal.aborted) setLoading(false)
     }
   }, [pinFilterResults])
 
@@ -373,6 +400,8 @@ function HomePageComponent() {
     (update: AiHighlightResponse) => {
       const c = update.criteria
       if (c.unknown?.length) return
+      postsRequestRef.current += 1
+      postsAbortRef.current?.abort()
       const params = new URLSearchParams({ section: 'listings' })
       const nextKeyword = (c.keyword || c.location || '').trim()
       if (nextKeyword) params.set('keyword', nextKeyword)
@@ -454,8 +483,9 @@ function HomePageComponent() {
     setDisrupted(false)
   }
 
-  const [exploreReload, setExploreReload] = useState(0)
   const exploreFitKey = useRef('')
+  /** Highest result page held in `posts`/`marketPosts` for the current search. */
+  const loadedPageRef = useRef(0)
 
   useEffect(() => {
     if (!isExploreView) return
@@ -472,12 +502,23 @@ function HomePageComponent() {
   useEffect(() => {
     if (!isAuthenticated || isLoading || !isExploreView) return
     const query = parseFiltersFromURL(searchParams)
+    // Pages accumulate in memory only. Arriving on page N without pages 1..N-1 (a reload, or a
+    // return from another route) starts over from page 1 instead of showing a lone later page.
+    if (query.page > 1 && loadedPageRef.current < query.page - 1) {
+      setSearchParams(serializeFiltersToQuery({ ...query, page: 1 }, searchParams), { replace: true })
+      return
+    }
+    const requestId = ++postsRequestRef.current
+    postsAbortRef.current?.abort()
     const controller = new AbortController()
+    postsAbortRef.current = controller
     let cancelled = false
     const fitKey = nonBoundsSignature(query)
     const marketMode = query.catalog === 'market'
     const finish = (ids: string[]) => {
-      setSelectedPostId((prev) => (prev && ids.includes(prev) ? prev : null))
+      loadedPageRef.current = query.page
+      // A listing opened by link stays selected even when the current filters exclude it.
+      setSelectedPostId((prev) => (prev && (ids.includes(prev) || prev === searchParams.get('post')) ? prev : null))
       setDisrupted(false)
       if (!searchParams.get('placeId') && exploreFitKey.current !== fitKey) {
         exploreFitKey.current = fitKey
@@ -487,7 +528,7 @@ function HomePageComponent() {
     const request = marketMode
       ? searchMarketplacePosts(listingQueryToMarketplaceParams(query), { signal: controller.signal }).then(
           (data) => {
-            if (cancelled) return
+            if (cancelled || requestId !== postsRequestRef.current || controller.signal.aborted) return
             setPosts([])
             setMarketPosts((current) => {
               if (query.page > 1) {
@@ -501,7 +542,7 @@ function HomePageComponent() {
           },
         )
       : (query.view === 'list' ? searchRentalPosts : searchRentalMapInventory)(listingQueryToSearchParams(query), { signal: controller.signal }).then((data) => {
-          if (cancelled) return
+          if (cancelled || requestId !== postsRequestRef.current || controller.signal.aborted) return
           setMarketPosts([])
           setPosts((current) => {
             if (query.page > 1) {
@@ -515,7 +556,7 @@ function HomePageComponent() {
         })
     void request
       .catch((err: unknown) => {
-        if (cancelled || controller.signal.aborted) return
+        if (cancelled || requestId !== postsRequestRef.current || controller.signal.aborted) return
         if (err instanceof DOMException && err.name === 'AbortError') return
         setError(
           getErrorMessage(err, marketMode ? 'Không thể tải chợ đồ' : 'Không thể tải danh sách phòng'),
@@ -523,7 +564,7 @@ function HomePageComponent() {
         setDisrupted(isServiceDisruption(err))
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled && requestId === postsRequestRef.current && !controller.signal.aborted) setLoading(false)
       })
     return () => {
       cancelled = true
@@ -536,6 +577,7 @@ function HomePageComponent() {
     searchParams,
     exploreReload,
     pinFilterResults,
+    setSearchParams,
   ])
 
   useOnReconnect(() => {
@@ -583,9 +625,23 @@ function HomePageComponent() {
   }, [selectedPostId])
 
   const selectedPost = useMemo(
-    () => posts.find((p) => p.id === selectedPostId) ?? null,
-    [posts, selectedPostId],
+    () => posts.find((p) => p.id === selectedPostId) ?? (linkedPost?.id === selectedPostId ? linkedPost : null),
+    [posts, selectedPostId, linkedPost],
   )
+
+  // `?post=` mirrors the open listing: picking another pin or closing with Escape updates the link too.
+  useEffect(() => {
+    if (!isAuthenticated || isLoading || !isExploreView || !urlPostId || selectedPostId === urlPostId) return
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (selectedPostId) next.set('post', selectedPostId)
+      else {
+        next.delete('post')
+        if (!next.get('section')) next.set('section', 'listings')
+      }
+      return next
+    }, { replace: true })
+  }, [isAuthenticated, isLoading, isExploreView, urlPostId, selectedPostId, setSearchParams])
 
   const toggleAmenity = useCallback((amenity: string) => {
     setSelectedAmenities((prev) =>
@@ -987,7 +1043,7 @@ function HomePageComponent() {
   return (
     <>
     {pendingAiReview ? <aside className="home-ai-review" aria-label="Xác nhận tìm kiếm">
-      <button type="button" onClick={() => setPendingAiReview(null)} aria-label="Đóng xác nhận tìm kiếm">×</button>
+      <button type="button" onClick={() => setPendingAiReview(null)} aria-label="Đóng xác nhận tìm kiếm" title="Đóng xác nhận tìm kiếm"><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button>
       <AiSearchReview result={pendingAiReview} onApply={applyAiSearchUpdate} onOpenListing={() => setPendingAiReview(null)}
         onRefine={text => { setSearchQuery(text); setPendingAiReview(null) }} />
     </aside> : null}

@@ -1,7 +1,8 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useChangedInputs } from '../hooks/useChangedInputs'
 import { ChoicePicker } from './ui/ChoicePicker'
 import { useMotionPresence } from './motion/useMotionPresence'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import {
   VI_MONTHS,
   VI_WEEKDAYS,
@@ -23,6 +24,7 @@ type Props = {
   inputClassName?: string
   disabled?: boolean
   id?: string
+  viewportBound?: boolean
 }
 
 const MINUTE_OPTIONS = [0, 15, 30, 45] as const
@@ -42,12 +44,52 @@ export function ScheduleDateTimePicker({
   inputClassName = 'form-input',
   disabled = false,
   id: idProp,
+  viewportBound = false,
 }: Props) {
   const autoId = useId()
   const id = idProp ?? autoId
   const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const { present, ...presence } = useMotionPresence(open)
+
+  // A calendar inside a modal footer must escape clipping and stay within the viewport.
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!viewportBound || !present || !panel) return
+    const position = () => {
+      const trigger = rootRef.current?.querySelector('.schedule-dt__trigger')
+      if (!trigger) return
+      const rect = trigger.getBoundingClientRect()
+      const viewport = window.visualViewport
+      const leftEdge = (viewport?.offsetLeft ?? 0) + 12
+      const topEdge = (viewport?.offsetTop ?? 0) + 12
+      const width = (viewport?.width ?? window.innerWidth) - 24
+      const height = (viewport?.height ?? window.innerHeight) - 24
+      Object.assign(panel.style, {
+        position: 'fixed', margin: '0', right: 'auto', bottom: 'auto',
+        width: `${Math.min(332, width)}px`, maxHeight: `${height}px`, overflowY: 'auto',
+      })
+      const panelHeight = panel.offsetHeight
+      const above = rect.top - panelHeight - 8
+      const below = rect.bottom + 8
+      panel.style.left = `${Math.max(leftEdge, Math.min(rect.right - panel.offsetWidth, leftEdge + width - panel.offsetWidth))}px`
+      panel.style.top = `${Math.max(topEdge, Math.min(above >= topEdge ? above : below, topEdge + height - panelHeight))}px`
+    }
+    position()
+    if (typeof panel.showPopover === 'function') panel.showPopover()
+    window.addEventListener('resize', position)
+    window.addEventListener('scroll', position, true)
+    window.visualViewport?.addEventListener('resize', position)
+    window.visualViewport?.addEventListener('scroll', position)
+    return () => {
+      if (panel.matches(':popover-open')) panel.hidePopover()
+      window.removeEventListener('resize', position)
+      window.removeEventListener('scroll', position, true)
+      window.visualViewport?.removeEventListener('resize', position)
+      window.visualViewport?.removeEventListener('scroll', position)
+    }
+  }, [viewportBound, present])
 
   const selected = parseLocalInputValue(value)
   const [viewMonth, setViewMonth] = useState(() => selected ?? new Date())
@@ -149,16 +191,16 @@ export function ScheduleDateTimePicker({
       </button>
 
       {present ? (
-        <div {...presence} className="schedule-dt__panel" role="dialog" aria-label="Chọn thời gian">
+        <div {...presence} ref={panelRef} popover={viewportBound ? "manual" : undefined} className="schedule-dt__panel" role="dialog" aria-label="Chọn thời gian">
           <div className="schedule-dt__top">
             <div className="schedule-dt__cal-head">
               <button
                 type="button"
                 className="schedule-dt__nav"
-                aria-label="Tháng trước"
+                aria-label="Tháng trước" title="Tháng trước"
                 onClick={() => setViewMonth((m) => addMonths(m, -1))}
               >
-                ‹
+                <ChevronLeft aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} />
               </button>
               <span className="schedule-dt__month">
                 {VI_MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}
@@ -166,10 +208,10 @@ export function ScheduleDateTimePicker({
               <button
                 type="button"
                 className="schedule-dt__nav"
-                aria-label="Tháng sau"
+                aria-label="Tháng sau" title="Tháng sau"
                 onClick={() => setViewMonth((m) => addMonths(m, 1))}
               >
-                ›
+                <ChevronRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} />
               </button>
             </div>
             <p className="schedule-dt__preview">{formatScheduleDisplay(toLocalInputValue(preview))}</p>
@@ -213,7 +255,7 @@ export function ScheduleDateTimePicker({
               <ChoicePicker
                 className="schedule-dt__select"
                 value={hour}
-                aria-label="Giờ"
+                aria-label="Giờ" title="Giờ"
                 onChange={(e) => setHour(Number(e.target.value))}
               >
                 {Array.from({ length: 24 }, (_, h) => (
@@ -226,7 +268,7 @@ export function ScheduleDateTimePicker({
               <ChoicePicker
                 className="schedule-dt__select"
                 value={minute}
-                aria-label="Phút"
+                aria-label="Phút" title="Phút"
                 onChange={(e) => setMinute(Number(e.target.value) as MinuteOption)}
               >
                 {MINUTE_OPTIONS.map((m) => (

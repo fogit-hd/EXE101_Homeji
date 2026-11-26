@@ -43,6 +43,10 @@ export function exploreUrlForView(
   return view === 'list' ? exploreListUrl(search) : exploreMapUrl(search)
 }
 
+export function isExploreNavigationActive(pathname: string, search: string): boolean {
+  return pathname === '/explore' || isExploreSurface(pathname, search)
+}
+
 export function isExploreSurface(pathname: string, search: string): boolean {
   if (pathname !== '/') return false
   const params = new URLSearchParams(search)

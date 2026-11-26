@@ -35,16 +35,16 @@
 
 .homeji-loader__label {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   font-weight: 500;
-  color: var(--text-secondary, #69727d);
+  color: var(--text-secondary);
 }
 
 .homeji-loader__message {
   margin: 0;
   max-width: 28rem;
   text-align: center;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   line-height: 1.45;
-  color: var(--danger, #c0392b);
+  color: var(--error);
 }

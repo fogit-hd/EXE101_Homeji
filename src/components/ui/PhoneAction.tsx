@@ -24,7 +24,7 @@ export function PhoneAction({ phone, className, children, hasPhone, onAuthentica
   const validPhone = /^\+?\d{8,15}$/.test(normalized)
   if (!(hasPhone ?? validPhone)) return null
   if (!isAuthenticated) return <button type="button" className={className}
-    aria-label={guestLabel ? guestAriaLabel ?? GUEST_PROMPT : GUEST_PROMPT} title={guestLabel ? GUEST_PROMPT : undefined}
+    aria-label={guestLabel ? guestAriaLabel ?? GUEST_PROMPT : GUEST_PROMPT} title={guestLabel ? guestAriaLabel ?? GUEST_PROMPT : GUEST_PROMPT}
     onClick={() => openAuthModal({ intent: 'contact', onSuccess: () => { setRevealed(true); onAuthenticated?.() } })}>
     {guestLabel ?? GUEST_PROMPT}
   </button>
@@ -33,7 +33,7 @@ export function PhoneAction({ phone, className, children, hasPhone, onAuthentica
     const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
       || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent))
     if (!mobile) { event.preventDefault(); setRevealed(true) }
-  }} aria-label={revealed ? `Số điện thoại ${phone}` : 'Gọi điện'}>
+  }} aria-label={revealed ? `Số điện thoại ${phone}` : 'Gọi điện'} title={revealed ? `Số điện thoại ${phone}` : 'Gọi điện'}>
     {revealed ? <span aria-live="polite">{phone}</span> : children}
   </a>
 }

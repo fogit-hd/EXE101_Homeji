@@ -1,159 +1,34 @@
-import { GLASS_LENS_DEPTHS, glassLensHasSceneReflection, glassLensId, type GlassLensVariant } from './glassLensGeometry'
+import { glassLensId, type GlassLensVariant } from './glassLensGeometry'
 
 const svg = 'http://www.w3.org/2000/svg'
-
-/** Share pixel-sized filters; release them when the last matching control leaves. */
 type LensMapSet = { circle: string; vertical: string; horizontal: string }
+
+/** A single neutral displacement; no channel splitting or scene recolouring. */
 export function createGlassLensFilters(defs: SVGDefsElement, maps: { capsule: LensMapSet; bead: LensMapSet }) {
-  const filters = new Map<string, { node: SVGFilterElement; users: number; illumination?: SVGFEColorMatrixElement; illuminationCap?: SVGFEFuncAElement }>()
-  let dark = document.documentElement.dataset.theme === 'dark'
-  const illuminationValues = () => dark
-    ? '.7874 -.7152 -.0722 0 .86 -.2126 .2848 -.0722 0 .86 -.2126 -.7152 .9278 0 .86 0 0 0 0 .18'
-    : [
-      // Neutral scenes lift towards a light reflection (.92). Subtracting luminance
-      // preserves local chroma and ensures frosted glass stays bright without dark mud.
-      '.7874 -.7152 -.0722 0 .92',
-      '-.2126 .2848 -.0722 0 .92',
-      '-.2126 -.7152 .9278 0 .92',
-      '.455571 1.532571 .154714 0 -.214286',
-    ].join(' ')
+  const filters = new Map<string, { node: SVGFilterElement; users: number }>()
   const acquire = (width: number, height: number, ratio: number, variant: GlassLensVariant) => {
     const id = `size-${width}x${height}-${glassLensId(ratio, variant)}`
     const existing = filters.get(id)
     if (existing) { existing.users++; return id }
     const filter = document.createElementNS(svg, 'filter')
-    const attributes = { id, filterUnits: 'objectBoundingBox', primitiveUnits: 'userSpaceOnUse',
-      x: '0', y: '0', width: '1', height: '1', 'color-interpolation-filters': 'sRGB',
-      'data-glass-depth': String(GLASS_LENS_DEPTHS[variant]) }
-    Object.entries(attributes).forEach(([key, value]) => filter.setAttribute(key, value))
-    const bead = variant === 'bead' || variant === 'bead-active'
-    const map = bead ? maps.bead : maps.capsule
-    const image = (href: string, x: number, y: number, w: number, h: number, aspect: string, result: string) => {
-      const node = document.createElementNS(svg, 'feImage')
-      Object.entries({ href, x, y, width: w, height: h, preserveAspectRatio: aspect, result })
-        .forEach(([key, value]) => node.setAttribute(key, String(value)))
-      filter.append(node)
-    }
-    // Crop equal-size circular caps and extend only the straight stem. Stretching
-    // a full PNG also stretches the cap normal, changing refraction with width.
-    if (width !== height) {
-      const horizontal = width > height, diameter = Math.min(width, height), radius = diameter / 2
-      if (horizontal) {
-        image(map.circle, 0, 0, radius, height, 'xMinYMid slice', 'cap-start')
-        image(map.circle, width - radius, 0, radius, height, 'xMaxYMid slice', 'cap-end')
-        image(map.vertical, radius, 0, width - diameter, height, 'none', 'stem')
-      } else {
-        image(map.circle, 0, 0, width, radius, 'xMidYMin slice', 'cap-start')
-        image(map.circle, 0, height - radius, width, radius, 'xMidYMax slice', 'cap-end')
-        image(map.horizontal, 0, radius, width, height - diameter, 'none', 'stem')
-      }
-      const merge = document.createElementNS(svg, 'feMerge')
-      merge.setAttribute('result', 'lens')
-      for (const input of ['cap-start', 'stem', 'cap-end']) {
-        const node = document.createElementNS(svg, 'feMergeNode'); node.setAttribute('in', input); merge.append(node)
-      }
-      filter.append(merge)
-    } else image(map.circle, 0, 0, width, height, 'none', 'lens')
-    // Smooth the encoded normal field, not foreground ink. This avoids stepping
-    // from 8-bit PNG quantization when a long capsule stretches the map.
-    const normals = document.createElementNS(svg, 'feGaussianBlur')
-    Object.entries({ in: 'lens', stdDeviation: '.65', edgeMode: 'duplicate', result: 'lens-normal' })
-      .forEach(([key, value]) => normals.setAttribute(key, value))
+    Object.entries({ id, x: '0', y: '0', width: '1', height: '1', filterUnits: 'objectBoundingBox',
+      primitiveUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' })
+      .forEach(([key, value]) => filter.setAttribute(key, value))
+    const image = document.createElementNS(svg, 'feImage')
+    Object.entries({ href: variant.startsWith('bead') ? maps.bead.circle : maps.capsule.circle,
+      width: String(width), height: String(height), preserveAspectRatio: 'none', result: 'lens' })
+      .forEach(([key, value]) => image.setAttribute(key, value))
     const warp = document.createElementNS(svg, 'feDisplacementMap')
-    // Equal pixel units on X and Y avoid aspect-dependent vertical stretching.
-    // The map confines bending to its shoulder; scale follows the photographed
-    // geometry instead of a fixed 3px cap that flattened large controls.
-    const tab = variant === 'tab-rest' || variant === 'tab-active'
-    const scale = GLASS_LENS_DEPTHS[variant] * Math.min(width, height)
-    Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(scale),
-      xChannelSelector: 'R', yChannelSelector: 'G', result: 'refracted-scene' }).forEach(([key, value]) => warp.setAttribute(key, value))
-    filter.append(normals)
-    if (!tab) filter.append(warp)
-    // Sample the real backdrop separately for R/G/B. Different displacement
-    // depths model dispersion along the capsule normal instead of a painted rainbow.
-    if (tab) {
-      for (const [channel, factor, matrix] of [
-        ['red', 1.12, '1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'],
-        ['green', 1, '0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0'],
-        ['blue', .88, '0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0'],
-      ] as const) {
-        const displacement = document.createElementNS(svg, 'feDisplacementMap')
-        Object.entries({ in: 'SourceGraphic', in2: 'lens-normal', scale: String(scale * factor),
-          xChannelSelector: 'R', yChannelSelector: 'G', result: `dispersed-${channel}` })
-          .forEach(([key, value]) => displacement.setAttribute(key, value))
-        const mask = document.createElementNS(svg, 'feColorMatrix')
-        Object.entries({ in: `dispersed-${channel}`, type: 'matrix', values: matrix, result: `channel-${channel}` })
-          .forEach(([key, value]) => mask.setAttribute(key, value))
-        filter.append(displacement, mask)
-      }
-      for (const [first, second, result] of [['channel-red', 'channel-green', 'red-green'], ['red-green', 'channel-blue', 'refracted-scene']]) {
-        const sum = document.createElementNS(svg, 'feComposite')
-        Object.entries({ in: first, in2: second, operator: 'arithmetic', k1: '0', k2: '1', k3: '1', k4: '0', result })
-          .forEach(([key, value]) => sum.setAttribute(key, value))
-        filter.append(sum)
-      }
-    }
-    let illumination: SVGFEColorMatrixElement | undefined
-    let illuminationCap: SVGFEFuncAElement | undefined
-    if (glassLensHasSceneReflection(variant)) {
-      // Mix a broad local scene color into bright text backdrops. This softens
-      // contrast without painting every scene white. Dark mode adds only a
-      // faint reflection, never an opaque dark fill. Foreground is never input.
-      const light = document.createElementNS(svg, 'feGaussianBlur')
-      Object.entries({ in: 'SourceGraphic', stdDeviation: String(Math.min(20, height * .3)), edgeMode: 'duplicate', result: 'scene-light' })
-        .forEach(([key, value]) => light.setAttribute(key, value))
-      illumination = document.createElementNS(svg, 'feColorMatrix')
-      illumination.setAttribute('in', 'scene-light'); illumination.setAttribute('type', 'matrix')
-      illumination.setAttribute('values', illuminationValues()); illumination.setAttribute('result', 'uncapped-glass-light')
-      const transmission = document.createElementNS(svg, 'feComponentTransfer')
-      transmission.setAttribute('in', 'uncapped-glass-light'); transmission.setAttribute('result', 'capped-glass-light')
-      illuminationCap = document.createElementNS(svg, 'feFuncA')
-      illuminationCap.setAttribute('type', 'linear'); illuminationCap.setAttribute('slope', dark ? '1' : '.7')
-      transmission.append(illuminationCap)
-      // Reflection lifts background lettering near contrasting edges. A flat
-      // scene must pass through unchanged instead of receiving a gray veil.
-      const contrast = document.createElementNS(svg, 'feBlend')
-      Object.entries({ in: 'SourceGraphic', in2: 'scene-light', mode: 'difference', result: 'scene-contrast' })
-        .forEach(([key, value]) => contrast.setAttribute(key, value))
-      const contrastMask = document.createElementNS(svg, 'feColorMatrix')
-      // Alpha = clamp(8 * luminance(abs(scene - local average)) - .08).
-      Object.entries({ in: 'scene-contrast', type: 'matrix',
-        values: '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1.7008 5.7216 .5776 0 -.08', result: 'reflection-mask' })
-        .forEach(([key, value]) => contrastMask.setAttribute(key, value))
-      const reflectedLight = document.createElementNS(svg, 'feComposite')
-      Object.entries({ in: 'capped-glass-light', in2: 'reflection-mask', operator: 'in', result: 'glass-light' })
-        .forEach(([key, value]) => reflectedLight.setAttribute(key, value))
-      const material = document.createElementNS(svg, 'feMerge')
-      material.setAttribute('result', 'material-scene')
-      for (const input of ['refracted-scene', 'glass-light']) {
-        const node = document.createElementNS(svg, 'feMergeNode'); node.setAttribute('in', input); material.append(node)
-      }
-      filter.append(light, illumination, transmission, contrast, contrastMask, reflectedLight, material)
-    }
-    const reflection = document.createElementNS(svg, 'feColorMatrix')
-    Object.entries({ in: 'lens-normal', type: 'matrix', values: '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 .5 0 0', result: 'bezel-reflection' })
-      .forEach(([key, value]) => reflection.setAttribute(key, value))
-    const finish = document.createElementNS(svg, 'feMerge')
-    const transmitted = document.createElementNS(svg, 'feMergeNode'), reflected = document.createElementNS(svg, 'feMergeNode')
-    transmitted.setAttribute('in', illumination ? 'material-scene' : 'refracted-scene')
-    reflected.setAttribute('in', 'bezel-reflection'); finish.append(transmitted, reflected)
-    filter.append(reflection, finish)
+    Object.entries({ in: 'SourceGraphic', in2: 'lens', scale: '2', xChannelSelector: 'R', yChannelSelector: 'G' })
+      .forEach(([key, value]) => warp.setAttribute(key, value))
+    filter.append(image, warp)
     defs.append(filter)
-    filters.set(id, { node: filter, users: 1, illumination, illuminationCap })
+    filters.set(id, { node: filter, users: 1 })
     return id
   }
   const release = (id: string) => {
-    const filter = filters.get(id)
-    if (filter && --filter.users === 0) { filter.node.remove(); filters.delete(id) }
+    const entry = filters.get(id)
+    if (entry && --entry.users === 0) { entry.node.remove(); filters.delete(id) }
   }
-  return { acquire, release,
-    setTheme: (nextDark: boolean) => {
-      if (nextDark === dark) return
-      dark = nextDark
-      filters.forEach(filter => {
-        filter.illumination?.setAttribute('values', illuminationValues())
-        filter.illuminationCap?.setAttribute('slope', dark ? '1' : '.7')
-      })
-    },
-    clear: () => { filters.forEach(filter => filter.node.remove()); filters.clear() } }
+  return { acquire, release, clear: () => { filters.forEach(entry => entry.node.remove()); filters.clear() } }
 }

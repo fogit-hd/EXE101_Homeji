@@ -1,7 +1,9 @@
+import { X } from 'lucide-react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import type { PostConversation } from '../../../api'
 import { PremiumBadge } from '../ChatExtras'
+import { MobileChatHeader } from '../../../mobile/messages/MobileChatHeader'
 import { Avatar, ContextCard } from './MessagePrimitives'
 import { subjectTag, type ContextItem } from './MessageFormatting'
 
@@ -22,6 +24,7 @@ type State = {
   cannotSend: boolean
   voiceBusy: boolean
   voiceReady: boolean
+  mobile?: boolean
 }
 type Refs = {
   contextRef: RefObject<HTMLDivElement | null>
@@ -43,19 +46,25 @@ type Actions = {
 type Props = { state: State; refs: Refs; actions: Actions }
 
 export function MessagesThreadHeader({ state, refs, actions }: Props) {
-  const { isFloatingThread, active, activeId, peerName, primaryContext, contextItems, contextOpen, searchOpen, searchQuery, matchedIds, matchIndex, blocking, sending, cannotSend, voiceBusy, voiceReady } = state
+  const { isFloatingThread, active, activeId, peerName, primaryContext, contextItems, contextOpen, searchOpen, searchQuery, matchedIds, matchIndex, blocking, cannotSend, voiceBusy, voiceReady } = state
   const { contextRef, searchToggleRef, searchBarRef, searchInputRef } = refs
   const { setContextOpen, setSearchOpen, setSearchQuery, setMatchIndex, onBack, onOpenProfile, onToggleBlock, onStartCall, onCloseWindow } = actions
 
   return (
     <>
+        {state.mobile ? (
+          <MobileChatHeader active={active} activeId={activeId} peerName={peerName} primaryContext={primaryContext}
+            contextItems={contextItems} blocking={blocking} sending={state.sending} cannotSend={cannotSend} voiceBusy={voiceBusy}
+            voiceReady={voiceReady} setSearchOpen={setSearchOpen} onBack={onBack} onOpenProfile={onOpenProfile}
+            onToggleBlock={onToggleBlock} onStartCall={onStartCall} />
+        ) : (
         <header className={`map-messages__thread-head${active?.otherParticipantIsPremium ? ' is-premium' : ''}`}>
           {isFloatingThread ? null : (
-            <button type="button" className="map-messages__back map-motion-press" onClick={onBack} aria-label="Quay lại hộp thư">
+            <button type="button" className="map-messages__back map-motion-press" onClick={onBack} aria-label="Quay lại hộp thư" title="Quay lại hộp thư">
               <svg viewBox="0 0 24 24" aria-hidden><path d="m15 6-6 6 6 6" /></svg>
             </button>
           )}
-          <button type="button" className="chat-profile-link" aria-label={`Xem hồ sơ ${peerName}`} disabled={!active} onClick={() => active && onOpenProfile()}><Avatar name={peerName} seed={active?.otherParticipantId || activeId || peerName} small /></button>
+          <button type="button" className="chat-profile-link" aria-label={`Xem hồ sơ ${peerName}`} title={`Xem hồ sơ ${peerName}`} disabled={!active} onClick={() => active && onOpenProfile()}><Avatar name={peerName} seed={active?.otherParticipantId || activeId || peerName} src={active?.otherParticipantAvatarPath} small /></button>
           <div className="map-messages__thread-titles">
             <strong className="map-messages__peer-name" title={peerName}>
               <button type="button" className="chat-profile-link" onClick={() => active && onOpenProfile()}>{peerName}</button> {active?.otherParticipantIsPremium && <PremiumBadge />}
@@ -74,7 +83,7 @@ export function MessagesThreadHeader({ state, refs, actions }: Props) {
                   className={`map-messages__ctx-more${contextOpen ? ' is-open' : ''}`}
                   aria-expanded={contextOpen}
                   aria-haspopup="dialog"
-                  aria-label={`Xem ${contextItems.length} mục đã nhắc trong cuộc trò chuyện`}
+                  aria-label={`Xem ${contextItems.length} mục đã nhắc trong cuộc trò chuyện`} title={`Xem ${contextItems.length} mục đã nhắc trong cuộc trò chuyện`}
                   onClick={() => setContextOpen((v) => !v)}
                 >
                   +{contextItems.length - 1}
@@ -105,20 +114,20 @@ export function MessagesThreadHeader({ state, refs, actions }: Props) {
           ) : null}
 
           <div className="map-messages__thread-actions">
-            <button type="button" className="map-messages__icon-btn" aria-label={active?.isBlockedByMe ? 'Bỏ chặn người dùng' : 'Chặn người dùng'} title={active?.isBlockedByMe ? 'Bỏ chặn người dùng' : 'Chặn người dùng'} aria-pressed={Boolean(active?.isBlockedByMe)} disabled={!active || blocking || sending} onClick={() => void onToggleBlock()}>
+            <button type="button" className="map-messages__icon-btn" aria-label={active?.isBlockedByMe ? 'Bỏ chặn người dùng' : 'Chặn người dùng'} title={active?.isBlockedByMe ? 'Bỏ chặn người dùng' : 'Chặn người dùng'} aria-pressed={Boolean(active?.isBlockedByMe)} disabled={!active || blocking} onClick={() => void onToggleBlock()}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="12" r="8" /><path d="m6.5 6.5 11 11" /></svg>
             </button>
-            <button type="button" className="map-messages__icon-btn" aria-label={`Gọi thoại cho ${peerName}`} title="Gọi thoại" disabled={cannotSend || voiceBusy || !voiceReady} onClick={() => active && onStartCall()}>
+            <button type="button" className="map-messages__icon-btn" aria-label={`Gọi thoại cho ${peerName}`} title={`Gọi thoại cho ${peerName}`} disabled={cannotSend || voiceBusy || !voiceReady} onClick={() => active && onStartCall()}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 1-1 2-2 2C10 21 3 14 3 5c0-1 1-2 2-2Z" /></svg>
             </button>
-            <button type="button" className="map-messages__icon-btn" aria-label={`Mở hồ sơ ${peerName}`} title="Xem hồ sơ" disabled={!active} onClick={() => active && onOpenProfile()}>
+            <button type="button" className="map-messages__icon-btn" aria-label={`Mở hồ sơ ${peerName}`} title={`Mở hồ sơ ${peerName}`} disabled={!active} onClick={() => active && onOpenProfile()}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></svg>
             </button>
             <button
               ref={searchToggleRef}
               type="button"
               className={`map-messages__icon-btn map-motion-press${searchOpen ? ' is-active' : ''}`}
-              aria-label="Tìm kiếm tin nhắn"
+              aria-label="Tìm kiếm tin nhắn" title="Tìm kiếm tin nhắn"
               aria-pressed={searchOpen}
               onClick={() => setSearchOpen((v) => !v)}
             >
@@ -136,11 +145,12 @@ export function MessagesThreadHeader({ state, refs, actions }: Props) {
                 aria-label="Đóng cửa sổ chat"
                 onClick={onCloseWindow}
               >
-                ✕
+                <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
               </button>
             ) : null}
           </div>
         </header>
+        )}
 
         {searchOpen ? (
           <div className="map-messages__search-bar" ref={searchBarRef}>
@@ -189,7 +199,7 @@ export function MessagesThreadHeader({ state, refs, actions }: Props) {
                 setSearchQuery('')
               }}
             >
-              ✕
+              <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
             </button>
           </div>
         ) : null}

@@ -1,7 +1,7 @@
 import { HomejiAgentMark } from './HomejiAgentMark'
 import { useId, useState } from 'react'
 import type { RentalPost } from '../../api/types'
-import { formatListingRent, formatPrice } from '../../lib/labels'
+import { formatMonthlyRent, formatPrice } from '../../lib/labels'
 import { buildRentalOwnerDraft, normalizeRentalOwnerDraft, RENTAL_OWNER_DRAFT_MAX_LENGTH } from '../../lib/rentalOwnerQuestions'
 import { RentalCostCalculator } from './RentalCostCalculator'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
@@ -37,7 +37,7 @@ function RentalDetailAssistantContent({ post, onPrepareMessage, canMessage = tru
     <p className="rental-detail-assistant__source">Dữ liệu do người đăng cung cấp{Number.isNaN(updatedAt.getTime()) ? '' : ` · cập nhật ${updatedAt.toLocaleDateString('vi-VN')}`}. Chưa xác minh tình trạng còn phòng.</p>
     <RentalConsiderationToggle post={post} />
     {showFacts ? <dl className="rental-detail-assistant__facts">
-      <div><dt>{rentalPriceLabel(basis)}</dt><dd>{formatListingRent(post.price)}</dd></div>
+      <div><dt>{rentalPriceLabel(basis)}</dt><dd>{formatMonthlyRent(post.price)}</dd></div>
       <div><dt>Tiền cọc · khoản riêng</dt><dd>{validAmount(post.deposit) ? formatPrice(post.deposit) : 'Chưa xác nhận'}</dd></div>
     </dl> : null}
     <p className="rental-detail-assistant__note">{basis === 'person'

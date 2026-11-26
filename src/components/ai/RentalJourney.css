@@ -1,22 +1,63 @@
-.rental-journey-tray { position: fixed; z-index: 60; bottom: max(16px,env(safe-area-inset-bottom)); left: 16px; display: flex; align-items: center; gap: 16px; max-width: calc(100vw - 32px); padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); color: var(--text-primary); box-shadow: 0 5px 25px #10212b26; }
+.rental-journey-tray { position: static; display: flex; align-items: center; gap: 16px; max-width: calc(100vw - 32px); padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); color: var(--text-primary); box-shadow: var(--shadow-pop); }
 .rental-journey-tray > div { display: grid; gap: 3px; min-width: 0; }
-.rental-journey-tray span { font-size: 0.6875rem; color: var(--text-secondary); }
+.rental-journey-tray span { font-size: var(--fs-xs); color: var(--text-secondary); }
 .rental-journey-tray a { flex-shrink: 0; }
-.rental-journey-workspace { display: grid; grid-template-columns: minmax(0,1fr); min-width: 0; gap: 12px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 14px; color: var(--text-primary); background: var(--surface-elevated); }
+.rental-journey-workspace { display: grid; grid-template-columns: minmax(0,1fr); min-width: 0; gap: 12px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--border); border-radius: var(--radius-lg); color: var(--text-primary); background: var(--surface-elevated); }
 .rental-journey-workspace > * { min-width: 0; }
 .rental-journey-workspace .btn { white-space: normal; }
 .rental-journey-workspace :is(h2,p) { margin: 0; }
-.rental-journey-workspace p { font-size: 0.8125rem; line-height: 1.7; color: var(--text-secondary); }
+.rental-journey-workspace p { font-size: var(--fs-sm); line-height: 1.7; color: var(--text-secondary); }
 .rental-journey__choices { list-style: none; display: grid; gap: 8px; padding: 0; margin: 0; }
-.rental-journey__choices li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; }
+.rental-journey__choices li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; }
 .rental-journey__choices a { min-width: 0; color: var(--text-primary); overflow-wrap: anywhere; }
-.rental-journey__choices button { min-width: 36px; min-height: 36px; cursor: pointer; background: transparent; color: var(--text-primary); border: 0; font-size: 1.25rem; }
+.rental-journey__choices button { min-width: 36px; min-height: 36px; cursor: pointer; background: transparent; color: var(--text-primary); border: 0; font-size: var(--fs-xl); }
 .rental-journey-toggle { margin: 6px 0; }
 .map-listings__consideration { padding: 0 14px 8px; }
 .map-listings__consideration .rental-journey-toggle { width: 100%; white-space: normal; }
-@media(max-width:600px) { .rental-journey-tray { left: 8px; right: 8px; bottom: max(8px,env(safe-area-inset-bottom)); max-width: none; gap: 8px; padding: 10px; font-size: 0.75rem; } .rental-journey-tray span { display: none; } .rental-journey-workspace { padding: 12px; } }
+@media(max-width:600px) { .rental-journey-tray { left: 8px; right: 8px; bottom: max(8px,var(--safe-bottom)); max-width: none; gap: 8px; padding: 10px; font-size: var(--fs-xs); } .rental-journey-tray span { display: none; } .rental-journey-workspace { padding: 12px; } }
 
-/* Stack companion actions above the measured tray, including wrapped labels. */
-body:has(.rental-journey-tray) #root .interest-launch { bottom: calc(var(--rental-tray-height,80px) + 32px + env(safe-area-inset-bottom)); }
-body:has(.rental-journey-tray) #root { padding-bottom: calc(var(--rental-tray-height,80px) + 32px); }
 @media(max-width:600px) { .rental-journey-tray a { max-width: 55%; white-space: normal; } }
+/* Step line: where the renter is in Cân nhắc · So sánh · Hẹn xem · Liên hệ; the current step is bold. */
+.rental-journey-tray__steps { display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; list-style: none; font-size: var(--fs-xs); color: var(--text-secondary); }
+.rental-journey-tray__steps li + li::before { content: '·'; margin: 0 6px; }
+.rental-journey-tray__steps li[aria-current='step'] { color: var(--text-heading); font-weight: 700; }
+@media (max-width: 600px) {
+  /* Phone: title and button share the first row, the step line gets the full width below. */
+  .rental-journey-tray { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title action" "steps steps"; align-items: center; row-gap: 6px; }
+  .rental-journey-tray > div { display: contents; }
+  .rental-journey-tray > div > strong { grid-area: title; }
+  .rental-journey-tray > a { grid-area: action; }
+  .rental-journey-tray__steps { grid-area: steps; flex-wrap: nowrap; white-space: nowrap; }
+}
+@media (max-width: 767px) {
+  /* Keep the inline search action readable on phones. */
+  .rental-journey-tray > a { max-width: none; white-space: nowrap; }
+}
+.rental-journey-toggle > span { display: inline-flex; align-items: center; }
+.rental-journey-toggle > span > svg { width: 14px; height: 14px; }
+
+/* Compact screen overlay on home and search, without a workspace footer. */
+html:root body #root .rental-journey-tray[data-floating] {
+  position: fixed; z-index: 60; left: 16px; bottom: calc(16px + var(--safe-bottom));
+  box-sizing: border-box;
+}
+@media (max-width: 767px) {
+  html:root body #root .rental-journey-tray[data-floating] {
+    left: 8px; right: 8px; bottom: calc(var(--mobile-tabbar-height, 56px) + var(--safe-bottom) + 8px);
+  }
+}
+
+/* Leave room at the end of the scrollable results, without adding a fixed full-width bar. */
+html:root body:has(.rental-journey-tray[data-floating]) #root .map-listings__panel-body {
+  padding-bottom: calc(var(--rental-tray-height, 100px) + var(--interest-launch-height, 56px) + 64px);
+}
+
+html:root body #root .rental-journey-tray[data-floating] {
+  transition: opacity .18s var(--ease-out, ease-out), transform .18s var(--ease-out, ease-out);
+}
+html:root body #root .rental-journey-tray[data-floating].is-tucked {
+  opacity: 0; transform: translateY(12px); pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root body #root .rental-journey-tray[data-floating] { transition: none; }
+}

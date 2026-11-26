@@ -1,0 +1,134 @@
+/* Tìm phòng on phones: toolbar (MobileListingsToolbar.tsx), result list, sort and filter sheets. */
+.m-listings-bar {
+  display: grid;
+  gap: 10px;
+  padding: 10px var(--m-gutter, 16px) 0;
+  background: var(--surface);
+}
+.m-listings-bar__row { padding-bottom: 4px; }
+.m-chip--tool { gap: 6px; padding: 0 12px; }
+.m-chip--tool svg { flex: none; }
+.m-chip.is-active .m-chip__count { background: var(--on-brand); color: var(--grab-green); }
+.m-listings-bar__divider { flex: none; align-self: center; width: 1px; height: 22px; background: var(--border); }
+.m-listings-bar__count {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs, .75rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Single-choice list inside a sheet (sort). */
+.m-options { display: grid; padding: 0 0 8px; }
+.m-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text-heading);
+  font: inherit;
+  font-size: var(--fs-md, 1rem);
+  text-align: left;
+  cursor: pointer;
+}
+.m-option:last-child { border-bottom: 0; }
+.m-option[aria-checked='true'] { color: var(--grab-green); font-weight: 700; }
+
+/* Result list: one column of compact cards. */
+html[data-device='mobile'] .map-listings__header {
+  position: sticky;
+  top: var(--hj-header-h);
+  z-index: 30;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+html[data-device='mobile'] .map-listings--list .map-listings__panel-body { padding: 12px var(--m-gutter) calc(var(--m-tabbar-h) + 24px); }
+html[data-device='mobile'] .map-listings__cards,
+html[data-device='mobile'] .map-listings--list .map-listings__cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+html[data-device='mobile'] .map-listings__cards > li { min-width: 0; }
+
+/* Filter sheet. Field styles come from the desktop filter; the sheet only sets rhythm. */
+.m-filter-sheet__form { display: grid; gap: 20px; padding-bottom: 8px; }
+.m-filter-sheet__form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.m-filter-sheet__form legend { margin-bottom: 10px; padding: 0; color: var(--text-heading); font-size: var(--fs-md, 1rem); font-weight: 700; }
+.m-filter-sheet__form .map-listings__quick-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.m-filter-sheet__form .map-listings__quick-chip { min-height: 40px; }
+.m-filter-sheet__actions { display: grid; flex: 1; width: 100%; grid-template-columns: auto minmax(0, 1fr); gap: 8px 10px; }
+.m-filter-sheet__actions > button {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.m-filter-sheet__actions > .map-listings__sheet-save { grid-column: 1 / -1; grid-row: 1; min-height: 44px; border: 0; background: none; color: var(--grab-green); }
+.m-filter-sheet__actions > .map-listings__sheet-apply { border-color: transparent; background: var(--action-primary); color: var(--action-on-primary); }
+.m-filter-sheet__actions > button:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (forced-colors: active) {
+  .m-seg > button[aria-pressed='true'], .m-option[aria-checked='true'] { outline: 2px solid Highlight; }
+}
+
+/* The desktop list sits in a padded, rounded panel; on phones the cards sit straight on the page. */
+html[data-device='mobile'] .map-listings--list { padding: 0; }
+html[data-device='mobile'] .map-listings--list .map-listings__panel { padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
+
+/* Range and checkbox fields sized for thumbs; 16px text keeps iOS from zooming on focus. */
+.m-filter-sheet__form .map-listings__range-inputs > label { display: grid; gap: 6px; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); }
+.m-filter-sheet__form .map-listings__range-inputs input {
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  color: var(--text-heading);
+  font-size: var(--fs-lg);
+}
+.m-filter-sheet__form .map-listings__range-dash { margin-top: 26px; }
+.m-filter-sheet__form .map-listings__amenity-grid { margin-top: 12px; }
+.m-filter-sheet__form .map-listings__amenity-grid label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--text-heading);
+  font-size: var(--fs-sm, .875rem);
+  cursor: pointer;
+}
+.m-filter-sheet__form .map-listings__amenity-grid input { width: 20px; height: 20px; accent-color: var(--grab-green); }
+
+/* Map view: the workspace is its own scroll box, so the toolbar sits in flow above the map. */
+html[data-device='mobile'] .map-listings.is-map-first .map-listings__header { position: relative; top: 0; }
+html[data-device='mobile'] .map-listings.is-map-first .map-listings__panel { padding-inline: 0; }
+html[data-device='mobile'] .map-listings.is-map-first .map-listings__panel-body { padding-inline: var(--m-gutter); }
+
+/* Loading rows: same shape as MobileRoomCard (104px square photo beside the text). */
+html[data-device='mobile'] .map-listings--list .sk-listing-card {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+}
+html[data-device='mobile'] .map-listings--list .sk-listing-card > .sk-stack { min-width: 0; padding-top: 2px; }

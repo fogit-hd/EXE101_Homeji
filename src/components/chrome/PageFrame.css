@@ -43,18 +43,10 @@
   min-width: 0;
 }
 
-.page-frame__eyebrow {
-  margin: 0;
-  font: 700 0.625rem/1.2 var(--font-ui);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: #e8603c;
-}
-
 .page-frame__title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 2.25rem;
+  font-size: var(--fs-display);
   font-weight: 600;
   letter-spacing: 0;
   line-height: 2.75rem;
@@ -63,12 +55,12 @@
 
 .page-frame__lead {
   margin: 0;
-  font: 400 0.875rem/1.375rem var(--font-ui);
+  font: 400 var(--fs-md)/22px var(--font-ui);
   color: var(--text-secondary);
 }
 
 .app-shell--product .page-frame__title {
-  color: var(--hj-ink, #18231d);
+  color: var(--text-heading);
 }
 
 .page-frame__actions {
@@ -90,7 +82,7 @@
   min-height: 44px;
   padding: 10px 14px;
   line-height: 1.5;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   min-width: 0;
   max-width: 100%;
 }

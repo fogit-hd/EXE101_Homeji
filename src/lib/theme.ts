@@ -15,7 +15,7 @@ export function applyTheme(theme: Theme, persist = false) {
   const root = document.documentElement
   root.dataset.theme = theme
   root.style.colorScheme = theme
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#10212b' : '#f3f7fa')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#15110d' : '#f7f1e7')
   if (persist) { try { localStorage.setItem(THEME_KEY, theme) } catch { /* Storage can be blocked in private browsing. */ } }
   window.dispatchEvent(new Event(THEME_EVENT))
 }

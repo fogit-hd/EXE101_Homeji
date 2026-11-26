@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { gallerySwipeDirection } from '../../../lib/gallerySwipe'
 import imageOffUrl from '../../../assets/room-detail/image-off.svg'
 
@@ -60,7 +61,7 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
   if (!current) {
     return (
       <div className="room-detail__photo-fallback">
-        <img src={imageOffUrl} alt="" width={24} height={24} />
+        <img loading="lazy" decoding="async" src={imageOffUrl} alt="" width={24} height={24} />
         <p>Tin đăng chưa cung cấp ảnh. Thông tin và các thao tác liên hệ vẫn hiển thị.</p>
       </div>
     )
@@ -92,7 +93,7 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
             inlineSwipeRef.current = null
           }}
         >
-          <img
+          <img loading="eager" decoding="async" fetchPriority="high" width={1200} height={900}
             src={current}
             alt=""
             onError={() => setFailed((prev) => (prev.includes(current) ? prev : [...prev, current]))}
@@ -108,10 +109,10 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
                 key={url}
                 type="button"
                 data-glass-exclude
-                aria-label={`Xem ảnh ${visible.indexOf(url) + 1}`}
+                aria-label={`Xem ảnh ${visible.indexOf(url) + 1}`} title={`Xem ảnh ${visible.indexOf(url) + 1}`}
                 onClick={() => openPhoto(visible.indexOf(url))}
               >
-                <img
+                <img loading="lazy" decoding="async" width={1200} height={900}
                   src={url}
                   alt=""
                   onError={() => setFailed((prev) => (prev.includes(url) ? prev : [...prev, url]))}
@@ -140,10 +141,10 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
       >
         <div className="room-photo-viewer__toolbar">
           <span aria-live="polite">Ảnh {safeIndex + 1} / {visible.length}</span>
-          <button type="button" aria-label="Thu nhỏ ảnh" disabled={view.scale <= 1} onClick={() => zoomAt(1 / 1.3)}>−</button>
+          <button type="button" aria-label="Thu nhỏ ảnh" title="Thu nhỏ ảnh" disabled={view.scale <= 1} onClick={() => zoomAt(1 / 1.3)}>−</button>
           <button type="button" aria-label="Đặt lại mức phóng to" onClick={() => setView({ scale: 1, x: 0, y: 0 })}>🔍 {Math.round(view.scale * 100)}%</button>
-          <button type="button" aria-label="Phóng to ảnh" disabled={view.scale >= 5} onClick={() => zoomAt(1.3)}>+</button>
-          <button type="button" aria-label="Đóng ảnh lớn" onClick={() => viewerRef.current?.close()}>✕</button>
+          <button type="button" aria-label="Phóng to ảnh" title="Phóng to ảnh" disabled={view.scale >= 5} onClick={() => zoomAt(1.3)}>+</button>
+          <button type="button" aria-label="Đóng ảnh lớn" onClick={() => viewerRef.current?.close()}><X aria-hidden="true" size={20} /></button>
         </div>
         <div
           ref={viewportRef}
@@ -185,7 +186,7 @@ export function PhotoGallery({ urls }: { urls: string[] }) {
           onPointerCancel={() => { dragRef.current = null; swipeRef.current = null }}
           onLostPointerCapture={() => { dragRef.current = null; swipeRef.current = null }}
         >
-          <img key={current} className="room-photo-viewer__image" src={current} alt={`Ảnh phòng ${safeIndex + 1}`} draggable={false}
+          <img loading="lazy" decoding="async" width={1200} height={900} key={current} className="room-photo-viewer__image" src={current} alt={`Ảnh phòng ${safeIndex + 1}`} draggable={false}
             style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }} />
         </div>
         {visible.length > 1 ? (

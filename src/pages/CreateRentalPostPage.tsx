@@ -59,6 +59,7 @@ export function CreateRentalPostPage() {
   return (
     <PageFrame
       title="Đăng tin mới"
+      className="rental-post-page"
     >
       <p className="page-subtitle" style={{ marginTop: 0 }}>
         Bước 1/3 · Chọn loại tin. Tiếp theo điền thông tin, thêm ảnh và gửi duyệt.
@@ -78,7 +79,7 @@ export function CreateRentalPostPage() {
             onClick={() => setType(t)}
           >
             <span className="type-card__state" aria-hidden="true">{selectedType === t ? '✓ Đã chọn' : 'Chọn loại tin'}</span>
-            <h3>{rentalPostTypeLabel[t]}</h3>
+            <strong className="type-card__title">{rentalPostTypeLabel[t]}</strong>
             {t === RentalPostType.RoomTransfer ? (
               <p>{availableTypes.includes(t) ? 'Chuyển hợp đồng hoặc cho thuê lại có xác nhận của chủ nhà' : 'Dành cho tài khoản người thuê đang muốn nhượng lại phòng. Tài khoản chủ nhà dùng mục Phòng trống để đăng cho thuê.'}</p>
             ) : (

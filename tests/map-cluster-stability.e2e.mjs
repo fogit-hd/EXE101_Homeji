@@ -24,6 +24,8 @@ await page.addInitScript(() => {
   }
   window.Marker = Marker
   class Popup {
+    addListener(name, handler) { this[name] = handler; return { remove() {} } }
+    getContent() { return this.content }
     setContent(content) { this.content = content }
     setPosition() {}
     open() { document.getElementById('fixture-popup')?.remove(); const host = document.createElement('div'); host.id = 'fixture-popup'; host.style.cssText = 'position:fixed;right:16px;top:100px;padding:16px;background:white;z-index:5000;border-radius:16px'; host.append(this.content); window.mapHost.append(host); window.testMap.emit('idle') }

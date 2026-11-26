@@ -17,9 +17,9 @@ type SandboxCapture = {
 }
 
 const resultMessages: Record<SandboxCapture['status'], string> = {
-  completed: 'PayPal đã xác nhận giao dịch thử thành công.',
+  completed: 'PayPal đã xác nhận giao dịch thành công.',
   pending: 'PayPal đang xử lý giao dịch. Bạn có thể kiểm tra lại.',
-  failed: 'PayPal báo giao dịch thử không thành công.',
+  failed: 'PayPal báo giao dịch không thành công.',
   unconfirmed: 'PayPal chưa xác nhận giao dịch. Bạn có thể kiểm tra lại.',
 }
 
@@ -41,7 +41,7 @@ export function PayPalSandboxPage() {
       const order = await apiRequest<SandboxOrder>(ordersPath + '/orders', { method: 'POST' })
       const checkoutUrl = safeCheckoutUrl(order.approvalUrl)
       if (!checkoutUrl || new URL(checkoutUrl).host !== 'www.sandbox.paypal.com') {
-        setError('Homeji chưa nhận được liên kết PayPal Sandbox hợp lệ.')
+        setError('Homeji chưa nhận được liên kết PayPal hợp lệ.')
         return
       }
       sessionStorage.setItem(orderStorageKey, JSON.stringify({ orderId: order.orderId, ticket: order.ticket }))
@@ -61,7 +61,7 @@ export function PayPalSandboxPage() {
       const savedOrder = sessionStorage.getItem(orderStorageKey)
       const order = savedOrder ? JSON.parse(savedOrder) as Partial<SandboxOrder> : null
       if (order?.orderId !== params.get('token') || typeof order?.ticket !== 'string') {
-        setError('Không tìm thấy đơn thử trong tab này. Quay lại trang thanh toán để tạo đơn mới.')
+        setError('Không tìm thấy đơn trong tab này. Quay lại trang thanh toán để tạo đơn mới.')
         return
       }
       setCapture(await apiRequest<SandboxCapture>(ordersPath + '/capture', {
@@ -69,7 +69,7 @@ export function PayPalSandboxPage() {
         body: { ticket: order.ticket },
       }))
     } catch (err) {
-      setError(getErrorMessage(err, 'Chưa thể xác nhận giao dịch với PayPal Sandbox.'))
+      setError(getErrorMessage(err, 'Chưa thể xác nhận giao dịch với PayPal.'))
     } finally {
       setBusy(false)
     }
@@ -82,7 +82,7 @@ export function PayPalSandboxPage() {
         <h1 id="sandbox-title">PayPal Demo</h1>
         <p className="payment-wait-description">Dùng tài khoản hoặc thẻ thử trong PayPal Sandbox. Giao dịch thử không trừ tiền thật hay kích hoạt gói Premium.</p>
         <div className="payment-result-total">
-          <span>Số tiền thử</span>
+          <span>Số tiền</span>
           <strong>1,00 USD</strong>
           {capture?.captureId && <small>Mã giao dịch PayPal {capture.captureId}</small>}
         </div>
@@ -95,7 +95,7 @@ export function PayPalSandboxPage() {
         <div className="payment-wait-actions">
           {canRetryCapture ? (
             <button type="button" className="payment-button" disabled={busy} onClick={() => void captureOrder()}>
-              {busy ? 'Đang xác nhận…' : capture ? 'Kiểm tra lại' : 'Xác nhận giao dịch thử'}
+              {busy ? 'Đang xác nhận…' : capture ? 'Kiểm tra lại' : 'Xác nhận giao dịch'}
             </button>
           ) : simulation === 'offer' ? (
             <button type="button" className="payment-button" onClick={() => setSimulation('complete')}>Xác nhận mô phỏng</button>
@@ -103,10 +103,10 @@ export function PayPalSandboxPage() {
             <button type="button" className="payment-button" onClick={() => setSimulation('offer')}>Thử lại mô phỏng</button>
           ) : !returned ? (
             <button type="button" className="payment-button" disabled={busy || walletBusy} onClick={() => void createOrder()}>
-              {busy ? 'Đang tạo đơn…' : 'Mở PayPal Sandbox'}
+              {busy ? 'Đang tạo đơn…' : 'Thanh toán qua PayPal'}
             </button>
           ) : (
-            <Link className="payment-button" reloadDocument to="/payments/sandbox">Tạo đơn thử mới</Link>
+            <Link className="payment-button" reloadDocument to="/payments/sandbox">Tạo đơn mới</Link>
           )}
         </div>
         {!returned && !simulation && <div inert={busy}><PayPalSandboxWallets onBusyChange={setWalletBusy} /></div>}

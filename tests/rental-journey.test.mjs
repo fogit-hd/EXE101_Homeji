@@ -37,7 +37,7 @@ const reactUrl = new URL('../node_modules/react/index.js', import.meta.url).href
 const fixture = moduleUrl(`import React from '${reactUrl}';
 export const useAuth=()=>globalThis.__journey.auth;
 export const getMySubscription=async()=>globalThis.__journey.subscription??{isPremium:false,maxComparedPosts:3};
-export const useLocation=()=>({search:globalThis.__journey.search||''});
+export const useLocation=()=>({pathname:'/',search:globalThis.__journey.search||''});
 export const Link=({to,children,...props})=>React.createElement('a',{href:to,...props},children);
 export const aiFeatureFlags={decisionTools:true,commute:false};
 export function RentalDecisionPanel(props){globalThis.__journey.panel=props;return React.createElement('section',{'aria-label':'Controlled cost comparison'});}
@@ -73,7 +73,18 @@ test('cards, shared workspace and account scope use the same choices and scenari
     await act(() => card('c').click())
     assert.equal(card('d').disabled, true)
     assert.equal(card('a').getAttribute('aria-pressed'), 'true')
+    assert.equal(document.querySelector('.rental-journey-tray').dataset.floating,'true','Home retains its original floating shortlist');
+    globalThis.__journey.search='?section=listings';
+    await show(false);
+    assert.equal(document.querySelectorAll('.rental-journey-tray').length,1);
+    assert.equal(document.querySelector('.rental-journey-tray').dataset.floating,'true');
     assert.equal(document.querySelector('.rental-journey-tray a').getAttribute('href'), '/?section=saved&view=considering')
+    for (const section of ['messages','profile','payments','appointments','marketplace']) {
+      globalThis.__journey.search='?section='+section;
+      await show(false);
+      assert.equal(document.querySelector('.rental-journey-tray'),null,'No shortlist overlay on '+section);
+      assert.equal(globalThis.__journey.snapshot.choices.length,3);
+    }
     globalThis.__journey.search='?section=saved'
     await show(true)
     assert.equal(document.querySelector('.rental-journey-tray'),null,'Saved workspace owns its choice list without a duplicate floating tray')

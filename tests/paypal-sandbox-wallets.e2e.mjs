@@ -129,7 +129,7 @@ try {
   page.on('console', (message) => { if (message.type() === 'error') console.error(message.text()) })
   await page.goto(origin + '/payments/sandbox')
   try {
-    await page.getByRole('button', { name: 'Mở PayPal Sandbox' }).waitFor()
+    await page.getByRole('button', { name: 'Thanh toán qua PayPal' }).waitFor()
   } catch (error) {
     console.error(page.url(), (await page.locator('body').innerText()).slice(0, 500))
     throw error

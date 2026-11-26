@@ -10,7 +10,7 @@ import { ChoicePicker } from '../ui/ChoicePicker'
 import { ApiRequestError } from '../../api/client'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { getErrorMessage } from '../../lib/errors'
-import { amenityLabel, formatListingArea, formatListingRent } from '../../lib/labels'
+import { amenityLabel, formatListingArea, formatMonthlyRent } from '../../lib/labels'
 import { calculateShortlistCommute, type CommuteMode, type CommuteResult } from '../../lib/shortlistCommute'
 import { recoverRentalComparison } from './recoverRentalComparison'
 import './RentalComparison.css'
@@ -112,7 +112,7 @@ export function RentalComparison({ postIds, onClose }: { postIds: string[]; onCl
           <p>{post.address}</p>
           {post.type === RentalPostType.RoomTransfer ? <small>Tin nhượng phòng dùng vị trí gần đúng nếu bạn không phải chủ tin; cần xác nhận địa chỉ trước khi đi xem.</small> : null}
           <dl>
-            <dt>{rentalPriceLabel(priceBasis)}</dt><dd>{formatListingRent(post.price)}{isLowestComparablePrice(post, items.map(item => item.post)) ? ' · thấp nhất trong các tin cùng đơn vị' : ''}</dd>
+            <dt>{rentalPriceLabel(priceBasis)}</dt><dd>{formatMonthlyRent(post.price)}{isLowestComparablePrice(post, items.map(item => item.post)) ? ' · thấp nhất trong các tin cùng đơn vị' : ''}</dd>
             <dt>Diện tích</dt><dd>{formatListingArea(post.area)}{post.area === largest ? ' · rộng nhất trong lựa chọn' : ''}</dd>
             <dt>Số người tối đa theo tin</dt><dd>{!isImportedRentalPost(post) && post.maxOccupants != null && Number.isInteger(post.maxOccupants) && post.maxOccupants > 0 ? post.maxOccupants : 'Chưa có thông tin'}</dd>
             <dt>Số chỗ còn lại theo tin</dt><dd>{isImportedRentalPost(post) ? 'Chưa có thông tin' : post.availableSlots ?? 'Chưa có thông tin'}</dd>

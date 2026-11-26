@@ -18,6 +18,7 @@ type Props = {
   currentUserId?: string | null
   activeId: string | null
   peerName: string
+  peerAvatarPath?: string | null
   matchedIds: string[]
   matchIndex: number
   searchQuery: string
@@ -28,7 +29,7 @@ type Props = {
 }
 
 export function MessagesTimeline({
-  history, messages, currentUserId, activeId, peerName, matchedIds, matchIndex,
+  history, messages, currentUserId, activeId, peerName, peerAvatarPath, matchedIds, matchIndex,
   searchQuery, matchRefs, setMessages, onError, onFocusMap, scrollRef, onLoadOlder, onScroll,
 }: Props) {
   return (
@@ -73,7 +74,7 @@ export function MessagesTimeline({
                 }${joinsPrev ? ' joins-prev' : ''}${joinsNext ? ' joins-next' : ''}${!hasText && !location ? ' is-media' : ''}${isHit ? ' is-hit' : ''}${isCurrent ? ' is-hit-current' : ''}`}
               >
                 {!mine && !joinsNext ? (
-                  <span className="map-messages__bubble-avatar"><Avatar name={peerName} seed={m.senderId} small /></span>
+                  <span className="map-messages__bubble-avatar"><Avatar name={peerName} seed={m.senderId} src={peerAvatarPath} small /></span>
                 ) : null}
                 <div className="map-messages__bubble-body">
                 {gif && <ChatGifMessage key={gif.id} id={gif.id} />}

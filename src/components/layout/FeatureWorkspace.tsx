@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationType, type Notification } from '../../api'
 import { mapMessagesUrl, mapPostUrl, mapSectionUrl, ROOMMATE_INVITATIONS_URL } from '../../lib/mapDeepLinks'
 import {
-  ActivitiesPage,
+  ActivitiesPage, HelpPage,
   MapAppointmentsPanel, MapMessagesPanel,
   MarketplacePage, MyPostsPage, NotificationsPage, PaymentPage,
   ProfilePage, RoommateWorkspace, SavedPostsPage, WantedPostsPage,
@@ -15,12 +15,13 @@ import { SectionSkeleton } from '../skeletons/RouteSkeleton'
 import './FeatureWorkspace.css'
 
 const TITLES: Partial<Record<MapAppSection, string>> = {
-  saved: 'Những nơi đáng để quay lại',
+  help: 'Trợ giúp',
+  saved: 'Phòng đã lưu',
   invitations: 'Ở ghép',
   notifications: 'Thông báo',
   messages: 'Tin nhắn',
   appointments: 'Lịch xem phòng',
-  payments: 'Gói Đăng ký',
+  payments: 'Gói Premium',
   profile: 'Hồ sơ',
   marketplace: 'Chợ Homeji',
   wanted: 'Tin tìm phòng',
@@ -163,6 +164,7 @@ export function FeatureWorkspace({ section }: Props) {
         {section === 'marketplace' ? <MarketplacePage embedded /> : null}
         {section === 'wanted' ? <WantedPostsPage embedded /> : null}
         {section === 'activities' ? <ActivitiesPage embedded /> : null}
+        {section === 'help' ? <HelpPage /> : null}
         {section === 'myPosts' ? <MyPostsPage embedded /> : null}
         </Suspense>
       </PageFrame>

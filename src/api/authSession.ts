@@ -41,6 +41,7 @@ const SIGN_OUT_PENDING_KEY = 'homeji_sign_out_pending'
 const CHANNEL_NAME = 'homeji-auth'
 
 let memory: MemorySession | null = null
+let pendingAdoption: LegacySession | null = null
 /** Changes when the session is replaced or ended, but not when its access token rotates. */
 let epoch = 0
 let legacyAbsorbed = false
@@ -104,12 +105,15 @@ export function clearLegacySession() {
   for (const key of LEGACY_KEYS) store?.removeItem(key)
 }
 
-/** Parks tokens from a sign-in link until the API adopts them; retried on later loads if it cannot yet. */
+/** Sign-in link credentials stay in memory for a single adoption attempt. */
 export function queueSessionAdoption(accessToken: string, refreshToken: string) {
-  const store = localStore()
-  store?.setItem('homeji_access_token', accessToken)
-  store?.setItem('homeji_session_anchor', accessToken)
-  store?.setItem('homeji_refresh_token', refreshToken)
+  pendingAdoption = { accessToken, anchor: accessToken, refreshToken }
+}
+
+export function takeSessionAdoption(): LegacySession | null {
+  const pending = pendingAdoption
+  pendingAdoption = null
+  return pending
 }
 
 export function isSignOutPending(): boolean {
@@ -155,6 +159,7 @@ export function clearStoredAuth() {
   legacyAbsorbed = true
   epoch += 1
   memory = null
+  pendingAdoption = null
   clearLegacySession()
 }
 
@@ -195,7 +200,7 @@ export function readAuthTokenState(
   if (!token) return { token: null, expired: false }
 
   const expiresAt = decodeJwtExpiry(token)
-  if (expiresAt != null && expiresAt <= now && !hasSessionHint() && !readLegacySession()) {
+  if (expiresAt != null && expiresAt <= now && !pendingAdoption && !hasSessionHint() && !readLegacySession()) {
     expireStoredAuth(eventTarget)
     return { token: null, expired: true }
   }

@@ -375,6 +375,7 @@ export function EditRentalPostPage() {
   return (
     <PageFrame
       title="Chỉnh sửa tin đăng"
+      className="rental-post-page"
       actions={
         <>
           <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void handleSubmit()}>
@@ -615,7 +616,7 @@ export function EditRentalPostPage() {
         </div>
         {post?.media.map((m) => (
           <div key={m.id} className="media-item">
-            <img src={m.path} alt="" width={120} height={80} style={{ objectFit: 'cover', borderRadius: 8 }} />
+            <img loading="lazy" decoding="async" src={m.path} alt="" width={120} height={80} style={{ objectFit: 'cover', borderRadius: 8 }} />
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => void handleDeleteMedia(m.id)}>Xóa</button>
           </div>
         ))}

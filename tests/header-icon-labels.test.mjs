@@ -22,8 +22,10 @@ const { HeaderLink } = await import(`data:text/javascript;base64,${Buffer.from(b
 test('saved and message icons retain meaningful accessible names without adding visible text', () => {
   const saved = renderToStaticMarkup(createElement(HeaderLink, { href: '/?section=saved', label: '', icon: 'heart' }))
   const messages = renderToStaticMarkup(createElement(HeaderLink, { href: '/?section=messages', label: '', icon: 'message', count: 3 }))
-  assert.match(saved, /aria-label="Tin đã lưu"/)
+  assert.match(saved, /aria-label="Phòng đã lưu"/)
   assert.match(messages, /aria-label="Tin nhắn, 3 chưa đọc"/)
+  assert.match(saved, /title="Phòng đã lưu"/)
+  assert.match(messages, /title="Tin nhắn, 3 chưa đọc"/)
   assert.doesNotMatch(saved, /class="hj-action__label"/)
   assert.doesNotMatch(messages, /class="hj-action__label"/)
 })

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
+import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { RentalPostType, type AiHighlightedRentalPost } from '../../api/types'
-import { amenityLabel, formatListingArea, formatListingRent, rentalPostTypeLabel } from '../../lib/labels'
+import { amenityLabel, formatListingArea, formatMonthlyRent, rentalPostTypeLabel } from '../../lib/labels'
 import { RentalConsiderationToggle } from './RentalConsiderationToggle'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import './AiRentalResultCard.css'
@@ -23,10 +24,10 @@ export function AiRentalResultCard({ item, index, onOpen, onRefine, requiredAmen
       <div><span className="ai-rental-result__type">{rentalPostTypeLabel[post.type] || 'Tin phòng'}</span>
         <h3><Link to={target} onClick={onOpen}>{post.title || 'Tin phòng chưa có tiêu đề'}</Link></h3>
       </div>
-      {post.thumbnailPath ? <Link className="ai-rental-result__image" to={target} onClick={onOpen} tabIndex={-1} aria-hidden="true"><img src={post.thumbnailPath} alt="" loading="lazy" /></Link> : null}
+      {post.thumbnailPath ? <Link className="ai-rental-result__image" to={target} onClick={onOpen} tabIndex={-1} aria-hidden="true"><img decoding="async" width={64} height={64} src={post.thumbnailPath} alt="" loading="lazy" /></Link> : null}
     </header>
     <dl className="ai-rental-result__facts">
-      <div><dt>{rentalPriceLabel(rentalPriceBasis(post))}</dt><dd>{formatListingRent(post.price)}</dd></div>
+      <div><dt>{rentalPriceLabel(rentalPriceBasis(post))}</dt><dd>{formatMonthlyRent(post.price)}</dd></div>
       <div><dt>Diện tích</dt><dd>{formatListingArea(post.area)}</dd></div>
     </dl>
     <p className="ai-rental-result__location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></svg><span>{post.address || 'Chưa có địa chỉ'}</span></p>
@@ -34,7 +35,7 @@ export function AiRentalResultCard({ item, index, onOpen, onRefine, requiredAmen
     {post.type === RentalPostType.RoomTransfer ? <p className="ai-rental-result__notice">Vị trí gần đúng của tin nhượng phòng. Cần hỏi lại đường đi từ cửa phòng.</p> : null}
     {post.isOwnerPremium ? <p className="ai-rental-result__notice">Người đăng dùng gói Premium. Kết quả AI vẫn được xếp theo tiêu chí tìm phòng của bạn; nhãn này không đánh giá mức phù hợp.</p> : null}
     <div className="ai-rental-result__actions">
-      <Link className="ai-rental-result__open" to={target} onClick={onOpen}>Xem phòng <span aria-hidden="true">↗</span></Link>
+      <Link className="ai-rental-result__open" to={target} onClick={onOpen}>Xem phòng <ArrowUpRight aria-hidden="true" size={14} /></Link>
       <RentalConsiderationToggle post={post} compact />
     </div>
     <p className="ai-rental-result__source">Theo tin chủ đăng · chưa xác nhận phòng trống và phí phát sinh.</p>

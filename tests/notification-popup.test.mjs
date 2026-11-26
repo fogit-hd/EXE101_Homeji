@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { THEMES, mix, token, tokenContrast } from './helpers/theme-tokens.mjs'
 
 const css = readFileSync(new URL('../src/components/shell/shell.css', import.meta.url), 'utf8')
 const notificationCss = readFileSync(new URL('../src/pages/pages.css', import.meta.url), 'utf8')
@@ -16,14 +17,16 @@ const contrast = (first, second) => {
   return (light + 0.05) / (dark + 0.05)
 }
 
-test('notification accent labels and white icons meet normal-text contrast', () => {
-  for (const severity of ['critical', 'attention']) {
-    const block = notificationCss.match(new RegExp(`\\.notification-item--${severity} \\{([^}]+)\\}`))[1]
-    const accent = block.match(/--notification-accent:\s*(#[\da-f]{6})/i)[1]
-    const percent = Number(block.match(/--notification-soft:[^;]+? (\d+)%/)[1]) / 100
-    const soft = '#' + accent.slice(1).match(/../g).map(channel => Math.round(parseInt(channel, 16) * percent + 255 * (1 - percent)).toString(16).padStart(2, '0')).join('')
-    assert.ok(contrast(accent, soft) >= 4.5, `${severity} label contrast`)
-    assert.ok(contrast('#ffffff', accent) >= 4.5, `${severity} icon contrast`)
+test('notification accent labels and icons meet normal-text contrast in both themes', () => {
+  for (const severity of ['critical', 'attention', 'success', 'info']) {
+    const block = notificationCss.match(new RegExp(`\.notification-item--${severity} \{([^}]+)\}`))[1]
+    const accent = block.match(/--notification-accent:\s*(var\(--[\w-]+\))/)[1]
+    const [, base, percent] = block.match(/--notification-soft:\s*color-mix\(in srgb, (var\(--[\w-]+\)) ([\d.]+)%, var\(--surface-elevated\)\)/)
+    for (const theme of THEMES) {
+      const soft = mix(token(base, theme), Number(percent) / 100, token('--surface-elevated', theme))
+      assert.ok(contrast(token(accent, theme), soft) >= 4.5, `${severity} label contrast (${theme})`)
+      assert.ok(tokenContrast('--on-brand', accent, theme) >= 4.5, `${severity} icon contrast (${theme})`)
+    }
   }
 })
 

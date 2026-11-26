@@ -1,0 +1,337 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T17:50:30.490Z",
+  "title": "Design System: Homeji Web",
+  "extensions": {
+    "colorMeta": {
+      "brand": {
+        "role": "primary",
+        "displayName": "Xóm Emerald",
+        "canonical": "oklch(50.8% 0.105 165.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.059 165.6)",
+          "oklch(27.0% 0.091 165.6)",
+          "oklch(39.0% 0.105 165.6)",
+          "oklch(51.0% 0.105 165.6)",
+          "oklch(63.0% 0.105 165.6)",
+          "oklch(75.0% 0.087 165.6)",
+          "oklch(86.0% 0.056 165.6)",
+          "oklch(95.0% 0.022 165.6)"
+        ]
+      },
+      "action-primary": {
+        "role": "secondary",
+        "displayName": "Burnt Orange",
+        "canonical": "oklch(54.7% 0.172 38.4)",
+        "tonalRamp": [
+          "oklch(15.0% 0.096 38.4)",
+          "oklch(27.0% 0.149 38.4)",
+          "oklch(39.0% 0.172 38.4)",
+          "oklch(51.0% 0.172 38.4)",
+          "oklch(63.0% 0.172 38.4)",
+          "oklch(75.0% 0.142 38.4)",
+          "oklch(86.0% 0.091 38.4)",
+          "oklch(95.0% 0.036 38.4)"
+        ]
+      },
+      "text-heading": {
+        "role": "neutral",
+        "displayName": "Walnut Ink",
+        "canonical": "oklch(22.5% 0.017 58.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.010 58.6)",
+          "oklch(27.0% 0.015 58.6)",
+          "oklch(39.0% 0.017 58.6)",
+          "oklch(51.0% 0.017 58.6)",
+          "oklch(63.0% 0.017 58.6)",
+          "oklch(75.0% 0.014 58.6)",
+          "oklch(86.0% 0.009 58.6)",
+          "oklch(95.0% 0.004 58.6)"
+        ]
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Cream Paper",
+        "canonical": "oklch(95.2% 0.016 79.4)",
+        "tonalRamp": [
+          "oklch(15.0% 0.009 79.4)",
+          "oklch(27.0% 0.014 79.4)",
+          "oklch(39.0% 0.016 79.4)",
+          "oklch(51.0% 0.016 79.4)",
+          "oklch(63.0% 0.016 79.4)",
+          "oklch(75.0% 0.014 79.4)",
+          "oklch(86.0% 0.009 79.4)",
+          "oklch(95.0% 0.003 79.4)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Warm Card",
+        "canonical": "oklch(99.4% 0.007 88.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 88.6)",
+          "oklch(27.0% 0.006 88.6)",
+          "oklch(39.0% 0.007 88.6)",
+          "oklch(51.0% 0.007 88.6)",
+          "oklch(63.0% 0.007 88.6)",
+          "oklch(75.0% 0.006 88.6)",
+          "oklch(86.0% 0.004 88.6)",
+          "oklch(95.0% 0.001 88.6)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Linen Rule",
+        "canonical": "oklch(85.6% 0.026 78.9)",
+        "tonalRamp": [
+          "oklch(15.0% 0.015 78.9)",
+          "oklch(27.0% 0.023 78.9)",
+          "oklch(39.0% 0.026 78.9)",
+          "oklch(51.0% 0.026 78.9)",
+          "oklch(63.0% 0.026 78.9)",
+          "oklch(75.0% 0.022 78.9)",
+          "oklch(86.0% 0.014 78.9)",
+          "oklch(95.0% 0.005 78.9)"
+        ]
+      },
+      "map-canvas-bg": {
+        "role": "neutral",
+        "displayName": "Map Sand",
+        "canonical": "oklch(92.8% 0.022 80.7)",
+        "tonalRamp": [
+          "oklch(15.0% 0.012 80.7)",
+          "oklch(27.0% 0.019 80.7)",
+          "oklch(39.0% 0.022 80.7)",
+          "oklch(51.0% 0.022 80.7)",
+          "oklch(63.0% 0.022 80.7)",
+          "oklch(75.0% 0.018 80.7)",
+          "oklch(86.0% 0.012 80.7)",
+          "oklch(95.0% 0.005 80.7)"
+        ]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Brick Red",
+        "canonical": "oklch(50.0% 0.182 29.5)",
+        "tonalRamp": [
+          "oklch(15.0% 0.102 29.5)",
+          "oklch(27.0% 0.158 29.5)",
+          "oklch(39.0% 0.182 29.5)",
+          "oklch(51.0% 0.182 29.5)",
+          "oklch(63.0% 0.182 29.5)",
+          "oklch(75.0% 0.150 29.5)",
+          "oklch(86.0% 0.096 29.5)",
+          "oklch(95.0% 0.038 29.5)"
+        ]
+      },
+      "warning": {
+        "role": "warning",
+        "displayName": "Amber Ochre",
+        "canonical": "oklch(49.4% 0.109 66.9)",
+        "tonalRamp": [
+          "oklch(15.0% 0.061 66.9)",
+          "oklch(27.0% 0.095 66.9)",
+          "oklch(39.0% 0.109 66.9)",
+          "oklch(51.0% 0.109 66.9)",
+          "oklch(63.0% 0.109 66.9)",
+          "oklch(75.0% 0.090 66.9)",
+          "oklch(86.0% 0.058 66.9)",
+          "oklch(95.0% 0.023 66.9)"
+        ]
+      },
+      "premium-edge": {
+        "role": "accent",
+        "displayName": "Premium Gold",
+        "canonical": "oklch(76.9% 0.133 81.0)",
+        "tonalRamp": [
+          "oklch(15.0% 0.075 81.0)",
+          "oklch(27.0% 0.116 81.0)",
+          "oklch(39.0% 0.133 81.0)",
+          "oklch(51.0% 0.133 81.0)",
+          "oklch(63.0% 0.133 81.0)",
+          "oklch(75.0% 0.110 81.0)",
+          "oklch(86.0% 0.071 81.0)",
+          "oklch(95.0% 0.028 81.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "All UI text; Be Vietnam Pro handles Vietnamese diacritics."
+      },
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "One per page."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips, meta, form labels."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Codes and IDs only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px rgb(34 26 20 / .06), 0 2px 6px -2px rgb(34 26 20 / .06)",
+        "purpose": "Cards at rest, chrome."
+      },
+      {
+        "name": "shadow-md",
+        "value": "0 2px 4px -1px rgb(34 26 20 / .06), 0 10px 20px -6px rgb(34 26 20 / .1)",
+        "purpose": "Hover, raised cards."
+      },
+      {
+        "name": "shadow-pop",
+        "value": "0 8px 24px -6px rgba(34,26,20,.18), 0 2px 6px rgba(34,26,20,.08)",
+        "purpose": "Menus, popovers, floating panels."
+      },
+      {
+        "name": "shadow-sheet",
+        "value": "0 -2px 8px rgba(34,26,20,.06), 0 24px 48px -12px rgba(34,26,20,.28)",
+        "purpose": "Bottom sheets and dialogs."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Default easing; no bounce."
+      },
+      {
+        "name": "dur-fast",
+        "value": "150ms",
+        "purpose": "Hover, press."
+      },
+      {
+        "name": "dur-med",
+        "value": "280ms",
+        "purpose": "Panels, cards."
+      },
+      {
+        "name": "dur-slow",
+        "value": "420ms",
+        "purpose": "Sheets, route changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "html[data-device=mobile] (separate UI)"
+      },
+      {
+        "name": "tablet",
+        "value": "768px"
+      },
+      {
+        "name": "desktop",
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "1200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one orange action per view.",
+      "html": "<button class=\"ds-btn-primary\">Nhắn chủ trọ</button>",
+      "css": ".ds-btn-primary{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);min-height:48px;padding:12px 24px;border:0;border-radius:var(--radius-sm,8px);background:var(--action-primary,#bf400c);color:var(--action-on-primary,#fff);font-size:16px;font-weight:600;cursor:pointer;transition:background .15s cubic-bezier(.22,1,.36,1),box-shadow .15s}.ds-btn-primary:hover{background:var(--action-primary-hover,#9a3412);box-shadow:0 8px 18px color-mix(in srgb,#bf400c 28%,transparent)}.ds-btn-primary:active{transform:scale(.97)}.ds-btn-primary:focus-visible{outline:3px solid var(--grab-green,#047857);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outline action next to a primary.",
+      "html": "<button class=\"ds-btn-secondary\">Lưu phòng</button>",
+      "css": ".ds-btn-secondary{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);min-height:48px;padding:12px 24px;border:1px solid var(--border,#d9cebd);border-radius:var(--radius-sm,8px);background:transparent;color:var(--text-heading,#221a14);font-size:16px;font-weight:600;cursor:pointer;transition:background .15s}.ds-btn-secondary:hover{background:var(--pastel-peach,#fde9dc);color:var(--grab-green-hover,#065f46)}.ds-btn-secondary:focus-visible{outline:3px solid var(--grab-green,#047857);outline-offset:2px}"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "form-input",
+      "description": "Pill field on the input surface with a green focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Khu vực, trường…\" />",
+      "css": ".ds-input{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);width:280px;padding:12px 20px;border:1px solid var(--border,#d9cebd);border-radius:999px;background:var(--surface-input,#f9f4ec);color:var(--text-primary,#2f251d);font-size:16px}.ds-input::placeholder{color:var(--text-secondary,#5a4a3d)}.ds-input:focus-visible{outline:none;border-color:var(--grab-green,#047857);box-shadow:0 0 0 3px color-mix(in srgb,#047857 25%,transparent)}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "description": "Pill filter; selected uses brand-soft fill plus a check icon.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip is-on\" aria-pressed=\"true\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Dưới 3 triệu</button><button class=\"ds-chip\" aria-pressed=\"false\">Có máy lạnh</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px}.ds-chip{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border:1px solid var(--control-border,#9a8670);border-radius:999px;background:var(--surface,#fffdf8);color:var(--text-primary,#2f251d);font-size:14px;font-weight:500;cursor:pointer}.ds-chip:hover{background:var(--surface-muted,#f5eee3)}.ds-chip.is-on{background:var(--maps-blue-soft,#ecfdf5);border-color:var(--grab-green,#047857);color:var(--grab-green-hover,#065f46)}.ds-chip:focus-visible{outline:3px solid var(--grab-green,#047857);outline-offset:2px}"
+    },
+    {
+      "name": "Listing Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Room card: photo, price first, area, distance to school.",
+      "html": "<article class=\"ds-listing\"><div class=\"ds-listing__photo\"></div><div class=\"ds-listing__body\"><strong>2,5 triệu/tháng</strong><span>Phòng 20 m² · Linh Trung, Thủ Đức</span><span class=\"ds-listing__meta\">800 m tới trường</span></div></article>",
+      "css": ".ds-listing{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);width:280px;overflow:hidden;border:1px solid var(--border,#d9cebd);border-radius:var(--radius-lg,16px);background:var(--surface-elevated,#fffffc);box-shadow:0 1px 2px rgb(34 26 20/.06),0 2px 6px -2px rgb(34 26 20/.06);transition:box-shadow .28s cubic-bezier(.22,1,.36,1),transform .28s}.ds-listing:hover{transform:translateY(-2px);box-shadow:0 2px 4px -1px rgb(34 26 20/.06),0 10px 20px -6px rgb(34 26 20/.1)}.ds-listing__photo{height:150px;background:linear-gradient(135deg,#efe6d7,#d9cebd)}.ds-listing__body{display:grid;gap:4px;padding:12px 16px 16px;color:var(--text-primary,#2f251d);font-size:14px}.ds-listing__body strong{font-size:16px;color:var(--text-heading,#221a14)}.ds-listing__meta{color:var(--text-secondary,#5a4a3d);font-size:13px}"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Small status pill, rare by design.",
+      "html": "<span class=\"ds-badge\">Đã xác minh</span>",
+      "css": ".ds-badge{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);display:inline-block;padding:4px 12px;border-radius:999px;background:var(--grab-green,#047857);color:var(--on-brand,#fff);font-size:12px;font-weight:600}"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "description": "Signed-in header: logo, sections, active underline.",
+      "html": "<nav class=\"ds-nav\"><b class=\"ds-nav__logo\">Homeji</b><a class=\"is-active\" href=\"#\">Tìm phòng</a><a href=\"#\">Ở ghép</a><a href=\"#\">Chợ</a><a href=\"#\">Tin nhắn</a></nav>",
+      "css": ".ds-nav{font-family: var(--font-ui, 'Be Vietnam Pro', system-ui, sans-serif);display:flex;align-items:center;gap:4px;padding:8px 16px;background:var(--surface,#fffdf8);border-bottom:1px solid var(--border,#d9cebd)}.ds-nav__logo{margin-right:16px;color:var(--grab-green,#047857);font-size:20px}.ds-nav a{min-height:44px;display:inline-flex;align-items:center;padding:0 12px;border-radius:var(--radius-sm,8px);color:var(--text-primary,#2f251d);font-size:14px;font-weight:500;text-decoration:none}.ds-nav a:hover{background:var(--surface-muted,#f5eee3)}.ds-nav a.is-active{color:var(--grab-green,#047857);box-shadow:inset 0 -2px 0 var(--grab-green,#047857)}.ds-nav a:focus-visible{outline:3px solid var(--grab-green,#047857);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Bản đồ xóm trọ đáng tin",
+    "overview": "The signed-in app is an Operate surface: a map-first shell where students find rooms, roommates and small services near their school. It should feel like a neighbour who knows the area: warm paper, plain Vietnamese copy, precise detail. Light mode first; phones get their own UI.",
+    "keyCharacteristics": [
+      "Warm cream ground, walnut ink, emerald brand, burnt-orange primary action.",
+      "One primary action per view, in orange; green means brand, links, focus, active nav and success.",
+      "Map canvas stays neutral beige; category colours keep their meanings.",
+      "Tokens are global in :root with dark overrides."
+    ],
+    "rules": [
+      {
+        "name": "The One Orange Rule",
+        "body": "One primary orange action per view.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutral Map Rule",
+        "body": "Never paint the map canvas or large areas in brand green.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Nesting Rule",
+        "body": "No rounded card inside another card.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Use the existing tokens and the --fs-* / --radius-* scales.",
+      "Keep 44px touch targets, AA contrast and reduced-motion support.",
+      "Check light mode first, then dark, at 375px and 1280px."
+    ],
+    "donts": [
+      "Don't add !important to win a specificity fight.",
+      "Don't use Unicode glyphs as icons.",
+      "Don't put two orange actions in one view.",
+      "Don't touch src/features/landing-hx from app work."
+    ]
+  }
+}

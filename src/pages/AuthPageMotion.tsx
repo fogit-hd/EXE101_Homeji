@@ -302,7 +302,7 @@ export function PasswordEyeToggle({
       type="button"
       className={`auth-cinema__eye-btn${visible ? ' is-visible' : ''}`}
       onClick={handleClick}
-      aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+      aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} title={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
       aria-pressed={visible}
     >
       <DotLottieReact

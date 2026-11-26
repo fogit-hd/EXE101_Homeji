@@ -1,5 +1,6 @@
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { createPortal } from 'react-dom'
 import { SPRING } from '../../../lib/motionTokens'
 import { attachPointerSpot } from '../../motion/pointerSpot'
 
@@ -25,6 +26,7 @@ import {
 } from './FoodUtilityRail'
 
 type Props = {
+  quickControlsTarget: HTMLDivElement | null
   posts: MarketplacePost[]
   sellerGroups: (Omit<NearbyKitchen, 'postsCount'> & { posts: MarketplacePost[] })[]
   kitchens: NearbyKitchen[]
@@ -85,6 +87,7 @@ export function ProceduralNoiseFilter() {
 }
 
 export function FoodMarketplaceView({
+  quickControlsTarget,
   posts,
   sellerGroups,
   kitchens,
@@ -113,7 +116,6 @@ export function FoodMarketplaceView({
   onCheckout,
   onCartNoteChange,
   onCartOpenChange,
-  onSelectKitchen,
 }: Props) {
   const cartDialogRef = useRef<HTMLDialogElement>(null)
   // Dot cards: the hovered card lights the dots under the pointer.
@@ -186,7 +188,6 @@ export function FoodMarketplaceView({
 
   const railProps = {
     loading,
-    kitchens,
     cartItems,
     cartItemCount,
     cartTotal,
@@ -204,7 +205,6 @@ export function FoodMarketplaceView({
     onRemoveCartItem,
     onClearCart,
     onCheckout,
-    onSelectKitchen,
   }
 
   return (
@@ -212,15 +212,8 @@ export function FoodMarketplaceView({
       <ProceduralNoiseFilter />
       <div className="food-catalog">
         {/* Bộ lọc bữa ăn sinh viên & khoảng cách (uiarc.dev Spring Motion Pattern) */}
-        <div className="food-meal-filter-bar" style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '16px',
-        }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', position: 'relative' }} role="tablist" aria-label="Bộ lọc bữa ăn">
+        {quickControlsTarget ? createPortal(<div className="food-meal-filter-bar">
+          <div className="food-meal-chips" role="tablist" aria-label="Bộ lọc bữa ăn">
             {MEAL_TABS.map((tab) => {
               const active = mealCategory === tab.id
               return (
@@ -229,30 +222,24 @@ export function FoodMarketplaceView({
                   type="button"
                   role="tab"
                   aria-selected={active}
-                  onClick={() => setMealCategory(tab.id)}
-                  style={{
-                    position: 'relative',
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    fontSize: '0.82rem',
-                    fontWeight: active ? 600 : 500,
-                    border: active ? '1px solid transparent' : '1px solid var(--border)',
-                    background: 'transparent',
-                    color: active ? '#ffffff' : 'var(--text-primary)',
-                    cursor: 'pointer',
-                    zIndex: 1,
+                  tabIndex={active ? 0 : -1}
+                  onKeyDown={(event) => {
+                    const index = MEAL_TABS.findIndex((item) => item.id === tab.id)
+                    const next = event.key === 'Home' ? 0 : event.key === 'End' ? MEAL_TABS.length - 1
+                      : event.key === 'ArrowRight' ? (index + 1) % MEAL_TABS.length
+                        : event.key === 'ArrowLeft' ? (index - 1 + MEAL_TABS.length) % MEAL_TABS.length : -1
+                    if (next < 0) return
+                    event.preventDefault()
+                    setMealCategory(MEAL_TABS[next].id)
+                    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus()
                   }}
+                  className={`hj-chip${active ? ' is-active' : ''}`}
+                  onClick={() => setMealCategory(tab.id)}
                 >
                   {active && (
                     <motion.div
                       layoutId="activeMealCategoryTab"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: '20px',
-                        backgroundColor: 'var(--grab-green, #087f8c)',
-                        zIndex: -1,
-                      }}
+                      className="hj-chip__fill"
                       transition={SPRING.soft}
                     />
                   )}
@@ -262,28 +249,19 @@ export function FoodMarketplaceView({
             })}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #5b6b76)' }}>Bán kính:</span>
+          <label className="food-distance">
+            <span>Bán kính:</span>
             <select
               value={maxDistanceKm}
               onChange={(e) => setMaxDistanceKm(Number(e.target.value) || 0)}
-              style={{
-                padding: '4px 10px',
-                borderRadius: '12px',
-                border: '1px solid var(--border)',
-                fontSize: '0.8rem',
-                background: 'var(--surface-elevated, #ffffff)',
-                color: 'var(--text-primary, #243742)',
-                cursor: 'pointer',
-              }}
               aria-label="Lọc theo khoảng cách"
             >
               {DISTANCE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-          </div>
-        </div>
+          </label>
+        </div>, quickControlsTarget) : null}
 
         <div className="food-nearby-head">
           <div>
@@ -397,7 +375,7 @@ export function FoodMarketplaceView({
         className={`food-cart-fab${cartItemCount > 0 && !cartOpen ? ' has-sticky-cart' : ''}`}
         data-glass-exclude
         onClick={() => onCartOpenChange(true)}
-        aria-label={`Mở giỏ hàng, ${cartItemCount} món, ${formatPrice(cartTotal)}`}
+        aria-label={`Mở giỏ hàng, ${cartItemCount} món, ${formatPrice(cartTotal)}`} title={`Mở giỏ hàng, ${cartItemCount} món, ${formatPrice(cartTotal)}`}
         aria-haspopup="dialog"
         aria-expanded={cartOpen}
         aria-controls={cartDialogId}
@@ -443,7 +421,7 @@ export function FoodMarketplaceView({
               data-glass-exclude=""
               onClick={() => onCartOpenChange(false)}
               disabled={cartBusy}
-              aria-label="Đóng giỏ hàng"
+              aria-label="Đóng giỏ hàng" title="Đóng giỏ hàng"
             >
               <img src={FOOD_ASSETS.icons.x} alt="" width={14} height={14} />
             </button>

@@ -11,6 +11,7 @@ export type MapAppSection =
   | 'wanted'
   | 'activities'
   | 'myPosts'
+  | 'help'
 
 export const WIDE_MAP_SECTIONS = new Set<MapAppSection>([
   'marketplace',
@@ -23,6 +24,7 @@ export const WIDE_MAP_SECTIONS = new Set<MapAppSection>([
   'activities',
   'profile',
   'payments',
+  'help',
 ])
 
 export function isWideMapSection(section: MapAppSection | null | undefined): boolean {

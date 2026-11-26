@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   cancelViewingAppointment,
@@ -42,11 +43,6 @@ function monthTitle(d: Date) {
   return d.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
 }
 
-function monthEyebrow(d: Date) {
-  return d
-    .toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
-    .toUpperCase()
-}
 
 function dayHeading(d: Date) {
   return d.toLocaleDateString('vi-VN', {
@@ -99,7 +95,6 @@ function buildMonthGrid(cursor: Date) {
 export function MapAppointmentsPanel({ embedded = false }: Props) {
   const { profile } = useAuth()
   const myId = profile?.id ?? null
-  const displayName = profile?.displayName?.trim()?.split(/\s+/).pop() || 'bạn'
   const [items, setItems] = useState<ViewingAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => Date.now())
@@ -244,6 +239,8 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
         <article className="map-appointments__tl-card">
           <img
             className="map-appointments__tl-thumb"
+            loading="lazy"
+            decoding="async"
             src={thumbSrc}
             alt=""
             onError={(e) => {
@@ -373,8 +370,8 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
     <div className={`map-appointments${embedded ? ' is-embedded' : ''}`}>
       <header className="map-appointments__page-head">
         <div className="map-appointments__page-copy">
-          <span className="map-appointments__eyebrow">{monthEyebrow(selectedDay)}</span>
-          <h1 className="map-appointments__page-title">Lịch xem phòng của {displayName}</h1>
+
+          <h1 className="map-appointments__page-title">Lịch xem phòng</h1>
           <p className="map-appointments__page-lead">
             {upcomingCount} lịch sắp tới
             {pendingCount > 0 ? ` · ${pendingCount} lịch đang chờ chủ nhà xác nhận.` : '.'}
@@ -388,6 +385,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
             <button
               type="button"
               className={viewMode === 'timeline' ? 'is-active' : ''}
+              aria-pressed={viewMode === 'timeline'}
               onClick={() => setViewMode('timeline')}
             >
               Timeline
@@ -395,6 +393,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
             <button
               type="button"
               className={viewMode === 'list' ? 'is-active' : ''}
+              aria-pressed={viewMode === 'list'}
               onClick={() => setViewMode('list')}
             >
               Danh sách
@@ -403,7 +402,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
         </div>
       </header>
 
-      {error ? <p className="map-appointments__error map-motion-fade">{error}</p> : null}
+      {error ? <div><p className="map-appointments__error map-motion-fade">{error}</p><button type="button" className="btn btn-secondary" disabled={loading} onClick={() => void load()}>Thử lại</button></div> : null}
 
       <div className="map-appointments__layout">
         <aside className="map-appointments__rail" aria-label="Lịch tháng">
@@ -411,22 +410,22 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
             <div className="map-appointments__cal-nav">
               <button
                 type="button"
-                aria-label="Tháng trước"
+                aria-label="Tháng trước" title="Tháng trước"
                 onClick={() =>
                   setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))
                 }
               >
-                ‹
+                <ChevronLeft aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
               </button>
               <strong>{monthTitle(cursor)}</strong>
               <button
                 type="button"
-                aria-label="Tháng sau"
+                aria-label="Tháng sau" title="Tháng sau"
                 onClick={() =>
                   setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))
                 }
               >
-                ›
+                <ChevronRight aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
               </button>
             </div>
             <div className="map-appointments__cal-weekdays" aria-hidden>
@@ -443,7 +442,7 @@ export function MapAppointmentsPanel({ embedded = false }: Props) {
                 return (
                   <button
                     key={key + String(inMonth)}
-                    aria-label={date.toLocaleDateString('vi-VN')}
+                    aria-label={date.toLocaleDateString('vi-VN')} title={date.toLocaleDateString('vi-VN')}
                     aria-pressed={selected}
                     type="button"
                     className={[

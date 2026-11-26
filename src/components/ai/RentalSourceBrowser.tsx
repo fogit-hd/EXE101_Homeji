@@ -3,7 +3,7 @@ import { ChoicePicker } from '../ui/ChoicePicker'
 import { useEffect, useRef, useState } from 'react'
 import { rentalSourcePublisher, sourceRoomHref, rentalSourceImageHref, searchRentalSources, type RentalSourceListing } from '../../api/rentalSources'
 import { getErrorMessage } from '../../lib/errors'
-import { formatPrice } from '../../lib/labels'
+import { formatMonthlyRent } from '../../lib/labels'
 import { rentalSourceFreshness } from '../../lib/rentalSourceFreshness'
 import './RentalSourceBrowser.css'
 
@@ -43,10 +43,10 @@ export function RentalSourceBrowser() {
         <strong>{item.title}</strong><span>{item.address}</span>
         <span>{rentalSourcePublisher(item.publisherName)}</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{item.imageUrls.map(rentalSourceImageHref).filter((url): url is string => url !== null).slice(0, 3).map(url =>
-          <a key={url} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`Ảnh từ tin phòng: ${item.title}`} loading="lazy" referrerPolicy="no-referrer" style={{ width: 160, height: 110, objectFit: 'cover', borderRadius: 8 }} onError={event => { event.currentTarget.hidden = true }} /></a>
+          <a key={url} href={url} target="_blank" rel="noopener noreferrer"><img decoding="async" width={160} height={110} src={url} alt={`Ảnh từ tin phòng: ${item.title}`} loading="lazy" referrerPolicy="no-referrer" style={{ width: 160, height: 110, objectFit: 'cover', borderRadius: 8 }} onError={event => { event.currentTarget.hidden = true }} /></a>
         )}</div>
         <small>Ảnh phòng do người đăng cung cấp; cần kiểm tra thực tế trước khi giao dịch.</small>
-        <span>Giá tại lần thu thập: {item.price > 0 ? formatPrice(item.price) : 'Chưa có thông tin'} · Diện tích: {item.area > 0 ? `${item.area} m²` : 'Chưa có thông tin'}</span>
+        <span>Giá tại lần thu thập: {item.price > 0 ? formatMonthlyRent(item.price) : 'Chưa có thông tin'} · Diện tích: {item.area > 0 ? `${item.area} m²` : 'Chưa có thông tin'}</span>
         <small>Lưu ngày: {dateLabel(item.collectedAt)} · cập nhật: {dateLabel(item.sourceUpdatedAt)}</small>
         <small>{freshness === 'expired' ? 'Tin đã quá ngày hết hạn.' : freshness === 'notExpired' ? 'Chưa quá ngày hết hạn đã ghi nhận; chưa xác nhận phòng còn trống.' : 'Chưa có thông tin kiểm tra thời hạn quảng cáo.'}</small>
         {item.sourceCheckedAt ? <small>Kiểm tra: {dateLabel(item.sourceCheckedAt)} · ngày hết hạn ghi nhận: {dateLabel(item.sourceExpiresAt ?? null)}</small> : null}

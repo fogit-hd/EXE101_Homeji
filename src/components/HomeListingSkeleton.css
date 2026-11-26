@@ -16,7 +16,7 @@
   background: linear-gradient(
     100deg,
     transparent 25%,
-    color-mix(in srgb, var(--grab-green) 8%, transparent) 48%,
+    var(--brand-soft) 48%,
     transparent 70%
   );
   transform: translateX(-110%);
@@ -32,7 +32,7 @@
   border-radius: var(--radius-xl);
   overflow: hidden;
   min-height: 136px;
-  box-shadow: 0 6px 16px rgba(var(--shadow-color), 0.04);
+  box-shadow: none;
 }
 
 .home-listing-skeleton__image {
@@ -54,7 +54,7 @@
 
 .home-listing-skeleton__line {
   height: 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--surface-input) 92%, var(--text-secondary) 8%);
 }
 
@@ -103,7 +103,7 @@
   }
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .home-listing-skeleton::after {
     animation: none;
   }

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useState } from 'react'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import type { MapPlaceDetails } from '../../lib/mapPlace'
@@ -38,10 +39,10 @@ export function MapPlacePreview({
       <button
         type="button"
         className="map-place-preview__close"
-        aria-label="Đóng"
+        aria-label="Đóng" title="Đóng"
         onClick={onClose}
       >
-        ×
+        <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
       </button>
 
       {loading && !shown ? (
@@ -50,14 +51,7 @@ export function MapPlacePreview({
         </div>
       ) : shown ? (
         <div className="map-place-preview__body">
-          <p className="map-place-preview__eyebrow">
-            {shown.typeLabel || 'Địa điểm trên bản đồ'}
-            {shown.openNow == null
-              ? ''
-              : shown.openNow
-                ? ' · Đang mở'
-                : ' · Đã đóng'}
-          </p>
+          
           <h2 className="map-place-preview__title">{shown.name}</h2>
           {shown.address ? (
             <p className="map-place-preview__addr">{shown.address}</p>

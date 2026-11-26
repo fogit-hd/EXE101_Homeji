@@ -4,10 +4,9 @@
   --hl-ink: var(--landing-ink, #12181c);
   --hl-paper: var(--landing-paper, #eef3f0);
   --hl-navy: var(--landing-navy, #091d2e);
-  --hl-green: var(--grab-green, #00b14f);
+  --hl-green: var(--grab-green);
   color: var(--hl-ink);
   background:
-    radial-gradient(120% 80% at 10% -10%, color-mix(in srgb, var(--hl-green) 18%, transparent), transparent 55%),
     linear-gradient(180deg, var(--hl-paper), #f7faf8 40%, var(--hl-paper));
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   min-height: 100svh;
@@ -22,7 +21,6 @@ html[data-theme='dark'] .hl {
   --hl-navy: #eef3f0;
   --hl-green: #00b14f;
   background:
-    radial-gradient(120% 80% at 10% -10%, color-mix(in srgb, #00b14f 14%, transparent), transparent 55%),
     linear-gradient(180deg, #142112, #1a2818 45%, #142112);
   color: var(--hl-ink);
 }
@@ -37,7 +35,7 @@ html[data-theme='dark'] .hl {
 .hl__footer {
   padding: 48px 24px 64px;
   text-align: center;
-  color: var(--text-secondary, #69727d);
+  color: var(--text-secondary);
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -91,7 +89,7 @@ html[data-theme='dark'] .hl {
 
 .hl-scene__eyebrow {
   margin: 0 0 8px;
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -117,9 +115,9 @@ html[data-theme='dark'] .hl {
 .hl-scene__lead {
   margin: 12px 0 0;
   max-width: 42ch;
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
   line-height: 1.55;
-  color: var(--text-secondary, #69727d);
+  color: var(--text-secondary);
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -143,16 +141,17 @@ html[data-theme='dark'] .hl {
   inset: 12% 8% auto;
   height: 55%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--hl-green) 35%, white), transparent 70%);
+  background: none;
   filter: blur(8px);
+  display: none;
 }
 
 .hl-scene__panel,
 .hl-scene__card,
 .hl-scene__map-frame {
   background: color-mix(in srgb, white 88%, var(--hl-paper));
-  border: 1px solid color-mix(in srgb, var(--border, #d5d8dc) 80%, transparent);
-  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--radius-md);
 }
 
 .hl-scene__panel {
@@ -183,8 +182,8 @@ html[data-theme='dark'] .hl {
 }
 
 .hl-scene__card span {
-  color: var(--text-secondary, #69727d);
-  font-size: 0.92rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
 }
 
 .hl-scene__map-frame {
@@ -193,12 +192,12 @@ html[data-theme='dark'] .hl {
   place-items: center;
   background:
     linear-gradient(135deg, #dfe8ee, #e8eef2 40%, #d5e0e8),
-    var(--map-canvas-bg, #e8eef2);
+    var(--map-canvas-bg);
 }
 
 .hl-scene__map-placeholder {
   margin: 0;
-  color: var(--text-secondary, #69727d);
+  color: var(--text-secondary);
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -216,7 +215,7 @@ html[data-theme='dark'] .hl {
   gap: 14px;
   align-items: center;
   font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
 }
 
 .hl-scene__step-index {
@@ -224,11 +223,11 @@ html[data-theme='dark'] .hl {
   height: 2rem;
   display: grid;
   place-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--hl-green);
   color: #fff;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
 }
 
 .hl-scene__cta {

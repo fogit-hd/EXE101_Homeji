@@ -1,10 +1,11 @@
+import { X } from 'lucide-react'
 import { ProfileSetupNotice } from '../auth/ProfileSetupNotice'
 import { confirmDialog } from '../ui/confirmDialog'
 import { useChangedInputs } from '../../hooks/useChangedInputs'
 import { mergeConversationMessages, useIncomingConversationMessages } from '../../hooks/useIncomingConversationMessages'
 import { useConversationInbox } from '../../hooks/useConversationInbox'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type SetStateAction } from 'react'
 import {
   ConversationSubjectType,
   searchConversationMessages,
@@ -19,8 +20,8 @@ import {
   type PostMessage,
 } from '../../api'
 import { getStoredSession } from '../../api/client'
-import { createAsyncActionGate } from '../../lib/asyncActionGate'
-import { sortConversationsByActivity } from '../../lib/conversationOrder'
+import { createAsyncActionGate, createKeyedAsyncActionGate } from '../../lib/asyncActionGate'
+import { sortConversationsByActivity, updateConversationAfterSend } from '../../lib/conversationOrder'
 import {
   encodeChatLocation,
   parseChatLocation,
@@ -29,7 +30,7 @@ import {
 import { getErrorMessage } from '../../lib/errors'
 import { NOTIFICATION_CONNECTED } from '../../lib/sellerOrderAlerts'
 import { getDeviceLocation } from '../../lib/geolocation'
-import { formatPrice } from '../../lib/labels'
+import { formatPrice, formatMonthlyRent } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { staticMapUrl } from '../../lib/mapStaticMedia'
 import { marketplaceItemUrl } from '../../lib/marketplaceSellers'
@@ -44,6 +45,9 @@ import { MessagesInbox } from './messages/MessagesInbox'
 import { MessagesTimeline } from './messages/MessagesTimeline'
 import { MessagesThreadHeader } from './messages/MessagesThreadHeader'
 import { MessageComposer } from './messages/MessageComposer'
+import { useIsMobile } from '../../mobile/useIsMobile'
+import { useMobileChatViewport } from '../../mobile/messages/useMobileChatViewport'
+import '../../mobile/messages/mobile-messages.css'
 import {
   directionsUrl,
   subjectTag,
@@ -85,7 +89,7 @@ type Props = {
 export function MapMessagesPanel(props: Props) {
   const { isAuthenticated, needsProfileSetup, profile } = useAuth()
   if (isAuthenticated && needsProfileSetup) return <section className={`map-messages${props.embedded ? ' map-messages--embedded' : ''}${props.layout?.startsWith('floating-') ? ' is-floating' : ''}${props.layout === 'floating-inbox' ? ' is-floating-inbox' : ''}`}>
-    {props.onCloseWindow ? <button type="button" className="map-messages__icon-btn" aria-label="Đóng tin nhắn" onClick={props.onCloseWindow}>×</button> : null}
+    {props.onCloseWindow ? <button type="button" className="map-messages__icon-btn" aria-label="Đóng tin nhắn" title="Đóng tin nhắn" onClick={props.onCloseWindow}><X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} /></button> : null}
     <ProfileSetupNotice action="xem và gửi tin nhắn" onNavigate={props.onCloseWindow} />
   </section>
   return <MapMessagesPanelContent key={profile?.id ?? getStoredSession()?.userId ?? "guest"} {...props} />
@@ -110,6 +114,7 @@ function MapMessagesPanelContent({
   const isFloating = isFloatingInbox || isFloatingThread
   /** FeatureWorkspace page (not map dock): split inbox | thread. */
   const isWorkspace = embedded && !isFloating
+  const isMobile = useIsMobile()
   const { profile } = useAuth()
   const voice = useVoiceCalls()
   const [profileId, setProfileId] = useState<string | null>(null)
@@ -119,18 +124,30 @@ function MapMessagesPanelContent({
   const { conversations, update: setConversations, cancel: cancelInbox, loading, error: inboxError, refresh: refreshInbox, reconcileRead } = useConversationInbox(me, profile?.id ?? null)
   const [activeId, setActiveId] = useState<string | null>(initialConversationId)
   const [appliedInitialId, setAppliedInitialId] = useState(initialConversationId)
-  const [contactedAt, setContactedAt] = useState<Record<string, number>>(() => initialConversationId ? { [initialConversationId]: Date.now() } : {})
   const currentThread = useRef({ id: activeId, version: 0 })
   useLayoutEffect(() => {
     currentThread.current = { id: activeId, version: currentThread.current.version + 1 }
     return () => { currentThread.current = { id: null, version: currentThread.current.version + 1 } }
   }, [activeId])
   const [messages, setMessages] = useState<PostMessage[]>([])
-  const [draft, setDraft] = useState('')
-  const [sending, setSending] = useState(false)
+  const [draft, setDraftValue] = useState('')
+  const draftRevision = useRef(0)
+  const setDraft = useCallback((value: SetStateAction<string>) => {
+    draftRevision.current += 1
+    setDraftValue(value)
+  }, [])
+  const [pendingSends, setPendingSends] = useState<Set<string>>(() => new Set())
+  const sending = pendingSends.has(`${activeId}:text`)
+  const uploading = pendingSends.has(`${activeId}:images`)
+  const markSending = (key: string, busy: boolean) => setPendingSends(previous => {
+    const next = new Set(previous)
+    if (busy) next.add(key)
+    else next.delete(key)
+    return next
+  })
   const [blocking, setBlocking] = useState(false)
   const blockGate = useRef(createAsyncActionGate())
-  const sendGate = useRef(createAsyncActionGate())
+  const sendGate = useRef(createKeyedAsyncActionGate())
   const gpsGate = useRef(createAsyncActionGate())
   const [error, setError] = useState<string | null>(null)
   const [threadVisible, setThreadVisible] = useState(
@@ -171,7 +188,6 @@ function MapMessagesPanelContent({
   if (initialConversationId !== appliedInitialId) {
     setAppliedInitialId(initialConversationId)
     if (initialConversationId) {
-      setContactedAt(previous => ({ ...previous, [initialConversationId]: Date.now() }))
       setActiveId(initialConversationId)
       setThreadVisible(true)
     } else {
@@ -186,6 +202,7 @@ function MapMessagesPanelContent({
 
   if (useChangedInputs([activeId], true)) {
     setMessages([])
+    setError(null)
     setSearchOpen(false)
     setSearchQuery('')
   }
@@ -297,7 +314,7 @@ function MapMessagesPanelContent({
   const cannotSend = !active || blocked || blocking
 
   const changeUserBlock = () => blockGate.current(async () => {
-    if (!active || sending) return
+    if (!active) return
     const conversation = active
     const nextBlocked = !conversation.isBlockedByMe
     if (nextBlocked && !await confirmDialog({ title: `Chặn ${peerName}?`, message: 'Hai người sẽ không thể nhắn tin hoặc gọi cho nhau. Lịch sử trò chuyện vẫn được giữ lại.', confirmLabel: 'Chặn', danger: true })) return
@@ -359,7 +376,7 @@ function MapMessagesPanelContent({
         key: 'subject',
         kind: subjectTag[active.subjectType]?.label ?? 'Tin đăng',
         title: subject.title,
-        detail: subject.price != null ? formatPrice(subject.price) : undefined,
+        detail: subject.price != null ? active.subjectType === ConversationSubjectType.RentalPost ? formatMonthlyRent(subject.price) : formatPrice(subject.price) : undefined,
         thumb: subject.thumb,
         href: subject.href,
         at: new Date(active.createdAt).getTime(),
@@ -441,35 +458,39 @@ function MapMessagesPanelContent({
   const appendSentMessage = (msg: PostMessage) => {
     void cancelInbox().then(() => {
       if (getStoredSession()?.userId !== me) return
-      setConversations((prev) => {
-        const next = prev.map(c => c.id === msg.conversationId ? { ...c, lastMessage: msg.body, lastMessageSenderId: msg.senderId, updatedAt: msg.sentAt, unreadCount: 0 } : c)
-        return sortConversationsByActivity(next)
-      })
+      setConversations(previous => updateConversationAfterSend(previous, msg))
     })
   }
 
   const appendToCurrentThread = (msg: PostMessage, thread: { id: string | null; version: number }) => {
-    if (msg.conversationId !== thread.id || currentThread.current.id !== thread.id || currentThread.current.version !== thread.version) return false
-    setMessages((prev) => prev.some(item => item.id === msg.id) ? prev : [...prev, msg])
+    if (getStoredSession()?.userId !== me || msg.conversationId !== thread.id || currentThread.current.id !== thread.id) return false
+    setMessages(prev => mergeConversationMessages(prev, [msg]))
     return true
   }
 
-  const sendBody = async (body: string) => sendGate.current(async () => {
+  const sendBody = async (body: string) => sendGate.current(`${activeId}:text`, async () => {
     if (!activeId || cannotSend || currentThread.current.id !== activeId || !body.trim() || sending) return
     const thread = { ...currentThread.current }
-    setSending(true)
+    const sendKey = `${activeId}:text`
+    markSending(sendKey, true)
+    const sentDraft = body.trim()
+    const clearedDraft = draft.trim() === sentDraft
+    if (clearedDraft) setDraft('')
+    const submittedDraftRevision = draftRevision.current
+    setAttachMode(null)
+    resetAddressDraft()
     setError(null)
     try {
       const msg = await sendConversationMessage(activeId, body.trim())
       appendSentMessage(msg)
-      if (!appendToCurrentThread(msg, thread)) return
-      setDraft('')
-      setAttachMode(null)
-      resetAddressDraft()
+      appendToCurrentThread(msg, thread)
     } catch (e) {
-      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Chưa gửi được tin nhắn. Vui lòng thử lại.'))
+      if (currentThread.current.version === thread.version) {
+        if (clearedDraft && draftRevision.current === submittedDraftRevision) setDraft(draft)
+        setError(getErrorMessage(e, 'Chưa gửi được tin nhắn. Vui lòng thử lại.'))
+      }
     } finally {
-      setSending(false)
+      markSending(sendKey, false)
     }
   })
 
@@ -496,22 +517,31 @@ function MapMessagesPanelContent({
     setAttachMode(null)
   }
 
-  const handleSendImages = async () => sendGate.current(async () => {
-    if (!activeId || cannotSend || currentThread.current.id !== activeId || imageFiles.length === 0 || sending) return
+  const handleSendImages = async () => sendGate.current(`${activeId}:images`, async () => {
+    if (!activeId || cannotSend || currentThread.current.id !== activeId || imageFiles.length === 0 || uploading) return
     const thread = { ...currentThread.current }
-    setSending(true)
+    const sendKey = `${activeId}:images`
+    const files = imageFiles
+    const caption = draft
+    const context = imageContext
+    markSending(sendKey, true)
+    setImageFiles([])
+    setDraft('')
+    const submittedDraftRevision = draftRevision.current
+    if (imageInputRef.current) imageInputRef.current.value = ''
     setError(null)
     try {
-      const msg = await sendConversationImages(activeId, imageFiles, imageContext, draft)
+      const msg = await sendConversationImages(activeId, files, context, caption)
       appendSentMessage(msg)
-      if (!appendToCurrentThread(msg, thread)) return
-      setDraft('')
-      setImageFiles([])
-      if (imageInputRef.current) imageInputRef.current.value = ''
+      appendToCurrentThread(msg, thread)
     } catch (e) {
-      if (currentThread.current.version === thread.version) setError(getErrorMessage(e, 'Chưa gửi được ảnh. Vui lòng thử lại.'))
+      if (currentThread.current.version === thread.version) {
+        setImageFiles(current => current.length ? current : files)
+        if (draftRevision.current === submittedDraftRevision) setDraft(caption)
+        setError(getErrorMessage(e, 'Chưa gửi được ảnh. Vui lòng thử lại.'))
+      }
     } finally {
-      setSending(false)
+      markSending(sendKey, false)
     }
   })
 
@@ -527,6 +557,7 @@ function MapMessagesPanelContent({
         const device = await getDeviceLocation()
         loc = { lat: device.lat, lng: device.lng }
       } catch (e) {
+        if (currentThread.current.version !== thread.version) return
         setError(getErrorMessage(e, 'Không lấy được vị trí thiết bị'))
         setAttachMode(null)
         return
@@ -553,7 +584,6 @@ function MapMessagesPanelContent({
       lat: addressPlace.lat,
       lng: addressPlace.lng,
     })
-    resetAddressDraft()
   }
 
   const handleSendTarget = async (
@@ -570,17 +600,19 @@ function MapMessagesPanelContent({
     })
   }
 
+  useMobileChatViewport(isMobile && isWorkspace && threadVisible && Boolean(activeId), '.map-messages.is-thread .map-messages__bubbles')
+
   const unreadTotal = conversations.reduce((n, c) => n + (c.unreadCount ?? 0), 0)
   const filteredConversations = useMemo(() => {
     const q = inboxQuery.trim().toLowerCase()
-    return sortConversationsByActivity(conversations, contactedAt).filter((c) => {
+    return sortConversationsByActivity(conversations).filter((c) => {
       if (inboxFilter === 'unread' && !(c.unreadCount > 0)) return false
       if (inboxFilter === 'rental' && c.subjectType !== 1) return false
       if (!q) return true
       const hay = `${c.otherParticipantName ?? ''} ${c.lastMessage ?? ''}`.toLowerCase()
       return hay.includes(q)
     })
-  }, [conversations, contactedAt, inboxFilter, inboxQuery])
+  }, [conversations, inboxFilter, inboxQuery])
 
 
   return (
@@ -601,7 +633,7 @@ function MapMessagesPanelContent({
             aria-label="Đóng hộp thư"
             onClick={() => onCloseWindow?.()}
           >
-            ✕
+            <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
           </button>
         </header>
       ) : null}
@@ -612,7 +644,7 @@ function MapMessagesPanelContent({
         </header>
       ) : null}
 
-      {error || inboxError ? <p className="map-messages__error map-motion-fade">{error ?? getErrorMessage(inboxError, 'Không tải được tin nhắn')}{inboxError ? <button type="button" onClick={refreshInbox}>Thử lại</button> : null}</p> : null}
+      {error || inboxError ? <div><p className="map-messages__error map-motion-fade">{error ?? getErrorMessage(inboxError, 'Không tải được tin nhắn')}</p>{inboxError ? <button type="button" className="btn btn-secondary" onClick={refreshInbox}>Thử lại</button> : null}</div> : null}
 
       <div className={isWorkspace ? 'map-messages__split' : undefined}>
 <MessagesInbox
@@ -633,6 +665,7 @@ function MapMessagesPanelContent({
         activeId={activeId}
         currentUserId={me}
         onOpenThread={openThread}
+        mobile={isMobile && isWorkspace}
       />
       {!isFloatingInbox ? (
       <div
@@ -665,6 +698,7 @@ function MapMessagesPanelContent({
             cannotSend,
             voiceBusy: voice.busy,
             voiceReady: voice.ready,
+            mobile: isMobile && isWorkspace,
           }}
           refs={{ contextRef: ctxRef, searchToggleRef, searchBarRef, searchInputRef }}
           actions={{
@@ -701,6 +735,7 @@ function MapMessagesPanelContent({
           currentUserId={me}
           activeId={activeId}
           peerName={peerName}
+          peerAvatarPath={active?.otherParticipantAvatarPath}
           matchedIds={matchedIds}
           matchIndex={matchIndex}
           searchQuery={term}
@@ -718,6 +753,7 @@ function MapMessagesPanelContent({
           draft={draft}
           setDraft={setDraft}
           sending={sending}
+          uploading={uploading}
           cannotSend={cannotSend}
           blocked={blocked}
           attachMode={attachMode}
@@ -745,12 +781,13 @@ function MapMessagesPanelContent({
           onSend={handleSend}
           onSendImages={handleSendImages}
           onSentMessage={(message) => {
-            if (currentThread.current.id === message.conversationId && getStoredSession()?.userId === me) {
-              setMessages(previous => mergeConversationMessages(previous, [message]))
-              appendSentMessage(message)
-            }
+            if (getStoredSession()?.userId !== me) return
+            appendSentMessage(message)
+            if (currentThread.current.id === message.conversationId) setMessages(previous => mergeConversationMessages(previous, [message]))
           }}
           voiceBusy={voice.busy}
+          mobile={isMobile && isWorkspace}
+          onSendText={(text) => { void sendBody(text) }}
         />          </>
         )}
       </div>

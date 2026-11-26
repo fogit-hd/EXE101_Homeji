@@ -32,7 +32,7 @@ export function VerifiedOwnerBadge({ onClick }: { onClick?: () => void } = {}) {
       >
         <span className="verified-owner-badge__icon" aria-hidden="true">
           {[0, 1, 2, 3].map((frame) => (
-            <img
+            <img loading="lazy"
               key={frame}
               className="verified-owner-badge__ring"
               src={`/images/badges/verified-owner-ring-${frame}.png`}

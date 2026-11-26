@@ -58,6 +58,7 @@ export function createMapClusterContent(options: {
   const { root, mount } = coordinateAnchorRoot(title, 'map-pin-cluster', {
     interactive: true,
   })
+  root.setAttribute('aria-label', title)
   const size = Math.min(64, 44 + Math.round(Math.log2(count) * 4))
   const activeKinds = (Object.keys(CLUSTER_COLORS) as MapClusterKind[])
     .filter((kind) => options.kindCounts[kind] > 0)
@@ -84,16 +85,13 @@ export function createMapClusterContent(options: {
   const value = document.createElement('strong')
   value.className = 'map-pin-cluster__count'
   value.textContent = String(count)
-  const label = document.createElement('span')
-  label.className = 'map-pin-cluster__label'
-  label.textContent = 'vị trí'
-  bubble.append(value, label)
+  bubble.append(value)
   mount.appendChild(bubble)
   if (premiumCount > 0) {
     root.classList.add('map-pin-cluster--premium')
     const badge = document.createElement('span')
     badge.className = 'map-pin-cluster__vip'
-    badge.textContent = `★ ${premiumCount} Premium`
+    badge.setAttribute('aria-hidden', 'true')
     mount.append(badge)
   }
   return root
@@ -273,9 +271,13 @@ export function createPricePillPinContent(options: {
 }): MapPinContentHandle {
   const selected = Boolean(options.selected)
   const hot = Boolean(options.hot)
-  const { root, mount } = coordinateAnchorRoot(options.title, 'map-price-pill', {
-    interactive: true,
-  })
+  // A real content box lets AdvancedMarker hit-test mouse clicks as well as Enter.
+  const root = document.createElement('div')
+  root.className = 'map-price-pill'
+  root.title = options.title
+  const mount = document.createElement('div')
+  mount.className = 'map-price-pill__lift'
+  root.appendChild(mount)
   if (selected) root.classList.add('is-selected')
   if (hot) root.classList.add('is-hot')
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { isImportedRentalPost } from '../../lib/sourcePublisherLinks'
 import type { DecisionItem, DecisionResponse } from '../../api/rentalAssistant'
-import { formatPrice, formatListingRent, formatListingArea, amenityLabel } from '../../lib/labels'
+import { formatPrice, formatMonthlyRent, formatListingArea, amenityLabel } from '../../lib/labels'
 import { mapPostUrl } from '../../lib/mapDeepLinks'
 import { rentalPriceBasis, rentalPriceLabel } from './rentalPriceBasis'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
@@ -19,7 +19,7 @@ export function RentalDecisionResults({ data, budgetCeiling, maxCommuteMinutes }
   const bases = data.posts.map(item => rentalPriceBasis(item.post))
   const comparable = data.posts.every(knownRent) && !bases.includes('unknown') && new Set(bases).size <= 1
   const rows: [string, (item: DecisionItem) => string][] = [
-    ['Tiền thuê theo tin', item => formatListingRent(item.post.price)],
+    ['Tiền thuê theo tin', item => formatMonthlyRent(item.post.price)],
     ['Đơn vị tiền thuê', item => rentalPriceLabel(rentalPriceBasis(item.post))],
     ['Diện tích', item => formatListingArea(item.post.area)],
     ['Chỗ trống / tối đa', item => isImportedRentalPost(item.post) ? 'Chưa rõ / Chưa rõ' : `${item.post.availableSlots ?? 'Chưa rõ'} / ${item.post.maxOccupants != null && item.post.maxOccupants > 0 ? item.post.maxOccupants : 'Chưa rõ'}`],

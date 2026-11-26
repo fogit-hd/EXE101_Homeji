@@ -1,8 +1,13 @@
+import { X } from 'lucide-react'
+import { useListingSplit } from './useListingSplit'
 import { useListingSearchParams } from '../../../hooks/useListingSearchParams'
-import { RentalMapPreview as PreviewCard, BookmarkIcon } from './RentalMapPreview'
+import { dismissListingsTips, listingsTipsDismissed } from './listingsTips'
+import { countActiveListingFilters, listingResultCount } from './listingCounts'
+import { sheetShouldExpand } from './mapListingsLayout.ts'
 import { MoneyInput } from '../../ui/MoneyInput'
 import { RentalSourceResults } from './RentalSourceResults'
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -17,25 +22,26 @@ import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
+import { formatCompactRent, formatListingArea } from '../../../lib/labels'
+import { PremiumBadge } from '../../PremiumBadge'
 import { ListingTrustBadges } from '../../ListingTrustBadges'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
 import { ChoicePicker } from '../../ui/ChoicePicker'
 import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
 import { listingThumbSrcSet } from '../../../lib/cloudinaryImage'
 import {
+  HeartIcon,
   SnowflakeIcon,
   LoftLadderIcon,
   ShowerIcon,
   PawIcon,
   TagIcon,
   SparkleIcon,
-  ArrowUpRightIcon,
   GraduationCapIcon,
   MetroTrainIcon,
-  FloodFreeIcon,
-  SecurityCameraIcon,
 } from '../../icons/SvgIcons'
 import {
+  filtersSignature,
   mapBackendListingToListingViewModel,
   mapFilterMetadataToFilterConfig,
   mapMarketplacePostToListingViewModel,
@@ -48,9 +54,15 @@ import {
 } from './listingAdapters'
 
 import { Sk, SkCard } from '../../skeletons/Skeleton'
+import { useIsMobile } from '../../../mobile/useIsMobile'
+import { sortListings, type ListingSort } from './listingSort'
+import { MobileRoomCard } from '../../../mobile/listings/MobileRoomCard'
+import { MobileListingsToolbar } from '../../../mobile/listings/MobileListingsToolbar'
+import { MobileSheet } from '../../../mobile/MobileSheet'
 import './MapListingsWorkspace.css'
 
 const PAGE_SIZE = 20
+const MOBILE_FILTER_FORM = 'm-listings-filter'
 
 type RangeDraft = { min: string; max: string }
 
@@ -84,7 +96,7 @@ type Props = {
 const SOURCE_OPTIONS: { id: ListingCatalog; label: string }[] = [
   { id: 'rooms', label: 'Phòng trọ' },
   { id: 'apartments', label: 'Căn hộ' },
-  { id: 'market', label: 'Chợ Homeji' },
+  // Chợ Homeji has its own header entry; it is not a kind of room, so it is not offered here.
 ]
 
 type QuickChip = {
@@ -263,8 +275,6 @@ export function MapListingsWorkspace({
   onHoverListing,
   onLeaveListing,
   onSelectListing,
-  onClearSelection,
-  onOpenNearby,
   onOpenRoomDetail,
   onToggleSave,
   onResetFilters,
@@ -272,7 +282,9 @@ export function MapListingsWorkspace({
   onFocusSource,
   onRefresh,
 }: Props) {
-  const [, setSourceCounts] = useState<{ total: number; mapped: number } | null>(null)
+  const isMobile = useIsMobile()
+  const { stageRef: splitStageRef, style: splitStyle, dragging: splitDragging, separatorProps: splitSeparatorProps } = useListingSplit()
+  const [sourceCounts, setSourceCounts] = useState<{ total: number; mapped: number; queryKey: string } | null>(null)
   const [searchParams, setSearchParams] = useListingSearchParams()
   const navigate = useNavigate()
   const [pullY, setPullY] = useState(0)
@@ -367,48 +379,30 @@ export function MapListingsWorkspace({
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
+  const [tipsDismissed, setTipsDismissed] = useState(listingsTipsDismissed)
   const apartmentMode = query.catalog === 'apartments'
-  const [sortBy, setSortBy] = useState<'default' | 'priceAsc' | 'priceDesc' | 'areaDesc'>('default')
-  const sortChoices = [
+  type SortBy = ListingSort
+  const [sortBy, setSortBy] = useState<SortBy>('default')
+  // Marketplace items have no floor area, so that choice is only offered for rooms.
+  const sortChoices = ([
     ['default', 'Mới nhất'],
     ['priceAsc', 'Giá thấp → cao'],
     ['priceDesc', 'Giá cao → thấp'],
     ['areaDesc', 'Diện tích lớn'],
-  ] as const
+  ] as const).filter(([id]) => !marketMode || id !== 'areaDesc')
+  const activeSort: SortBy = marketMode && sortBy === 'areaDesc' ? 'default' : sortBy
 
-  const cards = useMemo(
-    () => {
-      const items = marketMode
-        ? marketPosts.map((post) => ({ id: post.id, view: mapMarketplacePostToListingViewModel(post) }))
-        : posts.map((post) => ({ id: post.id, view: mapBackendListingToListingViewModel(post) }))
-      if (sortBy === 'default') return items
-      const copy = [...items]
-      if (sortBy === 'priceAsc') {
-        return copy.sort((a, b) => {
-          const postA = posts.find((p) => p.id === a.id)
-          const postB = posts.find((p) => p.id === b.id)
-          return (postA?.price ?? 0) - (postB?.price ?? 0)
-        })
-      }
-      if (sortBy === 'priceDesc') {
-        return copy.sort((a, b) => {
-          const postA = posts.find((p) => p.id === a.id)
-          const postB = posts.find((p) => p.id === b.id)
-          return (postB?.price ?? 0) - (postA?.price ?? 0)
-        })
-      }
-      if (sortBy === 'areaDesc') {
-        return copy.sort((a, b) => {
-          const postA = posts.find((p) => p.id === a.id)
-          const postB = posts.find((p) => p.id === b.id)
-          return (postB?.area ?? 0) - (postA?.area ?? 0)
-        })
-      }
-      return copy
-    },
-    [marketMode, marketPosts, posts, sortBy],
-  )
-  const selected = cards.find((item) => item.id === selectedListingId) ?? null
+  // Sort the data each mode actually renders: rooms by price/area, marketplace items by price.
+  const sortedMarketPosts = useMemo(() => {
+    if (activeSort === 'priceAsc') return [...marketPosts].sort((a, b) => a.price - b.price)
+    if (activeSort === 'priceDesc') return [...marketPosts].sort((a, b) => b.price - a.price)
+    return marketPosts
+  }, [marketPosts, activeSort])
+  const cards = useMemo(() => {
+    if (marketMode) return sortedMarketPosts.map((post) => ({ id: post.id, view: mapMarketplacePostToListingViewModel(post), facts: { price: post.price } }))
+    return sortListings(posts, activeSort, (post) => post)
+      .map((post) => ({ id: post.id, view: mapBackendListingToListingViewModel(post), facts: { price: post.price, area: post.area } }))
+  }, [marketMode, sortedMarketPosts, posts, activeSort])
 
   const writeQuery = (patch: Partial<ListingQuery>, options?: { fit?: boolean }) => {
     const nextQuery: ListingQuery = { ...query, ...patch }
@@ -420,7 +414,6 @@ export function MapListingsWorkspace({
   }
 
   const setView = (view: MapListingsView) => {
-    setMobilePane(view === 'list' ? 'list' : 'map')
     setPanelOpen(true)
     writeQuery({ view })
   }
@@ -442,10 +435,12 @@ export function MapListingsWorkspace({
     setFiltersOpen(false)
     onResetFilters()
   }
-  const activeFilterCount = Number(query.minPrice != null || query.maxPrice != null)
-    + Number(query.minArea != null || query.maxArea != null) + query.amenities.length
-    + (query.excludedAmenities?.length ?? 0) + Number(query.excludeRoommateShare)
-    + Number(query.minAvailableSlots != null)
+  const activeFilterCount = countActiveListingFilters(query)
+  const countQueryKey = filtersSignature(query)
+  const receiveSourceCounts = useCallback((counts: { total: number; mapped: number }) => {
+    setSourceCounts({ ...counts, queryKey: countQueryKey })
+  }, [countQueryKey])
+  const resultCount = listingResultCount(cards.length, sourceCounts?.queryKey === countQueryKey ? sourceCounts.total : null, marketMode)
   const openFilters = () => {
     setPriceDraft({ min: query.minPrice != null ? String(query.minPrice) : '', max: query.maxPrice != null ? String(query.maxPrice) : '' })
     setAreaDraft({ min: query.minArea != null ? String(query.minArea) : '', max: query.maxArea != null ? String(query.maxArea) : '' })
@@ -454,20 +449,29 @@ export function MapListingsWorkspace({
   }
 
   const showMap = query.view !== 'list' && mapNode != null
-  const showList = query.view !== 'map'
+  const showList = true
   const contextPanelOpen = showMap && Boolean(contextPanel)
   const mapFirst = query.view !== 'list'
   const [panelOpen, setPanelOpen] = useState(true)
-  const [mobilePane, setMobilePane] = useState<'map' | 'list'>(query.view === 'list' ? 'list' : 'map')
+  const [sheetExpanded, setSheetExpanded] = useState(false)
+  const [sheetDrag, setSheetDrag] = useState(0)
+  const sheetGesture = useRef<{ y: number; moved: boolean } | null>(null)
+  useEffect(() => {
+    if (!selectedListingId || window.innerWidth < 768) return
+    const card = Array.from(panelBodyRef.current?.querySelectorAll<HTMLElement>('[data-listing-id]') ?? []).find(el => el.dataset.listingId === selectedListingId)
+    card?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+  }, [selectedListingId, cards, sourceCounts])
   const viewChoices = [
-    ['map', 'Bản đồ'],
-    ['split', 'Chia đôi'],
     ['list', 'Danh sách'],
+    ['split', 'Chia đôi'],
+    ['map', 'Bản đồ'],
   ] as const
 
   const infiniteSentinelRef = useRef<HTMLDivElement>(null)
+  // Pages accumulate, so a short total means the last page came back short (or empty): stop there.
+  const hasMorePages = cards.length >= query.page * PAGE_SIZE
   useEffect(() => {
-    if (query.view === 'map' || loading || cards.length < PAGE_SIZE) return
+    if (query.view === 'map' || loading || !hasMorePages) return
     const sentinel = infiniteSentinelRef.current
     if (!sentinel || typeof IntersectionObserver === 'undefined') return
 
@@ -483,16 +487,55 @@ export function MapListingsWorkspace({
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [query.view, query.page, loading, cards.length])
+  }, [query.view, query.page, loading, hasMorePages])
 
   const renderListingCard = (id: string, view: ReturnType<typeof mapMarketplacePostToListingViewModel>) => {
+    const room = !marketMode ? posts.find(post => post.id === id) : undefined
     const selectedCard = selectedListingId === id
     const hovered = hoveredListingId === id
+    const openCard = () => {
+      if (!marketMode && query.view === 'list' && onOpenRoomDetail) {
+        onOpenRoomDetail(id)
+        return
+      }
+      if (marketMode && query.view === 'list') {
+        const post = marketPosts.find(item => item.id === id)
+        if (post) navigate(marketplaceItemUrl(post))
+        return
+      }
+      onSelectListing(id)
+    }
+    const saved = Boolean(savedIds?.has(id))
+    if (isMobile) {
+      const area = room && Number.isFinite(room.area) && room.area > 0 ? formatListingArea(room.area) : view.areaLabel
+      return (
+        <MobileRoomCard
+          id={id}
+          photo={view.thumbnailUrl}
+          price={room ? <>{formatCompactRent(room.price)}{Number.isFinite(room.price) && room.price > 0 ? '/tháng' : ''}</> : view.priceLabel}
+          title={view.title}
+          meta={[area, shortListingAddress((view.address || '').trim())].filter(Boolean).join(' · ')}
+          badge={!marketMode && view.isPremium ? <PremiumBadge variant="glass" /> : undefined}
+          selected={selectedCard}
+          pressed={query.view !== 'list' ? selectedCard : undefined}
+          onOpen={openCard}
+          corner={!marketMode && onToggleSave ? (
+            <button type="button" className={`m-room__save${saved ? ' is-on' : ''}`} aria-pressed={saved}
+              aria-label={saved ? 'Bỏ lưu' : 'Lưu phòng'} disabled={saveBusy && selectedListingId === id}
+              onClick={() => onToggleSave(id)}>
+              <HeartIcon size={20} filled={saved} />
+            </button>
+          ) : undefined}
+          actions={!marketMode ? <RentalConsiderationToggle compact post={{ id, title: view.title }} /> : undefined}
+        />
+      )
+    }
     return (
         <article
-          className={`map-listings__card${!marketMode && view.isPremium ? ' premium-listing' : ''}${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
+          data-listing-id={id}
+          className={`map-listings__card${!marketMode ? ' map-listings__room-card' : ''}${!marketMode && view.isPremium ? ' premium-listing' : ''}${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
         >
-          <ListingTrustBadges premium={!marketMode && view.isPremium} verified={view.isOwnerVerified} />
+          {marketMode ? <ListingTrustBadges premium={false} verified={view.isOwnerVerified} /> : view.isPremium ? <span className="map-listings__room-badge"><PremiumBadge variant="glass" /></span> : null}
           <button
             type="button"
             className="map-listings__card-hit"
@@ -502,23 +545,12 @@ export function MapListingsWorkspace({
             onMouseLeave={onLeaveListing}
             onFocus={() => onHoverListing(id)}
             onBlur={onLeaveListing}
-            onClick={() => {
-              if (!marketMode && query.view === 'list' && onOpenRoomDetail) {
-                onOpenRoomDetail(id)
-                return
-              }
-              if (marketMode && query.view === 'list') {
-                const post = marketPosts.find(item => item.id === id)
-                if (post) navigate(marketplaceItemUrl(post))
-                return
-              }
-              onSelectListing(id)
-            }}
+            onClick={openCard}
           >
             <span className="map-listings__card-photo">
               <span className="map-listings__card-photo-empty">Chưa có ảnh</span>
               {view.thumbnailUrl ? (
-                <img
+                <img width={640} height={400}
                   src={view.thumbnailUrl}
                   srcSet={listingThumbSrcSet(view.thumbnailUrl)}
                   sizes="(max-width: 640px) 100vw, 320px"
@@ -532,10 +564,11 @@ export function MapListingsWorkspace({
               ) : null}
             </span>
             <span className="map-listings__card-copy">
-              <span className="map-listings__price">{view.priceLabel}{!marketMode ? <small> / tháng</small> : null}</span>
+              <span className="map-listings__price">{room ? <>{formatCompactRent(room.price)}{Number.isFinite(room.price) && room.price > 0 ? '/tháng' : ''}</> : view.priceLabel}</span>
               <span className="map-listings__name">{view.title}</span>
+              {!marketMode ? <span className="map-listings__room-meta">{[room && Number.isFinite(room.area) && room.area > 0 ? formatListingArea(room.area) : '', shortListingAddress((view.address || '').trim())].filter(Boolean).join(' · ')}</span> : <>
                 <span className="map-listings__address">
-                  <img src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
+                  <img loading="lazy" decoding="async" src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
                   <span className="map-listings__address-text" title={view.address}>{shortListingAddress(view.address) || 'Chưa có địa chỉ'}</span>
                 </span>
               <span className="map-listings__meta">
@@ -545,32 +578,28 @@ export function MapListingsWorkspace({
                 {!marketMode && !view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
               </span>
               <span className="map-listings__facts">
-                <span className="map-listings__fact-tag is-flood-free" title="Tuyến đường cao ráo không ngập mùa mưa">
-                  <FloodFreeIcon size={11} /> Tuyến không ngập
-                </span>
-                <span className="map-listings__fact-tag is-security" title="Khu vực an ninh tốt, có camera quan sát">
-                  <SecurityCameraIcon size={11} /> An ninh 24/7
-                </span>
-                {view.facts.map(fact => <span key={fact}>{fact}</span>)}
+                {/* Only facts from the listing itself, at most three; the detail view carries the rest. */}
+                {view.facts.slice(0, 3).map(fact => <span key={fact}>{fact}</span>)}
                 {view.updatedAt && formatListingDate(view.updatedAt) ? <time dateTime={view.updatedAt}>Cập nhật {formatListingDate(view.updatedAt)}</time> : null}
               </span>
+              </>}
             </span>
           </button>
-          {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
-          {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></button> : null}
+          {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle compact post={{ id, title: view.title }} /></div> : null}
+
           {!marketMode && onToggleSave ? (
             <button
               type="button"
               className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`}
               data-glass-exclude aria-pressed={Boolean(savedIds?.has(id))}
-              aria-label={savedIds?.has(id) ? 'Bỏ lưu phòng' : 'Lưu phòng'}
+              aria-label={savedIds?.has(id) ? 'Bỏ lưu' : 'Lưu phòng'}
               disabled={saveBusy && selectedListingId === id}
               onClick={(event) => {
                 event.stopPropagation()
                 onToggleSave(id)
               }}
             >
-              <BookmarkIcon saved={savedIds?.has(id)} />
+              <HeartIcon size={20} filled={savedIds?.has(id)} />
             </button>
           ) : null}
         </article>
@@ -578,96 +607,17 @@ export function MapListingsWorkspace({
   }
 
 
-  return (
-    <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}`}>
-      <header className="map-listings__header">
-        <div className="map-listings__toolbar" aria-label="Tùy chỉnh kết quả">
-          <div className="map-listings__catalog" role="group" aria-label="Loại tin" data-glass-exclude>
-            {SOURCE_OPTIONS.map((option) => (
-              <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
-                aria-pressed={query.catalog === option.id}
-                onClick={() => {
-                  if (query.catalog === option.id) return
-                  setFiltersOpen(false)
-                  writeQuery({ catalog: option.id, page: 1 }, { fit: true })
-                }}>
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <div className="map-listings__tools">
-            <button type="button" className="map-listings__mobile-view" data-glass-exclude
-              onClick={() => setView(query.view === 'list' ? 'map' : 'list')}>
-              {query.view === 'list' ? 'Bản đồ' : 'Danh sách'}
-            </button>
-            <button ref={filterAnchor} type="button"
-              className={`map-listings__filter-trigger${activeFilterCount ? ' is-active' : ''}`}
-              aria-expanded={filtersOpen} aria-haspopup="dialog" onClick={() => filtersOpen ? setFiltersOpen(false) : openFilters()}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                <path d="M4 7h9m4 0h3M4 17h3m4 0h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" />
-              </svg>
-              Lọc {activeFilterCount > 0 ? <span className="map-listings__filter-count">{activeFilterCount}</span> : null}
-            </button>
-            <label className="map-listings__sort" title="Sắp xếp kết quả">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                <path d="m3 16 4 4 4-4M7 20V4m14 4-4-4-4 4m4-4v16" />
-              </svg>
-              <span className="map-listings__sr-only">Sắp xếp</span>
-              <ChoicePicker value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
-                {sortChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </ChoicePicker>
-            </label>
-            <label className="map-listings__display">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                <rect x="3.5" y="4" width="17" height="16" rx="2" /><path d="M10 4v16" />
-              </svg>
-              <span className="map-listings__sr-only">Chế độ xem</span>
-              <ChoicePicker value={query.view} onChange={(event) => setView(event.target.value as MapListingsView)}>
-                {viewChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </ChoicePicker>
-            </label>
-          </div>
-        </div>
-        {!marketMode ? (
-          <div className="map-listings__quick-chips-bar" role="group" aria-label="Bộ lọc nhanh" data-glass-exclude>
-            {QUICK_CHIPS.map((chip) => {
-              const active = chip.isActive(query)
-              return (
-                <button
-                  key={chip.id}
-                  type="button"
-                  className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
-                  aria-pressed={active}
-                  onClick={() => {
-                    const patch = chip.toggle(query)
-                    if (!active && chip.focus && onFocusSource) {
-                      onFocusSource(chip.focus)
-                    }
-                    writeQuery({ ...patch, page: 1 }, { fit: true })
-                  }}
-                >
-                  {chip.icon}
-                  <span>{chip.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        ) : null}
-        <FilterPopover anchorRef={filterAnchor} open={filtersOpen} onClose={() => setFiltersOpen(false)}
-          className="map-listings__popover map-listings__filter-sheet"
-          onSubmit={() => {
-            writeQuery({
-              minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max),
-              ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
-              page: 1,
-            }, { fit: true })
-            setFiltersOpen(false)
-          }}>
-          <div className="map-listings__sheet-heading">
-            <div><strong>Bộ lọc</strong><p>Chọn những điều bạn cần.</p></div>
-            <button type="button" className="map-listings__sheet-close" aria-label="Đóng bộ lọc" onClick={() => setFiltersOpen(false)}>×</button>
-          </div>
-          <div className="map-listings__sheet-body">
+  const applyFilters = () => {
+          writeQuery({
+            minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max),
+            ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
+            page: 1,
+          }, { fit: true })
+          setFiltersOpen(false)
+  }
+  const filterFields = (
+    <>
+
             {filterConfig.price ? (
               <>
                 <FilterRange label="Khoảng giá" unit="đ" draft={priceDraft} onChange={setPriceDraft} />
@@ -682,6 +632,7 @@ export function MapListingsWorkspace({
                       <button
                         key={preset.id}
                         type="button"
+                        aria-pressed={active}
                         className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
                         onClick={() => {
                           if (active) {
@@ -707,6 +658,7 @@ export function MapListingsWorkspace({
                     <button
                       key={item.id}
                       type="button"
+                      aria-pressed={active}
                       className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
                       onClick={() => {
                         const nextKeyword = active ? '' : item.keyword
@@ -746,6 +698,7 @@ export function MapListingsWorkspace({
                       <button
                         key={preset.code}
                         type="button"
+                        aria-pressed={active}
                         className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
                         onClick={() => {
                           setAmenityDraft((current) =>
@@ -770,39 +723,178 @@ export function MapListingsWorkspace({
                 </div>
               </fieldset>
             ) : null}
+    </>
+  )
+  const filterActions = (
+    <>
+            <button type="button" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-reset" disabled={!queryHasActiveFilters(query) && !priceDraft.min && !priceDraft.max && !areaDraft.min && !areaDraft.max && !amenityDraft.length} onClick={resetFilters}>Đặt lại</button>
+            {!marketMode && <button type="button" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-save" aria-haspopup="dialog" onClick={event => {
+              if (event.currentTarget.form?.reportValidity() === false) return
+              const next = serializeFiltersToQuery({ ...query, minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max), minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft, page: 1 }, searchParams)
+              next.set('interest', 'new')
+              setSearchParams(next, { replace: true })
+              setFiltersOpen(false)
+            }}>Lưu tìm kiếm này</button>}
+            <button type="submit" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-apply">
+              {`Xem ${resultCount} kết quả`}
+            </button>
+    </>
+  )
+
+  return (
+    <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}${sheetExpanded ? ' is-sheet-expanded' : ''}`}>
+      <header className="map-listings__header">
+        <h1 className="sr-only">Tìm phòng</h1>
+        <h2 className="sr-only">Kết quả tìm phòng</h2>
+        {isMobile ? (
+          <MobileListingsToolbar
+            catalogs={SOURCE_OPTIONS}
+            catalog={query.catalog}
+            onCatalog={(id) => {
+              if (query.catalog === id) return
+              setFiltersOpen(false)
+              writeQuery({ catalog: id as ListingCatalog, page: 1 }, { fit: true })
+            }}
+            resultLabel={`${resultCount} ${marketMode ? 'món đồ' : 'phòng'}`}
+            activeFilterCount={activeFilterCount}
+            filtersOpen={filtersOpen}
+            onOpenFilters={openFilters}
+            filterButtonRef={filterAnchor}
+            sortChoices={sortChoices}
+            sort={activeSort}
+            onSort={(id) => setSortBy(id as SortBy)}
+            showingMap={query.view !== 'list'}
+            onToggleMap={() => setView(query.view === 'list' ? 'map' : 'list')}
+            quickChips={marketMode ? [] : QUICK_CHIPS.map((chip) => {
+              const active = chip.isActive(query)
+              return {
+                id: chip.id, label: chip.label, icon: chip.icon, active,
+                onToggle: () => {
+                  if (!active && chip.focus && onFocusSource) onFocusSource(chip.focus)
+                  writeQuery({ ...chip.toggle(query), page: 1 }, { fit: true })
+                },
+              }
+            })}
+          />
+        ) : <>
+        <div className="map-listings__toolbar" aria-label="Tùy chỉnh kết quả">
+          <div className="map-listings__catalog" role="group" aria-label="Loại tin" data-glass-exclude>
+            {SOURCE_OPTIONS.map((option) => (
+              <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
+                aria-pressed={query.catalog === option.id}
+                onClick={() => {
+                  if (query.catalog === option.id) return
+                  setFiltersOpen(false)
+                  writeQuery({ catalog: option.id, page: 1 }, { fit: true })
+                }}>
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="map-listings__tools">
+            <span className="map-listings__toolbar-count">{resultCount} phòng</span>
+            {query.view === 'list' ? <button type="button" className="map-listings__mobile-view" data-glass-exclude
+              onClick={() => setView(query.view === 'list' ? 'map' : 'list')}>
+              Bản đồ
+            </button> : null}
+            <button ref={filterAnchor} type="button"
+              className={`map-listings__filter-trigger${activeFilterCount ? ' is-active' : ''}`}
+              aria-label={activeFilterCount ? `Bộ lọc, ${activeFilterCount} đang bật` : 'Bộ lọc'} title={activeFilterCount ? `Bộ lọc, ${activeFilterCount} đang bật` : 'Bộ lọc'}
+              aria-expanded={filtersOpen} aria-haspopup="dialog" onClick={() => filtersOpen ? setFiltersOpen(false) : openFilters()}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <path d="M4 7h9m4 0h3M4 17h3m4 0h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" />
+              </svg>
+              {activeFilterCount > 0 ? <span className="map-listings__filter-count" aria-hidden="true">{activeFilterCount}</span> : null}
+            </button>
+            <div className={`map-listings__sort${activeSort !== 'default' ? ' is-active' : ''}`}>
+              <ChoicePicker className="map-listings__sort-trigger" aria-label={`Sắp xếp: ${sortChoices.find(([id]) => id === activeSort)?.[1]}`} title={`Sắp xếp: ${sortChoices.find(([id]) => id === activeSort)?.[1]}`}
+                value={activeSort} onChange={(event) => setSortBy(event.target.value as SortBy)}>
+                {sortChoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+              </ChoicePicker>
+              <svg className="map-listings__sort-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <path d="m3 16 4 4 4-4M7 20V4m14 4-4-4-4 4m4-4v16" />
+              </svg>
+            </div>
+            <div className="map-listings__display" role="group" aria-label="Chế độ xem" data-glass-exclude>
+              {viewChoices.map(([id, label]) => <button key={id} type="button" aria-label={label} title={label} aria-pressed={query.view === id} onClick={() => setView(id)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                  {id === 'list' ? <path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" />
+                    : id === 'split' ? <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M10 4v16M5 8h3M5 12h3M5 16h3" /></>
+                      : <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6ZM9 3v15M15 6v15" /></>}
+                </svg>
+              </button>)}
+            </div>
+          </div>
+        </div>
+        {!marketMode ? (
+          <div className="map-listings__quick-chips-bar" role="group" aria-label="Bộ lọc nhanh" data-glass-exclude>
+            {QUICK_CHIPS.map((chip) => {
+              const active = chip.isActive(query)
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
+                  aria-pressed={active}
+                  onClick={() => {
+                    const patch = chip.toggle(query)
+                    if (!active && chip.focus && onFocusSource) {
+                      onFocusSource(chip.focus)
+                    }
+                    writeQuery({ ...patch, page: 1 }, { fit: true })
+                  }}
+                >
+                  {chip.icon}
+                  <span>{chip.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
+        </>}
+        {isMobile ? (
+          <MobileSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} title="Bộ lọc" size="full" className="m-filter-sheet"
+            footer={<div className="m-filter-sheet__actions">{filterActions}</div>}>
+            <form id={MOBILE_FILTER_FORM} className="m-filter-sheet__form" onSubmit={(event) => { event.preventDefault(); applyFilters() }}>
+              {filterFields}
+            </form>
+          </MobileSheet>
+        ) : (
+        <FilterPopover anchorRef={filterAnchor} open={filtersOpen} onClose={() => setFiltersOpen(false)}
+          className="map-listings__popover map-listings__filter-sheet"
+          onSubmit={applyFilters}>
+          <div className="map-listings__sheet-heading">
+            <div><strong>Bộ lọc</strong><p>Chọn những điều bạn cần.</p></div>
+            <button type="button" className="map-listings__sheet-close" aria-label="Đóng bộ lọc" onClick={() => setFiltersOpen(false)}><X aria-hidden="true" size={20} style={{ verticalAlign: 'middle' }} /></button>
+          </div>
+          <div className="map-listings__sheet-body">
+          <div className="map-listings__catalog map-listings__sheet-catalog" role="group" aria-label="Loại tin" data-glass-exclude>
+            {SOURCE_OPTIONS.map((option) => (
+              <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
+                aria-pressed={query.catalog === option.id}
+                onClick={() => {
+                  if (query.catalog === option.id) return
+                  setFiltersOpen(false)
+                  writeQuery({ catalog: option.id, page: 1 }, { fit: true })
+                }}>
+                {option.label}
+              </button>
+            ))}
+          </div>
+            {filterFields}
           </div>
           <div className="map-listings__sheet-footer">
-            <button type="button" className="map-listings__sheet-reset" disabled={!queryHasActiveFilters(query) && !priceDraft.min && !priceDraft.max && !areaDraft.min && !areaDraft.max && !amenityDraft.length} onClick={resetFilters}>Đặt lại</button>
-            <button type="submit" className="map-listings__sheet-apply">
-              {cards.length > 0 ? `Xem ${cards.length} kết quả` : 'Áp dụng'}
-            </button>
+            {filterActions}
           </div>
         </FilterPopover>
+        )}
       </header>
 
-      <div className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
-        {showMap && showList && !contextPanelOpen ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
-          <button
-            type="button"
-            aria-pressed={mobilePane === 'map'}
-            className={mobilePane === 'map' ? 'is-on' : ''}
-            onClick={() => setMobilePane('map')}
-          >
-            Bản đồ
-          </button>
-          <button
-            type="button"
-            aria-pressed={mobilePane === 'list'}
-            className={mobilePane === 'list' ? 'is-on' : ''}
-            onClick={() => setMobilePane('list')}
-          >
-            Danh sách
-          </button>
-        </div> : null}
+      <div ref={splitStageRef} style={splitStyle} data-resizing={splitDragging || undefined} className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
 
         {showMap ? (
           <section
-            className={`map-listings__map${mobilePane === 'list' && !contextPanelOpen ? ' is-mobile-hidden' : ''}`}
+            className="map-listings__map"
             aria-label="Bản đồ khu vực"
           >
             {mapNode}
@@ -825,47 +917,58 @@ export function MapListingsWorkspace({
                 }
               >
                 <span className="map-listings__move-check" aria-hidden>
-                  {query.searchOnMove ? <img src="/figma/map/check.svg" alt="" width={11} height={11} /> : null}
+                  {query.searchOnMove ? <img loading="lazy" decoding="async" src="/figma/map/check.svg" alt="" width={11} height={11} /> : null}
                 </span>
                 {viewportPaused ? 'Đang giữ khu vực tìm kiếm' : 'Tìm khi di chuyển bản đồ'}
               </button>
-            {selected && query.view !== 'list' ? (
-              <PreviewCard
-                onClose={onClearSelection}
-                onOpenNearby={onOpenNearby}
-                view={selected.view}
-                monthly={!marketMode}
-                considerationPost={!marketMode ? { id: selected.id, title: selected.view.title } : undefined}
-                saved={savedIds?.has(selected.id)}
-                saveBusy={saveBusy}
-                onToggleSave={!marketMode && onToggleSave ? () => onToggleSave(selected.id) : undefined}
-                onOpen={() => {
-                  if (!marketMode && onOpenRoomDetail) onOpenRoomDetail(selected.id)
-                  else if (marketMode) { const post = marketPosts.find(item => item.id === selected.id); if (post) navigate(marketplaceItemUrl(post)) }
-                  else onSelectListing(selected.id)
-                }}
-              />
-            ) : null}
+
           </section>
         ) : null}
 
+        {!isMobile && query.view === 'split' && showMap && panelOpen ? (
+          <div className="map-listings__split-handle" {...splitSeparatorProps} />
+        ) : null}
         {contextPanelOpen ? <div className="map-listings__context-panel">{contextPanel}</div> : null}
 
-        {showList && !contextPanelOpen ? (
+        {showList ? (
           <aside
-            className={`map-listings__panel${mobilePane === 'map' && showMap ? ' is-mobile-hidden' : ''}${panelOpen ? '' : ' is-collapsed'}`}
+            className={`map-listings__panel${panelOpen ? '' : ' is-collapsed'}${sheetDrag !== 0 ? ' is-dragging' : ''}`}
+            style={showMap ? { '--sheet-drag': `${sheetDrag}px` } as React.CSSProperties : undefined}
             aria-label="Danh sách kết quả"
           >
+            {isMobile && showMap ? <button type="button" className="map-listings__sheet-handle" aria-label={sheetExpanded ? 'Thu gọn danh sách phòng' : 'Mở danh sách phòng'} aria-expanded={sheetExpanded} aria-controls="map-listings-results"
+              onClick={event => { if (event.detail === 0 || !sheetGesture.current?.moved) setSheetExpanded(value => !value); sheetGesture.current = null }}
+              onPointerDown={event => { sheetGesture.current = { y: event.clientY, moved: false }; event.currentTarget.setPointerCapture(event.pointerId) }}
+              onPointerMove={event => { const gesture = sheetGesture.current; if (!gesture || !event.currentTarget.hasPointerCapture(event.pointerId)) return; const delta = event.clientY - gesture.y; gesture.moved = Math.abs(delta) > 8; setSheetDrag(sheetExpanded ? Math.max(0, delta) : Math.min(0, delta)) }}
+              onPointerUp={event => { const gesture = sheetGesture.current; if (!gesture) return; if (gesture.moved) setSheetExpanded(sheetShouldExpand(sheetExpanded, event.clientY - gesture.y)); setSheetDrag(0); event.currentTarget.releasePointerCapture(event.pointerId) }}
+              onPointerCancel={() => { sheetGesture.current = null; setSheetDrag(0) }}
+            ><span aria-hidden="true" /><strong>{resultCount} phòng</strong></button> : null}
             {query.view === 'split' ? <div className="map-listings__panel-head">
               <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : apartmentMode ? 'Căn hộ trong khu vực' : 'Phòng trọ trong khu vực'}</strong></div>
             </div> : null}
             <div
+              id="map-listings-results"
               ref={panelBodyRef}
               className="map-listings__panel-body"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
+              {!marketMode && <div className={`map-listings__tips-collapse${tipsDismissed ? ' is-dismissed' : ''}`} inert={tipsDismissed} aria-hidden={tipsDismissed}>
+                <div><aside className="map-listings__tips" role="note" aria-labelledby="listings-tips-title">
+                  <h2 id="listings-tips-title">Mẹo nhanh</h2>
+                  <ul>
+                    <li>Bấm ghim giá trên bản đồ để xem nhanh phòng.</li>
+                    <li>Dùng Bộ lọc để chọn giá, diện tích, tiện ích.</li>
+                    <li>Thêm phòng vào Cân nhắc để so sánh.</li>
+                  </ul>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    dismissListingsTips()
+                    setTipsDismissed(true)
+                    filterAnchor.current?.focus({ preventScroll: true })
+                  }}>Đã hiểu</button>
+                </aside></div>
+              </div>}
               {(pullY > 0 || pullRefreshing) ? (
                 <div
                   className={`map-listings__pull-indicator${pullRefreshing ? ' is-refreshing' : ''}`}
@@ -896,7 +999,7 @@ export function MapListingsWorkspace({
               {error ? (
                 <div className="map-listings__state" role="alert">
                   <p>{error}</p>
-                  <button type="button" onClick={resetFilters}>
+                  <button type="button" className="btn btn-secondary" disabled={loading} onClick={() => { void onRefresh?.() }}>
                     Thử lại
                   </button>
                 </div>
@@ -931,11 +1034,11 @@ export function MapListingsWorkspace({
                   </div>
                 </div>
               ) : (
-                marketMode ? <MarketplaceSellerCatalog posts={marketPosts} layout="list"
+                marketMode ? <MarketplaceSellerCatalog posts={sortedMarketPosts} layout="list"
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 null
               )}
-              {!marketMode && <RentalSourceResults nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} query={query} onCount={setSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              {!marketMode && <RentalSourceResults mobile={isMobile} selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
               <div ref={infiniteSentinelRef} className="map-listings__sentinel" aria-hidden="true" />
               {loading && query.page > 1 ? (
                 <div className="map-listings__loading-more" role="status">
@@ -943,14 +1046,14 @@ export function MapListingsWorkspace({
                   <span>Đang tải thêm phòng…</span>
                 </div>
               ) : null}
-              {(query.view === 'list' || marketMode) && (query.page > 1 || cards.length >= PAGE_SIZE) ? (
+              {(query.view === 'list' || marketMode) && (query.page > 1 || hasMorePages) ? (
                 <div className="map-listings__pager">
                   {query.page > 1 ? (
                     <button type="button" onClick={() => writeQuery({ page: query.page - 1 })}>
                       Trang trước
                     </button>
                   ) : null}
-                  {cards.length >= PAGE_SIZE ? (
+                  {hasMorePages && !loading ? (
                     <button type="button" onClick={() => writeQuery({ page: query.page + 1 })}>
                       Trang sau
                     </button>
@@ -1032,7 +1135,7 @@ function FilterPopover({
     return () => {
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
-      if (form?.contains(document.activeElement)) trigger?.focus({ preventScroll: true })
+      trigger?.focus({ preventScroll: true })
     }
   }, [open, anchorRef])
   if (!open || typeof document === 'undefined') return null

@@ -66,7 +66,7 @@ export function PremiumPurchaseConfirmation({ purchase, walletBalance, busy, onC
       data-glass-exclude
     >
       <header className="premium-purchase-confirm__head">
-        <span className="premium-purchase-confirm__eyebrow">Xác nhận đơn hàng</span>
+        
         <h2 id={titleId}>Xác nhận mua gói Premium</h2>
         <p id={descriptionId}>Kiểm tra gói và số tiền trước khi tiếp tục thanh toán.</p>
       </header>

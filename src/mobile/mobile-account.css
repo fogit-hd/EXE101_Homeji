@@ -1,0 +1,107 @@
+/* Phone account sheet (MobileAccountSheet.tsx). */
+.m-account__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  margin: 0 -4px;
+  padding: 8px 4px 12px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.m-account__head .m-avatar { width: 48px; height: 48px; font-size: var(--fs-lg); }
+.m-account__who { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.m-account__who strong { overflow: hidden; color: var(--text-heading); font-size: var(--fs-lg, 1.125rem); text-overflow: ellipsis; white-space: nowrap; }
+.m-account__who small { color: var(--text-secondary); font-size: var(--fs-sm, .875rem); }
+.m-account__chev { flex: none; color: var(--text-secondary); }
+
+/* The shared wallet row, restyled as a single card-free line. */
+.m-account__wallet { margin: 0 0 8px; }
+.m-account__wallet .hj-account__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.m-account__wallet .hj-account__wallet-copy { display: grid; flex: 1; min-width: 0; }
+.m-account__wallet .hj-account__wallet-copy small { color: var(--text-secondary); font-size: var(--fs-xs, .75rem); }
+.m-account__wallet .hj-account__wallet-value { color: var(--text-heading); font-variant-numeric: tabular-nums; }
+.m-account__wallet .hj-account__wallet-retry { min-height: 44px; margin-top: 4px; border: 0; background: none; color: var(--grab-green); font: inherit; font-weight: 600; }
+
+.m-account__group { padding-top: 16px; }
+.m-account__group h3 {
+  margin: 0 0 6px;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 600;
+}
+.m-account__group ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m-account__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-sm, .875rem);
+  font-weight: 500;
+  line-height: 1.25;
+  text-decoration: none;
+}
+.m-account__item svg { flex: none; color: var(--grab-green); }
+.m-account__item span { min-width: 0; }
+.m-account__item:active,
+.m-account__head:active { background: var(--surface-muted); }
+
+.m-account__theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  margin-top: 16px;
+  padding: 0 4px;
+  border-top: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.m-account__logout {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--error);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.m-account__logout:active { background: var(--error-soft, var(--surface-muted)); }
+
+/* Legal links: the site footer is hidden on signed-in phones, so they live here. */
+.m-account__legal { display: flex; justify-content: center; gap: 20px; padding: 4px 0 8px; }
+.m-account__legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm, .875rem);
+  text-decoration: none;
+}

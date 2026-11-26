@@ -1,14 +1,8 @@
 import { memo } from 'react'
 import type { RentalPostSummary } from '../../../api/types'
-import { shortListingTitle } from "../../MapListingCard.logic"
-
-import bookmarkCheckUrl from '../../../assets/figma-map/icons/bookmark-check.svg'
-import bookmarkOutlineUrl from '../../../assets/figma-map/icons/bookmark-outline.svg'
-import {
-  districtFromAddress,
-  formatMillionPriceLabel,
-  listingMetaLine,
-} from './mapExploreFormat'
+import { shortListingAddress } from '../../MapListingCard.logic'
+import { formatCompactRent, formatListingArea } from '../../../lib/labels'
+import { HeartIcon } from '../../icons/SvgIcons'
 import './MapExploreListingCard.css'
 import { PremiumBadge } from '../../PremiumBadge'
 
@@ -35,12 +29,8 @@ export const MapExploreListingCard = memo(function MapExploreListingCard({
   onToggleSave,
   saveBusy,
 }: Props) {
-  const title = shortListingTitle(post.title || 'Tin đăng', 64)
-  const district = districtFromAddress(post.address || '')
-  const meta = listingMetaLine({
-    area: post.area,
-    highlightTag: post.highlightTag,
-  })
+  const title = post.title || 'Tin đăng'
+  const meta = [Number.isFinite(post.area) && post.area > 0 ? formatListingArea(post.area) : '', shortListingAddress((post.address || '').trim())].filter(Boolean).join(' · ')
 
   return (
     <article
@@ -65,46 +55,39 @@ export const MapExploreListingCard = memo(function MapExploreListingCard({
       role="button"
       tabIndex={0}
       aria-pressed={active}
-      aria-label={`${title}, ${formatMillionPriceLabel(post.price)}/tháng`}
+      aria-label={`${title}, ${formatCompactRent(post.price)}${Number.isFinite(post.price) && post.price > 0 ? '/tháng' : ''}`}
     >
       <div className="map-explore-card__row">
         <div className="map-explore-card__thumb">
           {post.thumbnailPath ? (
-            <img src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
+            <img width={128} height={128} src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
           ) : (
             <div className="map-explore-card__thumb-empty" aria-hidden />
           )}
+          {post.isOwnerPremium === true && <PremiumBadge variant="glass" />}
+          {onToggleSave ? (
+            <button
+              type="button"
+              className="map-explore-card__save"
+              aria-label={saved ? 'Bỏ lưu' : 'Lưu phòng'} title={saved ? 'Bỏ lưu' : 'Lưu phòng'}
+              aria-pressed={Boolean(saved)}
+              onKeyDown={(event) => event.stopPropagation()}
+              disabled={saveBusy}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleSave()
+              }}
+            >
+              <HeartIcon size={20} filled={saved} />
+            </button>
+          ) : null}
         </div>
         <div className="map-explore-card__info">
-          <div className="map-explore-card__price-row">
-            <p className="map-explore-card__price">{formatMillionPriceLabel(post.price)}</p>
-            {onToggleSave ? (
-              <button
-                type="button"
-                className="map-explore-card__save"
-                aria-label={saved ? 'Bỏ lưu' : 'Lưu tin'}
-                aria-pressed={saved}
-                disabled={saveBusy}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggleSave()
-                }}
-              >
-                <img
-                  src={saved ? bookmarkCheckUrl : bookmarkOutlineUrl}
-                  alt=""
-                  width={15}
-                  height={15}
-                />
-              </button>
-            ) : null}
-          </div>
-          {post.isOwnerPremium === true && <PremiumBadge />}
+          <p className="map-explore-card__price">{formatCompactRent(post.price)}{Number.isFinite(post.price) && post.price > 0 ? '/tháng' : ''}</p>
           <p className="map-explore-card__title">{title}</p>
-          {district ? <p className="map-explore-card__district">{district}</p> : null}
+          {meta ? <p className="map-explore-card__meta">{meta}</p> : null}
         </div>
       </div>
-      {meta ? <p className="map-explore-card__meta">{meta}</p> : null}
     </article>
   )
 })

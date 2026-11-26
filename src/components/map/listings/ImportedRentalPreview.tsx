@@ -1,3 +1,4 @@
+import { formatCompactRent } from '../../../lib/labels'
 import { useEffect, useState } from 'react'
 import { getRentalPost, type RentalPost } from '../../../api'
 import { useRentalPostSave } from '../../../hooks/useRentalPostSave'
@@ -19,12 +20,13 @@ export function ImportedRentalPreview({ pin, onClose, onOpen }: { pin: SourceCat
     return () => controller.abort()
   }, [id])
   if (id) return <NativePreview key={id} id={id} post={post?.id === id ? post : null} pin={pin} onClose={onClose} onOpen={onOpen} />
-  return <RentalMapPreview monthly onClose={onClose} onOpen={onOpen} view={sourceView(pin)} />
+  return <RentalMapPreview compact monthly onClose={onClose} onOpen={onOpen} view={sourceView(pin)} />
 }
 
 function sourceView(pin: SourceCatalogPin) {
   return { id: pin.id, title: pin.title, address: pin.address,
-    priceLabel: pin.price === null ? 'Trao đổi' : `${pin.price.toLocaleString('vi-VN')} ₫`,
+    priceLabel: pin.price === null ? 'Trao đổi' : formatCompactRent(pin.price),
+    price: pin.price,
     areaLabel: pin.area === null ? '' : `${pin.area} m²`, thumbnailUrl: pin.imageUrl,
     latitude: pin.lat, longitude: pin.lng, typeLabel: isApartmentListing(pin.title) ? 'Căn hộ' : 'Phòng trọ',
     highlightTag: null, ownerBadge: null, isPremium: false, isOwnerVerified: false,
@@ -33,7 +35,7 @@ function sourceView(pin: SourceCatalogPin) {
 
 function NativePreview({ id, post, pin, onClose, onOpen }: { id: string; post: RentalPost | null; pin: SourceCatalogPin; onClose: () => void; onOpen: () => void }) {
   const save = useRentalPostSave(id)
-  return <RentalMapPreview monthly view={post ? mapBackendListingToListingViewModel(post) : sourceView(pin)}
+  return <RentalMapPreview compact monthly view={post ? mapBackendListingToListingViewModel(post) : sourceView(pin)}
       onClose={onClose} onOpen={onOpen} saved={save.saved} saveBusy={save.busy}
       onToggleSave={() => { void save.toggle() }} notice={save.error} considerationPost={{ id, title: post?.title ?? pin.title }} />
 }

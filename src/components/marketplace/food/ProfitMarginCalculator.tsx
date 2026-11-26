@@ -28,8 +28,8 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
       style={{
         padding: '14px 16px',
         borderRadius: '12px',
-        backgroundColor: 'var(--surface-muted, #f3f7fa)',
-        border: '1px solid var(--food-warm-border, var(--border, #dce5eb))',
+        backgroundColor: 'var(--surface-muted)',
+        border: '1px solid var(--food-warm-border, var(--border))',
         fontSize: '0.875rem',
       }}
     >
@@ -46,7 +46,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
         <span
           className="profit-margin-percent-badge"
           style={{
-            color: marginPercent >= 25 ? 'var(--grab-green, #087f8c)' : marginPercent >= 15 ? 'var(--food-warm-amber, #d97706)' : 'var(--error, #dc2626)',
+            color: marginPercent >= 25 ? 'var(--grab-green)' : marginPercent >= 15 ? 'var(--food-warm-amber)' : 'var(--error)',
             fontWeight: 700,
           }}
         >
@@ -60,7 +60,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
             style={{
               height: '8px',
               width: '100%',
-              backgroundColor: 'var(--border, #dce5eb)',
+              backgroundColor: 'var(--border)',
               borderRadius: '999px',
               overflow: 'hidden',
               position: 'relative',
@@ -73,10 +73,10 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
                 width: `${Math.min(100, Math.max(0, marginPercent))}%`,
                 backgroundColor:
                   marginPercent >= 25
-                    ? 'var(--grab-green, #087f8c)'
+                    ? 'var(--grab-green)'
                     : marginPercent >= 15
-                    ? 'var(--food-warm-amber, #ff9f43)'
-                    : 'var(--error, #ea4335)',
+                    ? 'var(--food-warm-amber)'
+                    : 'var(--error)',
                 borderRadius: '999px',
                 transition: 'width 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease',
               }}
@@ -87,7 +87,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
               display: 'flex',
               justifyContent: 'space-between',
               fontSize: '0.72rem',
-              color: 'var(--text-secondary, #5b6b76)',
+              color: 'var(--text-secondary)',
               marginTop: '4px',
             }}
           >
@@ -98,22 +98,22 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px 16px', color: 'var(--text-secondary, #5b6b76)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px 16px', color: 'var(--text-secondary)' }}>
         <div>
           <span>Phí sàn (10%):</span>{' '}
-          <strong style={{ color: 'var(--text-heading, #19323b)' }}>
+          <strong style={{ color: 'var(--text-heading)' }}>
             -{platformFee.toLocaleString('vi-VN')} đ
           </strong>
         </div>
         <div>
           <span>Doanh thu thực:</span>{' '}
-          <strong style={{ color: 'var(--text-heading, #19323b)' }}>
+          <strong style={{ color: 'var(--text-heading)' }}>
             {netRevenue.toLocaleString('vi-VN')} đ
           </strong>
         </div>
         <div>
           <span>Giá vốn nguyên liệu:</span>{' '}
-          <strong style={{ color: 'var(--text-heading, #19323b)' }}>
+          <strong style={{ color: 'var(--text-heading)' }}>
             -{safeCost.toLocaleString('vi-VN')} đ
           </strong>
         </div>
@@ -121,7 +121,7 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
           <span>Lãi ròng ước tính:</span>{' '}
           <strong
             style={{
-              color: estimatedProfit >= 0 ? 'var(--success, #39b54a)' : 'var(--error, #ea4335)',
+              color: estimatedProfit >= 0 ? 'var(--success)' : 'var(--error)',
             }}
           >
             {estimatedProfit >= 0 ? '+' : ''}
@@ -137,10 +137,10 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
             marginTop: '10px',
             padding: '8px 10px',
             borderRadius: '6px',
-            backgroundColor: '#fef2f2',
-            color: '#dc2626',
+            backgroundColor: 'var(--error-soft)',
+            color: 'var(--error)',
             fontSize: '0.8rem',
-            border: '1px solid #fecaca',
+            border: '1px solid var(--error)',
           }}
         >
           Giá món ăn tối thiểu là 10.000đ để đảm bảo chi phí vận hành.
@@ -153,10 +153,10 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
             marginTop: '10px',
             padding: '8px 10px',
             borderRadius: '6px',
-            backgroundColor: '#fffbeb',
-            color: '#b45309',
+            backgroundColor: 'var(--warning-soft)',
+            color: 'var(--warning)',
             fontSize: '0.8rem',
-            border: '1px solid #fde68a',
+            border: '1px solid var(--warning-border)',
           }}
         >
           Biên lãi ước tính dưới 20%. Bạn nên cân nhắc điều chỉnh lại giá hoặc khẩu phần để bù đắp công sức nấu nướng.
@@ -169,10 +169,10 @@ export const ProfitMarginCalculator: React.FC<ProfitMarginCalculatorProps> = ({
             marginTop: '10px',
             padding: '8px 10px',
             borderRadius: '6px',
-            backgroundColor: '#eff6ff',
-            color: '#1d4ed8',
+            backgroundColor: 'var(--info-soft)',
+            color: 'var(--info-text)',
             fontSize: '0.8rem',
-            border: '1px solid #bfdbfe',
+            border: '1px solid var(--info-border)',
           }}
         >
           ℹ️ Mức giá trên 45.000đ khá cao so với mặt bằng sinh viên Thủ Đức. Hãy đảm bảo phần ăn có khẩu phần lớn hoặc kèm nước uống.

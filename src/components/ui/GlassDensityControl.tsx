@@ -117,7 +117,7 @@ export function GlassDensityControl({ className = '' }: { className?: string }) 
         <button
           type="button"
           className={`glass-density-icon-btn${density <= 0.3 ? ' is-active' : ''}`}
-          title="Trong suốt (Độ xuyên thấu cao)"
+          title="Đặt độ trong suốt cao"
           onClick={() => applyDensity(DENSITY_TRANSPARENT)}
           aria-label="Đặt độ trong suốt cao"
         >
@@ -185,7 +185,7 @@ export function GlassDensityControl({ className = '' }: { className?: string }) 
         <button
           type="button"
           className={`glass-density-icon-btn${density >= 0.75 ? ' is-active' : ''}`}
-          title="Phủ màu (Tăng độ mờ và tương phản)"
+          title="Đặt độ phủ màu mờ đục"
           onClick={() => applyDensity(DENSITY_FROSTED)}
           aria-label="Đặt độ phủ màu mờ đục"
         >

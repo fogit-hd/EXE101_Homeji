@@ -20,7 +20,7 @@ export function MarketplaceSellerCatalog({ posts, renderItem, selectedSellerId, 
       <header className="seller-catalog__head">
         <span className="seller-catalog__avatar" aria-hidden="true">{seller.sellerName.slice(0, 1).toUpperCase()}</span>
         <div className="seller-catalog__identity">
-          <h3>{seller.sellerName}</h3>
+          {layout === 'list' ? <h3>{seller.sellerName}</h3> : <h2>{seller.sellerName}</h2>}
           <p>{seller.posts.length} sản phẩm{layout === 'grid' ? ' trong kết quả này' : ''}</p>
         </div>
         {seller.sellerId && selectedSellerId !== seller.sellerId && <Link className={`seller-catalog__open${layout === 'grid' ? ' btn btn-secondary' : ''}`}

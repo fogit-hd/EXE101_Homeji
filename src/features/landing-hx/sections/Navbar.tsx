@@ -7,10 +7,12 @@ import { BrandMark } from '../ui/BrandMark'
 import { IconButton } from '../ui/primitives'
 import { jumpToSection } from '../jump'
 import { frameScrollY } from '../frameScroll'
+import { CHAPTERS } from '../scrolly/storyData'
 
 /** A picture card in a nav word's panel (nav-cards). */
 export type NavCard = { id: string; title: string; meta: string; image: { src: string; alt: string }; onSelect: () => void }
-export type NavItem = { label: string; to: string; onSelect?: () => void; cards?: NavCard[] }
+/** spy: selector(s) of the page parts this word stands for; while one crosses the middle of the screen the word is marked current. */
+export type NavItem = { label: string; to: string; onSelect?: () => void; cards?: NavCard[]; spy?: string }
 
 export function Logo() {
   return (
@@ -27,12 +29,13 @@ function goToSection(hash: string) {
   if (target) jumpToSection(target, hash)
 }
 
-function NavLink({ item, className, onNavigate }: { item: NavItem; className: string; onNavigate?: (to: string) => void }) {
+function NavLink({ item, className, onNavigate, current }: { item: NavItem; className: string; onNavigate?: (to: string) => void; current?: boolean }) {
   if (item.to.startsWith('#')) {
     return (
       <a
         className={className}
         href={item.to}
+        aria-current={current ? 'location' : undefined}
         onClick={event => {
           item.onSelect?.()
           // Inside the sheet the jump waits until the modal has closed (see Navbar onClose):
@@ -47,7 +50,7 @@ function NavLink({ item, className, onNavigate }: { item: NavItem; className: st
     )
   }
   return (
-    <Link className={className} to={item.to} onClick={() => { item.onSelect?.(); onNavigate?.(item.to) }}>
+    <Link className={className} to={item.to} aria-current={current ? 'location' : undefined} onClick={() => { item.onSelect?.(); onNavigate?.(item.to) }}>
       {item.label}
     </Link>
   )
@@ -179,12 +182,51 @@ export function Navbar({ items }: { items: NavItem[] }) {
     if (!open && dialog.open) dialog.close()
   }, [open])
 
+  // Over the hero photograph the bar has no ground of its own: it reads in the night palette on the
+  // picture. Once the photo has gone under it, the bar takes its frosted paper back.
+  const header = useRef<HTMLElement>(null)
+  const [overHero, setOverHero] = useState(true)
+  useEffect(() => {
+    const hero = document.querySelector('.hx-sc__hero')
+    if (!hero) return // the landing always opens on the hero (ScrollyStory)
+    const navH = header.current?.offsetHeight ?? 72
+    const io = new IntersectionObserver(([entry]) => setOverHero(entry.isIntersecting), { rootMargin: `-${navH}px 0px 0px 0px` })
+    io.observe(hero)
+    return () => io.disconnect()
+  }, [])
+
+  // "You are here": the word whose part of the page crosses the middle of the screen.
+  const [current, setCurrent] = useState<string | null>(null)
+  useEffect(() => {
+    const owner = new Map<Element, string>()
+    for (const item of items) {
+      if (item.spy) document.querySelectorAll(item.spy).forEach(element => owner.set(element, item.label))
+    }
+    if (owner.size === 0) return
+    const inView = new Set<Element>()
+    const io = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) inView.add(entry.target)
+        else inView.delete(entry.target)
+      }
+      const [first] = inView
+      setCurrent(first ? owner.get(first) ?? null : null)
+    }, { rootMargin: '-50% 0px -50% 0px' })
+    owner.forEach((_, element) => io.observe(element))
+    return () => io.disconnect()
+  }, [items])
+
 
   return (
     <>
       <header
+        ref={header}
         className="hx-nav"
         data-tucked={hidden || undefined}
+        // The cards panel has its own paper, so the bar leaves the photo palette while it is open.
+        data-over={(overHero && !panel) || undefined}
+        // The small CTA hangs on the hero alone, so opening the panel there never moves the buttons.
+        data-hero={overHero || undefined}
         // Keyboard focus inside the bar always brings it back.
         onFocus={() => {
           tuckedRef.current = false
@@ -195,12 +237,16 @@ export function Navbar({ items }: { items: NavItem[] }) {
       >
         <div className="hx-nav__bar">
           <Logo />
+          {/* Story bar: the chapter being read (see ScrollyStory, which sets data-story/data-step). */}
+          <span className="hx-nav__chapter" aria-hidden="true">
+            {CHAPTERS.map((title, i) => <span key={title} data-n={i + 1}><b>{String(i + 1).padStart(2, '0')}</b>{title}</span>)}
+          </span>
 
           <nav className="hx-nav__words" aria-label="Điều hướng chính">
             {items.map(item =>
               item === panelItem ? (
                 <span key={item.label} className="hx-nav__has-panel" onMouseEnter={openPanelSoon} onMouseLeave={closePanelSoon}>
-                  <NavLink item={item} className="hx-nav__word" />
+                  <NavLink item={item} className="hx-nav__word" current={current === item.label} />
                   <button
                     type="button"
                     className="hx-nav__panel-toggle"
@@ -213,7 +259,7 @@ export function Navbar({ items }: { items: NavItem[] }) {
                   </button>
                 </span>
               ) : (
-                <NavLink key={item.label} item={item} className="hx-nav__word" />
+                <NavLink key={item.label} item={item} className="hx-nav__word" current={current === item.label} />
               ),
             )}
           </nav>
@@ -245,6 +291,7 @@ export function Navbar({ items }: { items: NavItem[] }) {
             />
           </div>
         </div>
+        <span className="hx-nav__progress" aria-hidden="true" />
         {panelItem ? (
           <CardsPanel item={panelItem} open={panel} onPick={() => setPanel(false)} onEnter={openPanelSoon} onLeave={closePanelSoon} />
         ) : null}

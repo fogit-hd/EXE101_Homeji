@@ -7,7 +7,7 @@ import {
   type RoommateDirectory, type RoommateDiscoveryProfile, type RoommatePerson,
 } from '../../api/roommateDiscovery'
 import { getErrorMessage } from '../../lib/errors'
-import { formatPrice, petPreferenceLabel, sleepHabitLabel, smokingPreferenceLabel } from '../../lib/labels'
+import { formatMonthlyRent, petPreferenceLabel, sleepHabitLabel, smokingPreferenceLabel } from '../../lib/labels'
 import { reconcileRoommateInvitations, upsertRoommateInvitation } from './roommateInvitationState'
 import { SparkleIcon, CheckCircleIcon } from '../icons/SvgIcons'
 import { InvitationsSkeleton } from '../skeletons/PageSkeletons'
@@ -74,7 +74,7 @@ function computeRoommateCompatibility(
       const diff = Math.abs(myProfile.maxBudget - person.maxBudget)
       if (diff <= 500000) {
         points += 20
-        reasons.push(`Ngân sách tương đương (~${formatPrice(person.maxBudget)})`)
+        reasons.push(`Ngân sách tương đương (~${formatMonthlyRent(person.maxBudget)})`)
       } else if (diff <= 1500000) {
         points += 15
         reasons.push('Khoảng giá thuê phù hợp')
@@ -158,7 +158,7 @@ function computeRoommateCompatibility(
       reasons.push(`Khu vực ${person.preferredArea}`)
     }
     if (person.maxBudget) {
-      reasons.push(`Ngân sách ~${formatPrice(person.maxBudget)}`)
+      reasons.push(`Ngân sách ~${formatMonthlyRent(person.maxBudget)}`)
     }
   }
 
@@ -174,6 +174,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
   const [profileReady, setProfileReady] = useState(false)
   const [profileError, setProfileError] = useState('')
   const [profileReload, setProfileReload] = useState(0)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const saveLock = useRef(false)
   const [notice, setNotice] = useState('')
@@ -229,6 +230,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
       setPreferences(await updateMyRoommateProfile({ ...preferences, introduction: preferences.introduction?.trim() || null }))
       setNotice(preferences.isDiscoverable ? 'Đã lưu. Người dùng tìm bạn có thể thấy hồ sơ bạn.' : 'Đã lưu. Hồ sơ bạn đang ẩn khỏi Tìm bạn.')
       setReload(value => value + 1)
+      setProfileOpen(false)
     } catch (reason) { setProfileError(getErrorMessage(reason, 'Không lưu được nhu cầu. Vui lòng thử lại.')) }
     finally { saveLock.current = false; setSaving(false) }
   }
@@ -251,8 +253,16 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
   }
 
   return <section className="roommate-people" aria-label="Tìm bạn theo nhu cầu và lối sống">
-    <header><h2>Tìm người cùng ở</h2><a href="#roommate-discovery-settings">Hồ sơ tìm bạn của tôi</a><p>Kết nối trước khi chọn phòng, hoặc tìm bạn ghép vào chỗ đang ở.</p></header>
-    <form className="roommate-people__profile" id="roommate-discovery-settings" data-glass-exclude onSubmit={event => void savePreferences(event)}>
+    <header><h2>Tìm người cùng ở</h2><a href="#roommate-discovery-settings" onClick={() => setProfileOpen(true)}>Hồ sơ tìm bạn của tôi</a><p>Kết nối trước khi chọn phòng, hoặc tìm bạn ghép vào chỗ đang ở.</p></header>
+    {/* The saved needs collapse to one summary line so results stay in view; "Sửa" opens the form in place. */}
+    <details className="roommate-people__profile-sheet" id="roommate-discovery-settings" data-glass-exclude
+      open={profileOpen || Boolean(profileError)} onToggle={event => setProfileOpen(event.currentTarget.open)}>
+    <summary>
+      <span><strong>Nhu cầu của bạn</strong>
+        <small>{INTENTS.find(option => option.value === preferences.intent)?.label ?? 'Chưa chọn'} · {preferences.isDiscoverable ? 'Đang hiển thị trong Tìm bạn' : 'Đang ẩn khỏi Tìm bạn'}</small></span>
+      <span className="roommate-people__profile-edit" aria-hidden="true">{profileOpen ? 'Thu gọn' : 'Sửa'}</span>
+    </summary>
+    <form className="roommate-people__profile" onSubmit={event => void savePreferences(event)}>
       <fieldset disabled={!profileReady || saving}>
         <legend>Nhu cầu của bạn</legend>
         <div className="roommate-people__intents">{INTENTS.map(option => <label key={option.value}>
@@ -271,8 +281,9 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
         <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu nhu cầu'}</button>
       </fieldset>
       {!profileReady && !profileError ? <p role="status">Đang tải nhu cầu của bạn…</p> : null}
-      {profileError ? <div role="alert"><p className="roommate-workspace__error">{profileError}</p>{!profileReady ? <button type="button" className="btn btn-secondary" onClick={() => setProfileReload(value => value + 1)}>Thử tải lại</button> : null}</div> : null}
+      {profileError ? <div role="alert"><p className="roommate-workspace__error">{profileError}</p>{!profileReady ? <button type="button" className="btn btn-secondary" onClick={() => setProfileReload(value => value + 1)}>Thử lại</button> : null}</div> : null}
     </form>
+    </details>
     <form className="roommate-workspace__filters" onSubmit={event => {
       event.preventDefault(); setQuery({ keyword: keyword.trim() || undefined, intent: intent ? Number(intent) as RoommateIntent : undefined, page: 1, pageSize: 12 })
     }}>
@@ -289,7 +300,8 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
         <InvitationsSkeleton />
       </>
     ) : !error && directory ? <>
-      <p aria-live="polite">{directory.totalCount} hồ sơ tìm bạn ở ghép</p>
+      {/* With no results the empty-state line below says it; the count stays for screen readers only. */}
+      <p aria-live="polite" className={directory.totalCount === 0 ? 'sr-only' : undefined}>{directory.totalCount} hồ sơ tìm bạn ở ghép</p>
       {directory.items.length === 0 ? <p>Chưa có hồ sơ phù hợp. Thử trường hoặc đường gần đó, hoặc đổi nhu cầu.</p> : <div className="roommate-people__grid">{directory.items.map(person => {
         const existing = invitations.find(invitation => (invitation.senderId === person.userId || invitation.receiverId === person.userId) &&
           (invitation.status === RoommateInvitationStatus.Pending || invitation.status === RoommateInvitationStatus.Accepted))
@@ -308,7 +320,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
             </div>
           </div>
           {person.introduction ? <p className="roommate-people__bio">{person.introduction}</p> : null}
-          <dl><div><dt>Trường</dt><dd>{person.school || 'Chưa cập nhật'}</dd></div><div><dt>Khu vực</dt><dd>{person.preferredArea || 'Chưa cập nhật'}</dd></div><div><dt>Ngân sách/tháng</dt><dd>{person.maxBudget != null ? formatPrice(person.maxBudget) : 'Chưa cập nhật'}</dd></div></dl>
+          <dl><div><dt>Trường</dt><dd>{person.school || 'Chưa cập nhật'}</dd></div><div><dt>Khu vực</dt><dd>{person.preferredArea || 'Chưa cập nhật'}</dd></div><div><dt>Ngân sách/tháng</dt><dd>{person.maxBudget != null ? formatMonthlyRent(person.maxBudget) : 'Chưa cập nhật'}</dd></div></dl>
           <ul className="roommate-people__habits"><li>{sleepHabitLabel[person.sleepHabit]}</li><li>{petPreferenceLabel[person.petPreference]}</li><li>{smokingPreferenceLabel[person.smokingPreference]}</li></ul>
           {reasons.length > 0 && (
             <ul className="roommate-compat-reasons" aria-label="Điểm hòa hợp">
@@ -325,7 +337,7 @@ export function RoommatePeople({ onViewInvitations }: { onViewInvitations: () =>
             : <button type="button" className="btn btn-primary" disabled={sendingId !== null} onClick={() => void sendInvitation(person.userId)}>{sendingId === person.userId ? 'Đang gửi…' : 'Mời kết nối'}</button>}
         </article>
       })}</div>}
-      <nav aria-label="Trang tìm bạn" className="roommate-workspace__pagination"><button type="button" className="btn btn-secondary" disabled={query.page === 1} onClick={() => setQuery(previous => ({ ...previous, page: previous.page - 1 }))}>Trang trước</button><span>Trang {query.page}</span><button type="button" className="btn btn-secondary" disabled={query.page * query.pageSize >= directory.totalCount} onClick={() => setQuery(previous => ({ ...previous, page: previous.page + 1 }))}>Trang sau</button></nav>
+      {directory.totalCount > query.pageSize ? <nav aria-label="Trang tìm bạn" className="roommate-workspace__pagination"><button type="button" className="btn btn-secondary" disabled={query.page === 1} onClick={() => setQuery(previous => ({ ...previous, page: previous.page - 1 }))}>Trang trước</button><span>Trang {query.page}</span><button type="button" className="btn btn-secondary" disabled={query.page * query.pageSize >= directory.totalCount} onClick={() => setQuery(previous => ({ ...previous, page: previous.page + 1 }))}>Trang sau</button></nav> : null}
     </> : null}
   </section>
 }

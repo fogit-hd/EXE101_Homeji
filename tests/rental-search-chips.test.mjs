@@ -11,7 +11,15 @@ const labelsUrl = compileUrl((await readFile(new URL('../src/lib/labels.ts', imp
 const source = await readFile(new URL('../src/components/ai/rentalSearchChips.ts', import.meta.url), 'utf8')
 const chipsUrl = compileUrl(source.replace('../../lib/labels', labelsUrl))
 const { buildRentalSearchChips } = await import(chipsUrl)
-const { formatListingRent, formatListingArea, formatPrice } = await import(labelsUrl)
+const { formatListingRent, formatListingArea, formatPrice, formatMonthlyRent } = await import(labelsUrl)
+
+test('member monthly rent uses compact amounts without changing other money', () => {
+  assert.equal(formatMonthlyRent(1_500_000), '1,5 triệu/tháng')
+  assert.equal(formatMonthlyRent(3_000_000), '3 triệu/tháng')
+  assert.equal(formatMonthlyRent(900_000), '900.000 đ/tháng')
+  assert.equal(formatMonthlyRent(0), 'Chưa có thông tin')
+  assert.equal(formatPrice(1_500_000), '1.500.000 đ')
+})
 
 test('listing zero and malformed measurements stay unknown while ordinary currency zero remains valid', () => {
   for (const value of [0, -1, NaN, Infinity]) {

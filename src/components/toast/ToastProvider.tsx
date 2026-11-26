@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { SPRING, transitions } from '../../lib/motionTokens'
 import {
@@ -70,7 +71,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           >
             <p>{toast.message}</p>
             <button type="button" className="app-toast__close" onClick={() => dismiss(toast.id)} aria-label="Đóng thông báo">
-              ×
+              <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
             </button>
           </motion.div>
         ))}

@@ -112,7 +112,7 @@ export function NotificationPopupList({
                 exit={{ opacity: 0, height: 0 }} className={`hj-nrow hj-nrow--${importance}${n.isRead ? '' : ' is-unread'}`}>
                 <button type="button" className="hj-nrow__main" onClick={activate}
                   disabled={!target && (n.isRead || readBusy !== null)}
-                  aria-label={`${n.title}${n.isRead ? ', đã đọc' : ', chưa đọc'}`}>
+                  aria-label={`${n.title}${n.isRead ? ', đã đọc' : ', chưa đọc'}`} title={`${n.title}${n.isRead ? ', đã đọc' : ', chưa đọc'}`}>
                   <span className="hj-nrow__icon"><Glyph name={iconFor(n.type)} /></span>
                   <span className="hj-nrow__body">
                     <span className="hj-nrow__meta">
@@ -129,7 +129,7 @@ export function NotificationPopupList({
                 <div className="hj-nrow__footer">
                   <span className={`hj-nrow__status${n.isRead ? '' : ' is-unread'}`}>{n.isRead ? 'Đã đọc' : 'Chưa đọc'}</span>
                   {!n.isRead ? <button type="button" className="hj-nrow__read" disabled={readBusy !== null}
-                    aria-label={`Đánh dấu đã đọc: ${n.title}`} onClick={() => onMarkRead(n.id)}>
+                    aria-label={`Đánh dấu đã đọc: ${n.title}`} title={`Đánh dấu đã đọc: ${n.title}`} onClick={() => onMarkRead(n.id)}>
                     {readBusy === n.id ? 'Đang đánh dấu…' : 'Đánh dấu đã đọc'}
                   </button> : null}
                 </div>

@@ -1,3 +1,4 @@
+import { ArrowUpRight } from 'lucide-react'
 import { MoneyInput } from '../../ui/MoneyInput'
 import { BankNameInput } from './BankNameInput'
 import { LiquidTabList } from '../../ui/LiquidTabList'
@@ -31,6 +32,7 @@ import { PayPalLogo } from '../../payments/PaymentMethodMarks'
 import { WALLET_ASSETS } from './walletAssets'
 import './WalletPage.css'
 import './WalletWorkspace.css'
+import { humanReference } from '../../../lib/humanReference'
 
 export type DepositMethod = 'momo' | 'payos' | 'paypal' | MomoWallet
 
@@ -152,7 +154,7 @@ function buildLedger(transactions: WalletTransaction[], withdrawals: WalletWithd
       title: KIND_LABEL[transaction.kind] ?? transaction.description,
       detail: transaction.description,
       time: transaction.createdAt,
-      reference: transaction.referenceId || transaction.id,
+      reference: humanReference(transaction.referenceId || transaction.id),
       status: withdrawal ? withdrawalStatus(withdrawal.status) : 'success',
       amount: transaction.amount,
       balanceAfter: transaction.balanceAfter,
@@ -215,8 +217,8 @@ export function WalletPage({
         <WalletSummary wallet={wallet} loading={loading && !loadError} />
         <details className="wallet-overview__links">
           <summary data-glass-exclude="">Biên nhận & hỗ trợ<span aria-hidden="true">+</span></summary>
-          <Link to="/receipts"><Icon src={WALLET_ASSETS.receipt} />Biên nhận giao dịch<span aria-hidden="true">↗</span></Link>
-          <Link to={mapSectionUrl('messages')}><Icon src={WALLET_ASSETS.shield} />Hỗ trợ về ví<span aria-hidden="true">↗</span></Link>
+          <Link to="/receipts"><Icon src={WALLET_ASSETS.receipt} />Biên nhận giao dịch<span aria-hidden="true"><ArrowUpRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span></Link>
+          <Link to={mapSectionUrl('messages')}><Icon src={WALLET_ASSETS.shield} />Hỗ trợ về ví<span aria-hidden="true"><ArrowUpRight aria-hidden="true" size={14} style={{ verticalAlign: 'middle' }} /></span></Link>
         </details>
       </aside>
       <div className="wallet-workspace">
@@ -473,7 +475,7 @@ function DepositPanel({
     <div className="wallet-deposit" id="wallet-panel-deposit" role="tabpanel" aria-labelledby="wallet-tab-deposit">
       <section className="wallet-card wallet-deposit__card">
         <header className="wallet-card__head">
-          <p className="wallet-card__eyebrow">NẠP TIỀN</p>
+          
           <h2>Nạp tiền vào ví</h2>
           <p>Chọn số tiền và phương thức thanh toán của bạn.</p>
         </header>
@@ -644,7 +646,7 @@ function DepositPanel({
               </p>
               <dl>
                 <div><dt>Thời gian</dt><dd>{formatWalletLedgerTime(recent.createdAt)}</dd></div>
-                <div><dt>Mã tham chiếu</dt><dd>{recent.referenceId || recent.id}</dd></div>
+                <div><dt>Mã tham chiếu</dt><dd>{humanReference(recent.referenceId || recent.id)}</dd></div>
               </dl>
             </article>
           ) : (
@@ -741,7 +743,7 @@ function WithdrawPanel({
     <div className="wallet-split" id="wallet-panel-withdraw" role="tabpanel" aria-labelledby="wallet-tab-withdraw">
       <section className="wallet-card">
         <header className="wallet-card__head">
-          <p className="wallet-card__eyebrow">Rút về ngân hàng</p>
+          
           <h2>Rút tiền về ngân hàng</h2>
           <p>Kiểm tra tên ngân hàng, số tài khoản và tên người nhận trước khi gửi yêu cầu.</p>
         </header>
@@ -909,7 +911,7 @@ function HistoryPanel({
     <div className="wallet-split" id="wallet-panel-history" role="tabpanel" aria-labelledby="wallet-tab-history">
       <section className="wallet-card">
         <header className="wallet-card__head">
-          <p className="wallet-card__eyebrow">Sổ giao dịch</p>
+          
           <h2>Lịch sử giao dịch</h2>
           <p>Theo dõi tiền vào, tiền ra và số dư sau từng giao dịch.</p>
         </header>
@@ -1061,7 +1063,7 @@ function Filter({
   return (
     <div className="wallet-filter">
       <span className="wallet-filter__label"><Icon src={icon} size={15} />{label}</span>
-      <ChoicePicker value={value} aria-label={label} onChange={(event) => onChange(event.target.value)}>
+      <ChoicePicker value={value} aria-label={label} title={label} onChange={(event) => onChange(event.target.value)}>
         {children}
       </ChoicePicker>
     </div>

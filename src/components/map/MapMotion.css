@@ -191,7 +191,7 @@
   pointer-events: none;
 }
 
-@media not all /* reduced-motion ignored: Homeji always animates */ {
+@media (prefers-reduced-motion: reduce) {
   .map-motion-fade,
   .map-motion-fade-up,
   .map-motion-scale-in,

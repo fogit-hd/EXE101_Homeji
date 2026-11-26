@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { IdCardCheckIcon, CameraCheckIcon, NoHiddenFeeIcon, ShieldCheckIcon } from '../icons/SvgIcons'
@@ -54,9 +55,9 @@ export function VerifiedBadgeModal({ open, onClose }: VerifiedBadgeModalProps) {
             type="button"
             className="verified-modal__close-btn"
             onClick={onClose}
-            aria-label="Đóng bảng giải thích"
+            aria-label="Đóng bảng giải thích" title="Đóng bảng giải thích"
           >
-            ×
+            <X aria-hidden="true" size={18} style={{ verticalAlign: 'middle' }} />
           </button>
         </header>
 

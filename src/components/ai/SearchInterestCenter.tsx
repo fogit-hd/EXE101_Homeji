@@ -1,4 +1,10 @@
+import { BellRing, X } from 'lucide-react'
+import { isExploreSurface } from '../chrome/exploreMode'
+import { useFloatingToolsTucked } from '../../hooks/useFloatingToolsTucked'
+import { formatMonthlyRent } from '../../lib/labels'
 import { useListingSearchParams } from '../../hooks/useListingSearchParams'
+import { useChangedInputs } from '../../hooks/useChangedInputs'
+import { followedInterestSearch, interestDraftFromSearch } from './SearchInterestCenter.logic'
 import { MoneyInput } from '../ui/MoneyInput'
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
@@ -13,7 +19,7 @@ import {
 } from '../../api/searchInterests'
 import { useAuth } from '../../contexts/AuthContext'
 import { getErrorMessage } from '../../lib/errors'
-import { AMENITY_OPTIONS, amenityLabel, formatPrice } from '../../lib/labels'
+import { AMENITY_OPTIONS, amenityLabel } from '../../lib/labels'
 import { interestFromSearch, interestSession } from '../../lib/searchInterestCapture'
 import { AddressAutocomplete } from '../map/AddressAutocomplete'
 import './SearchInterestCenter.css'
@@ -28,6 +34,7 @@ function OwnedSearchInterestCenter() {
   const location = useLocation()
   const [listingParams, setListingParams] = useListingSearchParams()
   const listingSearch = listingParams.toString()
+  const launcherRef = useRef<HTMLButtonElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const owner = profile?.id
@@ -37,7 +44,16 @@ function OwnedSearchInterestCenter() {
   const [busy, setBusy] = useState(false)
   const [draft, setDraft] = useState<InterestCriteria | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
+  // Bring the criteria form into view whenever a draft opens, so 'Lưu tìm kiếm này' lands on it.
+  const draftSection = useRef<HTMLElement>(null)
+  const hasDraft = draft !== null
+  useEffect(() => { if (hasDraft) draftSection.current?.scrollIntoView({ block: 'start' }) }, [hasDraft])
   const [open, setOpen] = useState(() => new URLSearchParams(listingSearch).get('interest') === 'manage')
+  const newInterestRequested = listingParams.get('interest') === 'new'
+  if (useChangedInputs([newInterestRequested], true) && newInterestRequested) {
+    setDraft(interestDraftFromSearch(listingSearch))
+    setWarnings([])
+  }
   const [confirmClear, setConfirmClear] = useState(false)
   const latest = useRef(0)
   const current = state && state.owner === owner ? state.value : null
@@ -107,8 +123,8 @@ function OwnedSearchInterestCenter() {
   }
   useEffect(() => {
     const node = dialog.current
-    const requested = open || new URLSearchParams(listingSearch).get('interest') === 'manage'
-    if (requested && node && !node.open) node.showModal()
+    const requested = open || ['manage', 'new'].includes(new URLSearchParams(listingSearch).get('interest') ?? '')
+    if (requested && node && !node.open) { node.showModal(); draftSection.current?.scrollIntoView({ block: 'start' }) }
     if (!requested && node?.open) node.close()
   }, [open, listingSearch])
   const action = async (run: () => Promise<InterestOverview>) => {
@@ -140,16 +156,63 @@ function OwnedSearchInterestCenter() {
     if (!draft) return
     if (await action(() => followSearchInterest(draft))) { setDraft(null); setNotice('Đã theo dõi. Homeji sẽ kiểm tra tin mới phù hợp theo bộ lọc bạn xác nhận.') }
   }
-  if (!isAuthenticated || !owner) return null
   const section = new URLSearchParams(listingSearch).get('section')
   const showLauncher = location.pathname === '/' && (!section || section === 'listings' || section === 'saved') && profile?.role !== UserRole.Admin
+  const [footerVisible, setFooterVisible] = useState(false)
+  const floating = showLauncher
+  const inSearchWorkspace = isExploreSurface(location.pathname, location.search)
+  const tucked = useFloatingToolsTucked(floating, `${location.pathname}:${section ?? ''}`)
+  useEffect(() => {
+    if (!floating) return
+    const visible = new Set<Element>()
+    const footers = new Set<Element>()
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) visible.add(entry.target)
+        else visible.delete(entry.target)
+      }
+      setFooterVisible(visible.size > 0)
+    })
+    const findFooters = () => {
+      document.querySelector('.app-main')?.classList.toggle('has-interest-launch', !inSearchWorkspace)
+      document.querySelectorAll('.site-footer').forEach(footer => {
+        if (!footers.has(footer)) { footers.add(footer); observer.observe(footer) }
+      })
+      for (const footer of footers) if (!footer.isConnected) {
+        observer.unobserve(footer); footers.delete(footer); visible.delete(footer)
+      }
+      setFooterVisible(visible.size > 0)
+    }
+    findFooters()
+    const mutations = new MutationObserver(findFooters)
+    mutations.observe(document.body, { childList: true, subtree: true })
+    return () => { observer.disconnect(); mutations.disconnect(); document.querySelector('.app-main')?.classList.remove('has-interest-launch') }
+  }, [floating, location.pathname, section, inSearchWorkspace])
+  useEffect(() => {
+    const element = launcherRef.current
+    if (!floating || !element) return
+    const measure = () => {
+      const height = element.getBoundingClientRect().height
+      if (height > 0) document.documentElement.style.setProperty('--interest-launch-height', `${height}px`)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty('--interest-launch-height') }
+  }, [floating])
   const changeNumber = (key: keyof InterestCriteria, raw: string) => setDraft(value => value ? { ...value, [key]: raw === '' ? null : Number(raw) } : value)
+  const launcher = <button ref={launcherRef} type="button" className={`interest-launch${tucked ? ' is-tucked' : ''}`} hidden={floating && footerVisible} inert={tucked} onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <BellRing className="interest-launch__icon" aria-hidden="true" size={18} /><b className="interest-launch__label">Báo phòng mới</b>
+      {current && current.rooms.length > 0
+        ? <span className="interest-launch__count"><small className="interest-launch__sr">, </small>{current.rooms.length}<small className="interest-launch__sr"> phòng mới</small></span>
+        : current && current.suggestions.length > 0
+          ? <><i className="interest-launch__dot" aria-hidden="true" /><small className="interest-launch__sr">, có khu vực gợi ý theo dõi</small></>
+          : null}
+    </button>
   return <>
-    {showLauncher && <button type="button" className="interest-launch" onClick={() => setOpen(true)} aria-haspopup="dialog">
-      Phòng mới {current && current.rooms.length > 0 ? <span>{current.rooms.length}</span> : current && current.suggestions.length > 0 ? <span>Gợi ý</span> : null}
-    </button>}
+    {showLauncher ? launcher : null}
     <dialog ref={dialog} className="interest-dialog" aria-labelledby={titleId} onCancel={closePanel} onClose={closePanel}>
-      <header><div><p>THEO NHU CẦU CỦA BẠN</p><h2 id={titleId}>Phòng mới phù hợp với bạn</h2></div><button type="button" aria-label="Đóng gợi ý phòng mới" onClick={closePanel}>×</button></header>
+      <header><div><h2 id={titleId}>Phòng mới phù hợp với bạn</h2></div><button type="button" aria-label="Đóng gợi ý phòng mới" title="Đóng gợi ý phòng mới" onClick={closePanel}><X aria-hidden="true" size={24} style={{ verticalAlign: 'middle' }} /></button></header>
       <div className="interest-content" aria-busy={busy}>
         {error && <p role="alert" className="interest-error">{error}</p>}
         {!current ? <button type="button" disabled={busy} onClick={() => void action(getSearchInterests)}>Tải lại thiết lập</button> : <>
@@ -164,14 +227,7 @@ function OwnedSearchInterestCenter() {
               <small>Thông báo trong web được tạo cho khu vực bạn xác nhận theo dõi. Bạn có thể tắt email bất cứ lúc nào.</small>
             </>}
           </section>
-          {current.settings.enabled && <>
-            <section><h3>Bạn đang quan tâm khu vực nào?</h3>
-              {current.suggestions.length === 0 && <p>Chưa đủ lượt tìm từ nhiều phiên. Bạn vẫn có thể chủ động theo dõi một khu vực.</p>}
-              {current.suggestions.map(s => <article key={s.key}><strong>Bạn đang quan tâm khu vực {s.criteria.area}?</strong><p>{s.sessions} phiên tìm trong 7 ngày gần nhất.</p><button type="button" disabled={busy} onClick={() => { setDraft(s.criteria); setWarnings([]) }}>Xem bộ lọc để theo dõi</button><button type="button" disabled={busy} onClick={() => void action(() => dismissSearchInterest(s.criteria.area))}>Bỏ gợi ý 30 ngày</button></article>)}
-              <div className="interest-actions"><button type="button" disabled={busy} onClick={() => { setDraft(interestFromSearch(listingSearch) || { area: '', amenities: [], excludedAmenities: [] }); setWarnings([]) }}>Theo dõi khu vực mới</button><button type="button" disabled={busy || !current.settings.aiEnabled} onClick={() => void infer()}>{busy ? 'Đang xử lý…' : 'AI tổng hợp nhu cầu'}</button></div>
-            </section>
-            {notice && <p role="status">{notice}</p>}{current.notice && current.notice !== notice && <p role="status">{current.notice}</p>}
-            {draft && <section><h3>Xác nhận tiêu chí theo dõi</h3><p>Ngân sách bên dưới là tiền thuê, chưa gồm điện, nước và phí. Gemini không tự bật theo dõi.</p>
+          {draft && <section ref={draftSection}><h3>Xác nhận tiêu chí theo dõi</h3><p>Ngân sách bên dưới là tiền thuê, chưa gồm điện, nước và phí. Gemini không tự bật theo dõi.</p>
               {warnings.map((w, i) => <p className="interest-warning" key={i}>{w}</p>)}
               <form onSubmit={event => void follow(event)}>
                 <label htmlFor={titleId + '-area'}>Khu vực hoặc địa điểm</label><AddressAutocomplete id={titleId + '-area'} required disabled={busy} value={draft.area}
@@ -186,11 +242,18 @@ function OwnedSearchInterestCenter() {
                 <label><input type="checkbox" checked={draft.excludeRoommateShare ?? false} onChange={e => setDraft({ ...draft, excludeRoommateShare: e.target.checked })} />Không tìm phòng ở ghép</label>
                 <label>Bán kính quanh địa điểm (km)<input type="number" step="0.5" min={0.5} max={30} disabled={draft.latitude == null || draft.longitude == null} value={draft.radiusKm ?? ''} onChange={e => changeNumber('radiusKm', e.target.value)} /></label>
                 <small>{draft.latitude == null ? 'Chọn một địa điểm trong danh sách gợi ý để giới hạn bán kính. Nếu nhập tên khu vực thủ công, Homeji đối chiếu tên trong tin đăng.' : 'Tâm là địa điểm bạn đã chọn. Không lấy GPS thiết bị. Bán kính không tương đương thời gian đi đường.'}</small>
-                <div className="interest-actions"><button disabled={busy} type="submit">Xác nhận theo dõi khu vực này</button><button type="button" disabled={busy} onClick={() => setDraft(null)}>Hủy</button></div>
+                <div className="interest-actions"><button disabled={busy || !current.settings.enabled} type="submit">Xác nhận theo dõi khu vực này</button><button type="button" disabled={busy} onClick={() => setDraft(null)}>Hủy</button></div>
               </form>
             </section>}
-            <section><h3>Đang theo dõi ({Math.min(current.following.length, followLimit)}/{followLimit})</h3>{current.following.length === 0 && <p>Bạn chưa xác nhận khu vực nào.</p>}{current.following.map((f, index) => <article key={f.id}><strong>{f.criteria.area}</strong>{index >= followLimit && <p>Tạm dừng theo dõi · Vượt hạn mức gói hiện tại</p>}<p>{f.criteria.maxPrice ? `Tiền thuê tối đa ${formatPrice(f.criteria.maxPrice)}` : 'Chưa giới hạn tiền thuê'}{f.criteria.radiusKm ? ` · Bán kính ${f.criteria.radiusKm} km` : ''}</p><div className="interest-actions"><button type="button" onClick={() => { setDraft(f.criteria); setWarnings([]) }}>Xem tiêu chí</button><button type="button" disabled={busy} onClick={() => void action(() => removeSearchInterest(f.id))}>Bỏ theo dõi</button></div></article>)}</section>
-            <section><h3>Phòng mới phù hợp với bạn</h3><button type="button" disabled={busy || !current.settings.aiEnabled || current.rooms.length === 0} onClick={() => void action(rankInterestRooms)}>AI xếp hạng phòng hợp lệ</button><p>Chỉ tin mới sau khi theo dõi, đang hoạt động, chưa xem và khớp bộ lọc. Hãy liên hệ chủ tin để xác nhận còn phòng.</p>{current.rooms.length === 0 && <p>Chưa có phòng mới khớp tiêu chí. Bạn sẽ thấy gợi ý khi có tin phù hợp.</p>}{current.rooms.map(({ post, reason }) => <article key={post.id}><Link to={`/?post=${post.id}`} onClick={() => { void markInterestViewed(post.id).catch(() => {}); setOpen(false) }}><strong>{post.title}</strong></Link><p>{formatPrice(post.price)} · {post.area} m²</p><p>{post.address}</p><small>{reason}</small></article>)}<button type="button" disabled={busy} onClick={() => void action(getSearchInterests)}>Kiểm tra phòng mới</button></section>
+          {current.settings.enabled && <>
+            <section><h3>Bạn đang quan tâm khu vực nào?</h3>
+              {current.suggestions.length === 0 && <p>Chưa đủ lượt tìm từ nhiều phiên. Bạn vẫn có thể chủ động theo dõi một khu vực.</p>}
+              {current.suggestions.map(s => <article key={s.key}><strong>Bạn đang quan tâm khu vực {s.criteria.area}?</strong><p>{s.sessions} phiên tìm trong 7 ngày gần nhất.</p><button type="button" disabled={busy} onClick={() => { setDraft(s.criteria); setWarnings([]) }}>Xem bộ lọc để theo dõi</button><button type="button" disabled={busy} onClick={() => void action(() => dismissSearchInterest(s.criteria.area))}>Bỏ gợi ý 30 ngày</button></article>)}
+              <div className="interest-actions"><button type="button" disabled={busy} onClick={() => { setDraft(interestDraftFromSearch(listingSearch)); setWarnings([]) }}>Theo dõi khu vực mới</button><button type="button" disabled={busy || !current.settings.aiEnabled} onClick={() => void infer()}>{busy ? 'Đang xử lý…' : 'AI tổng hợp nhu cầu'}</button></div>
+            </section>
+            {notice && <p role="status">{notice}</p>}{current.notice && current.notice !== notice && <p role="status">{current.notice}</p>}
+            <section><h3>Đang theo dõi ({Math.min(current.following.length, followLimit)}/{followLimit})</h3>{current.following.length === 0 && <p>Bạn chưa xác nhận khu vực nào.</p>}{current.following.map((f, index) => <article key={f.id}><strong>{f.criteria.area}</strong>{index >= followLimit && <p>Tạm dừng theo dõi · Vượt hạn mức gói hiện tại</p>}<p>{f.criteria.maxPrice ? `Tiền thuê tối đa ${formatMonthlyRent(f.criteria.maxPrice)}` : 'Chưa giới hạn tiền thuê'}{f.criteria.radiusKm ? ` · Bán kính ${f.criteria.radiusKm} km` : ''}</p><div className="interest-actions"><button type="button" onClick={() => { setOpen(false); setDraft(null); setListingParams(followedInterestSearch(f.criteria)) }}>Xem phòng</button><button type="button" onClick={() => { setDraft(f.criteria); setWarnings([]) }}>Xem tiêu chí</button><button type="button" disabled={busy} onClick={() => void action(() => removeSearchInterest(f.id))}>Bỏ theo dõi</button></div></article>)}</section>
+            <section><h3>Phòng mới phù hợp với bạn</h3><button type="button" disabled={busy || !current.settings.aiEnabled || current.rooms.length === 0} onClick={() => void action(rankInterestRooms)}>AI xếp hạng phòng hợp lệ</button><p>Chỉ tin mới sau khi theo dõi, đang hoạt động, chưa xem và khớp bộ lọc. Hãy liên hệ chủ tin để xác nhận còn phòng.</p>{current.rooms.length === 0 && <p>Chưa có phòng mới khớp tiêu chí. Bạn sẽ thấy gợi ý khi có tin phù hợp.</p>}{current.rooms.map(({ post, reason }) => <article key={post.id}><Link to={`/?post=${post.id}`} onClick={() => { void markInterestViewed(post.id).catch(() => {}); setOpen(false) }}><strong>{post.title}</strong></Link><p>{formatMonthlyRent(post.price)} · {post.area} m²</p><p>{post.address}</p><small>{reason}</small></article>)}<button type="button" disabled={busy} onClick={() => void action(getSearchInterests)}>Kiểm tra phòng mới</button></section>
             <section><h3>Quản lý dữ liệu</h3><p>Xóa lịch sử tìm kiếm không hủy những khu vực bạn đã chủ động theo dõi. Tắt cá nhân hóa ở trên để xóa toàn bộ và dừng gợi ý.</p>{confirmClear ? <div className="interest-actions"><button disabled={busy} type="button" onClick={() => { void action(clearInterestHistory); setConfirmClear(false) }}>Xác nhận xóa lịch sử</button><button type="button" onClick={() => setConfirmClear(false)}>Giữ lại</button></div> : <button disabled={busy} type="button" onClick={() => setConfirmClear(true)}>Xóa lịch sử tìm kiếm cá nhân hóa</button>}</section>
           </>}
         </>}

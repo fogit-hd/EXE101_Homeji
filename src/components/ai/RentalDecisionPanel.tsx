@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../lib/errors'
 import { aiFeatureFlags } from '../../lib/aiFeatureFlags'
 import { RentalDecisionResults } from './RentalDecisionResults'
 import './RentalAssistant.css'
+import './RentalDecisionPanel.css'
 
 const initialScenario: CostScenario = { occupants: 1, electricityKwh: 0, waterM3: 0, electricityUnit: 'unknown', waterUnit: 'unknown', internetUnit: 'unknown' }
 
@@ -72,22 +73,22 @@ export function RentalDecisionPanel({ postIds, maxCommuteMinutes, budgetCeiling,
     } finally { if (requestRef.current === controller) setPendingKey('') }
   }
 
-  return <section className="rental-assistant" aria-label="So sánh phòng và kịch bản chi phí">
+  return <section className="rental-assistant rental-decision" aria-label="So sánh phòng và kịch bản chi phí">
     <h3>So sánh & chi phí dự kiến</h3>
     <p>Đơn giá lấy từ tin đăng. Chọn đơn vị theo thông tin bạn đã hỏi chủ phòng; các khoản thiếu vẫn cần xác nhận. Cọc tính riêng.</p>
     <div className="rental-assistant__fields">
       {([
         ['occupants', 'Số người', 1, 50], ['electricityKwh', 'Điện dự kiến (kWh/tháng)', 0, 10000], ['waterM3', 'Nước dự kiến (m³/tháng)', 0, 1000],
-      ] as const).map(([field, label, min, max]) => <label key={field}>{label}<input type="number"  min={min} max={max} value={scenario[field]} onChange={event => setScenario(s => ({ ...s, [field]: Number(event.target.value) }))} /></label>)}
-      {(['electricityUnit', 'waterUnit', 'internetUnit'] as const).map((field, i) => <label key={field}>{['Đơn vị điện', 'Đơn vị nước', 'Đơn vị internet'][i]}
+      ] as const).map(([field, label, min, max]) => <label key={field}><span>{label}</span><input type="number"  min={min} max={max} value={scenario[field]} onChange={event => setScenario(s => ({ ...s, [field]: Number(event.target.value) }))} /></label>)}
+      {(['electricityUnit', 'waterUnit', 'internetUnit'] as const).map((field, i) => <label key={field}><span>{['Đơn vị điện', 'Đơn vị nước', 'Đơn vị internet'][i]}</span>
         <ChoicePicker value={scenario[field]} onChange={e => setScenario(s => ({ ...s, [field]: e.target.value }))}>
           <option value="unknown">Chưa xác nhận</option><option value="month">đồng/tháng</option><option value="person">đồng/người/tháng</option>
           {field === 'electricityUnit' ? <option value="kwh">đồng/kWh</option> : field === 'waterUnit' ? <option value="m3">đồng/m³</option> : null}
         </ChoicePicker></label>)}
-      {(['otherMonthlyFees', 'otherInitialFees'] as const).map((field, i) => <label key={field}>{i === 0 ? 'Phí cố định khác / tháng (đồng)' : 'Khoản thu ban đầu khác (đồng)'}<MoneyInput min="0" max="100000000" value={scenario[field] ?? ''} placeholder="Chưa xác nhận" onValueChange={value => setScenario(s => ({ ...s, [field]: value === '' ? null : Number(value) }))} /></label>)}
+      {(['otherMonthlyFees', 'otherInitialFees'] as const).map((field, i) => <label key={field}><span>{i === 0 ? 'Phí cố định khác / tháng (đồng)' : 'Khoản thu ban đầu khác (đồng)'}</span><MoneyInput min="0" max="100000000" value={scenario[field] ?? ''} placeholder="Chưa xác nhận" onValueChange={value => setScenario(s => ({ ...s, [field]: value === '' ? null : Number(value) }))} /></label>)}
     </div>
     <details><summary>Xác nhận khoản bằng 0 trong kịch bản</summary><p>Chỉ chọn sau khi đã hỏi chủ phòng. Đây là xác nhận của bạn cho kịch bản, không phải Homeji xác minh.</p>
-      {(['electricityFreeConfirmed', 'waterFreeConfirmed', 'internetFreeConfirmed', 'depositFreeConfirmed'] as const).map((field, i) => <label key={field}><span><input type="checkbox" checked={scenario[field] ?? false} onChange={e => setScenario(s => ({ ...s, [field]: e.target.checked }))} /> {['Điện miễn phí', 'Nước miễn phí', 'Internet miễn phí', 'Không thu cọc'][i]}</span></label>)}
+      <div className="rental-decision__confirmations">{(['electricityFreeConfirmed', 'waterFreeConfirmed', 'internetFreeConfirmed', 'depositFreeConfirmed'] as const).map((field, i) => <label key={field}><input type="checkbox" checked={scenario[field] ?? false} onChange={e => setScenario(s => ({ ...s, [field]: e.target.checked }))} /><span>{['Điện miễn phí', 'Nước miễn phí', 'Internet miễn phí', 'Không thu cọc'][i]}</span></label>)}</div>
     </details>
     {aiFeatureFlags.commute ? <details><summary>Tính đường đi tới điểm đến bạn chọn</summary>
       <p>Chỉ gửi tọa độ các phòng được chọn và điểm đến này tới Google Maps khi nhấn tính. Không sử dụng vị trí thiết bị.</p>

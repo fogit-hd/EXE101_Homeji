@@ -1,12 +1,11 @@
 /* No size change: premium decoration must preserve card layout and hit targets. */
 .premium-listing.premium-listing {
-  border-color: #dfaa42;
-  box-shadow: inset 0 0 0 1px rgba(223, 170, 66, 0.22), 0 2px 14px rgba(223, 170, 66, 0.12);
-  animation: premium-edge 6s ease-in-out 2;
+  border-color: var(--premium-edge-color);
+  box-shadow: none;
+  animation: none;
 }
 /* Match the existing workspace card skin while keeping selected/focus rings separate. */
-html:root #root .premium-listing.premium-listing { border-color: var(--premium-edge-color, #dfaa42); }
-[data-theme=dark] .premium-listing { --premium-edge-color: #c99a38; }
+html:root #root .premium-listing.premium-listing { border-color: var(--premium-edge-color); }
 
 .premium-badge {
   position: relative;
@@ -16,14 +15,14 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
   gap: 5px;
   max-width: 100%;
   padding: 3px 8px 3px 7px;
-  border: 1px solid rgba(218, 165, 32, 0.45);
-  border-radius: 999px;
-  background: linear-gradient(135deg, #fff7db 0%, #feeab3 60%, #fedd8a 100%);
-  color: #5e4002;
-  font: 650 0.71875rem/1.35 var(--font-ui);
+  border: 1px solid color-mix(in srgb, var(--premium-edge-color) 45%, transparent);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--premium-soft) 0%, var(--premium-fill) 60%, var(--premium-highlight) 100%);
+  color: var(--premium-text);
+  font: 650 var(--fs-xs)/1.35 var(--font-ui);
   white-space: nowrap;
   vertical-align: middle;
-  box-shadow: 0 1px 3px rgba(160, 115, 20, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  box-shadow: none;
   letter-spacing: 0.2px;
 }
 .premium-badge svg {
@@ -37,34 +36,37 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
 
 /* Variant: Boost (Priority Boost / Listing Bump) */
 .premium-badge--boost {
-  background: linear-gradient(135deg, #fff4e5 0%, #fedac2 60%, #fdba8c 100%);
-  color: #7c2d12;
-  border-color: rgba(234, 88, 12, 0.45);
-  box-shadow: 0 1px 4px rgba(194, 65, 12, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, var(--action-soft) 0%, var(--action-soft) 60%, var(--action-soft) 100%);
+  color: var(--action-on-soft);
+  border-color: color-mix(in srgb, var(--action-primary) 45%, transparent);
+  box-shadow: none;
 }
 
 /* Variant: Glass (Floating frosted glass on images) */
 .premium-badge--glass {
-  background: rgba(255, 248, 225, 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #533902;
-  border-color: rgba(218, 165, 32, 0.55);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--premium-soft) 78%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--premium-text);
+  border-color: color-mix(in srgb, var(--premium-edge-color) 55%, transparent);
+  box-shadow: none;
+  background-color: var(--surface-elevated);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
 }
 
 /* Variant: Compact (Minimalist badge for tight spaces) */
 .premium-badge--compact {
   padding: 2px 6px 2px 5px;
-  font-size: 0.65625rem;
+  font-size: var(--fs-xs);
   gap: 3.5px;
 }
 
 /* Variant: Subtle (Low-key elegant tint) */
 .premium-badge--subtle {
-  background: rgba(255, 247, 219, 0.55);
-  color: #634404;
-  border-color: rgba(218, 165, 32, 0.3);
+  background: color-mix(in srgb, var(--premium-soft) 55%, transparent);
+  color: var(--premium-text);
+  border-color: color-mix(in srgb, var(--premium-edge-color) 30%, transparent);
   box-shadow: none;
 }
 
@@ -77,17 +79,19 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
   position: absolute;
   top: 8px;
   right: 8px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   z-index: 2;
+  background-color: var(--surface-elevated);
 }
 .map-listings__card-photo > .premium-badge {
   position: absolute;
   left: 8px;
   bottom: 8px;
   z-index: 1;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: var(--surface-elevated);
 }
 .ai-rental-result > .premium-badge { margin-bottom: 10px; }
 
@@ -99,53 +103,46 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
   flex-direction: column;
   width: 100%;
 }
-[data-beam] > .post-card,
-[data-beam] > .map-listing-card,
-[data-beam] > .hx-listing {
+/* Same html:root body #root prefix as the card rules, plus [data-beam], so the beam border wins. */
+html:root body #root [data-beam] > :is(.post-card, .map-listing-card, .hx-listing) {
   width: 100%;
   height: 100%;
-  border-color: transparent !important;
+  border-color: transparent;
 }
-[data-beam] > .hx-listing.is-highlighted {
-  box-shadow: none !important;
+html:root body #root [data-beam] > .hx-listing.is-highlighted {
+  box-shadow: none;
 }
 
 [data-theme=dark] .premium-badge {
-  color: #ffe79a;
-  background: linear-gradient(135deg, rgba(62, 46, 18, 0.92) 0%, rgba(82, 60, 22, 0.95) 100%);
-  border-color: rgba(225, 185, 85, 0.38);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 235, 170, 0.15);
+  color: var(--premium-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--premium-soft) 92%, transparent) 0%, color-mix(in srgb, var(--premium-fill) 95%, transparent) 100%);
+  border-color: color-mix(in srgb, var(--premium-edge-color) 38%, transparent);
+  box-shadow: none;
 }
 [data-theme=dark] .premium-badge--boost {
-  color: #ffedd5;
-  background: linear-gradient(135deg, rgba(76, 29, 14, 0.92) 0%, rgba(124, 45, 18, 0.95) 100%);
-  border-color: rgba(251, 146, 60, 0.45);
+  color: var(--action-on-soft);
+  background: linear-gradient(135deg, var(--action-soft) 0%, var(--action-soft) 100%);
+  border-color: color-mix(in srgb, var(--action-primary) 45%, transparent);
 }
 [data-theme=dark] .premium-badge--glass {
-  background: rgba(45, 33, 14, 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-color: rgba(225, 185, 85, 0.45);
-  color: #ffe79a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 235, 170, 0.15);
+  background: color-mix(in srgb, var(--premium-soft) 78%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: color-mix(in srgb, var(--premium-edge-color) 45%, transparent);
+  color: var(--premium-text);
+  box-shadow: none;
+  background-color: var(--surface-elevated);
+  background: var(--surface-elevated);
+  color: var(--text-heading);
 }
 [data-theme=dark] .premium-badge--subtle {
-  background: rgba(62, 46, 18, 0.45);
-  border-color: rgba(225, 185, 85, 0.25);
-  color: #f7da83;
+  background: color-mix(in srgb, var(--premium-soft) 45%, transparent);
+  border-color: color-mix(in srgb, var(--premium-edge-color) 25%, transparent);
+  color: var(--premium-text);
 }
 [data-theme=dark] .premium-listing.premium-listing {
-  border-color: #c99a38;
-  box-shadow: inset 0 0 0 1px rgba(201, 154, 56, 0.28), 0 3px 16px rgba(0, 0, 0, 0.4);
-}
-
-@keyframes premium-edge {
-  0%, 100% {
-    box-shadow: inset 0 0 0 1px rgba(223, 170, 66, 0.22), 0 2px 14px rgba(223, 170, 66, 0.12);
-  }
-  50% {
-    box-shadow: inset 0 0 0 1px rgba(235, 185, 75, 0.6), 0 3px 18px rgba(223, 170, 66, 0.28);
-  }
+  border-color: var(--premium-edge-color);
+  box-shadow: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .premium-listing.premium-listing { animation: none; }
@@ -154,3 +151,6 @@ html:root #root .premium-listing.premium-listing { border-color: var(--premium-e
   html:root #root .premium-listing.premium-listing { border-color: Highlight; animation: none; }
   .premium-badge { border-color: CanvasText; }
 }
+/* Rental prices share one semantic color, regardless of subscription or highlight. */
+html:root body #root :is(.post-card-price, .map-listing-card-price, .hub-room__price strong, .rm-card__price, .map-explore-card__price, .map-explore-preview__price, .map-listings__price, .map-listings__preview-price strong) { color: var(--grab-green); }
+html:root body #root .ai-rental-result__facts > div:first-child dd { color: var(--grab-green); }

@@ -1,9 +1,8 @@
 import { memo } from 'react'
-import { BorderBeam } from 'border-beam'
 import { type RentalPostSummary } from '../api/types'
-import { formatCompactRent, formatListingArea, formatPrice, rentalPostTypeLabel } from '../lib/labels'
+import { formatCompactRent, formatListingArea } from '../lib/labels'
 import './MapListingCard.css'
-import { shortListingAddress, shortListingTitle } from "./MapListingCard.logic"
+import { shortListingAddress } from "./MapListingCard.logic"
 import { PremiumBadge } from './PremiumBadge'
 import { HeartIcon } from './icons/SvgIcons'
 
@@ -30,10 +29,9 @@ export const MapListingCard = memo(function MapListingCard({
   onLeave,
   onSelect,
 }: Props) {
-  const title = shortListingTitle(post.title || 'Tin đăng')
-  const address = shortListingAddress(post.address || 'Chưa có địa chỉ')
+  const title = post.title || 'Tin đăng'
+  const address = shortListingAddress((post.address || '').trim())
   const isPremium = post.isOwnerPremium === true
-  const isBeamActive = isPremium || highlighted
 
   const card = (
     <article
@@ -58,11 +56,11 @@ export const MapListingCard = memo(function MapListingCard({
       role="button"
       tabIndex={0}
       aria-pressed={active}
-      aria-label={`${title}, ${formatPrice(post.price)}/tháng`}
+      aria-label={`${title}, ${formatCompactRent(post.price)}${Number.isFinite(post.price) && post.price > 0 ? '/tháng' : ''}`}
     >
       <div className="map-listing-card-image">
         {post.thumbnailPath ? (
-          <img src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
+          <img width={128} height={128} src={post.thumbnailPath} alt="" loading="lazy" decoding="async" />
         ) : (
           <div className="map-listing-card-placeholder" aria-hidden>
             —
@@ -72,36 +70,27 @@ export const MapListingCard = memo(function MapListingCard({
           <button
             type="button"
             className={`map-listing-card-save${isSaved ? ' is-saved' : ''}`}
-            aria-label={isSaved ? 'Bỏ lưu tin' : 'Lưu tin phòng'}
+            aria-label={isSaved ? 'Bỏ lưu' : 'Lưu phòng'} title={isSaved ? 'Bỏ lưu' : 'Lưu phòng'}
+            aria-pressed={Boolean(isSaved)}
+            onKeyDown={(event) => event.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation()
               onToggleSave(post.id)
             }}
           >
-            <HeartIcon size={16} filled={isSaved} />
+            <HeartIcon size={20} filled={isSaved} />
           </button>
         ) : null}
         {post.isOwnerPremium === true ? <PremiumBadge variant="glass" /> : null}
-        <span className="map-listing-card-price">{formatCompactRent(post.price)}/tháng</span>
       </div>
       <div className="map-listing-card-body">
-        <div className="map-listing-card-meta">
-          <span className="map-listing-card-type">{rentalPostTypeLabel[post.type]}</span>
-          {post.area > 0 && <span className="map-listing-card-area"> · {formatListingArea(post.area)}</span>}
-        </div>
+        <p className="map-listing-card-price">{formatCompactRent(post.price)}{post.price > 0 && Number.isFinite(post.price) ? '/tháng' : ''}</p>
         <h3>{title}</h3>
-        <p className="map-listing-address">{address}</p>
+        <p className="map-listing-address">{[Number.isFinite(post.area) && post.area > 0 ? formatListingArea(post.area) : '', address].filter(Boolean).join(' · ')}</p>
       </div>
     </article>
   )
 
-  if (isBeamActive) {
-    return (
-      <BorderBeam colorVariant="gold" size="md" active={isBeamActive} theme="auto" borderRadius={12}>
-        {card}
-      </BorderBeam>
-    )
-  }
 
   return card
 })

@@ -105,7 +105,7 @@ export function HomejiLoader({
             />
           </>
         ) : (
-          <img
+          <img loading="eager" width={400} height={400}
             className="homeji-loader__media is-active"
             src={
               phase === 'intro'

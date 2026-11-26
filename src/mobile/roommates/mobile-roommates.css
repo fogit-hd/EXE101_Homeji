@@ -1,0 +1,72 @@
+/* Ở ghép on phones: the app header names the page, so the workspace starts at its tabs. */
+html[data-device='mobile'] #root .m-roommate-tabs { margin: 0 0 16px; }
+
+/* Tìm bạn: the profile card below already opens "Hồ sơ tìm bạn", so the heading block only names the panel. */
+html[data-device='mobile'] #root .roommate-people > header { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Search: keyword on its own row, need + search button side by side. */
+html[data-device='mobile']:root body #root .roommate-workspace__filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 12px 0 0;
+}
+html[data-device='mobile']:root body #root .roommate-workspace__filters > label:first-of-type { grid-column: 1 / -1; }
+html[data-device='mobile']:root body #root .roommate-workspace__filters > label { margin: 0; font-size: var(--fs-sm, .875rem); font-weight: 600; }
+html[data-device='mobile']:root body #root .roommate-workspace__filters .form-input { min-height: 44px; margin-top: 6px; }
+html[data-device='mobile']:root body #root .roommate-workspace__filters > button { min-height: 44px; width: auto; padding-inline: 18px; }
+
+/* Phòng ở ghép: the hero becomes a short intro with its two actions side by side, no illustration. */
+html[data-device='mobile']:root body #root .rm-hero {
+  display: block;
+  min-height: 0;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+html[data-device='mobile']:root body #root .rm-hero > :not(.rm-hero__copy) { display: none; }
+html[data-device='mobile']:root body #root .rm-hero h2 { margin: 0 0 4px; font-size: var(--fs-lead); line-height: 1.3; }
+html[data-device='mobile']:root body #root .rm-hero p { margin: 0 0 12px; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.5; }
+html[data-device='mobile']:root body #root .rm-hero__actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 0; }
+html[data-device='mobile']:root body #root .rm-hero__actions .btn { min-height: 44px; width: auto; margin: 0; }
+html[data-device='mobile']:root body #root .rm-hero__stats { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 12px; padding: 0; list-style: none; font-size: var(--fs-xs, .75rem); color: var(--text-secondary); }
+
+/* The filter form loses its card; fields sit on the page like Tìm phòng's search. */
+html[data-device='mobile']:root body #root .rm-filters { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; margin-bottom: 16px; }
+html[data-device='mobile']:root body #root .rm-filters > label { display: block; }
+html[data-device='mobile']:root body #root .rm-filters > button { align-self: end; }
+
+/* Results: the compact room cards, one column. */
+html[data-device='mobile']:root body #root .rm-grid.m-room-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+
+/* Empty state: small art beside the message instead of a tall dashed card. */
+html[data-device='mobile']:root body #root .rm-empty { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: center; padding: 16px; min-height: 0; }
+html[data-device='mobile']:root body #root .rm-empty > svg, html[data-device='mobile']:root body #root .rm-empty > :first-child:not(div) { width: 72px; height: auto; }
+html[data-device='mobile']:root body #root .rm-empty h3 { margin: 0 0 4px; font-size: var(--fs-lg); }
+html[data-device='mobile']:root body #root .rm-empty p { margin: 0; font-size: var(--fs-sm, .875rem); line-height: 1.5; }
+
+/* One rhythm under the tabs: the workspace grid gap plus the tab margin doubled it. */
+html[data-device='mobile']:root body #root .roommate-workspace { gap: 0; }
+
+/* Lời mời: compact heading, chip filters on one scrolling row, flat cards. */
+html[data-device='mobile']:root body #root .roommate-embed { padding: 0; }
+html[data-device='mobile']:root body #root .roommate-inbox__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
+html[data-device='mobile']:root body #root .roommate-inbox__heading h2 { margin: 0 0 2px; font-size: var(--fs-lead); line-height: 1.3; }
+html[data-device='mobile']:root body #root .roommate-inbox__heading p { margin: 0; color: var(--text-secondary); font-size: var(--fs-sm, .875rem); line-height: 1.45; }
+html[data-device='mobile']:root body #root .roommate-inbox__total { flex: none; font-size: var(--fs-xs, .75rem); color: var(--text-secondary); }
+html[data-device='mobile']:root body #root .roommate-inbox__filters.m-chips { flex-wrap: nowrap; margin: 0 calc(var(--m-gutter, 16px) * -1); padding: 0 var(--m-gutter, 16px) 2px; border: 0; overflow-x: auto; scrollbar-width: none; }
+html[data-device='mobile']:root body #root .roommate-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+html[data-device='mobile']:root body #root .roommate-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-elevated); }
+html[data-device='mobile']:root body #root .roommate-card__avatar { width: 40px; height: 40px; }
+html[data-device='mobile']:root body #root .roommate-card__body > p { margin: 2px 0 0; }
+html[data-device='mobile']:root body #root .roommate-card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+html[data-device='mobile']:root body #root .roommate-card__actions .btn { min-height: 44px; margin: 0; }
+/* workspace-readability styles these filters as flat text tabs; the chip look wins back here. */
+html[data-device='mobile']:root body #root .roommate-inbox__filters.m-chips button.m-chip { min-height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-elevated); color: var(--text-primary); font-size: var(--fs-sm, .875rem); font-weight: 600; white-space: nowrap; }
+html[data-device='mobile']:root body #root .roommate-inbox__filters.m-chips button.m-chip[aria-pressed='true'] { border-color: var(--focus-ring); background: var(--grab-green); color: var(--on-brand); }
+html[data-device='mobile']:root body #root .roommate-card__actions .btn-ghost { padding-inline: 0; }
+html[data-device='mobile']:root body #root .roommate-card__actions .btn-primary { border-color: transparent; }

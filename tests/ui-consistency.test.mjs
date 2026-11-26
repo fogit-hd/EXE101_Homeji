@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { THEMES, tokenContrast } from './helpers/theme-tokens.mjs'
 import { declaration, contrastColors } from './helpers/theme-colors.mjs'
 
 const read = (path) => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
@@ -25,7 +26,7 @@ test('status badges, section captions and map links retain small-text contrast',
   const css = read('ui-consistency.css')
   for (const [selector, background] of [
     ['.badge-gray', 'var(--surface-input)'], ['.badge-green', 'var(--hj-accent)'], ['.badge-blue', 'rgba(19, 111, 216, 0.12)'],
-    ['.page-frame__eyebrow', 'var(--surface-muted)'], ['.btn-map-cta', 'var(--pastel-peach)'],
+    ['.btn-map-cta', 'var(--pastel-peach)'],
     ['.btn-map-cta:hover:not(:disabled)', 'color-mix(in srgb, var(--pastel-rose) 45%, var(--pastel-peach))'],
   ]) {
     assert.ok(contrastColors(declaration(css, selector, 'color'), background) >= 4.5, `${selector} readable at caption size`)
@@ -46,17 +47,22 @@ test('product prices, statuses and food actions have readable small-text colors'
   const marketplace = read('pages/MarketplacePage.css')
   for (const variant of ['browse', 'mine']) {
     const rule = marketplace.slice(marketplace.indexOf(`.marketplace-card--${variant} .marketplace-card__price {`)).split('}')[0]
-    assert.match(rule, /color: #24543e;/)
+    assert.match(rule, /color: var\(--grab-green\);/)
   }
   const food = read('components/marketplace/food/FoodMarketplaceView.css')
-  assert.match(food, /--food-leaf-deep: #24543e;/)
-  assert.match(food, /--food-accent: #a43c22;/)
+  assert.match(food, /--food-leaf-deep: var\(--grab-green\);/)
+  assert.match(food, /--food-accent: var\(--action-primary\);/)
+  for (const theme of THEMES) {
+    for (const surface of ['--surface', '--surface-elevated', '--surface-muted']) {
+      assert.ok(tokenContrast('--grab-green', surface, theme) >= 4.5, `price on ${surface} (${theme})`)
+    }
+  }
   assert.ok(!food.includes('#e8603c'), 'food actions and captions must use the corrected accent token')
   assert.ok(!food.includes('#008f46'), 'food prices must use the corrected leaf token')
   for (const surface of ['e7f6ec','ffffff','fffdf8']) assert.ok(contrast('24543e', surface) >= 4.5)
   assert.ok(contrast('a43c22', 'f5f0e6') >= 4.5)
   assert.ok(contrast('fff', 'a43c22') >= 4.5)
-  assert.match(food, /\.food-featured__eyebrow\s*\{[^}]*color: #ffd0c2;/)
+  assert.ok(!food.includes('.food-featured__eyebrow'))
   assert.ok(contrast('ffd0c2', '14271f') >= 4.5)
 })
 
@@ -64,9 +70,10 @@ test('wallet captions and marketplace accent remain readable on their actual sur
   const wallet = read('components/marketplace/wallet/WalletPage.css')
   const header = read('components/marketplace/MarketplaceHeader.css')
   assert.ok(!wallet.includes('#708079'), 'old muted text failed on warm and mint cards')
-  assert.match(header, /--mh-accent: #a43c22;/)
-  assert.match(wallet, /\.wallet-card__eyebrow\s*\{[^}]*color: #a43c22;/)
-  assert.match(wallet, /\.wallet-submit button\s*\{[^}]*background: #a43c22;[^}]*color: #fff;/)
+  assert.match(header, /--mh-accent: var\(--action-on-soft\);/)
+  assert.ok(!wallet.includes('.wallet-card__eyebrow'))
+  assert.match(wallet, /\.wallet-submit button\s*\{[^}]*background: var\(--action-on-soft\);[^}]*color: var\(--on-brand\);/)
+  for (const theme of THEMES) assert.ok(tokenContrast('--on-brand', '--action-on-soft', theme) >= 4.5, `wallet submit (${theme})`)
   for (const background of ['ffffff', 'fff7ed', 'ffe6db', 'ddefe4', 'eef2ea']) {
     assert.ok(contrast('526358', background) >= 4.5, `wallet caption on ${background}`)
   }
@@ -105,16 +112,18 @@ test('payment plans and waiting screen share the Vietnamese-safe typeface', () =
 
 test('payment plan and transaction captions use readable semantic colors', () => {
   const css = read('pages/PaymentPage.css')
-  assert.match(css, /--payment-accent: #a43c22;/)
-  assert.match(css, /--payment-muted: #526358;/)
-  assert.match(css, /--payment-inverse-muted: #d7e3da;/)
+  assert.match(css, /--payment-accent: var\(--action-on-soft\);/)
+  assert.match(css, /--payment-muted: var\(--text-secondary\);/)
+  assert.match(css, /--payment-inverse-muted: var\(--text-secondary\);/)
   assert.ok(!css.includes('color: #e8603c'), 'old payment eyebrow failed on the warm page')
-  assert.ok(!css.includes('var(--hj-accent'), 'payment text and orange cards use the accessible scoped accent')
+  assert.match(css, /--pay-green: var\(--hj-accent\);/, 'payment brand chrome follows the shared emerald role')
   for (const oldMuted of ['#777a71', '#7b7f75', '#828579', '#707568', '#9da794']) {
     assert.ok(!css.includes(`color: ${oldMuted}`), `replace low-contrast payment caption ${oldMuted}`)
   }
-  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) \.payment-plan-card__price\s*\{[^}]*color: #fff;/)
-  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) :is\(\.payment-plan-card__total, \.payment-plan-card__savings\)\s*\{[^}]*color: #fff;[^}]*opacity: 1;/)
+  assert.match(css, /\.payment-plan-card\.is-popular\s*\{[^}]*background: var\(--action-primary\);/)
+  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) \.payment-plan-card__price\s*\{[^}]*color: var\(--action-on-primary\);/)
+  assert.match(css, /\.payment-plan-card:is\(\.is-featured, \.is-popular\) :is\(\.payment-plan-card__total, \.payment-plan-card__savings\)\s*\{[^}]*color: var\(--action-on-primary\);[^}]*opacity: 1;/)
+  for (const theme of THEMES) assert.ok(tokenContrast('--action-on-primary', '--action-primary', theme) >= 4.5, theme)
   assert.match(css, /\.payment-plan-card__price small\s*\{[^}]*opacity: 1;/)
   assert.match(css, /\.payment-plan-card__total,\s*\.payment-plan-card__savings\s*\{[^}]*opacity: 1;/)
   for (const background of ['f3ebdd', 'fffdf9', 'f6f7ef', 'f8f7f2', 'f0efeb']) {
@@ -133,13 +142,14 @@ test('profile skeleton depends on data, not an animation callback it never emits
 
 test('profile captions, inactive tabs and account badges retain readable colors', () => {
   const css = read('pages/ProfilePage.css')
-  for (const selector of ['.profile-page-eyebrow', '.profile-page-lead', '.profile-badge']) {
+  for (const selector of ['.profile-page-lead', '.profile-badge']) {
     const rule = css.slice(css.indexOf(`${selector} {`)).split('}')[0]
-    const color = rule.match(/color: #([\da-f]{6});/)?.[1]
-    assert.ok(color, `${selector} defines its semantic foreground`)
-    assert.ok(contrast(color, selector === '.profile-badge' ? 'eaf0ec' : 'f3ebdd') >= 4.5)
+    assert.match(rule, /color: var\(--text-secondary\);/, `${selector} uses the semantic muted ink`)
   }
-  assert.match(css, /:is\(\.profile-page, \.profile-embed\) \.tab:not\(\.active\)\s*\{[^}]*color: #526358;/)
+  assert.match(css, /:is\(\.profile-page, \.profile-embed\) \.tab:not\(\.active\)\s*\{[^}]*color: var\(--text-secondary\);/)
+  for (const theme of THEMES) for (const bg of ['--surface-muted', '--surface-input', '--surface-elevated']) {
+    assert.ok(tokenContrast('--text-secondary', bg, theme) >= 4.5, `${theme} ${bg}`)
+  }
   for (const [foreground, background] of [['7b530c', 'fff0cd'], ['24543e', 'e4f0e8'], ['9a3b2c', 'fcebe8']]) {
     assert.ok(contrast(foreground, background) >= 4.5)
   }
@@ -147,12 +157,17 @@ test('profile captions, inactive tabs and account badges retain readable colors'
 
 test('roommate cards use readable state colors and remain within narrow grids', () => {
   const css = read('pages/RoommateInvitationsPage.css')
-  assert.match(css, /--roommate-accent: #a43c22;/)
-  assert.match(css, /--roommate-muted: #526358;/)
+  assert.match(css, /--roommate-accent: var\(--grab-green\);/)
+  assert.match(css, /--roommate-muted: var\(--text-secondary\);/)
+  for (const theme of THEMES) {
+    assert.ok(tokenContrast('--on-brand', '--grab-green', theme) >= 4.5, `accepted avatar (${theme})`)
+    assert.ok(tokenContrast('--surface', '--text-heading', theme) >= 4.5, `avatar initials (${theme})`)
+    assert.ok(tokenContrast('--text-secondary', '--surface', theme) >= 4.5, `muted text (${theme})`)
+  }
   assert.match(css, /minmax\(min\(100%, 280px\), 1fr\)/)
   assert.match(css, /\.roommate-card__top\s*\{[^}]*flex-wrap: wrap;/)
   assert.match(css, /\.roommate-card__date\s*\{[^}]*color: var\(--roommate-muted\);/)
-  assert.match(css, /\.roommate-card\.is-accepted \.roommate-card__avatar\s*\{[^}]*background: var\(--roommate-accent\);[^}]*color: #fff;/)
+  assert.match(css, /\.roommate-card\.is-accepted \.roommate-card__avatar\s*\{[^}]*background: var\(--roommate-accent\);[^}]*color: var\(--on-brand\);/)
   assert.ok(contrast('fff', 'a43c22') >= 4.5)
   assert.ok(contrast('526358', 'fff9ef') >= 4.5)
   assert.ok(contrast('24382d', 'd8cdbb') >= 4.5)

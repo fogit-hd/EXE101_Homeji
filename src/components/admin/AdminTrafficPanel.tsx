@@ -24,7 +24,7 @@ export function AdminTrafficPanel({ days }: { days: number }) {
   const line = measuredTrend.map(({ point, index }, measuredIndex) => `${measuredIndex ? 'L' : 'M'}${40 + index / Math.max(1, (data?.trend.length ?? 1) - 1) * 600},${170 - point.pageViews / max * 140}`).join(' ')
 
   return <section className="admin-analytics__panel" aria-labelledby="traffic-title">
-    <div className="admin-analytics__panel-heading"><div><span className="admin-analytics__eyebrow">Website có được quan tâm không?</span><h3 id="traffic-title">Lượt ghé website</h3></div><span>{days} ngày gần nhất</span></div>
+    <div className="admin-analytics__panel-heading"><div><h3 id="traffic-title">Lượt ghé website</h3></div><span>{days} ngày gần nhất</span></div>
     {current?.error ? <div role="alert"><p>{current.error}</p><button type="button" onClick={() => { setState(null); setAttempt(value => value + 1) }}>Thử lại</button></div>
       : !data ? <p role="status">Đang tải thống kê lượt ghé…</p>
         : <>
