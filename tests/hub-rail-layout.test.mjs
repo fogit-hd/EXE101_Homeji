@@ -80,7 +80,7 @@ test('HubSkeleton and HubBodySkeleton match the 2-column (4 rooms left | promo +
   assert.ok(!routeHtml.includes('sk-hub__hero'), 'HubSkeleton should no longer render full-width hero skeleton')
 })
 
-test('AuthenticatedHub fetches 6 rooms + 4 market items, renders 2-column main block above viewings/alerts, and highlights VIP rooms', async () => {
+test('AuthenticatedHub fetches 4 rooms + 4 market items, renders 2-column main block above viewings/alerts, and highlights VIP rooms', async () => {
   const calls = []
   const sampleRooms = [1, 2, 3, 4].map((i) => ({
     id: `room-${i}`,
@@ -145,8 +145,6 @@ test('AuthenticatedHub fetches 6 rooms + 4 market items, renders 2-column main b
     reactDomModule(src('components/hub/AuthenticatedHub.tsx'), {
       '../../api': apiOverride,
       '../../contexts/AuthContext': authOverride,
-      // The shortlist toggle reads Vite env flags; its own behaviour is tested elsewhere.
-      '../ai/RentalConsiderationToggle': 'data:text/javascript;base64,' + Buffer.from('export const RentalConsiderationToggle = () => null').toString('base64'),
       '../../hooks/useConversationInbox': 'data:text/javascript,' + encodeURIComponent(
         'export const useConversationInbox = () => ({ conversations: [], error: null, refresh: () => {} })',
       ),
@@ -185,8 +183,8 @@ test('AuthenticatedHub fetches 6 rooms + 4 market items, renders 2-column main b
     calls.push(...(globalThis.__hubTestCalls || []))
     assert.deepEqual(
       calls.find(([kind]) => kind === 'rentals')?.[1],
-      { pageSize: 6 },
-      'AuthenticatedHub must request pageSize: 6 rooms (3-column grid)',
+      { pageSize: 4 },
+      'AuthenticatedHub must request pageSize: 4 rooms',
     )
     assert.deepEqual(
       calls.find(([kind]) => kind === 'market')?.[1],
@@ -197,7 +195,7 @@ test('AuthenticatedHub fetches 6 rooms + 4 market items, renders 2-column main b
     const hub = document.querySelector('.hub-home')
     assert.ok(hub)
     const children = [...hub.children].map((el) => el.className.split(' ')[0])
-    assert.deepEqual(children, ['hub-welcome', 'hub-find', 'hub-entries', 'hub-search', 'hub-next', 'hub-main', 'hub-update', 'hub-section'])
+    assert.deepEqual(children, ['hub-welcome', 'hub-search', 'hub-main', 'hub-update', 'hub-section'])
 
     const main = hub.querySelector('.hub-main')
     assert.ok(main.querySelector('.hub-rooms'), 'Left column holds rooms')

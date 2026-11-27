@@ -60,7 +60,7 @@ html:root #root .hub-welcome__lead {
   align-items: center;
   gap: 10px;
   margin-top: 6px;
-  font-size: var(--fs-xs);
+  font-size: 0.75rem;
   text-decoration: none;
   color: var(--action-primary);
 }
@@ -90,19 +90,15 @@ html:root #root .hub-search {
   background: transparent;
 }
 html:root #root .hub-search::-webkit-scrollbar { display: none; }
-html:root #root .hub-search h2 { font-size: var(--fs-xs); font-weight: 500; color: var(--text-secondary); }
+html:root #root .hub-search h2 { font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); }
 html:root #root .hub-search ul { flex-wrap: nowrap; }
 html:root #root .hub-search a {
   gap: 10px;
   min-height: 34px;
-}
-/* Phones: full 44px touch height for the recent-search chips. */
-html[data-device='mobile']:root #root .hub-search a { min-height: 44px; }
-html:root #root .hub-search a {
   padding: 0 12px;
   border: 1px solid var(--border);
   background: var(--surface-elevated);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   white-space: nowrap;
 }
 html:root #root .hub-home .hub-section {
@@ -116,13 +112,13 @@ html:root #root .hub-home .hub-section {
 html:root #root .hub-home .hub-rail .hub-market {
   padding: 18px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 18px;
   background: var(--surface-elevated);
 }
 html:root #root .hub-section header { align-items: center; margin-bottom: 18px; gap: 12px; }
-html:root #root .hub-section h2 { font-size: var(--fs-xl); line-height: 1.4; font-weight: 600; letter-spacing: -.035em; }
-html:root #root .hub-rail .hub-section h2 { font-size: var(--fs-lg); line-height: 1.4; }
-html:root #root .hub-section header a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-sm); white-space: nowrap; }
+html:root #root .hub-section h2 { font-size: 1.375rem; line-height: 1.4; font-weight: 600; letter-spacing: -.035em; }
+html:root #root .hub-rail .hub-section h2 { font-size: 1.125rem; line-height: 1.4; }
+html:root #root .hub-section header a { display: inline-flex; align-items: center; min-height: 36px; font-size: 0.8125rem; white-space: nowrap; }
 html:root #root .hub-viewings { grid-column: 1 / -1; order: 0; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
 html:root #root .hub-update {
   order: 0;
@@ -133,7 +129,7 @@ html:root #root .hub-update {
 html:root #root .hub-update:hover { background: var(--surface-input); }
 html:root #root .hub-update strong { color: var(--text-heading); }
 html:root #root .hub-update__body { color: var(--text-secondary); }
-html:root #root .hub-update em { color: var(--grab-green); }
+html:root #root .hub-update em { color: var(--hj-accent); }
 html:root #root .hub-viewings em {
   background: var(--surface-input);
   color: var(--text-heading);
@@ -143,7 +139,7 @@ html:root #root .hub-roommates li > b {
   background: var(--surface-input);
   color: var(--text-heading);
 }
-html:root #root .hub-roommates li em { color: var(--grab-green); }
+html:root #root .hub-roommates li em { color: var(--hj-accent); }
 html:root #root .hub-rooms { grid-column: 1 / -1; order: 0; padding-top: 0; }
 html:root #root .hub-main .hub-rooms { grid-column: auto; }
 html:root #root .hub-rooms > ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
@@ -158,20 +154,20 @@ html:root #root .hub-rooms li a {
   margin: 0;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   background: var(--surface-elevated);
   transition: background-color .2s ease, border-color .2s ease;
 }
 html:root #root .hub-rooms li a.premium-listing {
-  border-color: var(--premium-edge-color);
+  border-color: var(--premium-edge-color, #dfaa42);
 }
 html:root #root .hub-rooms li a:hover { background: var(--surface-muted); }
-html:root #root .hub-room__photo { aspect-ratio: 1.5; border-radius: var(--radius-md); }
+html:root #root .hub-room__photo { aspect-ratio: 1.5; border-radius: 12px; }
 html:root #root .hub-room__copy { gap: 6px; padding-inline: 2px; }
-html:root #root .hub-room__copy b { font-size: var(--fs-md); font-weight: 600; line-height: 1.5; min-height: 3em; }
-html:root #root .hub-room__copy span { font-size: var(--fs-sm); line-height: 1.55; }
+html:root #root .hub-room__copy b { font-size: 0.9375rem; font-weight: 600; line-height: 1.5; min-height: 3em; }
+html:root #root .hub-room__copy span { font-size: 0.8125rem; line-height: 1.55; }
 html:root #root .hub-room__price { flex-direction: row; align-items: baseline; gap: 6px; margin: auto 0 0; padding: 0 2px 4px; text-align: left; }
-html:root #root .hub-room__price strong { font-size: var(--fs-lg); font-weight: 600; letter-spacing: -.025em; color: var(--action-primary); }
+html:root #root .hub-room__price strong { font-size: 1.125rem; font-weight: 600; letter-spacing: -.025em; color: var(--action-primary); }
 html:root #root .hub-community {
   grid-column: 1 / -1;
   display: grid;
@@ -234,58 +230,95 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   html:root #root .hub-home { padding: 20px 16px 32px; gap: 18px; }
   html:root #root .hub-rail { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
   html:root #root .hub-section header { margin-bottom: 16px; }
-  html:root #root .hub-section h2 { font-size: var(--fs-xl); }
+  html:root #root .hub-section h2 { font-size: 1.25rem; }
   html:root #root .hub-community { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-top: 28px; }
   html:root #root .hub-community .hub-side { padding-top: 28px; border-top: 1px solid var(--border); }
   html:root #root .hub-rooms > ul { grid-template-columns: 1fr; gap: 12px; }
   html:root #root .hub-rooms li a { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px 14px; padding: 12px; }
   html:root #root .hub-room__photo { grid-row: span 2; width: 100%; height: 112px; min-height: 0; aspect-ratio: auto; }
-  html:root #root .hub-room__photo > .premium-badge { top: auto; bottom: 6px; right: auto; left: 6px; padding: 2px 6px; font-size: var(--fs-xs); }
+  html:root #root .hub-room__photo > .premium-badge { top: auto; bottom: 6px; right: auto; left: 6px; padding: 2px 6px; font-size: 0.625rem; }
   html:root #root .hub-room__copy { gap: 5px; padding-inline: 0; }
-  html:root #root .hub-room__copy b { min-height: 0; font-size: var(--fs-md); line-height: 1.5; }
-  html:root #root .hub-room__copy span { font-size: var(--fs-xs); }
+  html:root #root .hub-room__copy b { min-height: 0; font-size: 0.875rem; line-height: 1.5; }
+  html:root #root .hub-room__copy span { font-size: 0.75rem; }
   html:root #root .hub-room__price { padding: 0; }
-  html:root #root .hub-room__price strong { font-size: var(--fs-lg); }
+  html:root #root .hub-room__price strong { font-size: 1rem; }
   html:root #root .hub-room__price { grid-column: 2; flex-wrap: wrap; }
   html:root #root .hj-search-overlay .hj-search-slot { height: auto; margin: 0; padding: 12px; }
   html:root #root .hj-header .hj-search__submit { min-width: 48px; }
 }
-
-/* "Việc tiếp theo": one quiet strip of real tasks under the greeting, each with its one action. */
-html:root #root .hub-next { grid-column: 1 / -1; display: grid; gap: 10px; padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-elevated); }
-html:root #root .hub-next h2 { margin: 0; color: var(--text-heading); font-size: var(--fs-md); font-weight: 650; line-height: 1.4; }
-html:root #root .hub-next ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 24px; margin: 0; padding: 0; list-style: none; }
-html:root #root .hub-next li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; min-width: 0; padding: 4px 0; }
-/* Rows inside the card, not cards inside the card: a hairline between them is enough. */
-html:root #root .hub-next li + li { border-top: 1px solid var(--border); }
-html:root #root .hub-next li span { min-width: 0; color: var(--text-primary); font-size: var(--fs-sm); line-height: 1.45; }
-html:root #root .hub-next li a { flex: none; display: inline-flex; align-items: center; min-height: 44px; color: var(--action-on-soft); font-size: var(--fs-sm); font-weight: 600; text-decoration: none; }
-html:root #root .hub-next li a:hover { text-decoration: underline; }
-html:root #root .hub-next li a:focus-visible { outline: 2px solid var(--action-primary); outline-offset: 2px; border-radius: var(--radius-xs); }
-
-/* Desktop: 6 suggested rooms in 3 columns; the rail stays in view while the rooms scroll. */
-@media (min-width: 1025px) {
-  html:root #root .hub-rooms > ul { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-  html:root #root .hub-rooms li a { padding: 8px 8px 10px; }
-  html:root #root .hub-room__copy b { font-size: var(--fs-sm); }
-  html:root #root .hub-rail { position: sticky; top: calc(var(--hj-header-h, 72px) + 16px); align-self: start; }
+/* Pre-release member palette. Public pages and the Tìm phòng workspace retain their own theme. */
+:root:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)) {
+  --hj-accent: #087f8c;
+  --hj-grab-green: #087f8c;
+  --hj-soft: #82929c;
+  --hj-nav-idle: #dce5eb;
+  --hj-nav-line: #334854;
+  --hj-accent-soft: color-mix(in srgb, #087f8c 12%, var(--surface));
+  --hj-brand-coral: #c24933;
+  --hj-brand-coral-soft: #fff0eb;
+  --grab-green: #087f8c;
+  --grab-green-hover: #066875;
+  --grab-blue: #136fd8;
+  --grab-blue-hover: #0e52a3;
+  --text-primary: #243742;
+  --text-secondary: #5b6b76;
+  --text-heading: #19323b;
+  --text-accent: #087f8c;
+  --border: #dce5eb;
+  --surface: #ffffff;
+  --surface-muted: #f3f7fa;
+  --surface-input: #edf3f7;
+  --surface-elevated: #ffffff;
+  --surface-glass: rgb(255 255 255 / .94);
+  --overlay-scrim: rgb(28 36 31 / .4);
+  --shadow-color: 28, 42, 34;
+  --maps-blue: #1a73e8;
+  --maps-blue-hover: #1557b0;
+  --maps-blue-soft: #e8f0fe;
+  --maps-blue-text: #1967d2;
+  --maps-hover: rgb(60 64 67 / .08);
+  --map-canvas-bg: #e7eef3;
+  --action-primary: #076d78;
+  --action-primary-hover: #055660;
+  --action-on-primary: #ffffff;
+  --action-soft: #e6f4f4;
+  --action-on-soft: #075661;
+  --brand-soft: #e6f4f4;
+  --on-brand: #ffffff;
+  --control-border: #93a8b4;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
 }
-/* The last two blocks get equal columns so neither looks stranded. */
-html:root #root .hub-community:not(.hub-community--single) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
-@media (max-width: 767px) { html:root #root .hub-community:not(.hub-community--single) { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 
-/* Room summaries keep price, title and one address line together at every width. */
-html:root body #root .hub-rooms li a { display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; }
-html:root body #root .hub-room__photo { display: grid; place-items: center; flex: none; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 10; border-radius: 0; }
-html:root body #root .hub-room__photo > :is(.premium-badge, .hub-room__saved) { position: absolute; top: 8px; left: 8px; right: auto; bottom: auto; }
-html:root body #root .hub-room__copy { display: flex; flex-direction: column; gap: 4px; padding: 16px; }
-html:root body #root .hub-room__price { display: block; margin: 0; padding: 0; text-align: left; }
-html:root body #root .hub-room__price strong { color: var(--action-primary); font-size: var(--fs-lg); font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; white-space: normal; }
-html:root body #root .hub-room__copy b { min-height: 0; font-size: var(--fs-md); line-height: 1.5; color: var(--text-heading); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-html:root body #root .hub-room__meta { display: block; color: var(--text-secondary); font-size: var(--fs-sm); line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 767px) {
-  html:root body #root .hub-rooms li a { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; padding: 12px; }
-  html:root body #root .hub-room__photo { grid-row: auto; align-self: start; aspect-ratio: 1; border-radius: var(--radius-sm); }
-  html:root body #root .hub-room__photo > :is(.premium-badge, .hub-room__saved) { font-size: var(--fs-xs); padding: 4px; }
-  html:root body #root .hub-room__copy { padding: 0; }
+:root[data-theme='dark']:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)) {
+  --grab-green: #62cbd2;
+  --grab-green-hover: #8edce0;
+  --grab-blue: #4b9fff;
+  --grab-blue-hover: #2f86f0;
+  --text-primary: #e6edf2;
+  --text-secondary: #a8b9c4;
+  --text-heading: #f2f7fa;
+  --text-accent: #62cbd2;
+  --border: #354955;
+  --surface: #182b36;
+  --surface-muted: #10212b;
+  --surface-input: #223945;
+  --surface-elevated: #1d333f;
+  --surface-glass: rgb(24 43 54 / .94);
+  --overlay-scrim: rgb(0 0 0 / .5);
+  --shadow-color: 0, 0, 0;
+  --maps-blue: #8ab4f8;
+  --maps-blue-hover: #aecbfa;
+  --maps-blue-soft: rgb(138 180 248 / .16);
+  --maps-blue-text: #8ab4f8;
+  --maps-hover: rgb(255 255 255 / .08);
+  --map-canvas-bg: #1b303b;
+  --action-primary: #85dce1;
+  --action-primary-hover: #adebef;
+  --action-on-primary: #102e38;
+  --action-soft: #23444f;
+  --action-on-soft: #b9f2f4;
+  --brand-soft: #23444f;
+  --on-brand: #102e38;
+  --control-border: #718995;
 }

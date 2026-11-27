@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { UserRole } from '../../api/types'
 import { toggleHomejiAi } from '../../lib/homejiAiLauncher'
 import { promoBannerArt } from './promoBannerArt'
 import { getPromoSlidesForRole, type PromoBannerVariant } from './promoBannerSlides'
-import { useIsMobile } from '../../mobile/useIsMobile'
-import { MobilePromoCarousel } from '../../mobile/hub/MobilePromoCarousel'
 import './PromoBanner.css'
 
 const INTERVAL_MS = 5000
@@ -20,7 +17,6 @@ export function PromoBanner({ variant = 'hero', role }: { variant?: PromoBannerV
   const [[index, dir], setState] = useState<[number, number]>([0, 1])
   const [paused, setPaused] = useState(false)
   const ctaRef = useRef<HTMLButtonElement>(null)
-  const mobile = useIsMobile()
 
   const go = useCallback(
     (step: number) => setState(([i]) => [(i + step + count) % count, step >= 0 ? 1 : -1]),
@@ -29,12 +25,10 @@ export function PromoBanner({ variant = 'hero', role }: { variant?: PromoBannerV
   const jump = (to: number) => setState(([i]) => [to, to >= (i % count) ? 1 : -1])
 
   useEffect(() => {
-    if (paused || mobile) return
+    if (paused) return
     const id = window.setTimeout(() => go(1), INTERVAL_MS)
     return () => window.clearTimeout(id)
-  }, [index, paused, go, mobile])
-
-  if (mobile) return <MobilePromoCarousel slides={slides} />
+  }, [index, paused, go])
 
   const safeIndex = index % count
   const slide = slides[safeIndex]
@@ -82,7 +76,7 @@ export function PromoBanner({ variant = 'hero', role }: { variant?: PromoBannerV
             dangerouslySetInnerHTML={{ __html: promoBannerArt[slide.artIndex] ?? '' }}
           />
           <div className="hub-promo__copy">
-            
+            <p className="hub-promo__eyebrow" style={{ color: slide.accent }}>{slide.eyebrow}</p>
             <h2 className="hub-promo__title">
               {slide.title} <em style={{ color: slide.accent }}>{slide.keyword}</em>
             </h2>
@@ -113,7 +107,7 @@ export function PromoBanner({ variant = 'hero', role }: { variant?: PromoBannerV
             type="button"
             className={i === safeIndex ? 'is-on' : undefined}
             data-glass-exclude=""
-            aria-label={`Banner ${i + 1}`} title={`Banner ${i + 1}`}
+            aria-label={`Banner ${i + 1}`}
             aria-current={i === safeIndex}
             onClick={() => jump(i)}
           >
@@ -122,8 +116,8 @@ export function PromoBanner({ variant = 'hero', role }: { variant?: PromoBannerV
         ))}
       </div>
       <div className="hub-promo__arrows">
-        <button type="button" aria-label="Banner trước" title="Banner trước" onClick={() => go(-1)}><ChevronLeft aria-hidden="true" size={18} /></button>
-        <button type="button" aria-label="Banner tiếp" title="Banner tiếp" onClick={() => go(1)}><ChevronRight aria-hidden="true" size={18} /></button>
+        <button type="button" aria-label="Banner trước" onClick={() => go(-1)}>‹</button>
+        <button type="button" aria-label="Banner tiếp" onClick={() => go(1)}>›</button>
       </div>
     </section>
   )
