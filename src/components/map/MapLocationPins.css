@@ -444,3 +444,70 @@
 
 .map-price-pill:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .map-price-pill__bubble { transition: none; transform: none; } }
+
+/* Pre-release marker visuals for the member map. Keep the clickable marker box and its anchor. */
+.app-shell--authed.app-shell--listings .map-price-pill__bubble {
+  padding: 7px 11px;
+  background: #18231d;
+  color: #fff;
+  font-size: 0.6875rem;
+  box-shadow: 0 4px 10px rgb(24 35 29 / 20%);
+}
+
+.app-shell--authed.app-shell--listings .map-price-pill.is-selected .map-price-pill__bubble {
+  background: #e65c3a;
+  color: #fff;
+}
+
+.app-shell--authed.app-shell--listings .map-price-pill.is-premium .map-price-pill__bubble {
+  border: 2px solid #e4b749;
+  box-shadow: 0 0 0 2px #fff5d459, 0 4px 12px #7e581a40;
+}
+
+.app-shell--authed.app-shell--listings .map-pin-cluster__bubble {
+  border: 3px solid #fff;
+  color: #fff;
+  box-shadow: 0 4px 14px rgb(15 23 42 / 38%), 0 0 0 2px rgb(255 255 255 / 30%);
+}
+
+.app-shell--authed.app-shell--listings .map-pin-cluster__bubble::before {
+  inset: 5px;
+  background: rgb(15 23 42 / 82%);
+}
+
+.app-shell--authed.app-shell--listings .map-pin-cluster__count {
+  font-size: 0.9375rem;
+}
+
+.map-pin-cluster__label {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.5rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-shell--authed.app-shell--listings .map-pin-cluster--premium .map-pin-cluster__bubble {
+  box-shadow: 0 0 0 2px #d5ac45, 0 4px 14px #0f172a60;
+}
+
+.app-shell--authed.app-shell--listings .map-pin-cluster__vip {
+  inset: auto auto -9px 50%;
+  width: auto;
+  height: auto;
+  transform: translateX(-50%);
+  padding: 4px 7px;
+  border: 1px solid #c79c32;
+  border-radius: 8px;
+  background: #fff2c7;
+  color: #6b4913;
+  font: 750 0.625rem/1 var(--font-ui, sans-serif);
+  white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+  .app-shell--authed.app-shell--listings .map-price-pill.is-premium .map-price-pill__bubble {
+    border-color: Highlight;
+  }
+}

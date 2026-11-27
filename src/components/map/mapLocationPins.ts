@@ -51,6 +51,7 @@ export function createMapClusterContent(options: {
   count: number
   kindCounts: Record<MapClusterKind, number>
   premiumCount?: number
+  showLabels?: boolean
 }): HTMLDivElement {
   const count = Math.max(2, Math.round(options.count))
   const premiumCount = Math.min(count, Math.max(0, Math.floor(options.premiumCount ?? 0)))
@@ -86,11 +87,18 @@ export function createMapClusterContent(options: {
   value.className = 'map-pin-cluster__count'
   value.textContent = String(count)
   bubble.append(value)
+  if (options.showLabels) {
+    const label = document.createElement('span')
+    label.className = 'map-pin-cluster__label'
+    label.textContent = 'vị trí'
+    bubble.append(label)
+  }
   mount.appendChild(bubble)
   if (premiumCount > 0) {
     root.classList.add('map-pin-cluster--premium')
     const badge = document.createElement('span')
     badge.className = 'map-pin-cluster__vip'
+    if (options.showLabels) badge.textContent = `★ ${premiumCount} Premium`
     badge.setAttribute('aria-hidden', 'true')
     mount.append(badge)
   }

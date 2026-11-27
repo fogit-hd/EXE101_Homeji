@@ -8,7 +8,7 @@ await mkdir(out, { recursive: true })
 // Rewriting an .html file under Vite's root reloads the open page, so leave an unchanged scene alone.
 const writeScene = async (file, content) => { if (await readFile(file, 'utf8').catch(() => '') !== content) await writeFile(file, content) }
 await writeScene(out + '/index.html', '<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module" src="./scene.tsx"></script></html>')
-await writeScene(out + '/scene.tsx', `import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{RentalMap}from'/src/components/map/RentalMap.tsx';import'/src/index.css';import'/src/glass-controls.css';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';const posts=Array.from({length:3},(_,i)=>({id:'native-'+i,type:1,title:'Phòng Homeji '+i,address:'Lê Văn Việt, Thủ Đức',price:3000000+i*100000,area:25,latitude:10.842,longitude:106.81,thumbnailPath:'/brand/homeji-agent-cat.png',isOwnerPremium:i!==0,viewCount:0,saveCount:0}));function Scene(){const[vip,setVip]=useState(true),[selected,setSelected]=useState('');return <><button id="expiry" onClick={()=>setVip(false)}>Hết Premium</button><p id="selected">{selected}</p><div style={{height:500}}><RentalMap showSourceCatalog posts={posts.map(p=>({...p,isOwnerPremium:vip&&p.isOwnerPremium}))} selectedPostId={selected||null} onSelectPost={setSelected}/></div><LiquidGlassEffects/></>}createRoot(document.getElementById('root')).render(<MemoryRouter><Scene/></MemoryRouter>);`)
+await writeScene(out + '/scene.tsx', `import React,{useState}from'react';import{createRoot}from'react-dom/client';import{MemoryRouter}from'react-router-dom';import{RentalMap}from'/src/components/map/RentalMap.tsx';import'/src/index.css';import'/src/glass-controls.css';import{LiquidGlassEffects}from'/src/components/ui/LiquidGlassEffects.tsx';const posts=Array.from({length:3},(_,i)=>({id:'native-'+i,type:1,title:'Phòng Homeji '+i,address:'Lê Văn Việt, Thủ Đức',price:3000000+i*100000,area:25,latitude:10.842,longitude:106.81,thumbnailPath:'/brand/homeji-agent-cat.png',isOwnerPremium:i!==0,viewCount:0,saveCount:0}));function Scene(){const[vip,setVip]=useState(true),[selected,setSelected]=useState('');return <><button id="expiry" onClick={()=>setVip(false)}>Hết Premium</button><p id="selected">{selected}</p><div className="app-shell--authed app-shell--listings" style={{height:500}}><RentalMap showSourceCatalog markerVariant="price-pill" posts={posts.map(p=>({...p,isOwnerPremium:vip&&p.isOwnerPremium}))} selectedPostId={selected||null} onSelectPost={setSelected}/></div><LiquidGlassEffects/></>}createRoot(document.getElementById('root')).render(<MemoryRouter><Scene/></MemoryRouter>);`)
 const browser = await chromium.launch({ headless: true, channel: 'msedge' })
 const page = await browser.newPage({ viewport: { width: 1100, height: 800 } })
 const errors = []; page.on('pageerror', error => errors.push(error.message))
@@ -38,10 +38,11 @@ await page.addInitScript(() => {
     getStreetView() { return { setOptions() {}, addListener() { return { remove() {} } }, getVisible() { return false } } }
     addListener() { return { remove() {} } }
     getZoom() { return 13 }
+    getBounds() { return { contains: () => true } }
     fitBounds() { window.zoomed = true }
   }
   class Bounds { extend() { return this } getCenter() { return { lat: () => 10.84, lng: () => 106.81 } } }
-  window.google = { maps: { Map: FakeMap, InfoWindow: Popup, LatLngBounds: Bounds, event: { removeListener() {}, clearInstanceListeners() {}, trigger() {} } } }
+  window.google = { maps: { Map: FakeMap, InfoWindow: Popup, LatLngBounds: Bounds, event: { addListenerOnce() { return { remove() {} } }, removeListener() {}, clearInstanceListeners() {}, trigger() {} } } }
 })
 // Keep Google's clustering boundary mocked; run the actual RentalMap renderer,
 // shared marker ownership, source hook, DOM list and entitlement updates.
@@ -58,6 +59,18 @@ try {
   assert.equal(await page.evaluate(() => window.clusters.length), 1)
   assert.equal(await page.evaluate(() => window.clusters[0].markers.length), 17)
   assert.equal(await page.locator('.map-pin-cluster__count').textContent(), '17')
+  assert.equal(await page.locator('.map-pin-cluster__label').textContent(), 'vị trí')
+  const bubble = page.locator('.map-pin-cluster__bubble')
+  assert.equal(await bubble.evaluate(element => getComputedStyle(element, '::before').backgroundColor), 'rgba(15, 23, 42, 0.82)')
+  const pricePin = await page.evaluate(() => {
+    const marker = window.clusters[0].markers.find(item => item.title === 'Phòng Homeji 2')
+    const copy = marker.content.cloneNode(true)
+    window.mapHost.append(copy)
+    const background = getComputedStyle(copy.querySelector('.map-price-pill__bubble')).backgroundColor
+    copy.remove()
+    return { background, anchorTop: marker.anchorTop }
+  })
+  assert.deepEqual(pricePin, { background: 'rgb(24, 35, 29)', anchorTop: '-50%' })
   await page.screenshot({ path: `${out}/cluster-1100.png` })
   await page.locator('#fixture-cluster').click()
   assert.equal(await page.locator('.map-cluster-listings__card:visible').count(), 17)

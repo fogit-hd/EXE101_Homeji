@@ -760,7 +760,12 @@ function RentalMapComponent({
             if (kind) kindCounts[kind] += 1
             if (clusterListingsRef.current.get(marker as google.maps.marker.AdvancedMarkerElement)?.premium === true) premiumCount += 1
           }
-          const content = createMapClusterContent({ count: cluster.count, kindCounts, premiumCount })
+          const content = createMapClusterContent({
+            count: cluster.count,
+            kindCounts,
+            premiumCount,
+            showLabels: Boolean(host.closest('.app-shell--authed.app-shell--listings')),
+          })
           const marker = new lib.AdvancedMarkerElement({
             position: cluster.position,
             content,
