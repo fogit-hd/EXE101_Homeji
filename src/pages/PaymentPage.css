@@ -900,21 +900,22 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid var(--contro
 .pay-v2 .pay-plan {
   --plan-accent: var(--text-secondary);
   --plan-soft: var(--surface-muted);
-  --plan-tint: var(--surface-muted);
+  --plan-surface: color-mix(in srgb, var(--plan-accent) 4%, var(--surface-elevated));
+  --plan-line: color-mix(in srgb, var(--plan-accent) 22%, var(--border));
   position: relative;
   isolation: isolate;
   border-radius: var(--radius-2xl);
   border: 1px solid var(--border);
   padding: 24px 22px;
   overflow: hidden;
-  background: var(--surface-elevated);
+  background: var(--plan-surface);
   box-shadow: none;
   transition: border-color .2s ease, box-shadow .25s ease, translate .25s ease;
 }
-.pay-v2 .pay-plan[data-plan-tone=mint] { --plan-accent: var(--grab-green-hover); --plan-soft: var(--brand-soft); --plan-tint: var(--surface); }
-.pay-v2 .pay-plan[data-plan-tone=ocean] { --plan-accent: var(--info-text); --plan-soft: var(--info-soft); --plan-tint: var(--surface); }
-.pay-v2 .pay-plan[data-plan-tone=gold] { --plan-accent: var(--warning); --plan-soft: var(--warning-soft); --plan-tint: var(--surface); }
-.pay-v2 .pay-plan::after { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--brand-soft); transform: translateX(-120%); pointer-events: none; }
+.pay-v2 .pay-plan[data-plan-tone=mint] { --plan-accent: var(--text-accent); --plan-soft: var(--brand-soft); }
+.pay-v2 .pay-plan[data-plan-tone=ocean] { --plan-accent: var(--info-text); --plan-soft: var(--info-soft); }
+.pay-v2 .pay-plan[data-plan-tone=gold] { --plan-accent: var(--warning); --plan-soft: var(--warning-soft); }
+.pay-v2 .pay-plan::after { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--plan-soft); transform: translateX(-120%); pointer-events: none; }
 .pay-v2 .pay-plan:is(:hover, :focus-within)::after { animation: pay-plan-sheen .85s ease-out both; }
 .pay-v2 .pay-plan:is(:hover, :focus-within) { box-shadow: 0 14px 28px -8px color-mix(in srgb, var(--plan-accent) 18%, transparent); border-color: var(--control-border); }
 .pay-v2 .pay-plan.is-recommended {
@@ -922,9 +923,9 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid var(--contro
   box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--plan-accent) 22%, transparent);
 }
 .pay-v2 .pay-plan.is-selected { border-color: var(--control-border); box-shadow: none; }
-.pay-v2 .pay-plan__identity { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 36px; margin-bottom: 14px; color: var(--text-accent); }
-.pay-v2 .pay-plan__icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--brand-soft); color: var(--text-accent); }
-.pay-v2 .pay-plan__tier-tag { font: 700 11px/1.2 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-accent); }
+.pay-v2 .pay-plan__identity { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 36px; margin-bottom: 14px; color: var(--plan-accent); }
+.pay-v2 .pay-plan__icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--plan-soft); }
+.pay-v2 .pay-plan__tier-tag { font: 700 11px/1.2 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--plan-accent); }
 .pay-v2 .pay-plan__recommended-badge,
 .pay-v2 .pay-plan__save-badge,
 .pay-v2 .pay-plan__current-tag {
@@ -939,21 +940,22 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid var(--contro
   white-space: nowrap;
 }
 .pay-v2 .pay-plan__recommended-badge { background: var(--action-primary); color: var(--action-on-primary); }
-.pay-v2 .pay-plan__save-badge { background: var(--brand-soft); color: var(--text-accent); }
-.pay-v2 .pay-plan__current-tag { background: var(--brand-soft); color: var(--text-accent); font-style: normal; }
+.pay-v2 .pay-plan__save-badge,
+.pay-v2 .pay-plan__current-tag { background: var(--plan-soft); color: var(--plan-accent); }
+.pay-v2 .pay-plan__current-tag { font-style: normal; }
 .pay-v2 .pay-plan__heading { min-width: 0; }
 .pay-v2 .pay-plan__price-box {
   margin-top: 16px;
   padding: 14px 16px;
   border-radius: var(--radius-md);
-  background: var(--brand-soft);
-  border: 1px solid var(--border);
+  background: var(--plan-soft);
+  border: 1px solid var(--plan-line);
 }
-.pay-v2 .pay-plan__rate-label { color: var(--text-accent); }
+.pay-v2 .pay-plan__rate-label { color: var(--plan-accent); }
 .pay-v2 .pay-plan__price { font-size: var(--fs-display); color: var(--pay-heading); }
 .pay-v2 .pay-plan__price.is-daily-rate { font-size: var(--fs-display); color: var(--pay-heading); }
 .pay-v2 .pay-plan__price.is-daily-rate small { color: var(--pay-muted); }
-.pay-v2 .pay-plan__total { border-top-color: var(--border); }
+.pay-v2 .pay-plan__total { border-top-color: var(--plan-line); }
 .pay-v2 .pay-plan ul { margin: 18px 0 22px; padding: 0; border-top: 0; gap: 10px; }
 .pay-v2 .pay-plan li { color: var(--pay-ink); }
 .pay-v2 .pay-plan li::before {
@@ -963,8 +965,8 @@ html:root #root .pay-v2 .pay-btn:focus-visible { outline: 3px solid var(--contro
   height: 18px;
   margin-top: 1px;
   border-radius: 50%;
-  background: var(--brand-soft);
-  color: var(--text-accent);
+  background: var(--plan-soft);
+  color: var(--plan-accent);
   font-size: var(--fs-xs);
   line-height: 1;
 }
@@ -991,15 +993,10 @@ html:root #root .pay-v2 .pay-plan .pay-btn--primary {
   box-shadow: none;
 }
 [data-theme=dark] .pay-v2 .pay-plan {
-  --plan-tint: var(--surface);
-  --plan-soft: var(--surface-input);
-  --plan-accent: var(--text-secondary);
+  background-color: var(--plan-surface);
   border-color: var(--border);
   box-shadow: none;
 }
-[data-theme=dark] .pay-v2 .pay-plan[data-plan-tone=mint] { --plan-accent: var(--grab-green); --plan-soft: var(--brand-soft); --plan-tint: var(--surface); }
-[data-theme=dark] .pay-v2 .pay-plan[data-plan-tone=ocean] { --plan-accent: var(--info-text); --plan-soft: var(--info-soft); --plan-tint: var(--surface); }
-[data-theme=dark] .pay-v2 .pay-plan[data-plan-tone=gold] { --plan-accent: var(--warning); --plan-soft: var(--warning-soft); --plan-tint: var(--surface); }
 [data-theme=dark] .pay-v2 .pay-plan.is-recommended { border-color: var(--control-border); }
 [data-theme=dark] .pay-v2 .pay-plan__recommended-badge { color: var(--action-on-primary); }
 html:root[data-theme=dark] #root .pay-v2 .pay-plan .pay-btn--primary { color: var(--action-on-primary); }
@@ -1061,9 +1058,7 @@ html:root[data-theme='dark'] #root .pay-v2 .pay-current__actions .pay-btn--prima
   .pay-current__actions .pay-btn { flex: 1 1 auto; }
 }
 
-/* One palette for every plan: brand for the card details, orange only on the recommended plan. */
-html:root #root .pay-v2 .pay-plan[data-plan-tone] { --plan-accent: var(--grab-green); --plan-soft: var(--brand-soft); --plan-tint: var(--surface); }
-html:root #root .pay-v2 .pay-plan.is-recommended { --plan-accent: var(--action-primary); --plan-soft: var(--hj-brand-coral-soft); border-color: var(--action-primary); }
+html:root #root .pay-v2 .pay-plan.is-recommended { border-color: var(--action-primary); }
 
 .pay-plan__more { display: none; }
 /* Phone plans: identity, price and three benefits; more benefits on request. */
@@ -1076,7 +1071,7 @@ html:root #root .pay-v2 .pay-plan.is-recommended { --plan-accent: var(--action-p
   html:root #root .pay-v2 .pay-plan .pay-plan__benefits-list { gap: 6px; }
   .pay-plan__more {
     display: inline-flex; align-items: center; min-height: 44px; margin-top: -6px; padding: 0;
-    border: 0; background: none; color: var(--text-accent); font: 600 var(--fs-sm)/1.2 var(--font-ui); cursor: pointer;
+    border: 0; background: none; color: var(--plan-accent); font: 600 var(--fs-sm)/1.2 var(--font-ui); cursor: pointer;
   }
   .pay-plan__more:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 }
