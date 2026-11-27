@@ -111,12 +111,12 @@ html:root body #root .skip-link:focus {
   outline-offset: 2px;
 }
 
-/* Desktop search is one workspace: mode changes only rearrange the results stage. */
+/* Map and split modes occupy the viewport. The list scrolls with the document. */
 @media (min-width: 768px) {
-  html:root body #root .app-shell--product.app-shell--listings {
+  html:root body #root .app-shell--product.app-shell--listings.app-shell--map-peer {
     height: 100dvh; max-height: 100dvh; min-height: 0; overflow: hidden;
   }
-  html:root body #root .app-shell--product.app-shell--listings :is(.app-main, .route-outlet, .home-map-page--dest) {
+  html:root body #root .app-shell--product.app-shell--listings.app-shell--map-peer :is(.app-main, .route-outlet, .home-map-page--dest) {
     display: flex; flex-direction: column; flex: 1 1 auto;
     height: 100%; max-height: 100%; min-height: 0; overflow: hidden;
   }

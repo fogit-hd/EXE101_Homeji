@@ -954,19 +954,10 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   )
 
   const [focusedSourceId, setFocusedSourceId] = useState<string | null>(null)
-  const previewRental = posts.find(post => post.id === focusedPostId)
-  const previewMarket = marketPosts.find(post => post.id === focusedPostId)
   const mapStage = (
     <HomeMapStage
       onSourceSelectionChange={setFocusedSourceId}
-      listingPreview={destinationMode && focusedPostId ? {
-        post: !marketMode ? previewRental : undefined, marketPost: marketMode ? previewMarket : undefined,
-        saved: savedIds.has(focusedPostId), saveBusy,
-        onClose: handleClearMapSelection,
-        onToggleSave: !marketMode && isAuthenticated ? () => { void toggleSavedPost(focusedPostId) } : undefined,
-        onOpenRoom: () => openRoomDetail(focusedPostId),
-        onOpenNearby: nearbyAnchor ? () => { setNearbyRequestedKey(nearbyContextKey); setNearbyDismissedKey(null) } : undefined,
-      } : undefined}
+      sourcePreviewPlacement={destinationMode ? 'corner' : 'pin'}
       posts={destinationMode && marketMode ? [] : posts}
       selectedPostId={focusedPostId}
       hoveredPostId={hoveredPostId}

@@ -8,7 +8,7 @@ import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import { mapBackendListingToListingViewModel } from './listingAdapters'
 import { RentalMapPreview } from './RentalMapPreview'
 
-export function ImportedRentalPreview({ pin, onClose, onOpen }: { pin: SourceCatalogPin; onClose: () => void; onOpen: () => void }) {
+export function ImportedRentalPreview({ pin, onClose, onOpen, compact = true }: { compact?: boolean; pin: SourceCatalogPin; onClose: () => void; onOpen: () => void }) {
   const id = sourcePublisherLink(pin.id.slice('rental:'.length))?.nativePostId
   const [post, setPost] = useState<RentalPost | null>(null)
   useEffect(() => {
@@ -19,8 +19,8 @@ export function ImportedRentalPreview({ pin, onClose, onOpen }: { pin: SourceCat
     }).catch(() => { /* The real source summary remains available while detail can retry. */ })
     return () => controller.abort()
   }, [id])
-  if (id) return <NativePreview key={id} id={id} post={post?.id === id ? post : null} pin={pin} onClose={onClose} onOpen={onOpen} />
-  return <RentalMapPreview compact monthly onClose={onClose} onOpen={onOpen} view={sourceView(pin)} />
+  if (id) return <NativePreview compact={compact} key={id} id={id} post={post?.id === id ? post : null} pin={pin} onClose={onClose} onOpen={onOpen} />
+  return <RentalMapPreview compact={compact} monthly onClose={onClose} onOpen={onOpen} view={sourceView(pin)} />
 }
 
 function sourceView(pin: SourceCatalogPin) {
@@ -33,9 +33,9 @@ function sourceView(pin: SourceCatalogPin) {
     facts: pin.amenityHighlights, updatedAt: pin.sourceUpdatedAt }
 }
 
-function NativePreview({ id, post, pin, onClose, onOpen }: { id: string; post: RentalPost | null; pin: SourceCatalogPin; onClose: () => void; onOpen: () => void }) {
+function NativePreview({ id, post, pin, onClose, onOpen, compact }: { compact: boolean; id: string; post: RentalPost | null; pin: SourceCatalogPin; onClose: () => void; onOpen: () => void }) {
   const save = useRentalPostSave(id)
-  return <RentalMapPreview compact monthly view={post ? mapBackendListingToListingViewModel(post) : sourceView(pin)}
+  return <RentalMapPreview compact={compact} monthly view={post ? mapBackendListingToListingViewModel(post) : sourceView(pin)}
       onClose={onClose} onOpen={onOpen} saved={save.saved} saveBusy={save.busy}
       onToggleSave={() => { void save.toggle() }} notice={save.error} considerationPost={{ id, title: post?.title ?? pin.title }} />
 }

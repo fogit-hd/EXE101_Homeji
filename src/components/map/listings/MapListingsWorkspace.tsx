@@ -1,9 +1,6 @@
 import { X } from 'lucide-react'
-import { useListingSplit } from './useListingSplit'
 import { useListingSearchParams } from '../../../hooks/useListingSearchParams'
-import { dismissListingsTips, listingsTipsDismissed } from './listingsTips'
 import { countActiveListingFilters, listingResultCount } from './listingCounts'
-import { sheetShouldExpand } from './mapListingsLayout.ts'
 import { MoneyInput } from '../../ui/MoneyInput'
 import { RentalSourceResults } from './RentalSourceResults'
 import {
@@ -22,7 +19,6 @@ import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
-import { formatListingArea } from '../../../lib/labels'
 import { PremiumBadge } from '../../PremiumBadge'
 import { ListingTrustBadges } from '../../ListingTrustBadges'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
@@ -30,7 +26,7 @@ import { ChoicePicker } from '../../ui/ChoicePicker'
 import { RentalConsiderationToggle } from '../../ai/RentalConsiderationToggle'
 import { listingThumbSrcSet } from '../../../lib/cloudinaryImage'
 import {
-  HeartIcon,
+  ArrowUpRightIcon,
   SnowflakeIcon,
   LoftLadderIcon,
   ShowerIcon,
@@ -56,10 +52,11 @@ import {
 import { Sk, SkCard } from '../../skeletons/Skeleton'
 import { useIsMobile } from '../../../mobile/useIsMobile'
 import { sortListings, type ListingSort } from './listingSort'
-import { MobileRoomCard } from '../../../mobile/listings/MobileRoomCard'
 import { MobileListingsToolbar } from '../../../mobile/listings/MobileListingsToolbar'
 import { MobileSheet } from '../../../mobile/MobileSheet'
+import { BookmarkIcon, RentalMapPreview } from './RentalMapPreview'
 import './MapListingsWorkspace.css'
+import './MapListingsToolbar.css'
 
 const PAGE_SIZE = 20
 const MOBILE_FILTER_FORM = 'm-listings-filter'
@@ -275,6 +272,8 @@ export function MapListingsWorkspace({
   onHoverListing,
   onLeaveListing,
   onSelectListing,
+  onClearSelection,
+  onOpenNearby,
   onOpenRoomDetail,
   onToggleSave,
   onResetFilters,
@@ -283,7 +282,6 @@ export function MapListingsWorkspace({
   onRefresh,
 }: Props) {
   const isMobile = useIsMobile()
-  const { stageRef: splitStageRef, style: splitStyle, dragging: splitDragging, separatorProps: splitSeparatorProps } = useListingSplit()
   const [sourceCounts, setSourceCounts] = useState<{ total: number; mapped: number; queryKey: string } | null>(null)
   const [searchParams, setSearchParams] = useListingSearchParams()
   const navigate = useNavigate()
@@ -379,7 +377,6 @@ export function MapListingsWorkspace({
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
   const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
-  const [tipsDismissed, setTipsDismissed] = useState(listingsTipsDismissed)
   const apartmentMode = query.catalog === 'apartments'
   type SortBy = ListingSort
   const [sortBy, setSortBy] = useState<SortBy>('default')
@@ -414,6 +411,7 @@ export function MapListingsWorkspace({
   }
 
   const setView = (view: MapListingsView) => {
+    setMobilePane(view === 'list' ? 'list' : 'map')
     setPanelOpen(true)
     writeQuery({ view })
   }
@@ -448,14 +446,13 @@ export function MapListingsWorkspace({
     setFiltersOpen(true)
   }
 
+  const selected = cards.find(card => card.id === selectedListingId)
   const showMap = query.view !== 'list' && mapNode != null
-  const showList = true
+  const showList = query.view !== 'map'
   const contextPanelOpen = showMap && Boolean(contextPanel)
   const mapFirst = query.view !== 'list'
   const [panelOpen, setPanelOpen] = useState(true)
-  const [sheetExpanded, setSheetExpanded] = useState(false)
-  const [sheetDrag, setSheetDrag] = useState(0)
-  const sheetGesture = useRef<{ y: number; moved: boolean } | null>(null)
+  const [mobilePane, setMobilePane] = useState<'map' | 'list'>(query.view === 'list' ? 'list' : 'map')
   useEffect(() => {
     if (!selectedListingId || window.innerWidth < 768) return
     const card = Array.from(panelBodyRef.current?.querySelectorAll<HTMLElement>('[data-listing-id]') ?? []).find(el => el.dataset.listingId === selectedListingId)
@@ -506,35 +503,10 @@ export function MapListingsWorkspace({
       }
       onSelectListing(id)
     }
-    const saved = Boolean(savedIds?.has(id))
-    if (isMobile) {
-      const area = room && Number.isFinite(room.area) && room.area > 0 ? formatListingArea(room.area) : view.areaLabel
-      return (
-        <MobileRoomCard
-          id={id}
-          photo={view.thumbnailUrl}
-          price={price}
-          title={view.title}
-          meta={[area, shortListingAddress((view.address || '').trim())].filter(Boolean).join(' · ')}
-          badge={!marketMode && view.isPremium ? <PremiumBadge variant="glass" /> : undefined}
-          selected={selectedCard}
-          pressed={query.view !== 'list' ? selectedCard : undefined}
-          onOpen={openCard}
-          corner={!marketMode && onToggleSave ? (
-            <button type="button" className={`m-room__save${saved ? ' is-on' : ''}`} aria-pressed={saved}
-              aria-label={saved ? 'Bỏ lưu' : 'Lưu phòng'} disabled={saveBusy && selectedListingId === id}
-              onClick={() => onToggleSave(id)}>
-              <HeartIcon size={20} filled={saved} />
-            </button>
-          ) : undefined}
-          actions={!marketMode ? <RentalConsiderationToggle compact post={{ id, title: view.title }} /> : undefined}
-        />
-      )
-    }
     return (
         <article
           data-listing-id={id}
-          className={`map-listings__card${!marketMode ? ' map-listings__room-card' : ''}${!marketMode && view.isPremium ? ' premium-listing' : ''}${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
+          className={`map-listings__card${!marketMode && view.isPremium ? ' premium-listing' : ''}${selectedCard ? ' is-selected' : ''}${hovered ? ' is-hot' : ''}`}
         >
           {marketMode ? <ListingTrustBadges premium={false} verified={view.isOwnerVerified} /> : view.isPremium ? <span className="map-listings__room-badge"><PremiumBadge variant="glass" /></span> : null}
           <button
@@ -584,8 +556,9 @@ export function MapListingsWorkspace({
               </span>
             </span>
           </button>
-          {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle compact post={{ id, title: view.title }} /></div> : null}
+          {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
 
+          {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></button> : null}
           {!marketMode && onToggleSave ? (
             <button
               type="button"
@@ -598,7 +571,7 @@ export function MapListingsWorkspace({
                 onToggleSave(id)
               }}
             >
-              <HeartIcon size={20} filled={savedIds?.has(id)} />
+              <BookmarkIcon saved={savedIds?.has(id)} />
             </button>
           ) : null}
         </article>
@@ -741,7 +714,7 @@ export function MapListingsWorkspace({
   )
 
   return (
-    <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}${sheetExpanded ? ' is-sheet-expanded' : ''}`}>
+    <div className={`map-listings map-listings--${query.view}${mapFirst ? ' is-map-first' : ''}`}>
       <header className="map-listings__header">
         <h1 className="sr-only">Tìm phòng</h1>
         <h2 className="sr-only">Kết quả tìm phòng</h2>
@@ -889,11 +862,29 @@ export function MapListingsWorkspace({
         )}
       </header>
 
-      <div ref={splitStageRef} style={splitStyle} data-resizing={splitDragging || undefined} className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
+      <div className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
+        {showMap && showList && !contextPanelOpen ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
+          <button
+            type="button"
+            aria-pressed={mobilePane === 'map'}
+            className={mobilePane === 'map' ? 'is-on' : ''}
+            onClick={() => setMobilePane('map')}
+          >
+            Bản đồ
+          </button>
+          <button
+            type="button"
+            aria-pressed={mobilePane === 'list'}
+            className={mobilePane === 'list' ? 'is-on' : ''}
+            onClick={() => setMobilePane('list')}
+          >
+            Danh sách
+          </button>
+        </div> : null}
 
         {showMap ? (
           <section
-            className="map-listings__map"
+            className={`map-listings__map${mobilePane === 'list' && !contextPanelOpen ? ' is-mobile-hidden' : ''}`}
             aria-label="Bản đồ khu vực"
           >
             {mapNode}
@@ -916,32 +907,37 @@ export function MapListingsWorkspace({
                 }
               >
                 <span className="map-listings__move-check" aria-hidden>
-                  {query.searchOnMove ? <img loading="lazy" decoding="async" src="/figma/map/check.svg" alt="" width={11} height={11} /> : null}
+                  {query.searchOnMove ? <img src="/figma/map/check.svg" alt="" width={11} height={11} /> : null}
                 </span>
                 {viewportPaused ? 'Đang giữ khu vực tìm kiếm' : 'Tìm khi di chuyển bản đồ'}
               </button>
-
+            {selected && !contextPanelOpen ? (
+              <RentalMapPreview
+                onClose={onClearSelection}
+                onOpenNearby={onOpenNearby}
+                view={selected.view}
+                monthly={!marketMode}
+                considerationPost={!marketMode ? { id: selected.id, title: selected.view.title } : undefined}
+                saved={savedIds?.has(selected.id)}
+                saveBusy={saveBusy}
+                onToggleSave={!marketMode && onToggleSave ? () => onToggleSave(selected.id) : undefined}
+                onOpen={() => {
+                  if (!marketMode && onOpenRoomDetail) onOpenRoomDetail(selected.id)
+                  else if (marketMode) { const post = marketPosts.find(item => item.id === selected.id); if (post) navigate(marketplaceItemUrl(post)) }
+                  else onSelectListing(selected.id)
+                }}
+              />
+            ) : null}
           </section>
         ) : null}
 
-        {!isMobile && query.view === 'split' && showMap && panelOpen ? (
-          <div className="map-listings__split-handle" {...splitSeparatorProps} />
-        ) : null}
         {contextPanelOpen ? <div className="map-listings__context-panel">{contextPanel}</div> : null}
 
-        {showList ? (
+        {showList && !contextPanelOpen ? (
           <aside
-            className={`map-listings__panel${panelOpen ? '' : ' is-collapsed'}${sheetDrag !== 0 ? ' is-dragging' : ''}`}
-            style={showMap ? { '--sheet-drag': `${sheetDrag}px` } as React.CSSProperties : undefined}
+            className={`map-listings__panel${mobilePane === 'map' && showMap ? ' is-mobile-hidden' : ''}${panelOpen ? '' : ' is-collapsed'}`}
             aria-label="Danh sách kết quả"
           >
-            {isMobile && showMap ? <button type="button" className="map-listings__sheet-handle" aria-label={sheetExpanded ? 'Thu gọn danh sách phòng' : 'Mở danh sách phòng'} aria-expanded={sheetExpanded} aria-controls="map-listings-results"
-              onClick={event => { if (event.detail === 0 || !sheetGesture.current?.moved) setSheetExpanded(value => !value); sheetGesture.current = null }}
-              onPointerDown={event => { sheetGesture.current = { y: event.clientY, moved: false }; event.currentTarget.setPointerCapture(event.pointerId) }}
-              onPointerMove={event => { const gesture = sheetGesture.current; if (!gesture || !event.currentTarget.hasPointerCapture(event.pointerId)) return; const delta = event.clientY - gesture.y; gesture.moved = Math.abs(delta) > 8; setSheetDrag(sheetExpanded ? Math.max(0, delta) : Math.min(0, delta)) }}
-              onPointerUp={event => { const gesture = sheetGesture.current; if (!gesture) return; if (gesture.moved) setSheetExpanded(sheetShouldExpand(sheetExpanded, event.clientY - gesture.y)); setSheetDrag(0); event.currentTarget.releasePointerCapture(event.pointerId) }}
-              onPointerCancel={() => { sheetGesture.current = null; setSheetDrag(0) }}
-            ><span aria-hidden="true" /><strong>{resultCount} phòng</strong></button> : null}
             {query.view === 'split' ? <div className="map-listings__panel-head">
               <div><strong className="map-listings__panel-caption">{marketMode ? 'Đồ dùng trong khu vực' : apartmentMode ? 'Căn hộ trong khu vực' : 'Phòng trọ trong khu vực'}</strong></div>
             </div> : null}
@@ -953,21 +949,6 @@ export function MapListingsWorkspace({
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {!marketMode && <div className={`map-listings__tips-collapse${tipsDismissed ? ' is-dismissed' : ''}`} inert={tipsDismissed} aria-hidden={tipsDismissed}>
-                <div><aside className="map-listings__tips" role="note" aria-labelledby="listings-tips-title">
-                  <h2 id="listings-tips-title">Mẹo nhanh</h2>
-                  <ul>
-                    <li>Bấm ghim giá trên bản đồ để xem nhanh phòng.</li>
-                    <li>Dùng Bộ lọc để chọn giá, diện tích, tiện ích.</li>
-                    <li>Thêm phòng vào Cân nhắc để so sánh.</li>
-                  </ul>
-                  <button type="button" className="btn btn-secondary" onClick={() => {
-                    dismissListingsTips()
-                    setTipsDismissed(true)
-                    filterAnchor.current?.focus({ preventScroll: true })
-                  }}>Đã hiểu</button>
-                </aside></div>
-              </div>}
               {(pullY > 0 || pullRefreshing) ? (
                 <div
                   className={`map-listings__pull-indicator${pullRefreshing ? ' is-refreshing' : ''}`}
@@ -1037,7 +1018,7 @@ export function MapListingsWorkspace({
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 null
               )}
-              {!marketMode && <RentalSourceResults mobile={isMobile} selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              {!marketMode && <RentalSourceResults selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
               <div ref={infiniteSentinelRef} className="map-listings__sentinel" aria-hidden="true" />
               {loading && query.page > 1 ? (
                 <div className="map-listings__loading-more" role="status">

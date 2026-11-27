@@ -13,6 +13,7 @@ const HOME_SELECTION_PAD = { top: 110, bottom: 100 }
 export type HomeMapFocus = { lat: number; lng: number; zoom?: number }
 
 type HomeMapStageProps = {
+  sourcePreviewPlacement?: 'pin' | 'corner'
   onSourceSelectionChange?: (id: string | null) => void
   listingPreview?: { post?: RentalPostSummary; marketPost?: MarketplacePost; saved: boolean; saveBusy: boolean;
     onClose: () => void; onToggleSave?: () => void; onOpenRoom: () => void; onOpenNearby?: () => void }
@@ -76,6 +77,7 @@ type HomeMapStageProps = {
  */
 export const HomeMapStage = memo(function HomeMapStage({
   onSourceSelectionChange,
+  sourcePreviewPlacement,
   listingPreview,
   posts,
   selectedPostId,
@@ -112,6 +114,7 @@ export const HomeMapStage = memo(function HomeMapStage({
   return (
     <RentalMap
       onSourceSelectionChange={onSourceSelectionChange}
+      sourcePreviewPlacement={sourcePreviewPlacement}
       selectedPreview={selectedPreview}
       showSourceCatalog
       posts={posts}

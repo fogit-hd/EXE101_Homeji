@@ -201,8 +201,10 @@ function OwnedSearchInterestCenter() {
     return () => { observer.disconnect(); document.documentElement.style.removeProperty('--interest-launch-height') }
   }, [floating])
   const changeNumber = (key: keyof InterestCriteria, raw: string) => setDraft(value => value ? { ...value, [key]: raw === '' ? null : Number(raw) } : value)
-  const launcher = <button ref={launcherRef} type="button" className={`interest-launch${tucked ? ' is-tucked' : ''}`} hidden={floating && footerVisible} inert={tucked} onClick={() => setOpen(true)} aria-haspopup="dialog">
-      <BellRing className="interest-launch__icon" aria-hidden="true" size={18} /><b className="interest-launch__label">Báo phòng mới</b>
+  const launcher = <button ref={launcherRef} type="button" className={`interest-launch${inSearchWorkspace ? ' interest-launch--legacy-listings' : ''}${tucked ? ' is-tucked' : ''}`} hidden={floating && footerVisible} inert={tucked} onClick={() => setOpen(true)} aria-haspopup="dialog">
+      {inSearchWorkspace ? 'Phòng mới' : <>
+        <BellRing className="interest-launch__icon" aria-hidden="true" size={18} /><b className="interest-launch__label">Báo phòng mới</b>
+      </>}
       {current && current.rooms.length > 0
         ? <span className="interest-launch__count"><small className="interest-launch__sr">, </small>{current.rooms.length}<small className="interest-launch__sr"> phòng mới</small></span>
         : current && current.suggestions.length > 0

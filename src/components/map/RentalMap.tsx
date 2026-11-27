@@ -88,6 +88,7 @@ type MapDisplayMode = BaseMapMode | 'streetview-select' | 'streetview'
 
 type RentalMapProps = {
   selectedPreview?: ReactNode
+  sourcePreviewPlacement?: 'pin' | 'corner'
   onSourceSelectionChange?: (id: string | null) => void
   showSourceCatalog?: boolean
   sourceRentalPins?: SourceCatalogPin[]
@@ -207,6 +208,7 @@ function styleFor(
  */
 function RentalMapComponent({
   selectedPreview,
+  sourcePreviewPlacement = 'pin',
   onSourceSelectionChange,
   showSourceCatalog = false,
   sourceRentalPins,
@@ -1430,13 +1432,21 @@ function RentalMapComponent({
   const previewPost = posts.find(post => post.id === selectedPostId)
   const previewMarket = marketplacePins.find(pin => pin.id === selectedMarketplaceId)
   const previewPoint = selectedSource ?? (previewPost ? { lat: previewPost.latitude, lng: previewPost.longitude } : previewMarket)
+  const sourcePreview = selectedSource ? (
+    <ImportedRentalPreview key={selectedSource.id} pin={selectedSource} compact={sourcePreviewPlacement === 'pin'}
+      onClose={() => setSelectedSource(null)}
+      onOpen={() => navigate(sourceRoomHref(selectedSource.id.slice('rental:'.length)))} />
+  ) : null
+  const preview = sourcePreview ?? selectedPreview
+  const showSourceInCorner = Boolean(sourcePreview && sourcePreviewPlacement === 'corner')
   return (
     <div className="rental-map">
-      {previewPoint && (selectedSource || selectedPreview) ? <MapPinPreview map={mapInstance} lat={previewPoint.lat} lng={previewPoint.lng} onClose={() => { setSelectedSource(null); onClearSelection?.() }}>
-      {selectedSource ? <ImportedRentalPreview key={selectedSource.id} pin={selectedSource} onClose={() => setSelectedSource(null)}
-        onOpen={() => navigate(sourceRoomHref(selectedSource.id.slice('rental:'.length)))}
-        /> : selectedPreview}
-      </MapPinPreview> : null}
+      {showSourceInCorner ? sourcePreview : previewPoint && preview ? (
+        <MapPinPreview map={mapInstance} lat={previewPoint.lat} lng={previewPoint.lng}
+          onClose={() => { setSelectedSource(null); onClearSelection?.() }}>
+          {preview}
+        </MapPinPreview>
+      ) : null}
       <div ref={hostRef} className="rental-map__host"
         onWheelCapture={event => {
           if (isMapOverlayInteraction(event.target)) return
@@ -1584,6 +1594,7 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.onSelectPost === next.onSelectPost &&
     prev.onClearSelection === next.onClearSelection &&
     prev.selectedPreview === next.selectedPreview &&
+    prev.sourcePreviewPlacement === next.sourcePreviewPlacement &&
     prev.onSourceSelectionChange === next.onSourceSelectionChange &&
     prev.onSelectPlace === next.onSelectPlace &&
     prev.onPlaceLoading === next.onPlaceLoading &&
