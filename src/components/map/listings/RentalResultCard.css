@@ -1,0 +1,53 @@
+html:root body #root .map-listings .rental-result-card.map-listings__card { display: flex; flex-direction: column; width: 100%; min-width: 0; height: 100%; box-sizing: border-box; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-elevated); box-shadow: none; transition: border-color .15s ease; }
+html:root body #root .map-listings .rental-result-card.map-listings__card:is(:hover, .is-hot) { border-color: var(--text-secondary); box-shadow: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-selected { border: 1px solid var(--action-on-soft); box-shadow: inset 0 0 0 1px var(--action-on-soft); background: var(--surface-elevated); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__cover { position: relative; flex: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__media { position: relative; display: block; width: 100%; height: auto; min-height: 0; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; aspect-ratio: 16 / 9; background: var(--surface-muted); overflow: hidden; cursor: pointer; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--text-secondary); font: 400 .75rem/1.5 var(--font-ui); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__badge { position: absolute; left: 10px; top: 10px; pointer-events: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__type, html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__photo-count { position: absolute; bottom: 10px; left: 10px; padding: 4px 8px; border-radius: 6px; background: var(--surface-elevated); color: var(--text-heading); font: 500 .75rem/1.4 var(--font-ui); pointer-events: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__photo-count { left: auto; right: 10px; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__save { position: absolute; top: 10px; right: 10px; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__save > button { position: static; display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: var(--surface-elevated); color: var(--text-heading); box-shadow: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__save > button.is-on { background: var(--action-primary); color: var(--action-on-primary); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__body { display: flex; flex-direction: column; min-width: 0; gap: 8px; padding: 14px 16px 10px; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 28px; flex-wrap: wrap; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__price { color: var(--action-on-soft); font: 700 1.125rem/1.5 var(--font-ui); font-variant-numeric: tabular-nums; white-space: nowrap; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__price small { color: var(--text-secondary); font: 400 .75rem/1.5 var(--font-ui); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 44px; height: 44px; margin: 0; font: 600 .9375rem/22px var(--font-ui); color: var(--text-heading); overflow-wrap: anywhere; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__title > :is(a,button) { display: inline; width: auto; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__address { display: flex; align-items: center; gap: 5px; min-width: 0; height: 20px; margin: 0; color: var(--text-secondary); font: 400 .8125rem/20px var(--font-ui); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__address svg { flex: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__address span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__notes { position: relative; box-sizing: border-box; height: 40px; padding-right: 76px; color: var(--text-secondary); font: 400 .75rem/20px var(--font-ui); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__notes p { margin: 0; font: inherit; color: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__updated { position: absolute; right: 0; top: 0; font-variant-numeric: tabular-nums; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding: 12px 16px 16px; border-top: 1px solid var(--border); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__secondary:empty, html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__secondary:not(:has(button,a)) { display: none; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__secondary, html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__detail { flex: 1 1 106px; min-width: 0; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__detail, html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__secondary > :is(button,a) { display: flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; width: 100%; min-height: 42px; margin: 0; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-heading); font: 600 .8125rem/22px var(--font-ui); white-space: nowrap; text-decoration: none; cursor: pointer; }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__detail { width: auto; border-color: transparent; background: var(--brand-soft, var(--surface-muted)); color: var(--action-on-soft); }
+html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__detail:hover, html:root body #root .map-listings .rental-result-card.map-listings__card .rental-result-card__secondary > :is(button,a):hover { background: var(--surface-muted); }
+html:root body #root .map-listings .rental-result-card.map-listings__card :is(button,a):focus-visible { outline: 2px solid var(--text-heading); outline-offset: -3px; }
+
+@media (prefers-reduced-motion: reduce) { html:root body #root .map-listings .rental-result-card.map-listings__card { transition: none; } }
+
+/* Premium attention treatment: no layout change, one sweep when first visible. */
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured:not(.is-selected) { border-color: var(--premium-edge-color); }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__badge { z-index: 2; }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__save { z-index: 2; }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .premium-badge { background: var(--premium-soft); color: var(--premium-text); border-color: var(--premium-edge-color); }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__actions { border-top-color: color-mix(in srgb, var(--premium-edge-color) 45%, var(--border)); }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__cover::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 60%; z-index: 1; pointer-events: none; opacity: 0; transform: translateX(-160%) skewX(-18deg); background: linear-gradient(110deg, transparent, rgb(255 255 255 / .48), transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured-revealed .rental-result-card__cover::after { animation: rental-featured-sweep 900ms cubic-bezier(.22, 1, .36, 1) 120ms 1 both; }
+}
+@keyframes rental-featured-sweep {
+  0% { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
+  15%, 75% { opacity: .75; }
+  100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__cover::after { animation: none; content: none; }
+}

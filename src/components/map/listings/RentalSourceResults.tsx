@@ -1,3 +1,5 @@
+import { readSourceCatalogPins, type SourceCatalogPin } from '../../../lib/sourceCatalog'
+import { RentalResultCard } from './RentalResultCard'
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { getRentalSourceCatalog, rentalSourcePublisher, sourceRoomHref, rentalSourceImageHref, type RentalSourceListing } from '../../../api/rentalSources'
@@ -5,7 +7,7 @@ import { getErrorMessage } from '../../../lib/errors'
 import { formatPrice } from '../../../lib/labels'
 import { isApartmentListing } from '../../../lib/rentalPropertyCategory'
 import { filterRentalSourcesForList, sourceHasLocation, sourceHasUnsupportedFilters } from '../../../lib/rentalSourceFilters'
-import { HouseIcon, SparkleIcon, NoteEditIcon, UsersIcon, ArrowUpRightIcon } from '../../icons/SvgIcons'
+import { HouseIcon, SparkleIcon, NoteEditIcon, UsersIcon } from '../../icons/SvgIcons'
 import { Sk, SkCard } from '../../skeletons/Skeleton'
 import { ShowMore, SHOW_MORE_STEP } from '../../ui/Disclosure'
 import type { ListingQuery } from './listingAdapters'
@@ -14,18 +16,17 @@ import { useCatalogRefresh } from '../../../lib/useCatalogRefresh'
 import { sortListings, type ListingSort, type SortFacts } from './listingSort'
 
 type Counts = { total: number; mapped: number }
-// What students scan for first; shown highlighted on every card.
-const STUDENT_KEY_AMENITIES = new Set(['Máy lạnh', 'Máy nước nóng', 'Bếp', 'Giờ tự do', 'Không chung chủ'])
 function formatSourceDate(value: string | null | undefined): string | null {
   if (!value) return null
   const timestamp = Date.parse(value)
   return Number.isFinite(timestamp)
-    ? new Intl.DateTimeFormat('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }).format(timestamp)
+    ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(timestamp)
     : null
 }
 
-export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, nativeCards = [], nativeIds = [], nativeFacts = [], sort = 'default', selectedId, onHover, onLeave }: {
+export function RentalSourceResults({ onSelectSource, query, onCount, onFocus, onResetFilters, nativeCards = [], nativeIds = [], nativeFacts = [], sort = 'default', selectedId, onHover, onLeave }: {
   /** Price and area of each native card, in nativeCards order, so a sort can merge both inventories. */
+  onSelectSource?: (pin: SourceCatalogPin) => void
   nativeFacts?: SortFacts[]
   sort?: ListingSort
   selectedId?: string | null
@@ -128,27 +129,16 @@ export function RentalSourceResults({ query, onCount, onFocus, onResetFilters, n
       if (!item.row) return <li key={item.key}>{item.native}</li>
       const row = item.row
       const photo = row.imageUrls.map(rentalSourceImageHref).find(Boolean)
+      const sourcePin = onSelectSource ? readSourceCatalogPins([row], 'rental')[0] : undefined
       const updatedAt = formatSourceDate(row.sourceUpdatedAt)
-      return <li key={row.id}><article data-listing-id={`rental:${row.id}`} className={`map-listings__card source-results__card${selectedId === `rental:${row.id}` ? ' is-selected' : ''}`} onMouseEnter={() => onHover?.(`rental:${row.id}`)} onMouseLeave={onLeave} onFocus={() => onHover?.(`rental:${row.id}`)} onBlur={onLeave}>
-        <Link className="source-results__photo" to={sourceRoomHref(row.id)} aria-label={`Xem phòng: ${row.title}`}>
-          <span className="source-results__empty-photo">Chưa có ảnh</span>
-          {photo ? <img src={photo} alt="" loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.hidden = true }} /> : null}
-          {photo ? <span className="source-results__photo-count">{row.imageUrls.length} ảnh</span> : null}
-        </Link>
-        <div className="source-results__copy">
-          <strong className="map-listings__price source-results__price">{formatPrice(row.price)} <small>/ tháng</small></strong>
-          <h3 className="map-listings__name"><Link to={sourceRoomHref(row.id)}>{row.title}</Link></h3>
-          <p className="map-listings__address">{row.address}</p>
-          <div className="map-listings__meta">{row.area > 0 ? <span>{row.area} m²</span> : null}<span>{isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'}</span></div>
-          {row.amenityHighlights?.length ? <ul className="source-results__amenities" aria-label="Tiện ích nổi bật">{row.amenityHighlights.slice(0, 6).map(value => <li key={value} className={STUDENT_KEY_AMENITIES.has(value) ? 'is-key' : undefined}>{value}</li>)}</ul> : null}
-          <div className="map-listings__facts">{row.depositLabel ? <span>{row.depositLabel}</span> : null}{updatedAt ? <time dateTime={row.sourceUpdatedAt ?? undefined}>Cập nhật {updatedAt}</time> : null}</div>
-          <p className="source-results__publisher">{rentalSourcePublisher(row.publisherName)}</p>
-        </div>
-        <div className="source-results__actions">
-          {onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem vị trí trên bản đồ</button> : null}
-          <Link className="map-listings__card-open" data-glass-exclude to={sourceRoomHref(row.id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></Link>
-        </div>
-      </article></li>
+      return <li key={row.id}><RentalResultCard id={`rental:${row.id}`} title={row.title} price={<>{formatPrice(row.price)} <small>/ tháng</small></>}
+        area={row.area > 0 ? `${row.area} m²` : undefined} propertyType={isApartmentListing(row.title) ? 'Căn hộ' : 'Phòng trọ'} address={row.address}
+        photo={photo} photoCount={row.imageUrls.length} imported amenities={row.amenityHighlights ?? []} selectedAmenities={query.amenities}
+        deposit={row.depositLabel ?? undefined} updated={updatedAt} publisher={rentalSourcePublisher(row.publisherName)} href={sourceRoomHref(row.id)}
+        onSelect={onSelectSource && sourcePin ? () => onSelectSource(sourcePin) : undefined}
+        selected={selectedId === `rental:${row.id}`} onHover={() => onHover?.(`rental:${row.id}`)} onLeave={onLeave}
+        secondaryAction={onFocus && sourceHasLocation(row) ? <button type="button" data-glass-exclude onClick={() => onFocus({ lat: row.latitude!, lng: row.longitude! })}>Xem bản đồ</button> : undefined}
+      /></li>
     })}</ul>
     <ShowMore className="source-results__more" shown={Math.min(visibleCount, combined.length)} total={combined.length} unit="tin" onMore={() => setVisible(visibleCount + SHOW_MORE_STEP)} />
   </section>

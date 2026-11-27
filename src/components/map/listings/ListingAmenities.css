@@ -1,0 +1,48 @@
+/* Room facts and a small set of primary amenities share one chip treatment. */
+html:root body #root .listing-amenities { min-width: 0; width: 100%; }
+html:root body #root .listing-amenities__facts { display: flex; align-items: center; gap: 6px; min-height: 28px; margin-bottom: 6px; }
+html:root body #root .listing-amenities__facts > span {
+  box-sizing: border-box; padding: 3px 8px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--surface-input); color: var(--text-secondary); font: 600 .75rem/20px var(--font-ui); white-space: nowrap;
+}
+html:root body #root .listing-amenities__preview {
+  display: flex; align-content: flex-start; align-items: flex-start; gap: 6px; flex-wrap: nowrap;
+  height: 28px; min-height: 28px; overflow: hidden; list-style: none; margin: 0; padding: 0;
+}
+html:root body #root .listing-amenities__preview.has-many-matches { flex-wrap: wrap; height: 62px; min-height: 62px; }
+html:root body #root .listing-amenities__preview > li {
+  display: flex; align-items: center; gap: 4px; flex: 0 1 auto; box-sizing: border-box; max-width: 100%; min-width: 0;
+  height: 28px; padding: 3px 9px; border: 1px solid transparent; border-radius: 14px;
+  background: var(--brand-soft); color: var(--action-on-soft); font: 600 .75rem/20px var(--font-ui);
+}
+html:root body #root .listing-amenities__preview li.is-matched { background: var(--action-primary); color: var(--action-on-primary); border-color: var(--action-primary); font-weight: 700; }
+.listing-amenities__preview svg { flex: none; }
+.listing-amenities__preview li > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html:root body #root .listing-amenities__more, html:root body #root .listing-amenities__empty {
+  display: block; box-sizing: border-box; width: 100%; min-height: 32px; margin: 0; padding: 4px 0;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none; text-align: left;
+  color: var(--text-secondary); font: 400 var(--fs-sm, .875rem)/24px var(--font-ui); white-space: normal;
+}
+html:root body #root .listing-amenities__more { cursor: pointer; }
+.listing-amenities__link { color: var(--action-on-soft); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+html:root body #root .listing-amenities__more:focus-visible { outline: 2px solid var(--text-heading); outline-offset: 2px; }
+html:root body #root .listing-amenities__popover {
+  box-sizing: border-box; position: fixed; inset: auto; width: min(360px, calc(100vw - 32px));
+  max-height: min(400px, calc(100dvh - 32px)); margin: 0; padding: 16px; overflow: auto; overscroll-behavior: contain;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface-elevated);
+  color: var(--text-primary); box-shadow: 0 8px 24px rgb(0 0 0 / .16);
+}
+.listing-amenities__popover > header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+html:root body #root .listing-amenities__popover h3 { margin: 0; font: 600 1rem/1.5 var(--font-ui); color: var(--text-heading); }
+html:root body #root .listing-amenities__popover header button { display: grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 32px; padding: 0; border: 0; border-radius: 6px; background: var(--surface-muted); color: var(--text-heading); cursor: pointer; }
+html:root body #root .listing-amenities__room { margin: 8px 0 12px; color: var(--text-secondary); font: 400 .875rem/1.5 var(--font-ui); overflow-wrap: anywhere; }
+html:root body #root .listing-amenities__all { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+html:root body #root .listing-amenities__all li { display: flex; align-items: start; gap: 8px; color: var(--text-primary); font: 400 .875rem/1.5 var(--font-ui); }
+.listing-amenities__all svg { flex: none; margin-top: 3px; color: var(--action-on-soft); }
+.listing-amenities__all li > span { min-width: 0; overflow-wrap: anywhere; }
+.listing-amenities__all small { margin-left: auto; flex: none; color: var(--text-secondary); font-size: .75rem; }
+html:root body #root .map-listings__card > .listing-amenities { box-sizing: border-box; padding: 0 16px; }
+html:root body #root .map-listings__card > .listing-card-extra { margin: 4px 16px 16px; }
+@media (max-width: 767px) {
+  html:root body #root .listing-amenities__more, html:root body #root .listing-amenities__empty { min-height: 44px; padding-block: 10px; }
+}

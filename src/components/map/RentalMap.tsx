@@ -88,6 +88,7 @@ type MapDisplayMode = BaseMapMode | 'streetview-select' | 'streetview'
 
 type RentalMapProps = {
   selectedPreview?: ReactNode
+  sourceSelection?: SourceCatalogPin | null
   sourcePreviewPlacement?: 'pin' | 'corner'
   onSourceSelectionChange?: (id: string | null) => void
   showSourceCatalog?: boolean
@@ -208,6 +209,7 @@ function styleFor(
  */
 function RentalMapComponent({
   selectedPreview,
+  sourceSelection,
   sourcePreviewPlacement = 'pin',
   onSourceSelectionChange,
   showSourceCatalog = false,
@@ -296,9 +298,11 @@ function RentalMapComponent({
 
   const onSelectPostRef = useRef(onSelectPost)
   const navigate = useNavigate()
-  const [selectedSource, setSelectedSource] = useState<SourceCatalogPin | null>(null)
+  const [markerSource, setSelectedSource] = useState<SourceCatalogPin | null>(null)
+  const selectedSource = sourceSelection ?? (selectedPostId ? null : markerSource)
+  if (selectedPostId && markerSource) setSelectedSource(null)
   useEffect(() => { onSourceSelectionChange?.(selectedSource?.id ?? null) }, [selectedSource, onSourceSelectionChange])
-  if (selectedSource && sourceRentalPins && !sourceRentalPins.some(pin => pin.id === selectedSource.id)) {
+  if (markerSource && sourceRentalPins && !sourceRentalPins.some(pin => pin.id === markerSource.id)) {
     setSelectedSource(null)
   }
   const onClearSelectionRef = useRef(onClearSelection)
@@ -378,6 +382,7 @@ function RentalMapComponent({
   const selectSourceRental = useCallback((pin: SourceCatalogPin) => {
     onClearSelection?.()
     setSelectedSource(pin)
+    cameraRef.current?.schedule(`source:${pin.id}`, { center: {lat: pin.lat, lng: pin.lng}, zoom: Math.max(mapRef.current?.getZoom?.() ?? MAP_FOCUS_ZOOM, MAP_FOCUS_ZOOM) })
   }, [onClearSelection])
   useSourceCatalogMap(mapRef, libRef, mapReady, showSourceCatalog, pinLayers, markerVariant, onCatalogMarkersChange, selectSourceRental, sourceRentalPins, selectedSource?.id, hoveredPostId)
 
@@ -1167,7 +1172,7 @@ function RentalMapComponent({
    * Single coalesced camera controller.
    * Priority: listingsFit (filter) > focus > place pin > selected listing > initial overview.
    * Pin-layer chips (Phòng trọ / Ở ghép / Chợ đồ) only show/hide markers — no re-zoom.
-   * Filter/overview fits use the same maxZoom for every layer mix; listing selection only pans off-screen pins.
+   * Filter/overview fits share a maxZoom; selecting a room focuses its neighborhood.
    */
   useEffect(() => {
     if (!mapReady) return
@@ -1254,7 +1259,7 @@ function RentalMapComponent({
       if (key === selectAppliedRef.current) return
       selectAppliedRef.current = key
       const position = { lat: selectedPost.latitude, lng: selectedPost.longitude }
-      if (!mapRef.current?.getBounds()?.contains(position)) mapRef.current?.panTo(position)
+      camera.schedule(key, { center: position, zoom: Math.max(mapRef.current?.getZoom?.() ?? MAP_FOCUS_ZOOM, MAP_FOCUS_ZOOM) })
       return
     }
 
@@ -1434,7 +1439,7 @@ function RentalMapComponent({
   const previewPoint = selectedSource ?? (previewPost ? { lat: previewPost.latitude, lng: previewPost.longitude } : previewMarket)
   const sourcePreview = selectedSource ? (
     <ImportedRentalPreview key={selectedSource.id} pin={selectedSource} compact={sourcePreviewPlacement === 'pin'}
-      onClose={() => setSelectedSource(null)}
+      onClose={() => { setSelectedSource(null); onClearSelection?.() }}
       onOpen={() => navigate(sourceRoomHref(selectedSource.id.slice('rental:'.length)))} />
   ) : null
   const preview = sourcePreview ?? selectedPreview
@@ -1594,6 +1599,7 @@ function propsEqual(prev: RentalMapProps, next: RentalMapProps) {
     prev.onSelectPost === next.onSelectPost &&
     prev.onClearSelection === next.onClearSelection &&
     prev.selectedPreview === next.selectedPreview &&
+    prev.sourceSelection === next.sourceSelection &&
     prev.sourcePreviewPlacement === next.sourcePreviewPlacement &&
     prev.onSourceSelectionChange === next.onSourceSelectionChange &&
     prev.onSelectPlace === next.onSelectPlace &&

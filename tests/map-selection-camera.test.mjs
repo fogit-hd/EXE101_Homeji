@@ -28,13 +28,13 @@ function selectionHarness(body) {
   return { focus: focusRef.current, token, selectedId, locationRequest: locationRequest.current, locating }
 }
 
-test('off-screen rental selection pans without zooming or replaying device-location focus', () => {
+test('rental selection zooms to the room without replaying device-location focus', () => {
   const state = selectionHarness(selectBody)
   let movement
   runCamera(state.focus, state.token, { current: 'focus:10.8,106.7,16:4' }, { schedule: (key, target) => { movement = { key, ...target } } },
     16, null, null, () => true, { current: '' }, { id: state.selectedId, latitude: 10.9, longitude: 106.8 },
     { current: { getBounds: () => ({ contains: () => false }), panTo: center => { movement = { center } } } })
-  assert.deepEqual(movement, { center: { lat: 10.9, lng: 106.8 } })
+  assert.deepEqual(movement, { key: `post:room:${state.token}`, center: { lat: 10.9, lng: 106.8 }, zoom: 16 })
   assert.equal(state.locationRequest, 8, 'a pending geolocation response must no longer own the camera')
   assert.equal(state.locating, false)
 })
@@ -56,9 +56,28 @@ test('an explicit location button focus is still honored', () => {
   assert.deepEqual(movement.center, { lat: 10.8, lng: 106.7 })
 })
 
-test('visible rental selection leaves the camera untouched', () => {
-  const unexpectedMovement = () => assert.fail('visible selections must not move the camera')
-  runCamera(null, 0, { current: '' }, { schedule: unexpectedMovement }, 16, null, null, () => true,
+test('a room already visible on the map still receives street-level focus', () => {
+  let movement
+  runCamera(null, 0, { current: '' }, { schedule: (key, target) => { movement = {key, ...target} } }, 16, null, null, () => true,
     { current: '' }, { id: 'room', latitude: 10.9, longitude: 106.8 },
-    { current: { getBounds: () => ({ contains: () => true }), panTo: unexpectedMovement } })
+    { current: { getBounds: () => ({ contains: () => true }), getZoom: () => 10 } })
+  assert.deepEqual(movement, {key:'post:room:0',center:{lat:10.9,lng:106.8},zoom:16})
+})
+
+test('rental selection preserves a closer map zoom', () => {
+  let movement
+  runCamera(null, 0, { current: '' }, { schedule: (_, target) => { movement = target } }, 16, null, null, () => true,
+    { current: '' }, { id: 'room', latitude: 10.9, longitude: 106.8 }, {current:{getZoom:()=>20}})
+  assert.equal(movement.zoom,20)
+})
+
+test('a source marker selects its shared preview and zooms to its neighborhood', () => {
+  const body=map.match(/const selectSourceRental = useCallback\(\(pin: SourceCatalogPin\) => \{([\s\S]*?)\n  \}, \[onClearSelection\]\)/)[1]
+  const select=new Function('pin','onClearSelection','setSelectedSource','cameraRef','mapRef','MAP_FOCUS_ZOOM',compile(body))
+  let cleared=0, selected, movement
+  const pin={id:'rental:source',lat:10.85,lng:106.76}
+  select(pin,()=>cleared++,value=>{selected=value},{current:{schedule:(key,target)=>{movement={key,...target}}}},{current:{getZoom:()=>10}},18)
+  assert.equal(cleared,1)
+  assert.equal(selected,pin)
+  assert.deepEqual(movement,{key:'source:rental:source',center:{lat:10.85,lng:106.76},zoom:18})
 })

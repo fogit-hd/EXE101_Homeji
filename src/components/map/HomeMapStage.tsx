@@ -1,3 +1,4 @@
+import type { SourceCatalogPin } from '../../lib/sourceCatalog'
 import { useNavigate } from 'react-router-dom'
 import { RentalMapPreview } from './listings/RentalMapPreview'
 import { mapBackendListingToListingViewModel, mapMarketplacePostToListingViewModel } from './listings/listingAdapters'
@@ -13,6 +14,7 @@ const HOME_SELECTION_PAD = { top: 110, bottom: 100 }
 export type HomeMapFocus = { lat: number; lng: number; zoom?: number }
 
 type HomeMapStageProps = {
+  sourceSelection?: SourceCatalogPin | null
   sourcePreviewPlacement?: 'pin' | 'corner'
   onSourceSelectionChange?: (id: string | null) => void
   listingPreview?: { post?: RentalPostSummary; marketPost?: MarketplacePost; saved: boolean; saveBusy: boolean;
@@ -77,6 +79,7 @@ type HomeMapStageProps = {
  */
 export const HomeMapStage = memo(function HomeMapStage({
   onSourceSelectionChange,
+  sourceSelection,
   sourcePreviewPlacement,
   listingPreview,
   posts,
@@ -113,6 +116,7 @@ export const HomeMapStage = memo(function HomeMapStage({
     onOpen={() => { if (listingPreview.marketPost) navigate(marketplaceItemUrl(listingPreview.marketPost)); else listingPreview.onOpenRoom() }} /> : undefined
   return (
     <RentalMap
+      sourceSelection={sourceSelection}
       onSourceSelectionChange={onSourceSelectionChange}
       sourcePreviewPlacement={sourcePreviewPlacement}
       selectedPreview={selectedPreview}

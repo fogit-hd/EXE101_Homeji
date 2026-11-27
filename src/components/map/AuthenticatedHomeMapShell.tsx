@@ -1,3 +1,4 @@
+import type { SourceCatalogPin } from '../../lib/sourceCatalog'
 import { CONVERSATION_READ } from '../../lib/conversationRealtime'
 import { useListingSearchParams } from '../../hooks/useListingSearchParams'
 import { useSearchParams } from 'react-router-dom'
@@ -153,6 +154,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const isListMode = exploreView === 'list'
   const isMapMode = exploreView === 'map'
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null)
+  const [sourceSelection, setSourceSelection] = useState<SourceCatalogPin | null>(null)
   const [focusedPostId, setFocusedPostId] = useState<string | null>(selectedPostId)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceDetails | null>(null)
   const [placeLoading, setPlaceLoading] = useState(false)
@@ -553,6 +555,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   }, [isAuthenticated, needsProfileSetup, profile?.id, profile?.role])
 
   const handleClearMapSelection = useCallback(() => {
+    setSourceSelection(null)
     setNearbyRequestedKey(null)
     setNearbyDismissedKey(null)
     focusedPostIdRef.current = null
@@ -674,6 +677,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
 
   const handleSelectPost = useCallback(
     (postId: string) => {
+      setSourceSelection(null)
       setNearbyRequestedKey(null)
       setNearbyDismissedKey(null)
       setSharedLocationPin(null)
@@ -956,6 +960,7 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
   const [focusedSourceId, setFocusedSourceId] = useState<string | null>(null)
   const mapStage = (
     <HomeMapStage
+      sourceSelection={sourceSelection}
       onSourceSelectionChange={setFocusedSourceId}
       sourcePreviewPlacement={destinationMode ? 'corner' : 'pin'}
       posts={destinationMode && marketMode ? [] : posts}
@@ -1110,6 +1115,11 @@ export const AuthenticatedHomeMapShell = memo(function AuthenticatedHomeMapShell
           onOpenNearby={nearbyAnchor ? () => { setNearbyRequestedKey(nearbyContextKey); setNearbyDismissedKey(null) } : undefined}
           onHoverListing={handleCardHover}
           onLeaveListing={handleCardLeave}
+          onSelectSource={pin => {
+            handleClearMapSelection()
+            setSourceSelection(pin)
+            handleMarketplaceFocusMap(pin)
+          }}
           onSelectListing={handleSelectPost}
           onFocusSource={handleMarketplaceFocusMap}
           onOpenRoomDetail={openRoomDetail}

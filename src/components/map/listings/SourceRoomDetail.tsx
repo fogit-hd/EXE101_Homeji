@@ -108,14 +108,13 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         : currentContact?.state === 'loading' ? 'Đang tải…' : currentContact?.state === 'ready' && !phones.length ? 'Chưa cập nhật' : isAuthenticated ? '••• ••• ••••' : 'Đăng nhập để xem số'}
       revealLabel={phoneVisible ? 'Ẩn số điện thoại' : !isAuthenticated ? 'Đăng nhập để xem số điện thoại' : currentContact?.state === 'loading' ? 'Đang tải số điện thoại…' : currentContact?.state === 'error' ? 'Thử tải lại số' : 'Hiện số điện thoại'}
       onReveal={handleRevealPhone} disabled={currentContact?.state === 'loading'}
-      hint={phoneVisible ? 'Nhấn số điện thoại để gọi người đăng' : 'Xem số để liên hệ trực tiếp'} />
+      hint={phoneVisible ? undefined : 'Xem số để liên hệ trực tiếp'} />
     {phoneVisible && phones.length > 1 ? <div className="source-room-detail__contact-actions" aria-label="Các số điện thoại khác của người đăng">
       {phones.slice(1).map((phone, index) => <div className="source-room-detail__contact-number" key={phone}>
         <a href={`tel:${phone}`} aria-label={`Gọi người đăng, số ${index + 2}`} title={`Gọi người đăng, số ${index + 2}`}>{phone}</a>
         <button type="button" onClick={() => void copyPhone(phone)}>Sao chép</button>
       </div>)}
     </div> : null}
-    {phoneVisible ? <button type="button" className="source-room-detail__copy" onClick={() => void copyPhone(phones[0])}>Sao chép số điện thoại</button> : null}
     {viewingRequested ? <p className="room-detail__muted" role="status">Gọi người đăng để thống nhất thời gian xem phòng.</p> : null}
     {isAuthenticated && currentContact?.state === 'ready' && !phones.length ? <p className="source-room-detail__missing" role="status">Tin này chưa có số điện thoại để liên hệ.</p> : null}
     {currentContact?.state === 'error' ? <p className="source-room-detail__missing" role="alert">{currentContact.error}</p> : null}

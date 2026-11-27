@@ -848,7 +848,7 @@ function OwnerContacts({ post, phone, hasPhone, revealRequested, onAuthenticated
             if (!isAuthenticated) { openAuthModal({ intent: 'contact', onSuccess: () => { setRevealed(true); onAuthenticatedContact() } }); return }
             setRevealed(value => !value)
           } : undefined}
-        hint={hasPhone ? phoneVisible ? 'Nhấn số điện thoại để gọi người đăng' : isAuthenticated ? 'Xem số để liên hệ trực tiếp' : 'Đăng nhập để xem số và liên hệ' : 'Liên hệ qua tin nhắn trên Homeji.'} />
+        hint={hasPhone ? phoneVisible ? undefined : isAuthenticated ? 'Xem số để liên hệ trực tiếp' : 'Đăng nhập để xem số và liên hệ' : 'Liên hệ qua tin nhắn trên Homeji.'} />
     </>
   )
 }

@@ -10,6 +10,7 @@ type Props = {
   hideTitle?: boolean
   /** `full` fills the screen under the status bar (search, notifications); `auto` sizes to content. */
   size?: 'auto' | 'full'
+  headerAction?: ReactNode
   footer?: ReactNode
   children: ReactNode
   className?: string
@@ -24,7 +25,7 @@ const CLOSE_DRAG_PX = 96
  * the backdrop blurs the page instead of darkening it. Drag the handle or title row down to close,
  * and the phone's Back gesture closes it too.
  */
-export function MobileSheet({ open, onClose, title, hideTitle = false, size = 'auto', footer, children, className = '', labelledBy }: Props) {
+export function MobileSheet({ open, onClose, title, hideTitle = false, size = 'auto', headerAction, footer, children, className = '', labelledBy }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const ownTitleId = useId()
   const titleId = labelledBy ?? ownTitleId
@@ -101,6 +102,7 @@ export function MobileSheet({ open, onClose, title, hideTitle = false, size = 'a
           >
             <span className="m-sheet__handle" aria-hidden="true" />
             {labelledBy ? null : <h2 id={titleId} className={hideTitle ? 'sr-only' : 'm-sheet__title'}>{title}</h2>}
+            {headerAction}
             <button type="button" className="m-sheet__close" aria-label="Đóng" title="Đóng" onClick={requestClose}>
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                 <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M6 6l12 12M18 6 6 18" />

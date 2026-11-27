@@ -10,13 +10,13 @@ export function splitColumns(width: number): number {
   return Math.max(1, Math.min(3, Math.floor((width - 16) / 256)))
 }
 
-/** Width is local presentation state: changing it never rewrites search criteria or reloads results. */
+/** Pane width and column count update together via CSS during drag; React stores the result on release. */
 export function useListingSplit() {
   const stageRef = useRef<HTMLDivElement>(null)
   const [stageWidth, setStageWidth] = useState(0)
   const [ratio, setRatio] = useState<number | null>(null)
   const [dragging, setDragging] = useState(false)
-  const drag = useRef<{ x: number; width: number; stage: number } | null>(null)
+  const drag = useRef<{ x: number; width: number; stage: number; handle: HTMLDivElement } | null>(null)
   const frame = useRef<number | null>(null)
   const width = splitPanelWidth(stageWidth, ratio === null ? Math.min(stageWidth / 2, 760) : stageWidth * ratio)
   const columns = ratio === null ? 2 : splitColumns(width)
@@ -35,12 +35,25 @@ export function useListingSplit() {
   const move = (x: number) => {
     const current = drag.current
     if (!current || !current.stage) return
-    setRatio(splitPanelWidth(current.stage, current.width + x - current.x) / current.stage)
+    const next = splitPanelWidth(current.stage, current.width + x - current.x)
+    const liveColumns = splitColumns(next)
+    stageRef.current?.style.setProperty('--ml-split-width', `${next}px`)
+    stageRef.current?.style.setProperty('--ml-split-columns', String(liveColumns))
+    current.handle.setAttribute('aria-valuenow', String(Math.round(next)))
+    current.handle.setAttribute('aria-valuetext', `${liveColumns} cột phòng, danh sách rộng ${Math.round(next)} pixel`)
+    return next / current.stage
+  }
+  const restore = () => {
+    stageRef.current?.style.setProperty('--ml-split-width', `${width}px`)
+    stageRef.current?.style.setProperty('--ml-split-columns', String(columns))
+    drag.current?.handle.setAttribute('aria-valuenow', String(Math.round(width)))
+    drag.current?.handle.setAttribute('aria-valuetext', `${columns} cột phòng, danh sách rộng ${Math.round(width)} pixel`)
   }
   const stop = (event: PointerEvent<HTMLDivElement>) => {
     if (!drag.current) return
     if (frame.current !== null) { cancelAnimationFrame(frame.current); frame.current = null }
-    if (event.type !== 'pointercancel') move(event.clientX)
+    if (event.type !== 'pointercancel') setRatio(move(event.clientX) ?? ratio)
+    else restore()
     drag.current = null
     setDragging(false)
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
@@ -77,7 +90,7 @@ export function useListingSplit() {
         if (event.button !== 0) return
         event.preventDefault()
         event.currentTarget.focus({ preventScroll: true })
-        drag.current = { x: event.clientX, width, stage: stageWidth }
+        drag.current = { x: event.clientX, width, stage: stageWidth, handle: event.currentTarget }
         event.currentTarget.setPointerCapture(event.pointerId)
         setDragging(true)
       },
@@ -89,7 +102,7 @@ export function useListingSplit() {
       },
       onPointerUp: stop,
       onPointerCancel: stop,
-      onLostPointerCapture: () => { drag.current = null; setDragging(false) },
+      onLostPointerCapture: () => { if (drag.current) { if (frame.current !== null) cancelAnimationFrame(frame.current); frame.current = null; restore(); drag.current = null; setDragging(false) } },
     },
   }
 }

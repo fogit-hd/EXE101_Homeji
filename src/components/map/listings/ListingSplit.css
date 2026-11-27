@@ -1,0 +1,74 @@
+/* Desktop split stays in normal pane flow; mobile keeps its existing map/list navigation. */
+@media (min-width: 768px) {
+  html:root body #root .map-listings.map-listings--split .map-listings__stage { display: flex; gap: 0; }
+  html:root body #root .map-listings.map-listings--split .map-listings__panel:not(.is-collapsed) {
+    position: relative; inset: auto; order: -1; box-sizing: border-box;
+    width: var(--ml-split-width, min(50%, 760px)); max-width: none;
+    flex: 0 0 var(--ml-split-width, min(50%, 760px)); height: 100%;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
+  html:root body #root .map-listings.map-listings--split .map-listings__map { order: 1; flex: 1 1 0; min-width: 0; width: auto; }
+  html:root body #root .map-listings.map-listings--split .map-listings__cards {
+    display: grid; grid-template-columns: repeat(var(--ml-split-columns, 2), minmax(0, 1fr)); gap: 16px;
+  }
+  html:root body #root .map-listings.map-listings--split .map-listings__cards > li { display: flex; min-width: 0; }
+  html:root body #root .map-listings.map-listings--split .map-listings__card { display: flex; flex-direction: column; width: 100%; min-width: 0; overflow: hidden; }
+  html:root body #root .map-listings.map-listings--split .map-listings__card-hit { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
+  html:root body #root .map-listings.map-listings--split .map-listings__card-photo { display: block; width: 100%; height: auto; max-height: none; flex: none; aspect-ratio: 16 / 10; border-radius: 0; }
+  html:root body #root .map-listings.map-listings--split .map-listings__card-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  html:root body #root .map-listings.map-listings--split .map-listings__card-copy { box-sizing: border-box; width: 100%; min-width: 0; padding: 16px; gap: 6px; }
+  html:root body #root .map-listings.map-listings--split :is(.map-listings__name, .map-listings__address) { min-height: 0; overflow-wrap: anywhere; }
+  html:root body #root .map-listings.map-listings--split .map-listings__price { font-size: 1.125rem; white-space: normal; }
+  html:root body #root .map-listings.map-listings--split .map-listings__consideration { margin-top: auto; }
+  html:root body #root .map-listings.map-listings--split .map-listings__card-open { box-sizing: border-box; width: calc(100% - 32px); min-height: 44px; margin: 0 16px 16px; padding: 10px 14px; }
+  html:root body #root .map-listings.map-listings--split .map-listings__stage:not(.has-context-panel) .rental-map__controls { right: 18px; }
+  html:root body #root .map-listings__split-handle {
+    position: relative; order: 0; align-self: stretch; flex: 0 0 12px; box-sizing: border-box;
+    cursor: col-resize; touch-action: none; user-select: none; z-index: 6;
+    background: var(--surface-muted); border-inline: 1px solid var(--border);
+  }
+  .map-listings__split-handle::after {
+    content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 3px; height: 44px; border-radius: 999px; background: var(--text-secondary);
+  }
+  html:root body #root .map-listings__split-handle:is(:hover, :focus-visible),
+  html:root body #root .map-listings__stage[data-resizing] .map-listings__split-handle { background: var(--surface-input); }
+  html:root body #root .map-listings__split-handle:focus-visible { outline: 2px solid var(--text-heading); outline-offset: -2px; }
+  html:root body #root .map-listings__stage[data-resizing] { cursor: col-resize; user-select: none; }
+  html:root body #root .map-listings__stage[data-resizing] .map-listings__map { pointer-events: none; }
+}
+
+/* Resize affects layout locally; decorative effects and hover work wait until release. */
+@media (min-width: 768px) {
+  html:root body #root .map-listings--split .map-listings__panel-body { contain: layout paint; }
+  html:root body #root .map-listings__stage[data-resizing] .rental-result-card { pointer-events: none; transition: none; }
+  html:root body #root .map-listings__stage[data-resizing] .rental-result-card__cover::after { animation-play-state: paused; }
+}
+
+/* Content breathes independently of the full-width search toolbar. */
+html:root body #root .map-listings .map-listings__stage {
+  --ml-content-gutter: clamp(12px, 1.25vw, 24px);
+  margin: 12px var(--ml-content-gutter) var(--ml-content-gutter);
+  min-width: 0;
+}
+html:root body #root .map-listings .map-listings__map {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--map-canvas-bg, var(--surface-muted));
+}
+html:root body #root .map-listings .map-listings__panel-head { padding: 4px 0 12px; }
+html:root body #root .map-listings .map-listings__panel-body { padding: 0 8px 12px 0; }
+@media (min-width: 768px) {
+  html:root body #root .map-listings .map-listings__split-handle {
+    border: 0; background: transparent; margin-block: 12px;
+  }
+}
+@media (max-width: 767px) {
+  html:root body #root .map-listings .map-listings__stage { margin: 8px 8px 12px; }
+  html:root body #root .map-listings .map-listings__map { border-radius: 12px; }
+  html:root body #root .map-listings .map-listings__panel-body { padding-inline: 0; }
+}

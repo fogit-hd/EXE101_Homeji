@@ -1,3 +1,8 @@
+import { useFilterResultCount } from './useFilterResultCount'
+import type { SourceCatalogPin } from '../../../lib/sourceCatalog'
+import { RentalResultCard } from './RentalResultCard'
+import { amenityLabel } from '../../../lib/labels'
+import { useListingSplit } from './useListingSplit'
 import { X } from 'lucide-react'
 import { useListingSearchParams } from '../../../hooks/useListingSearchParams'
 import { countActiveListingFilters, listingResultCount } from './listingCounts'
@@ -42,7 +47,6 @@ import {
   mapFilterMetadataToFilterConfig,
   mapMarketplacePostToListingViewModel,
   parseFiltersFromURL,
-  queryHasActiveFilters,
   serializeFiltersToQuery,
   type ListingCatalog,
   type ListingQuery,
@@ -57,6 +61,8 @@ import { MobileSheet } from '../../../mobile/MobileSheet'
 import { BookmarkIcon, RentalMapPreview } from './RentalMapPreview'
 import './MapListingsWorkspace.css'
 import './MapListingsToolbar.css'
+import './ListingSplit.css'
+import './FilterAppearance.css'
 
 const PAGE_SIZE = 20
 const MOBILE_FILTER_FORM = 'm-listings-filter'
@@ -86,6 +92,7 @@ type Props = {
   onToggleSave?: (id: string) => void
   onResetFilters: () => void
   onUserSearch?: () => void
+  onSelectSource?: (pin: SourceCatalogPin) => void
   onFocusSource?: (location: { lat: number; lng: number }) => void
   onRefresh?: () => Promise<void> | void
 }
@@ -279,9 +286,11 @@ export function MapListingsWorkspace({
   onResetFilters,
   onUserSearch,
   onFocusSource,
+  onSelectSource,
   onRefresh,
 }: Props) {
   const isMobile = useIsMobile()
+  const { stageRef: splitStageRef, style: splitStyle, dragging: splitDragging, separatorProps: splitSeparatorProps } = useListingSplit()
   const [sourceCounts, setSourceCounts] = useState<{ total: number; mapped: number; queryKey: string } | null>(null)
   const [searchParams, setSearchParams] = useListingSearchParams()
   const navigate = useNavigate()
@@ -375,7 +384,6 @@ export function MapListingsWorkspace({
     }
   }
   const query = useMemo(() => parseFiltersFromURL(searchParams), [searchParams])
-  const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(query.catalog), [query.catalog])
   const marketMode = query.catalog === 'market'
   const apartmentMode = query.catalog === 'apartments'
   type SortBy = ListingSort
@@ -417,6 +425,8 @@ export function MapListingsWorkspace({
   }
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterAnchor = useRef<HTMLButtonElement>(null)
+  const [catalogDraft, setCatalogDraft] = useState<ListingCatalog>(query.catalog)
+  const filterConfig = useMemo(() => mapFilterMetadataToFilterConfig(catalogDraft), [catalogDraft])
   const [priceDraft, setPriceDraft] = useState<RangeDraft>(() => ({
     min: query.minPrice != null ? String(query.minPrice) : '',
     max: query.maxPrice != null ? String(query.maxPrice) : '',
@@ -425,7 +435,24 @@ export function MapListingsWorkspace({
     min: query.minArea != null ? String(query.minArea) : '',
     max: query.maxArea != null ? String(query.maxArea) : '',
   }))
+  const [keywordDraft, setKeywordDraft] = useState(query.keyword)
   const [amenityDraft, setAmenityDraft] = useState<string[]>(() => query.amenities)
+  const draftQuery = useMemo<ListingQuery>(() => ({
+    ...query, catalog: catalogDraft, keyword: keywordDraft,
+    minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max),
+    ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
+    page: 1,
+  }), [query, catalogDraft, keywordDraft, priceDraft, areaDraft, amenityDraft, filterConfig.area])
+  const previewCount = useFilterResultCount(filtersOpen, draftQuery)
+  const hasCampusDraft = CAMPUS_METRO_OPTIONS.some(option => matchesKeyword(keywordDraft, option.keyword))
+  const hasFilterDraft = Boolean(priceDraft.min || priceDraft.max || areaDraft.min || areaDraft.max || amenityDraft.length || hasCampusDraft)
+  const resetFilterDraft = () => {
+    setPriceDraft({ min: '', max: '' })
+    setAreaDraft({ min: '', max: '' })
+    setAmenityDraft([])
+    // General search text is outside this form; clear only its campus/metro preset.
+    if (hasCampusDraft) setKeywordDraft('')
+  }
   const resetFilters = () => {
     setPriceDraft({ min: '', max: '' })
     setAreaDraft({ min: '', max: '' })
@@ -440,9 +467,11 @@ export function MapListingsWorkspace({
   }, [countQueryKey])
   const resultCount = listingResultCount(cards.length, sourceCounts?.queryKey === countQueryKey ? sourceCounts.total : null, marketMode)
   const openFilters = () => {
+    setCatalogDraft(query.catalog)
     setPriceDraft({ min: query.minPrice != null ? String(query.minPrice) : '', max: query.maxPrice != null ? String(query.maxPrice) : '' })
     setAreaDraft({ min: query.minArea != null ? String(query.minArea) : '', max: query.maxArea != null ? String(query.maxArea) : '' })
     setAmenityDraft(query.amenities)
+    setKeywordDraft(query.keyword)
     setFiltersOpen(true)
   }
 
@@ -503,6 +532,17 @@ export function MapListingsWorkspace({
       }
       onSelectListing(id)
     }
+    if (!marketMode) return <RentalResultCard id={id} title={view.title} price={price} area={view.areaLabel} propertyType={view.typeLabel} address={shortListingAddress(view.address)}
+      photo={view.thumbnailUrl} photoSrcSet={view.thumbnailUrl ? listingThumbSrcSet(view.thumbnailUrl) : undefined} amenities={room?.amenities ?? []} selectedAmenities={query.amenities}
+      deposit={view.facts.find(fact => !(room?.amenities ?? []).some(code => amenityLabel(code) === fact))}
+      updated={view.updatedAt && formatListingDate(view.updatedAt) ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(new Date(view.updatedAt)) : null}
+      publisher={room?.ownerDisplayName} featured={view.isPremium} selected={selectedCard} hovered={hovered}
+      badge={view.isPremium ? <PremiumBadge variant="glass" showStars={false} /> : undefined}
+      onSelect={openCard} onDetail={onOpenRoomDetail ? () => onOpenRoomDetail(id) : openCard} onHover={() => onHoverListing(id)} onLeave={onLeaveListing}
+      secondaryAction={<RentalConsiderationToggle post={{ id, title: view.title }} compact />}
+      save={onToggleSave ? <button type="button" className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`} data-glass-exclude
+        aria-pressed={Boolean(savedIds?.has(id))} aria-label={savedIds?.has(id) ? 'Bỏ lưu' : 'Lưu phòng'} disabled={saveBusy && selectedListingId === id}
+        onClick={() => onToggleSave(id)}><BookmarkIcon saved={savedIds?.has(id)} /></button> : undefined} />
     return (
         <article
           data-listing-id={id}
@@ -549,13 +589,13 @@ export function MapListingsWorkspace({
                 {view.highlightTag ? <span>{view.highlightTag}</span> : null}
                 {!marketMode && !view.isPremium && view.ownerBadge ? <span>{view.ownerBadge}</span> : null}
               </span>
-              <span className="map-listings__facts">
-                {/* Only facts from the listing itself, at most three; the detail view carries the rest. */}
-                {view.facts.slice(0, 3).map(fact => <span key={fact}>{fact}</span>)}
-                {view.updatedAt && formatListingDate(view.updatedAt) ? <time dateTime={view.updatedAt}>Cập nhật {formatListingDate(view.updatedAt)}</time> : null}
-              </span>
+
             </span>
           </button>
+          <div className="map-listings__facts listing-card-extra">
+            {view.facts.filter(fact => !(room?.amenities ?? []).some(code => amenityLabel(code) === fact)).slice(0, 3).map(fact => <span key={fact}>{fact}</span>)}
+            {view.updatedAt && formatListingDate(view.updatedAt) ? <time dateTime={view.updatedAt}>Cập nhật {formatListingDate(view.updatedAt)}</time> : null}
+          </div>
           {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle post={{ id, title: view.title }} /></div> : null}
 
           {!marketMode && onOpenRoomDetail ? <button type="button" className="map-listings__card-open" data-glass-exclude onClick={() => onOpenRoomDetail(id)}>Chi tiết & liên hệ <ArrowUpRightIcon size={14} /></button> : null}
@@ -580,13 +620,23 @@ export function MapListingsWorkspace({
 
 
   const applyFilters = () => {
+          const campus = CAMPUS_METRO_OPTIONS.find(option => matchesKeyword(keywordDraft, option.keyword))
+          if (campus?.focus && keywordDraft !== query.keyword) onFocusSource?.(campus.focus)
           writeQuery({
+            catalog: catalogDraft, keyword: keywordDraft,
             minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max),
             ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
             page: 1,
           }, { fit: true })
           setFiltersOpen(false)
   }
+  const filterCatalog = (
+    <div className="map-listings__catalog map-listings__sheet-catalog" role="group" aria-label="Loại tin" data-glass-exclude>
+      {SOURCE_OPTIONS.map(option => <button key={option.id} type="button"
+        className={catalogDraft === option.id ? 'is-on' : ''} aria-pressed={catalogDraft === option.id}
+        onClick={() => setCatalogDraft(option.id)}>{option.label}</button>)}
+    </div>
+  )
   const filterFields = (
     <>
 
@@ -625,27 +675,14 @@ export function MapListingsWorkspace({
               <legend>Trường Đại học & Tuyến Metro</legend>
               <div className="map-listings__quick-chips" role="group" aria-label="Trường đại học và metro lân cận">
                 {CAMPUS_METRO_OPTIONS.map((item) => {
-                  const active = matchesKeyword(query.keyword, item.keyword)
+                  const active = matchesKeyword(keywordDraft, item.keyword)
                   return (
                     <button
                       key={item.id}
                       type="button"
                       aria-pressed={active}
                       className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
-                      onClick={() => {
-                        const nextKeyword = active ? '' : item.keyword
-                        if (!active && item.focus && onFocusSource) {
-                          onFocusSource(item.focus)
-                        }
-                        writeQuery({
-                          keyword: nextKeyword,
-                          minPrice: readDraft(priceDraft.min),
-                          maxPrice: readDraft(priceDraft.max),
-                          ...(filterConfig.area ? { minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft } : {}),
-                          page: 1,
-                        }, { fit: true })
-                        setFiltersOpen(false)
-                      }}
+                      onClick={() => setKeywordDraft(active ? '' : item.keyword)}
                     >
                       {item.isMetro ? <MetroTrainIcon size={13} /> : <GraduationCapIcon size={13} />}
                       <span>{item.label}</span>
@@ -658,34 +695,6 @@ export function MapListingsWorkspace({
             {filterConfig.amenities.length > 0 ? (
               <fieldset className="map-listings__amenity-group">
                 <legend>Tiện ích</legend>
-                <div className="map-listings__quick-chips" role="group" aria-label="Tiện ích nhanh">
-                  {[
-                    { code: 'AIR_CONDITIONER', label: 'Máy lạnh', icon: <SnowflakeIcon size={13} /> },
-                    { code: 'LOFT', label: 'Gác lửng', icon: <LoftLadderIcon size={13} /> },
-                    { code: 'PRIVATE_BATHROOM', label: 'WC riêng', icon: <ShowerIcon size={13} /> },
-                    { code: 'PET_FRIENDLY', label: 'Cho nuôi pet', icon: <PawIcon size={13} /> },
-                  ].map((preset) => {
-                    const active = amenityDraft.includes(preset.code)
-                    return (
-                      <button
-                        key={preset.code}
-                        type="button"
-                        aria-pressed={active}
-                        className={`map-listings__quick-chip${active ? ' is-active' : ''}`}
-                        onClick={() => {
-                          setAmenityDraft((current) =>
-                            current.includes(preset.code)
-                              ? current.filter((c) => c !== preset.code)
-                              : [...current, preset.code]
-                          )
-                        }}
-                      >
-                        {preset.icon}
-                        <span>{preset.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
                 <div className="map-listings__amenity-grid">
                   {filterConfig.amenities.map((option) => <label key={option.code}>
                     <input type="checkbox" checked={amenityDraft.includes(option.code)}
@@ -697,18 +706,19 @@ export function MapListingsWorkspace({
             ) : null}
     </>
   )
+  const filterReset = (<button type="button" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-reset" disabled={!hasFilterDraft} onClick={resetFilterDraft}>Đặt lại</button>)
   const filterActions = (
     <>
-            <button type="button" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-reset" disabled={!queryHasActiveFilters(query) && !priceDraft.min && !priceDraft.max && !areaDraft.min && !areaDraft.max && !amenityDraft.length} onClick={resetFilters}>Đặt lại</button>
             {!marketMode && <button type="button" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-save" aria-haspopup="dialog" onClick={event => {
               if (event.currentTarget.form?.reportValidity() === false) return
-              const next = serializeFiltersToQuery({ ...query, minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max), minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft, page: 1 }, searchParams)
+              const next = serializeFiltersToQuery({ ...query, catalog: catalogDraft, keyword: keywordDraft, minPrice: readDraft(priceDraft.min), maxPrice: readDraft(priceDraft.max), minArea: readDraft(areaDraft.min), maxArea: readDraft(areaDraft.max), amenities: amenityDraft, page: 1 }, searchParams)
               next.set('interest', 'new')
               setSearchParams(next, { replace: true })
               setFiltersOpen(false)
             }}>Lưu tìm kiếm này</button>}
-            <button type="submit" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-apply">
-              {`Xem ${resultCount} kết quả`}
+            <button type="submit" form={isMobile ? MOBILE_FILTER_FORM : undefined} className="map-listings__sheet-apply" aria-busy={previewCount.pending}
+              title={previewCount.failed ? 'Chưa tải được số kết quả. Bạn vẫn có thể áp dụng bộ lọc.' : undefined}>
+              <span aria-live="polite" aria-atomic="true">{previewCount.pending ? 'Xem … kết quả' : previewCount.count !== null ? `Xem ${previewCount.count} kết quả` : 'Xem kết quả'}</span>
             </button>
     </>
   )
@@ -826,8 +836,10 @@ export function MapListingsWorkspace({
         </>}
         {isMobile ? (
           <MobileSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} title="Bộ lọc" size="full" className="m-filter-sheet"
+            headerAction={filterReset}
             footer={<div className="m-filter-sheet__actions">{filterActions}</div>}>
             <form id={MOBILE_FILTER_FORM} className="m-filter-sheet__form" onSubmit={(event) => { event.preventDefault(); applyFilters() }}>
+              {filterCatalog}
               {filterFields}
             </form>
           </MobileSheet>
@@ -837,22 +849,13 @@ export function MapListingsWorkspace({
           onSubmit={applyFilters}>
           <div className="map-listings__sheet-heading">
             <div><strong>Bộ lọc</strong><p>Chọn những điều bạn cần.</p></div>
+            <div className="map-listings__heading-actions">
+              {filterReset}
             <button type="button" className="map-listings__sheet-close" aria-label="Đóng bộ lọc" onClick={() => setFiltersOpen(false)}><X aria-hidden="true" size={20} style={{ verticalAlign: 'middle' }} /></button>
+            </div>
           </div>
           <div className="map-listings__sheet-body">
-          <div className="map-listings__catalog map-listings__sheet-catalog" role="group" aria-label="Loại tin" data-glass-exclude>
-            {SOURCE_OPTIONS.map((option) => (
-              <button key={option.id} type="button" className={query.catalog === option.id ? 'is-on' : ''}
-                aria-pressed={query.catalog === option.id}
-                onClick={() => {
-                  if (query.catalog === option.id) return
-                  setFiltersOpen(false)
-                  writeQuery({ catalog: option.id, page: 1 }, { fit: true })
-                }}>
-                {option.label}
-              </button>
-            ))}
-          </div>
+            {filterCatalog}
             {filterFields}
           </div>
           <div className="map-listings__sheet-footer">
@@ -862,8 +865,8 @@ export function MapListingsWorkspace({
         )}
       </header>
 
-      <div className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
-        {showMap && showList && !contextPanelOpen ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
+      <div ref={splitStageRef} style={splitStyle} data-resizing={splitDragging || undefined} className={`map-listings__stage${contextPanelOpen ? ' has-context-panel' : ''}`}>
+        {isMobile && showMap && showList && !contextPanelOpen ? <div className="map-listings__mobile-toggle" role="group" aria-label="Bản đồ hoặc danh sách">
           <button
             type="button"
             aria-pressed={mobilePane === 'map'}
@@ -884,7 +887,7 @@ export function MapListingsWorkspace({
 
         {showMap ? (
           <section
-            className={`map-listings__map${mobilePane === 'list' && !contextPanelOpen ? ' is-mobile-hidden' : ''}`}
+            className={`map-listings__map${isMobile && mobilePane === 'list' && !contextPanelOpen ? ' is-mobile-hidden' : ''}`}
             aria-label="Bản đồ khu vực"
           >
             {mapNode}
@@ -931,11 +934,15 @@ export function MapListingsWorkspace({
           </section>
         ) : null}
 
+        {!isMobile && query.view === 'split' && showMap && panelOpen && !contextPanelOpen ? (
+          <div className="map-listings__split-handle" {...splitSeparatorProps} />
+        ) : null}
+
         {contextPanelOpen ? <div className="map-listings__context-panel">{contextPanel}</div> : null}
 
         {showList && !contextPanelOpen ? (
           <aside
-            className={`map-listings__panel${mobilePane === 'map' && showMap ? ' is-mobile-hidden' : ''}${panelOpen ? '' : ' is-collapsed'}`}
+            className={`map-listings__panel${isMobile && mobilePane === 'map' && showMap ? ' is-mobile-hidden' : ''}${panelOpen ? '' : ' is-collapsed'}`}
             aria-label="Danh sách kết quả"
           >
             {query.view === 'split' ? <div className="map-listings__panel-head">
@@ -1018,7 +1025,7 @@ export function MapListingsWorkspace({
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 null
               )}
-              {!marketMode && <RentalSourceResults selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              {!marketMode && <RentalSourceResults onSelectSource={showMap && (!isMobile || mobilePane === 'map') ? onSelectSource : undefined} selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
               <div ref={infiniteSentinelRef} className="map-listings__sentinel" aria-hidden="true" />
               {loading && query.page > 1 ? (
                 <div className="map-listings__loading-more" role="status">

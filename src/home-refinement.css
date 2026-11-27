@@ -246,9 +246,8 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   html:root #root .hj-search-overlay .hj-search-slot { height: auto; margin: 0; padding: 12px; }
   html:root #root .hj-header .hj-search__submit { min-width: 48px; }
 }
-/* Keep the current Tìm phòng controls while restoring the member palette around them. */
-:root:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)),
-:root #root .app-shell--authed.app-shell--listings :is(.hj-shell, .map-listings__stage) {
+/* All member pages, including the complete listings workspace, share one palette. */
+:root:has(.app-shell--authed:not(.app-shell--auth-cinema)) {
   --hj-accent: #087f8c;
   --hj-grab-green: #087f8c;
   --hj-soft: #82929c;
@@ -291,8 +290,7 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   --radius-xl: 20px;
 }
 
-:root[data-theme='dark']:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)),
-:root[data-theme='dark'] #root .app-shell--authed.app-shell--listings :is(.hj-shell, .map-listings__stage) {
+:root[data-theme='dark']:has(.app-shell--authed:not(.app-shell--auth-cinema)) {
   --grab-green: #62cbd2;
   --grab-green-hover: #8edce0;
   --grab-blue: #4b9fff;
