@@ -693,7 +693,10 @@ export function RoomDetailModal({
                 <RoomEssentials rentLabel={rentalPriceLabel(priceBasis)} area={post.area > 0 ? `${areaFormat.format(post.area)} m²` : 'Chưa cung cấp'} deposit={depositLabel ?? 'Chưa cung cấp'} />
                 <hr />
                 <div className="room-detail__contact" data-glass-exclude>
-                  <RoomOwnerProfile heading={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'} name={post.ownerDisplayName?.trim() || 'Chưa cập nhật'} avatarUrl={post.ownerAvatarPath} verified={post.isOwnerVerified}>{null}</RoomOwnerProfile>
+                  <RoomOwnerProfile heading={isStudentShare ? 'Hồ sơ người đăng' : 'Hồ sơ chủ trọ'} name={post.ownerDisplayName?.trim() || 'Chưa cập nhật'} avatarUrl={post.ownerAvatarPath} verified={post.isOwnerVerified}>
+                    <OwnerContacts key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone}
+                      revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
+                  </RoomOwnerProfile>
                   {areaMissing ? <p className="room-detail__muted">Hãy hỏi thêm diện tích và tình trạng phòng khi liên hệ.</p> : null}
                   {(!profile || post.ownerId !== profile.id) && (
                     <div className="room-detail__greeting-chips" role="group" aria-label="Mẫu tin nhắn nhanh">
@@ -777,11 +780,9 @@ export function RoomDetailModal({
                   ) : null}
                 </div>
                 <RentalConsiderationToggle post={post} />
-                <details className="room-detail__other-contacts">
+                {hasOwnerPhone ? <details className="room-detail__other-contacts">
                   <summary>Liên hệ khác</summary>
                   <div className="room-detail__other-actions">
-                    <OwnerContacts key={post.id} post={post} phone={phoneHref ? phone : ''} hasPhone={hasOwnerPhone}
-                      revealRequested={revealPhoneForPost === post.id} onAuthenticatedContact={() => setRevealPhoneForPost(post.id)} />
                 {hasOwnerPhone ? <PhoneAction className="room-detail__call" phone={phone} hasPhone={hasOwnerPhone} onAuthenticated={() => setRevealPhoneForPost(post.id)}
                   guestLabel={<>{phoneIcon}Gọi điện</>} guestAriaLabel="Gọi điện, đăng nhập để xem số điện thoại">
                   {phoneIcon}Gọi điện
@@ -811,7 +812,7 @@ export function RoomDetailModal({
                   )
                 ) : null}
                   </div>
-                </details>
+                </details> : null}
               </div>
             </footer>
           </>

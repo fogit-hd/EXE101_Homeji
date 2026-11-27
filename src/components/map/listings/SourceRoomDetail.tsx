@@ -1,5 +1,4 @@
 import { createPortal } from 'react-dom'
-import { useDismissDetailsOnOutside } from '../../../hooks/useDismissDetailsOnOutside'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
@@ -26,7 +25,6 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
   const labelId = useId()
   const phoneId = useId()
   const [listing, setListing] = useState(summary ?? null)
-  useDismissDetailsOnOutside('.room-detail__other-contacts')
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -217,6 +215,7 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
         <div className="room-detail__contact" data-glass-exclude>
         <RoomOwnerProfile heading="Hồ sơ người đăng" name={attribution}>
           <p className="room-detail__muted">Homeji chưa xác minh người đăng của tin này.</p>
+          <div ref={contact} tabIndex={-1}>{contactDetails}</div>
         </RoomOwnerProfile>
         </div>
         <div className="room-detail__note"><strong>Xem phòng trước khi quyết định</strong><p>Trao đổi trực tiếp để xác nhận thông tin và điều kiện thuê.</p></div>
@@ -225,15 +224,12 @@ export function SourceRoomDetail({ id, summary, onClose }: { id: string; summary
     <footer className="room-detail__footer"><div className="room-detail__footer-copy"><strong className="room-detail__footer-price">{rent}</strong><p>{attribution}</p></div>
       <div className="room-detail__footer-actions">
       <button type="button" className="room-detail__book" data-glass-exclude disabled={!listing || currentContact?.state === 'loading' || currentContact?.state === 'ready' && !phones.length}
-        onClick={() => { setViewingRequested(true); if (!phoneVisible) handleRevealPhone(); contact.current?.closest('details')?.setAttribute('open', ''); contact.current?.focus() }}>Đặt lịch xem phòng</button>
-      <details className="room-detail__other-contacts"><summary>Liên hệ khác</summary><div className="room-detail__other-actions" ref={contact} tabIndex={-1}>
-          {contactDetails}
-      <button type="button" className="room-detail__call" disabled={!listing || currentContact?.state === 'loading'} onClick={() => { if (!phoneVisible) handleRevealPhone(); contact.current?.closest('details')?.setAttribute('open', ''); contact.current?.focus() }}>
+        onClick={() => { setViewingRequested(true); if (!phoneVisible) handleRevealPhone(); showContact() }}>Đặt lịch xem phòng</button>
+      <button type="button" className="room-detail__call" disabled={!listing || currentContact?.state === 'loading'} onClick={() => { if (!phoneVisible) handleRevealPhone(); showContact() }}>
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2v-9.5A8.5 8.5 0 0 1 10.5 4h2A8.5 8.5 0 0 1 21 11.5Z" /></svg>Liên hệ người đăng
       </button>
       {phoneVisible ? <a className="room-detail__call" href={`tel:${phones[0]}`}><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m7 3 3 5-2 2c1.5 3 3 4.5 6 6l2-2 5 3c-1 5-4 5-8 3C7 17 3 13 3 7c0-3 2-4 4-4Z" /></svg>Gọi điện</a>
-        : <button type="button" className="room-detail__call" disabled={!listing || currentContact?.state === 'loading' || currentContact?.state === 'ready' && !phones.length} onClick={() => { handleRevealPhone(); contact.current?.closest('details')?.setAttribute('open', ''); contact.current?.focus() }}>Xem số để gọi</button>}
-      </div></details>
+        : <button type="button" className="room-detail__call" disabled={!listing || currentContact?.state === 'loading' || currentContact?.state === 'ready' && !phones.length} onClick={() => { handleRevealPhone(); showContact() }}>Xem số để gọi</button>}
 
       </div>
     </footer>
