@@ -246,8 +246,9 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   html:root #root .hj-search-overlay .hj-search-slot { height: auto; margin: 0; padding: 12px; }
   html:root #root .hj-header .hj-search__submit { min-width: 48px; }
 }
-/* Pre-release member palette. Public pages and the Tìm phòng workspace retain their own theme. */
-:root:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)) {
+/* Keep the current Tìm phòng controls while restoring the member palette around them. */
+:root:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)),
+:root #root .app-shell--authed.app-shell--listings :is(.hj-shell, .map-listings__stage) {
   --hj-accent: #087f8c;
   --hj-grab-green: #087f8c;
   --hj-soft: #82929c;
@@ -290,7 +291,8 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   --radius-xl: 20px;
 }
 
-:root[data-theme='dark']:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)) {
+:root[data-theme='dark']:has(.app-shell--authed:not(.app-shell--auth-cinema, .app-shell--listings)),
+:root[data-theme='dark'] #root .app-shell--authed.app-shell--listings :is(.hj-shell, .map-listings__stage) {
   --grab-green: #62cbd2;
   --grab-green-hover: #8edce0;
   --grab-blue: #4b9fff;
@@ -321,4 +323,16 @@ html:root #root .hub-skel-page { grid-column: 1 / -1; order: 0; }
   --brand-soft: #23444f;
   --on-brand: #102e38;
   --control-border: #718995;
+}
+
+#root .app-shell--authed.app-shell--listings .map-listings__stage {
+  --ml-ink: var(--text-heading);
+  --ml-paper: var(--surface-muted);
+  --ml-card: var(--surface-elevated);
+  --ml-line: var(--border);
+  --ml-muted: var(--text-secondary);
+  --ml-coral: var(--hj-accent);
+  --ml-green: var(--hj-accent);
+  color: var(--ml-ink);
+  background: var(--ml-paper);
 }

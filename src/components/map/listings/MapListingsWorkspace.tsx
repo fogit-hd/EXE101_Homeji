@@ -22,7 +22,7 @@ import type { MarketplacePost, RentalPostSummary } from '../../../api/types'
 import { marketplaceItemUrl } from '../../../lib/marketplaceSellers'
 import { useDismissOnOutside } from '../../../lib/useDismissOnOutside'
 import { shortListingAddress } from "../../MapListingCard.logic"
-import { formatCompactRent, formatListingArea } from '../../../lib/labels'
+import { formatListingArea } from '../../../lib/labels'
 import { PremiumBadge } from '../../PremiumBadge'
 import { ListingTrustBadges } from '../../ListingTrustBadges'
 import { MarketplaceSellerCatalog } from '../../marketplace/MarketplaceSellerCatalog'
@@ -491,6 +491,7 @@ export function MapListingsWorkspace({
 
   const renderListingCard = (id: string, view: ReturnType<typeof mapMarketplacePostToListingViewModel>) => {
     const room = !marketMode ? posts.find(post => post.id === id) : undefined
+    const price = <>{view.priceLabel}{room && Number.isFinite(room.price) && room.price > 0 ? <small> / tháng</small> : null}</>
     const selectedCard = selectedListingId === id
     const hovered = hoveredListingId === id
     const openCard = () => {
@@ -512,7 +513,7 @@ export function MapListingsWorkspace({
         <MobileRoomCard
           id={id}
           photo={view.thumbnailUrl}
-          price={room ? <>{formatCompactRent(room.price)}{Number.isFinite(room.price) && room.price > 0 ? '/tháng' : ''}</> : view.priceLabel}
+          price={price}
           title={view.title}
           meta={[area, shortListingAddress((view.address || '').trim())].filter(Boolean).join(' · ')}
           badge={!marketMode && view.isPremium ? <PremiumBadge variant="glass" /> : undefined}
@@ -564,9 +565,8 @@ export function MapListingsWorkspace({
               ) : null}
             </span>
             <span className="map-listings__card-copy">
-              <span className="map-listings__price">{room ? <>{formatCompactRent(room.price)}{Number.isFinite(room.price) && room.price > 0 ? '/tháng' : ''}</> : view.priceLabel}</span>
+              <span className="map-listings__price">{price}</span>
               <span className="map-listings__name">{view.title}</span>
-              {!marketMode ? <span className="map-listings__room-meta">{[room && Number.isFinite(room.area) && room.area > 0 ? formatListingArea(room.area) : '', shortListingAddress((view.address || '').trim())].filter(Boolean).join(' · ')}</span> : <>
                 <span className="map-listings__address">
                   <img loading="lazy" decoding="async" src="/figma/map/map-pin.svg" alt="" width={13} height={13} />
                   <span className="map-listings__address-text" title={view.address}>{shortListingAddress(view.address) || 'Chưa có địa chỉ'}</span>
@@ -582,7 +582,6 @@ export function MapListingsWorkspace({
                 {view.facts.slice(0, 3).map(fact => <span key={fact}>{fact}</span>)}
                 {view.updatedAt && formatListingDate(view.updatedAt) ? <time dateTime={view.updatedAt}>Cập nhật {formatListingDate(view.updatedAt)}</time> : null}
               </span>
-              </>}
             </span>
           </button>
           {!marketMode ? <div className="map-listings__consideration"><RentalConsiderationToggle compact post={{ id, title: view.title }} /></div> : null}
