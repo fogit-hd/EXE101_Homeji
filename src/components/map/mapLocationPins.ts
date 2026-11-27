@@ -1,3 +1,4 @@
+import { createMapPremiumEffect } from './premium-effects/mapPremiumEffects'
 import './MapLocationPins.css'
 import { createPremiumStarsElement } from '../../lib/premiumStarsElement'
 
@@ -96,10 +97,12 @@ export function createMapClusterContent(options: {
   mount.appendChild(bubble)
   if (premiumCount > 0) {
     root.classList.add('map-pin-cluster--premium')
+    bubble.append(createMapPremiumEffect('cluster'))
     const badge = document.createElement('span')
     badge.className = 'map-pin-cluster__vip'
     if (options.showLabels) badge.textContent = `★ ${premiumCount} Premium`
     badge.setAttribute('aria-hidden', 'true')
+    if (options.showLabels) badge.append(createMapPremiumEffect('label'))
     mount.append(badge)
   }
   return root

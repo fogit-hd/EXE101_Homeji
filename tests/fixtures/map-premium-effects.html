@@ -1,0 +1,5 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Map Premium integration fixture</title><style>body{margin:0;background:#eeeee4}#markers{position:relative;height:560px}.slot{position:absolute}.map-pin-cluster__lift{cursor:pointer}</style><body><main id="markers" class="app-shell--authed app-shell--listings"></main><script type="module">
+import '/src/index.css';import {createMapClusterContent} from '/src/components/map/mapLocationPins.ts';
+const host=document.getElementById('markers');
+for(const[count,premium,x,y]of[[24,5,130,140],[9,1,350,140],[30,3,130,350],[2,0,350,350]]){const slot=document.createElement('div');slot.className='slot';slot.style.cssText=`left:${x}px;top:${y}px`;const marker=createMapClusterContent({count,premiumCount:premium,kindCounts:{vacant:count,roommate:0,marketplace:0},showLabels:true});marker.addEventListener('click',()=>host.dataset.clicked=String(count));slot.append(marker);host.append(slot)}
+</script></body></html>

@@ -1,7 +1,6 @@
-import { Crown, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { SocialContactLinks } from '../profile/SocialContactLinks'
 import type { PublicContactProfile } from '../../api/profileContacts'
-import { PremiumStars } from '../PremiumStars'
 import { useEffect, useRef, useState } from 'react'
 import { chatEmojiGroups } from '../../lib/chatEmojis'
 import { apiRequest } from '../../api/client'
@@ -11,12 +10,8 @@ import { resolveChatGif, searchChatGifs } from '../../lib/giphyClient'
 import { getErrorMessage } from '../../lib/errors'
 import { useDismissOnOutside } from '../../lib/useDismissOnOutside'
 
-export function PremiumBadge({ compact = false }: { compact?: boolean }) {
-  return <span className="chat-premium" title="Thành viên Premium" aria-label="Thành viên Premium">
-    <span className="chat-premium__crown" aria-hidden><Crown aria-hidden="true" size={12} style={{ verticalAlign: 'middle' }} /></span><span>{compact ? 'PRO' : 'Premium'}</span>
-    <PremiumStars />
-  </span>
-}
+export { UserPremiumBadge as PremiumBadge } from '../membership/UserPremiumBadge'
+import { UserPremiumBadge as PremiumBadge } from '../membership/UserPremiumBadge'
 
 export function PublicProfile({ userId, onClose }: { userId: string; onClose: () => void }) {
   const [profile, setProfile] = useState<PublicContactProfile | null>(null)

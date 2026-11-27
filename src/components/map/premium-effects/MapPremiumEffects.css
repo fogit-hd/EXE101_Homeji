@@ -1,0 +1,11 @@
+/* Decoration cannot change the map coordinate, hit area, count or badge layout. */
+.map-pin-cluster--premium .map-pin-cluster__bubble { overflow: visible; }
+.map-premium-effect {
+  display: block; position: absolute; left: 50%; top: 50%;
+  width: 192px; height: 192px; transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 2;
+}
+.map-premium-effect canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .map-premium-effect { display: none; }
+}

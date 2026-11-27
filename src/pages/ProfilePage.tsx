@@ -1,3 +1,4 @@
+import { UserPremiumBadge } from '../components/membership/UserPremiumBadge'
 import { PremiumContactEditor } from '../components/profile/PremiumContactEditor'
 import { ProfileOverview } from '../components/profile/ProfileOverview'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -297,7 +298,7 @@ export function ProfilePage({ embedded = false, lifestyleOnly = false }: { embed
             <small>{avatarBusy ? 'Đang tải…' : 'Đổi ảnh'}</small>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void handleAvatarPick(e.target.files?.[0] ?? null)} />
-          <div><h1>{profile?.displayName || 'Chào bạn'}</h1><p><span>{userRoleLabel[profile?.role ?? UserRole.Renter]}</span><span>{profile?.isPremium ? profile.subscriptionBadge || 'Premium' : 'Gói miễn phí'}</span></p></div>
+          <div><h1>{profile?.displayName || 'Chào bạn'}</h1><p><span>{userRoleLabel[profile?.role ?? UserRole.Renter]}</span>{profile?.isPremium ? <UserPremiumBadge /> : <span>Gói miễn phí</span>}</p></div>
         </div>
         <Link className="profile-account-header__home" to="/">← Về trang chủ</Link>
       </header>}

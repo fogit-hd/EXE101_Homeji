@@ -1,0 +1,29 @@
+/* Featured label restored to gold; keep the static icon and soft, full-bodied reflection. */
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .premium-badge.featured-label {
+ position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;gap:7px;
+ min-height:26px;padding:4px 10px 4px 8px;border:1px solid #b98b37;border-radius:8px;
+ background:linear-gradient(115deg,#fff9e5 0%,#f9e6ac 48%,#fff3cd 100%);color:#50340e;
+ box-shadow:inset 0 1px 0 rgb(255 255 255 / .85),inset 0 -1px 0 rgb(158 112 32 / .14);
+ font:700 12px/16px var(--font-ui);letter-spacing:.015em;
+}
+html:root[data-theme='light'] body #root .map-listings .rental-result-card.map-listings__card.is-featured .premium-badge.featured-label {
+ background:linear-gradient(115deg,#fff3cc 0%,#ebcb7d 48%,#f8e3aa 100%);border-color:#b98b37;
+}
+.featured-label__icon{position:relative;z-index:2;display:inline-grid;place-items:center;flex:none;color:inherit}
+.featured-label__icon svg{display:block;animation:none;transform:none;filter:none}
+.featured-label__text{position:relative;z-index:2;color:inherit}
+.featured-label__reflection{position:absolute;inset:-5px -15%;z-index:1;pointer-events:none;
+ background:linear-gradient(110deg,transparent 20%,rgb(236 174 64 / .06) 27%,rgb(249 203 111 / .16) 34%,rgb(255 231 179 / .3) 41%,rgb(255 246 216 / .44) 47%,rgb(255 249 225 / .5) 51%,rgb(255 241 196 / .42) 56%,rgb(255 226 158 / .28) 63%,rgb(241 190 90 / .14) 71%,rgb(226 163 52 / .05) 78%,transparent 84%);
+ filter:blur(3px);
+ animation:featured-label-reflect 5.5s linear infinite;
+}
+@keyframes featured-label-reflect{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+@media(prefers-reduced-motion:reduce){.featured-label__reflection{display:none;animation:none}}
+
+
+
+.rental-result-card[data-featured-motion='paused'] .featured-label__reflection { animation-play-state: paused; }
+@media (forced-colors: active) {
+  html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .premium-badge.featured-label { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; }
+  .featured-label__reflection { display: none; animation: none; }
+}

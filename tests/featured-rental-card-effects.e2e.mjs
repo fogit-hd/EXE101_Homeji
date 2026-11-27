@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict'
+import { chromium } from 'playwright'
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+try {
+  const page = await browser.newPage({ viewport: { width: 1100, height: 950 } }), errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.addInitScript(() => {
+    const original = requestAnimationFrame.bind(window), cancel = cancelAnimationFrame.bind(window), pending = new Set()
+    window.requestAnimationFrame = callback => { const id = original(time => { pending.delete(id); callback(time) }); pending.add(id); return id }
+    window.cancelAnimationFrame = id => { pending.delete(id); cancel(id) }
+    window.pendingFeaturedFrames = () => pending.size
+  })
+  const url = `${process.env.BASE_URL || 'http://localhost:5194'}/tests/fixtures/featured-rental-card.html`
+  await page.goto(url)
+  await page.waitForFunction(() => document.querySelectorAll('.featured-card-fx').length === 2)
+  await page.waitForTimeout(1700)
+  assert.equal(await page.locator('[data-listing-id="room-2"] .featured-card-fx').count(), 0)
+  assert.equal(await page.locator('.premium-stars').count(), 0)
+  assert.equal(await page.locator('.featured-label__icon svg').count(), 2)
+  assert.equal(await page.locator('.featured-label__icon svg').first().evaluate(e => getComputedStyle(e).animationName), 'none')
+  assert.equal(await page.evaluate(() => window.pendingFeaturedFrames()), 1, 'One shared frame loop')
+  const painted = () => page.evaluate(() => [...document.querySelectorAll('.featured-card-fx')].every(c => c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,i) => i%4 === 3 && v>10)))
+  assert(await painted(), 'Light border trails paint')
+  const widths = await page.locator('.rental-result-card').evaluateAll(cards => cards.map(c => c.offsetWidth))
+  assert.equal(new Set(widths).size, 1, 'Featured does not change card width')
+  await page.locator('[data-listing-id="room-0"]').getByRole('button', { name: 'Lưu phòng 0' }).click()
+  assert.equal(await page.getByRole('status').innerText(), 'save-0')
+  await page.locator('[data-listing-id="room-0"]').getByRole('button', { name: 'Cân nhắc', exact: true }).click()
+  assert.equal(await page.getByRole('status').innerText(), 'consider-0')
+  await page.locator('[data-listing-id="room-0"]').getByRole('button', { name: 'Xem phòng', exact: true }).click()
+  assert.equal(await page.getByRole('status').innerText(), 'detail-0')
+  await page.locator('[data-listing-id="room-0"] .rental-result-card__price').click()
+  assert.equal(await page.getByRole('status').innerText(), 'map-0')
+  await page.screenshot({ path: 'output/verification/featured-card-assets/integrated-light.png' })
+  await page.evaluate(() => { document.documentElement.dataset.theme = 'dark' })
+  await page.waitForTimeout(250)
+  assert(await painted(), 'Dark trails repaint')
+  await page.screenshot({ path: 'output/verification/featured-card-assets/integrated-dark.png' })
+  await page.getByRole('button', { name: 'Đổi trạng thái Nổi bật' }).click()
+  await page.waitForFunction(() => document.querySelectorAll('.featured-card-fx').length === 1)
+  assert.equal(await page.locator('[data-listing-id="room-0"] .featured-label').count(), 0)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.waitForTimeout(100)
+  assert.equal(await page.locator('.featured-card-fx').evaluate(e => getComputedStyle(e).display), 'none')
+  assert.equal(await page.evaluate(() => window.pendingFeaturedFrames()), 0)
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.waitForTimeout(150)
+  assert.equal(await page.evaluate(() => window.pendingFeaturedFrames()), 1)
+  await page.evaluate(() => { document.querySelector('.map-listings').style.transform = 'translateY(2500px)' })
+  await page.waitForTimeout(250)
+  assert.equal(await page.evaluate(() => window.pendingFeaturedFrames()), 0, 'Offscreen stops drawing')
+  await page.evaluate(() => window.unmountFeaturedFixture())
+  await page.waitForTimeout(100)
+  assert.equal(await page.evaluate(() => window.pendingFeaturedFrames()), 0)
+  assert.deepEqual(errors, [])
+  console.log('PASS featured cards: light/dark, static icon, no sparkle points, shared loop, clicks, entitlement change, reduced motion, offscreen and cleanup')
+} finally { await browser.close() }

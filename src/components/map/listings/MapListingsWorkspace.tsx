@@ -1,3 +1,5 @@
+import { FeaturedListingBadge } from './featured/FeaturedListingBadge'
+import { useAuthModal } from '../../../contexts/AuthModalContext.logic'
 import { useFilterResultCount } from './useFilterResultCount'
 import type { SourceCatalogPin } from '../../../lib/sourceCatalog'
 import { RentalResultCard } from './RentalResultCard'
@@ -289,6 +291,8 @@ export function MapListingsWorkspace({
   onSelectSource,
   onRefresh,
 }: Props) {
+  const { openAuthModal } = useAuthModal()
+  const toggleCardSave = (id: string) => { if (onToggleSave) onToggleSave(id); else openAuthModal({ intent: 'save' }) }
   const isMobile = useIsMobile()
   const { stageRef: splitStageRef, style: splitStyle, dragging: splitDragging, separatorProps: splitSeparatorProps } = useListingSplit()
   const [sourceCounts, setSourceCounts] = useState<{ total: number; mapped: number; queryKey: string } | null>(null)
@@ -537,12 +541,13 @@ export function MapListingsWorkspace({
       deposit={view.facts.find(fact => !(room?.amenities ?? []).some(code => amenityLabel(code) === fact))}
       updated={view.updatedAt && formatListingDate(view.updatedAt) ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(new Date(view.updatedAt)) : null}
       publisher={room?.ownerDisplayName} featured={view.isPremium} selected={selectedCard} hovered={hovered}
-      badge={view.isPremium ? <PremiumBadge variant="glass" showStars={false} /> : undefined}
-      onSelect={openCard} onDetail={onOpenRoomDetail ? () => onOpenRoomDetail(id) : openCard} onHover={() => onHoverListing(id)} onLeave={onLeaveListing}
+      badge={view.isPremium ? <FeaturedListingBadge /> : undefined}
+      onDetail={onOpenRoomDetail ? () => onOpenRoomDetail(id) : openCard} onHover={() => onHoverListing(id)} onLeave={onLeaveListing}
+      onSelect={() => { if (query.view === 'list') writeQuery({ view: 'split' }); if (isMobile) setMobilePane('map'); onSelectListing(id) }}
       secondaryAction={<RentalConsiderationToggle post={{ id, title: view.title }} compact />}
-      save={onToggleSave ? <button type="button" className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`} data-glass-exclude
-        aria-pressed={Boolean(savedIds?.has(id))} aria-label={savedIds?.has(id) ? 'Bỏ lưu' : 'Lưu phòng'} disabled={saveBusy && selectedListingId === id}
-        onClick={() => onToggleSave(id)}><BookmarkIcon saved={savedIds?.has(id)} /></button> : undefined} />
+      save={<button type="button" className={`map-listings__save${savedIds?.has(id) ? ' is-on' : ''}`} data-glass-exclude
+        aria-pressed={Boolean(savedIds?.has(id))} aria-label={savedIds?.has(id) ? 'Bỏ lưu' : 'Lưu phòng'} disabled={saveBusy}
+        onClick={() => toggleCardSave(id)}><BookmarkIcon saved={savedIds?.has(id)} /></button>} />
     return (
         <article
           data-listing-id={id}
@@ -1025,7 +1030,7 @@ export function MapListingsWorkspace({
                   renderItem={post => renderListingCard(post.id, mapMarketplacePostToListingViewModel(post))} /> :
                 null
               )}
-              {!marketMode && <RentalSourceResults onSelectSource={showMap && (!isMobile || mobilePane === 'map') ? onSelectSource : undefined} selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
+              {!marketMode && <RentalSourceResults savedIds={savedIds} saveBusy={saveBusy} onToggleSave={toggleCardSave} onSelectSource={pin => { if (query.view === 'list') writeQuery({ view: 'split' }); if (isMobile) setMobilePane('map'); if (onSelectSource) onSelectSource(pin); else onFocusSource?.(pin) }} selectedId={selectedListingId} onHover={onHoverListing} onLeave={onLeaveListing} nativeIds={cards.map(card => card.id)} nativeCards={cards.map(({ id, view }) => renderListingCard(id, view))} nativeFacts={cards.map(card => card.facts)} sort={activeSort} query={query} onCount={receiveSourceCounts} onResetFilters={resetFilters} onFocus={onFocusSource ? location => { if (query.view === 'list') writeQuery({ view: 'split' }); onFocusSource(location) } : undefined} />}
               <div ref={infiniteSentinelRef} className="map-listings__sentinel" aria-hidden="true" />
               {loading && query.page > 1 ? (
                 <div className="map-listings__loading-more" role="status">

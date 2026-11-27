@@ -39,15 +39,12 @@ html:root body #root .map-listings .rental-result-card.map-listings__card.is-fea
 html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__save { z-index: 2; }
 html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .premium-badge { background: var(--premium-soft); color: var(--premium-text); border-color: var(--premium-edge-color); }
 html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__actions { border-top-color: color-mix(in srgb, var(--premium-edge-color) 45%, var(--border)); }
-html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__cover::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 60%; z-index: 1; pointer-events: none; opacity: 0; transform: translateX(-160%) skewX(-18deg); background: linear-gradient(110deg, transparent, rgb(255 255 255 / .48), transparent); }
-@media (prefers-reduced-motion: no-preference) {
-  html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured-revealed .rental-result-card__cover::after { animation: rental-featured-sweep 900ms cubic-bezier(.22, 1, .36, 1) 120ms 1 both; }
-}
-@keyframes rental-featured-sweep {
-  0% { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
-  15%, 75% { opacity: .75; }
-  100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__cover::after { animation: none; content: none; }
-}
+html:root body #root .map-listings .rental-result-card.has-map-target { cursor: pointer; }
+html:root body #root .map-listings .rental-result-card .rental-result-card__secondary button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* The approved light trace sits across the border without changing card geometry. */
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured { position: relative; overflow: visible; }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__cover { border-radius: 13px 13px 0 0; overflow: hidden; }
+html:root body #root .map-listings .rental-result-card.map-listings__card.is-featured .rental-result-card__actions { border-radius: 0 0 13px 13px; overflow: hidden; }
+.featured-card-fx { display: block; position: absolute; left: -3px; top: -3px; pointer-events: none; z-index: 4; }
+@media (prefers-reduced-motion: reduce), (forced-colors: active) { .featured-card-fx { display: none; } }

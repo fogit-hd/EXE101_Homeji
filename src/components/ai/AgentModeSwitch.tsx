@@ -1,3 +1,4 @@
+import { UserPremiumBadge } from '../membership/UserPremiumBadge'
 import { agentAccessSnapshot } from '../../lib/agentAccessSnapshot'
 import { HomejiAgentMark } from './HomejiAgentMark'
 import { memo, useEffect, useState } from 'react'
@@ -221,7 +222,7 @@ export const AgentModeSwitch = memo(function AgentModeSwitch({
           ) : (
             <HomejiAgentMark />
           )}
-          Agent <small>{badgeText}</small>
+          Agent {isPremium ? <UserPremiumBadge /> : <small>{badgeText}</small>}
         </button>
       </div>
       {!isPremium || active || busy ? (
